@@ -15,8 +15,8 @@
 *If contributing a partial or incomplete change (expecting the development team to complete the remaining work) please leave the box unchecked*
 
 - [ ] **Check to confirm**: I have performed a review of my PR against the [PR checklist](../contributing/pr-checklist.md) and confirm that:
-  - The changelog entry has been included (according to the [changelog process](../contributing/changelog-process.md))
-  - Changes have proper test coverage
+  - The changelog entry has been included according to the [changelog process](../contributing/changelog-process.md)
+  - Changes have proper test coverage (including regression tests)
   - Impacted resource, data source and schema descriptions have been reviewed and updated
   - Impacted resource and data source documentation HCL examples have been reviewed and updated
   - Does not introduce breaking changes (unless required to do so)

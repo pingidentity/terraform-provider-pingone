@@ -1,171 +1,428 @@
 # Provider Design
 
-## Directory/Module Structure
-The following describes how the code is organised in the repository
+This document provides an architectural and design overview of the PingOne Terraform Provider, outlining its structure, design principles, and development patterns.
 
-* `internal/acctest` - The `acctest` directory contains functions that are common to all acceptance tests in the provider
-* `internal/client` - The `client` directory contains functions specific to instantiation and modification of the PingOne GO SDK client.  The providers will source the PingOne client from this module
-* `internal/framework` - The `sdk` directory contains the code that brokers the interaction between the PingOne SDK functions and the Terraform provider (using the v6 protocol/plugin framework SDK).  For example, restructuring errors to Terraform provider format or processing resource retry conditions.
-* `internal/provider` - The `provider` directory contains the core Terraform provider code.  This will initialise the Terraform provider as a whole.  The `provider` package contains a provider factory based on the mux packages described [here](https://developer.hashicorp.com/terraform/plugin/mux).  The provider is being gradually migrated to the v6 protocol/plugin framework SDK and away from the v5 protocol/SDKv2 SDK.  Currently, the factory presents a combined v5 protocol provider for backward compatibility of Terraform CLI earlier than v1.
-* `internal/sdk` - The `sdk` directory contains the code that brokers the interaction between the PingOne SDK functions and the Terraform provider (using the v5 protocl/SDKv2 SDK).  For example, restructuring errors to Terraform provider format or processing resource retry conditions.
-* `internal/service` - The `service` directory contains the resource and data source code relevant for all of the PingOne services.  Common code to all services and the PingOne platform will be created here.
-* `internal/service/base` - The `base` directory, as a subdirectory of `service` contains the resources, data sources and testing code for the PingOne platform components that are shared between multiple services.
-* `internal/service/<service name>` - The individual PingOne services are separated into their own directories, under the `service` directory.  This is to ensure full logical separation between the different services and help with ongoing maintainability.  Service names and their support status can be found on the [Services Support](services-support.md) guide
+## Overview
 
-## Migration to Terraform Plugin Framework SDK
+The PingOne Terraform Provider is a comprehensive infrastructure-as-code solution for managing PingOne identity and access management resources. Built using HashiCorp's Terraform Plugin Framework and SDK, it provides full lifecycle management of PingOne configuration through a well-structured, maintainable codebase.
 
-The provider is being gradually migrated to the Plugin Framework SDK.  Any new resources and/or data sources should use the Plugin Framework and be registered in the `internal/service/<service name>/service.go` file for inclusion in the provider.  Examples provided in this document are specific to the Plugin Framework SDK.
+## Architecture
 
-## PingOne GO SDK and API
+### High-Level Architecture
 
-The PingOne Terraform provider leverages the [PingOne Platform API](https://apidocs.pingidentity.com/pingone/platform/v1/api/), via an automatically generated [PingOne Go SDK](https://github.com/patrickcping/pingone-go-sdk-v2).  The resources in this provider must use the Go SDK to call PingOne platform endpoints, rather than call API endpoints directly.
-
-For each resource that requires a PingOne SDK call, the client must be retrieved and the PingOne domain suffix (of the PingOne tenant region) applied:
+The provider follows a layered architecture pattern with clear separation of concerns:
 
 ```
-func (r *FooResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	// Prevent panic if the provider has not been configured.
-	if req.ProviderData == nil {
-		return
-	}
-
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected the provider client, got: %T. Please report this issue to the provider maintainers.", req.ProviderData),
-		)
-
-		return
-	}
-
-	preparedClient, err := prepareClient(ctx, resourceConfig)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Client not initialized",
-			err.Error(),
-		)
-
-		return
-	}
-
-	r.client = preparedClient
-}
+┌─────────────────────────────────────────────────────────────┐
+│                     Terraform Core                          │
+└─────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────┐
+│              Provider Entry Point (main.go)                 │
+│  - Version management                                       │
+│  - Server factory initialization                           │
+│  - Debug mode support                                      │
+└─────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────┐
+│           Provider Factory (internal/provider)              │
+│  - Dual Framework Support (v5/v6 mux)                     │
+│  - Framework Provider (Plugin Framework)                   │
+│  - SDKv2 Provider (Legacy SDK)                            │
+└─────────────────────────────────────────────────────────────┘
+                                │
+                    ┌───────────┴───────────┐
+                    ▼                       ▼
+┌─────────────────────────────┐   ┌─────────────────────────────┐
+│    Framework Provider       │   │     SDKv2 Provider          │
+│  (Plugin Framework v1.x)    │   │   (Legacy SDK v2.x)         │
+│  - Modern resource impl.    │   │   - Legacy resources        │
+│  - Type-safe schemas        │   │   - Gradual migration       │
+│  - Better validation        │   │                             │
+└─────────────────────────────┘   └─────────────────────────────┘
+                    │                       │
+                    └───────────┬───────────┘
+                                ▼
+┌─────────────────────────────────────────────────────────────┐
+│               Service Layer (internal/service)              │
+│  ├── authorize/    - PingOne Authorize resources           │
+│  ├── base/         - Core/foundational resources           │
+│  ├── credentials/  - PingOne Credentials resources         │
+│  ├── mfa/          - Multi-factor authentication           │
+│  ├── risk/         - PingOne Risk Management               │
+│  ├── sso/          - Single Sign-On resources             │
+│  └── verify/       - PingOne Verify resources             │
+└─────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────┐
+│           Framework & Utilities (internal/framework)        │
+│  - Type conversion utilities                               │
+│  - Custom validators                                       │
+│  - Plan modifiers                                         │
+│  - Common resource patterns                               │
+│  - Schema helpers                                         │
+└─────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────┐
+│              Client Layer (internal/client)                 │
+│  - Configuration management                                │
+│  - Authentication handling                                 │
+│  - API client initialization                              │
+│  - Global options support                                 │
+└─────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────┐
+│            PingOne Go SDK                                  │
+└─────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    PingOne APIs                             │
+│  - Management API                                          │
+│  - Service-specific APIs                                   │
+│  - Multi-region support                                    │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-Once initialised in the Configure method (as above), the SDK can be invoked inside a function using a retry and response parsing wrapper.  Example:
+### Core Components
+
+#### 1. Provider Entry Point (`main.go`)
+- **Purpose**: Application entry point and server initialization
+- **Key Features**:
+  - Version management for releases
+  - Debug mode support for development
+  - Terraform Plugin Protocol v6 server setup
+  - Provider server factory delegation
+
+#### 2. Provider Factory (`internal/provider/factory.go`)
+- **Purpose**: Manages dual framework support and provider multiplexing
+- **Key Features**:
+  - **Dual Framework Support**: Seamlessly combines Plugin Framework v1.x and SDK v2.x providers
+  - **Protocol Upgrade**: Automatically upgrades SDK v2 (protocol v5) to protocol v6
+  - **Multiplexing**: Routes requests to appropriate provider implementation
+  - **Migration Strategy**: Enables gradual migration from SDK v2 to Plugin Framework
+
+#### 3. Framework Provider (`internal/provider/framework/`)
+- **Purpose**: Modern provider implementation using Terraform Plugin Framework
+- **Key Features**:
+  - Type-safe schema definitions
+  - Enhanced validation and plan modification
+  - Improved error handling and diagnostics
+  - Resource and data source registration
+  - Provider configuration management
+
+#### 4. Service Layer (`internal/service/`)
+Organized by PingOne service domains:
+
+- **`authorize/`**: PingOne Authorize (fine-grained authorization)
+- **`base/`**: Core foundational resources (environments, organizations, licenses)
+- **`credentials/`**: PingOne Credentials (digital credentials and wallets)
+- **`mfa/`**: Multi-factor authentication resources
+- **`risk/`**: PingOne Risk Management (risk assessment and policies)
+- **`sso/`**: Single Sign-On resources (applications, users, groups, policies)
+- **`verify/`**: PingOne Verify (identity verification and proofing)
+
+Each service module follows a consistent pattern:
 ```
-	var trustedEmailAddress *management.EmailDomainTrustedEmail
-	resp.Diagnostics.Append(framework.ParseResponse(
-		ctx,
-
-		func() (any, *http.Response, error) {
-			return r.client.TrustedEmailAddressesApi.CreateTrustedEmailAddress(ctx, plan.EnvironmentId.ValueString(), plan.EmailDomainId.ValueString()).EmailDomainTrustedEmail(*emailDomainTrustedEmail).Execute()
-		},
-		"CreateTrustedEmailAddress", // This is an ID used for logging and error output
-		framework.DefaultCustomError,
-		sdk.DefaultCreateReadRetryable,
-		&trustedEmailAddress,
-	)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-```
-
-The purpose of the response wrapper is to standardise and optionally override API error responses and retry conditions.
-
-More information about the SDK methods available can be found at:
-* [Go API client for PingOne Management (SSO and Base)](https://pkg.go.dev/github.com/patrickcping/pingone-go-sdk-v2/management)
-* [Go API client for PingOne Authorize](https://pkg.go.dev/github.com/patrickcping/pingone-go-sdk-v2/authorize)
-* [Go API client for PingOne MFA](https://pkg.go.dev/github.com/patrickcping/pingone-go-sdk-v2/mfa)
-* [Go API client for PingOne Risk](https://pkg.go.dev/github.com/patrickcping/pingone-go-sdk-v2/risk)
-* [Go API client for PingOne Credentials](https://pkg.go.dev/github.com/patrickcping/pingone-go-sdk-v2/credentials)
-* [Go API client for PingOne Verify](https://pkg.go.dev/github.com/patrickcping/pingone-go-sdk-v2/verify)
-
-## Custom Errors
-
-The `CustomError` parameter of the `framework.ParseResponse` function allows the developer to override API errors with a custom message or output.
-
-The following shows an implementation where two overrides are in place; one that evaluates the PingOne API details block for specific validation errors based on the environment region, and the second overriding the error message returned based on a string match:
-```
-	var trustedEmailAddress *management.EmailDomainTrustedEmail
-	resp.Diagnostics.Append(framework.ParseResponse(
-		ctx,
-
-		func() (any, *http.Response, error) {
-			return r.client.TrustedEmailAddressesApi.CreateTrustedEmailAddress(ctx, plan.EnvironmentId.ValueString(), plan.EmailDomainId.ValueString()).EmailDomainTrustedEmail(*emailDomainTrustedEmail).Execute()
-		},
-		"CreateTrustedEmailAddress", // This is an ID used for logging and error output
-		trustedEmailAddressAPIErrors, // This is an overridden error function
-		sdk.DefaultCreateReadRetryable,
-		&trustedEmailAddress,
-	)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+service/
+├── service.go                    # Resource/DataSource registration
+├── resource_*.go                 # Resource implementations
+├── data_source_*.go             # Data source implementations
+├── *_test.go                    # Acceptance tests
+├── utils_*.go                   # Service-specific utilities
+└── sweep.go                     # Test cleanup utilities
 ```
 
+**Note**: This document describes the patterns for manually implemented resources and data sources. Considerations and patterns specific to generated code implementations are not covered in this design document.
+
+#### 5. Framework Utilities (`internal/framework/`)
+Provides reusable components and patterns:
+
+- **Type Conversion**: Utilities for converting between Terraform types and Go SDK types
+- **Custom Validators**: Domain-specific validation logic
+- **Plan Modifiers**: Custom plan modification behaviors
+- **Schema Helpers**: Common schema patterns and attribute definitions
+- **Custom Types**: PingOne-specific type implementations (ResourceID, etc.)
+
+#### 6. Client Layer (`internal/client/`)
+- **Configuration Management**: Provider configuration parsing and validation
+- **Authentication**: OAuth2 client credentials and access token management
+- **API Client Initialization**: PingOne SDK client setup with proper configuration
+- **Global Options**: Provider-wide behavioral configurations
+- **Multi-Region Support**: Automatic endpoint selection based on region
+
+### Design Principles
+
+#### 1. **Separation of Concerns**
+- **Service Isolation**: Each PingOne service has its own module with clear boundaries
+- **Layer Separation**: Distinct layers for provider logic, business logic, and API interaction
+- **Single Responsibility**: Each component has a clearly defined purpose
+
+#### 2. **Dual Framework Strategy**
+- **Progressive Migration**: Gradual transition from SDK v2 to Plugin Framework
+- **Backward Compatibility**: Existing resources continue to work during migration
+- **Protocol Unification**: Both frameworks present a unified interface via protocol v6
+
+#### 3. **Type Safety**
+- **Framework Types**: Leverages Plugin Framework's type-safe attribute system
+- **Custom Types**: Implements domain-specific types (ResourceID, enum types)
+- **Validation**: Comprehensive validation at multiple layers
+
+#### 4. **Consistency**
+- **Naming Conventions**: Standardized resource and data source naming
+- **File Organization**: Consistent directory and file structure across services
+- **Code Patterns**: Reusable patterns for common operations
+
+#### 5. **Testability**
+- **Acceptance Tests**: Comprehensive integration testing against real PingOne APIs
+- **Test Utilities**: Shared testing infrastructure and helpers
+- **Test Isolation**: Independent test environments and cleanup procedures
+
+#### 6. **Code Generation Strategy**
+- **Migration to Generated Code**: The provider is transitioning from manually created and maintained resources and data sources to using generated code over time
+- **Generated Code Identification**: Generated code files are marked with a comment at the top of the file indicating they are generated
+- **Implementation Approach**: New resources and data sources will prioritize generated implementations, while existing manual implementations will be migrated incrementally
+- **Maintenance Benefits**: Generated code reduces maintenance overhead, ensures consistency across resources, and accelerates development of new features
+- **Quality Assurance**: Generated code follows the same testing and validation standards as manually written code
+
+## Framework Utilities Reference
+
+The `internal/framework/` package provides a comprehensive set of utilities and patterns for implementing consistent, well-documented, and properly validated resources and data sources. These utilities should be used when defining schemas, descriptions, and validators to ensure uniformity across the provider.
+
+### Schema Description Utilities
+
+The `internal/framework/` package provides schema description utilities that standardize how resource and data source documentation is generated. These utilities ensure consistent formatting between plain text and Markdown descriptions, automatically handle common documentation patterns like allowed values and default values, and provide chainable methods for building comprehensive attribute documentation.
+
+**Why use these utilities:**
+- Ensures consistent documentation formatting across all resources
+- Automatically generates both plain text and Markdown descriptions
+- Provides standardized messaging for common validation scenarios
+- Supports documentation of complex validation relationships between attributes
+- Enables automated generation of provider documentation
+
+### Common Schema Attributes
+
+The framework provides pre-built schema attributes for common patterns used throughout the provider. These attributes include standard ID fields with appropriate custom types, link attributes for foreign key references with built-in validation, data source return attributes for computed results, and filter attributes for SCIM and data filtering operations.
+
+**Why use common attributes:**
+- Ensures consistency in schema definitions across resources
+- Provides pre-configured validation and plan modifiers
+- Reduces boilerplate code in resource implementations
+- Standardizes attribute naming and behavior patterns
+- Includes appropriate custom types for type safety
+
+### Custom Validators
+
+The framework includes specialized validators organized by data type (`stringvalidator`, `boolvalidator`, `int32validator`, etc.) that handle PingOne-specific validation scenarios. These validators support conditional validation based on other field values, content validation for specific formats, cross-field validation for conflicting or mutually exclusive attributes, and domain-specific validation rules.
+
+**Why use framework validators:**
+- Provides consistent validation behavior across resources
+- Handles complex validation scenarios specific to PingOne
+- Includes proper error messaging for validation failures
+- Supports conditional validation based on resource state
+- Reduces code duplication in validation logic
+
+### Custom Plan Modifiers
+
+The framework provides plan modifiers that handle PingOne-specific lifecycle management scenarios, including data loss protection for immutable fields, conditional plan modification based on resource state, and specialized replacement behaviors for sensitive operations.
+
+**Why use framework plan modifiers:**
+- Ensures consistent lifecycle management across resources
+- Provides appropriate warnings for potentially destructive operations
+- Handles edge cases specific to PingOne resource management
+- Standardizes immutability patterns across the provider
+- Includes proper user messaging for plan modifications
+
+### Custom Types
+
+The framework includes custom types specifically designed for PingOne resources, including `ResourceIDType` for PingOne UUID validation and `DaVinci` types for DaVinci service-specific requirements. These types provide enhanced validation, consistent serialization/deserialization, and improved type safety throughout the provider.
+
+**Why use custom types:**
+- Provides compile-time type safety for PingOne resource identifiers
+- Includes built-in validation for PingOne-specific formats
+- Ensures consistent handling of resource references
+- Enables better error messages for type-related issues
+- Supports automatic conversion between Terraform and SDK types
+
+### Implementation Guidelines
+
+When implementing resources and data sources, developers should leverage the framework utilities to ensure consistency and reduce implementation overhead. The utilities handle common patterns, provide standardized validation, and ensure proper documentation generation. Refer to existing implementations in `internal/service/` for examples of proper usage patterns.
+
+## SDK Utilities Reference
+
+The `internal/sdk` package provides essential utilities for making API calls to PingOne services with consistent error handling, retry logic, and response parsing. These utilities abstract the complexity of error handling across multiple PingOne service APIs and provide standardized patterns for CRUD operations.
+
+**Why use SDK utilities:**
+- Ensures consistent error handling across all PingOne service APIs
+- Provides automatic retry logic for transient failures and permission propagation delays
+- Standardizes error message formatting for better user experience
+- Handles multi-service API differences transparently
+- Includes built-in timeout and retry configuration
+- Supports custom error handling for domain-specific business logic
+
+### Core Functions
+
+The package provides `ParseResponse` and `ParseResponseWithCustomTimeout` functions that serve as the primary interface for executing SDK API calls. These functions handle error parsing, retry logic, response validation, and diagnostic generation uniformly across all PingOne services.
+
+### Error Handling
+
+The SDK utilities include built-in error handlers for common scenarios such as resource not found warnings (useful for read operations where external deletion should not fail) and invalid value errors with enhanced messaging. Custom error handlers can be created for domain-specific business logic requirements.
+
+### Retry Logic
+
+The package provides configurable retry conditions including default retry behavior for create/read operations that may encounter permission propagation delays. Custom retry logic can be implemented for handling specific race conditions or service-specific transient failures.
+
+### Multi-Service Support
+
+The SDK utilities automatically handle different PingOne service APIs (Management, MFA, Authorize, Credentials, Risk, Verify) with uniform error marshaling and retry logic, eliminating the need for service-specific implementations.
+
+### Integration Patterns
+
+Developers should use the SDK utilities for all API interactions following established CRUD operation patterns. The utilities integrate with the framework's environment validation and provide consistent diagnostic handling across all resource types.
+
+## Validation Utilities Reference
+
+The `internal/verify` package provides validation functions, regular expressions, and validators for common data formats and PingOne-specific requirements. These utilities ensure consistent validation across all resources and data sources and provide a centralized location for validation logic.
+
+**Why use validation utilities:**
+- Ensures consistent validation behavior across all resources
+- Provides pre-defined regular expressions for common data formats
+- Includes PingOne-specific validation for resource identifiers and formats
+- Supports both SDKv2 and Plugin Framework validation patterns
+- Centralizes validation logic for maintainability
+- Includes comprehensive locale and language validation support
+
+### Regular Expressions
+
+The package includes pre-defined regular expressions for resource identifiers (PingOne UUIDs and DaVinci IDs), network and protocol formats (IPv4, IPv6, URLs, domains), and other common formats (timestamps, color codes, country codes). These patterns are available in both partial match and full string match variants.
+
+### Validation Functions
+
+The package provides validation functions compatible with both SDKv2 and Plugin Framework implementations. These include resource ID validators for PingOne and DaVinci resources, and framework validators that return appropriate validator types for Plugin Framework usage.
+
+### Locale and Language Utilities
+
+The package includes comprehensive ISO language code support with functions for generating language validators, retrieving complete ISO language lists, and managing reserved language codes specific to PingOne.
+
+### OIDC Attribute Validation
+
+Specialized utilities for OpenID Connect attribute validation include functions for retrieving lists of illegal and overrideable OIDC attribute names, along with formatted strings for documentation purposes.
+
+### Integration Patterns
+
+Developers should use the validation utilities consistently across Framework and SDKv2 resources, apply appropriate validators in acceptance tests using the provided regex patterns, and leverage the centralized validation logic rather than creating custom patterns.
+
+## Utility Functions Reference
+
+The `internal/utils` package provides helper functions for common data transformations, type conversions, and utility operations used throughout the provider. These utilities standardize common operations and reduce code duplication across implementations.
+
+**Why use utility functions:**
+- Standardizes common data transformation operations
+- Provides type-safe conversions between different data types
+- Includes specialized functions for working with SDK enum values
+- Offers cryptographically secure random generation for testing
+- Supports schema composition and reusability patterns
+- Reduces code duplication across resource implementations
+
+### Enum Utilities
+
+The package provides functions for converting SDK enum values to formats compatible with Terraform validators and framework descriptions. These utilities handle the complexity of enum serialization and provide consistent interfaces for working with SDK-provided enum values.
+
+### Type Conversion Utilities
+
+Conversion functions are available for transforming slices between different types (string, int, int32, int64) to the `any` type required by various Terraform framework interfaces. These utilities provide type-safe conversions for use in validators, descriptions, and other framework operations.
+
+### JSON Utilities
+
+The package includes functions for performing semantic comparison of JSON content, which is useful for state comparison where formatting differences should not trigger changes. These utilities handle JSON unmarshaling and deep comparison automatically.
+
+### String Utilities
+
+Cryptographically secure random string generation functions are provided for test data creation and other scenarios requiring secure random values. The utilities support custom character sets and various random value generation patterns.
+
+### Schema Utilities
+
+Functions for merging schema attribute maps enable schema composition and reusability patterns. These utilities support optional overwrite behavior and facilitate the creation of base schemas that can be extended with additional attributes.
+
+### Integration Patterns
+
+Developers should leverage these utilities for consistent data transformations, use enum utilities when working with SDK-provided enum values in validators and descriptions, apply random generation functions for secure test data creation, and utilize schema merging for creating reusable schema components.
+
+## Provider Documentation
+
+The PingOne Terraform Provider uses an automated documentation generation system that creates comprehensive documentation from multiple sources. Understanding the relationship between templates, examples, and generated documentation is essential for maintaining high-quality provider documentation.
+
+### Documentation Architecture
+
+The provider documentation system consists of three main components that work together to generate the final documentation published at `/docs`:
+
+#### Templates (`/templates`)
+Template files define the structure and content for documentation pages. These templates use Go template syntax and are organized by type and service subcategory:
+
+- **Structure**: `/templates/{type}/{service-subcategory}/`
+- **Types**: `data-sources/`, `resources/`, `guides/`
+- **Service Subcategories**: Each subdirectory corresponds to a service package in `internal/service/`
+  - `authorize/` - PingOne Authorize resources
+  - `base/` - Core foundational resources
+  - `credentials/` - PingOne Credentials resources
+  - `mfa/` - Multi-factor authentication resources
+  - `risk/` - PingOne Risk Management resources
+  - `sso/` - Single Sign-On resources
+  - `verify/` - PingOne Verify resources
+
+#### Examples (`/examples`)
+Example configurations demonstrate real-world usage patterns and are referenced by templates during documentation generation:
+
+- **Structure**: `/examples/{type}/{service-subcategory}/`
+- **Types**: `data-sources/`, `resources/`, `guides/`, `provider/`
+- **Service Alignment**: Subcategories mirror the service package structure
+- **Content**: Complete Terraform configuration examples showing practical usage
+
+#### Generated Documentation (`/docs`)
+The final documentation is generated by running `make generate`, which processes templates and examples to create comprehensive documentation:
+
+- **Generation Process**: Combines template content with example configurations
+- **Output Structure**: `/docs/{type}/{service-subcategory}/`
+- **Content**: Complete documentation pages with descriptions, schemas, and examples
+
+### Documentation Generation Process
+
+#### Make Target
+```bash
+make generate
 ```
-func trustedEmailAddressAPIErrors(error model.P1Error) diag.Diagnostics {
-	var diags diag.Diagnostics
 
-	// Domain not verified
-	if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
-		if code, ok := details[0].GetCodeOk(); ok && *code == "INVALID_VALUE" {
-			if target, ok := details[0].GetTargetOk(); ok && *target == "trustedEmail" {
-				diags.AddError(
-					"The domain of the given email address is not verified",
-					"Ensure that the domain of the given trusted email address has been verified first.  This can be configured with the `pingone_trusted_email_domain` resource.",
-				)
+This command processes all templates and examples to generate the complete documentation set in `/docs`. The generation process:
 
-				return diags
-			}
-		}
-	}
-	return nil
-}
-```
+1. **Reads Templates**: Processes Go template files from `/templates`
+2. **Incorporates Examples**: Includes relevant example configurations from `/examples`
+3. **Generates Schema Documentation**: Extracts schema information from resource and data source implementations
+4. **Creates Final Documentation**: Outputs complete documentation pages to `/docs`
 
-The default value for this parameter is the `framework.DefaultCustomError` function.  This can be explicitly set (recommended for readability), or the parameter value can be set to `nil`.
+#### Template Processing
+Templates use Go template syntax to include dynamic content:
+- **Schema Information**: Automatically extracted from resource implementations
+- **Example Configurations**: Referenced from corresponding example files
+- **Cross-References**: Links to related resources and data sources
+- **Metadata**: Provider version information and generation timestamps
 
-## Custom Retry Conditions
+### Service Package Alignment
 
-The `Retryable` parameter of the `framework.ParseResponse` function allows the developer to define specific conditions of retry. By default, the provider will retry on network connectivity or timeout responses, but the developer may choose to also retry based on asynchronous latency and eventual consistency.  More information about possible latency conditions can be found at the PingOne API documentation [Accounting for Latency](https://apidocs.pingidentity.com/pingone/platform/v1/api/#accounting-for-latency) section.
+The documentation structure directly mirrors the service package organization:
 
-The following example shows a custom retry override to account for bootstrapped role assignment for the Terraform client to be able to create populations, based on string match of the error message:
-```
-	resp.Diagnostics.Append(framework.ParseResponse(
-		ctx,
+#### Service Package → Documentation Mapping
+- `internal/service/authorize/` → `templates/*/authorize/` → `examples/*/authorize/` → `docs/*/authorize/`
+- `internal/service/base/` → `templates/*/base/` → `examples/*/base/` → `docs/*/base/`
+- `internal/service/credentials/` → `templates/*/credentials/` → `examples/*/credentials/` → `docs/*/credentials/`
+- `internal/service/mfa/` → `templates/*/mfa/` → `examples/*/mfa/` → `docs/*/mfa/`
+- `internal/service/risk/` → `templates/*/risk/` → `examples/*/risk/` → `docs/*/risk/`
+- `internal/service/sso/` → `templates/*/sso/` → `examples/*/sso/` → `docs/*/sso/`
+- `internal/service/verify/` → `templates/*/verify/` → `examples/*/verify/` → `docs/*/verify/`
 
-		func() (any, *http.Response, error) {
-			return apiClient.PopulationsApi.CreatePopulation(ctx, environmentID).Population(population).Execute()
-		},
-		"CreatePopulation",
-		sdk.DefaultCustomError,
-		func(ctx context.Context, r *http.Response, p1error *management.P1Error) bool {
+This alignment ensures that documentation organization matches the provider's internal structure, making it easier for developers to locate relevant documentation and examples.
 
-			if p1error != nil {
-				var err error
-
-				// Permissions may not have propagated by this point
-				m, err := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage())
-				if err == nil && m {
-					tflog.Warn(ctx, "Insufficient PingOne privileges detected")
-					return true
-				}
-				if err != nil {
-					tflog.Warn(ctx, "Cannot match error string for retry")
-					return false
-				}
-
-			}
-
-			return false
-		},
-		&population,
-	)...)
-```
-
-The default value for this parameter is the `sdk.DefaultRetryable` function.  This can be explicitly set (recommended for readability), or the parameter value can be set to `nil`.
-
-*Note:* Retry specific code has not been converted to a framework equivalent and still exists under the `internal/sdk` package.  This is because the plugin framework does not yet include features for retry.
