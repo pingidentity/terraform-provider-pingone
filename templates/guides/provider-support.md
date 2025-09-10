@@ -2,29 +2,55 @@
 layout: ""
 page_title: "Provider Support"
 description: |-
-  The guide describes the support provided to customers using the PingOne Terraform provider.
+  Comprehensive guide to support options, policies, and resources for the PingOne Terraform provider.
 ---
 
 # Provider Support
 
-The guide describes the support provided to customers using the PingOne Terraform provider.
+This guide outlines the support provided to customers using the PingOne Terraform provider, including support policies, contact methods, and available resources.
 
-Distributions of the provider follows [Semantic Versioning 2.0.0](https://semver.org/) rules.
+## Version Support Policy
 
-## "Generally Available" Distributions
+The PingOne Terraform provider follows [Semantic Versioning 2.0.0](https://semver.org/) for all releases.
 
-Any distribution version that follows the `X.Y.Z` format where the major version number `X` is `1` or above, is considered **Generally Available** / GA and is **fully supported**.  Customers are advised to use these distributions to configure production environments.
+### Generally Available (GA) Releases
 
-With these distributions, customers are able to raise issues with Ping Identity and expect a timely resolution.
+Versions following the `X.Y.Z` format where the major version `X` is `1` or above are considered **Generally Available** and receive **full support**.
 
-- Where issues are raised on the GitHub project repository or raised internally through a Ping contact, these are triaged by the engineering team to assess whether the resolution is with the Terraform project or a dependent API.  Terraform changes are scheduled according to priority and upstream changes to Ping APIs are forwarded internally.
-- Where issues are raised to Ping Support, the usual documented SLA applies.
+**Support includes:**
+- Bug fixes and security patches
+- Documentation updates
+- Migration assistance for breaking changes
+- Access to all support channels listed below
 
-## Pre-release Distributions
+**Recommended for:** Production environments and critical workloads.
 
-Any distribution version that follows the `X.Y.Z-<pre-release>` format where there is a pre-release notation suffix is considered **not Generally Available** and support is limited.  Customers are advised to use these distributions at their own risk as the interfaces may not be stable and breaking changes may be introduced to both the pre-release binary and the underlying API without warning.
+### Pre-release Versions
 
-With pre-release versions, customers are still able to raise issues with Ping Identity but should not expect a timely resolution.
+Versions with pre-release suffixes (e.g., `X.Y.Z-beta.1`, `X.Y.Z-rc.1`) are **not Generally Available** and receive **limited support**.
 
-- Where issues are raised on the GitHub project repository or raised internally through a Ping contact, these are triaged by the engineering team to assess whether the resolution is with the Terraform project or a dependent API.  Terraform changes are scheduled according to priority and upstream changes to Ping APIs are forwarded internally.  Pre-release features carry a lower priority than "Generally Available" features.
-- If using Ping Support, customers will be asked to reproduce the error on the latest "Generally Available" provider distribution.
+**Support limitations:**
+- Lower priority for issue resolution
+- Interfaces may be unstable
+- Breaking changes may occur without warning
+- Support requests may be redirected to GA versions
+
+**Recommended for:** Testing, development, and evaluation environments only.
+
+## Support Channels
+
+### GitHub Issues (Community Support)
+- **Best for:** Bug reports, feature requests, and community discussions
+- **Repository:** [github.com/pingidentity/terraform-provider-pingone](https://github.com/pingidentity/terraform-provider-pingone)
+- **Response time:** Best effort, community-driven
+
+### Ping Identity Support (Enterprise Support)
+- **Best for:** Production issues, urgent matters, and customers with support contracts
+- **Contact:** Through your Ping Identity support portal
+- **SLA:** According to your support agreement
+- **Requirements:** Valid support contract with Ping Identity
+
+### Community Forum
+- **Best for:** Questions, discussions, and sharing experiences
+- **Link:** [Ping DevOps Community](https://support.pingidentity.com/s/topic/0TO1W000000IF30WAG/pingdevops)
+- **Response time:** Community-driven, best effort
