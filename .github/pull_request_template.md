@@ -48,7 +48,7 @@ This PR has been tested with:
 ### Shell Command(s)
 <!-- Use the following shell block to paste the command used when testing.  An example of a testing command could be: -->
 <!-- TF_ACC=1 go test -v -timeout 240s -run ^TestAccBrandingTheme $(go list ./internal/service/...) -->
-<!-- An example of a test against beta functionaly might be: -->
+<!-- An example of a test against beta functionality might be: -->
 <!-- TF_ACC=1 TESTACC_BETA=true go test -tags=beta -v -timeout 240s -run ^TestAccBrandingTheme $(go list ./internal/service/...) -->
 ```shell
 
