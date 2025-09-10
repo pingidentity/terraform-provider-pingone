@@ -21,16 +21,16 @@ The provider follows a layered architecture pattern with clear separation of con
 ┌─────────────────────────────────────────────────────────────┐
 │              Provider Entry Point (main.go)                 │
 │  - Version management                                       │
-│  - Server factory initialization                           │
-│  - Debug mode support                                      │
+│  - Server factory initialization                            │
+│  - Debug mode support                                       │
 └─────────────────────────────────────────────────────────────┘
                                 │
                                 ▼
 ┌─────────────────────────────────────────────────────────────┐
 │           Provider Factory (internal/provider)              │
-│  - Dual Framework Support (v5/v6 mux)                     │
-│  - Framework Provider (Plugin Framework)                   │
-│  - SDKv2 Provider (Legacy SDK)                            │
+│  - Dual Framework Support (v5/v6 mux)                       │
+│  - Framework Provider (Plugin Framework)                    │
+│  - SDKv2 Provider (Legacy SDK)                              │
 └─────────────────────────────────────────────────────────────┘
                                 │
                     ┌───────────┴───────────┐
@@ -47,45 +47,45 @@ The provider follows a layered architecture pattern with clear separation of con
                                 ▼
 ┌─────────────────────────────────────────────────────────────┐
 │               Service Layer (internal/service)              │
-│  ├── authorize/    - PingOne Authorize resources           │
-│  ├── base/         - Core/foundational resources           │
-│  ├── credentials/  - PingOne Credentials resources         │
-│  ├── mfa/          - Multi-factor authentication           │
-│  ├── risk/         - PingOne Risk Management               │
-│  ├── sso/          - Single Sign-On resources             │
-│  └── verify/       - PingOne Verify resources             │
+│  ├── authorize/    - PingOne Authorize resources            │
+│  ├── base/         - Core/foundational resources            │
+│  ├── credentials/  - PingOne Credentials resources          │
+│  ├── mfa/          - Multi-factor authentication            │
+│  ├── risk/         - PingOne Risk Management                │
+│  ├── sso/          - Single Sign-On resources               │
+│  └── verify/       - PingOne Verify resources               │
 └─────────────────────────────────────────────────────────────┘
                                 │
                                 ▼
 ┌─────────────────────────────────────────────────────────────┐
 │           Framework & Utilities (internal/framework)        │
-│  - Type conversion utilities                               │
-│  - Custom validators                                       │
-│  - Plan modifiers                                         │
-│  - Common resource patterns                               │
-│  - Schema helpers                                         │
+│  - Type conversion utilities                                │
+│  - Custom validators                                        │
+│  - Plan modifiers                                           │
+│  - Common resource patterns                                 │
+│  - Schema helpers                                           │
 └─────────────────────────────────────────────────────────────┘
                                 │
                                 ▼
 ┌─────────────────────────────────────────────────────────────┐
 │              Client Layer (internal/client)                 │
-│  - Configuration management                                │
-│  - Authentication handling                                 │
-│  - API client initialization                              │
-│  - Global options support                                 │
+│  - Configuration management                                 │
+│  - Authentication handling                                  │
+│  - API client initialization                                │
+│  - Global options support                                   │
 └─────────────────────────────────────────────────────────────┘
                                 │
                                 ▼
 ┌─────────────────────────────────────────────────────────────┐
-│            PingOne Go SDK                                  │
+│            PingOne Go SDK                                   │
 └─────────────────────────────────────────────────────────────┘
                                 │
                                 ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                    PingOne APIs                             │
-│  - Management API                                          │
-│  - Service-specific APIs                                   │
-│  - Multi-region support                                    │
+│  - Management API                                           │
+│  - Service-specific APIs                                    │
+│  - Multi-region support                                     │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -322,6 +322,7 @@ Developers should use the validation utilities consistently across Framework and
 The `internal/utils` package provides helper functions for common data transformations, type conversions, and utility operations used throughout the provider. These utilities standardize common operations and reduce code duplication across implementations.
 
 **Why use utility functions:**
+
 - Standardizes common data transformation operations
 - Provides type-safe conversions between different data types
 - Includes specialized functions for working with SDK enum values
@@ -362,6 +363,7 @@ The PingOne Terraform Provider uses an automated documentation generation system
 The provider documentation system consists of three main components that work together to generate the final documentation published at `/docs`:
 
 #### Templates (`/templates`)
+
 Template files define the structure and content for documentation pages. These templates use Go template syntax and are organized by type and service subcategory:
 
 - **Structure**: `/templates/{type}/{service-subcategory}/`
@@ -384,6 +386,7 @@ Example configurations demonstrate real-world usage patterns and are referenced 
 - **Content**: Complete Terraform configuration examples showing practical usage
 
 #### Generated Documentation (`/docs`)
+
 The final documentation is generated by running `make generate`, which processes templates and examples to create comprehensive documentation:
 
 - **Generation Process**: Combines template content with example configurations
@@ -393,6 +396,7 @@ The final documentation is generated by running `make generate`, which processes
 ### Documentation Generation Process
 
 #### Make Target
+
 ```bash
 make generate
 ```
@@ -405,7 +409,9 @@ This command processes all templates and examples to generate the complete docum
 4. **Creates Final Documentation**: Outputs complete documentation pages to `/docs`
 
 #### Template Processing
+
 Templates use Go template syntax to include dynamic content:
+
 - **Schema Information**: Automatically extracted from resource implementations
 - **Example Configurations**: Referenced from corresponding example files
 - **Cross-References**: Links to related resources and data sources
@@ -416,6 +422,7 @@ Templates use Go template syntax to include dynamic content:
 The documentation structure directly mirrors the service package organization:
 
 #### Service Package → Documentation Mapping
+
 - `internal/service/authorize/` → `templates/*/authorize/` → `examples/*/authorize/` → `docs/*/authorize/`
 - `internal/service/base/` → `templates/*/base/` → `examples/*/base/` → `docs/*/base/`
 - `internal/service/credentials/` → `templates/*/credentials/` → `examples/*/credentials/` → `docs/*/credentials/`
@@ -425,4 +432,3 @@ The documentation structure directly mirrors the service package organization:
 - `internal/service/verify/` → `templates/*/verify/` → `examples/*/verify/` → `docs/*/verify/`
 
 This alignment ensures that documentation organization matches the provider's internal structure, making it easier for developers to locate relevant documentation and examples.
-
