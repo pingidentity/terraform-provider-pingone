@@ -1,5 +1,20 @@
 ## 1.12.0 (10 September 2025)
 
+NOTES:
+
+* bump `github.com/go-viper/mapstructure/v2` 2.3.0 => 2.4.0 ([#1114](https://github.com/pingidentity/terraform-provider-pingone/issues/1114))
+* bump `github.com/hashicorp/go-getter` 1.7.8 => 1.7.9 ([#1113](https://github.com/pingidentity/terraform-provider-pingone/issues/1113))
+* bump `github.com/ulikunitz/xz` 0.5.12 => 0.5.14 ([#1115](https://github.com/pingidentity/terraform-provider-pingone/issues/1115))
+
+ENHANCEMENTS:
+
+* `resource/pingone_mfa_fido2_policy`: Added support for user_presence_timeout attribute. ([#1117](https://github.com/pingidentity/terraform-provider-pingone/issues/1117))
+
+BUG FIXES:
+
+* `resource/pingone_resource_scope_pingone_api`: Fixed `Invalid Attribute Value Match` error when custom scope name attribute consists of valid characters ([#1112](https://github.com/pingidentity/terraform-provider-pingone/issues/1112))
+* `resource/pingone_risk_predictor`: Fixed auto-capitalization of composite predictor "equals" value ([#1122](https://github.com/pingidentity/terraform-provider-pingone/issues/1122))
+
 ## 1.11.0 (13 August 2025)
 
 ENHANCEMENTS:
