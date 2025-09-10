@@ -91,7 +91,7 @@ jobs:
         region: [AP, CA, EU, NA, SG]
         # list whatever Terraform versions here you would like to support
         terraform:
-          - '1.11.*'
+          - '1.13.*'
       # If we have issues due to simultaneous tests across regions, max-parallel can be set to 1 to run sequentially
       #max-parallel: 1
 
@@ -162,7 +162,7 @@ jobs:
         region: [AP, CA, EU, NA, SG]
         # list whatever Terraform versions here you would like to support
         terraform:
-          - '1.11.*'
+          - '1.13.*'
       # If we have issues due to simultaneous tests across regions, max-parallel can be set to 1 to run sequentially
       #max-parallel: 1
 
