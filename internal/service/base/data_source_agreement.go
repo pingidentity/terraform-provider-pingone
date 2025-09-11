@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -199,7 +200,7 @@ func (r *AgreementDataSource) Read(ctx context.Context, req datasource.ReadReque
 					if agreements, ok := pageCursor.EntityArray.Embedded.GetAgreementsOk(); ok {
 
 						for _, agreementItem := range agreements {
-							if agreementItem.GetName() == data.Name.ValueString() {
+							if strings.EqualFold(agreementItem.GetName(), data.Name.ValueString()) {
 								return &agreementItem, pageCursor.HTTPResponse, nil
 							}
 						}

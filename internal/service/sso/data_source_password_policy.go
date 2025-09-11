@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -390,7 +391,7 @@ func (r *PasswordPolicyDataSource) Read(ctx context.Context, req datasource.Read
 					if passwordPolicies, ok := pageCursor.EntityArray.Embedded.GetPasswordPoliciesOk(); ok {
 
 						for _, passwordPolicyObject := range passwordPolicies {
-							if passwordPolicyObject.GetId() != "" && passwordPolicyObject.GetName() == data.Name.ValueString() {
+							if passwordPolicyObject.GetId() != "" && strings.EqualFold(passwordPolicyObject.GetName(), data.Name.ValueString()) {
 								return &passwordPolicyObject, pageCursor.HTTPResponse, nil
 							}
 						}

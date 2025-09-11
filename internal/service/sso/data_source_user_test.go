@@ -31,7 +31,7 @@ func TestAccUserDataSource_ByNameFull(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccUserDataSourceConfig_ByNameFull(resourceName, name),
+				Config: testAccUserDataSourceConfig_ByNameFull(resourceName, name, false),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -61,6 +61,14 @@ func TestAccUserDataSource_ByNameFull(t *testing.T) {
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "verify_status", resourceFullName, "verify_status"),
 				),
 			},
+			// Case insensitivity check
+			{
+				Config: testAccUserDataSourceConfig_ByNameFull(resourceName, name, true),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "username", resourceFullName, "username"),
+				),
+			},
 		},
 	})
 }
@@ -84,7 +92,7 @@ func TestAccUserDataSource_ByEmailFull(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccUserDataSourceConfig_ByEmailFull(resourceName, name),
+				Config: testAccUserDataSourceConfig_ByEmailFull(resourceName, name, false),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -112,6 +120,13 @@ func TestAccUserDataSource_ByEmailFull(t *testing.T) {
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "title", resourceFullName, "title"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "type", resourceFullName, "type"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "verify_status", resourceFullName, "verify_status"),
+				),
+			},
+			{
+				Config: testAccUserDataSourceConfig_ByEmailFull(resourceName, name, true),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "username", resourceFullName, "username"),
 				),
 			},
 		},
@@ -197,7 +212,14 @@ func TestAccUserDataSource_NotFound(t *testing.T) {
 	})
 }
 
-func testAccUserDataSourceConfig_ByNameFull(resourceName, name string) string {
+func testAccUserDataSourceConfig_ByNameFull(resourceName, name string, insensitivityCheck bool) string {
+
+	// If insensitivityCheck is true, alter the case of the name
+	nameComparator := name
+	if insensitivityCheck {
+		nameComparator = acctest.AlterStringCasing(nameComparator)
+	}
+
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -209,10 +231,17 @@ data "pingone_user" "%[2]s" {
   depends_on = [
     pingone_user.%[2]s,
   ]
-}`, testAccUserConfig_Full(resourceName, name), resourceName, name)
+}`, testAccUserConfig_Full(resourceName, name), resourceName, nameComparator)
 }
 
-func testAccUserDataSourceConfig_ByEmailFull(resourceName, name string) string {
+func testAccUserDataSourceConfig_ByEmailFull(resourceName, name string, insensitivityCheck bool) string {
+
+	// If insensitivityCheck is true, alter the case of the name
+	nameComparator := name
+	if insensitivityCheck {
+		nameComparator = acctest.AlterStringCasing(nameComparator)
+	}
+
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -224,7 +253,7 @@ data "pingone_user" "%[2]s" {
   depends_on = [
     pingone_user.%[2]s,
   ]
-}`, testAccUserConfig_Full(resourceName, name), resourceName, name)
+}`, testAccUserConfig_Full(resourceName, name), resourceName, nameComparator)
 }
 
 func testAccUserDataSourceConfig_ByIDFull(resourceName, name string) string {

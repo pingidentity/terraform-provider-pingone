@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -169,7 +170,7 @@ func (r *OrganizationDataSource) Read(ctx context.Context, req datasource.ReadRe
 
 						for _, organizationItem := range organizations {
 
-							if organizationItem.GetName() == data.Name.ValueString() {
+							if strings.EqualFold(organizationItem.GetName(), data.Name.ValueString()) {
 								return &organizationItem, pageCursor.HTTPResponse, nil
 							}
 						}

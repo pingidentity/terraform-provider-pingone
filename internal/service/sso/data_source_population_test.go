@@ -36,7 +36,7 @@ func TestAccPopulationDataSource_ByNameFull(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccPopulationDataSourceConfig_ByNameFull(environmentName, licenseID, resourceName, name),
+				Config: testAccPopulationDataSourceConfig_ByNameFull(environmentName, licenseID, resourceName, name, false),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "population_id", verify.P1ResourceIDRegexpFullString),
@@ -52,6 +52,13 @@ func TestAccPopulationDataSource_ByNameFull(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "alternative_identifiers.*", "identifier2"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "preferred_language", "pl"),
 					resource.TestMatchResourceAttr(dataSourceFullName, "theme.id", verify.P1ResourceIDRegexpFullString),
+				),
+			},
+			{
+				Config: testAccPopulationDataSourceConfig_ByNameFull(environmentName, licenseID, resourceName, name, true),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(dataSourceFullName, "name", name),
 				),
 			},
 		},
@@ -129,7 +136,14 @@ func TestAccPopulationDataSource_NotFound(t *testing.T) {
 	})
 }
 
-func testAccPopulationDataSourceConfig_ByNameFull(environmentName, licenseID, resourceName, name string) string {
+func testAccPopulationDataSourceConfig_ByNameFull(environmentName, licenseID, resourceName, name string, insensitivityCheck bool) string {
+
+	// If insensitivityCheck is true, alter the case of the name
+	nameComparator := name
+	if insensitivityCheck {
+		nameComparator = acctest.AlterStringCasing(nameComparator)
+	}
+
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -181,9 +195,11 @@ resource "pingone_population" "%[2]s-name" {
 data "pingone_population" "%[2]s" {
   environment_id = pingone_environment.%[4]s.id
 
-  name = pingone_population.%[2]s-name.name
+  name = "%[5]s"
+
+  depends_on = [pingone_population.%[2]s-name]
 }
-`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), resourceName, name, environmentName)
+`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), resourceName, name, environmentName, nameComparator)
 }
 
 func testAccPopulationDataSourceConfig_ByIDFull(environmentName, licenseID, resourceName, name string) string {

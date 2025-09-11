@@ -571,7 +571,7 @@ func (p *IdentityProviderAttributeResourceModel) expand(ctx context.Context, api
 
 						for _, idpAttribute := range idpAttributes {
 
-							if idpAttribute.IdentityProviderAttribute.GetName() == p.Name.ValueString() {
+							if strings.EqualFold(idpAttribute.IdentityProviderAttribute.GetName(), p.Name.ValueString()) {
 								return idpAttribute.IdentityProviderAttribute, pageCursor.HTTPResponse, nil
 							}
 						}

@@ -34,7 +34,16 @@ func TestAccTrustedEmailDomainDataSource_ByNameFull(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccTrustedEmailDomainDataSourceConfig_ByNameFull(resourceName, verifiedDomain),
+				Config: testAccTrustedEmailDomainDataSourceConfig_ByNameFull(resourceName, verifiedDomain, false),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "trusted_email_domain_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(dataSourceFullName, "domain_name", verifiedDomain),
+				),
+			},
+			{
+				Config: testAccTrustedEmailDomainDataSourceConfig_ByNameFull(resourceName, verifiedDomain, true),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -107,7 +116,14 @@ func TestAccTrustedEmailDomainDataSource_NotFound(t *testing.T) {
 	})
 }
 
-func testAccTrustedEmailDomainDataSourceConfig_ByNameFull(resourceName, verifiedDomain string) string {
+func testAccTrustedEmailDomainDataSourceConfig_ByNameFull(resourceName, verifiedDomain string, insensitivityCheck bool) string {
+
+	// If insensitivityCheck is true, alter the case of the domain name
+	domainComparator := verifiedDomain
+	if insensitivityCheck {
+		domainComparator = acctest.AlterStringCasing(domainComparator)
+	}
+
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -116,7 +132,7 @@ data "pingone_trusted_email_domain" "%[2]s" {
 
   domain_name = "%[3]s"
 }
-`, acctest.DomainVerifiedSandboxEnvironment(), resourceName, verifiedDomain)
+`, acctest.DomainVerifiedSandboxEnvironment(), resourceName, domainComparator)
 }
 
 func testAccTrustedEmailDomainDataSourceConfig_ByIDFull(resourceName, verifiedDomain string) string {
