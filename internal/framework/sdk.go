@@ -1,5 +1,7 @@
 // Copyright © 2025 Ping Identity Corporation
 
+// Package framework provides utilities for Terraform Plugin Framework implementation in the PingOne provider.
+// This package contains SDK response parsing, error handling, and retry logic for PingOne API interactions.
 package framework
 
 import (
@@ -17,11 +19,22 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
+// CustomError defines a function type for handling custom error responses from the PingOne API.
+// It takes an HTTP response and a P1Error model and returns diagnostics for error handling.
+// Custom error functions allow specific resources to implement specialized error handling logic
+// beyond the default error processing, such as treating certain errors as warnings or providing
+// additional context for specific error conditions.
 type CustomError func(*http.Response, *model.P1Error) diag.Diagnostics
 
 var (
+	// DefaultCustomError is the default custom error handler that performs no special processing.
+	// It always returns nil diagnostics, allowing the standard error handling logic to proceed.
 	DefaultCustomError = func(_ *http.Response, _ *model.P1Error) diag.Diagnostics { return nil }
 
+	// CustomErrorResourceNotFoundWarning handles resource not found errors by converting them to warnings.
+	// This is useful for read operations where a missing resource should not cause an error but should
+	// warn the user that the resource may have been deleted outside of Terraform.
+	// It checks for HTTP 404 status codes or P1Error codes of "NOT_FOUND".
 	CustomErrorResourceNotFoundWarning = func(r *http.Response, p1Error *model.P1Error) diag.Diagnostics {
 		var diags diag.Diagnostics
 
@@ -41,6 +54,10 @@ var (
 		return nil
 	}
 
+	// CustomErrorInvalidValue handles invalid value errors by converting them to specific error diagnostics.
+	// This custom error handler looks for P1Error responses with "INVALID_VALUE" codes targeting the "name" field
+	// and converts them into user-friendly error messages. This is commonly used for validation errors
+	// where the API rejects a provided name value due to format or constraint violations.
 	CustomErrorInvalidValue = func(_ *http.Response, p1Error *model.P1Error) diag.Diagnostics {
 		var diags diag.Diagnostics
 
@@ -59,6 +76,17 @@ var (
 	}
 )
 
+// CheckEnvironmentExistsOnPermissionsError verifies environment existence when permission errors occur.
+// It returns the original response objects, potentially modified to reflect environment not found status.
+// This function is used to distinguish between permission errors on existing environments versus
+// permission errors caused by non-existent environments. When a 400, 401, or 403 error occurs,
+// it makes an additional API call to check if the environment exists, and if not, overrides the
+// original error response to indicate the environment was not found.
+//
+// The ctx parameter provides the context for the API call.
+// The managementClient parameter is the PingOne management API client.
+// The environmentID parameter is the ID of the environment to check.
+// The fO, fR, and fErr parameters are the original response objects from the failed API call.
 func CheckEnvironmentExistsOnPermissionsError(ctx context.Context, managementClient *management.APIClient, environmentID string, fO any, fR *http.Response, fErr error) (any, *http.Response, error) {
 	if fR != nil && (fR.StatusCode == http.StatusUnauthorized || fR.StatusCode == http.StatusForbidden || fR.StatusCode == http.StatusBadRequest) {
 		_, fER, fEErr := managementClient.EnvironmentsApi.ReadOneEnvironment(ctx, environmentID).Execute()
@@ -72,11 +100,34 @@ func CheckEnvironmentExistsOnPermissionsError(ctx context.Context, managementCli
 	return fO, fR, fErr
 }
 
+// ParseResponse processes SDK interface function responses with error handling and retry logic.
+// It returns diagnostics for any errors encountered during the API call or response processing.
+// This function wraps SDK API calls with standardized error handling, retry logic, and response parsing.
+// It uses a default timeout of 10 minutes for the operation.
+//
+// The ctx parameter provides the context for the API call.
+// The f parameter is the SDK interface function to execute.
+// The requestID parameter is used for error reporting and logging.
+// The customError parameter defines custom error handling logic (can be nil for default handling).
+// The customRetryConditions parameter defines custom retry logic (can be nil for default retry conditions).
+// The targetObject parameter receives the parsed response object (can be nil if response is not needed).
 func ParseResponse(ctx context.Context, f sdk.SDKInterfaceFunc, requestID string, customError CustomError, customRetryConditions sdk.Retryable, targetObject any) diag.Diagnostics {
 	defaultTimeout := 10
 	return ParseResponseWithCustomTimeout(ctx, f, requestID, customError, customRetryConditions, targetObject, time.Duration(defaultTimeout)*time.Minute)
 }
 
+// ParseResponseWithCustomTimeout processes SDK interface function responses with custom timeout.
+// It returns diagnostics for any errors encountered during the API call or response processing.
+// This function provides the same functionality as ParseResponse but allows specifying a custom timeout
+// duration for operations that may require longer processing times than the default 10 minutes.
+//
+// The ctx parameter provides the context for the API call.
+// The f parameter is the SDK interface function to execute.
+// The requestID parameter is used for error reporting and logging.
+// The customError parameter defines custom error handling logic (can be nil for default handling).
+// The customRetryConditions parameter defines custom retry logic (can be nil for default retry conditions).
+// The targetObject parameter receives the parsed response object (can be nil if response is not needed).
+// The timeout parameter specifies the maximum duration to wait for the operation to complete.
 func ParseResponseWithCustomTimeout(ctx context.Context, f sdk.SDKInterfaceFunc, requestID string, customError CustomError, customRetryConditions sdk.Retryable, targetObject any, timeout time.Duration) diag.Diagnostics {
 	var diags diag.Diagnostics
 

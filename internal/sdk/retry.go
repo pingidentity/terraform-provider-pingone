@@ -1,5 +1,6 @@
 // Copyright © 2025 Ping Identity Corporation
 
+// Package sdk provides SDK wrapper functions and error handling utilities for the PingOne Terraform provider.
 package sdk
 
 import (
@@ -21,11 +22,20 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/verify"
 )
 
+// Retryable represents a function that determines whether an API call should be retried.
+// It receives the context, HTTP response, and PingOne error details to make retry decisions.
+// This function type allows for custom retry logic based on specific API error conditions
+// and response characteristics.
 type Retryable func(context.Context, *http.Response, *model.P1Error) bool
 
 var (
+	// DefaultRetryable is the default retry condition that never retries.
+	// This provides a safe default behavior when no custom retry conditions are specified.
 	DefaultRetryable = func(ctx context.Context, r *http.Response, p1error *model.P1Error) bool { return false }
 
+	// DefaultCreateReadRetryable provides retry logic for create and read operations.
+	// It retries when authorization errors occur, which may happen due to propagation delays
+	// in role assignments and permissions within the PingOne platform.
 	DefaultCreateReadRetryable = func(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {
 
 		if p1error != nil {
@@ -48,6 +58,13 @@ var (
 	}
 )
 
+// RetryWrapper executes an SDK function with retry logic and consistent error handling.
+// It returns the API response, HTTP response, and any error encountered during execution.
+// The timeout parameter specifies the maximum duration to wait for successful completion.
+// The f parameter is the SDK function to execute with retry logic applied.
+// The isRetryable parameter determines when API calls should be retried based on error conditions.
+// This function handles error marshaling across all PingOne SDK modules (management, authorize, mfa, risk, credentials, verify)
+// and ensures consistent error format for downstream processing.
 func RetryWrapper(ctx context.Context, timeout time.Duration, f SDKInterfaceFunc, isRetryable Retryable) (interface{}, *http.Response, error) {
 
 	var resp interface{}

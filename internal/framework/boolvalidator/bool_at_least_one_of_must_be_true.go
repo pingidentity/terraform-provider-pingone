@@ -1,5 +1,8 @@
 // Copyright © 2025 Ping Identity Corporation
 
+// Package boolvalidator provides custom boolean validators for the Terraform Plugin Framework.
+// This package contains validators that check boolean attribute constraints and combinations
+// for the PingOne provider's specific validation requirements.
 package boolvalidator
 
 import (
@@ -16,24 +19,34 @@ import (
 
 var _ validator.Bool = boolAtLeastOneOfMustBeTrueValidator{}
 
-// boolAtLeastOneOfMustBeTrueValidator validates that set contains at least min elements.
+// boolAtLeastOneOfMustBeTrueValidator validates that at least one boolean attribute in a group must be true.
+// It ensures that among a set of boolean attributes (including the one being validated),
+// at least one must have a true value, considering both explicit values and defaults.
 type boolAtLeastOneOfMustBeTrueValidator struct {
-	AttributeDefault   basetypes.BoolValue
+	// AttributeDefault is the default value for the attribute being validated
+	AttributeDefault basetypes.BoolValue
+	// ExpressionDefaults is the default value for attributes in the path expressions
 	ExpressionDefaults basetypes.BoolValue
-	PathExpressions    path.Expressions
+	// PathExpressions contains the paths to other attributes that are part of this validation group
+	PathExpressions path.Expressions
 }
 
 // Description describes the validation in plain text formatting.
+// It returns a human-readable description of the validation rule for error messages and documentation.
 func (v boolAtLeastOneOfMustBeTrueValidator) Description(_ context.Context) string {
 	return fmt.Sprintf("Ensure that at least one attribute is true from the following: %v", v.PathExpressions)
 }
 
 // MarkdownDescription describes the validation in Markdown formatting.
+// It returns the same description as Description() but formatted for Markdown documentation.
 func (v boolAtLeastOneOfMustBeTrueValidator) MarkdownDescription(ctx context.Context) string {
 	return v.Description(ctx)
 }
 
-// Validate performs the validation.
+// ValidateBool performs the validation logic for the at-least-one-true constraint.
+// It checks that among the current attribute and the specified path expressions,
+// at least one boolean attribute has a true value (either explicitly set or via defaults).
+// The validation considers null values with defaults as potentially true values.
 func (v boolAtLeastOneOfMustBeTrueValidator) ValidateBool(ctx context.Context, req validator.BoolRequest, resp *validator.BoolResponse) {
 	// If attribute configuration is true, it cannot conflict with others
 	if req.ConfigValue.ValueBool() {
@@ -99,12 +112,15 @@ func (v boolAtLeastOneOfMustBeTrueValidator) ValidateBool(ctx context.Context, r
 	))
 }
 
-// AtLeastOneOfMustBeTrue checks that a set of path.Expression,
-// including the attribute the validator is applied to,
-// must have a true value.
+// AtLeastOneOfMustBeTrue creates a validator that ensures at least one boolean in a group is true.
+// It returns a validator that checks the current attribute and specified path expressions
+// to ensure at least one has a true value, considering both explicit values and defaults.
 //
-// Relative path.Expression will be resolved using the attribute being
-// validated.
+// The attributeDefault parameter specifies the default value for the current attribute being validated.
+// The expressionDefaults parameter specifies the default value for attributes in the path expressions.
+// The expressions parameter contains the paths to other attributes that are part of this validation group.
+//
+// Relative path expressions will be resolved using the attribute being validated as the base.
 func AtLeastOneOfMustBeTrue(attributeDefault, expressionDefaults basetypes.BoolValue, expressions ...path.Expression) validator.Bool {
 	return boolAtLeastOneOfMustBeTrueValidator{
 		AttributeDefault:   attributeDefault,

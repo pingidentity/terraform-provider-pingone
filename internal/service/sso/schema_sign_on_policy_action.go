@@ -1,5 +1,7 @@
 // Copyright © 2025 Ping Identity Corporation
 
+// Package sso provides schema definitions for sign-on policy actions in PingOne SSO service configurations.
+// This file contains schema definitions for sign-on policy actions using the legacy Terraform SDK v2.
 package sso
 
 import (
@@ -11,6 +13,9 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
+// resourceSignOnPolicyActionSchema returns the Terraform schema definition for sign-on policy action resources.
+// This function defines the complete schema structure including all attributes, validation rules, and constraints
+// for sign-on policy actions using the legacy Terraform SDK v2 schema format.
 func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 
 	return map[string]*schema.Schema{

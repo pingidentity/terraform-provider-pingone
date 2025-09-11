@@ -1,5 +1,7 @@
 // Copyright © 2025 Ping Identity Corporation
 
+// Package sso provides utility functions for managing resources in PingOne SSO service configurations.
+// This file contains functions for fetching and managing resource data from the PingOne API.
 package sso
 
 import (
@@ -13,6 +15,13 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
+// fetchResourceFromID retrieves a specific resource by its ID from the PingOne API.
+// It returns the resource object and any diagnostics encountered during the fetch operation.
+// The ctx parameter provides context for the API call.
+// The apiClient parameter is the PingOne Management API client instance.
+// The environmentId parameter specifies the environment containing the resource.
+// The resourceId parameter specifies the ID of the resource to fetch.
+// The warnIfNotFound parameter controls whether a missing resource generates a warning or error.
 func fetchResourceFromID(ctx context.Context, apiClient *management.APIClient, environmentId, resourceId string, warnIfNotFound bool) (*management.Resource, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -42,6 +51,13 @@ func fetchResourceFromID(ctx context.Context, apiClient *management.APIClient, e
 	return resource, diags
 }
 
+// fetchResourceFromName retrieves a specific resource by its name from the PingOne API.
+// It returns the resource object and any diagnostics encountered during the fetch operation.
+// The ctx parameter provides context for the API call.
+// The apiClient parameter is the PingOne Management API client instance.
+// The environmentId parameter specifies the environment containing the resource.
+// The resourceName parameter specifies the name of the resource to fetch.
+// The warnIfNotFound parameter controls whether a missing resource generates a warning or error.
 func fetchResourceFromName(ctx context.Context, apiClient *management.APIClient, environmentId string, resourceName string, warnIfNotFound bool) (*management.Resource, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -84,6 +100,13 @@ func fetchResourceFromName(ctx context.Context, apiClient *management.APIClient,
 	return &resource, diags
 }
 
+// fetchResourceByType retrieves a specific resource by its type from the PingOne API.
+// It returns the resource object and any diagnostics encountered during the fetch operation.
+// The ctx parameter provides context for the API call.
+// The apiClient parameter is the PingOne Management API client instance.
+// The environmentId parameter specifies the environment containing the resource.
+// The resourceType parameter specifies the type of resource to fetch (cannot be CUSTOM type).
+// The warnIfNotFound parameter controls whether a missing resource generates a warning or error.
 func fetchResourceByType(ctx context.Context, apiClient *management.APIClient, environmentId string, resourceType management.EnumResourceType, warnIfNotFound bool) (*management.Resource, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -131,6 +154,13 @@ func fetchResourceByType(ctx context.Context, apiClient *management.APIClient, e
 	return &resource, diags
 }
 
+// fetchResources retrieves all resources from a specific environment using the PingOne API.
+// It returns a slice of resource objects and any diagnostics encountered during the fetch operation.
+// The ctx parameter provides context for the API call.
+// The apiClient parameter is the PingOne Management API client instance.
+// The environmentId parameter specifies the environment containing the resources.
+// The warnIfNotFound parameter controls whether a missing environment generates a warning or error.
+// This function handles paginated responses to retrieve all available resources.
 func fetchResources(ctx context.Context, apiClient *management.APIClient, environmentId string, warnIfNotFound bool) ([]management.EntityArrayEmbeddedResourcesInner, diag.Diagnostics) {
 	var diags diag.Diagnostics
 

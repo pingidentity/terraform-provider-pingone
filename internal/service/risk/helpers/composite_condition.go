@@ -12,6 +12,11 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 )
 
+// CheckCompositeConditionStructure validates the structure of a composite condition JSON string.
+// It returns diagnostics indicating whether the JSON structure is valid and supported.
+// The ctx parameter provides context for logging validation operations.
+// The jsonValue parameter contains the JSON string to validate as a composite condition.
+// This function unmarshals the JSON through SDK objects to verify compatibility and detect unsupported fields.
 func CheckCompositeConditionStructure(ctx context.Context, jsonValue string) diag.Diagnostics {
 	var diags diag.Diagnostics
 
@@ -57,6 +62,11 @@ func CheckCompositeConditionStructure(ctx context.Context, jsonValue string) dia
 	return diags
 }
 
+// NormaliseCompositeCondition normalizes a composite condition JSON string by adding missing type fields.
+// It returns a pointer to the normalized JSON string and any diagnostics encountered during processing.
+// The ctx parameter provides context for logging normalization operations.
+// The jsonValue parameter contains the JSON string to normalize.
+// This function walks the JSON tree and adds "type" fields to "and", "or", and "not" objects where missing.
 func NormaliseCompositeCondition(ctx context.Context, jsonValue string) (*string, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -101,6 +111,10 @@ func NormaliseCompositeCondition(ctx context.Context, jsonValue string) (*string
 	return &returnVar, diags
 }
 
+// WalkAggregatedCondition recursively walks through a condition map and adds missing type fields to aggregated conditions.
+// It returns the modified condition map with proper type fields added to "and", "or", and "not" objects.
+// The condition parameter is a map[string]interface{} representing a single condition object in the JSON structure.
+// This function identifies aggregated condition types and ensures they have the correct "type" field values.
 func WalkAggregatedCondition(condition map[string]interface{}) map[string]interface{} {
 
 	evaluateAggregateConditions := []struct {
@@ -140,6 +154,10 @@ func WalkAggregatedCondition(condition map[string]interface{}) map[string]interf
 	return condition
 }
 
+// WalkAggregatedListCondition recursively processes a list of condition objects by applying normalization to each.
+// It returns a slice of interface{} containing the normalized condition objects.
+// The conditionList parameter is a slice of interface{} representing multiple condition objects in a list.
+// This function is used to process the condition arrays found in "and" and "or" aggregated conditions.
 func WalkAggregatedListCondition(conditionList []interface{}) []interface{} {
 
 	conditionReturnList := make([]interface{}, 0)

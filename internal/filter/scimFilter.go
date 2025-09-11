@@ -1,5 +1,8 @@
 // Copyright © 2025 Ping Identity Corporation
 
+// Package filter provides SCIM filter building utilities for the PingOne Terraform provider.
+// This package contains functions for constructing SCIM (System for Cross-domain Identity Management)
+// filter expressions used in PingOne API queries.
 package filter
 
 import (
@@ -9,6 +12,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+// BuildScimFilter constructs a SCIM filter expression from a filter set and attribute mapping.
+// It returns a properly formatted SCIM filter string that can be used in PingOne API queries.
+// The filterSet parameter contains filter specifications with name and values fields.
+// The attributeMapping parameter maps filter names to custom SCIM attribute expressions,
+// allowing for complex filtering patterns beyond simple equality checks.
+// Multiple values within a filter are combined with OR logic, while multiple filters are combined with AND logic.
 func BuildScimFilter(filterSet []interface{}, attributeMapping map[string]string) string {
 
 	generalMapping := "%s eq \"%s\""

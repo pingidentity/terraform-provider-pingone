@@ -1,5 +1,7 @@
 // Copyright © 2025 Ping Identity Corporation
 
+// Package sso provides test sweeping functionality for cleaning up PingOne SSO service resources during testing.
+// This file contains sweep functions that clean up test groups, populations, and sign-on policies.
 package sso
 
 import (
@@ -12,6 +14,9 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/sweep"
 )
 
+// init registers test sweepers for SSO service resources.
+// The sweepers are configured with proper dependencies to ensure cleanup order during test sweeping operations.
+// Groups are cleaned up first, followed by sign-on policies, and finally populations.
 func init() {
 	resource.AddTestSweepers("pingone_group", &resource.Sweeper{
 		Name: "pingone_group",
@@ -33,6 +38,10 @@ func init() {
 	})
 }
 
+// sweepGroups cleans up test groups created during testing.
+// It deletes all groups with names matching the test group prefix pattern across all tagged test environments.
+// The region parameter specifies the region to clean up, though it's not currently used in the implementation.
+// This function is called by the Terraform testing framework during test cleanup.
 func sweepGroups(region string) error {
 
 	var ctx = context.Background()

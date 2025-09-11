@@ -1,5 +1,7 @@
 // Copyright © 2025 Ping Identity Corporation
 
+// Package provider provides the core provider factory and configuration for the PingOne Terraform provider.
+// This package contains functions for creating provider servers that support both SDKv2 and Framework protocols.
 package provider
 
 import (
@@ -13,6 +15,11 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/provider/sdkv2"
 )
 
+// ProviderServerFactoryV6 creates a multiplexed provider server that supports both SDKv2 and Framework protocols.
+// It returns a function that creates a tfprotov6.ProviderServer and any error encountered during setup.
+// The version parameter is used to set the provider version string for both underlying providers.
+// This factory enables the provider to serve both legacy SDKv2-based resources and new Framework-based resources
+// within a single provider instance, allowing for gradual migration from SDKv2 to Framework.
 func ProviderServerFactoryV6(ctx context.Context, version string) (func() tfprotov6.ProviderServer, error) {
 
 	p1V5Provider := sdkv2.New(version)()

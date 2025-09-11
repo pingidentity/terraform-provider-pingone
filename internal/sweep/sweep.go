@@ -1,5 +1,8 @@
 // Copyright © 2025 Ping Identity Corporation
 
+// Package sweep provides utilities for cleaning up test resources during acceptance testing.
+// This package contains functions for creating test environments, fetching tagged test resources,
+// and configuring clients for resource cleanup operations.
 package sweep
 
 import (
@@ -19,9 +22,17 @@ import (
 )
 
 var (
+	// EnvironmentNamePrefix is the standard prefix used for test environment names.
+	// This prefix helps identify environments created during acceptance testing
+	// so they can be properly cleaned up after test completion.
 	EnvironmentNamePrefix = "tf-testacc-"
 )
 
+// SweepClient creates and configures a PingOne API client for resource cleanup operations.
+// It returns a configured client instance that can be used to identify and clean up test resources.
+// The client is configured using environment variables and includes global options suitable for testing,
+// such as enabling force deletion of populations that contain users.
+// This function is typically used in acceptance test sweep functions to obtain an API client for cleanup.
 func SweepClient(ctx context.Context) (*client.Client, error) {
 
 	regionCode := management.EnumRegionCode(os.Getenv("PINGONE_REGION_CODE"))
@@ -42,6 +53,10 @@ func SweepClient(ctx context.Context) (*client.Client, error) {
 
 }
 
+// getProviderTestingVersion returns the provider version string for testing purposes.
+// It checks for the PINGONE_TESTING_PROVIDER_VERSION environment variable and returns
+// its value if set, otherwise defaults to "dev".
+// This version string is used in User-Agent headers for API requests during testing.
 func getProviderTestingVersion() string {
 	returnVar := "dev"
 	if v := os.Getenv("PINGONE_TESTING_PROVIDER_VERSION"); v != "" {
@@ -50,10 +65,19 @@ func getProviderTestingVersion() string {
 	return returnVar
 }
 
+// FetchTaggedEnvironments retrieves all environments with names starting with the standard test prefix.
+// It returns a slice of environments that were created for testing purposes and may need cleanup.
+// This function uses the default EnvironmentNamePrefix to identify test environments.
+// The returned environments can be used in sweep operations to clean up test resources.
 func FetchTaggedEnvironments(ctx context.Context, apiClient *management.APIClient) ([]management.Environment, error) {
 	return FetchTaggedEnvironmentsByPrefix(ctx, apiClient, EnvironmentNamePrefix)
 }
 
+// FetchTaggedEnvironmentsByPrefix retrieves all environments with names starting with the specified prefix.
+// It returns a slice of environments that match the prefix pattern and may need cleanup.
+// The prefix parameter allows filtering for specific test environment naming patterns.
+// This function includes safety checks to prevent accidental deletion of the "Administrators" environment.
+// The function uses pagination to retrieve all matching environments and includes retry logic for permission issues.
 func FetchTaggedEnvironmentsByPrefix(ctx context.Context, apiClient *management.APIClient, prefix string) ([]management.Environment, error) {
 
 	filter := fmt.Sprintf("name sw \"%s\"", prefix)
@@ -122,6 +146,13 @@ func FetchTaggedEnvironmentsByPrefix(ctx context.Context, apiClient *management.
 	return respList, nil
 }
 
+// CreateTestEnvironment creates a new PingOne environment configured for testing purposes.
+// It returns an error if environment creation fails for any reason.
+// The apiClient parameter is used to make API calls to the PingOne platform.
+// The region parameter specifies the geographic region where the environment should be created.
+// The index parameter is used to generate a unique environment name for parallel test execution.
+// The created environment includes all PingOne services enabled and a default population for testing.
+// Environment credentials are obtained from the PINGONE_LICENSE_ID environment variable.
 func CreateTestEnvironment(ctx context.Context, apiClient *management.APIClient, region management.EnvironmentRegion, index string) error {
 
 	environmentLicense := os.Getenv("PINGONE_LICENSE_ID")

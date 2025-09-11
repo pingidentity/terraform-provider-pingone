@@ -1,5 +1,6 @@
 // Copyright © 2025 Ping Identity Corporation
 
+// Package verify provides validation utilities and constants for the PingOne Terraform provider.
 package verify
 
 import (
@@ -8,6 +9,7 @@ import (
 	"strings"
 )
 
+// reservedLanguageCodes contains language codes that are reserved by PingOne and cannot be customized
 var reservedLanguageCodes = []string{
 	"cs",
 	"de",
@@ -28,8 +30,11 @@ var reservedLanguageCodes = []string{
 	"zh",
 }
 
+// IsoCountry represents an ISO language/country code with its descriptive name
 type IsoCountry struct {
+	// Code is the ISO language or locale code (e.g., "en", "en-US")
 	Code string
+	// Name is the human-readable name for the language or locale
 	Name string
 }
 
@@ -1400,6 +1405,10 @@ var isoList = []IsoCountry{
 	},
 }
 
+// FullIsoList returns a slice of all supported ISO language and locale codes.
+// This includes both standard language codes (e.g., "en") and region-specific codes (e.g., "en-US").
+// The returned slice contains all language codes that are valid for use in PingOne,
+// including both reserved and customizable language codes.
 func FullIsoList() []string {
 	returnVar := make([]string, len(isoList))
 	for i, c := range isoList {
@@ -1409,6 +1418,10 @@ func FullIsoList() []string {
 	return returnVar
 }
 
+// FullIsoListString returns a formatted string containing all supported ISO language and locale codes.
+// The codes are sorted alphabetically and formatted with backticks for documentation purposes.
+// This function is useful for generating documentation or validation error messages
+// that need to display the complete list of supported language codes.
 func FullIsoListString() string {
 
 	slices.Sort(FullIsoList())
@@ -1421,6 +1434,9 @@ func FullIsoListString() string {
 
 }
 
+// IsoList returns a slice of ISO language and locale codes that are available for customization.
+// This excludes reserved language codes that are managed by PingOne and cannot be customized.
+// The returned slice contains only language codes that can be used for custom language configurations.
 func IsoList() []string {
 
 	v := make([]string, 0)
@@ -1433,10 +1449,17 @@ func IsoList() []string {
 	return v
 }
 
+// ReservedIsoList returns a slice of language codes that are reserved by PingOne.
+// These language codes have predefined translations and configurations that cannot be customized.
+// This function is useful for validation to ensure users don't attempt to override reserved languages.
 func ReservedIsoList() []string {
 	return reservedLanguageCodes
 }
 
+// IsoReservedListString returns a formatted string containing all reserved language codes.
+// The codes are sorted alphabetically and formatted with backticks for documentation purposes.
+// This function is useful for generating documentation or validation error messages
+// that need to display the list of reserved language codes that cannot be customized.
 func IsoReservedListString() string {
 
 	slices.Sort(reservedLanguageCodes)

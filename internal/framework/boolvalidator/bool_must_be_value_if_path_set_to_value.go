@@ -15,24 +15,33 @@ import (
 
 var _ validator.Bool = boolMustBeValueIfPathSetToValue{}
 
-// boolMustBeValueIfPathSetToValue validates that set contains at least min elements.
+// boolMustBeValueIfPathSetToValue validates that a boolean attribute has a specific value when another attribute matches a condition.
+// It ensures that when a path attribute equals a specified value, the current boolean attribute
+// must be set to the required boolean value.
 type boolMustBeValueIfPathSetToValue struct {
-	BoolValue          basetypes.BoolValue
+	// BoolValue is the required boolean value for the current attribute when the condition is met
+	BoolValue basetypes.BoolValue
+	// PathAttributeValue is the value that the path attribute must match to trigger the validation
 	PathAttributeValue basetypes.StringValue
-	PathExpression     path.Expression
+	// PathExpression defines the path to the attribute whose value is being checked
+	PathExpression path.Expression
 }
 
 // Description describes the validation in plain text formatting.
+// It returns a human-readable description of the validation rule for error messages and documentation.
 func (v boolMustBeValueIfPathSetToValue) Description(_ context.Context) string {
 	return fmt.Sprintf("Ensure that the boolean is set to %v when the value %s is present in the following path expression: %v", v.BoolValue, v.PathAttributeValue, v.PathExpression)
 }
 
 // MarkdownDescription describes the validation in Markdown formatting.
+// It returns the same description as Description() but formatted for Markdown documentation.
 func (v boolMustBeValueIfPathSetToValue) MarkdownDescription(ctx context.Context) string {
 	return v.Description(ctx)
 }
 
-// Validate performs the validation.
+// ValidateBool performs the validation logic for conditional boolean value requirements.
+// It checks that when the path attribute equals the specified value, the current boolean attribute
+// is set to the required boolean value. Unknown values are deferred until they become known.
 func (v boolMustBeValueIfPathSetToValue) ValidateBool(ctx context.Context, req validator.BoolRequest, resp *validator.BoolResponse) {
 
 	// If unknown, we can't check until it is known
@@ -92,7 +101,13 @@ func (v boolMustBeValueIfPathSetToValue) ValidateBool(ctx context.Context, req v
 	}
 }
 
-// MustBeValueIfPathSetToValue checks that the boolean is set to the required value if a string value is present in the provided path.Expression.
+// MustBeValueIfPathSetToValue creates a validator that enforces a boolean value based on another attribute's value.
+// It returns a validator that ensures the current boolean attribute equals the required value
+// when the specified path attribute matches the provided value.
+//
+// The boolValue parameter specifies the required boolean value for the current attribute.
+// The pathAttributeValue parameter specifies the value that the path attribute must match.
+// The expression parameter defines the path to the attribute whose value is being checked.
 func MustBeValueIfPathSetToValue(boolValue basetypes.BoolValue, pathAttributeValue basetypes.StringValue, expression path.Expression) validator.Bool {
 	return boolMustBeValueIfPathSetToValue{
 		BoolValue:          boolValue,
