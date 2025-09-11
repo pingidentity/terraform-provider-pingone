@@ -42,6 +42,7 @@ func TestAccApplicationAttributeMapping_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 
+			acctest.PreCheckNoBeta(t)
 			p1Client = acctest.PreCheckTestClient(ctx, t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -143,6 +144,7 @@ func TestAccApplicationAttributeMapping_OIDC(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.ApplicationAttributeMapping_CheckDestroy,
@@ -219,6 +221,7 @@ func TestAccApplicationAttributeMapping_OIDC_UserInfo(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.ApplicationAttributeMapping_CheckDestroy,
@@ -271,6 +274,7 @@ func TestAccApplicationAttributeMapping_OIDC_ReservedAttributeName(t *testing.T)
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.ApplicationAttributeMapping_CheckDestroy,
@@ -336,6 +340,7 @@ func TestAccApplicationAttributeMapping_SAML(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.ApplicationAttributeMapping_CheckDestroy,
@@ -413,6 +418,7 @@ func TestAccApplicationAttributeMapping_BadApplication(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.ApplicationAttributeMapping_CheckDestroy,
@@ -465,6 +471,7 @@ func TestAccApplicationAttributeMapping_Core_OIDC(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.ApplicationAttributeMapping_CheckDestroy,
@@ -552,6 +559,7 @@ func TestAccApplicationAttributeMapping_Core_SAML(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.ApplicationAttributeMapping_CheckDestroy,
@@ -611,6 +619,7 @@ func TestAccApplicationAttributeMapping_Core_BadApplication(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.ApplicationAttributeMapping_CheckDestroy,
@@ -637,6 +646,7 @@ func TestAccApplicationAttributeMapping_Core_Expression(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.ApplicationAttributeMapping_CheckDestroy,
@@ -691,6 +701,7 @@ func TestAccApplicationAttributeMapping_SystemApplication(t *testing.T) {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.ApplicationAttributeMapping_CheckDestroy,
@@ -717,6 +728,7 @@ func TestAccApplicationAttributeMapping_BadParameters(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.ApplicationAttributeMapping_CheckDestroy,

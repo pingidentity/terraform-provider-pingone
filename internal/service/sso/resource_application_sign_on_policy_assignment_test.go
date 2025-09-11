@@ -42,6 +42,7 @@ func TestAccApplicationSignOnPolicyAssignment_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
 
+			acctest.PreCheckNoBeta(t)
 			p1Client = acctest.PreCheckTestClient(ctx, t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -113,6 +114,7 @@ func TestAccApplicationSignOnPolicyAssignment_Single(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.ApplicationSignOnPolicyAssignment_CheckDestroy,
@@ -161,6 +163,7 @@ func TestAccApplicationSignOnPolicyAssignment_Multiple(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.ApplicationSignOnPolicyAssignment_CheckDestroy,
@@ -198,6 +201,7 @@ func TestAccApplicationSignOnPolicyAssignment_Change(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.ApplicationSignOnPolicyAssignment_CheckDestroy,
@@ -260,6 +264,7 @@ func TestAccApplicationSignOnPolicyAssignment_SystemApplication(t *testing.T) {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.ApplicationSignOnPolicyAssignment_CheckDestroy,
@@ -308,6 +313,7 @@ func TestAccApplicationSignOnPolicyAssignment_BadParameters(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.ApplicationSignOnPolicyAssignment_CheckDestroy,

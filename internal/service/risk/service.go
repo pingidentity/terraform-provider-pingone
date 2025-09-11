@@ -13,12 +13,18 @@ type serviceClientType struct {
 }
 
 func Resources() []func() resource.Resource {
-	return []func() resource.Resource{
+	resources := []func() resource.Resource{
 		NewRiskPolicyResource,
 		NewRiskPredictorResource,
 	}
+	resources = append(resources, BetaResources()...)
+
+	return resources
 }
 
 func DataSources() []func() datasource.DataSource {
-	return []func() datasource.DataSource{}
+	dataSources := []func() datasource.DataSource{}
+	dataSources = append(dataSources, BetaDataSources()...)
+
+	return dataSources
 }
