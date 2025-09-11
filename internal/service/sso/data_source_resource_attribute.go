@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	frameworkdiag "github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -227,7 +228,7 @@ func fetchResourceAttributeFromNameSDKFunc(ctx context.Context, apiClient *manag
 
 			for _, resourceAttribute := range resourceAttributes {
 
-				if resourceAttribute.ResourceAttribute.GetName() == resourceAttributeName {
+				if strings.EqualFold(resourceAttribute.ResourceAttribute.GetName(), resourceAttributeName) {
 					return resourceAttribute.ResourceAttribute, pageCursor.HTTPResponse, nil
 				}
 			}

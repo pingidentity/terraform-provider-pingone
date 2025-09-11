@@ -284,7 +284,7 @@ func (r *EnvironmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 					if environments, ok := pageCursor.EntityArray.Embedded.GetEnvironmentsOk(); ok {
 						for _, environmentItem := range environments {
 
-							if environmentItem.GetName() == data.Name.ValueString() {
+							if strings.EqualFold(environmentItem.GetName(), data.Name.ValueString()) {
 								return &environmentItem, pageCursor.HTTPResponse, nil
 							}
 						}

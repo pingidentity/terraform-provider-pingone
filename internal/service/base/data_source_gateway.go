@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -469,17 +470,17 @@ func (r *GatewayDataSource) Read(ctx context.Context, req datasource.ReadRequest
 					if gateways, ok := pageCursor.EntityArray.Embedded.GetGatewaysOk(); ok {
 
 						for _, gatewayObject := range gateways {
-							if gateway := gatewayObject.Gateway; gateway != nil && gateway.GetId() != "" && gateway.GetName() == data.Name.ValueString() {
+							if gateway := gatewayObject.Gateway; gateway != nil && gateway.GetId() != "" && strings.EqualFold(gateway.GetName(), data.Name.ValueString()) {
 								return &management.CreateGateway201Response{
 									Gateway: gateway,
 								}, pageCursor.HTTPResponse, nil
 
-							} else if gateway := gatewayObject.GatewayTypeLDAP; gateway != nil && gateway.GetId() != "" && gateway.GetName() == data.Name.ValueString() {
+							} else if gateway := gatewayObject.GatewayTypeLDAP; gateway != nil && gateway.GetId() != "" && strings.EqualFold(gateway.GetName(), data.Name.ValueString()) {
 								return &management.CreateGateway201Response{
 									GatewayTypeLDAP: gateway,
 								}, pageCursor.HTTPResponse, nil
 
-							} else if gateway := gatewayObject.GatewayTypeRADIUS; gateway != nil && gateway.GetId() != "" && gateway.GetName() == data.Name.ValueString() {
+							} else if gateway := gatewayObject.GatewayTypeRADIUS; gateway != nil && gateway.GetId() != "" && strings.EqualFold(gateway.GetName(), data.Name.ValueString()) {
 								return &management.CreateGateway201Response{
 									GatewayTypeRADIUS: gateway,
 								}, pageCursor.HTTPResponse, nil

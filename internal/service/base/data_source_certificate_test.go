@@ -38,7 +38,7 @@ func TestAccCertificateDataSource_ByNameFull(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCertificateDataSourceConfig_ByNameFull(environmentName, licenseID, resourceName, pem_cert),
+				Config: testAccCertificateDataSourceConfig_ByNameFull(environmentName, licenseID, resourceName, pem_cert, false),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -55,6 +55,14 @@ func TestAccCertificateDataSource_ByNameFull(t *testing.T) {
 					resource.TestMatchResourceAttr(dataSourceFullName, "expires_at", regexp.MustCompile(`^(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d)$`)),
 					resource.TestMatchResourceAttr(dataSourceFullName, "starts_at", regexp.MustCompile(`^(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d)$`)),
 					resource.TestCheckResourceAttr(dataSourceFullName, "status", "VALID"),
+				),
+			},
+			// Case insensitivity check
+			{
+				Config: testAccCertificateDataSourceConfig_ByNameFull(environmentName, licenseID, resourceName, pem_cert, true),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(dataSourceFullName, "name", "terraform"),
 				),
 			},
 		},
@@ -136,7 +144,14 @@ func TestAccCertificateDataSource_NotFound(t *testing.T) {
 	})
 }
 
-func testAccCertificateDataSourceConfig_ByNameFull(environmentName, licenseID, resourceName, pem string) string {
+func testAccCertificateDataSourceConfig_ByNameFull(environmentName, licenseID, resourceName, pem string, insensitivityCheck bool) string {
+
+	// If insensitivityCheck is true, alter the case of the name
+	nameComparator := "terraform"
+	if insensitivityCheck {
+		nameComparator = acctest.AlterStringCasing(nameComparator)
+	}
+
 	return fmt.Sprintf(`
 %[1]s
 
@@ -153,12 +168,12 @@ EOT
 data "pingone_certificate" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
-  name = "terraform"
+  name = "%[5]s"
 
   depends_on = [
     pingone_certificate.%[3]s
   ]
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, pem)
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, pem, nameComparator)
 }
 
 func testAccCertificateDataSourceConfig_ByIDFull(environmentName, licenseID, resourceName, pem string) string {

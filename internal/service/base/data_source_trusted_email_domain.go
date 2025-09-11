@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -164,7 +165,7 @@ func (r *TrustedEmailDomainDataSource) Read(ctx context.Context, req datasource.
 
 						for _, emailDomainItem := range emailDomains {
 
-							if emailDomainItem.GetDomainName() == data.DomainName.ValueString() {
+							if strings.EqualFold(emailDomainItem.GetDomainName(), data.DomainName.ValueString()) {
 								return &emailDomainItem, pageCursor.HTTPResponse, nil
 							}
 						}

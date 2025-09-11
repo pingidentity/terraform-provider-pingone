@@ -51,8 +51,16 @@ func TestAccOrganizationDataSource_Full(t *testing.T) {
 				Check:  testCheck,
 			},
 			{
-				Config: testAccOrganizationDataSourceConfig_ByNameFull(resourceName, organizationName),
+				Config: testAccOrganizationDataSourceConfig_ByNameFull(resourceName, organizationName, false),
 				Check:  testCheck,
+			},
+			// Case insensitivity check
+			{
+				Config: testAccOrganizationDataSourceConfig_ByNameFull(resourceName, organizationName, true),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(dataSourceFullName, "name", organizationName),
+				),
 			},
 		},
 	})
@@ -91,11 +99,18 @@ data "pingone_organization" "%[1]s" {
 }`, resourceName, organizationID)
 }
 
-func testAccOrganizationDataSourceConfig_ByNameFull(resourceName, organizationName string) string {
+func testAccOrganizationDataSourceConfig_ByNameFull(resourceName, organizationName string, insensitivityCheck bool) string {
+
+	// If insensitivityCheck is true, alter the case of the organization name
+	nameComparator := organizationName
+	if insensitivityCheck {
+		nameComparator = acctest.AlterStringCasing(nameComparator)
+	}
+
 	return fmt.Sprintf(`
 data "pingone_organization" "%[1]s" {
   name = "%[2]s"
-}`, resourceName, organizationName)
+}`, resourceName, nameComparator)
 }
 
 func testAccOrganizationDataSourceConfig_NotFoundByID(resourceName string) string {
