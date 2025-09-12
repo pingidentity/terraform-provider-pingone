@@ -1,0 +1,30 @@
+{
+  "recommendations": [
+    // Go language support
+    "golang.go",
+    
+    // Terraform support
+    "hashicorp.terraform",
+    
+    // Markdown support for documentation
+    "yzhang.markdown-all-in-one",
+    "davidanson.vscode-markdownlint",
+    
+    // JSON/YAML support
+    "redhat.vscode-yaml",
+    
+    // Code formatting and linting
+    "ms-vscode.vscode-json",
+    
+    // Development productivity
+    "streetsidesoftware.code-spell-checker",
+    
+    // Documentation and changelog tools
+    "yzhang.markdown-all-in-one"
+  ],
+  "unwantedRecommendations": [
+    // Disable extensions that might conflict or aren't needed
+    "ms-python.python",
+    "ms-dotnettools.csharp"
+  ]
+}
