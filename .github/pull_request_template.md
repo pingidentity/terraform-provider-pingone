@@ -41,10 +41,10 @@ N/a
 
 This PR has been tested with:
 
-- [ ] Unit tests *(please paste commands and results below)*
-- [ ] Acceptance tests *(please paste commands and results below)*
-- [ ] End-to-end tests *(please paste the link to the actions workflow runs)*
-- [ ] Not applicable *(no evidences needed)*
+- [ ] Unit tests _(please paste commands and results below)_
+- [ ] Acceptance tests _(please paste commands and results below)_
+- [ ] End-to-end tests _(please paste the link to the actions workflow runs)_
+- [ ] Not applicable _(no evidences needed)_
 
 ### Shell Command(s)
 <!-- Use the following shell block to paste the command used when testing.  An example of a testing command could be: -->
