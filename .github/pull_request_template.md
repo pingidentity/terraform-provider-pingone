@@ -10,9 +10,9 @@
 ## Checklist
 <!-- Please check off completed items. -->
 
-*All full (or complete) PRs that need review prior to merge should have the following box checked.*
+_All full (or complete) PRs that need review prior to merge should have the following box checked._
 
-*If contributing a partial or incomplete change (expecting the development team to complete the remaining work) please leave the box unchecked*
+_If contributing a partial or incomplete change (expecting the development team to complete the remaining work) please leave the box unchecked_
 
 - [ ] **Check to confirm**: I have performed a review of my PR against the [PR checklist](../contributing/pr-checklist.md) and confirm that:
   - The changelog entry has been included according to the [changelog process](../contributing/changelog-process.md)
@@ -41,9 +41,11 @@ N/a
 ## Testing
 
 This PR has been tested with:
+
 - [ ] Unit tests *(please paste commands and results below)*
 - [ ] Acceptance tests *(please paste commands and results below)*
 - [ ] End-to-end tests *(please paste the link to the actions workflow runs)*
+- [ ] Not applicable *(no evidences needed)*
 
 ### Shell Command(s)
 <!-- Use the following shell block to paste the command used when testing.  An example of a testing command could be: -->
