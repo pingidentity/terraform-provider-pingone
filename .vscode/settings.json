@@ -82,30 +82,35 @@
   // Spell checker configuration
   "cSpell.enabled": true,
   "cSpell.words": [
-    "pingone",
-    "pingidentity",
-    "terraform",
-    "tfprotov",
-    "hashicorp",
-    "golangci",
-    "tfplugindocs",
-    "testacc",
-    "testargs",
-    "sweepargs",
     "depscheck",
     "devcheck",
-    "terrafmt",
+    "golangci",
+    "GOPATH",
+    "hashicorp",
+    "patrickcping",
+    "pingidentity",
+    "pingone",
     "pkcs",
+    "sweepargs",
     "syniverse",
-    "twilio"
+    "terrafmt",
+    "terraform",
+    "terraformrc",
+    "testacc",
+    "testargs",
+    "tfplugindocs",
+    "tfprotov",
+    "tfstate",
+    "twilio",
+    "winfile"
   ],
   "cSpell.ignoreWords": [
-    "struct",
-    "func",
     "bool",
-    "uint",
+    "func",
     "int64",
-    "string"
+    "string",
+    "struct",
+    "uint"
   ],
   "cSpell.languageSettings": [
     {
