@@ -180,7 +180,7 @@ func (r *davinciConnectorInstanceDataSource) Read(ctx context.Context, req datas
 		},
 		"GetConnectorInstanceById",
 		framework.DefaultCustomError,
-		framework.DefaultRetryable,
+		framework.InsufficientPrivilegeRetryable,
 		&responseData,
 	)...)
 

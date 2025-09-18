@@ -1782,7 +1782,7 @@ func (r *davinciFlowResource) Read(ctx context.Context, req resource.ReadRequest
 		},
 		"GetFlowById",
 		framework.CustomErrorResourceNotFoundWarning,
-		framework.DefaultRetryable,
+		framework.InsufficientPrivilegeRetryable,
 		&responseData,
 	)...)
 
@@ -1850,7 +1850,7 @@ func (r *davinciFlowResource) Update(ctx context.Context, req resource.UpdateReq
 		},
 		"ReplaceFlowById",
 		framework.DefaultCustomError,
-		framework.DefaultRetryable,
+		framework.InsufficientPrivilegeRetryable,
 		&responseData,
 	)...)
 
@@ -1905,7 +1905,7 @@ func (r *davinciFlowResource) Delete(ctx context.Context, req resource.DeleteReq
 		},
 		"DeleteFlowById",
 		framework.CustomErrorResourceNotFoundWarning,
-		framework.DefaultRetryable,
+		framework.InsufficientPrivilegeRetryable,
 		nil,
 	)...)
 }

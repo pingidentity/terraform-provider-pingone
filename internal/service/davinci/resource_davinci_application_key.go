@@ -227,7 +227,7 @@ func (r *davinciApplicationKeyResource) Create(ctx context.Context, req resource
 		},
 		"RotateDavinciApplicationApiKey",
 		framework.DefaultCustomError,
-		framework.DefaultRetryable,
+		framework.InsufficientPrivilegeRetryable,
 		&responseData,
 	)...)
 
@@ -283,7 +283,7 @@ func (r *davinciApplicationKeyResource) Read(ctx context.Context, req resource.R
 		},
 		"GetDavinciApplicationById",
 		framework.CustomErrorResourceNotFoundWarning,
-		framework.DefaultRetryable,
+		framework.InsufficientPrivilegeRetryable,
 		&responseData,
 	)...)
 
