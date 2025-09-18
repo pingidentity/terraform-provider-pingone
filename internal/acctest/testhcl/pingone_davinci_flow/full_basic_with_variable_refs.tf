@@ -385,7 +385,7 @@ resource "pingone_davinci_flow" "%[2]s" {
             node_type = "CONNECTION"
             connection_id = pingone_davinci_connector_instance.%[2]s-http.id
             connector_id = "httpConnector"
-            name = "acjaeeskxf-http"
+            name = "%[2]s-http"
             label = "Http"
             status = "configured"
             capability_name = "customHtmlMessage"
@@ -435,7 +435,7 @@ resource "pingone_davinci_flow" "%[2]s" {
             node_type = "CONNECTION"
             connection_id = pingone_davinci_connector_instance.%[2]s-functions.id
             connector_id = "functionsConnector"
-            name = "acjaeeskxf-functions"
+            name = "%[2]s-functions"
             label = "Functions"
             status = "configured"
             capability_name = "AEqualsB"
@@ -495,7 +495,7 @@ resource "pingone_davinci_flow" "%[2]s" {
             node_type = "CONNECTION"
             connection_id = pingone_davinci_connector_instance.%[2]s-http.id
             connector_id = "httpConnector"
-            name = "acjaeeskxf-http"
+            name = "%[2]s-http"
             label = "Http"
             status = "configured"
             capability_name = "createSuccessResponse"
@@ -521,7 +521,7 @@ resource "pingone_davinci_flow" "%[2]s" {
             node_type = "CONNECTION"
             connection_id = pingone_davinci_connector_instance.%[2]s-errors.id
             connector_id = "errorConnector"
-            name = "acjaeeskxf-error"
+            name = "%[2]s-error"
             label = "Error Message"
             status = "configured"
             capability_name = "customErrorMessage"
@@ -551,7 +551,7 @@ resource "pingone_davinci_flow" "%[2]s" {
             node_type = "CONNECTION"
             connection_id = pingone_davinci_connector_instance.%[2]s-flow.id
             connector_id = "flowConnector"
-            name = "acjaeeskxf-flow"
+            name = "%[2]s-flow"
             label = "Flow Conductor"
             status = "configured"
             capability_name = "startUiSubFlow"
@@ -587,7 +587,7 @@ resource "pingone_davinci_flow" "%[2]s" {
             node_type = "CONNECTION"
             connection_id = pingone_davinci_connector_instance.%[2]s-flow.id
             connector_id = "flowConnector"
-            name = "acjaeeskxf-flow"
+            name = "%[2]s-flow"
             label = "Flow Conductor"
             status = "configured"
             capability_name = "startUiSubFlow"
@@ -661,7 +661,7 @@ resource "pingone_davinci_flow" "%[2]s" {
             node_type = "CONNECTION"
             connection_id = pingone_davinci_connector_instance.%[2]s-variables.id
             connector_id = "variablesConnector"
-            name = "acjaeeskxf-variables"
+            name = "%[2]s-variables"
             label = "Variables"
             status = "configured"
             capability_name = "saveFlowValue"
@@ -732,8 +732,8 @@ resource "pingone_davinci_flow" "%[2]s" {
             node_type = "CONNECTION"
             connection_id = pingone_davinci_connector_instance.%[2]s-variables.id
             connector_id = "variablesConnector"
-            name = "acjaeeskxf-variables"
-            label = "acjaeeskxf-variables"
+            name = "%[2]s-variables"
+            label = "%[2]s-variables"
             status = "configured"
             capability_name = "saveValue"
             type = "trigger"
@@ -789,8 +789,8 @@ resource "pingone_davinci_flow" "%[2]s" {
             node_type = "CONNECTION"
             connection_id = pingone_davinci_connector_instance.%[2]s-variables.id
             connector_id = "variablesConnector"
-            name = "acjaeeskxf-variables"
-            label = "acjaeeskxf-variables"
+            name = "%[2]s-variables"
+            label = "%[2]s-variables"
             status = "configured"
             capability_name = "saveValueUserInfo"
             type = "trigger"

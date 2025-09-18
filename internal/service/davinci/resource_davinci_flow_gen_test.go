@@ -168,51 +168,37 @@ func testAccDavinciFlow_Basic(t *testing.T, withBootstrapConfig bool) {
 	fullStepHcl := davinciFlow_FullWithMappingIDsHCL(t, resourceName, withBootstrapConfig)
 	fullStep := resource.TestStep{
 		Config: fullStepHcl,
-		Check: resource.ComposeTestCheckFunc(
-			//TODO expand checks for all these
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1DVResourceIDRegexpFullString),
-		),
+		Check:  davinciFlow_CheckComputedValuesFullBasic(resourceName),
 	}
 
 	fullStepModifyNodePropsHcl := davinciFlow_FullWithMappingIDsModifyNodePropertiesHCL(t, resourceName, withBootstrapConfig)
 	fullStepModifyNodeProps := resource.TestStep{
 		Config: fullStepModifyNodePropsHcl,
-		Check: resource.ComposeTestCheckFunc(
-			//TODO expand checks for all these
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1DVResourceIDRegexpFullString),
-		),
+		Check:  davinciFlow_CheckComputedValuesFullBasic(resourceName),
 	}
 
 	minimalStepHcl := davinciFlow_MinimalWithMappingIDsHCL(t, resourceName, withBootstrapConfig)
 	minimalStep := resource.TestStep{
 		Config: minimalStepHcl,
-		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1DVResourceIDRegexpFullString),
-		),
+		Check:  davinciFlow_CheckComputedValuesFullMinimal(resourceName),
 	}
 
 	updateStepHcl := davinciFlow_MinimalWithMappingIDsUpdateHCL(t, resourceName, withBootstrapConfig)
 	updateStep := resource.TestStep{
 		Config: updateStepHcl,
-		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1DVResourceIDRegexpFullString),
-		),
+		Check:  davinciFlow_CheckComputedValuesFullMinimal(resourceName),
 	}
 
 	updateNoDescriptionStepHcl := davinciFlow_MinimalWithMappingIDsNoDescriptionUpdateHCL(t, resourceName, withBootstrapConfig)
 	updateNoDescriptionStep := resource.TestStep{
 		Config: updateNoDescriptionStepHcl,
-		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1DVResourceIDRegexpFullString),
-		),
+		Check:  davinciFlow_CheckComputedValuesFullMinimal(resourceName),
 	}
 
 	updateNewNodeStepHcl := davinciFlow_MinimalWithAddedNodeHCL(t, resourceName, withBootstrapConfig)
 	updateNewNodeStep := resource.TestStep{
 		Config: updateNewNodeStepHcl,
-		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1DVResourceIDRegexpFullString),
-		),
+		Check:  davinciFlow_CheckComputedValuesFullMinimalAddedNode(resourceName),
 	}
 
 	resource.Test(t, resource.TestCase{
@@ -278,7 +264,6 @@ func TestAccDavinciFlow_EmptyObjectsInSettings(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_davinci_flow.%s", resourceName)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -291,9 +276,7 @@ func TestAccDavinciFlow_EmptyObjectsInSettings(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: davinciFlow_EmptyObjectsInSettingsHCL(t, resourceName, false),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1DVResourceIDRegexpFullString),
-				),
+				Check:  davinciFlow_CheckComputedValuesFullMinimal(resourceName),
 			},
 		},
 	})
@@ -303,7 +286,6 @@ func TestAccDavinciFlow_ComplexObjectsInSettings(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_davinci_flow.%s", resourceName)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -316,9 +298,7 @@ func TestAccDavinciFlow_ComplexObjectsInSettings(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: davinciFlow_ComplexObjectsInSettingsHCL(t, resourceName, false),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1DVResourceIDRegexpFullString),
-				),
+				Check:  davinciFlow_CheckComputedValuesFullMinimal(resourceName),
 			},
 		},
 	})
@@ -336,23 +316,17 @@ func testAccDavinciFlow_VariableRefs(t *testing.T, withBootstrap bool) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_davinci_flow.%s", resourceName)
 
 	fullWithVarsStepHcl := davinciFlow_VariableRefsHCL(t, resourceName, withBootstrap)
 	fullWithVarsStep := resource.TestStep{
 		Config: fullWithVarsStepHcl,
-		Check: resource.ComposeTestCheckFunc(
-			//TODO expand checks for all these
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1DVResourceIDRegexpFullString),
-		),
+		Check:  davinciFlow_CheckComputedValuesFullBasicWithVariableRefs(resourceName),
 	}
 
 	minimalNoDefinedVarsStepHcl := davinciFlow_FullWithMappingIDsHCL(t, resourceName, withBootstrap)
 	minimalNoDefinedVarsStep := resource.TestStep{
 		Config: minimalNoDefinedVarsStepHcl,
-		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1DVResourceIDRegexpFullString),
-		),
+		Check:  davinciFlow_CheckComputedValuesFullBasic(resourceName),
 	}
 
 	resource.Test(t, resource.TestCase{
@@ -376,9 +350,7 @@ func testAccDavinciFlow_VariableRefs(t *testing.T, withBootstrap bool) {
 			fullWithVarsStep,
 			{
 				Config: davinciFlow_VariableRefsHCL(t, resourceName, withBootstrap),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1DVResourceIDRegexpFullString),
-				),
+				Check:  davinciFlow_CheckComputedValuesFullBasicWithVariableRefs(resourceName),
 			},
 		},
 	})
@@ -465,7 +437,6 @@ resource "pingone_davinci_flow" "%[2]s" {
 
   graph_data = {
     elements = {
-      edges = []
       nodes = [{
         data = {
           id              = "8bnj41592a"
@@ -524,13 +495,6 @@ resource "pingone_davinci_flow" "%[2]s" {
     renderer = jsonencode({
       "name" : "null"
     })
-  }
-
-  settings = {
-    csp                              = "worker-src 'self' blob:; script-src 'self' https://cdn.jsdelivr.net https://code.jquery.com https://devsdk.singularkey.com http://cdnjs.cloudflare.com 'unsafe-inline' 'unsafe-eval';"
-    intermediate_loading_screen_css  = ""
-    intermediate_loading_screen_html = ""
-    log_level                        = 2
   }
 
   output_schema = {
@@ -723,13 +687,6 @@ resource "pingone_davinci_flow" "%[3]s" {
     })
   }
 
-  settings = {
-    csp                              = "worker-src 'self' blob:; script-src 'self' https://cdn.jsdelivr.net https://code.jquery.com https://devsdk.singularkey.com http://cdnjs.cloudflare.com 'unsafe-inline' 'unsafe-eval';"
-    intermediate_loading_screen_css  = ""
-    intermediate_loading_screen_html = ""
-    log_level                        = 2
-  }
-
   output_schema = {
     output = jsonencode({
       "type" : "object",
@@ -753,7 +710,13 @@ func davinciFlow_CheckComputedValuesMinimal(resourceName string) resource.TestCh
 			"id": "pingOneSSOConnector",
 		}),
 		resource.TestCheckResourceAttrSet(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "current_version"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "edges.#", "0"),
 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "enabled", "true"),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.elements.nodes.*", map[string]string{
+			"data.connector_id": "pingOneSSOConnector",
+			"data.name":         "",
+			"data.id":           "8bnj41592a",
+		}),
 		resource.TestMatchResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "id", verify.P1DVResourceIDRegexp),
 		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "input_schema.*", map[string]string{
 			"description":            "A string that specifies an identifier to pre-fill the username field of a sign-on screen.",
@@ -811,11 +774,12 @@ func davinciFlow_CheckComputedValuesMinimal(resourceName string) resource.TestCh
 			"property_name":          "relayState",
 			"required":               "true",
 		}),
+		resource.TestCheckNoResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "published_version"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.log_level", "4"),
 	)
 }
 
 // Validate any computed values when applying complete HCL
-// TODO add any remaining computed attributes here and above
 func davinciFlow_CheckComputedValuesComplete(resourceName string) resource.TestCheckFunc {
 	return resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "connectors.#", "7"),
@@ -843,6 +807,232 @@ func davinciFlow_CheckComputedValuesComplete(resourceName string) resource.TestC
 		resource.TestCheckResourceAttrSet(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "current_version"),
 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "enabled", "true"),
 		resource.TestMatchResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "id", verify.P1DVResourceIDRegexp),
+		resource.TestCheckNoResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "published_version"),
+	)
+}
+
+func davinciFlow_CheckComputedValuesFullMinimal(resourceName string) resource.TestCheckFunc {
+	return resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "connectors.#", "1"),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "connectors.*", map[string]string{
+			"id": "errorConnector",
+		}),
+		resource.TestCheckResourceAttrSet(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "current_version"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "enabled", "true"),
+		resource.TestMatchResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "id", verify.P1DVResourceIDRegexp),
+		resource.TestCheckNoResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "input_schema"),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.elements.nodes.*", map[string]string{
+			"data.connector_id": "errorConnector",
+			"data.name":         "",
+			"data.id":           "2pzouq7el7",
+		}),
+		resource.TestCheckNoResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "published_version"),
+	)
+}
+
+func davinciFlow_CheckComputedValuesFullMinimalAddedNode(resourceName string) resource.TestCheckFunc {
+	return resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "connectors.#", "1"),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "connectors.*", map[string]string{
+			"id": "errorConnector",
+		}),
+		resource.TestCheckResourceAttrSet(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "current_version"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "enabled", "true"),
+		resource.TestMatchResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "id", verify.P1DVResourceIDRegexp),
+		resource.TestCheckNoResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "input_schema"),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.elements.nodes.*", map[string]string{
+			"data.connector_id": "errorConnector",
+			"data.name":         "",
+			"data.id":           "2pzouq7el7",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.elements.nodes.*", map[string]string{
+			"data.connector_id": "errorConnector",
+			"data.name":         "",
+			"data.id":           "123456",
+		}),
+		resource.TestCheckNoResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "published_version"),
+	)
+}
+
+func davinciFlow_CheckComputedValuesFullBasic(resourceName string) resource.TestCheckFunc {
+	return resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "connectors.#", "5"),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "connectors.*", map[string]string{
+			"id": "errorConnector",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "connectors.*", map[string]string{
+			"id": "flowConnector",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "connectors.*", map[string]string{
+			"id": "functionsConnector",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "connectors.*", map[string]string{
+			"id": "httpConnector",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "connectors.*", map[string]string{
+			"id": "variablesConnector",
+		}),
+		resource.TestCheckResourceAttrSet(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "current_version"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "enabled", "true"),
+		resource.TestMatchResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "id", verify.P1DVResourceIDRegexp),
+		resource.TestCheckNoResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "input_schema"),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.elements.nodes.*", map[string]string{
+			"data.connector_id": "functionsConnector",
+			"data.name":         fmt.Sprintf("%s-functions", resourceName),
+			"data.id":           "nx0o1b2cmw",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.elements.nodes.*", map[string]string{
+			"data.connector_id": "httpConnector",
+			"data.name":         fmt.Sprintf("%s-http", resourceName),
+			"data.id":           "ikt13crnhy",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.elements.nodes.*", map[string]string{
+			"data.connector_id": "errorConnector",
+			"data.name":         "",
+			"data.id":           "vsp1ewtr9m",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.elements.nodes.*", map[string]string{
+			"data.connector_id": "httpConnector",
+			"data.name":         fmt.Sprintf("%s-http", resourceName),
+			"data.id":           "1u2m5vzr49",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.elements.nodes.*", map[string]string{
+			"data.connector_id": "variablesConnector",
+			"data.name":         fmt.Sprintf("%s-variables", resourceName),
+			"data.id":           "3zvjdgdljx",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.elements.nodes.*", map[string]string{
+			"data.connector_id": "flowConnector",
+			"data.name":         fmt.Sprintf("%s-flow", resourceName),
+			"data.id":           "kq5ybvwvro",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.elements.nodes.*", map[string]string{
+			"data.connector_id": "flowConnector",
+			"data.name":         fmt.Sprintf("%s-flow", resourceName),
+			"data.id":           "xb74p6rkd8",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.elements.nodes.*", map[string]string{
+			"data.name": "",
+			"data.id":   "8fvg7tfr8j",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.elements.nodes.*", map[string]string{
+			"data.name": "",
+			"data.id":   "bbemfztdyk",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.elements.nodes.*", map[string]string{
+			"data.name": "",
+			"data.id":   "cdcw8k7dnx",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.elements.nodes.*", map[string]string{
+			"data.name": "",
+			"data.id":   "j74pmg6577",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.elements.nodes.*", map[string]string{
+			"data.name": "",
+			"data.id":   "pensvkew7y",
+		}),
+		resource.TestCheckNoResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "published_version"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.log_level", "4"),
+	)
+}
+
+func davinciFlow_CheckComputedValuesFullBasicWithVariableRefs(resourceName string) resource.TestCheckFunc {
+	return resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "connectors.#", "5"),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "connectors.*", map[string]string{
+			"id": "errorConnector",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "connectors.*", map[string]string{
+			"id": "flowConnector",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "connectors.*", map[string]string{
+			"id": "functionsConnector",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "connectors.*", map[string]string{
+			"id": "httpConnector",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "connectors.*", map[string]string{
+			"id": "variablesConnector",
+		}),
+		resource.TestCheckResourceAttrSet(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "current_version"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "enabled", "true"),
+		resource.TestMatchResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "id", verify.P1DVResourceIDRegexp),
+		resource.TestCheckNoResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "input_schema"),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.elements.nodes.*", map[string]string{
+			"data.connector_id": "functionsConnector",
+			"data.name":         fmt.Sprintf("%s-functions", resourceName),
+			"data.id":           "nx0o1b2cmw",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.elements.nodes.*", map[string]string{
+			"data.connector_id": "httpConnector",
+			"data.name":         fmt.Sprintf("%s-http", resourceName),
+			"data.id":           "ikt13crnhy",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.elements.nodes.*", map[string]string{
+			"data.connector_id": "errorConnector",
+			"data.name":         fmt.Sprintf("%s-error", resourceName),
+			"data.id":           "vsp1ewtr9m",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.elements.nodes.*", map[string]string{
+			"data.connector_id": "httpConnector",
+			"data.name":         fmt.Sprintf("%s-http", resourceName),
+			"data.id":           "1u2m5vzr49",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.elements.nodes.*", map[string]string{
+			"data.connector_id": "variablesConnector",
+			"data.name":         fmt.Sprintf("%s-variables", resourceName),
+			"data.id":           "3zvjdgdljx",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.elements.nodes.*", map[string]string{
+			"data.connector_id": "flowConnector",
+			"data.name":         fmt.Sprintf("%s-flow", resourceName),
+			"data.id":           "kq5ybvwvro",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.elements.nodes.*", map[string]string{
+			"data.connector_id": "flowConnector",
+			"data.name":         fmt.Sprintf("%s-flow", resourceName),
+			"data.id":           "xb74p6rkd8",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.elements.nodes.*", map[string]string{
+			"data.name": "",
+			"data.id":   "8fvg7tfr8j",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.elements.nodes.*", map[string]string{
+			"data.name": "",
+			"data.id":   "bbemfztdyk",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.elements.nodes.*", map[string]string{
+			"data.name": "",
+			"data.id":   "cdcw8k7dnx",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.elements.nodes.*", map[string]string{
+			"data.name": "",
+			"data.id":   "j74pmg6577",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.elements.nodes.*", map[string]string{
+			"data.name": "",
+			"data.id":   "pensvkew7y",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.elements.nodes.*", map[string]string{
+			"data.connector_id": "variablesConnector",
+			"data.name":         fmt.Sprintf("%s-variables", resourceName),
+			"data.id":           "0cj7n971ix",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.elements.nodes.*", map[string]string{
+			"data.name": "",
+			"data.id":   "esg7oyahen",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.elements.nodes.*", map[string]string{
+			"data.connector_id": "variablesConnector",
+			"data.name":         fmt.Sprintf("%s-variables", resourceName),
+			"data.id":           "j3j8fmgc9q",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.elements.nodes.*", map[string]string{
+			"data.name": "",
+			"data.id":   "1uu35lv024",
+		}),
+		resource.TestCheckNoResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "published_version"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.log_level", "4"),
 	)
 }
 
