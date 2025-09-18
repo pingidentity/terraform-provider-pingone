@@ -331,6 +331,22 @@ resource "pingone_davinci_flow" "%[2]s-subflow2" {
       "name": "null"
     })
   }
+
+  trigger = {
+    type = "AUTHENTICATION"
+    configuration = {
+      mfa = {
+        enabled = true
+        time = 5
+        time_format = "hour"
+      }
+      pwd = {
+        enabled = false
+        time = 3
+        time_format = "day"
+      }
+    }
+  }
 }
 
 resource "pingone_davinci_flow" "%[2]s" {

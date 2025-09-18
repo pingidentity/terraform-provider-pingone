@@ -672,30 +672,36 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 							"mfa": schema.SingleNestedAttribute{
 								Attributes: map[string]schema.Attribute{
 									"enabled": schema.BoolAttribute{
-										Computed: true,
+										Optional: true,
 									},
 									"time": schema.Float32Attribute{
-										Computed: true,
+										Optional: true,
 									},
 									"time_format": schema.StringAttribute{
-										Computed: true,
+										Optional: true,
+										Validators: []validator.String{
+											stringvalidator.LengthBetween(0, 50),
+										},
 									},
 								},
-								Computed: true,
+								Optional: true,
 							},
 							"pwd": schema.SingleNestedAttribute{
 								Attributes: map[string]schema.Attribute{
 									"enabled": schema.BoolAttribute{
-										Computed: true,
+										Optional: true,
 									},
 									"time": schema.Float32Attribute{
-										Computed: true,
+										Optional: true,
 									},
 									"time_format": schema.StringAttribute{
-										Computed: true,
+										Optional: true,
+										Validators: []validator.String{
+											stringvalidator.LengthBetween(0, 50),
+										},
 									},
 								},
-								Computed: true,
+								Optional: true,
 							},
 						},
 						Optional: true,
@@ -975,6 +981,27 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 	if !model.Trigger.IsNull() && !model.Trigger.IsUnknown() {
 		triggerValue := &pingone.DaVinciFlowCreateRequestTrigger{}
 		triggerAttrs := model.Trigger.Attributes()
+		if !triggerAttrs["configuration"].IsNull() && !triggerAttrs["configuration"].IsUnknown() {
+			triggerConfigurationValue := &pingone.DaVinciFlowCreateRequestTriggerConfiguration{}
+			triggerConfigurationAttrs := triggerAttrs["configuration"].(types.Object).Attributes()
+			if !triggerConfigurationAttrs["mfa"].IsNull() && !triggerConfigurationAttrs["mfa"].IsUnknown() {
+				triggerConfigurationMfaValue := &pingone.DaVinciFlowCreateRequestTriggerConfigurationMFA{}
+				triggerConfigurationMfaAttrs := triggerConfigurationAttrs["mfa"].(types.Object).Attributes()
+				triggerConfigurationMfaValue.Enabled = triggerConfigurationMfaAttrs["enabled"].(types.Bool).ValueBoolPointer()
+				triggerConfigurationMfaValue.Time = triggerConfigurationMfaAttrs["time"].(types.Float32).ValueFloat32Pointer()
+				triggerConfigurationMfaValue.TimeFormat = triggerConfigurationMfaAttrs["time_format"].(types.String).ValueStringPointer()
+				triggerConfigurationValue.Mfa = triggerConfigurationMfaValue
+			}
+			if !triggerConfigurationAttrs["pwd"].IsNull() && !triggerConfigurationAttrs["pwd"].IsUnknown() {
+				triggerConfigurationPwdValue := &pingone.DaVinciFlowCreateRequestTriggerConfigurationPassword{}
+				triggerConfigurationPwdAttrs := triggerConfigurationAttrs["pwd"].(types.Object).Attributes()
+				triggerConfigurationPwdValue.Enabled = triggerConfigurationPwdAttrs["enabled"].(types.Bool).ValueBoolPointer()
+				triggerConfigurationPwdValue.Time = triggerConfigurationPwdAttrs["time"].(types.Float32).ValueFloat32Pointer()
+				triggerConfigurationPwdValue.TimeFormat = triggerConfigurationPwdAttrs["time_format"].(types.String).ValueStringPointer()
+				triggerConfigurationValue.Pwd = triggerConfigurationPwdValue
+			}
+			triggerValue.Configuration = triggerConfigurationValue
+		}
 		triggerTypeValue, err := pingone.NewDaVinciFlowCreateRequestTriggerTypeFromValue(triggerAttrs["type"].(types.String).ValueString())
 		if err != nil {
 			respDiags.AddAttributeError(
@@ -1250,6 +1277,27 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 	if !model.Trigger.IsNull() && !model.Trigger.IsUnknown() {
 		triggerValue := &pingone.DaVinciFlowReplaceRequestTrigger{}
 		triggerAttrs := model.Trigger.Attributes()
+		if !triggerAttrs["configuration"].IsNull() && !triggerAttrs["configuration"].IsUnknown() {
+			triggerConfigurationValue := &pingone.DaVinciFlowReplaceRequestTriggerConfiguration{}
+			triggerConfigurationAttrs := triggerAttrs["configuration"].(types.Object).Attributes()
+			if !triggerConfigurationAttrs["mfa"].IsNull() && !triggerConfigurationAttrs["mfa"].IsUnknown() {
+				triggerConfigurationMfaValue := &pingone.DaVinciFlowReplaceRequestTriggerConfigurationMFA{}
+				triggerConfigurationMfaAttrs := triggerConfigurationAttrs["mfa"].(types.Object).Attributes()
+				triggerConfigurationMfaValue.Enabled = triggerConfigurationMfaAttrs["enabled"].(types.Bool).ValueBoolPointer()
+				triggerConfigurationMfaValue.Time = triggerConfigurationMfaAttrs["time"].(types.Float32).ValueFloat32Pointer()
+				triggerConfigurationMfaValue.TimeFormat = triggerConfigurationMfaAttrs["time_format"].(types.String).ValueStringPointer()
+				triggerConfigurationValue.Mfa = triggerConfigurationMfaValue
+			}
+			if !triggerConfigurationAttrs["pwd"].IsNull() && !triggerConfigurationAttrs["pwd"].IsUnknown() {
+				triggerConfigurationPwdValue := &pingone.DaVinciFlowReplaceRequestTriggerConfigurationPassword{}
+				triggerConfigurationPwdAttrs := triggerConfigurationAttrs["pwd"].(types.Object).Attributes()
+				triggerConfigurationPwdValue.Enabled = triggerConfigurationPwdAttrs["enabled"].(types.Bool).ValueBoolPointer()
+				triggerConfigurationPwdValue.Time = triggerConfigurationPwdAttrs["time"].(types.Float32).ValueFloat32Pointer()
+				triggerConfigurationPwdValue.TimeFormat = triggerConfigurationPwdAttrs["time_format"].(types.String).ValueStringPointer()
+				triggerConfigurationValue.Pwd = triggerConfigurationPwdValue
+			}
+			triggerValue.Configuration = triggerConfigurationValue
+		}
 		triggerTypeValue, err := pingone.NewDaVinciFlowReplaceRequestTriggerTypeFromValue(triggerAttrs["type"].(types.String).ValueString())
 		if err != nil {
 			respDiags.AddAttributeError(
