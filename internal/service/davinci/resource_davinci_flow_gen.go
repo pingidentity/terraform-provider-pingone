@@ -317,6 +317,7 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 												"properties": schema.StringAttribute{
 													CustomType: jsontypes.NormalizedType{},
 													Optional:   true,
+													Sensitive:  true,
 												},
 												"status": schema.StringAttribute{
 													Optional: true,
