@@ -1,5 +1,7 @@
 // Copyright © 2025 Ping Identity Corporation
 
+// Package base provides test sweeping functionality for cleaning up PingOne base service resources during testing.
+// This file contains sweep functions that clean up test environments and related resources.
 package base
 
 import (
@@ -14,6 +16,9 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/sweep"
 )
 
+// init registers the environment sweeper for test cleanup.
+// The sweeper is configured with dependencies on group and population sweepers
+// to ensure proper cleanup order during test sweeping operations.
 func init() {
 	resource.AddTestSweepers("pingone_environment", &resource.Sweeper{
 		Name: "pingone_environment",
@@ -25,6 +30,11 @@ func init() {
 	})
 }
 
+// sweepEnvironments cleans up test environments created during testing.
+// It deletes all environments with names matching the test environment prefix pattern.
+// For production environments, it marks them for soft delete instead of immediate deletion.
+// The regionString parameter specifies the region to clean up, though it's not currently used in the implementation.
+// This function is called by the Terraform testing framework during test cleanup.
 func sweepEnvironments(regionString string) error {
 
 	var ctx = context.Background()

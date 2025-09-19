@@ -1,5 +1,7 @@
 // Copyright © 2025 Ping Identity Corporation
 
+// Package client provides client configuration and initialization functions for the PingOne Terraform provider.
+// This package contains the core client configuration structures and methods for connecting to the PingOne platform API.
 package client
 
 import (
@@ -9,11 +11,20 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone"
 )
 
+// Client represents a configured PingOne API client with additional global options.
+// This structure wraps the PingOne SDK client and provides access to provider-specific configuration.
 type Client struct {
-	API           *pingone.Client
+	// API is the initialized PingOne SDK client used for making API calls to the PingOne platform
+	API *pingone.Client
+	// GlobalOptions contains provider-wide configuration options that affect client behavior
 	GlobalOptions *GlobalOptions
 }
 
+// APIClient creates and configures a new PingOne API client using the provided configuration.
+// It returns a configured Client instance that can be used to interact with the PingOne platform.
+// The version parameter is used to construct the user agent string for API requests.
+// The context parameter is required for client initialization and authentication flows.
+// Returns an error if client configuration or initialization fails.
 func (c *Config) APIClient(ctx context.Context, version string) (*Client, error) {
 
 	userAgent := fmt.Sprintf("terraform-provider-pingone/%s", version)

@@ -1,11 +1,17 @@
 // Copyright © 2025 Ping Identity Corporation
 
+// Package helpers provides utility functions and default configurations for PingOne Risk service resources.
+// This package contains bootstrap data and helper functions for risk predictors and related configurations.
 package helpers
 
 import (
 	"github.com/patrickcping/pingone-go-sdk-v2/risk"
 )
 
+// BootstrapPredictorValues contains a map of default risk predictor configurations.
+// This variable provides pre-configured risk predictors that can be used as bootstrap data
+// when setting up new PingOne Risk environments. Each predictor is mapped by its compact name
+// for easy lookup and initialization of risk predictor resources.
 var (
 	BootstrapPredictorValues = map[string]risk.RiskPredictor{
 		defaultUserRiskBehavior().RiskPredictorUserRiskBehavior.CompactName:       defaultUserRiskBehavior(),
@@ -21,6 +27,9 @@ var (
 	}
 )
 
+// defaultUserRiskBehavior creates a default user risk behavior predictor configuration.
+// This function returns a RiskPredictor configured for detecting login anomalies based on user behavior patterns.
+// The predictor uses the LOGIN_ANOMALY_STATISTIC prediction model with a default weight of 5 and score of 50.
 func defaultUserRiskBehavior() risk.RiskPredictor {
 
 	defaultWeight := 5
@@ -43,6 +52,9 @@ func defaultUserRiskBehavior() risk.RiskPredictor {
 	}
 }
 
+// defaultUserBasedRiskBehavior creates a default user-based risk behavior predictor configuration.
+// This function returns a RiskPredictor configured for points-based risk assessment of user behavior.
+// The predictor uses the POINTS prediction model with a default weight of 5 and score of 75.
 func defaultUserBasedRiskBehavior() risk.RiskPredictor {
 
 	defaultWeight := 5
@@ -65,6 +77,9 @@ func defaultUserBasedRiskBehavior() risk.RiskPredictor {
 	}
 }
 
+// defaultIpVelocityByUser creates a default IP velocity predictor configuration for tracking IP addresses per user.
+// This function returns a RiskPredictor configured to detect unusual IP address usage patterns by monitoring
+// distinct IP addresses used by each user over time. Uses POISSON_WITH_MAX distribution with environment fallback strategy.
 func defaultIpVelocityByUser() risk.RiskPredictor {
 
 	everyQuantity := 1
@@ -119,6 +134,9 @@ func defaultIpVelocityByUser() risk.RiskPredictor {
 	}
 }
 
+// defaultUserVelocityByIp creates a default user velocity predictor configuration for tracking users per IP address.
+// This function returns a RiskPredictor configured to detect unusual user access patterns by monitoring
+// distinct users accessing from each IP address. Uses POISSON_WITH_MAX distribution with environment fallback strategy.
 func defaultUserVelocityByIp() risk.RiskPredictor {
 
 	everyQuantity := 1

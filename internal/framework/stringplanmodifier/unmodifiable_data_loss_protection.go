@@ -1,7 +1,10 @@
 // Copyright © 2025 Ping Identity Corporation
 
+// Package stringplanmodifier provides custom string plan modifiers for the Terraform Plugin Framework.
+// This package contains plan modifiers that handle string attribute lifecycle management,
+// including data loss protection and immutability enforcement for the PingOne provider.
+//
 // Influenced from github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier/*
-
 package stringplanmodifier
 
 import (
@@ -10,6 +13,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 )
 
+// UnmodifiableDataLossProtection creates a plan modifier that prevents changes to protect against data loss.
+// It returns a plan modifier that prevents any modifications to a string attribute once it has been set,
+// requiring manual resource replacement to change the value. This is used for critical attributes where
+// modification could result in data loss and requires explicit user action.
+//
+// The plan modifier will generate an error for any attempted changes, directing users to use
+// Terraform's replace command option to manually replace the resource when changes are needed.
 func UnmodifiableDataLossProtection() planmodifier.String {
 	return UnmodifiableDataLossProtectionIf(
 		func(_ context.Context, _ planmodifier.StringRequest, resp *UnmodifiableDataLossProtectionIfFuncResponse) {

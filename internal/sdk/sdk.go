@@ -1,5 +1,8 @@
 // Copyright © 2025 Ping Identity Corporation
 
+// Package sdk provides SDK wrapper functions and error handling utilities for the PingOne Terraform provider.
+// This package brokers the interaction between PingOne SDK functions and the Terraform provider using the v5 protocol/SDKv2 SDK.
+// It includes functions for processing API responses, handling retries, and formatting error messages.
 package sdk
 
 import (
@@ -15,12 +18,24 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 )
 
+// SDKInterfaceFunc represents a function signature for PingOne SDK API calls.
+// This function type is used as a wrapper for all SDK method invocations to enable
+// consistent error handling and retry logic across the provider.
 type SDKInterfaceFunc func() (any, *http.Response, error)
+
+// CustomError represents a function that processes PingOne API errors and returns custom diagnostics.
+// This allows resources to override default error handling with context-specific error messages
+// or warnings based on the API error details.
 type CustomError func(model.P1Error) diag.Diagnostics
 
 var (
+	// DefaultCustomError is the default error handler that returns no custom diagnostics.
+	// This allows the standard error formatting to be used when no custom error handling is required.
 	DefaultCustomError = func(error model.P1Error) diag.Diagnostics { return nil }
 
+	// CustomErrorResourceNotFoundWarning provides custom error handling for resource not found scenarios.
+	// It converts NOT_FOUND errors to warnings instead of errors, useful for cases where resources
+	// may have been deleted outside of Terraform and should be gracefully handled.
 	CustomErrorResourceNotFoundWarning = func(error model.P1Error) diag.Diagnostics {
 		var diags diag.Diagnostics
 
@@ -37,6 +52,9 @@ var (
 		return nil
 	}
 
+	// CustomErrorInvalidValue provides custom error handling for invalid value scenarios.
+	// It extracts specific error details for INVALID_VALUE errors targeting the "name" field
+	// and formats them as user-friendly error messages.
 	CustomErrorInvalidValue = func(error model.P1Error) diag.Diagnostics {
 		var diags diag.Diagnostics
 
@@ -53,11 +71,25 @@ var (
 	}
 )
 
+// ParseResponse processes the result of a PingOne SDK API call with standard error handling and retry logic.
+// It returns the API response data and any diagnostics encountered during processing.
+// The f parameter is the SDK function to execute, which should return the API response data, HTTP response, and any error.
+// The sdkMethod parameter is used for logging and error identification purposes.
+// The customError parameter allows overriding default error handling with resource-specific error processing.
+// The customRetryConditions parameter defines when API calls should be retried based on response conditions.
+// This function uses a default timeout of 10 minutes for retry operations.
 func ParseResponse(ctx context.Context, f SDKInterfaceFunc, sdkMethod string, customError CustomError, customRetryConditions Retryable) (interface{}, diag.Diagnostics) {
 	defaultTimeout := 10
 	return ParseResponseWithCustomTimeout(ctx, f, sdkMethod, customError, customRetryConditions, time.Duration(defaultTimeout)*time.Minute)
 }
 
+// ParseResponseWithCustomTimeout processes the result of a PingOne SDK API call with custom timeout settings.
+// It returns the API response data and any diagnostics encountered during processing.
+// The f parameter is the SDK function to execute, which should return the API response data, HTTP response, and any error.
+// The sdkMethod parameter is used for logging and error identification purposes.
+// The customError parameter allows overriding default error handling with resource-specific error processing.
+// The customRetryConditions parameter defines when API calls should be retried based on response conditions.
+// The timeout parameter specifies the maximum duration to wait for successful API completion including retries.
 func ParseResponseWithCustomTimeout(ctx context.Context, f SDKInterfaceFunc, sdkMethod string, customError CustomError, customRetryConditions Retryable, timeout time.Duration) (interface{}, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -136,6 +168,11 @@ func ParseResponseWithCustomTimeout(ctx context.Context, f SDKInterfaceFunc, sdk
 
 }
 
+// FormatPingOneError creates formatted error summary and detail messages from a PingOne API error.
+// It returns both a summary text suitable for brief error display and detailed text with comprehensive error information.
+// The sdkMethod parameter identifies the API method that generated the error for context.
+// The v parameter contains the PingOne error details including error code, message, and nested error information.
+// The formatted output includes error ID, code, message, and detailed breakdowns of any nested error constraints or validation rules.
 func FormatPingOneError(sdkMethod string, v model.P1Error) (summaryText, detailText string) {
 	summaryText = fmt.Sprintf("Error when calling `%s`: %v", sdkMethod, v.GetMessage())
 	detailText = fmt.Sprintf("PingOne Error Details:\nID:\t\t%s\nCode:\t\t%s\nMessage:\t%s", v.GetId(), v.GetCode(), v.GetMessage())

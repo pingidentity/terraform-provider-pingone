@@ -9,11 +9,13 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/schemavalidator"
 )
 
-// IsRequiredIfMatchesPathValue validates if the provided string value equals
-// the value at the provided path expression(s).  If matched, the current arguemnt is required.
+// IsRequiredIfMatchesPathValue creates a validator that requires the current attribute when another attribute matches a specific value.
+// It returns a validator that ensures the current string attribute is not null or empty
+// when any of the specified path attributes equal the target value.
 //
-// If a list of expressions is provided, all expressions are checked until a match is found,
-// or the list of expressions is exhausted.
+// The targetValue parameter specifies the value that the path attributes are checked against.
+// The expressions parameter defines the paths to attributes that should be checked for the target value.
+// If any expression matches the target value, the current attribute becomes required.
 func IsRequiredIfMatchesPathValue(targetValue basetypes.StringValue, expressions ...path.Expression) validator.String {
 	return schemavalidator.IsRequiredIfMatchesPathValueValidator{
 		TargetValue: targetValue,
