@@ -40,7 +40,6 @@ func TestAccRiskPolicy_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
 			acctest.PreCheckNoBeta(t)
 
 			p1Client = acctest.PreCheckTestClient(ctx, t)
@@ -94,7 +93,6 @@ func TestAccRiskPolicy_NewEnv(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
 			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -143,7 +141,7 @@ func TestAccRiskPolicy_Full(t *testing.T) {
 		// PreCheck: func() {
 		//  acctest.PreCheckNoTestAccFlaky(t)
 		// 	acctest.PreCheckClient(t)
-		// 	acctest.PreCheckNoFeatureFlag(t)
+		// 	acctest.PreCheckNoBeta(t)
 		//	acctest.PreCheckNoBeta(t)
 		// },
 		PreCheck:                 func() { t.Skipf("PND-5900") },
@@ -235,7 +233,7 @@ func TestAccRiskPolicy_Scores(t *testing.T) {
 		// PreCheck: func() {
 		//  acctest.PreCheckNoTestAccFlaky(t)
 		// 	acctest.PreCheckClient(t)
-		// 	acctest.PreCheckNoFeatureFlag(t)
+		// 	acctest.PreCheckNoBeta(t)
 		//	acctest.PreCheckNoBeta(t)
 		// },
 		PreCheck:                 func() { t.Skipf("PND-5900") },
@@ -356,7 +354,7 @@ func TestAccRiskPolicy_Weights(t *testing.T) {
 		// PreCheck: func() {
 		//	acctest.PreCheckNoTestAccFlaky(t)
 		// 	acctest.PreCheckClient(t)
-		// 	acctest.PreCheckNoFeatureFlag(t)
+		// 	acctest.PreCheckNoBeta(t)
 		//	acctest.PreCheckNoBeta(t)
 		// },
 		PreCheck:                 func() { t.Skipf("PND-5900") },
@@ -477,7 +475,7 @@ func TestAccRiskPolicy_ChangeType(t *testing.T) {
 		// PreCheck: func() {
 		//	acctest.PreCheckNoTestAccFlaky(t)
 		// 	acctest.PreCheckClient(t)
-		// 	acctest.PreCheckNoFeatureFlag(t)
+		// 	acctest.PreCheckNoBeta(t)
 		//	acctest.PreCheckNoBeta(t)
 		// },
 		PreCheck:                 func() { t.Skipf("PND-5900") },
@@ -563,7 +561,7 @@ func TestAccRiskPolicy_PolicyOverrides(t *testing.T) {
 		// PreCheck: func() {
 		//	acctest.PreCheckNoTestAccFlaky(t)
 		// 	acctest.PreCheckClient(t)
-		// 	acctest.PreCheckNoFeatureFlag(t)
+		// 	acctest.PreCheckNoBeta(t)
 		//	acctest.PreCheckNoBeta(t)
 		// },
 		PreCheck:                 func() { t.Skipf("PND-5900") },
@@ -634,7 +632,6 @@ func TestAccRiskPolicy_BadParameters(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
 			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,

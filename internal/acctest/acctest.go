@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"slices"
 	"strconv"
 	"testing"
 
@@ -76,12 +77,6 @@ type MinMaxChecks struct {
 	Full    resource.TestCheckFunc
 }
 
-type EnumFeatureFlag string
-
-const (
-	ENUMFEATUREFLAG_DAVINCI EnumFeatureFlag = "DAVINCI"
-)
-
 func PreCheckClient(t *testing.T) {
 	if v := os.Getenv("PINGONE_CLIENT_ID"); v == "" {
 		t.Fatal("PINGONE_CLIENT_ID is missing and must be set")
@@ -109,16 +104,6 @@ func PreCheckNoBeta(t *testing.T) {
 func PreCheckBeta(t *testing.T) {
 	if v := os.Getenv("TESTACC_BETA"); v != "true" {
 		t.Skip("Skipping test because TESTACC_BETA is not set to true")
-	}
-}
-
-func PreCheckNoFeatureFlag(t *testing.T) {
-	PreCheckFeatureFlag(t, "")
-}
-
-func PreCheckFeatureFlag(t *testing.T, flag EnumFeatureFlag) {
-	if v := os.Getenv("FEATURE_FLAG"); v != string(flag) {
-		t.Skipf("Skipping feature flag test.  Flag required: \"%s\"", string(flag))
 	}
 }
 
@@ -165,6 +150,12 @@ func PreCheckDomainVerification(t *testing.T) {
 
 	if v := os.Getenv("PINGONE_VERIFIED_EMAIL_DOMAIN"); v == "" {
 		t.Fatal("PINGONE_VERIFIED_EMAIL_DOMAIN is missing and must be set")
+	}
+}
+
+func PreCheckSupportsRegion(t *testing.T, supportedRegionCodes []string) {
+	if v := os.Getenv("PINGONE_REGION_CODE"); !slices.Contains(supportedRegionCodes, v) {
+		t.Skipf("Test not supported in the %s region", v)
 	}
 }
 
@@ -360,14 +351,18 @@ func MinimalSandboxEnvironmentNoPopulation(resourceName, licenseID string) strin
 
 func MinimalEnvironmentNoPopulation(resourceName, licenseID string, environmentType management.EnumEnvironmentType) string {
 	return fmt.Sprintf(`
-	resource "pingone_environment" "%[1]s" {
-		name = "%[1]s"
-		license_id = "%[2]s"
-		type = "%[3]s"
+resource "pingone_environment" "%[1]s" {
+	name = "%[1]s"
+	license_id = "%[2]s"
+	type = "%[3]s"
 
 	services = [
 		{
 			type = "SSO"
+		},
+		{
+			type = "DaVinci"
+			tags = ["DAVINCI_MINIMAL"]
 		},
 		{
 			type = "MFA"
@@ -425,13 +420,6 @@ func AgreementSandboxEnvironment() string {
 	return `
 		data "pingone_environment" "agreement_test" {
 			name = "tf-testacc-static-agreements-test"
-		}`
-}
-
-func DaVinciFlowPolicySandboxEnvironment() string {
-	return `
-		data "pingone_environment" "davinci_test" {
-			name = "tf-testacc-static-davinci-test"
 		}`
 }
 

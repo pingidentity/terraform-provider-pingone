@@ -40,7 +40,7 @@ testacc: build
 
 sweep: build
 	@echo "WARNING: This will destroy infrastructure. Use only in development accounts."
-	go test $(SWEEP_DIR) -v -sweep=all $(SWEEPARGS) -timeout 10m
+	go test $(BUILD_TAGS) $(SWEEP_DIR) -v -sweep=all $(SWEEPARGS) -timeout 10m
 
 vet:
 	@echo "==> Running go vet..."
