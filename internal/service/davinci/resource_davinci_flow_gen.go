@@ -174,7 +174,6 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 				Validators: []validator.String{
 					stringvalidator.LengthAtMost(1024),
 					stringvalidator.LengthAtLeast(1),
-					// stringvalidator.RegexMatches(regexp.MustCompile("^\\s*[\\p{L}\\p{M}\\p{N}\\p{So}/.'_ -]*(?!.*((<)|(\\$\\{)))"), ""),
 				},
 			},
 			"enabled": schema.BoolAttribute{
@@ -492,7 +491,6 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 				Required: true,
 				Validators: []validator.String{
 					stringvalidator.LengthBetween(1, 256),
-					// stringvalidator.RegexMatches(regexp.MustCompile("^\\s*([\\p{L}\\p{M}\\p{N}\\p{So}/.'_-]).?(?!.*((<)|(\\$\\{)))"), ""),
 				},
 			},
 			"output_schema": schema.SingleNestedAttribute{

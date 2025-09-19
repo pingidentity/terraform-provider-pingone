@@ -627,9 +627,8 @@ resource "pingone_davinci_flow" "%[3]s" {
       edges = []
       nodes = [{
         data = {
-          id        = "8bnj41592a"
-          node_type = "CONNECTION"
-          // connection_id will be computed
+          id              = "8bnj41592a"
+          node_type       = "CONNECTION"
           connector_id    = "pingOneSSOConnector"
           label           = "PingOne"
           status          = "configured"

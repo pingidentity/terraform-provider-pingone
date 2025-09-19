@@ -235,8 +235,8 @@ resource "pingone_davinci_flow" "%[2]s" {
       edges = []
       nodes = [{
         data = {
-          id        = "8bnj41592a"
-          node_type = "CONNECTION"
+          id              = "8bnj41592a"
+          node_type       = "CONNECTION"
           connector_id    = "pingOneSSOConnector"
           label           = "PingOne"
           status          = "configured"
@@ -357,8 +357,8 @@ resource "pingone_davinci_flow" "%[2]s-first" {
       edges = []
       nodes = [{
         data = {
-          id        = "nodefirstflow"
-          node_type = "CONNECTION"
+          id              = "nodefirstflow"
+          node_type       = "CONNECTION"
           connector_id    = "pingOneSSOConnector"
           label           = "PingOne"
           status          = "configured"
@@ -447,8 +447,8 @@ resource "pingone_davinci_flow" "%[2]s-second" {
       edges = []
       nodes = [{
         data = {
-          id        = "nodesecondflow1"
-          node_type = "CONNECTION"
+          id              = "nodesecondflow1"
+          node_type       = "CONNECTION"
           connector_id    = "pingOneSSOConnector"
           label           = "PingOne"
           status          = "configured"
@@ -481,43 +481,43 @@ resource "pingone_davinci_flow" "%[2]s-second" {
         grabbable  = true
         pannable   = false
         classes    = ""
-      },
-	  {
-        data = {
-          id        = "nodesecondflow2"
-          node_type = "CONNECTION"
-          connector_id    = "pingOneSSOConnector"
-          label           = "PingOne"
-          status          = "configured"
-          capability_name = "userLookup"
-          type            = "action"
-          properties = jsonencode({
-            "additionalUserProperties" : {
-              "value" : []
-            },
-            "username" : {
-              "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
-            },
-            "population" : {
-              "value" : "c9f3fb3f-11e9-4eb0-b4ba-9fb7789a8418"
-            },
-            "userIdentifierForFindUser" : {
-              "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
-            }
-          })
-        }
-        position = {
-          x = 420
-          y = 360
-        }
-        group      = "nodes"
-        removed    = false
-        selected   = false
-        selectable = true
-        locked     = false
-        grabbable  = true
-        pannable   = false
-        classes    = ""
+        },
+        {
+          data = {
+            id              = "nodesecondflow2"
+            node_type       = "CONNECTION"
+            connector_id    = "pingOneSSOConnector"
+            label           = "PingOne"
+            status          = "configured"
+            capability_name = "userLookup"
+            type            = "action"
+            properties = jsonencode({
+              "additionalUserProperties" : {
+                "value" : []
+              },
+              "username" : {
+                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+              },
+              "population" : {
+                "value" : "c9f3fb3f-11e9-4eb0-b4ba-9fb7789a8418"
+              },
+              "userIdentifierForFindUser" : {
+                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+              }
+            })
+          }
+          position = {
+            x = 420
+            y = 360
+          }
+          group      = "nodes"
+          removed    = false
+          selected   = false
+          selectable = true
+          locked     = false
+          grabbable  = true
+          pannable   = false
+          classes    = ""
       }]
     }
 
@@ -568,7 +568,7 @@ resource "pingone_davinci_application_flow_policy" "%[2]s" {
   da_vinci_application_id = pingone_davinci_application.%[2]s.id
   flow_distributions = [
     {
-  	  id      = pingone_davinci_flow.%[2]s-first.id
+      id = pingone_davinci_flow.%[2]s-first.id
       ip = [
         "0.0.0.0/0",
         "1.1.1.1/1",
@@ -582,19 +582,19 @@ resource "pingone_davinci_application_flow_policy" "%[2]s" {
       weight  = 45
     },
     {
-  	  id      = pingone_davinci_flow.%[2]s-second.id
+      id = pingone_davinci_flow.%[2]s-second.id
       ip = [
         "0.0.0.0/0",
         "1.1.1.1/1",
-		"2.2.2.2/2",
+        "2.2.2.2/2",
       ]
       success_nodes = [
         {
           id = "nodesecondflow1"
         },
-		{
-		  id = "nodesecondflow2"
-		}
+        {
+          id = "nodesecondflow2"
+        }
       ]
       version = 0
       weight  = 55
@@ -605,13 +605,13 @@ resource "pingone_davinci_application_flow_policy" "%[2]s" {
   trigger = {
     configuration = {
       mfa = {
-        enabled = true
-        time = 5
+        enabled     = true
+        time        = 5
         time_format = "hour"
       }
       pwd = {
-        enabled = false
-        time = 3
+        enabled     = false
+        time        = 3
         time_format = "day"
       }
     }
@@ -646,8 +646,8 @@ resource "pingone_davinci_flow" "%[2]s-first" {
       edges = []
       nodes = [{
         data = {
-          id        = "nodefirstflow"
-          node_type = "CONNECTION"
+          id              = "nodefirstflow"
+          node_type       = "CONNECTION"
           connector_id    = "pingOneSSOConnector"
           label           = "PingOne"
           status          = "configured"
@@ -736,8 +736,8 @@ resource "pingone_davinci_flow" "%[2]s-second" {
       edges = []
       nodes = [{
         data = {
-          id        = "nodesecondflow1"
-          node_type = "CONNECTION"
+          id              = "nodesecondflow1"
+          node_type       = "CONNECTION"
           connector_id    = "pingOneSSOConnector"
           label           = "PingOne"
           status          = "configured"
@@ -770,43 +770,43 @@ resource "pingone_davinci_flow" "%[2]s-second" {
         grabbable  = true
         pannable   = false
         classes    = ""
-      },
-	  {
-        data = {
-          id        = "nodesecondflow2"
-          node_type = "CONNECTION"
-          connector_id    = "pingOneSSOConnector"
-          label           = "PingOne"
-          status          = "configured"
-          capability_name = "userLookup"
-          type            = "action"
-          properties = jsonencode({
-            "additionalUserProperties" : {
-              "value" : []
-            },
-            "username" : {
-              "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
-            },
-            "population" : {
-              "value" : "c9f3fb3f-11e9-4eb0-b4ba-9fb7789a8418"
-            },
-            "userIdentifierForFindUser" : {
-              "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
-            }
-          })
-        }
-        position = {
-          x = 420
-          y = 360
-        }
-        group      = "nodes"
-        removed    = false
-        selected   = false
-        selectable = true
-        locked     = false
-        grabbable  = true
-        pannable   = false
-        classes    = ""
+        },
+        {
+          data = {
+            id              = "nodesecondflow2"
+            node_type       = "CONNECTION"
+            connector_id    = "pingOneSSOConnector"
+            label           = "PingOne"
+            status          = "configured"
+            capability_name = "userLookup"
+            type            = "action"
+            properties = jsonencode({
+              "additionalUserProperties" : {
+                "value" : []
+              },
+              "username" : {
+                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+              },
+              "population" : {
+                "value" : "c9f3fb3f-11e9-4eb0-b4ba-9fb7789a8418"
+              },
+              "userIdentifierForFindUser" : {
+                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+              }
+            })
+          }
+          position = {
+            x = 420
+            y = 360
+          }
+          group      = "nodes"
+          removed    = false
+          selected   = false
+          selectable = true
+          locked     = false
+          grabbable  = true
+          pannable   = false
+          classes    = ""
       }]
     }
 
@@ -857,16 +857,16 @@ resource "pingone_davinci_application_flow_policy" "%[2]s" {
   da_vinci_application_id = pingone_davinci_application.%[2]s.id
   flow_distributions = [
     {
-  	  id      = pingone_davinci_flow.%[2]s-second.id
+      id = pingone_davinci_flow.%[2]s-second.id
       ip = [
-		"2.2.2.2/2",
+        "2.2.2.2/2",
         "0.0.0.0/0",
         "1.1.1.1/1",
       ]
       success_nodes = [
-		{
-		  id = "nodesecondflow2"
-		},
+        {
+          id = "nodesecondflow2"
+        },
         {
           id = "nodesecondflow1"
         },
@@ -875,7 +875,7 @@ resource "pingone_davinci_application_flow_policy" "%[2]s" {
       weight  = 55
     },
     {
-  	  id      = pingone_davinci_flow.%[2]s-first.id
+      id = pingone_davinci_flow.%[2]s-first.id
       ip = [
         "1.1.1.1/1",
         "0.0.0.0/0",
@@ -894,13 +894,13 @@ resource "pingone_davinci_application_flow_policy" "%[2]s" {
   trigger = {
     configuration = {
       mfa = {
-        enabled = true
-        time = 5
+        enabled     = true
+        time        = 5
         time_format = "hour"
       }
       pwd = {
-        enabled = false
-        time = 3
+        enabled     = false
+        time        = 3
         time_format = "day"
       }
     }
@@ -934,8 +934,8 @@ resource "pingone_davinci_flow" "%[2]s" {
       edges = []
       nodes = [{
         data = {
-          id        = "8bnj41592a"
-          node_type = "CONNECTION"
+          id              = "8bnj41592a"
+          node_type       = "CONNECTION"
           connector_id    = "pingOneSSOConnector"
           label           = "PingOne"
           status          = "configured"

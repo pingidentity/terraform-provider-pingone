@@ -27,18 +27,17 @@ resource "pingone_davinci_variable" "my_awesome_region_variable" {
   }
 }
 
-#TODO update for real flow resource
 resource "pingone_davinci_flow" "my_awesome_main_flow" {
   depends_on = [
     pingone_davinci_variable.my_awesome_region_variable,
   ]
 
   environment_id = var.environment_id
+  name           = "My Awesome Main Flow"
 
-  name      = "My Awesome Main Flow"
-  flow_json = file("./path/to/example-mainflow.json")
-
-  # ... subflow_link and connection_link arguments
+  graph_data = {
+    // edges, nodes, etc.
+  }
 }
 
 resource "pingone_davinci_variable" "my_awesome_usercontext_variable" {
@@ -62,14 +61,13 @@ resource "pingone_davinci_variable" "my_awesome_usercontext_variable" {
 The following example shows the recommended usage of a variable where the variable value is dynamically set by flow execution, and should not be managed in Terraform state.
 
 ```terraform
-#TODO update with real flow resource
 resource "pingone_davinci_flow" "my_awesome_main_flow" {
   environment_id = var.environment_id
+  name           = "My Awesome Main Flow"
 
-  name      = "My Awesome Main Flow"
-  flow_json = file("./path/to/example-mainflow.json")
-
-  # ... subflow_link and connection_link arguments
+  graph_data = {
+    // edges, nodes, etc.
+  }
 }
 
 resource "pingone_davinci_variable" "my_awesome_usercontext_variable" {
@@ -93,14 +91,13 @@ resource "pingone_davinci_variable" "my_awesome_usercontext_variable" {
 The following example shows the recommended usage of a variable where the variable value is static, has a defined value and should be managed in Terraform state.
 
 ```terraform
-#TODO use real flow resource
 resource "pingone_davinci_flow" "my_awesome_main_flow" {
   environment_id = var.environment_id
+  name           = "My Awesome Main Flow"
 
-  name      = "My Awesome Main Flow"
-  flow_json = file("./path/to/example-mainflow.json")
-
-  # ... subflow_link and connection_link arguments
+  graph_data = {
+    // edges, nodes, etc.
+  }
 }
 
 resource "pingone_davinci_variable" "my_awesome_usercontext_variable" {

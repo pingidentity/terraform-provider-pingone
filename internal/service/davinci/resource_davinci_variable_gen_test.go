@@ -486,8 +486,8 @@ resource "pingone_davinci_flow" "%[2]s" {
       edges = []
       nodes = [{
         data = {
-          id        = "8bnj41592a"
-          node_type = "CONNECTION"
+          id              = "8bnj41592a"
+          node_type       = "CONNECTION"
           connector_id    = "pingOneSSOConnector"
           label           = "PingOne"
           status          = "configured"
@@ -716,8 +716,8 @@ resource "pingone_davinci_flow" "%[2]s" {
       edges = []
       nodes = [{
         data = {
-          id        = "8bnj41592a"
-          node_type = "CONNECTION"
+          id              = "8bnj41592a"
+          node_type       = "CONNECTION"
           connector_id    = "pingOneSSOConnector"
           label           = "PingOne"
           status          = "configured"
@@ -803,8 +803,8 @@ resource "pingone_davinci_variable" "%[2]s" {
   flow = {
     id = pingone_davinci_flow.%[2]s.id
   }
-  mutable        = false
-  name           = "%[2]s"
+  mutable = false
+  name    = "%[2]s"
   value = {
     string = "flow-test-value"
   }
