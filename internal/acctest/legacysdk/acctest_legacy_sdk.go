@@ -68,14 +68,18 @@ func MinimalSandboxEnvironmentNoPopulation(resourceName, licenseID string) strin
 
 func MinimalEnvironmentNoPopulation(resourceName, licenseID string, environmentType management.EnumEnvironmentType) string {
 	return fmt.Sprintf(`
-	resource "pingone_environment" "%[1]s" {
-		name = "%[1]s"
-		license_id = "%[2]s"
-		type = "%[3]s"
+resource "pingone_environment" "%[1]s" {
+	name = "%[1]s"
+	license_id = "%[2]s"
+	type = "%[3]s"
 
 	services = [
 		{
 			type = "SSO"
+		},
+		{
+			type = "DaVinci"
+			tags = ["DAVINCI_MINIMAL"]
 		},
 		{
 			type = "MFA"
