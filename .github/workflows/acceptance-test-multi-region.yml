@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod'
           cache: true
@@ -59,7 +59,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod'
           cache: true
@@ -84,7 +84,7 @@ jobs:
         region: [AP, CA, EU, NA, SG]
         # list whatever Terraform versions here you would like to support
         terraform:
-          - '1.11.*'
+          - '1.13.*'
       # If we have issues due to simultaneous tests across regions, max-parallel can be set to 1 to run sequentially
       #max-parallel: 1
 
@@ -123,7 +123,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod'
           cache: true
@@ -155,7 +155,7 @@ jobs:
         region: [AP, CA, EU, NA, SG]
         # list whatever Terraform versions here you would like to support
         terraform:
-          - '1.11.*'
+          - '1.13.*'
       # If we have issues due to simultaneous tests across regions, max-parallel can be set to 1 to run sequentially
       #max-parallel: 1
 
@@ -195,7 +195,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod'
           cache: true
@@ -250,7 +250,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod'
           cache: true
