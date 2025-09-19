@@ -4,6 +4,7 @@ package sso_test
 
 import (
 	"fmt"
+	"os"
 	"regexp"
 	"testing"
 
@@ -20,18 +21,23 @@ func TestAccFlowPolicyDataSource_ByIDFull(t *testing.T) {
 	resourceFullName := fmt.Sprintf("pingone_flow_policy.%s", resourceName)
 	dataSourceFullName := fmt.Sprintf("data.%s", resourceFullName)
 
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			t.Skip("Skipping until DaVinci capability merged")
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.FlowPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccFlowPolicyDataSourceConfig_ByIDFull(resourceName),
+				Config: testAccFlowPolicyDataSourceConfig_ByIDFull(environmentName, licenseID, resourceName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1DVResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "flow_policy_id", verify.P1DVResourceIDRegexpFullString),
@@ -56,7 +62,7 @@ func TestAccFlowPolicyDataSource_NotFound(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.FlowPolicy_CheckDestroy,
@@ -70,21 +76,26 @@ func TestAccFlowPolicyDataSource_NotFound(t *testing.T) {
 	})
 }
 
-func testAccFlowPolicyDataSourceConfig_ByIDFull(resourceName string) string {
+func testAccFlowPolicyDataSourceConfig_ByIDFull(environmentName, licenseID, resourceName string) string {
 	return fmt.Sprintf(`
-	%[1]s
+%[1]s
 
 data "pingone_flow_policies" "%[2]s" {
-  environment_id = data.pingone_environment.davinci_test.id
+  environment_id = pingone_environment.%[2]s.id
 
   scim_filter = "(trigger.type eq \"AUTHENTICATION\")"
+
+  depends_on = [
+    davinci_application_flow_policy.%[2]s-1,
+    davinci_application_flow_policy.%[2]s-2,
+  ]
 }
 
 data "pingone_flow_policy" "%[2]s" {
-  environment_id = data.pingone_environment.davinci_test.id
+  environment_id = pingone_environment.%[2]s.id
 
   flow_policy_id = data.pingone_flow_policies.%[2]s.ids[0]
-}`, acctest.DaVinciFlowPolicySandboxEnvironment(), resourceName)
+}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), resourceName)
 }
 
 func testAccFlowPolicyDataSourceConfig_NotFoundByID(resourceName string) string {
@@ -92,9 +103,9 @@ func testAccFlowPolicyDataSourceConfig_NotFoundByID(resourceName string) string 
 	%[1]s
 
 data "pingone_flow_policy" "%[2]s" {
-  environment_id = data.pingone_environment.davinci_test.id
+  environment_id = data.pingone_environment.general_test.id
 
   flow_policy_id = "07ae09dea68df5530269c242487fbaf8" // dummy ID
 }
-`, acctest.DaVinciFlowPolicySandboxEnvironment(), resourceName)
+`, acctest.GenericSandboxEnvironment(), resourceName)
 }

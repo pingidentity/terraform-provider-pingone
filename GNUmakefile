@@ -5,6 +5,15 @@ PKG_NAME=pingone
 BINARY=terraform-provider-${NAME}
 VERSION=1.12.0
 OS_ARCH=linux_amd64
+BETA?=false
+
+ifeq ($(BETA),true)
+	BUILD_TAGS=-tags=beta
+	VERSION_SUFFIX=-beta
+else
+	BUILD_TAGS=
+	VERSION_SUFFIX=
+endif
 
 default: install
 
@@ -14,24 +23,24 @@ fmtcheck:
 
 build:
 	go mod tidy
-	go build -v .
+	go build $(BUILD_TAGS) -v .
 
 install: build
-	go install -ldflags="-X main.version=$(VERSION)"
+	go install $(BUILD_TAGS) -ldflags="-X main.version=$(VERSION)$(VERSION_SUFFIX)"
 
 generate: build fmt
-	go tool tfplugindocs generate --provider-name terraform-provider-pingone
+	GOFLAGS="$(BUILD_TAGS)" go tool tfplugindocs generate --provider-name terraform-provider-pingone
 
 test: build
 	go test $(TEST_PATH) $(TESTARGS) -timeout=5m
 
 testacc: build
-	TF_ACC=1 go test $$(go list ./internal/client/...) -v $(TESTARGS) -timeout 120m
-	TF_ACC=1 go test $$(go list ./internal/service/...) -v $(TESTARGS) -timeout 120m
+	TF_ACC=1 go test $(BUILD_TAGS) $$(go list ./internal/client/...) -v $(TESTARGS) -timeout 120m
+	TF_ACC=1 go test $(BUILD_TAGS) $$(go list ./internal/service/...) -v $(TESTARGS) -timeout 120m
 
 sweep: build
 	@echo "WARNING: This will destroy infrastructure. Use only in development accounts."
-	go test $(SWEEP_DIR) -v -sweep=all $(SWEEPARGS) -timeout 10m
+	go test $(BUILD_TAGS) $(SWEEP_DIR) -v -sweep=all $(SWEEPARGS) -timeout 10m
 
 vet:
 	@echo "==> Running go vet..."
@@ -56,7 +65,7 @@ depscheck:
 	@git diff --exit-code -- go.mod go.sum || \
 		(echo; echo "Unexpected difference in go.mod/go.sum files. Run 'go mod tidy' command or revert any go.mod/go.sum changes and commit."; exit 1)
 
-lint: golangci-lint providerlint importlint tflint terrafmtcheck
+lint: golangci-lint providerlint importlint tflint terrafmtcheck betatagscheck
 
 golangci-lint:
 	@echo "==> Checking source code with golangci-lint..."
@@ -96,10 +105,14 @@ terrafmtcheck:
 		exit 1; \
 	fi
 
+betatagscheck:
+	@echo "==> Checking beta resources and data sources for correct build tags..."
+	@go run scripts/check_beta_build_tags.go
+
 fmt: terrafmt fmtcheck
 
 devcheck: build vet fmt generate docscategorycheck lint test sweep testacc
 
 devchecknotest: build vet fmt generate docscategorycheck lint
 
-.PHONY: build install generate docscategorycheck test testacc sweep vet fmtcheck depscheck lint golangci-lint importlint providerlint tflint terrafmt terrafmtcheck devcheck devchecknotest
+.PHONY: build install generate docscategorycheck test testacc sweep vet fmtcheck depscheck lint golangci-lint importlint providerlint tflint terrafmt terrafmtcheck betatagscheck devcheck devchecknotest
