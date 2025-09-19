@@ -151,11 +151,11 @@ func testAccDavinciFlow_MinimalMaximal(t *testing.T, withBootstrap bool) {
 	})
 }
 
-func TestAccDavinciFlow_Basic_Clean(t *testing.T) {
+func TestAccDavinciFlow_BasicClean(t *testing.T) {
 	testAccDavinciFlow_Basic(t, false)
 }
 
-func TestAccDavinciFlow_Basic_WithBootstrap(t *testing.T) {
+func TestAccDavinciFlow_BasicWithBootstrap(t *testing.T) {
 	testAccDavinciFlow_Basic(t, true)
 }
 
@@ -165,37 +165,37 @@ func testAccDavinciFlow_Basic(t *testing.T, withBootstrapConfig bool) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_davinci_flow.%s", resourceName)
 
-	fullStepHcl := davinciFlow_FullWithMappingIDsHCL(t, resourceName, withBootstrapConfig)
+	fullStepHcl := davinciFlow_FullBasicHCL(t, resourceName, withBootstrapConfig)
 	fullStep := resource.TestStep{
 		Config: fullStepHcl,
 		Check:  davinciFlow_CheckComputedValuesFullBasic(resourceName),
 	}
 
-	fullStepModifyNodePropsHcl := davinciFlow_FullWithMappingIDsModifyNodePropertiesHCL(t, resourceName, withBootstrapConfig)
+	fullStepModifyNodePropsHcl := davinciFlow_FullBasicModifyNodePropertiesHCL(t, resourceName, withBootstrapConfig)
 	fullStepModifyNodeProps := resource.TestStep{
 		Config: fullStepModifyNodePropsHcl,
 		Check:  davinciFlow_CheckComputedValuesFullBasic(resourceName),
 	}
 
-	minimalStepHcl := davinciFlow_MinimalWithMappingIDsHCL(t, resourceName, withBootstrapConfig)
+	minimalStepHcl := davinciFlow_FullMinimalHCL(t, resourceName, withBootstrapConfig)
 	minimalStep := resource.TestStep{
 		Config: minimalStepHcl,
 		Check:  davinciFlow_CheckComputedValuesFullMinimal(resourceName),
 	}
 
-	updateStepHcl := davinciFlow_MinimalWithMappingIDsUpdateHCL(t, resourceName, withBootstrapConfig)
+	updateStepHcl := davinciFlow_FullMinimalUpdateHCL(t, resourceName, withBootstrapConfig)
 	updateStep := resource.TestStep{
 		Config: updateStepHcl,
 		Check:  davinciFlow_CheckComputedValuesFullMinimal(resourceName),
 	}
 
-	updateNoDescriptionStepHcl := davinciFlow_MinimalWithMappingIDsNoDescriptionUpdateHCL(t, resourceName, withBootstrapConfig)
+	updateNoDescriptionStepHcl := davinciFlow_FullMinimalNoDescriptionUpdateHCL(t, resourceName, withBootstrapConfig)
 	updateNoDescriptionStep := resource.TestStep{
 		Config: updateNoDescriptionStepHcl,
 		Check:  davinciFlow_CheckComputedValuesFullMinimal(resourceName),
 	}
 
-	updateNewNodeStepHcl := davinciFlow_MinimalWithAddedNodeHCL(t, resourceName, withBootstrapConfig)
+	updateNewNodeStepHcl := davinciFlow_FullMinimalWithAddedNodeHCL(t, resourceName, withBootstrapConfig)
 	updateNewNodeStep := resource.TestStep{
 		Config: updateNewNodeStepHcl,
 		Check:  davinciFlow_CheckComputedValuesFullMinimalAddedNode(resourceName),
@@ -304,11 +304,11 @@ func TestAccDavinciFlow_ComplexObjectsInSettings(t *testing.T) {
 	})
 }
 
-func TestAccDavinciFlow_VariableRefs_Clean(t *testing.T) {
+func TestAccDavinciFlow_VariableRefsClean(t *testing.T) {
 	testAccDavinciFlow_VariableRefs(t, false)
 }
 
-func TestAccDavinciFlow_VariableRefs_WithBootstrap(t *testing.T) {
+func TestAccDavinciFlow_VariableRefsWithBootstrap(t *testing.T) {
 	testAccDavinciFlow_VariableRefs(t, true)
 }
 
@@ -323,7 +323,7 @@ func testAccDavinciFlow_VariableRefs(t *testing.T, withBootstrap bool) {
 		Check:  davinciFlow_CheckComputedValuesFullBasicWithVariableRefs(resourceName),
 	}
 
-	minimalNoDefinedVarsStepHcl := davinciFlow_FullWithMappingIDsHCL(t, resourceName, withBootstrap)
+	minimalNoDefinedVarsStepHcl := davinciFlow_FullBasicHCL(t, resourceName, withBootstrap)
 	minimalNoDefinedVarsStep := resource.TestStep{
 		Config: minimalNoDefinedVarsStepHcl,
 		Check:  davinciFlow_CheckComputedValuesFullBasic(resourceName),
@@ -530,7 +530,7 @@ func davinciFlow_DeviceManagementMainFlowReorderedHCL(t *testing.T, resourceName
 	return fmt.Sprintf(hcl, acctest.DaVinciSandboxEnvironment(withBootstrap), resourceName)
 }
 
-func davinciFlow_FullWithMappingIDsHCL(t *testing.T, resourceName string, withBootstrap bool) string {
+func davinciFlow_FullBasicHCL(t *testing.T, resourceName string, withBootstrap bool) string {
 	hcl, err := testhcl.ReadTestHcl("pingone_davinci_flow/full_basic.tf")
 	if err != nil {
 		t.Fatalf("failed to read HCL in davinciFlow_FullWithMappingIDsHCL: %v", err)
@@ -538,7 +538,7 @@ func davinciFlow_FullWithMappingIDsHCL(t *testing.T, resourceName string, withBo
 	return fmt.Sprintf(hcl, acctest.DaVinciSandboxEnvironment(withBootstrap), resourceName)
 }
 
-func davinciFlow_FullWithMappingIDsModifyNodePropertiesHCL(t *testing.T, resourceName string, withBootstrap bool) string {
+func davinciFlow_FullBasicModifyNodePropertiesHCL(t *testing.T, resourceName string, withBootstrap bool) string {
 	hcl, err := testhcl.ReadTestHcl("pingone_davinci_flow/full_basic_modify_node_properties.tf")
 	if err != nil {
 		t.Fatalf("failed to read HCL in davinciFlow_FullWithMappingIDsModifyNodePropertiesHCL: %v", err)
@@ -546,7 +546,7 @@ func davinciFlow_FullWithMappingIDsModifyNodePropertiesHCL(t *testing.T, resourc
 	return fmt.Sprintf(hcl, acctest.DaVinciSandboxEnvironment(withBootstrap), resourceName)
 }
 
-func davinciFlow_MinimalWithMappingIDsHCL(t *testing.T, resourceName string, withBootstrap bool) string {
+func davinciFlow_FullMinimalHCL(t *testing.T, resourceName string, withBootstrap bool) string {
 	descriptionHcl := `
 	description = "base description"
 	`
@@ -557,7 +557,7 @@ func davinciFlow_MinimalWithMappingIDsHCL(t *testing.T, resourceName string, wit
 	return fmt.Sprintf(hcl, acctest.DaVinciSandboxEnvironment(withBootstrap), resourceName, descriptionHcl)
 }
 
-func davinciFlow_MinimalWithMappingIDsUpdateHCL(t *testing.T, resourceName string, withBootstrap bool) string {
+func davinciFlow_FullMinimalUpdateHCL(t *testing.T, resourceName string, withBootstrap bool) string {
 	descriptionHcl := `
 	description = "updated description"
 	`
@@ -568,7 +568,7 @@ func davinciFlow_MinimalWithMappingIDsUpdateHCL(t *testing.T, resourceName strin
 	return fmt.Sprintf(hcl, acctest.DaVinciSandboxEnvironment(withBootstrap), resourceName, descriptionHcl)
 }
 
-func davinciFlow_MinimalWithMappingIDsNoDescriptionUpdateHCL(t *testing.T, resourceName string, withBootstrap bool) string {
+func davinciFlow_FullMinimalNoDescriptionUpdateHCL(t *testing.T, resourceName string, withBootstrap bool) string {
 	hcl, err := testhcl.ReadTestHcl("pingone_davinci_flow/full_minimal.tf")
 	if err != nil {
 		t.Fatalf("failed to read HCL in davinciFlow_MinimalWithMappingIDsNoDescriptionUpdateHCL: %v", err)
@@ -577,7 +577,7 @@ func davinciFlow_MinimalWithMappingIDsNoDescriptionUpdateHCL(t *testing.T, resou
 	return fmt.Sprintf(hcl, acctest.DaVinciSandboxEnvironment(withBootstrap), resourceName, "")
 }
 
-func davinciFlow_MinimalWithAddedNodeHCL(t *testing.T, resourceName string, withBootstrap bool) string {
+func davinciFlow_FullMinimalWithAddedNodeHCL(t *testing.T, resourceName string, withBootstrap bool) string {
 	descriptionHcl := `
 	description = "base description"
 	`
