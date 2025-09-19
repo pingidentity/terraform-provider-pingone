@@ -34,6 +34,7 @@ Use this process for resources and data sources that are entirely new and have n
     ```
 3.  **Register the new resource/data source** by adding its `NewXResource` or `NewXDataSource` method to the `service_beta.go` file for the relevant service.
     * **Do not** edit the `service_beta_stub.go` file.
+4.  **Add any required documentation templates** to the `betatemplates` folder. Doc templates for beta resources or data sources must be placed in a separate directory, or tfplugindocs will fail due to being unable to find the resource.
 
 You can validate that your beta tags are correctly placed by running `make betatagscheck`.
 
@@ -58,7 +59,10 @@ Publishing a beta release requires a specific sequence of steps to ensure the Te
 1.  **Create a Release Branch:** Create a new branch from `main`. The branch name must be unique and should follow the pattern `vX.X.X-beta-release`.
     * *Note: Git refs must be unique, so the branch name cannot be identical to the tag name you will create later. This is why a `-release` suffix is included.*
 
-2.  **Generate Beta Documentation:** On your new branch, run the following command to generate documentation that includes the beta-specific resources and attributes:
+2.  **Generate Beta Documentation:** 
+    On your new branch, copy any beta resource or data source documentation templates from `betatemplates` to the `templates` folder, so that they are handled by `tfplugindocs`.
+
+    Then run the following command to generate documentation that includes the beta-specific resources and attributes:
     ```shell
     make generate BETA=true
     ```
