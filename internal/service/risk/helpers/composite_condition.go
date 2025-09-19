@@ -5,7 +5,6 @@ package helpers
 import (
 	"context"
 	"encoding/json"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -136,10 +135,6 @@ func WalkAggregatedCondition(condition map[string]interface{}) map[string]interf
 				condition[evaluateCondition.mapIndex] = WalkAggregatedCondition(condition[evaluateCondition.mapIndex].(map[string]interface{}))
 			}
 		}
-	}
-
-	if v, ok := condition["equals"].(string); ok && v != "" {
-		condition["equals"] = strings.ToUpper(v[:1]) + v[1:]
 	}
 
 	return condition

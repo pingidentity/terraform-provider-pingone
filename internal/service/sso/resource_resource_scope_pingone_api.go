@@ -57,6 +57,7 @@ func (r *ResourceScopePingOneAPIResource) Metadata(ctx context.Context, req reso
 func (r *ResourceScopePingOneAPIResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 
 	const attrMinLength = 1
+	const attrMaxLength = 256
 
 	nameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The name of the resource scope.  Predefined scopes of `p1:read:user` and `p1:update:user` can be overridden, and new scopes can be defined as subscopes in the format `p1:read:user:{suffix}` or `p1:update:user:{suffix}`.  E.g. `p1:read:user:newscope` or `p1:update:user:newscope`",
@@ -83,9 +84,10 @@ func (r *ResourceScopePingOneAPIResource) Schema(ctx context.Context, req resour
 				Required:            true,
 
 				Validators: []validator.String{
+					stringvalidator.LengthBetween(attrMinLength, attrMaxLength),
 					stringvalidator.RegexMatches(
-						regexp.MustCompile(`^p1:(read|update):user(:{1}[a-zA-Z0-9]+)*$`),
-						"Resource scope name must be either `p1:read:user`, `p1:update:user`, `p1:read:user:{suffix}` or `p1:update:user:{suffix}`",
+						regexp.MustCompile(`^p1:(read|update):user(:{1}[!\x23-\x5B\x5D-~]+)*$`),
+						"Resource scope name must be either `p1:read:user`, `p1:update:user`, `p1:read:user:{suffix}` or `p1:update:user:{suffix}`. Suffix may only contain alphanumeric characters and/or the following symbols: !#$%&'()*+,-./:;<=>?@[]^_`{|}~",
 					),
 				},
 			},
