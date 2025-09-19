@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"regexp"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/int32validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -17,7 +18,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -25,6 +29,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	int32validatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/int32validator"
 	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
 	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -50,6 +55,7 @@ type FIDO2PolicyResourceModel struct {
 	MdsAuthenticatorsRequirements types.Object                 `tfsdk:"mds_authenticators_requirements"`
 	RelyingPartyId                types.String                 `tfsdk:"relying_party_id"`
 	UserDisplayNameAttributes     types.Object                 `tfsdk:"user_display_name_attributes"`
+	UserPresenceTimeout           types.Object                 `tfsdk:"user_presence_timeout"`
 	UserVerification              types.Object                 `tfsdk:"user_verification"`
 }
 
@@ -75,6 +81,11 @@ type FIDO2PolicyUserDisplayNameAttributesAttributesResourceModel struct {
 
 type FIDO2PolicyUserDisplayNameAttributesAttributesSubAttributesResourceModel struct {
 	Name types.String `tfsdk:"name"`
+}
+
+type FIDO2PolicyUserPresenceTimeoutResourceModel struct {
+	Duration types.Int32  `tfsdk:"duration"`
+	TimeUnit types.String `tfsdk:"time_unit"`
 }
 
 type FIDO2PolicyUserVerificationResourceModel struct {
@@ -107,6 +118,11 @@ var (
 		"name": types.StringType,
 	}
 
+	fido2PolicyUserPresenceTimeoutTFObjectTypes = map[string]attr.Type{
+		"duration":  types.Int32Type,
+		"time_unit": types.StringType,
+	}
+
 	fido2PolicyUserVerificationTFObjectTypes = map[string]attr.Type{
 		"enforce_during_authentication": types.BoolType,
 		"option":                        types.StringType,
@@ -134,15 +150,13 @@ func (r *FIDO2PolicyResource) Schema(ctx context.Context, req resource.SchemaReq
 
 	// schema descriptions and validation settings
 	const attrMinLength = 1
-	const attrMinColumns = 1
-	const attrMaxColumns = 3
-	const attrDefaultVersion = 5
-	const attrMinPercent = 0
-	const attrMaxPercent = 100
-	const imageMaxSize = 50000
-
 	const attrNameMaxLength = 256
 	const attrDeviceDisplayNameMaxLength = 100
+	const attrMinLifetimeDurationMinutes = 1
+	const attrMaxLifetimeDurationMinutes = 10
+	const attrMinLifetimeDurationSeconds = 60
+	const attrMaxLifetimeDurationSeconds = 600
+	const attrDefaultUserPresenceTimeoutDuration = 2
 
 	attestationRequirementsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the level of attestation to apply.",
@@ -221,6 +235,16 @@ func (r *FIDO2PolicyResource) Schema(ctx context.Context, req resource.SchemaReq
 	userDisplayNameAttributesAttributesSubAttributesNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The name of a complex attribute's sub attribute in PingOne, for example `given` or `formatted` where the parent object has a name value of `name`.",
 	)
+
+	userPresenceTimeoutDescription := framework.SchemaAttributeDescriptionFromMarkdown("A single nested object that specifies the user presence timeout settings, used to control the amount of time a user has to perform a user presence gesture with their FIDO device. If not provided, defaults to 2 minutes.")
+
+	userPresenceTimeoutDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The amount of time (minutes or seconds) a user presence gesture will be accepted for the authentication request. Minimum is one minute (60 seconds); maxiumum is ten minutes (600 seconds).",
+	).DefaultValue(attrDefaultUserPresenceTimeoutDuration)
+
+	userPresenceTimeoutTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The units for specifying the amount of time a user presence gesture will be accepted for the authentication request.",
+	).AllowedValuesEnum(mfa.AllowedEnumTimeUnitEnumValues).DefaultValue(string(mfa.ENUMTIMEUNIT_MINUTES))
 
 	userVerificationEnforceDuringAuthnDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether device characteristics related to user verification are to be checked again at each authentication attempt. Set to `true` if you want the device characteristics related to user verification to be checked again at each authentication attempt and not just once during registration. Set to `false` to have them checked only at registration.",
@@ -455,6 +479,61 @@ func (r *FIDO2PolicyResource) Schema(ctx context.Context, req resource.SchemaReq
 						Validators: []validator.List{
 							listvalidator.SizeAtLeast(1),
 							listvalidatormfa.FIDO2UserDisplayNameAttributeContainsUsername(),
+						},
+					},
+				},
+			},
+
+			"user_presence_timeout": schema.SingleNestedAttribute{
+				Description: userPresenceTimeoutDescription.Description,
+				Optional:    true,
+				Computed:    true,
+				Default: objectdefault.StaticValue(types.ObjectValueMust(
+					fido2PolicyUserPresenceTimeoutTFObjectTypes,
+					map[string]attr.Value{
+						"duration":  types.Int32Value(attrDefaultUserPresenceTimeoutDuration),
+						"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
+					},
+				)),
+
+				Attributes: map[string]schema.Attribute{
+					"duration": schema.Int32Attribute{
+						Description:         userPresenceTimeoutDurationDescription.Description,
+						MarkdownDescription: userPresenceTimeoutDurationDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+						Default:             int32default.StaticInt32(attrDefaultUserPresenceTimeoutDuration),
+
+						Validators: []validator.Int32{
+							int32validator.Any(
+								int32validator.All(
+									int32validator.Between(attrMinLifetimeDurationMinutes, attrMaxLifetimeDurationMinutes),
+									int32validatorinternal.RegexMatchesPathValue(
+										regexp.MustCompile(`MINUTES`),
+										fmt.Sprintf("If `time_unit` is `MINUTES`, the allowed duration range is %d - %d.", attrMinLifetimeDurationMinutes, attrMaxLifetimeDurationMinutes),
+										path.MatchRelative().AtParent().AtName("time_unit"),
+									),
+								),
+								int32validator.All(
+									int32validator.Between(attrMinLifetimeDurationSeconds, attrMaxLifetimeDurationSeconds),
+									int32validatorinternal.RegexMatchesPathValue(
+										regexp.MustCompile(`SECONDS`),
+										fmt.Sprintf("If `time_unit` is `SECONDS`, the allowed duration range is %d - %d.", attrMinLifetimeDurationSeconds, attrMaxLifetimeDurationSeconds),
+										path.MatchRelative().AtParent().AtName("time_unit"),
+									),
+								),
+							),
+						},
+					},
+					"time_unit": schema.StringAttribute{
+						Description:         userPresenceTimeoutTimeUnitDescription.Description,
+						MarkdownDescription: userPresenceTimeoutTimeUnitDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+						Default:             stringdefault.StaticString(string(mfa.ENUMTIMEUNIT_MINUTES)),
+
+						Validators: []validator.String{
+							stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumTimeUnitEnumValues)...),
 						},
 					},
 				},
@@ -882,6 +961,23 @@ func (p *FIDO2PolicyResourceModel) expand(ctx context.Context) (*mfa.FIDO2Policy
 		*userVerification,
 	)
 
+	// User presence timeout
+	if !p.UserPresenceTimeout.IsNull() && !p.UserPresenceTimeout.IsUnknown() {
+		var userPresenceTimeoutPlan FIDO2PolicyUserPresenceTimeoutResourceModel
+		diags.Append(p.UserPresenceTimeout.As(ctx, &userPresenceTimeoutPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		userPresenceTimeout := mfa.NewFIDO2PolicyUserPresenceTimeout()
+		userPresenceTimeout.SetDuration(userPresenceTimeoutPlan.Duration.ValueInt32())
+		userPresenceTimeout.SetTimeUnit(mfa.EnumTimeUnit(userPresenceTimeoutPlan.TimeUnit.ValueString()))
+		data.SetUserPresenceTimeout(*userPresenceTimeout)
+	}
+
 	if !p.Description.IsNull() && !p.Description.IsUnknown() {
 		data.SetDescription(p.Description.ValueString())
 	}
@@ -928,6 +1024,9 @@ func (p *FIDO2PolicyResourceModel) toState(apiObject *mfa.FIDO2Policy) diag.Diag
 	p.RelyingPartyId = framework.StringOkToTF(apiObject.GetRelyingPartyIdOk())
 
 	p.UserDisplayNameAttributes, d = toStateUserDisplayNameAttributes(apiObject.GetUserDisplayNameAttributesOk())
+	diags.Append(d...)
+
+	p.UserPresenceTimeout, d = toStateUserPresenceTimeout(apiObject.GetUserPresenceTimeoutOk())
 	diags.Append(d...)
 
 	p.UserVerification, d = toStateUserVerification(apiObject.GetUserVerificationOk())
@@ -1060,6 +1159,24 @@ func toStateUserDisplayNameAttributesAttributesSubAttributes(apiObject []mfa.FID
 	diags.Append(d...)
 
 	return returnVar, diags
+}
+
+func toStateUserPresenceTimeout(apiObject *mfa.FIDO2PolicyUserPresenceTimeout, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(fido2PolicyUserPresenceTimeoutTFObjectTypes), nil
+	}
+
+	o := map[string]attr.Value{
+		"duration":  framework.Int32OkToTF(apiObject.GetDurationOk()),
+		"time_unit": framework.EnumOkToTF(apiObject.GetTimeUnitOk()),
+	}
+
+	objValue, d := types.ObjectValue(fido2PolicyUserPresenceTimeoutTFObjectTypes, o)
+	diags.Append(d...)
+
+	return objValue, diags
 }
 
 func toStateUserVerification(apiObject *mfa.FIDO2PolicyUserVerification, ok bool) (types.Object, diag.Diagnostics) {

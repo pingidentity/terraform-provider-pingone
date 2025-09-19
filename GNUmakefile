@@ -3,7 +3,7 @@ SWEEP_DIR=./internal/sweep
 NAMESPACE=pingidentity
 PKG_NAME=pingone
 BINARY=terraform-provider-${NAME}
-VERSION=1.11.0
+VERSION=1.12.0
 OS_ARCH=linux_amd64
 BETA?=false
 
@@ -40,7 +40,7 @@ testacc: build
 
 sweep: build
 	@echo "WARNING: This will destroy infrastructure. Use only in development accounts."
-	go test $(SWEEP_DIR) $(BUILD_TAGS) -v -sweep=all $(SWEEPARGS) -timeout 10m
+	go test $(BUILD_TAGS) $(SWEEP_DIR) -v -sweep=all $(SWEEPARGS) -timeout 10m
 
 vet:
 	@echo "==> Running go vet..."

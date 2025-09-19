@@ -71,7 +71,7 @@ func (r SchemaDescription) AppendMarkdownString(text string) SchemaDescription {
 }
 
 func (r SchemaDescription) Beta(text string) SchemaDescription {
-	return r.AppendMarkdownString(fmt.Sprintf("**Beta or experimental**. Use of this resource is subject to change at any time and to be used with caution. The API may change without notice that may lead to errors. %s", text))
+	return r.AppendMarkdownString(fmt.Sprintf("**Beta or experimental**. Use of this resource is subject to change at any time and to be used with caution. The API may change without notice which may lead to errors. %s", text))
 }
 
 func SchemaDescriptionFromMarkdown(description string) SchemaDescription {
