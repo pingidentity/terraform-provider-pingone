@@ -127,11 +127,11 @@ func TestAccApplication_OIDC_ImportedClientIDClientSecret(t *testing.T) {
 			},
 			{
 				Config: testAccApplicationConfig_OIDC_Import(resourceName, name, &clientIDValue, nil),
-				// Check: resource.ComposeTestCheckFunc(
-				// 	resource.TestCheckResourceAttr(resourceFullName, "oidc_options.client_id", clientIDValue),
-				// 	resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initial_client_secret"),
-				// ),
-				ExpectError: regexp.MustCompile(`Invalid application`),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.client_id", clientIDValue),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initial_client_secret"),
+				),
+				// ExpectError: regexp.MustCompile(`Invalid application`),
 			},
 			{
 				Config:  testAccApplicationConfig_OIDC_Import(resourceName, name, &clientIDValue, nil),
