@@ -40,17 +40,20 @@ Versions with pre-release suffixes (e.g., `X.Y.Z-beta.1`, `X.Y.Z-rc.1`) are **no
 ## Support Channels
 
 ### GitHub Issues (Community Support)
+
 - **Best for:** Bug reports, feature requests, and community discussions
 - **Repository:** [github.com/pingidentity/terraform-provider-pingone](https://github.com/pingidentity/terraform-provider-pingone)
-- **Response time:** Best effort, community-driven
+- **Response time:** Best effort
 
 ### Ping Identity Support (Enterprise Support)
+
 - **Best for:** Production issues, urgent matters, and customers with support contracts
 - **Contact:** Through your Ping Identity support portal
 - **SLA:** According to your support agreement
 - **Requirements:** Valid support contract with Ping Identity
 
 ### Community Forum
+
 - **Best for:** Questions, discussions, and sharing experiences
 - **Link:** [Ping DevOps Community](https://support.pingidentity.com/s/topic/0TO1W000000IF30WAG/pingdevops)
 - **Response time:** Community-driven, best effort
