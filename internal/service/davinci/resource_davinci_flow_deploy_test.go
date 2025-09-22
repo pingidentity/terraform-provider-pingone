@@ -345,7 +345,7 @@ func davinciFlowDeploy_NewEnvHCL(environmentName, licenseID, resourceName string
 		%[1]s
 
 resource "pingone_davinci_flow" "%[3]s" {
-  environment_id = data.pingone_environment.general_test.id
+  environment_id = pingone_environment.%[2]s.id
   name           = "%[3]s"
   description    = "This is a demo flow"
   color          = "#00FF00"
