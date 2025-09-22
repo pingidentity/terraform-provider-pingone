@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 	"time"
 
@@ -175,7 +176,37 @@ func TestAccDavinciFlowDeploy_NewEnv(t *testing.T) {
 	})
 }
 
-//TODO add test with bad flow
+func TestAccDavinciFlowDeploy_BrokenFlow_Clean(t *testing.T) {
+	testAccDavinciFlowDeploy_BrokenFlow(t, false)
+}
+
+func TestAccDavinciFlowDeploy_BrokenFlow_WithBootstrap(t *testing.T) {
+	testAccDavinciFlowDeploy_BrokenFlow(t, true)
+}
+
+func testAccDavinciFlowDeploy_BrokenFlow(t *testing.T, withBootstrap bool) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoFeatureFlag(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             davinciFlow_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: davinciFlowDeploy_BrokenFlowHCL(t, resourceName, withBootstrap),
+				//TODO determine real error message
+				ExpectError: regexp.MustCompile(`Error deploying flow`),
+			},
+		},
+	})
+}
 
 func davinciFlowDeploy_GetIDs(resourceName string, environmentId, id *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
@@ -402,4 +433,76 @@ resource "pingone_davinci_flow_deploy" "%[3]s" {
   }
 }
 `, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+}
+
+func davinciFlowDeploy_BrokenFlowHCL(t *testing.T, resourceName string, withBootstrap bool) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_davinci_connector_instance" "%[2]s-errors" {
+  environment_id = data.pingone_environment.general_test.id
+  connector = {
+    id = "errorConnector"
+  }
+  name = "%[2]s-errors"
+}
+
+resource "pingone_davinci_flow" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  
+  name        = "brokenFlow"
+  color       = "#FFC8C1"
+
+  graph_data = {
+    elements = {
+      nodes = [
+        {
+          data = {
+            id          = "zlgncqvws2"
+            node_type   = "CONNECTION"
+            connection_id = pingone_davinci_connector_instance.%[2]s-errors.id
+            connector_id = "errorConnector"
+            name        = "Error Message"
+            label       = "Error Message"
+            status      = "unconfigured"
+          }
+          position = {
+            x = 400
+            y = 409.0909090042114
+          }
+          group      = "nodes"
+          removed    = false
+          selected   = false
+          selectable = true
+          locked     = false
+          grabbable  = true
+          pannable   = false
+          classes    = ""
+        }
+      ]
+    }
+    data = "{}"
+    zooming_enabled = true
+    user_zooming_enabled = true
+    zoom = 1
+    min_zoom = 1e-50
+    max_zoom = 1e+50
+    panning_enabled = true
+    user_panning_enabled = true
+    pan = {
+      x = 0
+      y = 0
+    }
+    box_selection_enabled = true
+    renderer = jsonencode({
+      "name": "null"
+    })
+  }
+}
+
+resource "pingone_davinci_flow_deploy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  flow_id = pingone_davinci_flow.%[2]s.id
+}
+`, acctest.DaVinciSandboxEnvironment(withBootstrap), resourceName)
 }
