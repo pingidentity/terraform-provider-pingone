@@ -442,3 +442,27 @@ func CheckForResourceDestroyCustomHTTPCode(r *http.Response, err error, customHt
 
 	return false, nil
 }
+
+// AlterStringCasing alternates the case of alphabetic characters in a string for testing purposes.
+// It returns a string where even-indexed characters (0, 2, 4, etc.) are converted to uppercase
+// and odd-indexed characters (1, 3, 5, etc.) are converted to lowercase. Non-alphabetic characters
+// remain unchanged in their original positions.
+// The strInput parameter must be a valid string that may contain any Unicode characters.
+// This function is primarily used in acceptance tests to create case-insensitive string comparisons
+// and verify that data source filters work correctly regardless of character casing.
+// No external dependencies or environment variables are required for this function to operate.
+func AlterStringCasing(strInput string) string {
+	runes := []rune(strInput)
+	for i := range runes {
+		if i%2 == 0 {
+			if runes[i] >= 'a' && runes[i] <= 'z' {
+				runes[i] = runes[i] - ('a' - 'A')
+			}
+		} else {
+			if runes[i] >= 'A' && runes[i] <= 'Z' {
+				runes[i] = runes[i] + ('a' - 'A')
+			}
+		}
+	}
+	return string(runes)
+}

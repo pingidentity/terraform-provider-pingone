@@ -57,11 +57,15 @@ func TestAccVerifyVoicePhraseDataSource_All(t *testing.T) {
 				Destroy: true,
 			},
 			{
-				Config: testAccVerifyVoicePhrase_FindByName(resourceName, updatedName),
+				Config: testAccVerifyVoicePhrase_FindByName(resourceName, updatedName, false),
 				Check:  findByName,
 			},
 			{
-				Config:  testAccVerifyVoicePhrase_FindByName(resourceName, updatedName),
+				Config: testAccVerifyVoicePhrase_FindByName(resourceName, updatedName, true),
+				Check:  findByName,
+			},
+			{
+				Config:  testAccVerifyVoicePhrase_FindByName(resourceName, updatedName, false),
 				Destroy: true,
 			},
 		},
@@ -114,7 +118,14 @@ data "pingone_verify_voice_phrase" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccVerifyVoicePhrase_FindByName(resourceName, name string) string {
+func testAccVerifyVoicePhrase_FindByName(resourceName, name string, insensitivityCheck bool) string {
+
+	// If insensitivityCheck is true, alter the case of the display name
+	nameComparator := name
+	if insensitivityCheck {
+		nameComparator = acctest.AlterStringCasing(nameComparator)
+	}
+
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -125,10 +136,10 @@ resource "pingone_verify_voice_phrase" "%[2]s" {
 
 data "pingone_verify_voice_phrase" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  display_name   = "%[3]s"
+  display_name   = "%[4]s"
 
   depends_on = [pingone_verify_voice_phrase.%[2]s]
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, nameComparator)
 }
 
 func testAccVerifyVoicePhrase_FindByIDFail(resourceName, name string) string {

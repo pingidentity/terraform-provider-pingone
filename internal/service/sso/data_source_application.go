@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -870,7 +871,7 @@ func (r *ApplicationDataSource) Read(ctx context.Context, req datasource.ReadReq
 								applicationName = v.GetName()
 							}
 
-							if applicationName == data.Name.ValueString() {
+							if strings.EqualFold(applicationName, data.Name.ValueString()) {
 								return &applicationObj, pageCursor.HTTPResponse, nil
 							}
 						}

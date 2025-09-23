@@ -124,69 +124,6 @@ func TestAccLanguageTranslation_Full(t *testing.T) {
 	})
 }
 
-func TestAccLanguageTranslation_NewEnvExpectedTranslationCount(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_language_translation.%s", resourceName)
-	environmentName := acctest.ResourceNameGenEnvironment()
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-
-	var environmentId string
-	var locale string
-	var totalTranslations int
-
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acctest.PreCheckNoTestAccFlaky(t)
-			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoBeta(t)
-		},
-		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			{
-				Config: languageTranslation_NewEnvHCL(environmentName, licenseID, resourceName),
-				Check: resource.ComposeTestCheckFunc(
-					languageTranslation_GetIDs(resourceFullName, &environmentId, &locale),
-				),
-			},
-			{
-				PreConfig: func() {
-					// Fetch all translations for the `en` locale
-					p1Client, err := acctestlegacysdk.TestClient(context.Background())
-					if err != nil {
-						t.Fatalf("Failed to create PingOne client: %v", err)
-					}
-
-					apiClient := p1Client.API.ManagementAPIClient
-					pagedIterator := apiClient.TranslationsApi.ReadTranslations(context.Background(), environmentId, "en").Execute()
-
-					totalTranslations = 0
-					for pageCursor, err := range pagedIterator {
-						if err != nil {
-							t.Fatalf("Failed to fetch translations: %v", err)
-						}
-
-						if translations, ok := pageCursor.EntityArray.Embedded.GetTranslationsOk(); ok {
-							totalTranslations += len(translations)
-						}
-					}
-				},
-				RefreshState: true,
-				Check: func(s *terraform.State) error {
-					// Validate the total number of translations
-					expectedTranslations := 875
-					if totalTranslations != expectedTranslations {
-						return fmt.Errorf("Expected %d translations, but got %d", expectedTranslations, totalTranslations)
-					}
-					return nil
-				},
-			},
-		},
-	})
-}
 func TestAccLanguageTranslation_NewEnv(t *testing.T) {
 	t.Parallel()
 

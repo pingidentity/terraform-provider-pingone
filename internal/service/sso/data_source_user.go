@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -683,15 +684,15 @@ func (r *UserDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 				if users, ok := pageCursor.EntityArray.Embedded.GetUsersOk(); ok {
 					for _, u := range users {
 
-						if !data.Username.IsNull() && u.GetUsername() == data.Username.ValueString() {
+						if !data.Username.IsNull() && strings.EqualFold(u.GetUsername(), data.Username.ValueString()) {
 							return &u, pageCursor.HTTPResponse, nil
 						}
 
-						if !data.UserId.IsNull() && u.GetId() == data.UserId.ValueString() {
+						if !data.UserId.IsNull() && strings.EqualFold(u.GetId(), data.UserId.ValueString()) {
 							return &u, pageCursor.HTTPResponse, nil
 						}
 
-						if !data.Email.IsNull() && u.GetEmail() == data.Email.ValueString() {
+						if !data.Email.IsNull() && strings.EqualFold(u.GetEmail(), data.Email.ValueString()) {
 							return &u, pageCursor.HTTPResponse, nil
 						}
 					}

@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -207,7 +208,7 @@ func (r *VoicePhraseDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 						for _, voicePhraseItem := range voicePhrases {
 
-							if voicePhraseItem.GetDisplayName() == data.DisplayName.ValueString() {
+							if strings.EqualFold(voicePhraseItem.GetDisplayName(), data.DisplayName.ValueString()) {
 								return &voicePhraseItem, pageCursor.HTTPResponse, nil
 							}
 						}
