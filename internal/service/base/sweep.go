@@ -85,11 +85,6 @@ func sweepEnvironments(regionString string) error {
 		log.Printf("Error creating environment `general-test` during sweep: %s", err)
 	}
 
-	err = sweep.CreateTestEnvironment(ctx, apiClient, region, "davinci-bootstrapped-test", true)
-	if err != nil {
-		log.Printf("Error creating environment `davinci-bootstrapped-test` during sweep: %s", err)
-	}
-
 	return nil
 
 }
