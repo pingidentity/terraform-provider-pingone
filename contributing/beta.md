@@ -81,6 +81,14 @@ Pushing the tag will automatically trigger a GitHub Action that runs Goreleaser,
 
 ---
 
+## Example Acceptance Test Command
+
+To run acceptance tests for a beta resource, you will need to include both the `beta` build tag and set the environment variable `TESTACC_BETA=true`. For example, to run all tests for the beta resource `pingone_davinci_connector_instance` in the `davinci` service:
+
+```
+% TF_ACC=1 TESTACC_BETA=true go test -tags=beta -v -timeout 300s -run ^TestAccDavinciConnectorInstance github.com/pingidentity/terraform-provider-pingone/internal/service/davinci
+```
+
 ## VSCode Configuration Tip
 
 To compile files with a `beta` tag in VSCode, you can instruct the Go language server (`gopls`) to always use the `beta` build tag.
