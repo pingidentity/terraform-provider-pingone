@@ -10,6 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/verify"
 	validation "github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -331,7 +332,7 @@ data "pingone_verify_policy" "%[3]s" {
   verify_policy_id = pingone_verify_policy.%[3]s.id
 
   depends_on = [pingone_verify_policy.%[3]s]
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccVerifyPolicy_FindByName(environmentName, licenseID, resourceName, name string, insensitivityCheck bool) string {
@@ -385,7 +386,7 @@ data "pingone_verify_policy" "%[3]s" {
   name           = "%[5]s"
 
   depends_on = [pingone_verify_policy.%[3]s]
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, nameComparator)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, nameComparator)
 }
 
 func testAccVerifyPolicy_FindDefaultPolicy(environmentName, licenseID, resourceName, name string) string {
@@ -397,7 +398,7 @@ data "pingone_verify_policy" "%[3]s" {
   default        = true
 
   depends_on = [pingone_environment.%[2]s]
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccVerifyPolicy_FindByIDFail(environmentName, licenseID, resourceName, name string) string {
@@ -409,7 +410,7 @@ data "pingone_verify_policy" "%[3]s" {
   verify_policy_id = "9c052a8a-14be-44e4-8f07-2662569994ce" // dummy ID that conforms to UUID v4
 
 
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccVerifyPolicy_FindByNameFail(environmentName, licenseID, resourceName, name string) string {
@@ -420,5 +421,5 @@ data "pingone_verify_policy" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s"
 
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }

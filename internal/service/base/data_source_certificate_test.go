@@ -10,6 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -173,7 +174,7 @@ data "pingone_certificate" "%[3]s" {
   depends_on = [
     pingone_certificate.%[3]s
   ]
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, pem, nameComparator)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, pem, nameComparator)
 }
 
 func testAccCertificateDataSourceConfig_ByIDFull(environmentName, licenseID, resourceName, pem string) string {
@@ -194,7 +195,7 @@ data "pingone_certificate" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
   certificate_id = pingone_certificate.%[3]s.id
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, pem)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, pem)
 }
 
 func testAccCertificateDataSourceConfig_NotFoundByName(resourceName string) string {

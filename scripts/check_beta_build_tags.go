@@ -74,46 +74,84 @@ func main() {
 			// Check resources for the beta build tag
 			for _, resource := range betaResources {
 				snakeCase := camelToSnake(resource)
-				resourceFile := filepath.Join(serviceDir, fmt.Sprintf("resource_%s.go", snakeCase))
 
-				if _, err := os.Stat(resourceFile); os.IsNotExist(err) {
-					fmt.Printf("  %sError: Could not find resource file for %s at %s%s\n",
-						colorRed, resource, resourceFile, colorReset)
-					errors++
-					continue
+				// Define file patterns to check
+				resourceFilePatterns := []string{
+					fmt.Sprintf("resource_%s.go", snakeCase),
+					fmt.Sprintf("resource_%s_gen.go", snakeCase),
 				}
 
-				// Check if the file has the beta build tag
-				if !hasBetaBuildTag(resourceFile) {
-					fmt.Printf("  %sError: Resource file %s is missing //go:build beta tag%s\n",
-						colorRed, resourceFile, colorReset)
+				fileFound := false
+
+				// Check both standard and generated resource files
+				for _, pattern := range resourceFilePatterns {
+					resourceFile := filepath.Join(serviceDir, pattern)
+
+					if _, err := os.Stat(resourceFile); os.IsNotExist(err) {
+						// File doesn't exist, try the next pattern
+						continue
+					}
+
+					fileFound = true
+
+					// Check if the file has the beta build tag
+					if !hasBetaBuildTag(resourceFile) {
+						fmt.Printf("  %sError: Resource file %s is missing //go:build beta tag%s\n",
+							colorRed, resourceFile, colorReset)
+						errors++
+					} else {
+						fmt.Printf("  %s✓ %s has the correct build tag%s\n",
+							colorGreen, resourceFile, colorReset)
+					}
+				}
+
+				// Only report an error if neither file pattern was found
+				if !fileFound {
+					fmt.Printf("  %sError: Could not find any resource file for %s (checked both regular and generated patterns)%s\n",
+						colorRed, resource, colorReset)
 					errors++
-				} else {
-					fmt.Printf("  %s✓ %s has the correct build tag%s\n",
-						colorGreen, resourceFile, colorReset)
 				}
 			}
 
 			// Check data sources for the beta build tag
 			for _, dataSource := range betaDataSources {
 				snakeCase := camelToSnake(dataSource)
-				dataSourceFile := filepath.Join(serviceDir, fmt.Sprintf("data_source_%s.go", snakeCase))
 
-				if _, err := os.Stat(dataSourceFile); os.IsNotExist(err) {
-					fmt.Printf("  %sError: Could not find data source file for %s at %s%s\n",
-						colorRed, dataSource, dataSourceFile, colorReset)
-					errors++
-					continue
+				// Define file patterns to check
+				dataSourceFilePatterns := []string{
+					fmt.Sprintf("data_source_%s.go", snakeCase),
+					fmt.Sprintf("data_source_%s_gen.go", snakeCase),
 				}
 
-				// Check if the file has the beta build tag
-				if !hasBetaBuildTag(dataSourceFile) {
-					fmt.Printf("  %sError: Data source file %s is missing //go:build beta tag%s\n",
-						colorRed, dataSourceFile, colorReset)
+				fileFound := false
+
+				// Check both standard and generated data source files
+				for _, pattern := range dataSourceFilePatterns {
+					dataSourceFile := filepath.Join(serviceDir, pattern)
+
+					if _, err := os.Stat(dataSourceFile); os.IsNotExist(err) {
+						// File doesn't exist, try the next pattern
+						continue
+					}
+
+					fileFound = true
+
+					// Check if the file has the beta build tag
+					if !hasBetaBuildTag(dataSourceFile) {
+						fmt.Printf("  %sError: Data source file %s is missing //go:build beta tag%s\n",
+							colorRed, dataSourceFile, colorReset)
+						errors++
+					} else {
+						fmt.Printf("  %s✓ %s has the correct build tag%s\n",
+							colorGreen, dataSourceFile, colorReset)
+					}
+				}
+
+				// Only report an error if neither file pattern was found
+				if !fileFound {
+					fmt.Printf("  %sError: Could not find any data source file for %s (checked both regular and generated patterns)%s\n",
+						colorRed, dataSource, colorReset)
 					errors++
-				} else {
-					fmt.Printf("  %s✓ %s has the correct build tag%s\n",
-						colorGreen, dataSourceFile, colorReset)
 				}
 			}
 		}

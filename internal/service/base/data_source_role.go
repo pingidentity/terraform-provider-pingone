@@ -18,6 +18,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 )
@@ -149,7 +150,7 @@ func (r *RoleDataSource) Configure(ctx context.Context, req datasource.Configure
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -190,7 +191,7 @@ func (r *RoleDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	if !data.Name.IsNull() {
 
 		// Run the API call
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
@@ -221,7 +222,7 @@ func (r *RoleDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 				return nil, initialHttpResponse, nil
 			},
 			"ReadAllRoles",
-			framework.DefaultCustomError,
+			legacysdk.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
 			&role,
 		)...)
@@ -240,14 +241,14 @@ func (r *RoleDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	} else if !data.RoleId.IsNull() {
 
 		// Run the API call
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
 				return r.Client.ManagementAPIClient.RolesApi.ReadOneRole(ctx, data.RoleId.ValueString()).Execute()
 			},
 			"ReadOneRole",
-			framework.DefaultCustomError,
+			legacysdk.DefaultCustomError,
 			retryEnvironmentDefault,
 			&role,
 		)...)

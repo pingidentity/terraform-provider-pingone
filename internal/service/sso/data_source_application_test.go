@@ -11,6 +11,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/sso"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -837,7 +838,7 @@ resource "pingone_application" "%[3]s" {
 data "pingone_application" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   application_id = pingone_application.%[3]s.id
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, image, pkcs7_cert, pem_cert)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, image, pkcs7_cert, pem_cert)
 }
 
 func testAccApplicationDataSource_SAMLAppByName(resourceName, name string) string {
@@ -1047,7 +1048,7 @@ resource "pingone_application" "%[3]s" {
 data "pingone_application" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   application_id = pingone_application.%[3]s.id
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, image)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, image)
 }
 
 func testAccApplicationDataSource_WSFedAppByName(resourceName, name string) string {

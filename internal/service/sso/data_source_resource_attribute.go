@@ -14,7 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
-	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -99,7 +99,7 @@ func datasourcePingOneResourceAttributeRead(ctx context.Context, d *schema.Resou
 
 			func() (any, *http.Response, error) {
 				fO, fR, fErr := apiClient.ResourceAttributesApi.ReadOneResourceAttribute(ctx, d.Get("environment_id").(string), d.Get("resource_id").(string), v.(string)).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 			},
 			"ReadOneResourceAttribute",
 			sdk.DefaultCustomError,
@@ -183,14 +183,14 @@ func fetchResourceAttributeFromName_Framework(ctx context.Context, apiClient *ma
 	var diags frameworkdiag.Diagnostics
 
 	var returnVar *management.ResourceAttribute
-	diags.Append(framework.ParseResponse(
+	diags.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			return fetchResourceAttributeFromNameSDKFunc(ctx, apiClient, environmentID, resourceID, resourceAttributeName)
 		},
 		"ReadAllResourceAttributes",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&returnVar,
 	)...)
@@ -217,7 +217,7 @@ func fetchResourceAttributeFromNameSDKFunc(ctx context.Context, apiClient *manag
 
 	for pageCursor, err := range pagedIterator {
 		if err != nil {
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, nil, pageCursor.HTTPResponse, err)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, nil, pageCursor.HTTPResponse, err)
 		}
 
 		if initialHttpResponse == nil {

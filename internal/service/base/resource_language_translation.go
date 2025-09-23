@@ -23,6 +23,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -47,7 +48,7 @@ func (r *languageTranslationResource) Configure(ctx context.Context, req resourc
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -259,23 +260,23 @@ func (r *languageTranslationResource) Create(ctx context.Context, req resource.C
 	}
 
 	// The UpdateTranslations API call does not return a response
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.TranslationsApi.UpdateTranslations(ctx, data.EnvironmentId.ValueString(), data.Locale.ValueString()).LocaleTranslation(*clientData).Execute()
 
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateTranslations-Create",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		nil,
 	)...)
 
 	// Subsequent read needed as the API does not return the full object on any create or update operation.
 	var responseData *[]management.LocaleTranslation
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
@@ -285,7 +286,7 @@ func (r *languageTranslationResource) Create(ctx context.Context, req resource.C
 			translationsSlice := make([]management.LocaleTranslation, 0)
 			for pageCursor, err := range pagedIterator {
 				if err != nil {
-					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+					return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
 				}
 
 				if initialHttpResponse == nil {
@@ -302,7 +303,7 @@ func (r *languageTranslationResource) Create(ctx context.Context, req resource.C
 			return &translationsSlice, initialHttpResponse, nil
 		},
 		"UpdateTranslations-Create-SubsequentRead",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&responseData,
 	)...)
@@ -341,7 +342,7 @@ func (r *languageTranslationResource) Read(ctx context.Context, req resource.Rea
 
 	// Read API call logic
 	var responseData *[]management.LocaleTranslation
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
@@ -351,7 +352,7 @@ func (r *languageTranslationResource) Read(ctx context.Context, req resource.Rea
 			translationsSlice := make([]management.LocaleTranslation, 0)
 			for pageCursor, err := range pagedIterator {
 				if err != nil {
-					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+					return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
 				}
 
 				if initialHttpResponse == nil {
@@ -369,7 +370,7 @@ func (r *languageTranslationResource) Read(ctx context.Context, req resource.Rea
 			return &translationsSlice, initialHttpResponse, nil
 		},
 		"ReadTranslations",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 		&responseData,
 	)...)
@@ -420,22 +421,22 @@ func (r *languageTranslationResource) Update(ctx context.Context, req resource.U
 	}
 
 	// The UpdateTranslations API call does not return a response
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.TranslationsApi.UpdateTranslations(ctx, data.EnvironmentId.ValueString(), data.Locale.ValueString()).LocaleTranslation(*clientData).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateTranslations-Update",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		nil,
 	)...)
 
 	// Subsequent read needed as the API does not return the full object on any create or update operation.
 	var responseData *[]management.LocaleTranslation
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
@@ -445,7 +446,7 @@ func (r *languageTranslationResource) Update(ctx context.Context, req resource.U
 			translationsSlice := make([]management.LocaleTranslation, 0)
 			for pageCursor, err := range pagedIterator {
 				if err != nil {
-					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+					return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
 				}
 
 				if initialHttpResponse == nil {
@@ -463,7 +464,7 @@ func (r *languageTranslationResource) Update(ctx context.Context, req resource.U
 			return &translationsSlice, initialHttpResponse, nil
 		},
 		"UpdateTranslations-Update-SubsequentRead",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&responseData,
 	)...)
@@ -504,15 +505,15 @@ func (r *languageTranslationResource) Delete(ctx context.Context, req resource.D
 
 	// Update API call logic to reset to default
 	clientData := r.buildDefaultClientStruct(data)
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.TranslationsApi.UpdateTranslations(ctx, data.EnvironmentId.ValueString(), data.Locale.ValueString()).LocaleTranslation(*clientData).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateTranslations",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 		nil,
 	)...)

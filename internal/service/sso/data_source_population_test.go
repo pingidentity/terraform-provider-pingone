@@ -10,6 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/sso"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -199,7 +200,7 @@ data "pingone_population" "%[2]s" {
 
   depends_on = [pingone_population.%[2]s-name]
 }
-`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), resourceName, name, environmentName, nameComparator)
+`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), resourceName, name, environmentName, nameComparator)
 }
 
 func testAccPopulationDataSourceConfig_ByIDFull(environmentName, licenseID, resourceName, name string) string {
@@ -257,7 +258,7 @@ data "pingone_population" "%[2]s" {
   environment_id = pingone_environment.%[4]s.id
 
   population_id = pingone_population.%[2]s-name.id
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), resourceName, name, environmentName)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), resourceName, name, environmentName)
 }
 
 func testAccPopulationDataSourceConfig_NotFoundByName(resourceName string) string {

@@ -18,6 +18,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -100,7 +101,7 @@ func resourceLanguageUpdateRead(ctx context.Context, d *schema.ResourceData, met
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := apiClient.LanguagesApi.ReadOneLanguage(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOneLanguage-Read",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -144,7 +145,7 @@ func resourceLanguageUpdateUpdate(ctx context.Context, d *schema.ResourceData, m
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := apiClient.LanguagesApi.ReadOneLanguage(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOneLanguage-Update",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -176,7 +177,7 @@ func resourceLanguageUpdateDelete(ctx context.Context, d *schema.ResourceData, m
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := apiClient.LanguagesApi.ReadOneLanguage(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOneLanguage-Delete",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -214,7 +215,7 @@ func resourceLanguageUpdateDelete(ctx context.Context, d *schema.ResourceData, m
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := apiClient.LanguagesApi.UpdateLanguage(ctx, d.Get("environment_id").(string), d.Id()).Language(*language).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"UpdateLanguage-Delete",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -315,7 +316,7 @@ func updateLanguageEnabledDefaultSequence(ctx context.Context, apiClient *manage
 
 				func() (any, *http.Response, error) {
 					fO, fR, fErr := apiClient.LanguagesApi.UpdateLanguage(ctx, environmentID, languageID).Language(language).Execute()
-					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
+					return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
 				},
 				"UpdateLanguage-UpdateSequence1",
 				errorFunction,
@@ -336,7 +337,7 @@ func updateLanguageEnabledDefaultSequence(ctx context.Context, apiClient *manage
 
 				func() (any, *http.Response, error) {
 					fO, fR, fErr := apiClient.LanguagesApi.ReadOneLanguage(ctx, environmentID, languageID).Execute()
-					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
+					return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
 				},
 				"ReadOneLanguage-UpdateSequence1",
 				errorFunction,
@@ -389,7 +390,7 @@ func updateLanguageEnabledDefaultSequence(ctx context.Context, apiClient *manage
 
 			func() (any, *http.Response, error) {
 				fO, fR, fErr := apiClient.LanguagesApi.UpdateLanguage(ctx, environmentID, languageID).Language(language).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
 			},
 			"UpdateLanguage-UpdateSequence2",
 			errorFunction,

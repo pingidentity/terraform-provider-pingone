@@ -9,14 +9,18 @@ import (
 	"os"
 	"slices"
 	"strconv"
+	"strings"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	clientconfig "github.com/pingidentity/pingone-go-client/config"
+	"github.com/pingidentity/pingone-go-client/oauth2"
+	"github.com/pingidentity/pingone-go-client/pingone"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/provider"
 )
 
@@ -46,7 +50,7 @@ func protoV6ProviderFactoriesInit(ctx context.Context, providerNames ...string) 
 	for _, name := range providerNames {
 
 		factories[name] = func() (tfprotov6.ProviderServer, error) {
-			providerServerFactory, err := provider.ProviderServerFactoryV6(ctx, getProviderTestingVersion())
+			providerServerFactory, err := provider.ProviderServerFactoryV6(ctx, GetProviderTestingVersion())
 
 			if err != nil {
 				return nil, err
@@ -59,7 +63,7 @@ func protoV6ProviderFactoriesInit(ctx context.Context, providerNames ...string) 
 	return factories
 }
 
-func getProviderTestingVersion() string {
+func GetProviderTestingVersion() string {
 	returnVar := "dev"
 	if v := os.Getenv("PINGONE_TESTING_PROVIDER_VERSION"); v != "" {
 		returnVar = v
@@ -303,27 +307,23 @@ func ResourceNameGenEnvironment() string {
 	return fmt.Sprintf("tf-testacc-dynamic-%s", ResourceNameGen())
 }
 
-func TestClient(ctx context.Context) (*client.Client, error) {
-
-	regionCode := management.EnumRegionCode(os.Getenv("PINGONE_REGION_CODE"))
-
-	config := &client.Config{
-		ClientID:      os.Getenv("PINGONE_CLIENT_ID"),
-		ClientSecret:  os.Getenv("PINGONE_CLIENT_SECRET"),
-		EnvironmentID: os.Getenv("PINGONE_ENVIRONMENT_ID"),
-		RegionCode:    &regionCode,
-		GlobalOptions: &client.GlobalOptions{
-			Population: &client.PopulationOptions{
-				ContainsUsersForceDelete: false,
-			},
-		},
+func TestClient(ctx context.Context) (*pingone.APIClient, error) {
+	regionTopLevelDomain, ok := framework.RegionTopLevelDomainFromCode(strings.ToLower(os.Getenv("PINGONE_REGION_CODE")))
+	if !ok {
+		return nil, fmt.Errorf("invalid PINGONE_REGION_CODE: %s", os.Getenv("PINGONE_REGION_CODE"))
 	}
+	config := clientconfig.NewConfiguration().
+		WithGrantType(oauth2.GrantTypeClientCredentials).
+		WithTopLevelDomain(regionTopLevelDomain)
 
-	return config.APIClient(ctx, getProviderTestingVersion())
+	pingOneConfig := pingone.NewConfiguration(config)
+	pingOneConfig.UserAgent = framework.UserAgent("", GetProviderTestingVersion())
+
+	return pingone.NewAPIClient(pingOneConfig)
 
 }
 
-func PreCheckTestClient(ctx context.Context, t *testing.T) *client.Client {
+func PreCheckTestClient(ctx context.Context, t *testing.T) *pingone.APIClient {
 	p1Client, err := TestClient(ctx)
 
 	if err != nil {
@@ -333,52 +333,13 @@ func PreCheckTestClient(ctx context.Context, t *testing.T) *client.Client {
 	return p1Client
 }
 
-func MinimalSandboxEnvironment(resourceName, licenseID string) string {
-	return fmt.Sprintf(`
-	%[1]s
-		
-	resource "pingone_population_default" "%[2]s" {
-		environment_id = pingone_environment.%[2]s.id
-
-		name = "%[2]s"
+func DaVinciSandboxEnvironment(withBootstrapConfig bool) string {
+	if withBootstrapConfig {
+		generalName := "general_test"
+		return DaVinciBootstrappedSandboxEnvironment(&generalName)
+	} else {
+		return GenericSandboxEnvironment()
 	}
-`, MinimalSandboxEnvironmentNoPopulation(resourceName, licenseID), resourceName)
-}
-
-func MinimalSandboxEnvironmentNoPopulation(resourceName, licenseID string) string {
-	return MinimalEnvironmentNoPopulation(resourceName, licenseID, management.ENUMENVIRONMENTTYPE_SANDBOX)
-}
-
-func MinimalEnvironmentNoPopulation(resourceName, licenseID string, environmentType management.EnumEnvironmentType) string {
-	return fmt.Sprintf(`
-resource "pingone_environment" "%[1]s" {
-	name = "%[1]s"
-	license_id = "%[2]s"
-	type = "%[3]s"
-
-	services = [
-		{
-			type = "SSO"
-		},
-		{
-			type = "DaVinci"
-			tags = ["DAVINCI_MINIMAL"]
-		},
-		{
-			type = "MFA"
-		},
-		{
-			type = "Risk"
-		},
-		{
-			type = "Credentials"
-		},
-		{
-			type = "Verify"
-		}
-	]
-}
-`, resourceName, licenseID, string(environmentType))
 }
 
 func GenericSandboxEnvironment() string {
@@ -386,6 +347,19 @@ func GenericSandboxEnvironment() string {
 		data "pingone_environment" "general_test" {
 			name = "tf-testacc-dynamic-general-test"
 		}`
+}
+
+func DaVinciBootstrappedSandboxEnvironment(dataSourceName *string) string {
+	var name string
+	if dataSourceName != nil {
+		name = *dataSourceName
+	} else {
+		name = "davinci_bootstrapped_test"
+	}
+	return fmt.Sprintf(`
+		data "pingone_environment" "%s" {
+			name = "tf-testacc-dynamic-davinci-bootstrapped-test"
+		}`, name)
 }
 
 const (
@@ -423,8 +397,13 @@ func AgreementSandboxEnvironment() string {
 		}`
 }
 
-func CheckParentEnvironmentDestroy(ctx context.Context, apiClient *management.APIClient, environmentID string) (bool, error) {
-	environment, r, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, environmentID).Execute()
+func CheckParentEnvironmentDestroy(ctx context.Context, apiClient *pingone.APIClient, environmentID string) (bool, error) {
+	environmentIdUuid, err := uuid.Parse(environmentID)
+	if err != nil {
+		return false, fmt.Errorf("unable to parse environment id '%s' as uuid: %v", environmentID, err)
+	}
+
+	environment, r, err := apiClient.EnvironmentsApi.GetEnvironmentById(ctx, environmentIdUuid).Execute()
 
 	destroyed, err := CheckForResourceDestroy(r, err)
 	if err != nil {
@@ -434,18 +413,12 @@ func CheckParentEnvironmentDestroy(ctx context.Context, apiClient *management.AP
 	if destroyed {
 		return destroyed, nil
 	} else {
-		if environment != nil && environment.Type == management.ENUMENVIRONMENTTYPE_PRODUCTION {
+		if environment != nil && environment.Type == pingone.ENVIRONMENTTYPEVALUE_PRODUCTION {
 			return true, nil
 		} else {
 			return false, nil
 		}
 	}
-}
-
-func CheckParentUserDestroy(ctx context.Context, apiClient *management.APIClient, environmentID, userID string) (bool, error) {
-	_, r, err := apiClient.UsersApi.ReadUser(ctx, environmentID, userID).Execute()
-
-	return CheckForResourceDestroy(r, err)
 }
 
 func CheckForResourceDestroy(r *http.Response, err error) (bool, error) {

@@ -10,12 +10,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-mux/tf5to6server"
 	"github.com/hashicorp/terraform-plugin-mux/tf6muxserver"
 	"github.com/pingidentity/terraform-provider-pingone/internal/provider/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/provider/frameworklegacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/provider/sdkv2"
 )
 
 func ProviderServerFactoryV6(ctx context.Context, version string) (func() tfprotov6.ProviderServer, error) {
 
 	p1V5Provider := sdkv2.New(version)()
+	p1V6ProviderLegacySdk := frameworklegacysdk.New(version)()
 	p1V6Provider := framework.New(version)()
 
 	upgradedp1V5Provider, err := tf5to6server.UpgradeServer(
@@ -31,6 +33,7 @@ func ProviderServerFactoryV6(ctx context.Context, version string) (func() tfprot
 		func() tfprotov6.ProviderServer {
 			return upgradedp1V5Provider
 		},
+		providerserver.NewProtocol6(p1V6ProviderLegacySdk),
 		providerserver.NewProtocol6(p1V6Provider),
 	}
 

@@ -9,6 +9,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/sso"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -125,7 +126,7 @@ data "pingone_flow_policies" "%[2]s" {
     davinci_application_flow_policy.%[2]s-2,
   ]
 }
-`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), resourceName, filter)
+`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), resourceName, filter)
 }
 
 func testAccFlowPoliciesDataSourceConfig_ByDataFilters(environmentName, licenseID, resourceName string) string {
@@ -146,7 +147,7 @@ data "pingone_flow_policies" "%[2]s" {
     davinci_application_flow_policy.%[2]s-1,
     davinci_application_flow_policy.%[2]s-2,
   ]
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), resourceName)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), resourceName)
 }
 
 func testAccFlowPoliciesDataSourceConfig_NotFound(resourceName, filter string) string {

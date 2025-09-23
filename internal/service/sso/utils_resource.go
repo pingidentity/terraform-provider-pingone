@@ -10,26 +10,26 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
 func fetchResourceFromID(ctx context.Context, apiClient *management.APIClient, environmentId, resourceId string, warnIfNotFound bool) (*management.Resource, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	errorFunction := framework.DefaultCustomError
+	errorFunction := legacysdk.DefaultCustomError
 
 	if warnIfNotFound {
-		errorFunction = framework.CustomErrorResourceNotFoundWarning
+		errorFunction = legacysdk.CustomErrorResourceNotFoundWarning
 	}
 
 	var resource *management.Resource
-	diags.Append(framework.ParseResponse(
+	diags.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := apiClient.ResourcesApi.ReadOneResource(ctx, environmentId, resourceId).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentId, fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentId, fO, fR, fErr)
 		},
 		"ReadOneResource",
 		errorFunction,
@@ -135,14 +135,14 @@ func fetchResourceByType(ctx context.Context, apiClient *management.APIClient, e
 func fetchResources(ctx context.Context, apiClient *management.APIClient, environmentId string, warnIfNotFound bool) ([]management.EntityArrayEmbeddedResourcesInner, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	errorFunction := framework.DefaultCustomError
+	errorFunction := legacysdk.DefaultCustomError
 	if warnIfNotFound {
-		errorFunction = framework.CustomErrorResourceNotFoundWarning
+		errorFunction = legacysdk.CustomErrorResourceNotFoundWarning
 	}
 
 	// Run the API call
 	var resources []management.EntityArrayEmbeddedResourcesInner
-	diags.Append(framework.ParseResponse(
+	diags.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
@@ -154,7 +154,7 @@ func fetchResources(ctx context.Context, apiClient *management.APIClient, enviro
 
 			for pageCursor, err := range pagedIterator {
 				if err != nil {
-					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentId, nil, pageCursor.HTTPResponse, err)
+					return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentId, nil, pageCursor.HTTPResponse, err)
 				}
 
 				if initialHttpResponse == nil {
