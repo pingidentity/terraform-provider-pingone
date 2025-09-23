@@ -23,19 +23,26 @@ func TestAccSchemaDataSource_ByNameFull(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSchemaDataSourceConfig_ByNameFull(resourceName, "User"),
+				Config: testAccSchemaDataSourceConfig_ByNameFull(resourceName, "User", false),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "schema_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(dataSourceFullName, "name", "User"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "description"),
+				),
+			},
+			{
+				Config: testAccSchemaDataSourceConfig_ByNameFull(resourceName, "User", true),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(dataSourceFullName, "name", "User"),
 				),
 			},
 		},
@@ -53,7 +60,7 @@ func TestAccSchemaDataSource_ByIDFull(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -81,7 +88,7 @@ func TestAccSchemaDataSource_NotFound(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -98,15 +105,22 @@ func TestAccSchemaDataSource_NotFound(t *testing.T) {
 	})
 }
 
-func testAccSchemaDataSourceConfig_ByNameFull(resourceName, name string) string {
+func testAccSchemaDataSourceConfig_ByNameFull(resourceName, name string, insensitivityCheck bool) string {
+
+	// If insensitivityCheck is true, alter the case of the name
+	nameComparator := name
+	if insensitivityCheck {
+		nameComparator = acctest.AlterStringCasing(nameComparator)
+	}
+
 	return fmt.Sprintf(`
 		%[1]s
 
 data "pingone_schema" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
-  name = "%[3]s"
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+  name = "%[4]s"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, nameComparator)
 }
 
 func testAccSchemaDataSourceConfig_ByIDFull(resourceName, name string) string {

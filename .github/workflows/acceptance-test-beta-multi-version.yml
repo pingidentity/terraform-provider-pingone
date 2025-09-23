@@ -1,13 +1,6 @@
-# This GitHub action runs your tests for each commit push and/or PR. Optionally
-# you can turn it on using a cron schedule for regular testing.
-#
-name: Multi-version Acceptance Tests (Feature Flagged)
+name: Multi-version Acceptance Tests (Beta)
 on:
   workflow_dispatch:
-  # For systems with an upstream API that could drift unexpectedly (like most SaaS systems, etc.),
-  # we recommend testing at a regular interval not necessarily tied to code changes. This will 
-  # ensure you are alerted to something breaking due to an API change, even if the code did not
-  # change.
   schedule:
     - cron: '0 6 14,28 * *'
 jobs:
@@ -19,10 +12,10 @@ jobs:
  
     steps:
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod'
           cache: true
@@ -34,7 +27,7 @@ jobs:
 
       - name: Build
         run: |
-          make build
+          make build BETA=true
 
   # run acceptance tests in a matrix with Terraform core versions
   test:
@@ -43,7 +36,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      FEATURE_FLAG: DAVINCI
+      TESTACC_BETA: true
       PINGONE_TESTING_PROVIDER_VERSION: test
       PINGONE_CLIENT_ID: ${{ vars.PINGONE_PROD_EU_FF_CLIENT_ID_CLIENT_SECRET_BASIC }}
       PINGONE_CLIENT_SECRET: ${{ secrets.PINGONE_PROD_EU_FF_CLIENT_SECRET_CLIENT_SECRET_BASIC }}
@@ -63,10 +56,10 @@ jobs:
 
     steps:
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod'
           cache: true
@@ -88,14 +81,14 @@ jobs:
       - name: TF acceptance tests
         timeout-minutes: 45
         run: |
-          make testacc
+          make testacc BETA=true
 
       - name: Sweep to clean up
         run: |
           make sweep
 
   onfailure:
-    if: ${{ failure() }}
+    if: ${{ failure() && github.event_name == 'schedule' }}
     needs: [build, test]
     name: Send failure webhook
     runs-on: ubuntu-latest

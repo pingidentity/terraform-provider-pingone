@@ -1,0 +1,63 @@
+```release-note:bug
+`data-source/pingone_agreement`: Corrected lookup by name to be case insensitive.
+```
+
+```release-note:bug
+`data-source/pingone_certificate`: Corrected lookup by name to be case insensitive.
+```
+
+```release-note:bug
+`data-source/pingone_environment`: Corrected lookup by name to be case insensitive.
+```
+
+```release-note:bug
+`data-source/pingone_gateway`: Corrected lookup by name to be case insensitive.
+```
+
+```release-note:bug
+`data-source/pingone_organization`: Corrected lookup by name to be case insensitive.
+```
+
+```release-note:bug
+`data-source/pingone_trusted_email_domain`: Corrected lookup by domain_name to be case insensitive.
+```
+
+```release-note:bug
+`data-source/pingone_digital_wallet_application`: Corrected lookup by name to be case insensitive.
+```
+
+```release-note:bug
+`data-source/pingone_application`: Corrected lookup by name to be case insensitive.
+```
+
+```release-note:bug
+`data-source/pingone_group`: Corrected lookup by name to be case insensitive.
+```
+
+```release-note:bug
+`data-source/pingone_password_policy`: Corrected lookup by name to be case insensitive.
+```
+
+```release-note:bug
+`data-source/pingone_population`: Corrected lookup by name to be case insensitive.
+```
+
+```release-note:bug
+`data-source/pingone_resource_attribute`: Corrected lookup by name to be case insensitive.
+```
+
+```release-note:bug
+`data-source/pingone_schema`: Corrected lookup by name to be case insensitive.
+```
+
+```release-note:bug
+`data-source/pingone_user`: Corrected lookup by username or email to be case insensitive.
+```
+
+```release-note:bug
+`data-source/pingone_verify_policy`: Corrected lookup by name to be case insensitive.
+```
+
+```release-note:bug
+`data-source/pingone_verify_voice_phrase`: Corrected lookup by display_name to be case insensitive.
+```

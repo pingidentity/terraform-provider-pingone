@@ -41,8 +41,7 @@ func TestAccFIDO2Policy_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
-
+			acctest.PreCheckNoBeta(t)
 			p1Client = acctestlegacysdk.PreCheckTestClient(ctx, t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -94,7 +93,7 @@ func TestAccFIDO2Policy_NewEnv(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             mfa.FIDO2Policy_CheckDestroy,
@@ -143,6 +142,8 @@ func TestAccFIDO2Policy_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "user_display_name_attributes.attributes.1.sub_attributes.0.name", "given"),
 		resource.TestCheckResourceAttr(resourceFullName, "user_display_name_attributes.attributes.1.sub_attributes.1.name", "family"),
 		resource.TestCheckResourceAttr(resourceFullName, "user_display_name_attributes.attributes.2.name", "username"),
+		resource.TestCheckResourceAttr(resourceFullName, "user_presence_timeout.duration", "60"),
+		resource.TestCheckResourceAttr(resourceFullName, "user_presence_timeout.time_unit", "SECONDS"),
 		resource.TestCheckResourceAttr(resourceFullName, "user_verification.enforce_during_authentication", "true"),
 		resource.TestCheckResourceAttr(resourceFullName, "user_verification.option", "REQUIRED"),
 	)
@@ -164,6 +165,8 @@ func TestAccFIDO2Policy_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "relying_party_id", "ping-devops.com"),
 		resource.TestCheckResourceAttr(resourceFullName, "user_display_name_attributes.attributes.#", "1"),
 		resource.TestCheckResourceAttr(resourceFullName, "user_display_name_attributes.attributes.0.name", "username"),
+		resource.TestCheckResourceAttr(resourceFullName, "user_presence_timeout.duration", "2"),
+		resource.TestCheckResourceAttr(resourceFullName, "user_presence_timeout.time_unit", "MINUTES"),
 		resource.TestCheckResourceAttr(resourceFullName, "user_verification.enforce_during_authentication", "false"),
 		resource.TestCheckResourceAttr(resourceFullName, "user_verification.option", "DISCOURAGED"),
 	)
@@ -172,7 +175,7 @@ func TestAccFIDO2Policy_Full(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             mfa.FIDO2Policy_CheckDestroy,
@@ -240,22 +243,26 @@ func TestAccFIDO2Policy_Errors(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             mfa.FIDO2Policy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccFIDO2PolicyConfig_ConflictedOptions_1(resourceName, name),
+				Config:      testAccFIDO2PolicyConfig_ConflictedOptions_attestationRequirements(resourceName, name),
 				ExpectError: regexp.MustCompile(`Invalid argument combination`),
 			},
 			{
-				Config:      testAccFIDO2PolicyConfig_ConflictedOptions_2(resourceName, name),
+				Config:      testAccFIDO2PolicyConfig_ConflictedOptions_mdsAuthenticatorsRequirements(resourceName, name),
 				ExpectError: regexp.MustCompile(`Invalid argument combination`),
 			},
 			{
-				Config:      testAccFIDO2PolicyConfig_ConflictedOptions_3(resourceName, name),
+				Config:      testAccFIDO2PolicyConfig_ConflictedOptions_userDisplayNameAttributes(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid Attribute Value`),
+			},
+			{
+				Config:      testAccFIDO2PolicyConfig_ConflictedOptions_userPresenceTimeout(resourceName, name),
 				ExpectError: regexp.MustCompile(`Invalid Attribute Value`),
 			},
 		},
@@ -274,7 +281,7 @@ func TestAccFIDO2Policy_BadParameters(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             mfa.FIDO2Policy_CheckDestroy,
@@ -404,6 +411,11 @@ resource "pingone_mfa_fido2_policy" "%[2]s" {
     ]
   }
 
+  user_presence_timeout = {
+    duration  = 60
+    time_unit = "SECONDS"
+  }
+
   user_verification = {
     enforce_during_authentication = true
     option                        = "REQUIRED"
@@ -455,7 +467,7 @@ resource "pingone_mfa_fido2_policy" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccFIDO2PolicyConfig_ConflictedOptions_1(resourceName, name string) string {
+func testAccFIDO2PolicyConfig_ConflictedOptions_attestationRequirements(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -498,7 +510,7 @@ resource "pingone_mfa_fido2_policy" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccFIDO2PolicyConfig_ConflictedOptions_2(resourceName, name string) string {
+func testAccFIDO2PolicyConfig_ConflictedOptions_mdsAuthenticatorsRequirements(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -547,7 +559,7 @@ resource "pingone_mfa_fido2_policy" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccFIDO2PolicyConfig_ConflictedOptions_3(resourceName, name string) string {
+func testAccFIDO2PolicyConfig_ConflictedOptions_userDisplayNameAttributes(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -580,6 +592,54 @@ resource "pingone_mfa_fido2_policy" "%[2]s" {
         name = "email"
       }
     ]
+  }
+
+  user_verification = {
+    enforce_during_authentication = false
+    option                        = "DISCOURAGED"
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccFIDO2PolicyConfig_ConflictedOptions_userPresenceTimeout(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_mfa_fido2_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  attestation_requirements = "NONE"
+  authenticator_attachment = "PLATFORM"
+
+  backup_eligibility = {
+    allow                         = false
+    enforce_during_authentication = true
+  }
+
+  device_display_name = "fidoPolicy.deviceDisplayName02"
+
+  discoverable_credentials = "DISCOURAGED"
+
+  mds_authenticators_requirements = {
+    enforce_during_authentication = false
+    option                        = "NONE"
+  }
+
+  relying_party_id = "ping-devops.com"
+
+  user_display_name_attributes = {
+    attributes = [
+      {
+        name = "username"
+      }
+    ]
+  }
+
+  user_presence_timeout = {
+    duration  = 2
+    time_unit = "SECONDS"
   }
 
   user_verification = {
