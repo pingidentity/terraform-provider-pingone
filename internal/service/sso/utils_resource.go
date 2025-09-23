@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
@@ -57,7 +58,7 @@ func fetchResourceFromName(ctx context.Context, apiClient *management.APIClient,
 
 		found := false
 		for _, resourceItem := range resources {
-			if resourceItem.Resource != nil && resourceItem.Resource.GetName() == resourceName {
+			if resourceItem.Resource != nil && strings.EqualFold(resourceItem.Resource.GetName(), resourceName) {
 				resource = *resourceItem.Resource
 				found = true
 				break

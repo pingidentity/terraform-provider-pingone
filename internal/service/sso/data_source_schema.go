@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -224,7 +225,7 @@ func fetchSchemaFromName(ctx context.Context, apiClient *management.APIClient, e
 
 					for _, schemaItem := range schemas {
 
-						if schemaItem.GetName() == schemaName {
+						if strings.EqualFold(schemaItem.GetName(), schemaName) {
 							return &schemaItem, pageCursor.HTTPResponse, nil
 						}
 					}

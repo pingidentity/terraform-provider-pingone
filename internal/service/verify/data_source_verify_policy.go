@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
@@ -872,7 +873,7 @@ func (r *VerifyPolicyDataSource) Read(ctx context.Context, req datasource.ReadRe
 
 						for _, verifyPolicyItem := range verifyPolicies {
 
-							if verifyPolicyItem.GetName() == data.Name.ValueString() {
+							if strings.EqualFold(verifyPolicyItem.GetName(), data.Name.ValueString()) {
 								return &verifyPolicyItem, pageCursor.HTTPResponse, nil
 							}
 						}
