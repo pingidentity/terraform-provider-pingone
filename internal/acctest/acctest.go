@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -80,12 +81,6 @@ type MinMaxChecks struct {
 	Full    resource.TestCheckFunc
 }
 
-type EnumFeatureFlag string
-
-const (
-	ENUMFEATUREFLAG_DAVINCI EnumFeatureFlag = "DAVINCI"
-)
-
 func PreCheckClient(t *testing.T) {
 	if v := os.Getenv("PINGONE_CLIENT_ID"); v == "" {
 		t.Fatal("PINGONE_CLIENT_ID is missing and must be set")
@@ -104,13 +99,15 @@ func PreCheckClient(t *testing.T) {
 	}
 }
 
-func PreCheckNoFeatureFlag(t *testing.T) {
-	PreCheckFeatureFlag(t, "")
+func PreCheckNoBeta(t *testing.T) {
+	if v := os.Getenv("TESTACC_BETA"); v == "true" {
+		t.Skip("Skipping test because TESTACC_BETA is set to true")
+	}
 }
 
-func PreCheckFeatureFlag(t *testing.T, flag EnumFeatureFlag) {
-	if v := os.Getenv("FEATURE_FLAG"); v != string(flag) {
-		t.Skipf("Skipping feature flag test.  Flag required: \"%s\"", string(flag))
+func PreCheckBeta(t *testing.T) {
+	if v := os.Getenv("TESTACC_BETA"); v != "true" {
+		t.Skip("Skipping test because TESTACC_BETA is not set to true")
 	}
 }
 
@@ -157,6 +154,12 @@ func PreCheckDomainVerification(t *testing.T) {
 
 	if v := os.Getenv("PINGONE_VERIFIED_EMAIL_DOMAIN"); v == "" {
 		t.Fatal("PINGONE_VERIFIED_EMAIL_DOMAIN is missing and must be set")
+	}
+}
+
+func PreCheckSupportsRegion(t *testing.T, supportedRegionCodes []string) {
+	if v := os.Getenv("PINGONE_REGION_CODE"); !slices.Contains(supportedRegionCodes, v) {
+		t.Skipf("Test not supported in the %s region", v)
 	}
 }
 
@@ -394,13 +397,6 @@ func AgreementSandboxEnvironment() string {
 		}`
 }
 
-func DaVinciFlowPolicySandboxEnvironment() string {
-	return `
-		data "pingone_environment" "davinci_test" {
-			name = "tf-testacc-static-davinci-test"
-		}`
-}
-
 func CheckParentEnvironmentDestroy(ctx context.Context, apiClient *pingone.APIClient, environmentID string) (bool, error) {
 	environmentIdUuid, err := uuid.Parse(environmentID)
 	if err != nil {
@@ -445,4 +441,28 @@ func CheckForResourceDestroyCustomHTTPCode(r *http.Response, err error, customHt
 	}
 
 	return false, nil
+}
+
+// AlterStringCasing alternates the case of alphabetic characters in a string for testing purposes.
+// It returns a string where even-indexed characters (0, 2, 4, etc.) are converted to uppercase
+// and odd-indexed characters (1, 3, 5, etc.) are converted to lowercase. Non-alphabetic characters
+// remain unchanged in their original positions.
+// The strInput parameter must be a valid string that may contain any Unicode characters.
+// This function is primarily used in acceptance tests to create case-insensitive string comparisons
+// and verify that data source filters work correctly regardless of character casing.
+// No external dependencies or environment variables are required for this function to operate.
+func AlterStringCasing(strInput string) string {
+	runes := []rune(strInput)
+	for i := range runes {
+		if i%2 == 0 {
+			if runes[i] >= 'a' && runes[i] <= 'z' {
+				runes[i] = runes[i] - ('a' - 'A')
+			}
+		} else {
+			if runes[i] >= 'A' && runes[i] <= 'Z' {
+				runes[i] = runes[i] + ('a' - 'A')
+			}
+		}
+	}
+	return string(runes)
 }

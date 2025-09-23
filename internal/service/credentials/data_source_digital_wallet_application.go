@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -250,7 +251,7 @@ func (r *DigitalWalletApplicationDataSource) Read(ctx context.Context, req datas
 
 						for _, digitalWalletAppItem := range digitalWalletApps {
 
-							if digitalWalletAppItem.GetName() == data.Name.ValueString() {
+							if strings.EqualFold(digitalWalletAppItem.GetName(), data.Name.ValueString()) {
 								return &digitalWalletAppItem, pageCursor.HTTPResponse, nil
 							}
 						}

@@ -32,7 +32,7 @@ func TestAccApplicationDataSource_OIDCAppByID(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -77,14 +77,33 @@ func TestAccApplicationDataSource_OIDCAppByName(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationDataSource_OIDCAppByName(resourceName, name, image),
+				Config: testAccApplicationDataSource_OIDCAppByName(resourceName, name, image, false),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "environment_id", resourceFullName, "environment_id"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "name", resourceFullName, "name"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "description", resourceFullName, "description"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "enabled", resourceFullName, "enabled"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "tags", resourceFullName, "tags"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "login_page_url", resourceFullName, "login_page_url"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "icon", resourceFullName, "icon"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "access_control_role_type", resourceFullName, "access_control_role_type"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "access_control_group_options", resourceFullName, "access_control_group_options"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "oidc_options", resourceFullName, "oidc_options"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "saml_options", resourceFullName, "saml_options"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "external_link_options", resourceFullName, "external_link_options"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "hidden_from_app_portal", resourceFullName, "hidden_from_app_portal"),
+				),
+			},
+			{
+				Config: testAccApplicationDataSource_OIDCAppByName(resourceName, name, image, true),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "environment_id", resourceFullName, "environment_id"),
@@ -122,7 +141,7 @@ func TestAccApplicationDataSource_ExternalLinkAppByID(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -164,7 +183,7 @@ func TestAccApplicationDataSource_ExternalLinkAppByName(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -217,7 +236,7 @@ func TestAccApplicationDataSource_SAMLAppByID(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 			acctest.PreCheckPKCS7Cert(t)
 			acctest.PreCheckPEMCert(t)
 		},
@@ -261,7 +280,7 @@ func TestAccApplicationDataSource_SAMLAppByName(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -311,7 +330,7 @@ func TestAccApplicationDataSource_WSFedAppByID(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -338,7 +357,7 @@ func TestAccApplicationDataSource_WSFedAppByName(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -362,7 +381,7 @@ func TestAccApplicationDataSource_FailureChecks(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -465,7 +484,14 @@ data "pingone_application" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
 }
 
-func testAccApplicationDataSource_OIDCAppByName(resourceName, name, image string) string {
+func testAccApplicationDataSource_OIDCAppByName(resourceName, name, image string, insensitivityCheck bool) string {
+
+	// If insensitivityCheck is true, alter the case of the name
+	nameComparator := name
+	if insensitivityCheck {
+		nameComparator = acctest.AlterStringCasing(nameComparator)
+	}
+
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -544,10 +570,10 @@ resource "pingone_application" "%[2]s" {
 }
 data "pingone_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s"
+  name           = "%[5]s"
 
   depends_on = [pingone_application.%[2]s]
-}`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, image, nameComparator)
 }
 
 func testAccApplicationDataSource_ExternalLinkAppByID(resourceName, name, image string) string {

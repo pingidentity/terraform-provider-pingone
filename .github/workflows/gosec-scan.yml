@@ -18,7 +18,7 @@ jobs:
       GO111MODULE: on
     steps:
       - name: Checkout Source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Run Gosec Security Scanner
         uses: securego/gosec@master
         with:
@@ -31,7 +31,7 @@ jobs:
           sarif_file: results.sarif
 
   onfailure:
-    if: ${{ failure() }}
+    if: ${{ failure() && github.event_name == 'schedule' }}
     needs: [tests]
     name: Send failure webhook
     runs-on: ubuntu-latest

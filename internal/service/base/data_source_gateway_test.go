@@ -24,7 +24,7 @@ func TestAccGatewayDataSource_FindGatewayAll(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.Gateway_CheckDestroy,
@@ -43,7 +43,7 @@ func TestAccGatewayDataSource_FindGatewayAll(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccGatewayDataSource_FindGatewayByName(resourceName, name),
+				Config: testAccGatewayDataSource_FindGatewayByName(resourceName, name, false),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -54,6 +54,14 @@ func TestAccGatewayDataSource_FindGatewayAll(t *testing.T) {
 
 					resource.TestCheckResourceAttr(dataSourceFullName, "enabled", "false"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "type", "API_GATEWAY_INTEGRATION"),
+				),
+			},
+			// Case insensitivity check
+			{
+				Config: testAccGatewayDataSource_FindGatewayByName(resourceName, name, true),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(dataSourceFullName, "name", name),
 				),
 			},
 		},
@@ -72,7 +80,7 @@ func TestAccGatewayDataSource_FindRADIUSGatewayByID(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.Gateway_CheckDestroy,
@@ -119,14 +127,14 @@ func TestAccGatewayDataSource_FindRADIUSGatewayByName(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.Gateway_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccGatewayDataSource_FindRADIUSGatewayByName(resourceName, name),
+				Config: testAccGatewayDataSource_FindRADIUSGatewayByName(resourceName, name, false),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -142,6 +150,14 @@ func TestAccGatewayDataSource_FindRADIUSGatewayByName(t *testing.T) {
 						"ip":            "127.0.0.3",
 						"shared_secret": "",
 					}),
+				),
+			},
+			// Case insensitivity check
+			{
+				Config: testAccGatewayDataSource_FindRADIUSGatewayByName(resourceName, name, true),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(dataSourceFullName, "name", name),
 				),
 			},
 		},
@@ -160,7 +176,7 @@ func TestAccGatewayDataSource_FindLDAPGatewayByID(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.Gateway_CheckDestroy,
@@ -230,14 +246,14 @@ func TestAccGatewayDataSource_FindLDAPGatewayByName(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.Gateway_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccGatewayDataSource_FindLDAPGatewayByName(resourceName, name),
+				Config: testAccGatewayDataSource_FindLDAPGatewayByName(resourceName, name, false),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -280,6 +296,14 @@ func TestAccGatewayDataSource_FindLDAPGatewayByName(t *testing.T) {
 					resource.TestCheckResourceAttr(dataSourceFullName, "user_types.User Set 1.update_user_on_successful_authentication", "false"),
 				),
 			},
+			// Case insensitivity check
+			{
+				Config: testAccGatewayDataSource_FindLDAPGatewayByName(resourceName, name, true),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(dataSourceFullName, "name", name),
+				),
+			},
 		},
 	})
 }
@@ -303,7 +327,14 @@ data "pingone_gateway" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccGatewayDataSource_FindGatewayByName(resourceName, name string) string {
+func testAccGatewayDataSource_FindGatewayByName(resourceName, name string, insensitivityCheck bool) string {
+
+	// If insensitivityCheck is true, alter the case of the name
+	nameComparator := name
+	if insensitivityCheck {
+		nameComparator = acctest.AlterStringCasing(nameComparator)
+	}
+
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -317,10 +348,10 @@ resource "pingone_gateway" "%[2]s" {
 
 data "pingone_gateway" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s"
+  name           = "%[4]s"
 
   depends_on = [pingone_gateway.%[2]s]
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, nameComparator)
 }
 
 func testAccGatewayDataSource_FindRADIUSGatewayByID(resourceName, name string) string {
@@ -355,7 +386,14 @@ data "pingone_gateway" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccGatewayDataSource_FindRADIUSGatewayByName(resourceName, name string) string {
+func testAccGatewayDataSource_FindRADIUSGatewayByName(resourceName, name string, insensitivityCheck bool) string {
+
+	// If insensitivityCheck is true, alter the case of the name
+	nameComparator := name
+	if insensitivityCheck {
+		nameComparator = acctest.AlterStringCasing(nameComparator)
+	}
+
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -378,10 +416,10 @@ resource "pingone_gateway" "%[2]s" {
 
 data "pingone_gateway" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s"
+  name           = "%[4]s"
 
   depends_on = [pingone_gateway.%[2]s]
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, nameComparator)
 }
 
 func testAccGatewayDataSource_FindLDAPGatewayByID(resourceName, name string) string {
@@ -486,7 +524,14 @@ data "pingone_gateway" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccGatewayDataSource_FindLDAPGatewayByName(resourceName, name string) string {
+func testAccGatewayDataSource_FindLDAPGatewayByName(resourceName, name string, insensitivityCheck bool) string {
+
+	// If insensitivityCheck is true, alter the case of the name
+	nameComparator := name
+	if insensitivityCheck {
+		nameComparator = acctest.AlterStringCasing(nameComparator)
+	}
+
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -567,8 +612,8 @@ resource "pingone_gateway" "%[2]s" {
 
 data "pingone_gateway" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s"
+  name           = "%[4]s"
 
   depends_on = [pingone_gateway.%[2]s]
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, nameComparator)
 }
