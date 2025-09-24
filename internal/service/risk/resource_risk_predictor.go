@@ -41,6 +41,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	boolvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/boolvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	objectplanmodifierinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectplanmodifier"
 	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -1663,7 +1664,7 @@ func (r *RiskPredictorResource) Configure(ctx context.Context, req resource.Conf
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -1709,12 +1710,12 @@ func (r *RiskPredictorResource) Create(ctx context.Context, req resource.CreateR
 	// Run the API call
 	var response *risk.RiskPredictor
 	if predefinedPredictorId == nil {
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
 				fO, fR, fErr := r.Client.RiskAPIClient.RiskAdvancedPredictorsApi.CreateRiskPredictor(ctx, plan.EnvironmentId.ValueString()).RiskPredictor(*riskPredictor).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"CreateRiskPredictor",
 			riskPredictorCreateUpdateCustomErrorHandler,
@@ -1722,12 +1723,12 @@ func (r *RiskPredictorResource) Create(ctx context.Context, req resource.CreateR
 			&response,
 		)...)
 	} else {
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
 				fO, fR, fErr := r.Client.RiskAPIClient.RiskAdvancedPredictorsApi.UpdateRiskPredictor(ctx, plan.EnvironmentId.ValueString(), *predefinedPredictorId).RiskPredictor(*riskPredictor).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"UpdateRiskPredictor",
 			riskPredictorCreateUpdateCustomErrorHandler,
@@ -1765,15 +1766,15 @@ func (r *RiskPredictorResource) Read(ctx context.Context, req resource.ReadReque
 
 	// Run the API call
 	var response *risk.RiskPredictor
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.RiskAPIClient.RiskAdvancedPredictorsApi.ReadOneRiskPredictor(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneRiskPredictor",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
@@ -1817,12 +1818,12 @@ func (r *RiskPredictorResource) Update(ctx context.Context, req resource.UpdateR
 
 	// Run the API call
 	var response *risk.RiskPredictor
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.RiskAPIClient.RiskAdvancedPredictorsApi.UpdateRiskPredictor(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).RiskPredictor(*riskPredictor).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateRiskPredictor",
 		riskPredictorCreateUpdateCustomErrorHandler,
@@ -1859,15 +1860,15 @@ func (r *RiskPredictorResource) Delete(ctx context.Context, req resource.DeleteR
 
 	if data.Deletable.ValueBool() {
 		// Run the API call
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
 				fR, fErr := r.Client.RiskAPIClient.RiskAdvancedPredictorsApi.DeleteRiskAdvancedPredictor(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 			},
 			"DeleteRiskAdvancedPredictor",
-			framework.CustomErrorResourceNotFoundWarning,
+			legacysdk.CustomErrorResourceNotFoundWarning,
 			nil,
 			nil,
 		)...)
@@ -1879,7 +1880,7 @@ func (r *RiskPredictorResource) Delete(ctx context.Context, req resource.DeleteR
 		if v, ok := riskservicehelpers.BootstrapPredictorValues[data.CompactName.ValueString()]; ok {
 
 			// Run the API call
-			resp.Diagnostics.Append(framework.ParseResponse(
+			resp.Diagnostics.Append(legacysdk.ParseResponse(
 				ctx,
 
 				func() (any, *http.Response, error) {
@@ -1887,7 +1888,7 @@ func (r *RiskPredictorResource) Delete(ctx context.Context, req resource.DeleteR
 					return nil, r, err
 				},
 				"UpdateRiskPredictor",
-				framework.CustomErrorResourceNotFoundWarning,
+				legacysdk.CustomErrorResourceNotFoundWarning,
 				nil,
 				nil,
 			)...)
@@ -1963,7 +1964,7 @@ func (p *riskPredictorResourceModel) expand(ctx context.Context, apiClient *risk
 	var riskPredictorCommonData *risk.RiskPredictorCommon
 
 	// Check if this is attempting to overwrite an existing predictor.  We'll only allows overwriting where deletable = false
-	diags.Append(framework.ParseResponse(
+	diags.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
@@ -1973,7 +1974,7 @@ func (p *riskPredictorResourceModel) expand(ctx context.Context, apiClient *risk
 
 			for pageCursor, err := range pagedIterator {
 				if err != nil {
-					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, managementApiClient, p.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+					return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, managementApiClient, p.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
 				}
 
 				if initialHttpResponse == nil {
@@ -2054,7 +2055,7 @@ func (p *riskPredictorResourceModel) expand(ctx context.Context, apiClient *risk
 			return nil, initialHttpResponse, nil
 		},
 		"ReadAllRiskPredictors",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&overwriteRiskPredictorId,
 	)...)

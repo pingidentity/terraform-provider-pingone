@@ -18,6 +18,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -159,7 +160,7 @@ func (r *ResourceSecretResource) Configure(ctx context.Context, req resource.Con
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -203,15 +204,15 @@ func (r *ResourceSecretResource) Create(ctx context.Context, req resource.Create
 	}
 
 	// Run the API call
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.ResourceClientSecretApi.UpdateResourceSecret(ctx, plan.EnvironmentId.ValueString(), plan.ResourceId.ValueString()).ResourceSecret(*resourceSecret).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateResourceSecret",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		nil,
 	)...)
@@ -220,15 +221,15 @@ func (r *ResourceSecretResource) Create(ctx context.Context, req resource.Create
 	}
 
 	var response *management.ResourceSecret
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.ResourceClientSecretApi.ReadResourceSecret(ctx, plan.EnvironmentId.ValueString(), plan.ResourceId.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadResourceSecret",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
@@ -262,15 +263,15 @@ func (r *ResourceSecretResource) Read(ctx context.Context, req resource.ReadRequ
 
 	// Run the API call
 	var response *management.ResourceSecret
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.ResourceClientSecretApi.ReadResourceSecret(ctx, data.EnvironmentId.ValueString(), data.ResourceId.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadResourceSecret",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
@@ -313,15 +314,15 @@ func (r *ResourceSecretResource) Update(ctx context.Context, req resource.Update
 	}
 
 	var response *management.ResourceSecret
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.ResourceClientSecretApi.UpdateResourceSecret(ctx, plan.EnvironmentId.ValueString(), plan.ResourceId.ValueString()).ResourceSecret(*resourceSecret).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateResourceSecret",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)

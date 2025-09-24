@@ -10,6 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
 )
 
@@ -30,7 +31,7 @@ func TestAccCustomDomainSSL_Full(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckCustomDomainSSL(t)
 		},
@@ -71,5 +72,5 @@ EOT
 %[6]s
 EOT
 
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, certificateFile, intermediateFile, privateKeyFile)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, certificateFile, intermediateFile, privateKeyFile)
 }

@@ -10,6 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 )
 
 func TestAccCertificateExportDataSource_ByIDFull(t *testing.T) {
@@ -32,7 +33,7 @@ func TestAccCertificateExportDataSource_ByIDFull(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckPKCS12Key(t)
 			acctest.PreCheckPKCS7Cert(t)
@@ -61,6 +62,7 @@ func TestAccCertificateExportDataSource_NotFound(t *testing.T) {
 		// PreCheck:                 func() {
 		// acctest.PreCheckNoTestAccFlaky(t)
 		// 			acctest.PreCheckClient(t)
+		//			acctest.PreCheckNoBeta(t)
 		// 			acctest.PreCheckNewEnvironment(t)
 		// 			acctest.PreCheckPKCS12Key(t)
 		//                         acctest.PreCheckPKCS7Cert(t)
@@ -98,7 +100,7 @@ data "pingone_certificate_export" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
   key_id = pingone_key.%[3]s.id
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, pkcs12, keystorePassword)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, pkcs12, keystorePassword)
 }
 
 func testAccCertificateExportDataSourceConfig_NotFoundByID(resourceName string) string {

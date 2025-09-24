@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -20,6 +21,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/filter"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
@@ -43,7 +45,7 @@ func (r *populationDataSource) Configure(ctx context.Context, req datasource.Con
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -264,7 +266,7 @@ func (r *populationDataSource) Read(ctx context.Context, req datasource.ReadRequ
 	}
 
 	// Run the API call
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
@@ -274,7 +276,7 @@ func (r *populationDataSource) Read(ctx context.Context, req datasource.ReadRequ
 
 			for pageCursor, err := range pagedIterator {
 				if err != nil {
-					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+					return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
 				}
 
 				if initialHttpResponse == nil {
@@ -284,10 +286,10 @@ func (r *populationDataSource) Read(ctx context.Context, req datasource.ReadRequ
 				if results, ok := pageCursor.EntityArray.Embedded.GetPopulationsOk(); ok {
 
 					for _, resultObj := range results {
-						if !data.Name.IsNull() && resultObj.GetName() == data.Name.ValueString() {
+						if !data.Name.IsNull() && strings.EqualFold(resultObj.GetName(), data.Name.ValueString()) {
 							return &resultObj, pageCursor.HTTPResponse, nil
 						}
-						if !data.PopulationId.IsNull() && resultObj.GetId() == data.PopulationId.ValueString() {
+						if !data.PopulationId.IsNull() && strings.EqualFold(resultObj.GetId(), data.PopulationId.ValueString()) {
 							return &resultObj, pageCursor.HTTPResponse, nil
 						}
 					}
@@ -297,7 +299,7 @@ func (r *populationDataSource) Read(ctx context.Context, req datasource.ReadRequ
 			return nil, initialHttpResponse, nil
 		},
 		"ReadAllPopulations",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&responseData,
 	)...)

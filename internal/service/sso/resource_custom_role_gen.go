@@ -25,6 +25,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -50,7 +51,7 @@ func (r *customRoleResource) Configure(ctx context.Context, req resource.Configu
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -315,15 +316,15 @@ func (r *customRoleResource) Create(ctx context.Context, req resource.CreateRequ
 	}
 
 	var responseData *management.CustomAdminRole
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.CustomAdminRolesApi.CreateCustomAdminRole(ctx, data.EnvironmentId.ValueString()).CustomAdminRole(*clientData).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateCustomAdminRole",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&responseData,
 	)...)
@@ -362,15 +363,15 @@ func (r *customRoleResource) Read(ctx context.Context, req resource.ReadRequest,
 
 	// Read API call logic
 	var responseData *management.CustomAdminRole
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.CustomAdminRolesApi.ReadOneCustomAdminRole(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneCustomAdminRole",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 		&responseData,
 	)...)
@@ -421,15 +422,15 @@ func (r *customRoleResource) Update(ctx context.Context, req resource.UpdateRequ
 	}
 
 	var responseData *management.CustomAdminRole
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.CustomAdminRolesApi.UpdateCustomAdminRole(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).CustomAdminRole(*clientData).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateCustomAdminRole",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		nil,
 		&responseData,
 	)...)
@@ -448,14 +449,14 @@ func (r *customRoleResource) Update(ctx context.Context, req resource.UpdateRequ
 			"err",
 		},
 		Refresh: func() (interface{}, string, error) {
-			resp.Diagnostics.Append(framework.ParseResponse(
+			resp.Diagnostics.Append(legacysdk.ParseResponse(
 				ctx,
 				func() (any, *http.Response, error) {
 					fO, fR, fErr := r.Client.ManagementAPIClient.CustomAdminRolesApi.ReadOneCustomAdminRole(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+					return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 				},
 				"ReadOneCustomAdminRole",
-				framework.CustomErrorResourceNotFoundWarning,
+				legacysdk.CustomErrorResourceNotFoundWarning,
 				sdk.DefaultCreateReadRetryable,
 				&responseData,
 			)...)
@@ -506,15 +507,15 @@ func (r *customRoleResource) Delete(ctx context.Context, req resource.DeleteRequ
 	}
 
 	// Delete API call logic
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fR, fErr := r.Client.ManagementAPIClient.CustomAdminRolesApi.DeleteCustomAdminRole(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteCustomAdminRole",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		nil,
 		nil,
 	)...)

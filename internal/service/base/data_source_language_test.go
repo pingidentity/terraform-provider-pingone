@@ -10,6 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
 )
 
@@ -29,7 +30,7 @@ func TestAccLanguageDataSource_ByNameFull(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.Language_CheckDestroy,
@@ -67,7 +68,7 @@ func TestAccLanguageDataSource_ByIDFull(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.Language_CheckDestroy,
@@ -105,7 +106,7 @@ func TestAccLanguageDataSource_SystemDefined(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.Language_CheckDestroy,
@@ -136,7 +137,7 @@ func TestAccLanguageDataSource_NotFound(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.Language_CheckDestroy,
@@ -176,7 +177,7 @@ data "pingone_language" "%[3]s" {
     pingone_language.%[3]s
   ]
 }
-`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, locale)
+`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, locale)
 }
 
 func testAccLanguageDataSourceConfig_ByIDFull(environmentName, licenseID, resourceName, locale string) string {
@@ -193,7 +194,7 @@ data "pingone_language" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
   language_id = pingone_language.%[3]s.id
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, locale)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, locale)
 }
 
 func testAccLanguageDataSourceConfig_SystemDefined(environmentName, licenseID, resourceName, locale string) string {
@@ -204,7 +205,7 @@ data "pingone_language" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
   locale = "%[4]s"
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, locale)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, locale)
 }
 
 func testAccLanguageDataSourceConfig_NotFoundByName(resourceName string) string {

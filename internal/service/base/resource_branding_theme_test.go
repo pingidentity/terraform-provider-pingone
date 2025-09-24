@@ -13,7 +13,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	baselegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base/legacysdk"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -40,9 +42,8 @@ func TestAccBrandingTheme_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
-
-			p1Client = acctest.PreCheckTestClient(ctx, t)
+			acctest.PreCheckNoBeta(t)
+			p1Client = acctestlegacysdk.PreCheckTestClient(ctx, t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.BrandingTheme_CheckDestroy,
@@ -67,7 +68,7 @@ func TestAccBrandingTheme_RemovalDrift(t *testing.T) {
 			},
 			{
 				PreConfig: func() {
-					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
+					baselegacysdk.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -93,7 +94,7 @@ func TestAccBrandingTheme_NewEnv(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.BrandingTheme_CheckDestroy,
@@ -127,7 +128,7 @@ func TestAccBrandingTheme_Full(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.BrandingTheme_CheckDestroy,
@@ -188,7 +189,7 @@ func TestAccBrandingTheme_Minimal(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.BrandingTheme_CheckDestroy,
@@ -237,7 +238,7 @@ func TestAccBrandingTheme_Change(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.BrandingTheme_CheckDestroy,
@@ -326,7 +327,7 @@ func TestAccBrandingTheme_BadParameters(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.BrandingTheme_CheckDestroy,
@@ -376,7 +377,7 @@ resource "pingone_branding_theme" "%[3]s" {
   link_text_color    = "#8A7F06"
   button_color       = "#0CFFFB"
 
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccBrandingThemeConfig_Full(resourceName, name, logo, background string) string {

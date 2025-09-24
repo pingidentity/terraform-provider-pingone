@@ -9,6 +9,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/credentials"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -30,7 +31,7 @@ func TestAccCredentialTypesDataSource_NoFilter(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             credentials.CredentialType_CheckDestroy,
@@ -70,7 +71,7 @@ func TestAccCredentialTypesDataSource_NotFound(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             credentials.CredentialType_CheckDestroy,
@@ -177,7 +178,7 @@ data "pingone_credential_types" "%[3]s" {
 
   depends_on = [pingone_credential_type.%[3]s-1, pingone_credential_type.%[3]s-2, pingone_credential_type.%[3]s-3]
 
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccCredentialTypesDataSource_NotFound(environmentName, licenseID, resourceName string) string {
@@ -187,5 +188,5 @@ func testAccCredentialTypesDataSource_NotFound(environmentName, licenseID, resou
 data "pingone_credential_types" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }

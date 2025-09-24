@@ -12,7 +12,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	baselegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base/legacysdk"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -36,10 +38,10 @@ func TestAccLanguageUpdate_RemovalDrift(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
 			acctest.PreCheckTestAccFlaky(t)
 
-			p1Client = acctest.PreCheckTestClient(ctx, t)
+			acctest.PreCheckNoBeta(t)
+			p1Client = acctestlegacysdk.PreCheckTestClient(ctx, t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.LanguageUpdate_CheckDestroy,
@@ -52,7 +54,7 @@ func TestAccLanguageUpdate_RemovalDrift(t *testing.T) {
 			},
 			{
 				PreConfig: func() {
-					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
+					baselegacysdk.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -76,7 +78,7 @@ func TestAccLanguageUpdate_Full(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.LanguageUpdate_CheckDestroy,
@@ -129,7 +131,7 @@ func TestAccLanguageUpdate_Minimal(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.LanguageUpdate_CheckDestroy,
@@ -166,7 +168,7 @@ func TestAccLanguageUpdate_SystemDefined(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.LanguageUpdate_CheckDestroy,
@@ -247,7 +249,7 @@ func TestAccLanguageUpdate_Change(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.LanguageUpdate_CheckDestroy,
@@ -320,7 +322,7 @@ func TestAccLanguageUpdate_BadParameters(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.LanguageUpdate_CheckDestroy,
@@ -368,7 +370,7 @@ resource "pingone_language_update" "%[3]s" {
   language_id = pingone_language.%[3]s.id
   enabled     = %[5]t
   default     = true
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, locale, enabled)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, locale, enabled)
 }
 
 func testAccLanguageUpdateConfig_Minimal(environmentName, licenseID, resourceName, locale string, enabled bool) string {
@@ -386,7 +388,7 @@ resource "pingone_language_update" "%[3]s" {
 
   language_id = pingone_language.%[3]s.id
   enabled     = %[5]t
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, locale, enabled)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, locale, enabled)
 }
 
 func testAccLanguageUpdateConfig_SystemDefined(environmentName, licenseID, resourceName, locale string, enabled, defaultValue bool) string {
@@ -405,5 +407,5 @@ resource "pingone_language_update" "%[3]s" {
   language_id = data.pingone_language.%[3]s.id
   enabled     = %[5]t
   default     = %[6]t
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, locale, enabled, defaultValue)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, locale, enabled, defaultValue)
 }

@@ -15,6 +15,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 )
 
 // Types
@@ -134,7 +135,7 @@ func (r *TrustedEmailDomainDKIMDataSource) Configure(ctx context.Context, req da
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -173,14 +174,14 @@ func (r *TrustedEmailDomainDKIMDataSource) Read(ctx context.Context, req datasou
 	var role *management.EmailDomainDKIMStatus
 
 	// Run the API call
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			return r.Client.ManagementAPIClient.TrustedEmailDomainsApi.ReadTrustedEmailDomainDKIMStatus(ctx, data.EnvironmentId.ValueString(), data.TrustedEmailDomainId.ValueString()).Execute()
 		},
 		"ReadTrustedEmailDomainDKIMStatus",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		nil,
 		&role,
 	)...)

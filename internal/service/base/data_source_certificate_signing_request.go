@@ -13,7 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
-	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -83,7 +83,7 @@ func certificateSigningExport(ctx context.Context, apiClient *management.APIClie
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := apiClient.CertificateManagementApi.ExportCSR(ctx, environmentID, keyID).Accept(exportFileType).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
 		},
 		"ExportCSR",
 		sdk.DefaultCustomError,

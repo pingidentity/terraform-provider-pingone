@@ -13,6 +13,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -77,7 +78,7 @@ func resourceGatewayCredentialCreate(ctx context.Context, d *schema.ResourceData
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := apiClient.GatewayCredentialsApi.CreateGatewayCredential(ctx, d.Get("environment_id").(string), d.Get("gateway_id").(string)).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"CreateGatewayCredential",
 		sdk.DefaultCustomError,
@@ -106,7 +107,7 @@ func resourceGatewayCredentialRead(ctx context.Context, d *schema.ResourceData, 
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := apiClient.GatewayCredentialsApi.ReadOneGatewayCredential(ctx, d.Get("environment_id").(string), d.Get("gateway_id").(string), d.Id()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOneGatewayCredential",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -149,7 +150,7 @@ func resourceGatewayCredentialDelete(ctx context.Context, d *schema.ResourceData
 
 		func() (any, *http.Response, error) {
 			fR, fErr := apiClient.GatewayCredentialsApi.DeleteGatewayCredential(ctx, d.Get("environment_id").(string), d.Get("gateway_id").(string), d.Id()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
 		},
 		"DeleteGatewayCredential",
 		sdk.CustomErrorResourceNotFoundWarning,

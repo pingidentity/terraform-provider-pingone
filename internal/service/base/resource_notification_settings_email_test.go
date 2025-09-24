@@ -12,7 +12,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	baselegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base/legacysdk"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -37,9 +39,8 @@ func TestAccNotificationSettingsEmail_SMTP_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
-
-			p1Client = acctest.PreCheckTestClient(ctx, t)
+			acctest.PreCheckNoBeta(t)
+			p1Client = acctestlegacysdk.PreCheckTestClient(ctx, t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.NotificationSettingsEmail_CheckDestroy,
@@ -52,7 +53,7 @@ func TestAccNotificationSettingsEmail_SMTP_RemovalDrift(t *testing.T) {
 			},
 			{
 				PreConfig: func() {
-					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
+					baselegacysdk.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -89,7 +90,7 @@ func TestAccNotificationSettingsEmail_SMTP_Full(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.NotificationSettingsEmail_CheckDestroy,
@@ -176,7 +177,7 @@ func TestAccNotificationSettingsEmail_SMTP_EmailSources(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.NotificationSettingsEmail_CheckDestroy,
@@ -233,7 +234,7 @@ func TestAccNotificationSettingsEmail_SMTP_BadParameters(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.NotificationSettingsEmail_CheckDestroy,
@@ -281,7 +282,7 @@ resource "pingone_notification_settings_email" "%[3]s" {
     email_address = "reply@pingidentity.com"
     name          = "Stubbed Reply To Address"
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
 func testAccNotificationSettingsEmail_SMTPConfig_FromFull(environmentName, licenseID, resourceName string) string {
@@ -300,7 +301,7 @@ resource "pingone_notification_settings_email" "%[3]s" {
     email_address = "noreply@pingidentity.com"
     name          = "Stubbed From Address"
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
 func testAccNotificationSettingsEmail_SMTPConfig_FromMinimal(environmentName, licenseID, resourceName string) string {
@@ -318,7 +319,7 @@ resource "pingone_notification_settings_email" "%[3]s" {
   from = {
     email_address = "noreply@pingidentity.com"
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
 func testAccNotificationSettingsEmail_SMTPConfig_ReplyToFull(environmentName, licenseID, resourceName string) string {
@@ -342,7 +343,7 @@ resource "pingone_notification_settings_email" "%[3]s" {
     email_address = "reply@pingidentity.com"
     name          = "Stubbed Reply To Address"
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
 func testAccNotificationSettingsEmail_SMTPConfig_ReplyToMinimal(environmentName, licenseID, resourceName string) string {
@@ -364,7 +365,7 @@ resource "pingone_notification_settings_email" "%[3]s" {
   reply_to = {
     email_address = "reply@pingidentity.com"
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
 func TestAccNotificationSettingsEmail_CustomProvider_RemovalDrift(t *testing.T) {
@@ -387,9 +388,8 @@ func TestAccNotificationSettingsEmail_CustomProvider_RemovalDrift(t *testing.T) 
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
-
-			p1Client = acctest.PreCheckTestClient(ctx, t)
+			acctest.PreCheckNoBeta(t)
+			p1Client = acctestlegacysdk.PreCheckTestClient(ctx, t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.NotificationSettingsEmail_CheckDestroy,
@@ -402,7 +402,7 @@ func TestAccNotificationSettingsEmail_CustomProvider_RemovalDrift(t *testing.T) 
 			},
 			{
 				PreConfig: func() {
-					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
+					baselegacysdk.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -491,7 +491,7 @@ func TestAccNotificationSettingsEmail_CustomProvider_GET(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.NotificationSettingsEmail_CheckDestroy,
@@ -563,7 +563,7 @@ resource "pingone_notification_settings_email" "%[3]s" {
       url = "https://api.pingidentity.com/send-email.apx?$${to}-$${message}"
     }
   ]
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
 func testAccNotificationSettingsEmail_CustomProviderConfig_GET_Full(environmentName, licenseID, resourceName string) string {
@@ -600,7 +600,7 @@ resource "pingone_notification_settings_email" "%[3]s" {
       url = "https://api.pingidentity.com/updated-send-email.aspx?$${to}-$${message}"
     }
   ]
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
 func TestAccNotificationSettingsEmail_CustomProvider_POST_NoKeyValuesBody(t *testing.T) {
@@ -684,7 +684,7 @@ func TestAccNotificationSettingsEmail_CustomProvider_POST_NoKeyValuesBody(t *tes
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.NotificationSettingsEmail_CheckDestroy,
@@ -756,7 +756,7 @@ resource "pingone_notification_settings_email" "%[3]s" {
       url = "https://api.pingidentity.com/send-email"
     }
   ]
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
 func testAccNotificationSettingsEmail_CustomProviderConfig_POST_NoKeyValuesBody_Full(environmentName, licenseID, resourceName string) string {
@@ -793,7 +793,7 @@ resource "pingone_notification_settings_email" "%[3]s" {
       url = "https://api.pingidentity.com/updated-send-email"
     }
   ]
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
 func TestAccNotificationSettingsEmail_CustomProvider_POST_KeyValuesBody(t *testing.T) {
@@ -878,7 +878,7 @@ func TestAccNotificationSettingsEmail_CustomProvider_POST_KeyValuesBody(t *testi
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.NotificationSettingsEmail_CheckDestroy,
@@ -951,7 +951,7 @@ resource "pingone_notification_settings_email" "%[3]s" {
       url  = "https://api.pingidentity.com/send-email"
     }
   ]
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
 func testAccNotificationSettingsEmail_CustomProviderConfig_POST_KeyValuesBody_Full(environmentName, licenseID, resourceName string) string {
@@ -989,7 +989,7 @@ resource "pingone_notification_settings_email" "%[3]s" {
       url  = "https://api.pingidentity.com/updated-send-email"
     }
   ]
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
 func TestAccNotificationSettingsEmail_CustomProvider_POST_RawBody(t *testing.T) {
@@ -1039,7 +1039,7 @@ func TestAccNotificationSettingsEmail_CustomProvider_POST_RawBody(t *testing.T) 
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.NotificationSettingsEmail_CheckDestroy,
@@ -1115,5 +1115,5 @@ EOF
       url  = "https://api.pingidentity.com/updated-send-email"
     }
   ]
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }

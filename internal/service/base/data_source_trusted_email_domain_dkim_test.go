@@ -10,6 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 )
 
 func TestAccTrustedEmailDomainDKIMDataSource_Full(t *testing.T) {
@@ -29,7 +30,7 @@ func TestAccTrustedEmailDomainDKIMDataSource_Full(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -59,7 +60,7 @@ func TestAccTrustedEmailDomainDKIMDataSource_NotFound(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -90,7 +91,7 @@ data "pingone_trusted_email_domain_dkim" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
   trusted_email_domain_id = pingone_trusted_email_domain.%[3]s.id
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, domainPrefix)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, domainPrefix)
 }
 
 func testAccTrustedEmailDomainDKIMDataSourceConfig_NotFoundByID(resourceName string) string {

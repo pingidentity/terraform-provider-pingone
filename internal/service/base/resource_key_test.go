@@ -12,7 +12,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	baselegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base/legacysdk"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -39,9 +41,8 @@ func TestAccKey_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
-
-			p1Client = acctest.PreCheckTestClient(ctx, t)
+			acctest.PreCheckNoBeta(t)
+			p1Client = acctestlegacysdk.PreCheckTestClient(ctx, t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.Key_CheckDestroy,
@@ -66,7 +67,7 @@ func TestAccKey_RemovalDrift(t *testing.T) {
 			},
 			{
 				PreConfig: func() {
-					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
+					baselegacysdk.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -92,7 +93,7 @@ func TestAccKey_Full(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.Key_CheckDestroy,
@@ -237,7 +238,7 @@ func TestAccKey_Minimal(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.Key_CheckDestroy,
@@ -286,7 +287,7 @@ func TestAccKey_PKCS12(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckPKCS12Key(t)
 			acctest.PreCheckPKCS12UnencryptedKey(t)
@@ -358,7 +359,7 @@ func TestAccKey_Change(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckPKCS12Key(t)
 		},
@@ -472,7 +473,7 @@ func TestAccKey_CustomCRL(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckPKCS12Key(t)
 		},
@@ -516,7 +517,7 @@ func TestAccKey_BadParameters(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.Key_CheckDestroy,
@@ -566,7 +567,7 @@ resource "pingone_key" "%[3]s" {
   issuer_dn       = "CN=My CA, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
   serial_number   = "1662023413215"
   validity_period = 3650
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, usage, defaultKey)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, usage, defaultKey)
 }
 
 func testAccKeyConfig_Minimal(environmentName, licenseID, resourceName, name string) string {
@@ -583,7 +584,7 @@ resource "pingone_key" "%[3]s" {
   subject_dn          = "CN=%[4]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
   usage_type          = "SIGNING"
   validity_period     = 365
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccKeyConfig_CustomCRL(environmentName, licenseID, resourceName, name string) string {
@@ -602,7 +603,7 @@ resource "pingone_key" "%[3]s" {
   validity_period     = 365
 
   custom_crl = "http://www.pingidentity.com/test.crl"
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccKeyConfig_CustomCRLIncorrectKeyType(environmentName, licenseID, resourceName, name string) string {
@@ -621,7 +622,7 @@ resource "pingone_key" "%[3]s" {
   validity_period     = 365
 
   custom_crl = "http://www.pingidentity.com/test.crl"
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccKeyConfig_PKCS12(environmentName, licenseID, resourceName, pkcs12, keystorePassword string) string {
@@ -638,7 +639,7 @@ EOT
   pkcs12_file_password = "%[5]s"
 
   usage_type = "SIGNING"
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, pkcs12, keystorePassword)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, pkcs12, keystorePassword)
 }
 
 func testAccKeyConfig_PKCS12Unencrypted(environmentName, licenseID, resourceName, pkcs12 string) string {
@@ -653,5 +654,5 @@ resource "pingone_key" "%[3]s" {
 EOT
 
   usage_type = "SIGNING"
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, pkcs12)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, pkcs12)
 }

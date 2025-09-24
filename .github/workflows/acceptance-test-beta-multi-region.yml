@@ -1,13 +1,6 @@
-# This GitHub action runs your tests for each commit push and/or PR. Optionally
-# you can turn it on using a cron schedule for regular testing.
-#
-name: Multi-region Acceptance Tests (Feature Flagged)
+name: Multi-region Acceptance Tests (Beta)
 on:
   workflow_dispatch:
-  # For systems with an upstream API that could drift unexpectedly (like most SaaS systems, etc.),
-  # we recommend testing at a regular interval not necessarily tied to code changes. This will 
-  # ensure you are alerted to something breaking due to an API change, even if the code did not
-  # change.
   schedule:
     - cron: '0 3 * * *'
 jobs:
@@ -21,7 +14,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod'
           cache: true
@@ -33,7 +26,7 @@ jobs:
 
       - name: Build
         run: |
-          make build
+          make build BETA=true
 
   prepare:
     name: Prepare ${{ matrix.region }}
@@ -45,7 +38,7 @@ jobs:
         region: [AP, CA, EU, NA, SG]
 
     env:
-      FEATURE_FLAG: DAVINCI
+      TESTACC_BETA: true
       PINGONE_TESTING_PROVIDER_VERSION: test
       PINGONE_CLIENT_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_CLIENT_ID_CLIENT_SECRET_BASIC', matrix.region)] }}
       PINGONE_CLIENT_SECRET: ${{ secrets[format('PINGONE_PROD_{0}_FF_CLIENT_SECRET_CLIENT_SECRET_BASIC', matrix.region)] }}
@@ -61,7 +54,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod'
           cache: true
@@ -73,7 +66,7 @@ jobs:
 
       - name: Sweep to prepare
         run: |
-          make sweep
+          make sweep BETA=true
 
   # run acceptance tests in a matrix with Terraform core versions and regions
   test:
@@ -86,12 +79,12 @@ jobs:
         region: [AP, CA, EU, NA, SG]
         # list whatever Terraform versions here you would like to support
         terraform:
-          - '1.11.*'
+          - '1.13.*'
       # If we have issues due to simultaneous tests across regions, max-parallel can be set to 1 to run sequentially
       #max-parallel: 1
 
     env:
-      FEATURE_FLAG: DAVINCI
+      TESTACC_BETA: true
       PINGONE_TESTING_PROVIDER_VERSION: test
       PINGONE_CLIENT_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_CLIENT_ID_CLIENT_SECRET_BASIC', matrix.region)] }}
       PINGONE_CLIENT_SECRET: ${{ secrets[format('PINGONE_PROD_{0}_FF_CLIENT_SECRET_CLIENT_SECRET_BASIC', matrix.region)] }}
@@ -107,7 +100,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod'
           cache: true
@@ -125,7 +118,7 @@ jobs:
       - name: TF acceptance tests
         timeout-minutes: 45
         run: |
-          make testacc
+          make testacc BETA=true
 
   cleanup:
     name: Clean up ${{ matrix.region }}
@@ -138,7 +131,7 @@ jobs:
         region: [AP, CA, EU, NA, SG]
 
     env:
-      FEATURE_FLAG: DAVINCI
+      TESTACC_BETA: true
       PINGONE_TESTING_PROVIDER_VERSION: test
       PINGONE_CLIENT_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_CLIENT_ID_CLIENT_SECRET_BASIC', matrix.region)] }}
       PINGONE_CLIENT_SECRET: ${{ secrets[format('PINGONE_PROD_{0}_FF_CLIENT_SECRET_CLIENT_SECRET_BASIC', matrix.region)] }}
@@ -154,7 +147,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod'
           cache: true
@@ -166,7 +159,7 @@ jobs:
 
       - name: Sweep to cleanup
         run: |
-          make sweep
+          make sweep BETA=true
 
   onfailure:
     if: ${{ failure() && github.event_name == 'schedule' }}

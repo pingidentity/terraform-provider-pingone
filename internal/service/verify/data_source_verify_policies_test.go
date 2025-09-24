@@ -9,6 +9,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/verify"
 	validation "github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -40,7 +41,7 @@ func TestAccVerifyPoliciesDataSource_NoFilter(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             verify.VerifyPolicy_CheckDestroy,
@@ -112,5 +113,5 @@ data "pingone_verify_policies" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
   depends_on = [pingone_verify_policy.%[3]s-1, pingone_verify_policy.%[3]s-2, pingone_verify_policy.%[3]s-3, pingone_verify_policy.%[3]s-4]
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }

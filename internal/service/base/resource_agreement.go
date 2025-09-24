@@ -19,6 +19,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -103,7 +104,7 @@ func (r *AgreementResource) Configure(ctx context.Context, req resource.Configur
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -144,15 +145,15 @@ func (r *AgreementResource) Create(ctx context.Context, req resource.CreateReque
 
 	// Run the API call
 	var response *management.Agreement
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.AgreementsResourcesApi.CreateAgreement(ctx, plan.EnvironmentId.ValueString()).Agreement(*createAgreement).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateAgreement",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
@@ -186,15 +187,15 @@ func (r *AgreementResource) Read(ctx context.Context, req resource.ReadRequest, 
 
 	// Run the API call
 	var response *management.Agreement
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.AgreementsResourcesApi.ReadOneAgreement(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneAgreement",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
@@ -234,15 +235,15 @@ func (r *AgreementResource) Update(ctx context.Context, req resource.UpdateReque
 
 	// Run the API call
 	var response *management.Agreement
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.AgreementsResourcesApi.UpdateAgreement(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Agreement(*agreement).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateAgreement",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
@@ -275,15 +276,15 @@ func (r *AgreementResource) Delete(ctx context.Context, req resource.DeleteReque
 	}
 
 	// Run the API call
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fR, fErr := r.Client.ManagementAPIClient.AgreementsResourcesApi.DeleteAgreement(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteAgreement",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 		nil,
 	)...)

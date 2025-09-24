@@ -10,6 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/sso"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -29,14 +30,14 @@ func TestAccPopulationDataSource_ByNameFull(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Population_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccPopulationDataSourceConfig_ByNameFull(environmentName, licenseID, resourceName, name),
+				Config: testAccPopulationDataSourceConfig_ByNameFull(environmentName, licenseID, resourceName, name, false),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "population_id", verify.P1ResourceIDRegexpFullString),
@@ -52,6 +53,13 @@ func TestAccPopulationDataSource_ByNameFull(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "alternative_identifiers.*", "identifier2"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "preferred_language", "pl"),
 					resource.TestMatchResourceAttr(dataSourceFullName, "theme.id", verify.P1ResourceIDRegexpFullString),
+				),
+			},
+			{
+				Config: testAccPopulationDataSourceConfig_ByNameFull(environmentName, licenseID, resourceName, name, true),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(dataSourceFullName, "name", name),
 				),
 			},
 		},
@@ -73,7 +81,7 @@ func TestAccPopulationDataSource_ByIDFull(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Population_CheckDestroy,
@@ -111,7 +119,7 @@ func TestAccPopulationDataSource_NotFound(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Population_CheckDestroy,
@@ -129,7 +137,14 @@ func TestAccPopulationDataSource_NotFound(t *testing.T) {
 	})
 }
 
-func testAccPopulationDataSourceConfig_ByNameFull(environmentName, licenseID, resourceName, name string) string {
+func testAccPopulationDataSourceConfig_ByNameFull(environmentName, licenseID, resourceName, name string, insensitivityCheck bool) string {
+
+	// If insensitivityCheck is true, alter the case of the name
+	nameComparator := name
+	if insensitivityCheck {
+		nameComparator = acctest.AlterStringCasing(nameComparator)
+	}
+
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -181,9 +196,11 @@ resource "pingone_population" "%[2]s-name" {
 data "pingone_population" "%[2]s" {
   environment_id = pingone_environment.%[4]s.id
 
-  name = pingone_population.%[2]s-name.name
+  name = "%[5]s"
+
+  depends_on = [pingone_population.%[2]s-name]
 }
-`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), resourceName, name, environmentName)
+`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), resourceName, name, environmentName, nameComparator)
 }
 
 func testAccPopulationDataSourceConfig_ByIDFull(environmentName, licenseID, resourceName, name string) string {
@@ -241,7 +258,7 @@ data "pingone_population" "%[2]s" {
   environment_id = pingone_environment.%[4]s.id
 
   population_id = pingone_population.%[2]s-name.id
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), resourceName, name, environmentName)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), resourceName, name, environmentName)
 }
 
 func testAccPopulationDataSourceConfig_NotFoundByName(resourceName string) string {

@@ -12,7 +12,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	baselegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base/legacysdk"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -40,9 +42,8 @@ func TestAccNotificationTemplateContent_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
-
-			p1Client = acctest.PreCheckTestClient(ctx, t)
+			acctest.PreCheckNoBeta(t)
+			p1Client = acctestlegacysdk.PreCheckTestClient(ctx, t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.NotificationTemplateContent_CheckDestroy,
@@ -67,7 +68,7 @@ func TestAccNotificationTemplateContent_RemovalDrift(t *testing.T) {
 			},
 			{
 				PreConfig: func() {
-					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
+					baselegacysdk.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -108,7 +109,7 @@ func TestAccNotificationTemplateContent_OverrideDefaultLocale(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.NotificationTemplateContent_CheckDestroy,
@@ -179,7 +180,7 @@ func TestAccNotificationTemplateContent_NewLocale(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.NotificationTemplateContent_CheckDestroy,
@@ -260,7 +261,7 @@ func TestAccNotificationTemplateContent_NewVariant(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.NotificationTemplateContent_CheckDestroy,
@@ -327,7 +328,7 @@ func TestAccNotificationTemplateContent_ChangeVariant(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.NotificationTemplateContent_CheckDestroy,
@@ -383,7 +384,7 @@ func TestAccNotificationTemplateContent_InvalidData(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.NotificationTemplateContent_CheckDestroy,
@@ -460,7 +461,7 @@ func TestAccNotificationTemplateContent_Email(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.NotificationTemplateContent_CheckDestroy,
@@ -546,7 +547,7 @@ func TestAccNotificationTemplateContent_Push(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.NotificationTemplateContent_CheckDestroy,
@@ -639,7 +640,7 @@ func TestAccNotificationTemplateContent_SMS(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.NotificationTemplateContent_CheckDestroy,
@@ -732,7 +733,7 @@ func TestAccNotificationTemplateContent_Voice(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.NotificationTemplateContent_CheckDestroy,
@@ -800,7 +801,7 @@ func TestAccNotificationTemplateContent_BadParameters(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.NotificationTemplateContent_CheckDestroy,
@@ -855,7 +856,7 @@ resource "pingone_notification_template_content" "%[3]s" {
   depends_on = [
     pingone_language.%[3]s
   ]
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, locale)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, locale)
 }
 
 func testAccNotificationTemplateContentConfig_NewVariant_Minimal(environmentName, licenseID, resourceName, name, locale, variant string) string {
@@ -874,7 +875,7 @@ Test $${code.value}
 EOT
     subject = "Test"
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, locale, variant)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, locale, variant)
 }
 
 func testAccNotificationTemplateContentConfig_NoVariant_Minimal(environmentName, licenseID, resourceName, name, locale string) string {
@@ -892,7 +893,7 @@ Test $${code.value}
 EOT
     subject = "Test"
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, locale)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, locale)
 }
 
 func testAccNotificationTemplateContentConfig_DuplicateLocale(environmentName, licenseID, resourceName, name, locale string) string {
@@ -925,7 +926,7 @@ resource "pingone_notification_template_content" "%[3]s-2" {
   depends_on = [
     pingone_notification_template_content.%[3]s-1
   ]
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, locale)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, locale)
 
 }
 
@@ -954,7 +955,7 @@ Min - <p>
 EOT
     subject = "Min - Verify your email address"
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, locale)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, locale)
 }
 
 func testAccNotificationTemplateContentConfig_DefaultVariant_Email_Full(environmentName, licenseID, resourceName, name, locale string) string {
@@ -995,7 +996,7 @@ EOT
     character_set = "iso-8859-5"
     content_type  = "text/plain"
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, locale)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, locale)
 }
 
 func testAccNotificationTemplateContentConfig_DefaultVariant_Push_Minimal(environmentName, licenseID, resourceName, name, locale string) string {
@@ -1011,7 +1012,7 @@ resource "pingone_notification_template_content" "%[3]s" {
     body  = "Min - Please approve this transaction."
     title = "Min - BX Retail Transaction Request"
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, locale)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, locale)
 }
 
 func testAccNotificationTemplateContentConfig_DefaultVariant_Push_Full(environmentName, licenseID, resourceName, name, locale string) string {
@@ -1029,7 +1030,7 @@ resource "pingone_notification_template_content" "%[3]s" {
 
     category = "WITHOUT_BANNER_BUTTONS"
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, locale)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, locale)
 }
 
 func testAccNotificationTemplateContentConfig_DefaultVariant_SMS_Minimal(environmentName, licenseID, resourceName, name, locale string) string {
@@ -1044,7 +1045,7 @@ resource "pingone_notification_template_content" "%[3]s" {
   sms = {
     content = "Min - Please approve this transaction with passcode $${otp}."
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, locale)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, locale)
 }
 
 func testAccNotificationTemplateContentConfig_DefaultVariant_SMS_Full(environmentName, licenseID, resourceName, name, locale string) string {
@@ -1060,7 +1061,7 @@ resource "pingone_notification_template_content" "%[3]s" {
     content = "Full - Please approve this transaction with passcode $${otp}."
     sender  = "BX Retail"
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, locale)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, locale)
 }
 
 func testAccNotificationTemplateContentConfig_DefaultVariant_Voice_Minimal(environmentName, licenseID, resourceName, name, locale string) string {
@@ -1075,7 +1076,7 @@ resource "pingone_notification_template_content" "%[3]s" {
   voice = {
     content = "Min - Hello <pause1sec> your authentication code is <sayCharValue>$${otp}</sayCharValue><pause1sec><pause1sec><repeatMessage val=2>I repeat <pause1sec>your code is <sayCharValue>$${otp}</sayCharValue></repeatMessage>"
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, locale)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, locale)
 }
 
 func testAccNotificationTemplateContentConfig_DefaultVariant_Voice_Full(environmentName, licenseID, resourceName, name, locale string) string {
@@ -1091,5 +1092,5 @@ resource "pingone_notification_template_content" "%[3]s" {
     content = "Full - Hello <pause1sec> your authentication code is <sayCharValue>$${otp}</sayCharValue><pause1sec><pause1sec><repeatMessage val=2>I repeat <pause1sec>your code is <sayCharValue>$${otp}</sayCharValue></repeatMessage>"
     type    = "Man"
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, locale)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, locale)
 }

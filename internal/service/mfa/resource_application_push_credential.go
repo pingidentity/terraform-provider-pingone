@@ -22,6 +22,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/mfa"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	objectplanmodifierinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectplanmodifier"
 	stringplanmodifierinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringplanmodifier"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -250,7 +251,7 @@ func (r *ApplicationPushCredentialResource) Configure(ctx context.Context, req r
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -295,15 +296,15 @@ func (r *ApplicationPushCredentialResource) Create(ctx context.Context, req reso
 
 	// Run the API call
 	var response *mfa.MFAPushCredentialResponse
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.MFAAPIClient.ApplicationsApplicationMFAPushCredentialsApi.CreateMFAPushCredential(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).MFAPushCredentialRequest(*applicationPushCredential).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateMFAPushCredential",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
@@ -337,15 +338,15 @@ func (r *ApplicationPushCredentialResource) Read(ctx context.Context, req resour
 
 	// Run the API call
 	var response *mfa.MFAPushCredentialResponse
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.MFAAPIClient.ApplicationsApplicationMFAPushCredentialsApi.ReadOneMFAPushCredential(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneMFAPushCredential",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
@@ -389,15 +390,15 @@ func (r *ApplicationPushCredentialResource) Update(ctx context.Context, req reso
 
 	// Run the API call
 	var response *mfa.MFAPushCredentialResponse
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.MFAAPIClient.ApplicationsApplicationMFAPushCredentialsApi.UpdateMFAPushCredential(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), plan.Id.ValueString()).MFAPushCredentialRequest(*applicationPushCredential).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateMFAPushCredential",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
@@ -430,15 +431,15 @@ func (r *ApplicationPushCredentialResource) Delete(ctx context.Context, req reso
 	}
 
 	// Run the API call
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fR, fErr := r.Client.MFAAPIClient.ApplicationsApplicationMFAPushCredentialsApi.DeleteMFAPushCredential(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteMFAPushCredential",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 		nil,
 	)...)
