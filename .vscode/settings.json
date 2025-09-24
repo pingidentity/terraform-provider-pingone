@@ -1,8 +1,121 @@
 {
-    "gopls": {
-        "build.buildFlags": [
-            // uncomment to build compile beta functionality in vscode
-            //"-tags=beta"
-        ]
+  // Go language configuration
+  "go.lintTool": "golangci-lint",
+  "go.generateTestsFlags": [
+    "-parallel"
+  ],
+  "gopls": {
+    "build.buildFlags": [
+      // uncomment to build compile beta functionality in vscode
+      //"-tags=beta"
+    ]
+  },
+  // File associations
+  "files.associations": {
+    "*.tf": "terraform",
+    "*.tfvars": "terraform",
+    "*.hcl": "terraform",
+    "*.tmpl": "go-template"
+  },
+  // File exclusions for better performance
+  "files.exclude": {
+    "**/vendor": true,
+    "**/terraform-provider-pingone": true,
+    "**/*.exe": true
+  },
+  // Search exclusions
+  "search.exclude": {
+    "**/vendor": true,
+    "**/.changelog": false
+  },
+  // Watcher exclusions for performance
+  "files.watcherExclude": {
+    "**/vendor/**": true,
+  },
+  // JSON configuration
+  "json.format.enable": true,
+  "[json]": {
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true
+  },
+  "[jsonc]": {
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true
+  },
+  // Markdown configuration
+  "[markdown]": {
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true,
+    "editor.wordWrap": "on",
+    "editor.quickSuggestions": {
+      "comments": "off",
+      "strings": "off",
+      "other": "off"
     }
+  },
+  // YAML configuration
+  "[yaml]": {
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true
+  },
+  // Go file configuration
+  "[go]": {
+    "editor.tabSize": 4,
+    "editor.insertSpaces": false
+  },
+  // Terraform file configuration
+  "[terraform]": {
+    "editor.defaultFormatter": "hashicorp.terraform",
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true
+  },
+  // Shell script configuration
+  "[shellscript]": {
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true
+  },
+  // Makefile configuration
+  "[makefile]": {
+    "editor.insertSpaces": false,
+    "editor.detectIndentation": false
+  },
+  // Spell checker configuration
+  "cSpell.enabled": true,
+  "cSpell.words": [
+    "depscheck",
+    "devcheck",
+    "golangci",
+    "GOPATH",
+    "hashicorp",
+    "patrickcping",
+    "pingidentity",
+    "pingone",
+    "pkcs",
+    "sweepargs",
+    "syniverse",
+    "terrafmt",
+    "terraform",
+    "terraformrc",
+    "testacc",
+    "testargs",
+    "tfplugindocs",
+    "tfprotov",
+    "tfstate",
+    "twilio",
+    "winfile"
+  ],
+  "cSpell.ignoreWords": [
+    "bool",
+    "func",
+    "int64",
+    "string",
+    "struct",
+    "uint"
+  ],
+  "cSpell.languageSettings": [
+    {
+      "languageId": "go",
+      "caseSensitive": true
+    }
+  ]
 }
