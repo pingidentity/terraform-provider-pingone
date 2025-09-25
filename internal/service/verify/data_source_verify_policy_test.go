@@ -91,6 +91,8 @@ func TestAccVerifyPolicyDataSource_All(t *testing.T) {
 		resource.TestCheckResourceAttr(dataSourceFullName, "transaction.data_collection.timeout.time_unit", "MINUTES"),
 		resource.TestCheckResourceAttr(dataSourceFullName, "transaction.data_collection_only", "false"),
 
+		resource.TestCheckNoResourceAttr(dataSourceFullName, "identity_record_matching"),
+
 		resource.TestMatchResourceAttr(dataSourceFullName, "created_at", validation.RFC3339Regexp),
 		resource.TestMatchResourceAttr(dataSourceFullName, "updated_at", validation.RFC3339Regexp),
 	)

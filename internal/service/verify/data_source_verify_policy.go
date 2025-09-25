@@ -30,21 +30,22 @@ import (
 type VerifyPolicyDataSource serviceClientType
 
 type verifyPolicyDataSourceModel struct {
-	Id               pingonetypes.ResourceIDValue `tfsdk:"id"`
-	EnvironmentId    pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
-	VerifyPolicyId   pingonetypes.ResourceIDValue `tfsdk:"verify_policy_id"`
-	Name             types.String                 `tfsdk:"name"`
-	Default          types.Bool                   `tfsdk:"default"`
-	Description      types.String                 `tfsdk:"description"`
-	GovernmentId     types.Object                 `tfsdk:"government_id"`
-	FacialComparison types.Object                 `tfsdk:"facial_comparison"`
-	Liveness         types.Object                 `tfsdk:"liveness"`
-	Email            types.Object                 `tfsdk:"email"`
-	Phone            types.Object                 `tfsdk:"phone"`
-	Transaction      types.Object                 `tfsdk:"transaction"`
-	Voice            types.Object                 `tfsdk:"voice"`
-	CreatedAt        timetypes.RFC3339            `tfsdk:"created_at"`
-	UpdatedAt        timetypes.RFC3339            `tfsdk:"updated_at"`
+	Id                     pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId          pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	VerifyPolicyId         pingonetypes.ResourceIDValue `tfsdk:"verify_policy_id"`
+	Name                   types.String                 `tfsdk:"name"`
+	Default                types.Bool                   `tfsdk:"default"`
+	Description            types.String                 `tfsdk:"description"`
+	GovernmentId           types.Object                 `tfsdk:"government_id"`
+	FacialComparison       types.Object                 `tfsdk:"facial_comparison"`
+	Liveness               types.Object                 `tfsdk:"liveness"`
+	Email                  types.Object                 `tfsdk:"email"`
+	Phone                  types.Object                 `tfsdk:"phone"`
+	Transaction            types.Object                 `tfsdk:"transaction"`
+	Voice                  types.Object                 `tfsdk:"voice"`
+	IdentityRecordMatching types.Object                 `tfsdk:"identity_record_matching"`
+	CreatedAt              timetypes.RFC3339            `tfsdk:"created_at"`
+	UpdatedAt              timetypes.RFC3339            `tfsdk:"updated_at"`
 }
 
 var (
@@ -128,6 +129,19 @@ var (
 		"retain_original_recordings": types.BoolType,
 		"update_on_reenrollment":     types.BoolType,
 		"update_on_verification":     types.BoolType,
+	}
+
+	identityRecordMatchingDataSourceServiceTFObjectTypes = map[string]attr.Type{
+		"address":     types.ObjectType{AttrTypes: identityRecordMatchingFieldDataSourceServiceTFObjectTypes},
+		"birth_date":  types.ObjectType{AttrTypes: identityRecordMatchingFieldDataSourceServiceTFObjectTypes},
+		"family_name": types.ObjectType{AttrTypes: identityRecordMatchingFieldDataSourceServiceTFObjectTypes},
+		"given_name":  types.ObjectType{AttrTypes: identityRecordMatchingFieldDataSourceServiceTFObjectTypes},
+		"name":        types.ObjectType{AttrTypes: identityRecordMatchingFieldDataSourceServiceTFObjectTypes},
+	}
+
+	identityRecordMatchingFieldDataSourceServiceTFObjectTypes = map[string]attr.Type{
+		"field_required": types.BoolType,
+		"threshold":      types.StringType,
 	}
 )
 
@@ -336,6 +350,10 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 	providerManualDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Provider to use for the manual verification service.",
 	).AllowedValuesEnum(verify.AllowedEnumProviderManualEnumValues).DefaultValue(string(defaultProviderManual))
+
+	identityRecordMatchingThresholdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Threshold for successful comparison.",
+	).AllowedValuesEnum(verify.AllowedEnumThresholdEnumValues)
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -772,6 +790,89 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 				},
 			},
 
+			"identity_record_matching": schema.SingleNestedAttribute{
+				Description: "Defines the verification requirements for identity record matching.",
+				Computed:    true,
+
+				Attributes: map[string]schema.Attribute{
+					"address": schema.SingleNestedAttribute{
+						Description: "Configuration for address verification.",
+						Computed:    true,
+						Attributes: map[string]schema.Attribute{
+							"field_required": schema.BoolAttribute{
+								Description: "Whether the field is required.",
+								Computed:    true,
+							},
+							"threshold": schema.StringAttribute{
+								Description:         identityRecordMatchingThresholdDescription.Description,
+								MarkdownDescription: identityRecordMatchingThresholdDescription.MarkdownDescription,
+								Computed:            true,
+							},
+						},
+					},
+					"birth_date": schema.SingleNestedAttribute{
+						Description: "Configuration for birth date verification.",
+						Computed:    true,
+						Attributes: map[string]schema.Attribute{
+							"field_required": schema.BoolAttribute{
+								Description: "Whether the field is required.",
+								Computed:    true,
+							},
+							"threshold": schema.StringAttribute{
+								Description:         identityRecordMatchingThresholdDescription.Description,
+								MarkdownDescription: identityRecordMatchingThresholdDescription.MarkdownDescription,
+								Computed:            true,
+							},
+						},
+					},
+					"family_name": schema.SingleNestedAttribute{
+						Description: "Configuration for family name verification.",
+						Computed:    true,
+						Attributes: map[string]schema.Attribute{
+							"field_required": schema.BoolAttribute{
+								Description: "Whether the field is required.",
+								Computed:    true,
+							},
+							"threshold": schema.StringAttribute{
+								Description:         identityRecordMatchingThresholdDescription.Description,
+								MarkdownDescription: identityRecordMatchingThresholdDescription.MarkdownDescription,
+								Computed:            true,
+							},
+						},
+					},
+					"given_name": schema.SingleNestedAttribute{
+						Description: "Configuration for given name verification.",
+						Computed:    true,
+						Attributes: map[string]schema.Attribute{
+							"field_required": schema.BoolAttribute{
+								Description: "Whether the field is required.",
+								Computed:    true,
+							},
+							"threshold": schema.StringAttribute{
+								Description:         identityRecordMatchingThresholdDescription.Description,
+								MarkdownDescription: identityRecordMatchingThresholdDescription.MarkdownDescription,
+								Computed:            true,
+							},
+						},
+					},
+					"name": schema.SingleNestedAttribute{
+						Description: "Configuration for full name verification.",
+						Computed:    true,
+						Attributes: map[string]schema.Attribute{
+							"field_required": schema.BoolAttribute{
+								Description: "Whether the field is required.",
+								Computed:    true,
+							},
+							"threshold": schema.StringAttribute{
+								Description:         identityRecordMatchingThresholdDescription.Description,
+								MarkdownDescription: identityRecordMatchingThresholdDescription.MarkdownDescription,
+								Computed:            true,
+							},
+						},
+					},
+				},
+			},
+
 			"created_at": schema.StringAttribute{
 				Description: "Date and time the verify policy was created.",
 				Computed:    true,
@@ -1004,6 +1105,9 @@ func (p *verifyPolicyDataSourceModel) toState(apiObject *verify.VerifyPolicy) di
 	diags.Append(d...)
 
 	p.Voice, d = p.toStateVoice(apiObject.GetVoiceOk())
+	diags.Append(d...)
+
+	p.IdentityRecordMatching, d = p.toStateIdentityRecordMatching(apiObject.GetIdentityRecordMatchingOk())
 	diags.Append(d...)
 
 	return diags
@@ -1286,4 +1390,78 @@ func (p *verifyPolicyDataSourceModel) toStateVoice(apiObject *verify.VoiceConfig
 	diags.Append(d...)
 
 	return objValue, diags
+}
+
+func (p *verifyPolicyDataSourceModel) toStateIdentityRecordMatching(apiObject *verify.IdentityRecordMatching, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(identityRecordMatchingDataSourceServiceTFObjectTypes), diags
+	}
+
+	address, d := p.toStateIdentityRecordMatchingAddress(apiObject.GetAddressOk())
+	diags.Append(d...)
+
+	birthDate, d := p.toStateIdentityRecordMatchingBirthDate(apiObject.GetBirthDateOk())
+	diags.Append(d...)
+
+	familyName, d := p.toStateIdentityRecordMatchingFamilyName(apiObject.GetFamilyNameOk())
+	diags.Append(d...)
+
+	givenName, d := p.toStateIdentityRecordMatchingGivenName(apiObject.GetGivenNameOk())
+	diags.Append(d...)
+
+	name, d := p.toStateIdentityRecordMatchingName(apiObject.GetNameOk())
+	diags.Append(d...)
+
+	objValue, d := types.ObjectValue(identityRecordMatchingDataSourceServiceTFObjectTypes, map[string]attr.Value{
+		"address":     address,
+		"birth_date":  birthDate,
+		"family_name": familyName,
+		"given_name":  givenName,
+		"name":        name,
+	})
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+// toStateIdentityRecordMatchingField converts any identity record matching field type to TF state for data source
+func (p *verifyPolicyDataSourceModel) toStateIdentityRecordMatchingField(apiObject IdentityRecordMatchingField, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(identityRecordMatchingFieldDataSourceServiceTFObjectTypes), diags
+	}
+
+	fieldRequired, fieldRequiredOk := apiObject.GetFieldRequiredOk()
+	threshold, thresholdOk := apiObject.GetThresholdOk()
+
+	objValue, d := types.ObjectValue(identityRecordMatchingFieldDataSourceServiceTFObjectTypes, map[string]attr.Value{
+		"field_required": framework.BoolOkToTF(fieldRequired, fieldRequiredOk),
+		"threshold":      framework.EnumOkToTF(threshold, thresholdOk),
+	})
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func (p *verifyPolicyDataSourceModel) toStateIdentityRecordMatchingAddress(apiObject *verify.IdentityRecordMatchingAddress, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+	return p.toStateIdentityRecordMatchingField(apiObject, ok)
+}
+
+func (p *verifyPolicyDataSourceModel) toStateIdentityRecordMatchingBirthDate(apiObject *verify.IdentityRecordMatchingBirthDate, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+	return p.toStateIdentityRecordMatchingField(apiObject, ok)
+}
+
+func (p *verifyPolicyDataSourceModel) toStateIdentityRecordMatchingFamilyName(apiObject *verify.IdentityRecordMatchingFamilyName, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+	return p.toStateIdentityRecordMatchingField(apiObject, ok)
+}
+
+func (p *verifyPolicyDataSourceModel) toStateIdentityRecordMatchingGivenName(apiObject *verify.IdentityRecordMatchingGivenName, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+	return p.toStateIdentityRecordMatchingField(apiObject, ok)
+}
+
+func (p *verifyPolicyDataSourceModel) toStateIdentityRecordMatchingName(apiObject *verify.IdentityRecordMatchingName, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+	return p.toStateIdentityRecordMatchingField(apiObject, ok)
 }

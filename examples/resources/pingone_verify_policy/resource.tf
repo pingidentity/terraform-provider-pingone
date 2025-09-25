@@ -114,4 +114,27 @@ resource "pingone_verify_policy" "my_verify_everything_policy" {
 
     data_collection_only = false
   }
+
+  identity_record_matching = {
+    address = {
+      threshold      = "LOW"
+      field_required = "false"
+    }
+    birth_date = {
+      threshold      = "MEDIUM"
+      field_required = "true"
+    }
+    family_name = {
+      threshold      = "MEDIUM"
+      field_required = "false"
+    }
+    given_name = {
+      threshold      = "MEDIUM"
+      field_required = "false"
+    }
+    name = {
+      threshold      = "HIGH"
+      field_required = "true"
+    }
+  }
 }
