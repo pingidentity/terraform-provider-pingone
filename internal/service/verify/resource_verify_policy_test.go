@@ -131,6 +131,7 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "government_id.provider_auto", "VERIFF"),
 		resource.TestCheckResourceAttr(resourceFullName, "government_id.provider_manual", "MITEK"),
 		resource.TestCheckResourceAttr(resourceFullName, "government_id.retry_attempts", "2"),
+		resource.TestCheckResourceAttr(resourceFullName, "government_id.verify_aamva", "false"),
 
 		resource.TestCheckResourceAttr(resourceFullName, "facial_comparison.verify", "REQUIRED"),
 		resource.TestCheckResourceAttr(resourceFullName, "facial_comparison.threshold", "HIGH"),
@@ -203,6 +204,7 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "government_id.inspection_type", "AUTOMATIC"),
 		resource.TestCheckResourceAttr(resourceFullName, "government_id.provider_auto", "MITEK"),
 		resource.TestCheckResourceAttr(resourceFullName, "government_id.provider_manual", "MITEK"),
+		resource.TestCheckResourceAttr(resourceFullName, "government_id.verify_aamva", "true"),
 
 		resource.TestCheckResourceAttr(resourceFullName, "facial_comparison.verify", "DISABLED"),
 		resource.TestCheckResourceAttr(resourceFullName, "facial_comparison.threshold", "MEDIUM"),
@@ -261,6 +263,7 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 
 		resource.TestCheckResourceAttr(resourceFullName, "government_id.verify", "DISABLED"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "government_id.inspection_type"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "government_id.verify_aamva"),
 
 		resource.TestCheckResourceAttr(resourceFullName, "facial_comparison.verify", "REQUIRED"),
 		resource.TestCheckResourceAttr(resourceFullName, "facial_comparison.threshold", "HIGH"),
@@ -424,6 +427,11 @@ func TestAccVerifyPolicy_ValidationChecks(t *testing.T) {
 				Destroy:     true,
 			},
 			{
+				Config:      testAccVerifyPolicy_GovernmentIdVerifyAamvaTrueWhenVerifyDisabled(resourceName, name),
+				ExpectError: regexp.MustCompile("Error: Invalid Attribute Combination"),
+				Destroy:     true,
+			},
+			{
 				Config:      testAccVerifyPolicy_IdentityRecordMatchingEmpty(resourceName, name),
 				ExpectError: regexp.MustCompile("Error: Missing Required Configuration"),
 				Destroy:     true,
@@ -436,6 +444,11 @@ func TestAccVerifyPolicy_ValidationChecks(t *testing.T) {
 			{
 				Config:      testAccVerifyPolicy_IdentityRecordMatchingMissingThreshold(resourceName, name),
 				ExpectError: regexp.MustCompile("Error: Incorrect attribute value type"),
+				Destroy:     true,
+			},
+			{
+				Config:      testAccVerifyPolicy_GovernmentIdVerifyAamvaTrueWhenVerifyDisabled(resourceName, name),
+				ExpectError: regexp.MustCompile("Error: Invalid Attribute Combination"),
 				Destroy:     true,
 			},
 		},
@@ -525,6 +538,7 @@ resource "pingone_verify_policy" "%[2]s" {
     provider_auto   = "VERIFF"
     provider_manual = "MITEK"
     retry_attempts  = "2"
+    verify_aamva    = false
   }
 
   facial_comparison = {
@@ -884,8 +898,44 @@ resource "pingone_verify_policy" "%[2]s" {
   description    = "%[3]s"
 
   government_id = {
-    verify    = "DISABLED"
-    threshold = "STEP_UP"
+    verify          = "DISABLED"
+    inspection_type = "STEP_UP"
+  }
+
+  facial_comparison = {
+    verify    = "REQUIRED"
+    threshold = "HIGH"
+  }
+
+  transaction = {
+    timeout = {
+      duration  = "35"
+      time_unit = "MINUTES"
+    }
+
+    data_collection = {
+      timeout = {
+        duration  = "2000"
+        time_unit = "SECONDS"
+      }
+    }
+  }
+
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccVerifyPolicy_GovernmentIdVerifyAamvaTrueWhenVerifyDisabled(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+resource "pingone_verify_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "%[3]s"
+
+  government_id = {
+    verify       = "DISABLED"
+    verify_aamva = true
   }
 
   facial_comparison = {

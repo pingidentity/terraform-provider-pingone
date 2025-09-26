@@ -45,6 +45,7 @@ func TestAccVerifyPolicyDataSource_All(t *testing.T) {
 		resource.TestCheckResourceAttr(dataSourceFullName, "government_id.provider_auto", "VERIFF"),
 		resource.TestCheckResourceAttr(dataSourceFullName, "government_id.provider_manual", "MITEK"),
 		resource.TestCheckResourceAttr(dataSourceFullName, "government_id.retry_attempts", "1"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "government_id.verify_aamva", "false"),
 
 		resource.TestCheckResourceAttr(dataSourceFullName, "facial_comparison.verify", "REQUIRED"),
 		resource.TestCheckResourceAttr(dataSourceFullName, "facial_comparison.threshold", "HIGH"),
@@ -115,6 +116,7 @@ func TestAccVerifyPolicyDataSource_All(t *testing.T) {
 
 		resource.TestCheckResourceAttr(dataSourceFullName, "government_id.verify", "DISABLED"),
 		resource.TestCheckNoResourceAttr(dataSourceFullName, "government_id.inspection_type"),
+		resource.TestCheckNoResourceAttr(dataSourceFullName, "government_id.verify_aamva"),
 
 		resource.TestCheckResourceAttr(dataSourceFullName, "facial_comparison.verify", "DISABLED"),
 		resource.TestCheckResourceAttr(dataSourceFullName, "facial_comparison.threshold", "MEDIUM"),
@@ -258,6 +260,7 @@ resource "pingone_verify_policy" "%[3]s" {
     provider_auto   = "VERIFF"
     provider_manual = "MITEK"
     retry_attempts  = "1"
+    verify_aamva    = false
   }
 
   facial_comparison = {
