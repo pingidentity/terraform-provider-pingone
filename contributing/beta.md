@@ -96,3 +96,4 @@ Modify your `.vscode/settings.json` file with the following configuration:
         ]
     }
 }
+```
