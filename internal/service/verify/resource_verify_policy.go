@@ -1597,7 +1597,7 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 						types.StringValue(string(verify.ENUMVERIFY_DISABLED)),
 						path.MatchRelative().AtParent().AtName("government_id").AtName("verify"),
 					),
-					customobjectvalidator.AtLeastOneAttributeConfigured(
+					customobjectvalidator.AtLeastOneChildConfigured(
 						"address",
 						"birth_date",
 						"family_name",

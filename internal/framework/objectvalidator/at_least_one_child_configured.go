@@ -10,24 +10,24 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 )
 
-var _ validator.Object = AtLeastOneAttributeConfiguredValidator{}
+var _ validator.Object = AtLeastOneChildConfiguredValidator{}
 
-// AtLeastOneAttributeConfiguredValidator validates that if an object is configured,
+// AtLeastOneChildConfiguredValidator validates that if an object is configured,
 // at least one of the specified nested attributes must be configured (not null).
 // This prevents empty object blocks in Terraform configurations.
-type AtLeastOneAttributeConfiguredValidator struct {
+type AtLeastOneChildConfiguredValidator struct {
 	AttributeNames []string
 }
 
-func (v AtLeastOneAttributeConfiguredValidator) Description(_ context.Context) string {
+func (v AtLeastOneChildConfiguredValidator) Description(_ context.Context) string {
 	return fmt.Sprintf("At least one of these attributes must be configured: %s", strings.Join(v.AttributeNames, ", "))
 }
 
-func (v AtLeastOneAttributeConfiguredValidator) MarkdownDescription(ctx context.Context) string {
+func (v AtLeastOneChildConfiguredValidator) MarkdownDescription(ctx context.Context) string {
 	return v.Description(ctx)
 }
 
-func (v AtLeastOneAttributeConfiguredValidator) ValidateObject(ctx context.Context, req validator.ObjectRequest, resp *validator.ObjectResponse) {
+func (v AtLeastOneChildConfiguredValidator) ValidateObject(ctx context.Context, req validator.ObjectRequest, resp *validator.ObjectResponse) {
 	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
 		return
 	}
@@ -48,8 +48,8 @@ func (v AtLeastOneAttributeConfiguredValidator) ValidateObject(ctx context.Conte
 	)
 }
 
-func AtLeastOneAttributeConfigured(attributeNames ...string) validator.Object {
-	return AtLeastOneAttributeConfiguredValidator{
+func AtLeastOneChildConfigured(attributeNames ...string) validator.Object {
+	return AtLeastOneChildConfiguredValidator{
 		AttributeNames: attributeNames,
 	}
 }
