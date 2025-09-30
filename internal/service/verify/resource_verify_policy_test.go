@@ -623,23 +623,23 @@ resource "pingone_verify_policy" "%[2]s" {
   identity_record_matching = {
     address = {
       threshold      = "LOW"
-      field_required = "false"
+      field_required = false
     }
     birth_date = {
       threshold      = "MEDIUM"
-      field_required = "true"
+      field_required = true
     }
     family_name = {
       threshold      = "MEDIUM"
-      field_required = "false"
+      field_required = false
     }
     given_name = {
       threshold      = "MEDIUM"
-      field_required = "false"
+      field_required = false
     }
     name = {
       threshold      = "HIGH"
-      field_required = "true"
+      field_required = true
     }
   }
 
