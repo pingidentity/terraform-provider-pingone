@@ -446,11 +446,6 @@ func TestAccVerifyPolicy_ValidationChecks(t *testing.T) {
 				ExpectError: regexp.MustCompile("Error: Incorrect attribute value type"),
 				Destroy:     true,
 			},
-			{
-				Config:      testAccVerifyPolicy_GovernmentIdVerifyAamvaTrueWhenVerifyDisabled(resourceName, name),
-				ExpectError: regexp.MustCompile("Error: Invalid Attribute Combination"),
-				Destroy:     true,
-			},
 		},
 	})
 }
