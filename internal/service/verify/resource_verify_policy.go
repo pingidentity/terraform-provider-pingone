@@ -482,6 +482,10 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 		"Threshold for successful comparison.",
 	).AllowedValuesEnum(verify.AllowedEnumThresholdEnumValues)
 
+	verifyAamvaDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"When enabled, the AAMVA DLDV system is used to validate identity documents issued by participating states. If license allows, defaults to `true` when `government_id.inspection_type` is `REQUIRED` or `OPTIONAL`; otherwise disabled.",
+	)
+
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to configure the requirements to verify a user, including the parameters for verification.\n\n" +
@@ -608,9 +612,10 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 						},
 					},
 					"verify_aamva": schema.BoolAttribute{
-						Description: "When enabled, the AAMVA DLDV system is used to validate identity documents issued by participating states.",
-						Computed:    true,
-						Optional:    true,
+						Description:         verifyAamvaDescription.Description,
+						MarkdownDescription: verifyAamvaDescription.MarkdownDescription,
+						Computed:            true,
+						Optional:            true,
 						Validators: []validator.Bool{
 							boolvalidatorinternal.MustNotBeTrueIfPathSetToValue(
 								types.StringValue(string(verify.ENUMVERIFY_DISABLED)),

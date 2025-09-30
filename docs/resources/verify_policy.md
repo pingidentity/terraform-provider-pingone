@@ -299,7 +299,7 @@ Optional:
 - `provider_auto` (String) Provider to use for the automatic verification service.  Options are `MITEK`, `VERIFF`.  Defaults to `MITEK`.
 - `provider_manual` (String) Provider to use for the manual verification service.  Options are `MITEK`.  Defaults to `MITEK`.
 - `retry_attempts` (Number) Number of retries permitted when submitting images.  The allowed range is `0 - 3`.
-- `verify_aamva` (Boolean) When enabled, the AAMVA DLDV system is used to validate identity documents issued by participating states.
+- `verify_aamva` (Boolean) When enabled, the AAMVA DLDV system is used to validate identity documents issued by participating states. If license allows, defaults to `true` when `government_id.inspection_type` is `REQUIRED` or `OPTIONAL`; otherwise disabled.
 
 
 <a id="nestedatt--identity_record_matching"></a>
