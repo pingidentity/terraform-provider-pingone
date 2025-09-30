@@ -2915,19 +2915,19 @@ func (p *verifyPolicyResourceModel) toStateIdentityRecordMatching(apiObject *ver
 		return types.ObjectNull(identityRecordMatchingServiceTFObjectTypes), diags
 	}
 
-	address, d := p.toStateIdentityRecordMatchingAddress(apiObject.GetAddressOk())
+	address, d := p.toStateIdentityRecordMatchingField(apiObject.GetAddressOk())
 	diags.Append(d...)
 
-	birthDate, d := p.toStateIdentityRecordMatchingBirthDate(apiObject.GetBirthDateOk())
+	birthDate, d := p.toStateIdentityRecordMatchingField(apiObject.GetBirthDateOk())
 	diags.Append(d...)
 
-	familyName, d := p.toStateIdentityRecordMatchingFamilyName(apiObject.GetFamilyNameOk())
+	familyName, d := p.toStateIdentityRecordMatchingField(apiObject.GetFamilyNameOk())
 	diags.Append(d...)
 
-	givenName, d := p.toStateIdentityRecordMatchingGivenName(apiObject.GetGivenNameOk())
+	givenName, d := p.toStateIdentityRecordMatchingField(apiObject.GetGivenNameOk())
 	diags.Append(d...)
 
-	name, d := p.toStateIdentityRecordMatchingName(apiObject.GetNameOk())
+	name, d := p.toStateIdentityRecordMatchingField(apiObject.GetNameOk())
 	diags.Append(d...)
 
 	objValue, d := types.ObjectValue(identityRecordMatchingServiceTFObjectTypes, map[string]attr.Value{
@@ -2966,24 +2966,4 @@ func (p *verifyPolicyResourceModel) toStateIdentityRecordMatchingField(apiObject
 	diags.Append(d...)
 
 	return objValue, diags
-}
-
-func (p *verifyPolicyResourceModel) toStateIdentityRecordMatchingAddress(apiObject *verify.IdentityRecordMatchingAddress, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
-	return p.toStateIdentityRecordMatchingField(apiObject, ok)
-}
-
-func (p *verifyPolicyResourceModel) toStateIdentityRecordMatchingBirthDate(apiObject *verify.IdentityRecordMatchingBirthDate, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
-	return p.toStateIdentityRecordMatchingField(apiObject, ok)
-}
-
-func (p *verifyPolicyResourceModel) toStateIdentityRecordMatchingFamilyName(apiObject *verify.IdentityRecordMatchingFamilyName, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
-	return p.toStateIdentityRecordMatchingField(apiObject, ok)
-}
-
-func (p *verifyPolicyResourceModel) toStateIdentityRecordMatchingGivenName(apiObject *verify.IdentityRecordMatchingGivenName, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
-	return p.toStateIdentityRecordMatchingField(apiObject, ok)
-}
-
-func (p *verifyPolicyResourceModel) toStateIdentityRecordMatchingName(apiObject *verify.IdentityRecordMatchingName, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
-	return p.toStateIdentityRecordMatchingField(apiObject, ok)
 }
