@@ -19,6 +19,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -131,7 +132,7 @@ func (r *AgreementLocalizationResource) Configure(ctx context.Context, req resou
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -168,15 +169,15 @@ func (r *AgreementLocalizationResource) Create(ctx context.Context, req resource
 	}
 
 	var language *management.Language
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.LanguagesApi.ReadOneLanguage(ctx, plan.EnvironmentId.ValueString(), plan.LanguageId.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneLanguage",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&language,
 	)...)
@@ -199,15 +200,15 @@ func (r *AgreementLocalizationResource) Create(ctx context.Context, req resource
 
 	// Run the API call
 	var response *management.AgreementLanguage
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.AgreementLanguagesResourcesApi.CreateAgreementLanguage(ctx, plan.EnvironmentId.ValueString(), plan.AgreementId.ValueString()).AgreementLanguage(*localization).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateAgreementLanguage",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
@@ -241,15 +242,15 @@ func (r *AgreementLocalizationResource) Read(ctx context.Context, req resource.R
 
 	// Run the API call
 	var response *management.AgreementLanguage
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.AgreementLanguagesResourcesApi.ReadOneAgreementLanguage(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneAgreementLanguage",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
@@ -269,15 +270,15 @@ func (r *AgreementLocalizationResource) Read(ctx context.Context, req resource.R
 		language, d = findLanguageByLocale_Framework(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), response.GetLocale())
 		resp.Diagnostics.Append(d...)
 	} else {
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
 				fO, fR, fErr := r.Client.ManagementAPIClient.LanguagesApi.ReadOneLanguage(ctx, data.EnvironmentId.ValueString(), data.LanguageId.ValueString()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"ReadOneLanguage",
-			framework.CustomErrorResourceNotFoundWarning,
+			legacysdk.CustomErrorResourceNotFoundWarning,
 			sdk.DefaultCreateReadRetryable,
 			&language,
 		)...)
@@ -308,15 +309,15 @@ func (r *AgreementLocalizationResource) Update(ctx context.Context, req resource
 	}
 
 	var language *management.Language
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.LanguagesApi.ReadOneLanguage(ctx, plan.EnvironmentId.ValueString(), plan.LanguageId.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneLanguage",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&language,
 	)...)
@@ -339,15 +340,15 @@ func (r *AgreementLocalizationResource) Update(ctx context.Context, req resource
 
 	// Run the API call
 	var response *management.AgreementLanguage
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.AgreementLanguagesResourcesApi.UpdateAgreementLanguage(ctx, plan.EnvironmentId.ValueString(), plan.AgreementId.ValueString(), plan.Id.ValueString()).AgreementLanguage(*localization).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateAgreementLanguage",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
@@ -380,12 +381,12 @@ func (r *AgreementLocalizationResource) Delete(ctx context.Context, req resource
 	}
 
 	// Run the API call
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fR, fErr := r.Client.ManagementAPIClient.AgreementLanguagesResourcesApi.DeleteAgreementLanguage(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteAgreementLanguage",
 		agreementLocalizationDeleteErrorHandler,
@@ -504,7 +505,7 @@ func (p *AgreementLocalizationResourceModel) toState(apiObject *management.Agree
 func agreementLocalizationDeleteErrorHandler(r *http.Response, p1Error *model.P1Error) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	diags.Append(framework.CustomErrorResourceNotFoundWarning(r, p1Error)...)
+	diags.Append(legacysdk.CustomErrorResourceNotFoundWarning(r, p1Error)...)
 
 	if v, ok := p1Error.GetDetailsOk(); ok && v != nil && len(v) > 0 {
 		if v[0].GetCode() == "CONSTRAINT_VIOLATION" {

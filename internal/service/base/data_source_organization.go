@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -19,6 +20,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
@@ -107,7 +109,7 @@ func (r *OrganizationDataSource) Configure(ctx context.Context, req datasource.C
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -148,7 +150,7 @@ func (r *OrganizationDataSource) Read(ctx context.Context, req datasource.ReadRe
 	if !data.Name.IsNull() {
 
 		// Run the API call
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
@@ -169,7 +171,7 @@ func (r *OrganizationDataSource) Read(ctx context.Context, req datasource.ReadRe
 
 						for _, organizationItem := range organizations {
 
-							if organizationItem.GetName() == data.Name.ValueString() {
+							if strings.EqualFold(organizationItem.GetName(), data.Name.ValueString()) {
 								return &organizationItem, pageCursor.HTTPResponse, nil
 							}
 						}
@@ -180,7 +182,7 @@ func (r *OrganizationDataSource) Read(ctx context.Context, req datasource.ReadRe
 				return nil, initialHttpResponse, nil
 			},
 			"ReadAllOrganizations",
-			framework.DefaultCustomError,
+			legacysdk.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
 			&organization,
 		)...)
@@ -199,14 +201,14 @@ func (r *OrganizationDataSource) Read(ctx context.Context, req datasource.ReadRe
 	} else if !data.OrganizationId.IsNull() {
 
 		// Run the API call
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
 				return r.Client.ManagementAPIClient.OrganizationsApi.ReadOneOrganization(ctx, data.OrganizationId.ValueString()).Execute()
 			},
 			"ReadOneOrganization",
-			framework.DefaultCustomError,
+			legacysdk.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
 			&organization,
 		)...)

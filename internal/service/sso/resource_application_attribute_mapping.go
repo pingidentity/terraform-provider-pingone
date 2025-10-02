@@ -22,6 +22,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	customboolvalidator "github.com/pingidentity/terraform-provider-pingone/internal/framework/boolvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -222,7 +223,7 @@ func (r *ApplicationAttributeMappingResource) Configure(ctx context.Context, req
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -283,28 +284,28 @@ func (r *ApplicationAttributeMappingResource) Create(ctx context.Context, req re
 	// Run the API call
 	var response *management.ApplicationAttributeMapping
 	if !isCoreAttribute {
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
 				fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationAttributeMappingApi.CreateApplicationAttributeMapping(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString()).ApplicationAttributeMapping(*applicationAttributeMapping).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"CreateApplicationAttributeMapping",
-			framework.CustomErrorInvalidValue,
+			legacysdk.CustomErrorInvalidValue,
 			sdk.DefaultCreateReadRetryable,
 			&response,
 		)...)
 	} else {
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
 				fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationAttributeMappingApi.UpdateApplicationAttributeMapping(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), applicationAttributeMapping.GetId()).ApplicationAttributeMapping(*applicationAttributeMapping).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"UpdateApplicationAttributeMapping",
-			framework.CustomErrorInvalidValue,
+			legacysdk.CustomErrorInvalidValue,
 			sdk.DefaultCreateReadRetryable,
 			&response,
 		)...)
@@ -339,15 +340,15 @@ func (r *ApplicationAttributeMappingResource) Read(ctx context.Context, req reso
 
 	// Run the API call
 	var response *management.ApplicationAttributeMapping
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationAttributeMappingApi.ReadOneApplicationAttributeMapping(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneApplicationAttributeMapping",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
@@ -404,15 +405,15 @@ func (r *ApplicationAttributeMappingResource) Update(ctx context.Context, req re
 
 	// Run the API call
 	var response *management.ApplicationAttributeMapping
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationAttributeMappingApi.UpdateApplicationAttributeMapping(ctx, plan.EnvironmentId.ValueString(), plan.ApplicationId.ValueString(), plan.Id.ValueString()).ApplicationAttributeMapping(*applicationAttributeMapping).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateApplicationAttributeMapping",
-		framework.CustomErrorInvalidValue,
+		legacysdk.CustomErrorInvalidValue,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
@@ -470,29 +471,29 @@ func (r *ApplicationAttributeMappingResource) Delete(ctx context.Context, req re
 			return
 		}
 
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
 				fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationAttributeMappingApi.UpdateApplicationAttributeMapping(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).ApplicationAttributeMapping(*applicationAttributeMapping).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"UpdateApplicationAttributeMapping",
-			framework.CustomErrorResourceNotFoundWarning,
+			legacysdk.CustomErrorResourceNotFoundWarning,
 			sdk.DefaultCreateReadRetryable,
 			nil,
 		)...)
 
 	} else {
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
 				fR, fErr := r.Client.ManagementAPIClient.ApplicationAttributeMappingApi.DeleteApplicationAttributeMapping(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString(), data.Id.ValueString()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 			},
 			"DeleteApplicationAttributeMapping",
-			framework.CustomErrorResourceNotFoundWarning,
+			legacysdk.CustomErrorResourceNotFoundWarning,
 			sdk.DefaultCreateReadRetryable,
 			nil,
 		)...)
@@ -545,15 +546,15 @@ func (p *ApplicationAttributeMappingResourceModel) getApplicationType(ctx contex
 
 	// Get application type and verify against the set params
 	var respObject *management.ReadOneApplication200Response
-	diags.Append(framework.ParseResponse(
+	diags.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := apiClient.ApplicationsApi.ReadOneApplication(ctx, p.EnvironmentId.ValueString(), p.ApplicationId.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, p.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, p.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneApplication",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&respObject,
 	)...)
@@ -672,7 +673,7 @@ func (p *ApplicationAttributeMappingResourceModel) expand(ctx context.Context, a
 
 	if overrideExisting {
 
-		diags.Append(framework.ParseResponse(
+		diags.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
@@ -682,7 +683,7 @@ func (p *ApplicationAttributeMappingResourceModel) expand(ctx context.Context, a
 
 				for pageCursor, err := range pagedIterator {
 					if err != nil {
-						return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, p.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+						return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, p.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
 					}
 
 					if initialHttpResponse == nil {
@@ -704,7 +705,7 @@ func (p *ApplicationAttributeMappingResourceModel) expand(ctx context.Context, a
 				return nil, initialHttpResponse, nil
 			},
 			"ReadAllApplicationAttributeMappings",
-			framework.DefaultCustomError,
+			legacysdk.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
 			&data,
 		)...)

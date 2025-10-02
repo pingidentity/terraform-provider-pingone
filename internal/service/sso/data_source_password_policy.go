@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -17,6 +18,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
@@ -311,7 +313,7 @@ func (r *PasswordPolicyDataSource) Configure(ctx context.Context, req datasource
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -352,15 +354,15 @@ func (r *PasswordPolicyDataSource) Read(ctx context.Context, req datasource.Read
 	// Gateway API does not support SCIM filtering
 	if !data.PasswordPolicyId.IsNull() {
 		// Run the API call
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
 				fO, fR, fErr := r.Client.ManagementAPIClient.PasswordPoliciesApi.ReadOnePasswordPolicy(ctx, data.EnvironmentId.ValueString(), data.PasswordPolicyId.ValueString()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"ReadOnePasswordPolicy",
-			framework.DefaultCustomError,
+			legacysdk.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
 			&policyInstance,
 		)...)
@@ -370,7 +372,7 @@ func (r *PasswordPolicyDataSource) Read(ctx context.Context, req datasource.Read
 
 	} else if !data.Name.IsNull() {
 		// Run the API call
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
@@ -380,7 +382,7 @@ func (r *PasswordPolicyDataSource) Read(ctx context.Context, req datasource.Read
 
 				for pageCursor, err := range pagedIterator {
 					if err != nil {
-						return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+						return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
 					}
 
 					if initialHttpResponse == nil {
@@ -390,7 +392,7 @@ func (r *PasswordPolicyDataSource) Read(ctx context.Context, req datasource.Read
 					if passwordPolicies, ok := pageCursor.EntityArray.Embedded.GetPasswordPoliciesOk(); ok {
 
 						for _, passwordPolicyObject := range passwordPolicies {
-							if passwordPolicyObject.GetId() != "" && passwordPolicyObject.GetName() == data.Name.ValueString() {
+							if passwordPolicyObject.GetId() != "" && strings.EqualFold(passwordPolicyObject.GetName(), data.Name.ValueString()) {
 								return &passwordPolicyObject, pageCursor.HTTPResponse, nil
 							}
 						}
@@ -401,7 +403,7 @@ func (r *PasswordPolicyDataSource) Read(ctx context.Context, req datasource.Read
 				return nil, initialHttpResponse, nil
 			},
 			"ReadAllPasswordPolicies",
-			framework.DefaultCustomError,
+			legacysdk.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
 			&policyInstance,
 		)...)

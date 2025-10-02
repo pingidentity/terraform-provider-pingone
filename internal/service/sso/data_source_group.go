@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -19,6 +20,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/filter"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
@@ -139,7 +141,7 @@ func (r *GroupDataSource) Configure(ctx context.Context, req datasource.Configur
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -203,7 +205,7 @@ func (r *GroupDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 	}
 
 	// Run the API call
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
@@ -213,7 +215,7 @@ func (r *GroupDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 
 			for pageCursor, err := range pagedIterator {
 				if err != nil {
-					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+					return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
 				}
 
 				if initialHttpResponse == nil {
@@ -223,11 +225,11 @@ func (r *GroupDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 				if groups, ok := pageCursor.EntityArray.Embedded.GetGroupsOk(); ok {
 					for _, g := range groups {
 
-						if !data.Name.IsNull() && g.GetName() == data.Name.ValueString() {
+						if !data.Name.IsNull() && strings.EqualFold(g.GetName(), data.Name.ValueString()) {
 							return &g, pageCursor.HTTPResponse, nil
 						}
 
-						if !data.GroupId.IsNull() && g.GetId() == data.GroupId.ValueString() {
+						if !data.GroupId.IsNull() && strings.EqualFold(g.GetId(), data.GroupId.ValueString()) {
 							return &g, pageCursor.HTTPResponse, nil
 						}
 					}
@@ -237,7 +239,7 @@ func (r *GroupDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 			return nil, initialHttpResponse, nil
 		},
 		"ReadAllGroups",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&group,
 	)...)

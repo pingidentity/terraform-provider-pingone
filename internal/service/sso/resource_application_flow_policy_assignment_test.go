@@ -12,7 +12,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
-	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
+	baselegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/sso"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -41,9 +42,8 @@ func TestAccApplicationFlowPolicyAssignment_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-
 			acctest.PreCheckNoBeta(t)
-			p1Client = acctest.PreCheckTestClient(ctx, t)
+			p1Client = acctestlegacysdk.PreCheckTestClient(ctx, t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.ApplicationFlowPolicyAssignment_CheckDestroy,
@@ -80,7 +80,7 @@ func TestAccApplicationFlowPolicyAssignment_RemovalDrift(t *testing.T) {
 			},
 			{
 				PreConfig: func() {
-					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
+					baselegacysdk.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -314,7 +314,7 @@ resource "pingone_application_flow_policy_assignment" "%[2]s" {
   flow_policy_id = data.pingone_flow_policies.%[2]s.ids[0]
 
   priority = 1
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), resourceName, name)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), resourceName, name)
 }
 
 func testAccApplicationFlowPolicyAssignmentConfig_Single(resourceName, name string) string {

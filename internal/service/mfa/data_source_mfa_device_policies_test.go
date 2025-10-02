@@ -9,6 +9,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/mfa"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -121,5 +122,5 @@ data "pingone_mfa_device_policies" "%[3]s" {
     pingone_mfa_device_policy.%[3]s-1,
     pingone_mfa_device_policy.%[3]s-2,
   ]
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }

@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -20,6 +21,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/filter"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
@@ -591,7 +593,7 @@ func (r *UserDataSource) Configure(ctx context.Context, req datasource.Configure
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -662,7 +664,7 @@ func (r *UserDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		return
 	}
 
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
@@ -672,7 +674,7 @@ func (r *UserDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 
 			for pageCursor, err := range pagedIterator {
 				if err != nil {
-					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+					return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
 				}
 
 				if initialHttpResponse == nil {
@@ -682,15 +684,15 @@ func (r *UserDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 				if users, ok := pageCursor.EntityArray.Embedded.GetUsersOk(); ok {
 					for _, u := range users {
 
-						if !data.Username.IsNull() && u.GetUsername() == data.Username.ValueString() {
+						if !data.Username.IsNull() && strings.EqualFold(u.GetUsername(), data.Username.ValueString()) {
 							return &u, pageCursor.HTTPResponse, nil
 						}
 
-						if !data.UserId.IsNull() && u.GetId() == data.UserId.ValueString() {
+						if !data.UserId.IsNull() && strings.EqualFold(u.GetId(), data.UserId.ValueString()) {
 							return &u, pageCursor.HTTPResponse, nil
 						}
 
-						if !data.Email.IsNull() && u.GetEmail() == data.Email.ValueString() {
+						if !data.Email.IsNull() && strings.EqualFold(u.GetEmail(), data.Email.ValueString()) {
 							return &u, pageCursor.HTTPResponse, nil
 						}
 					}
@@ -701,7 +703,7 @@ func (r *UserDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 			return nil, initialHttpResponse, nil
 		},
 		"ReadAllUsers",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&user,
 	)...)
@@ -719,15 +721,15 @@ func (r *UserDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 
 	var responseEnabled *management.UserEnabled
 
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.EnableUsersApi.ReadUserEnabled(ctx, data.EnvironmentId.ValueString(), user.GetId()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadUserEnabled",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&responseEnabled,
 	)...)

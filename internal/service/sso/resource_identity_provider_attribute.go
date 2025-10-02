@@ -19,6 +19,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -161,7 +162,7 @@ func (r *IdentityProviderAttributeResource) Configure(ctx context.Context, req r
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -214,28 +215,28 @@ func (r *IdentityProviderAttributeResource) Create(ctx context.Context, req reso
 	// Run the API call
 	var response *management.IdentityProviderAttribute
 	if !isCoreAttribute {
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
 				fO, fR, fErr := r.Client.ManagementAPIClient.IdentityProviderAttributesApi.CreateIdentityProviderAttribute(ctx, plan.EnvironmentId.ValueString(), plan.IdentityProviderId.ValueString()).IdentityProviderAttribute(*identityProviderAttribute).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"CreateIdentityProviderAttribute",
-			framework.DefaultCustomError,
+			legacysdk.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
 			&response,
 		)...)
 	} else {
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
 				fO, fR, fErr := r.Client.ManagementAPIClient.IdentityProviderAttributesApi.UpdateIdentityProviderAttribute(ctx, plan.EnvironmentId.ValueString(), plan.IdentityProviderId.ValueString(), identityProviderAttribute.GetId()).IdentityProviderAttribute(*identityProviderAttribute).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"UpdateIdentityProviderAttribute",
-			framework.DefaultCustomError,
+			legacysdk.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
 			&response,
 		)...)
@@ -270,15 +271,15 @@ func (r *IdentityProviderAttributeResource) Read(ctx context.Context, req resour
 
 	// Run the API call
 	var response *management.IdentityProviderAttribute
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.IdentityProviderAttributesApi.ReadOneIdentityProviderAttribute(ctx, data.EnvironmentId.ValueString(), data.IdentityProviderId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneIdentityProviderAttribute",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
@@ -329,15 +330,15 @@ func (r *IdentityProviderAttributeResource) Update(ctx context.Context, req reso
 
 	// Run the API call
 	var response *management.IdentityProviderAttribute
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.IdentityProviderAttributesApi.UpdateIdentityProviderAttribute(ctx, plan.EnvironmentId.ValueString(), plan.IdentityProviderId.ValueString(), plan.Id.ValueString()).IdentityProviderAttribute(*identityProviderAttributeMapping).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateIdentityProviderAttribute",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
@@ -395,30 +396,30 @@ func (r *IdentityProviderAttributeResource) Delete(ctx context.Context, req reso
 			return
 		}
 
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
 				fO, fR, fErr := r.Client.ManagementAPIClient.IdentityProviderAttributesApi.UpdateIdentityProviderAttribute(ctx, data.EnvironmentId.ValueString(), data.IdentityProviderId.ValueString(), data.Id.ValueString()).IdentityProviderAttribute(*idpMapping).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"UpdateIdentityProviderAttribute",
-			framework.DefaultCustomError,
+			legacysdk.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
 			nil,
 		)...)
 
 	} else {
 
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
 				fR, fErr := r.Client.ManagementAPIClient.IdentityProviderAttributesApi.DeleteIdentityProviderAttribute(ctx, data.EnvironmentId.ValueString(), data.IdentityProviderId.ValueString(), data.Id.ValueString()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 			},
 			"DeleteIdentityProviderAttribute",
-			framework.CustomErrorResourceNotFoundWarning,
+			legacysdk.CustomErrorResourceNotFoundWarning,
 			sdk.DefaultCreateReadRetryable,
 			nil,
 		)...)
@@ -472,15 +473,15 @@ func (p *IdentityProviderAttributeResourceModel) getIdentityProviderType(ctx con
 
 	// Get application type and verify against the set params
 	var respObject *management.IdentityProvider
-	diags.Append(framework.ParseResponse(
+	diags.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := apiClient.IdentityProvidersApi.ReadOneIdentityProvider(ctx, p.EnvironmentId.ValueString(), p.IdentityProviderId.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, p.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, p.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneIdentityProvider",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&respObject,
 	)...)
@@ -550,7 +551,7 @@ func (p *IdentityProviderAttributeResourceModel) expand(ctx context.Context, api
 
 	if overrideExisting {
 
-		diags.Append(framework.ParseResponse(
+		diags.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
@@ -560,7 +561,7 @@ func (p *IdentityProviderAttributeResourceModel) expand(ctx context.Context, api
 
 				for pageCursor, err := range pagedIterator {
 					if err != nil {
-						return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, p.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+						return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, p.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
 					}
 
 					if initialHttpResponse == nil {
@@ -571,7 +572,7 @@ func (p *IdentityProviderAttributeResourceModel) expand(ctx context.Context, api
 
 						for _, idpAttribute := range idpAttributes {
 
-							if idpAttribute.IdentityProviderAttribute.GetName() == p.Name.ValueString() {
+							if strings.EqualFold(idpAttribute.IdentityProviderAttribute.GetName(), p.Name.ValueString()) {
 								return idpAttribute.IdentityProviderAttribute, pageCursor.HTTPResponse, nil
 							}
 						}
@@ -582,7 +583,7 @@ func (p *IdentityProviderAttributeResourceModel) expand(ctx context.Context, api
 				return nil, initialHttpResponse, nil
 			},
 			"ReadAllIdentityProviderAttributes",
-			framework.DefaultCustomError,
+			legacysdk.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
 			&data,
 		)...)

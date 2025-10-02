@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/risk"
-	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
@@ -21,7 +21,7 @@ func riskPredictorFetchIDsFromCompactNames(ctx context.Context, apiClient *risk.
 	var diags diag.Diagnostics
 
 	riskPredictorIDsMap := make(map[string]string)
-	diags.Append(framework.ParseResponse(
+	diags.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
@@ -33,7 +33,7 @@ func riskPredictorFetchIDsFromCompactNames(ctx context.Context, apiClient *risk.
 
 			for pageCursor, err := range pagedIterator {
 				if err != nil {
-					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, managementApiClient, environmentID, nil, pageCursor.HTTPResponse, err)
+					return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, managementApiClient, environmentID, nil, pageCursor.HTTPResponse, err)
 				}
 
 				if initialHttpResponse == nil {
@@ -73,7 +73,7 @@ func riskPredictorFetchIDsFromCompactNames(ctx context.Context, apiClient *risk.
 			return riskPredictorIDsMap, initialHttpResponse, nil
 		},
 		"ReadAllRiskPredictors",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&riskPredictorIDsMap,
 	)...)

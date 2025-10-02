@@ -9,7 +9,8 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
-	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
+	baselegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -33,7 +34,7 @@ func TestAccPhoneDeliverySettingsListDataSource_ByAll(t *testing.T) {
 			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.Environment_CheckDestroy,
+		CheckDestroy:             baselegacysdk.Environment_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -66,7 +67,7 @@ func TestAccPhoneDeliverySettingsListDataSource_NotFound(t *testing.T) {
 			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.Environment_CheckDestroy,
+		CheckDestroy:             baselegacysdk.Environment_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -112,7 +113,7 @@ data "pingone_phone_delivery_settings_list" "%[3]s" {
   depends_on = [
     pingone_phone_delivery_settings.%[3]s,
   ]
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccPhoneDeliverySettingsListDataSourceConfig_NotFound(environmentName, licenseID, resourceName string) string {
@@ -121,5 +122,5 @@ func testAccPhoneDeliverySettingsListDataSourceConfig_NotFound(environmentName, 
 
 data "pingone_phone_delivery_settings_list" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
