@@ -138,6 +138,8 @@ func (r *davinciApplicationResource) Schema(ctx context.Context, req resource.Sc
 					},
 					"enforce_signed_request_openid": schema.BoolAttribute{
 						Optional: true,
+						Computed: true,
+						Default:  booldefault.StaticBool(false),
 					},
 					"grant_types": schema.SetAttribute{
 						ElementType:         types.StringType,
@@ -303,6 +305,13 @@ func (state *davinciApplicationResourceModel) readClientResponse(response *pingo
 		"sp_jwks_openid":                types.StringType,
 		"sp_jwks_url":                   types.StringType,
 	}
+	// enforce_signed_request_openid is not returned by the API when false, so assume it is false if nil
+	var oauthEnforceSignedRequestOpenidValue types.Bool
+	if response.Oauth.EnforceSignedRequestOpenid == nil {
+		oauthEnforceSignedRequestOpenidValue = types.BoolValue(false)
+	} else {
+		oauthEnforceSignedRequestOpenidValue = types.BoolValue(*response.Oauth.EnforceSignedRequestOpenid)
+	}
 	var oauthGrantTypesValue types.Set
 	if response.Oauth.GrantTypes == nil {
 		oauthGrantTypesValue, diags = types.SetValue(types.StringType, []attr.Value{})
@@ -337,7 +346,7 @@ func (state *davinciApplicationResourceModel) readClientResponse(response *pingo
 	}
 	oauthValue, diags := types.ObjectValue(oauthAttrTypes, map[string]attr.Value{
 		"client_secret":                 types.StringValue(response.Oauth.ClientSecret),
-		"enforce_signed_request_openid": types.BoolPointerValue(response.Oauth.EnforceSignedRequestOpenid),
+		"enforce_signed_request_openid": oauthEnforceSignedRequestOpenidValue,
 		"grant_types":                   oauthGrantTypesValue,
 		"logout_uris":                   oauthLogoutUrisValue,
 		"redirect_uris":                 oauthRedirectUrisValue,

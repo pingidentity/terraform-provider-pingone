@@ -319,7 +319,6 @@ resource "pingone_davinci_application" "%[2]s" {
     enabled = false
   }
   oauth = {
-    # Test with false after TRIAGE-27920 fixed
     enforce_signed_request_openid = true
     grant_types = [
       "clientCredentials",
@@ -359,8 +358,7 @@ resource "pingone_davinci_application" "%[2]s" {
     enabled = true
   }
   oauth = {
-    # Test with false after TRIAGE-27920 fixed
-    enforce_signed_request_openid = true
+    enforce_signed_request_openid = false
     grant_types = [
       "authorizationCode",
       "implicit",
