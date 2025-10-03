@@ -319,7 +319,7 @@ Optional:
 
 Optional:
 
-- `enabled` (Boolean) Whether Aadhaar verification is enabled or not.
+- `enabled` (Boolean) Whether Aadhaar verification is enabled.  Defaults to `false`.
 - `otp` (Attributes) Aadhaar one-time password (OTP) configuration. (see [below for nested schema](#nestedatt--government_id--aadhaar--otp))
 
 <a id="nestedatt--government_id--aadhaar--otp"></a>
