@@ -9,6 +9,7 @@ import (
 	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
+	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int32validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -19,6 +20,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
@@ -69,6 +71,7 @@ type governmentIdModel struct {
 	ProviderManual types.String `tfsdk:"provider_manual"`
 	RetryAttempts  types.Int32  `tfsdk:"retry_attempts"`
 	VerifyAamva    types.Bool   `tfsdk:"verify_aamva"`
+	Aadhaar        types.Object `tfsdk:"aadhaar"`
 }
 
 type facialComparisonModel struct {
@@ -157,10 +160,48 @@ type identityRecordMatchingFieldModel struct {
 	Threshold     types.String `tfsdk:"threshold"`
 }
 
+type aadhaarModel struct {
+	Enabled types.Bool   `tfsdk:"enabled"`
+	Otp     types.Object `tfsdk:"otp"`
+}
+
+type aadhaarOtpModel struct {
+	Deliveries types.Object `tfsdk:"deliveries"`
+}
+
+type aadhaarOtpDeliveriesModel struct {
+	Count    types.Int32  `tfsdk:"count"`
+	Cooldown types.Object `tfsdk:"cooldown"`
+}
+
+type aadhaarOtpCooldownModel struct {
+	Duration types.Int32  `tfsdk:"duration"`
+	TimeUnit types.String `tfsdk:"time_unit"`
+}
+
 var (
 	genericTimeoutServiceTFObjectTypes = map[string]attr.Type{
 		"duration":  types.Int32Type,
 		"time_unit": types.StringType,
+	}
+
+	aadhaarOtpCooldownServiceTFObjectTypes = map[string]attr.Type{
+		"duration":  types.Int32Type,
+		"time_unit": types.StringType,
+	}
+
+	aadhaarOtpDeliveriesServiceTFObjectTypes = map[string]attr.Type{
+		"count":    types.Int32Type,
+		"cooldown": types.ObjectType{AttrTypes: aadhaarOtpCooldownServiceTFObjectTypes},
+	}
+
+	aadhaarOtpServiceTFObjectTypes = map[string]attr.Type{
+		"deliveries": types.ObjectType{AttrTypes: aadhaarOtpDeliveriesServiceTFObjectTypes},
+	}
+
+	aadhaarServiceTFObjectTypes = map[string]attr.Type{
+		"enabled": types.BoolType,
+		"otp":     types.ObjectType{AttrTypes: aadhaarOtpServiceTFObjectTypes},
 	}
 
 	governmentIdServiceTFObjectTypes = map[string]attr.Type{
@@ -171,6 +212,7 @@ var (
 		"provider_manual": types.StringType,
 		"retry_attempts":  types.Int32Type,
 		"verify_aamva":    types.BoolType,
+		"aadhaar":         types.ObjectType{AttrTypes: aadhaarServiceTFObjectTypes},
 	}
 
 	facialComparisonServiceTFObjectTypes = map[string]attr.Type{
@@ -304,6 +346,13 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 	const attrMinRetryAttempts = 0
 	const attrMaxRetryAttempts = 3
 
+	const attrMinAadhaarDurationSeconds = 60
+	const attrMaxAadhaarDurationSeconds = 1800
+	const attrMinAadhaarDurationMinutes = 1
+	const attrMaxAadhaarDurationMinutes = 30
+	const attrMinAadhaarCount = 1
+	const attrMaxAadhaarCount = 3
+
 	// defaults
 	const defaultNotificationTemplate = "email_phone_verification"
 
@@ -334,6 +383,27 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 
 	const defaultProviderAuto = verify.ENUMPROVIDERAUTO_MITEK
 	const defaultProviderManual = verify.ENUMPROVIDERAUTO_MITEK
+
+	const defaultAadhaarEnabled = false
+	const defaultAadhaarDuration = 60
+	const defaultAadhaarTimeUnit = verify.ENUMTIMEUNIT_SECONDS
+	const defaultAadhaarCount = 3
+
+	defaultAadhaarDeliveries := types.ObjectValueMust(
+		aadhaarOtpDeliveriesServiceTFObjectTypes,
+		map[string]attr.Value{
+			"count": types.Int32Value(defaultAadhaarCount),
+			"cooldown": types.ObjectValueMust(
+				aadhaarOtpCooldownServiceTFObjectTypes,
+				map[string]attr.Value{
+					"duration": types.Int32Value(defaultAadhaarDuration),
+					"time_unit": types.StringValue(
+						string(defaultAadhaarTimeUnit),
+					),
+				},
+			),
+		},
+	)
 
 	defaultDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Specifies whether this is the environment's default verify policy.",
@@ -486,6 +556,25 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 		"When enabled, the AAMVA DLDV system is used to validate identity documents issued by participating states. If license allows, defaults to `true` when `government_id.inspection_type` is `REQUIRED` or `OPTIONAL`; otherwise disabled.",
 	)
 
+	aadhaarDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Aadhaar configuration for India-based government Aadhaar documents;`facial_comparison.verify` must be `REQUIRED` to enable.",
+	)
+
+	aadhaarOtpDeliveriesCountDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("Number of OTP deliveries permitted. The allowed range is `%d - %d`.", attrMinAadhaarCount, attrMaxAadhaarCount),
+	).DefaultValue(int32(defaultAadhaarCount))
+
+	aadhaarOtpDeliveriesCooldownDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Cooldown duration for Aadhaar OTP deliveries.\n" +
+			fmt.Sprintf("    - If `cooldown.time_unit` is `MINUTES`, the allowed range is `%d - %d`.\n", attrMinAadhaarDurationMinutes, attrMaxAadhaarDurationMinutes) +
+			fmt.Sprintf("    - If `cooldown.time_unit` is `SECONDS`, the allowed range is `%d - %d`.\n", attrMinAadhaarDurationSeconds, attrMaxAadhaarDurationSeconds) +
+			fmt.Sprintf("    - Defaults to `%d %s`.\n", defaultAadhaarDuration, defaultAadhaarTimeUnit),
+	)
+
+	aadhaarOtpDeliveriesCooldownTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Time unit of the Aadhaar OTP cooldown duration.",
+	).AllowedValuesEnum(verify.AllowedEnumTimeUnitEnumValues).DefaultValue(string(defaultAadhaarTimeUnit))
+
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to configure the requirements to verify a user, including the parameters for verification.\n\n" +
@@ -548,6 +637,7 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 						"provider_manual": types.StringValue(string(defaultProviderManual)),
 						"retry_attempts":  types.Int32Null(),
 						"verify_aamva":    types.BoolNull(),
+						"aadhaar":         types.ObjectNull(aadhaarServiceTFObjectTypes),
 					},
 				)),
 
@@ -621,6 +711,104 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 								types.StringValue(string(verify.ENUMVERIFY_DISABLED)),
 								path.MatchRoot("government_id").AtName("verify"),
 							),
+						},
+					},
+					"aadhaar": schema.SingleNestedAttribute{
+						Description:         aadhaarDescription.Description,
+						MarkdownDescription: aadhaarDescription.MarkdownDescription,
+						Optional:            true,
+
+						Attributes: map[string]schema.Attribute{
+							"enabled": schema.BoolAttribute{
+								Description: "Whether Aadhaar verification is enabled or not.",
+								Optional:    true,
+								Computed:    true,
+								Default:     booldefault.StaticBool(defaultAadhaarEnabled),
+								Validators: []validator.Bool{
+									boolvalidator.All(
+										boolvalidatorinternal.MustNotBeTrueIfPathSetToValue(
+											types.StringValue(string(verify.ENUMVERIFY_DISABLED)),
+											path.MatchRoot("facial_comparison").AtName("verify"),
+										),
+										boolvalidatorinternal.MustNotBeTrueIfPathSetToValue(
+											types.StringValue(string(verify.ENUMVERIFY_OPTIONAL)),
+											path.MatchRoot("facial_comparison").AtName("verify"),
+										),
+									),
+								},
+							},
+							"otp": schema.SingleNestedAttribute{
+								Description: "Aadhaar one-time password (OTP) configuration.",
+								Optional:    true,
+								Computed:    true,
+								Default: objectdefault.StaticValue(types.ObjectValueMust(
+									aadhaarOtpServiceTFObjectTypes,
+									map[string]attr.Value{
+										"deliveries": defaultAadhaarDeliveries,
+									},
+								)),
+								Attributes: map[string]schema.Attribute{
+									"deliveries": schema.SingleNestedAttribute{
+										Description: "OTP delivery configuration. If omitted, defaults to 3 deliveries with a cooldown of 60 seconds.",
+										Optional:    true,
+										Computed:    true,
+										Default:     objectdefault.StaticValue(defaultAadhaarDeliveries),
+
+										Attributes: map[string]schema.Attribute{
+											"count": schema.Int32Attribute{
+												Description:         aadhaarOtpDeliveriesCountDescription.Description,
+												MarkdownDescription: aadhaarOtpDeliveriesCountDescription.MarkdownDescription,
+												Optional:            true,
+												Computed:            true,
+												Default:             int32default.StaticInt32(defaultAadhaarCount),
+												Validators: []validator.Int32{
+													int32validator.Between(attrMinAadhaarCount, attrMaxAadhaarCount),
+												},
+											},
+											"cooldown": schema.SingleNestedAttribute{
+												Description: "Cooldown (waiting period between OTP deliveries) configuration.",
+												Required:    true,
+
+												Attributes: map[string]schema.Attribute{
+													"duration": schema.Int32Attribute{
+														Description:         aadhaarOtpDeliveriesCooldownDurationDescription.Description,
+														MarkdownDescription: aadhaarOtpDeliveriesCooldownDurationDescription.MarkdownDescription,
+														Required:            true,
+														Validators: []validator.Int32{
+															int32validator.Any(
+																int32validator.All(
+																	int32validator.Between(attrMinAadhaarDurationMinutes, attrMaxAadhaarDurationMinutes),
+																	int32validatorinternal.RegexMatchesPathValue(
+																		regexp.MustCompile(`MINUTES`),
+																		fmt.Sprintf("If `time_unit` is `MINUTES`, the allowed duration range is %d - %d.", attrMinAadhaarDurationMinutes, attrMaxAadhaarDurationMinutes),
+																		path.MatchRelative().AtParent().AtName("time_unit"),
+																	),
+																),
+																int32validator.All(
+																	int32validator.Between(attrMinAadhaarDurationSeconds, attrMaxAadhaarDurationSeconds),
+																	int32validatorinternal.RegexMatchesPathValue(
+																		regexp.MustCompile(`SECONDS`),
+																		fmt.Sprintf("If `time_unit` is `SECONDS`, the allowed duration range is %d - %d.", attrMinAadhaarDurationSeconds, attrMaxAadhaarDurationSeconds),
+																		path.MatchRelative().AtParent().AtName("time_unit"),
+																	),
+																),
+															),
+														},
+													},
+													"time_unit": schema.StringAttribute{
+														Description:         aadhaarOtpDeliveriesCooldownTimeUnitDescription.Description,
+														MarkdownDescription: aadhaarOtpDeliveriesCooldownTimeUnitDescription.MarkdownDescription,
+														Required:            true,
+														Validators: []validator.String{
+															stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumTimeUnitEnumValues)...),
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
 						},
 					},
 				},
@@ -2143,6 +2331,86 @@ func (p *governmentIdModel) expandgovernmentIdModel() (*verify.GovernmentIdConfi
 		verifyGovernmentId.SetVerifyAamva(p.VerifyAamva.ValueBool())
 	}
 
+	if !p.Aadhaar.IsNull() && !p.Aadhaar.IsUnknown() {
+		var aadhaar aadhaarModel
+		d := p.Aadhaar.As(context.Background(), &aadhaar, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		aadhaarConfig := verify.NewGovernmentIdConfigurationAadhaarWithDefaults()
+
+		if !aadhaar.Enabled.IsNull() && !aadhaar.Enabled.IsUnknown() {
+			aadhaarConfig.SetEnabled(aadhaar.Enabled.ValueBool())
+		}
+
+		if !aadhaar.Otp.IsNull() && !aadhaar.Otp.IsUnknown() {
+			var otp aadhaarOtpModel
+			d := aadhaar.Otp.As(context.Background(), &otp, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})
+			diags.Append(d...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			otpConfig := verify.NewGovernmentIdConfigurationAadhaarOtpWithDefaults()
+
+			if !otp.Deliveries.IsNull() && !otp.Deliveries.IsUnknown() {
+				var deliveries aadhaarOtpDeliveriesModel
+				d := otp.Deliveries.As(context.Background(), &deliveries, basetypes.ObjectAsOptions{
+					UnhandledNullAsEmpty:    false,
+					UnhandledUnknownAsEmpty: false,
+				})
+				diags.Append(d...)
+				if diags.HasError() {
+					return nil, diags
+				}
+
+				deliveriesConfig := verify.NewGovernmentIdConfigurationAadhaarOtpDeliveriesWithDefaults()
+
+				if !deliveries.Count.IsNull() && !deliveries.Count.IsUnknown() {
+					deliveriesConfig.SetCount(deliveries.Count.ValueInt32())
+				}
+
+				if !deliveries.Cooldown.IsNull() && !deliveries.Cooldown.IsUnknown() {
+					var cooldown aadhaarOtpCooldownModel
+					d := deliveries.Cooldown.As(context.Background(), &cooldown, basetypes.ObjectAsOptions{
+						UnhandledNullAsEmpty:    false,
+						UnhandledUnknownAsEmpty: false,
+					})
+					diags.Append(d...)
+					if diags.HasError() {
+						return nil, diags
+					}
+
+					cooldownConfig := verify.NewGovernmentIdConfigurationAadhaarOtpDeliveriesCooldownWithDefaults()
+
+					if !cooldown.Duration.IsNull() && !cooldown.Duration.IsUnknown() {
+						cooldownConfig.SetDuration(cooldown.Duration.ValueInt32())
+					}
+
+					if !cooldown.TimeUnit.IsNull() && !cooldown.TimeUnit.IsUnknown() {
+						cooldownConfig.SetTimeUnit(verify.EnumTimeUnit(cooldown.TimeUnit.ValueString()))
+					}
+
+					deliveriesConfig.SetCooldown(*cooldownConfig)
+				}
+
+				otpConfig.SetDeliveries(*deliveriesConfig)
+			}
+
+			aadhaarConfig.SetOtp(*otpConfig)
+		}
+
+		verifyGovernmentId.SetAadhaar(*aadhaarConfig)
+	}
+
 	if verifyGovernmentId == nil {
 		diags.AddError(
 			"Unexpected Value",
@@ -2658,6 +2926,59 @@ func (p *verifyPolicyResourceModel) toStateGovernmentId(apiObject *verify.Govern
 			"GovernmentId data object contained unexpected null value for the `provider` data object.  Please report this issue to the provider maintainers.")
 	}
 
+	aadhaarObject := types.ObjectNull(aadhaarServiceTFObjectTypes)
+	if v, ok := apiObject.GetAadhaarOk(); ok {
+		var d diag.Diagnostics
+
+		aadhaarOtpObject := types.ObjectNull(aadhaarOtpServiceTFObjectTypes)
+		if otpV, otpOk := v.GetOtpOk(); otpOk {
+			aadhaarOtpDeliveriesObject := types.ObjectNull(aadhaarOtpDeliveriesServiceTFObjectTypes)
+			if deliveriesV, deliveriesOk := otpV.GetDeliveriesOk(); deliveriesOk {
+				aadhaarOtpCooldownObject := types.ObjectNull(aadhaarOtpCooldownServiceTFObjectTypes)
+				if cooldownV, cooldownOk := deliveriesV.GetCooldownOk(); cooldownOk {
+					cooldownAttrs := map[string]attr.Value{
+						"duration":  framework.Int32OkToTF(cooldownV.GetDurationOk()),
+						"time_unit": framework.EnumOkToTF(cooldownV.GetTimeUnitOk()),
+					}
+
+					objValue, d := types.ObjectValue(aadhaarOtpCooldownServiceTFObjectTypes, cooldownAttrs)
+					diags.Append(d...)
+
+					aadhaarOtpCooldownObject = objValue
+				}
+
+				deliveriesAttrs := map[string]attr.Value{
+					"count":    framework.Int32OkToTF(deliveriesV.GetCountOk()),
+					"cooldown": aadhaarOtpCooldownObject,
+				}
+
+				objValue, d := types.ObjectValue(aadhaarOtpDeliveriesServiceTFObjectTypes, deliveriesAttrs)
+				diags.Append(d...)
+
+				aadhaarOtpDeliveriesObject = objValue
+			}
+
+			otpAttrs := map[string]attr.Value{
+				"deliveries": aadhaarOtpDeliveriesObject,
+			}
+
+			objValue, d := types.ObjectValue(aadhaarOtpServiceTFObjectTypes, otpAttrs)
+			diags.Append(d...)
+
+			aadhaarOtpObject = objValue
+		}
+
+		aadhaarAttrs := map[string]attr.Value{
+			"enabled": framework.BoolOkToTF(v.GetEnabledOk()),
+			"otp":     aadhaarOtpObject,
+		}
+
+		objValue, d := types.ObjectValue(aadhaarServiceTFObjectTypes, aadhaarAttrs)
+		diags.Append(d...)
+
+		aadhaarObject = objValue
+	}
+
 	objValue, d := types.ObjectValue(governmentIdServiceTFObjectTypes, map[string]attr.Value{
 		"verify":          framework.EnumOkToTF(apiObject.GetVerifyOk()),
 		"inspection_type": framework.EnumOkToTF(apiObject.GetInspectionTypeOk()),
@@ -2666,6 +2987,7 @@ func (p *verifyPolicyResourceModel) toStateGovernmentId(apiObject *verify.Govern
 		"provider_manual": framework.EnumOkToTF(provider.GetManualOk()),
 		"retry_attempts":  retryAttempts,
 		"verify_aamva":    framework.BoolOkToTF(apiObject.GetVerifyAamvaOk()),
+		"aadhaar":         aadhaarObject,
 	})
 	diags.Append(d...)
 
