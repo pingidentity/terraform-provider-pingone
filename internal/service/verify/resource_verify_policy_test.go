@@ -452,7 +452,7 @@ func TestAccVerifyPolicy_ValidationChecks(t *testing.T) {
 			},
 			{
 				Config:      testAccVerifyPolicy_AadhaarEnabledWhenFacialRecognitionNotRequired(resourceName, name),
-				ExpectError: regexp.MustCompile("Error: Invalid Attribute Value"),
+				ExpectError: regexp.MustCompile("Error: Invalid Attribute Combination"),
 				Destroy:     true,
 			},
 		},
