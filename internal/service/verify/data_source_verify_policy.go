@@ -392,6 +392,10 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 		"Aadhaar configuration for India-based government Aadhaar documents;`facial_comparison.verify` must be `REQUIRED` to enable.",
 	)
 
+	aadhaarEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Whether Aadhaar verification is enabled.",
+	).DefaultValue(defaultAadhaarEnabled)
+
 	aadhaarOtpDeliveriesCountDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("Number of OTP deliveries permitted. The allowed range is `%d - %d`.", attrMinAadhaarCount, attrMaxAadhaarCount),
 	).DefaultValue(int32(defaultAadhaarCount))
@@ -508,8 +512,9 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 
 						Attributes: map[string]schema.Attribute{
 							"enabled": schema.BoolAttribute{
-								Description: "Whether Aadhaar verification is enabled or not.",
-								Computed:    true,
+								Description:         aadhaarEnabledDescription.Description,
+								MarkdownDescription: aadhaarEnabledDescription.MarkdownDescription,
+								Computed:            true,
 							},
 							"otp": schema.SingleNestedAttribute{
 								Description: "Aadhaar one-time password (OTP) configuration.",

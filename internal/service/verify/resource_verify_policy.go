@@ -560,6 +560,10 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 		"Aadhaar configuration for India-based government Aadhaar documents;`facial_comparison.verify` must be `REQUIRED` to enable.",
 	)
 
+	aadhaarEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Whether Aadhaar verification is enabled.",
+	).DefaultValue(defaultAadhaarEnabled)
+
 	aadhaarOtpDeliveriesCountDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("Number of OTP deliveries permitted. The allowed range is `%d - %d`.", attrMinAadhaarCount, attrMaxAadhaarCount),
 	).DefaultValue(int32(defaultAadhaarCount))
@@ -720,10 +724,11 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 
 						Attributes: map[string]schema.Attribute{
 							"enabled": schema.BoolAttribute{
-								Description: "Whether Aadhaar verification is enabled or not.",
-								Optional:    true,
-								Computed:    true,
-								Default:     booldefault.StaticBool(defaultAadhaarEnabled),
+								Description:         aadhaarEnabledDescription.Description,
+								MarkdownDescription: aadhaarEnabledDescription.MarkdownDescription,
+								Optional:            true,
+								Computed:            true,
+								Default:             booldefault.StaticBool(defaultAadhaarEnabled),
 								Validators: []validator.Bool{
 									boolvalidator.All(
 										boolvalidatorinternal.MustNotBeTrueIfPathSetToValue(
