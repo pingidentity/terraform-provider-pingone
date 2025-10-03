@@ -1,6 +1,6 @@
 module github.com/pingidentity/terraform-provider-pingone
 
-go 1.24.1
+go 1.24.6
 
 tool (
 	github.com/bflad/tfproviderlint/cmd/tfproviderlintx
@@ -27,11 +27,11 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/patrickcping/pingone-go-sdk-v2 v0.14.0
 	github.com/patrickcping/pingone-go-sdk-v2/authorize v0.8.1
-	github.com/patrickcping/pingone-go-sdk-v2/credentials v0.11.1
+	github.com/patrickcping/pingone-go-sdk-v2/credentials v0.12.0
 	github.com/patrickcping/pingone-go-sdk-v2/management v0.60.0
 	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.23.1
-	github.com/patrickcping/pingone-go-sdk-v2/risk v0.19.1
-	github.com/patrickcping/pingone-go-sdk-v2/verify v0.9.1
+	github.com/patrickcping/pingone-go-sdk-v2/risk v0.21.0
+	github.com/patrickcping/pingone-go-sdk-v2/verify v0.10.0
 	github.com/pingidentity/pingone-go-client v0.2.0
 )
 
