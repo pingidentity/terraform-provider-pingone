@@ -91,6 +91,17 @@ func TestAccVerifyPolicyDataSource_All(t *testing.T) {
 		resource.TestCheckResourceAttr(dataSourceFullName, "transaction.data_collection.timeout.time_unit", "MINUTES"),
 		resource.TestCheckResourceAttr(dataSourceFullName, "transaction.data_collection_only", "false"),
 
+		resource.TestCheckResourceAttr(dataSourceFullName, "identity_record_matching.address.threshold", "LOW"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "identity_record_matching.address.field_required", "false"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "identity_record_matching.birth_date.threshold", "MEDIUM"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "identity_record_matching.birth_date.field_required", "true"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "identity_record_matching.family_name.threshold", "MEDIUM"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "identity_record_matching.family_name.field_required", "false"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "identity_record_matching.given_name.threshold", "MEDIUM"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "identity_record_matching.given_name.field_required", "false"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "identity_record_matching.name.threshold", "HIGH"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "identity_record_matching.name.field_required", "true"),
+
 		resource.TestMatchResourceAttr(dataSourceFullName, "created_at", validation.RFC3339Regexp),
 		resource.TestMatchResourceAttr(dataSourceFullName, "updated_at", validation.RFC3339Regexp),
 	)
@@ -322,6 +333,29 @@ resource "pingone_verify_policy" "%[3]s" {
     }
 
     data_collection_only = false
+  }
+
+  identity_record_matching = {
+    address = {
+      threshold      = "LOW"
+      field_required = false
+    }
+    birth_date = {
+      threshold      = "MEDIUM"
+      field_required = true
+    }
+    family_name = {
+      threshold      = "MEDIUM"
+      field_required = false
+    }
+    given_name = {
+      threshold      = "MEDIUM"
+      field_required = false
+    }
+    name = {
+      threshold      = "HIGH"
+      field_required = true
+    }
   }
 
   depends_on = [pingone_environment.%[2]s]

@@ -32,6 +32,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	int32validatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/int32validator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
+	customobjectvalidator "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectvalidator"
 	customstringvalidator "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
@@ -42,20 +43,21 @@ import (
 type VerifyPolicyResource serviceClientType
 
 type verifyPolicyResourceModel struct {
-	Id               pingonetypes.ResourceIDValue `tfsdk:"id"`
-	EnvironmentId    pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
-	Name             types.String                 `tfsdk:"name"`
-	Default          types.Bool                   `tfsdk:"default"`
-	Description      types.String                 `tfsdk:"description"`
-	GovernmentId     types.Object                 `tfsdk:"government_id"`
-	FacialComparison types.Object                 `tfsdk:"facial_comparison"`
-	Liveness         types.Object                 `tfsdk:"liveness"`
-	Email            types.Object                 `tfsdk:"email"`
-	Phone            types.Object                 `tfsdk:"phone"`
-	Transaction      types.Object                 `tfsdk:"transaction"`
-	Voice            types.Object                 `tfsdk:"voice"`
-	CreatedAt        timetypes.RFC3339            `tfsdk:"created_at"`
-	UpdatedAt        timetypes.RFC3339            `tfsdk:"updated_at"`
+	Id                     pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId          pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Name                   types.String                 `tfsdk:"name"`
+	Default                types.Bool                   `tfsdk:"default"`
+	Description            types.String                 `tfsdk:"description"`
+	GovernmentId           types.Object                 `tfsdk:"government_id"`
+	FacialComparison       types.Object                 `tfsdk:"facial_comparison"`
+	Liveness               types.Object                 `tfsdk:"liveness"`
+	Email                  types.Object                 `tfsdk:"email"`
+	Phone                  types.Object                 `tfsdk:"phone"`
+	Transaction            types.Object                 `tfsdk:"transaction"`
+	Voice                  types.Object                 `tfsdk:"voice"`
+	IdentityRecordMatching types.Object                 `tfsdk:"identity_record_matching"`
+	CreatedAt              timetypes.RFC3339            `tfsdk:"created_at"`
+	UpdatedAt              timetypes.RFC3339            `tfsdk:"updated_at"`
 }
 
 type governmentIdModel struct {
@@ -140,6 +142,19 @@ type referenceDataModel struct {
 	UpdateOnRVerification    types.Bool `tfsdk:"update_on_verification"`
 }
 
+type identityRecordMatchingModel struct {
+	Address    types.Object `tfsdk:"address"`
+	BirthDate  types.Object `tfsdk:"birth_date"`
+	FamilyName types.Object `tfsdk:"family_name"`
+	GivenName  types.Object `tfsdk:"given_name"`
+	Name       types.Object `tfsdk:"name"`
+}
+
+type identityRecordMatchingFieldModel struct {
+	FieldRequired types.Bool   `tfsdk:"field_required"`
+	Threshold     types.String `tfsdk:"threshold"`
+}
+
 var (
 	genericTimeoutServiceTFObjectTypes = map[string]attr.Type{
 		"duration":  types.Int32Type,
@@ -221,6 +236,19 @@ var (
 		"retain_original_recordings": types.BoolType,
 		"update_on_reenrollment":     types.BoolType,
 		"update_on_verification":     types.BoolType,
+	}
+
+	identityRecordMatchingServiceTFObjectTypes = map[string]attr.Type{
+		"address":     types.ObjectType{AttrTypes: identityRecordMatchingFieldServiceTFObjectTypes},
+		"birth_date":  types.ObjectType{AttrTypes: identityRecordMatchingFieldServiceTFObjectTypes},
+		"family_name": types.ObjectType{AttrTypes: identityRecordMatchingFieldServiceTFObjectTypes},
+		"given_name":  types.ObjectType{AttrTypes: identityRecordMatchingFieldServiceTFObjectTypes},
+		"name":        types.ObjectType{AttrTypes: identityRecordMatchingFieldServiceTFObjectTypes},
+	}
+
+	identityRecordMatchingFieldServiceTFObjectTypes = map[string]attr.Type{
+		"field_required": types.BoolType,
+		"threshold":      types.StringType,
 	}
 
 	verifyPolicyOptions = []validator.Object{
@@ -443,6 +471,14 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 		"Provider to use for the manual verification service.",
 	).AllowedValuesEnum(verify.AllowedEnumProviderManualEnumValues).DefaultValue(string(defaultProviderManual))
 
+	identityRecordMatchingDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Defines the verification requirements for identity record matching. If `government_id.verify` is `DISABLED`, then identity record matching is disabled.",
+	)
+
+	identityRecordMatchingThresholdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Threshold for successful comparison.",
+	).AllowedValuesEnum(verify.AllowedEnumThresholdEnumValues)
+
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to configure the requirements to verify a user, including the parameters for verification.\n\n" +
@@ -454,7 +490,8 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 			"- Liveness - Inspect a mobile phone self-image for evidence that the subject is alive and not a representation, such as a photograph or mask.\n" +
 			"- Email - Receive a one-time password (OTP) on an email address and return the OTP to the service.\n" +
 			"- Phone - Receive a one-time password (OTP) on a mobile phone and return the OTP to the service.\n" +
-			"- Voice - Compare a voice recording to a previously submitted reference voice recording.\n\n ",
+			"- Voice - Compare a voice recording to a previously submitted reference voice recording.\n" +
+			"- Identity Record Matching - Compare submitted biographic data (address, birth date, full name, given name, or family name) to an identity record.\n\n ",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
@@ -1312,7 +1349,7 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 			},
 
 			"voice": schema.SingleNestedAttribute{
-				Description: "Defines the requirements for transactions invoked by the policy.",
+				Description: "Defines the requirements for comparing a voice recording against a reference voice recording.",
 				Optional:    true,
 				Computed:    true,
 
@@ -1445,6 +1482,129 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 				},
 
 				Validators: verifyPolicyOptions,
+			},
+
+			"identity_record_matching": schema.SingleNestedAttribute{
+				Description:         identityRecordMatchingDescription.Description,
+				MarkdownDescription: identityRecordMatchingDescription.MarkdownDescription,
+				Optional:            true,
+
+				Attributes: map[string]schema.Attribute{
+					"address": schema.SingleNestedAttribute{
+						Description: "Configuration for address verification.",
+						Optional:    true,
+						Attributes: map[string]schema.Attribute{
+							"field_required": schema.BoolAttribute{
+								Description: "Whether the field is required.",
+								Optional:    true,
+								Computed:    true,
+								Default:     booldefault.StaticBool(false),
+							},
+							"threshold": schema.StringAttribute{
+								Description:         identityRecordMatchingThresholdDescription.Description,
+								MarkdownDescription: identityRecordMatchingThresholdDescription.MarkdownDescription,
+								Required:            true,
+								Validators: []validator.String{
+									stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumThresholdEnumValues)...),
+								},
+							},
+						},
+					},
+					"birth_date": schema.SingleNestedAttribute{
+						Description: "Configuration for birth date verification.",
+						Optional:    true,
+						Attributes: map[string]schema.Attribute{
+							"field_required": schema.BoolAttribute{
+								Description: "Whether the field is required.",
+								Optional:    true,
+								Computed:    true,
+								Default:     booldefault.StaticBool(false),
+							},
+							"threshold": schema.StringAttribute{
+								Description:         identityRecordMatchingThresholdDescription.Description,
+								MarkdownDescription: identityRecordMatchingThresholdDescription.MarkdownDescription,
+								Required:            true,
+								Validators: []validator.String{
+									stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumThresholdEnumValues)...),
+								},
+							},
+						},
+					},
+					"family_name": schema.SingleNestedAttribute{
+						Description: "Configuration for family name verification.",
+						Optional:    true,
+						Attributes: map[string]schema.Attribute{
+							"field_required": schema.BoolAttribute{
+								Description: "Whether the field is required.",
+								Optional:    true,
+								Computed:    true,
+								Default:     booldefault.StaticBool(false),
+							},
+							"threshold": schema.StringAttribute{
+								Description:         identityRecordMatchingThresholdDescription.Description,
+								MarkdownDescription: identityRecordMatchingThresholdDescription.MarkdownDescription,
+								Required:            true,
+								Validators: []validator.String{
+									stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumThresholdEnumValues)...),
+								},
+							},
+						},
+					},
+					"given_name": schema.SingleNestedAttribute{
+						Description: "Configuration for given name verification.",
+						Optional:    true,
+						Attributes: map[string]schema.Attribute{
+							"field_required": schema.BoolAttribute{
+								Description: "Whether the field is required.",
+								Optional:    true,
+								Computed:    true,
+								Default:     booldefault.StaticBool(false),
+							},
+							"threshold": schema.StringAttribute{
+								Description:         identityRecordMatchingThresholdDescription.Description,
+								MarkdownDescription: identityRecordMatchingThresholdDescription.MarkdownDescription,
+								Required:            true,
+								Validators: []validator.String{
+									stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumThresholdEnumValues)...),
+								},
+							},
+						},
+					},
+					"name": schema.SingleNestedAttribute{
+						Description: "Configuration for full name verification.",
+						Optional:    true,
+						Attributes: map[string]schema.Attribute{
+							"field_required": schema.BoolAttribute{
+								Description: "Whether the field is required.",
+								Optional:    true,
+								Computed:    true,
+								Default:     booldefault.StaticBool(false),
+							},
+							"threshold": schema.StringAttribute{
+								Description:         identityRecordMatchingThresholdDescription.Description,
+								MarkdownDescription: identityRecordMatchingThresholdDescription.MarkdownDescription,
+								Required:            true,
+								Validators: []validator.String{
+									stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumThresholdEnumValues)...),
+								},
+							},
+						},
+					},
+				},
+
+				Validators: []validator.Object{
+					customobjectvalidator.ConflictsIfMatchesPathValue(
+						types.StringValue(string(verify.ENUMVERIFY_DISABLED)),
+						path.MatchRelative().AtParent().AtName("government_id").AtName("verify"),
+					),
+					customobjectvalidator.AtLeastOneChildConfigured(
+						"address",
+						"birth_date",
+						"family_name",
+						"given_name",
+						"name",
+					),
+				},
 			},
 
 			"created_at": schema.StringAttribute{
@@ -1899,6 +2059,28 @@ func (p *verifyPolicyResourceModel) expand(ctx context.Context) (*verify.VerifyP
 		data.SetDefault(false)
 	}
 
+	// Identity Record Matching Object
+	if !p.IdentityRecordMatching.IsNull() && !p.IdentityRecordMatching.IsUnknown() {
+
+		var identityRecordMatching identityRecordMatchingModel
+		d := p.IdentityRecordMatching.As(ctx, &identityRecordMatching, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		identityRecordMatchingSettings, d := identityRecordMatching.expandIdentityRecordMatching(ctx)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetIdentityRecordMatching(*identityRecordMatchingSettings)
+	}
+
 	return data, diags
 }
 
@@ -2285,6 +2467,104 @@ func (p *voiceModel) expandVoiceModel(ctx context.Context) (*verify.VoiceConfigu
 
 }
 
+func (p *identityRecordMatchingModel) expandIdentityRecordMatching(ctx context.Context) (*verify.IdentityRecordMatching, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	identityRecordMatching := verify.NewIdentityRecordMatchingWithDefaults()
+
+	if !p.Address.IsNull() && !p.Address.IsUnknown() {
+		var address identityRecordMatchingFieldModel
+		d := p.Address.As(ctx, &address, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		addressSettings := verify.NewIdentityRecordMatchingAddress(
+			address.FieldRequired.ValueBool(),
+			verify.EnumThreshold(address.Threshold.ValueString()),
+		)
+		identityRecordMatching.SetAddress(*addressSettings)
+	}
+
+	if !p.BirthDate.IsNull() && !p.BirthDate.IsUnknown() {
+		var birthDate identityRecordMatchingFieldModel
+		d := p.BirthDate.As(ctx, &birthDate, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		birthDateSettings := verify.NewIdentityRecordMatchingBirthDate(
+			birthDate.FieldRequired.ValueBool(),
+			verify.EnumThreshold(birthDate.Threshold.ValueString()),
+		)
+		identityRecordMatching.SetBirthDate(*birthDateSettings)
+	}
+
+	if !p.FamilyName.IsNull() && !p.FamilyName.IsUnknown() {
+		var familyName identityRecordMatchingFieldModel
+		d := p.FamilyName.As(ctx, &familyName, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		familyNameSettings := verify.NewIdentityRecordMatchingFamilyName(
+			familyName.FieldRequired.ValueBool(),
+			verify.EnumThreshold(familyName.Threshold.ValueString()),
+		)
+		identityRecordMatching.SetFamilyName(*familyNameSettings)
+	}
+
+	if !p.GivenName.IsNull() && !p.GivenName.IsUnknown() {
+		var givenName identityRecordMatchingFieldModel
+		d := p.GivenName.As(ctx, &givenName, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		givenNameSettings := verify.NewIdentityRecordMatchingGivenName(
+			givenName.FieldRequired.ValueBool(),
+			verify.EnumThreshold(givenName.Threshold.ValueString()),
+		)
+		identityRecordMatching.SetGivenName(*givenNameSettings)
+	}
+
+	if !p.Name.IsNull() && !p.Name.IsUnknown() {
+		var name identityRecordMatchingFieldModel
+		d := p.Name.As(ctx, &name, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		nameSettings := verify.NewIdentityRecordMatchingName(
+			name.FieldRequired.ValueBool(),
+			verify.EnumThreshold(name.Threshold.ValueString()),
+		)
+		identityRecordMatching.SetName(*nameSettings)
+	}
+
+	return identityRecordMatching, diags
+}
+
 func (p *verifyPolicyResourceModel) toState(apiObject *verify.VerifyPolicy) diag.Diagnostics {
 	var diags diag.Diagnostics
 
@@ -2325,6 +2605,9 @@ func (p *verifyPolicyResourceModel) toState(apiObject *verify.VerifyPolicy) diag
 	diags.Append(d...)
 
 	p.Voice, d = p.toStateVoice(apiObject.GetVoiceOk())
+	diags.Append(d...)
+
+	p.IdentityRecordMatching, d = p.toStateIdentityRecordMatching(apiObject.GetIdentityRecordMatchingOk())
 	diags.Append(d...)
 
 	return diags
@@ -2619,6 +2902,66 @@ func (p *verifyPolicyResourceModel) toStateVoice(apiObject *verify.VoiceConfigur
 		"liveness_threshold":   livenessThreshold,
 		"text_dependent":       textDependent,
 		"reference_data":       referenceData,
+	})
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func (p *verifyPolicyResourceModel) toStateIdentityRecordMatching(apiObject *verify.IdentityRecordMatching, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(identityRecordMatchingServiceTFObjectTypes), diags
+	}
+
+	address, d := p.toStateIdentityRecordMatchingField(apiObject.GetAddressOk())
+	diags.Append(d...)
+
+	birthDate, d := p.toStateIdentityRecordMatchingField(apiObject.GetBirthDateOk())
+	diags.Append(d...)
+
+	familyName, d := p.toStateIdentityRecordMatchingField(apiObject.GetFamilyNameOk())
+	diags.Append(d...)
+
+	givenName, d := p.toStateIdentityRecordMatchingField(apiObject.GetGivenNameOk())
+	diags.Append(d...)
+
+	name, d := p.toStateIdentityRecordMatchingField(apiObject.GetNameOk())
+	diags.Append(d...)
+
+	objValue, d := types.ObjectValue(identityRecordMatchingServiceTFObjectTypes, map[string]attr.Value{
+		"address":     address,
+		"birth_date":  birthDate,
+		"family_name": familyName,
+		"given_name":  givenName,
+		"name":        name,
+	})
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+// IdentityRecordMatchingField defines the interface for identity record matching field types
+type IdentityRecordMatchingField interface {
+	GetFieldRequiredOk() (*bool, bool)
+	GetThresholdOk() (*verify.EnumThreshold, bool)
+}
+
+// toStateIdentityRecordMatchingField converts any identity record matching field type to TF state
+func (p *verifyPolicyResourceModel) toStateIdentityRecordMatchingField(apiObject IdentityRecordMatchingField, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(identityRecordMatchingFieldServiceTFObjectTypes), diags
+	}
+
+	fieldRequired, fieldRequiredOk := apiObject.GetFieldRequiredOk()
+	threshold, thresholdOk := apiObject.GetThresholdOk()
+
+	objValue, d := types.ObjectValue(identityRecordMatchingFieldServiceTFObjectTypes, map[string]attr.Value{
+		"field_required": framework.BoolOkToTF(fieldRequired, fieldRequiredOk),
+		"threshold":      framework.EnumOkToTF(threshold, thresholdOk),
 	})
 	diags.Append(d...)
 
