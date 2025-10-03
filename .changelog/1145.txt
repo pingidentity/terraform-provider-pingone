@@ -1,0 +1,3 @@
+```release-note:enhancement
+`resource/pingone_verify_policy`: Added support for aadhaar to government_id config.
+```
