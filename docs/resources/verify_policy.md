@@ -53,6 +53,18 @@ resource "pingone_verify_policy" "my_verify_everything_policy" {
     fail_expired_id = true
     retry_attempts  = "2"
     verify_aamva    = true
+    aadhaar = {
+      enabled = true
+      otp = {
+        deliveries = {
+          count = 3
+          cooldown = {
+            duration  = 60
+            time_unit = "SECONDS"
+          }
+        }
+      }
+    }
   }
 
   facial_comparison = {
@@ -294,12 +306,54 @@ Required:
 
 Optional:
 
+- `aadhaar` (Attributes) Aadhaar configuration for India-based government Aadhaar documents;`facial_comparison.verify` must be `REQUIRED` to enable. (see [below for nested schema](#nestedatt--government_id--aadhaar))
 - `fail_expired_id` (Boolean) When enabled, Government ID verification fails if the document is expired.
 - `inspection_type` (String) Determine whether document authentication is automated, manual, or possibly both.  Options are `AUTOMATIC`, `MANUAL`, `STEP_UP`.
 - `provider_auto` (String) Provider to use for the automatic verification service.  Options are `MITEK`, `VERIFF`.  Defaults to `MITEK`.
 - `provider_manual` (String) Provider to use for the manual verification service.  Options are `MITEK`.  Defaults to `MITEK`.
 - `retry_attempts` (Number) Number of retries permitted when submitting images.  The allowed range is `0 - 3`.
 - `verify_aamva` (Boolean) When enabled, the AAMVA DLDV system is used to validate identity documents issued by participating states. If license allows, defaults to `true` when `government_id.inspection_type` is `REQUIRED` or `OPTIONAL`; otherwise disabled.
+
+<a id="nestedatt--government_id--aadhaar"></a>
+### Nested Schema for `government_id.aadhaar`
+
+Optional:
+
+- `enabled` (Boolean) Whether Aadhaar verification is enabled or not.
+- `otp` (Attributes) Aadhaar one-time password (OTP) configuration. (see [below for nested schema](#nestedatt--government_id--aadhaar--otp))
+
+<a id="nestedatt--government_id--aadhaar--otp"></a>
+### Nested Schema for `government_id.aadhaar.otp`
+
+Optional:
+
+- `deliveries` (Attributes) OTP delivery configuration. If omitted, defaults to 3 deliveries with a cooldown of 60 seconds. (see [below for nested schema](#nestedatt--government_id--aadhaar--otp--deliveries))
+
+<a id="nestedatt--government_id--aadhaar--otp--deliveries"></a>
+### Nested Schema for `government_id.aadhaar.otp.deliveries`
+
+Required:
+
+- `cooldown` (Attributes) Cooldown (waiting period between OTP deliveries) configuration. (see [below for nested schema](#nestedatt--government_id--aadhaar--otp--deliveries--cooldown))
+
+Optional:
+
+- `count` (Number) Number of OTP deliveries permitted. The allowed range is `1 - 3`.  Defaults to `3`.
+
+<a id="nestedatt--government_id--aadhaar--otp--deliveries--cooldown"></a>
+### Nested Schema for `government_id.aadhaar.otp.deliveries.cooldown`
+
+Required:
+
+- `duration` (Number) Cooldown duration for Aadhaar OTP deliveries.
+    - If `cooldown.time_unit` is `MINUTES`, the allowed range is `1 - 30`.
+    - If `cooldown.time_unit` is `SECONDS`, the allowed range is `60 - 1800`.
+    - Defaults to `60 SECONDS`.
+- `time_unit` (String) Time unit of the Aadhaar OTP cooldown duration.  Options are `MINUTES`, `SECONDS`.  Defaults to `SECONDS`.
+
+
+
+
 
 
 <a id="nestedatt--identity_record_matching"></a>

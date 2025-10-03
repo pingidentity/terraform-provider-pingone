@@ -46,6 +46,10 @@ func TestAccVerifyPolicyDataSource_All(t *testing.T) {
 		resource.TestCheckResourceAttr(dataSourceFullName, "government_id.provider_manual", "MITEK"),
 		resource.TestCheckResourceAttr(dataSourceFullName, "government_id.retry_attempts", "1"),
 		resource.TestCheckResourceAttr(dataSourceFullName, "government_id.verify_aamva", "false"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "government_id.aadhaar.enabled", "true"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "government_id.aadhaar.otp.deliveries.count", "2"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "government_id.aadhaar.otp.deliveries.cooldown.duration", "90"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "government_id.aadhaar.otp.deliveries.cooldown.time_unit", "SECONDS"),
 
 		resource.TestCheckResourceAttr(dataSourceFullName, "facial_comparison.verify", "REQUIRED"),
 		resource.TestCheckResourceAttr(dataSourceFullName, "facial_comparison.threshold", "HIGH"),
@@ -261,6 +265,18 @@ resource "pingone_verify_policy" "%[3]s" {
     provider_manual = "MITEK"
     retry_attempts  = "1"
     verify_aamva    = false
+    aadhaar = {
+      enabled = true
+      otp = {
+        deliveries = {
+          count = 2
+          cooldown = {
+            duration  = 90
+            time_unit = "SECONDS"
+          }
+        }
+      }
+    }
   }
 
   facial_comparison = {
@@ -458,5 +474,45 @@ data "pingone_verify_policy" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s"
 
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}
+
+func testAccVerifyPolicy_FindByID_Aadhaar(environmentName, licenseID, resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+resource "pingone_verify_policy" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s"
+  description    = "%[4]s with Aadhaar"
+
+  government_id = {
+    verify = "REQUIRED"
+    aadhaar = {
+      enabled = true
+      otp = {
+        deliveries = {
+          count = 2
+          cooldown = {
+            duration  = 90
+            time_unit = "SECONDS"
+          }
+        }
+      }
+    }
+  }
+
+  facial_comparison = {
+    verify    = "REQUIRED"
+    threshold = "HIGH"
+  }
+
+  depends_on = [pingone_environment.%[2]s]
+}
+
+data "pingone_verify_policy" "%[3]s" {
+  environment_id   = pingone_environment.%[2]s.id
+  verify_policy_id = pingone_verify_policy.%[3]s.id
+
+  depends_on = [pingone_verify_policy.%[3]s]
 }`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
