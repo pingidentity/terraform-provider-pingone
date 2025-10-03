@@ -24,6 +24,7 @@ resource "pingone_verify_policy" "my_verify_everything_policy" {
     provider_auto   = "VERIFF"
     fail_expired_id = true
     retry_attempts  = "2"
+    verify_aamva    = true
   }
 
   facial_comparison = {

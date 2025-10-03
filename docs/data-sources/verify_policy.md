@@ -147,6 +147,7 @@ Read-Only:
 - `provider_manual` (String) Provider to use for the manual verification service.  Options are `MITEK`.  Defaults to `MITEK`.
 - `retry_attempts` (Number) Number of retries permitted when submitting images.  The allowed range is `0 - 3`.
 - `verify` (String) Controls Government ID verification requirements.  Options are `DISABLED`, `OPTIONAL`, `REQUIRED`.  Defaults to `DISABLED`.
+- `verify_aamva` (Boolean) When enabled, the AAMVA DLDV system is used to validate identity documents issued by participating states.
 
 
 <a id="nestedatt--identity_record_matching"></a>

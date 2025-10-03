@@ -61,6 +61,7 @@ var (
 		"provider_auto":   types.StringType,
 		"provider_manual": types.StringType,
 		"retry_attempts":  types.Int32Type,
+		"verify_aamva":    types.BoolType,
 	}
 
 	facialComparisonDataSourceServiceTFObjectTypes = map[string]attr.Type{
@@ -444,6 +445,10 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 						Description:         retryAttemptsDescription.Description,
 						MarkdownDescription: retryAttemptsDescription.MarkdownDescription,
 						Computed:            true,
+					},
+					"verify_aamva": schema.BoolAttribute{
+						Description: "When enabled, the AAMVA DLDV system is used to validate identity documents issued by participating states.",
+						Computed:    true,
 					},
 				},
 			},
@@ -1141,6 +1146,7 @@ func (p *verifyPolicyDataSourceModel) toStateGovernmentId(apiObject *verify.Gove
 		"provider_auto":   framework.EnumOkToTF(provider.GetAutoOk()),
 		"provider_manual": framework.EnumOkToTF(provider.GetManualOk()),
 		"retry_attempts":  retryAttempts,
+		"verify_aamva":    framework.BoolOkToTF(apiObject.GetVerifyAamvaOk()),
 	})
 	diags.Append(d...)
 

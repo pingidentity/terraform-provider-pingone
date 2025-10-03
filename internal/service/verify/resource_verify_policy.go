@@ -29,6 +29,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/patrickcping/pingone-go-sdk-v2/verify"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	boolvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/boolvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	int32validatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/int32validator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
@@ -67,6 +68,7 @@ type governmentIdModel struct {
 	ProviderAuto   types.String `tfsdk:"provider_auto"`
 	ProviderManual types.String `tfsdk:"provider_manual"`
 	RetryAttempts  types.Int32  `tfsdk:"retry_attempts"`
+	VerifyAamva    types.Bool   `tfsdk:"verify_aamva"`
 }
 
 type facialComparisonModel struct {
@@ -168,6 +170,7 @@ var (
 		"provider_auto":   types.StringType,
 		"provider_manual": types.StringType,
 		"retry_attempts":  types.Int32Type,
+		"verify_aamva":    types.BoolType,
 	}
 
 	facialComparisonServiceTFObjectTypes = map[string]attr.Type{
@@ -479,6 +482,10 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 		"Threshold for successful comparison.",
 	).AllowedValuesEnum(verify.AllowedEnumThresholdEnumValues)
 
+	verifyAamvaDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"When enabled, the AAMVA DLDV system is used to validate identity documents issued by participating states. If license allows, defaults to `true` when `government_id.inspection_type` is `REQUIRED` or `OPTIONAL`; otherwise disabled.",
+	)
+
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to configure the requirements to verify a user, including the parameters for verification.\n\n" +
@@ -540,6 +547,7 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 						"provider_auto":   types.StringValue(string(defaultProviderAuto)),
 						"provider_manual": types.StringValue(string(defaultProviderManual)),
 						"retry_attempts":  types.Int32Null(),
+						"verify_aamva":    types.BoolNull(),
 					},
 				)),
 
@@ -601,6 +609,18 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 						Optional:            true,
 						Validators: []validator.Int32{
 							int32validator.Between(attrMinRetryAttempts, attrMaxRetryAttempts),
+						},
+					},
+					"verify_aamva": schema.BoolAttribute{
+						Description:         verifyAamvaDescription.Description,
+						MarkdownDescription: verifyAamvaDescription.MarkdownDescription,
+						Computed:            true,
+						Optional:            true,
+						Validators: []validator.Bool{
+							boolvalidatorinternal.MustNotBeTrueIfPathSetToValue(
+								types.StringValue(string(verify.ENUMVERIFY_DISABLED)),
+								path.MatchRoot("government_id").AtName("verify"),
+							),
 						},
 					},
 				},
@@ -2119,6 +2139,10 @@ func (p *governmentIdModel) expandgovernmentIdModel() (*verify.GovernmentIdConfi
 		verifyGovernmentId.SetRetry(*retryAttempts)
 	}
 
+	if !p.VerifyAamva.IsNull() && !p.VerifyAamva.IsUnknown() {
+		verifyGovernmentId.SetVerifyAamva(p.VerifyAamva.ValueBool())
+	}
+
 	if verifyGovernmentId == nil {
 		diags.AddError(
 			"Unexpected Value",
@@ -2641,6 +2665,7 @@ func (p *verifyPolicyResourceModel) toStateGovernmentId(apiObject *verify.Govern
 		"provider_auto":   framework.EnumOkToTF(provider.GetAutoOk()),
 		"provider_manual": framework.EnumOkToTF(provider.GetManualOk()),
 		"retry_attempts":  retryAttempts,
+		"verify_aamva":    framework.BoolOkToTF(apiObject.GetVerifyAamvaOk()),
 	})
 	diags.Append(d...)
 
