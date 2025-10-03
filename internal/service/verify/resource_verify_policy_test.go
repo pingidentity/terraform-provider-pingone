@@ -132,6 +132,10 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "government_id.provider_manual", "MITEK"),
 		resource.TestCheckResourceAttr(resourceFullName, "government_id.retry_attempts", "2"),
 		resource.TestCheckResourceAttr(resourceFullName, "government_id.verify_aamva", "false"),
+		resource.TestCheckResourceAttr(resourceFullName, "government_id.aadhaar.enabled", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "government_id.aadhaar.otp.deliveries.count", "3"),
+		resource.TestCheckResourceAttr(resourceFullName, "government_id.aadhaar.otp.deliveries.cooldown.duration", "120"),
+		resource.TestCheckResourceAttr(resourceFullName, "government_id.aadhaar.otp.deliveries.cooldown.time_unit", "SECONDS"),
 
 		resource.TestCheckResourceAttr(resourceFullName, "facial_comparison.verify", "REQUIRED"),
 		resource.TestCheckResourceAttr(resourceFullName, "facial_comparison.threshold", "HIGH"),
@@ -446,6 +450,11 @@ func TestAccVerifyPolicy_ValidationChecks(t *testing.T) {
 				ExpectError: regexp.MustCompile("Error: Incorrect attribute value type"),
 				Destroy:     true,
 			},
+			{
+				Config:      testAccVerifyPolicy_AadhaarEnabledWhenFacialRecognitionNotRequired(resourceName, name),
+				ExpectError: regexp.MustCompile("Error: Invalid Attribute Combination"),
+				Destroy:     true,
+			},
 		},
 	})
 }
@@ -534,6 +543,18 @@ resource "pingone_verify_policy" "%[2]s" {
     provider_manual = "MITEK"
     retry_attempts  = "2"
     verify_aamva    = false
+    aadhaar = {
+      enabled = true
+      otp = {
+        deliveries = {
+          count = 3
+          cooldown = {
+            duration  = "120"
+            time_unit = "SECONDS"
+          }
+        }
+      }
+    }
   }
 
   facial_comparison = {
@@ -1010,6 +1031,38 @@ resource "pingone_verify_policy" "%[2]s" {
     address = {
       field_required = true
     }
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccVerifyPolicy_AadhaarEnabledWhenFacialRecognitionNotRequired(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+resource "pingone_verify_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "Description for %[3]s with Aadhaar validation error"
+
+  government_id = {
+    verify = "REQUIRED"
+    aadhaar = {
+      enabled = true
+      otp = {
+        deliveries = {
+          count = 2
+          cooldown = {
+            duration  = 90
+            time_unit = "SECONDS"
+          }
+        }
+      }
+    }
+  }
+
+  facial_comparison = {
+    verify    = "OPTIONAL"
+    threshold = "MEDIUM"
   }
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)

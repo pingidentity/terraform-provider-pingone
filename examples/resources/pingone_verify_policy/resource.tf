@@ -25,6 +25,18 @@ resource "pingone_verify_policy" "my_verify_everything_policy" {
     fail_expired_id = true
     retry_attempts  = "2"
     verify_aamva    = true
+    aadhaar = {
+      enabled = true
+      otp = {
+        deliveries = {
+          count = 3
+          cooldown = {
+            duration  = 60
+            time_unit = "SECONDS"
+          }
+        }
+      }
+    }
   }
 
   facial_comparison = {
