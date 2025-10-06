@@ -39,6 +39,11 @@ resource "pingone_risk_predictor" "my_awesome_composite_predictor" {
                 "equals" : "High",
                 "value" : "$${details.${pingone_risk_predictor.my_awesome_anonymous_network_predictor.compact_name}.level}",
                 "type" : "VALUE_COMPARISON"
+                },
+                {
+                  "list" : ["Group Name"],
+                  "contains" : "$${event.user.groups}",
+                  "type" : "GROUPS_INTERSECTION"
               }],
               "type" : "AND"
             }],
