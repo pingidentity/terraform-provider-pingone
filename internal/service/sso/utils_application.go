@@ -80,11 +80,53 @@ func applicationCorsSettingsOkToTF(apiObject *management.ApplicationCorsSettings
 	return returnVar, diags
 }
 
+func applicationOidcOptionsDataSourceToTF(ctx context.Context, apiObject *management.ApplicationOIDC, stateValue applicationOIDCOptionsDataSourceModelV1) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	commonAttrs, d := applicationOidcOptionsCommonToTF(ctx, apiObject, stateValue.applicationOIDCOptionsCommonModelV1)
+	diags.Append(d...)
+
+	if commonAttrs == nil {
+		return types.ObjectNull(applicationOidcOptionsDataSourceTFObjectTypes), diags
+	}
+
+	attributesMap := utils.MergeAttributeValueMapsRtn(
+		map[string]attr.Value{
+			"client_id": framework.StringOkToTF(apiObject.GetIdOk()),
+		},
+		commonAttrs,
+	)
+
+	returnVar, d := types.ObjectValue(applicationOidcOptionsDataSourceTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
 func applicationOidcOptionsToTF(ctx context.Context, apiObject *management.ApplicationOIDC, stateValue applicationOIDCOptionsResourceModelV1) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	commonAttrs, d := applicationOidcOptionsCommonToTF(ctx, apiObject, stateValue.applicationOIDCOptionsCommonModelV1)
+	diags.Append(d...)
+
+	if commonAttrs == nil {
+		return types.ObjectNull(applicationOidcOptionsResourceTFObjectTypes), diags
+	}
+
+	attributesMap := utils.MergeAttributeValueMapsRtn(
+		beta.ApplicationBetaToTF(apiObject, stateValue.ApplicationOIDCOptionsResourceModelV1),
+		commonAttrs,
+	)
+
+	returnVar, d := types.ObjectValue(applicationOidcOptionsResourceTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func applicationOidcOptionsCommonToTF(ctx context.Context, apiObject *management.ApplicationOIDC, stateValue applicationOIDCOptionsCommonModelV1) (map[string]attr.Value, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if apiObject == nil || apiObject.GetId() == "" {
-		return types.ObjectNull(applicationOidcOptionsTFObjectTypes), diags
+		return nil, diags
 	}
 
 	kerberos, d := applicationOidcOptionsCertificateBasedAuthenticationToTF(apiObject.GetKerberosOk())
@@ -102,51 +144,43 @@ func applicationOidcOptionsToTF(ctx context.Context, apiObject *management.Appli
 		})
 		diags.Append(d...)
 		if diags.HasError() {
-			return types.ObjectNull(applicationOidcOptionsTFObjectTypes), diags
+			return nil, diags
 		}
 	}
 	mobileApp, d := applicationMobileAppOkToTF(ctx, mobileAppObject, ok, mobileAppState)
 	diags.Append(d...)
 
-	attributesMap := utils.MergeAttributeValueMapsRtn(
-		beta.ApplicationBetaToTF(apiObject, stateValue.ApplicationOIDCOptionsResourceModelV1),
-		map[string]attr.Value{
-			"additional_refresh_token_replay_protection_enabled": framework.BoolOkToTF(apiObject.GetAdditionalRefreshTokenReplayProtectionEnabledOk()),
-			"allow_wildcard_in_redirect_uris":                    framework.BoolOkToTF(apiObject.GetAllowWildcardInRedirectUrisOk()),
-			"certificate_based_authentication":                   kerberos,
-			"cors_settings":                                      corsSettings,
-			"device_path_id":                                     framework.StringOkToTF(apiObject.GetDevicePathIdOk()),
-			"device_custom_verification_uri":                     framework.StringOkToTF(apiObject.GetDeviceCustomVerificationUriOk()),
-			"device_timeout":                                     framework.Int32OkToTF(apiObject.GetDeviceTimeoutOk()),
-			"device_polling_interval":                            framework.Int32OkToTF(apiObject.GetDevicePollingIntervalOk()),
-			"grant_types":                                        framework.EnumSetOkToTF(apiObject.GetGrantTypesOk()),
-			"home_page_url":                                      framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
-			"idp_signoff":                                        framework.BoolOkToTF(apiObject.GetIdpSignoffOk()),
-			"initiate_login_uri":                                 framework.StringOkToTF(apiObject.GetInitiateLoginUriOk()),
-			"jwks_url":                                           framework.StringOkToTF(apiObject.GetJwksUrlOk()),
-			"jwks":                                               framework.StringOkToTF(apiObject.GetJwksOk()),
-			"mobile_app":                                         mobileApp,
-			"par_requirement":                                    framework.EnumOkToTF(apiObject.GetParRequirementOk()),
-			"par_timeout":                                        framework.Int32OkToTF(apiObject.GetParTimeoutOk()),
-			"pkce_enforcement":                                   framework.EnumOkToTF(apiObject.GetPkceEnforcementOk()),
-			"post_logout_redirect_uris":                          framework.StringSetOkToTF(apiObject.GetPostLogoutRedirectUrisOk()),
-			"redirect_uris":                                      framework.StringSetOkToTF(apiObject.GetRedirectUrisOk()),
-			"refresh_token_duration":                             framework.Int32OkToTF(apiObject.GetRefreshTokenDurationOk()),
-			"refresh_token_rolling_duration":                     framework.Int32OkToTF(apiObject.GetRefreshTokenRollingDurationOk()),
-			"refresh_token_rolling_grace_period_duration":        framework.Int32OkToTF(apiObject.GetRefreshTokenRollingGracePeriodDurationOk()),
-			"require_signed_request_object":                      framework.BoolOkToTF(apiObject.GetRequireSignedRequestObjectOk()),
-			"response_types":                                     framework.EnumSetOkToTF(apiObject.GetResponseTypesOk()),
-			"support_unsigned_request_object":                    framework.BoolOkToTF(apiObject.GetSupportUnsignedRequestObjectOk()),
-			"target_link_uri":                                    framework.StringOkToTF(apiObject.GetTargetLinkUriOk()),
-			"token_endpoint_auth_method":                         framework.EnumOkToTF(apiObject.GetTokenEndpointAuthMethodOk()),
-			"type":                                               framework.EnumOkToTF(apiObject.GetTypeOk()),
-		},
-	)
-
-	returnVar, d := types.ObjectValue(applicationOidcOptionsTFObjectTypes, attributesMap)
-	diags.Append(d...)
-
-	return returnVar, diags
+	return map[string]attr.Value{
+		"additional_refresh_token_replay_protection_enabled": framework.BoolOkToTF(apiObject.GetAdditionalRefreshTokenReplayProtectionEnabledOk()),
+		"allow_wildcard_in_redirect_uris":                    framework.BoolOkToTF(apiObject.GetAllowWildcardInRedirectUrisOk()),
+		"certificate_based_authentication":                   kerberos,
+		"cors_settings":                                      corsSettings,
+		"device_path_id":                                     framework.StringOkToTF(apiObject.GetDevicePathIdOk()),
+		"device_custom_verification_uri":                     framework.StringOkToTF(apiObject.GetDeviceCustomVerificationUriOk()),
+		"device_timeout":                                     framework.Int32OkToTF(apiObject.GetDeviceTimeoutOk()),
+		"device_polling_interval":                            framework.Int32OkToTF(apiObject.GetDevicePollingIntervalOk()),
+		"grant_types":                                        framework.EnumSetOkToTF(apiObject.GetGrantTypesOk()),
+		"home_page_url":                                      framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
+		"idp_signoff":                                        framework.BoolOkToTF(apiObject.GetIdpSignoffOk()),
+		"initiate_login_uri":                                 framework.StringOkToTF(apiObject.GetInitiateLoginUriOk()),
+		"jwks_url":                                           framework.StringOkToTF(apiObject.GetJwksUrlOk()),
+		"jwks":                                               framework.StringOkToTF(apiObject.GetJwksOk()),
+		"mobile_app":                                         mobileApp,
+		"par_requirement":                                    framework.EnumOkToTF(apiObject.GetParRequirementOk()),
+		"par_timeout":                                        framework.Int32OkToTF(apiObject.GetParTimeoutOk()),
+		"pkce_enforcement":                                   framework.EnumOkToTF(apiObject.GetPkceEnforcementOk()),
+		"post_logout_redirect_uris":                          framework.StringSetOkToTF(apiObject.GetPostLogoutRedirectUrisOk()),
+		"redirect_uris":                                      framework.StringSetOkToTF(apiObject.GetRedirectUrisOk()),
+		"refresh_token_duration":                             framework.Int32OkToTF(apiObject.GetRefreshTokenDurationOk()),
+		"refresh_token_rolling_duration":                     framework.Int32OkToTF(apiObject.GetRefreshTokenRollingDurationOk()),
+		"refresh_token_rolling_grace_period_duration":        framework.Int32OkToTF(apiObject.GetRefreshTokenRollingGracePeriodDurationOk()),
+		"require_signed_request_object":                      framework.BoolOkToTF(apiObject.GetRequireSignedRequestObjectOk()),
+		"response_types":                                     framework.EnumSetOkToTF(apiObject.GetResponseTypesOk()),
+		"support_unsigned_request_object":                    framework.BoolOkToTF(apiObject.GetSupportUnsignedRequestObjectOk()),
+		"target_link_uri":                                    framework.StringOkToTF(apiObject.GetTargetLinkUriOk()),
+		"token_endpoint_auth_method":                         framework.EnumOkToTF(apiObject.GetTokenEndpointAuthMethodOk()),
+		"type":                                               framework.EnumOkToTF(apiObject.GetTypeOk()),
+	}, diags
 }
 
 func applicationOidcOptionsCertificateBasedAuthenticationToTF(apiObject *management.ApplicationOIDCAllOfKerberos, ok bool) (types.Object, diag.Diagnostics) {

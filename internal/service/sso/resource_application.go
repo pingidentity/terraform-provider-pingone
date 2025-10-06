@@ -72,8 +72,7 @@ type applicationExternalLinkOptionsResourceModelV1 struct {
 	HomePageUrl types.String `tfsdk:"home_page_url"`
 }
 
-type applicationOIDCOptionsResourceModelV1 struct {
-	beta.ApplicationOIDCOptionsResourceModelV1
+type applicationOIDCOptionsCommonModelV1 struct {
 	AdditionalRefreshTokenReplayProtectionEnabled types.Bool   `tfsdk:"additional_refresh_token_replay_protection_enabled"`
 	AllowWildcardsInRedirectUris                  types.Bool   `tfsdk:"allow_wildcard_in_redirect_uris"`
 	CertificateBasedAuthentication                types.Object `tfsdk:"certificate_based_authentication"`
@@ -103,6 +102,17 @@ type applicationOIDCOptionsResourceModelV1 struct {
 	TargetLinkUri                                 types.String `tfsdk:"target_link_uri"`
 	TokenEndpointAuthnMethod                      types.String `tfsdk:"token_endpoint_auth_method"`
 	Type                                          types.String `tfsdk:"type"`
+}
+
+type applicationOIDCOptionsResourceModelV1 struct {
+	beta.ApplicationOIDCOptionsResourceModelV1
+	applicationOIDCOptionsCommonModelV1
+}
+
+type applicationOIDCOptionsDataSourceModelV1 struct {
+	// The data source is the same whether in beta or GA. These split models can be merged again on completion of CDI-631
+	ClientId types.String `tfsdk:"client_id"`
+	applicationOIDCOptionsCommonModelV1
 }
 
 type applicationCorsSettingsResourceModelV1 struct {
@@ -232,39 +242,48 @@ var (
 		"key_id":    pingonetypes.ResourceIDType{},
 	}
 
-	applicationOidcOptionsTFObjectTypes = utils.MergeAttributeTypeMapsRtn(
+	applicationOidcOptionsCommonTFObjectTypes = map[string]attr.Type{
+		"additional_refresh_token_replay_protection_enabled": types.BoolType,
+		"allow_wildcard_in_redirect_uris":                    types.BoolType,
+		"certificate_based_authentication":                   types.ObjectType{AttrTypes: applicationOidcOptionsCertificateAuthenticationTFObjectTypes},
+		"cors_settings":                                      types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes},
+		"device_path_id":                                     types.StringType,
+		"device_custom_verification_uri":                     types.StringType,
+		"device_timeout":                                     types.Int32Type,
+		"device_polling_interval":                            types.Int32Type,
+		"grant_types":                                        types.SetType{ElemType: types.StringType},
+		"home_page_url":                                      types.StringType,
+		"idp_signoff":                                        types.BoolType,
+		"initiate_login_uri":                                 types.StringType,
+		"jwks_url":                                           types.StringType,
+		"jwks":                                               types.StringType,
+		"mobile_app":                                         types.ObjectType{AttrTypes: applicationOidcMobileAppTFObjectTypes},
+		"par_requirement":                                    types.StringType,
+		"par_timeout":                                        types.Int32Type,
+		"pkce_enforcement":                                   types.StringType,
+		"post_logout_redirect_uris":                          types.SetType{ElemType: types.StringType},
+		"redirect_uris":                                      types.SetType{ElemType: types.StringType},
+		"refresh_token_duration":                             types.Int32Type,
+		"refresh_token_rolling_duration":                     types.Int32Type,
+		"refresh_token_rolling_grace_period_duration":        types.Int32Type,
+		"require_signed_request_object":                      types.BoolType,
+		"response_types":                                     types.SetType{ElemType: types.StringType},
+		"support_unsigned_request_object":                    types.BoolType,
+		"target_link_uri":                                    types.StringType,
+		"token_endpoint_auth_method":                         types.StringType,
+		"type":                                               types.StringType,
+	}
+
+	applicationOidcOptionsResourceTFObjectTypes = utils.MergeAttributeTypeMapsRtn(
 		beta.ApplicationOidcOptionsTFObjectTypes,
+		applicationOidcOptionsCommonTFObjectTypes,
+	)
+
+	applicationOidcOptionsDataSourceTFObjectTypes = utils.MergeAttributeTypeMapsRtn(
 		map[string]attr.Type{
-			"additional_refresh_token_replay_protection_enabled": types.BoolType,
-			"allow_wildcard_in_redirect_uris":                    types.BoolType,
-			"certificate_based_authentication":                   types.ObjectType{AttrTypes: applicationOidcOptionsCertificateAuthenticationTFObjectTypes},
-			"cors_settings":                                      types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes},
-			"device_path_id":                                     types.StringType,
-			"device_custom_verification_uri":                     types.StringType,
-			"device_timeout":                                     types.Int32Type,
-			"device_polling_interval":                            types.Int32Type,
-			"grant_types":                                        types.SetType{ElemType: types.StringType},
-			"home_page_url":                                      types.StringType,
-			"idp_signoff":                                        types.BoolType,
-			"initiate_login_uri":                                 types.StringType,
-			"jwks_url":                                           types.StringType,
-			"jwks":                                               types.StringType,
-			"mobile_app":                                         types.ObjectType{AttrTypes: applicationOidcMobileAppTFObjectTypes},
-			"par_requirement":                                    types.StringType,
-			"par_timeout":                                        types.Int32Type,
-			"pkce_enforcement":                                   types.StringType,
-			"post_logout_redirect_uris":                          types.SetType{ElemType: types.StringType},
-			"redirect_uris":                                      types.SetType{ElemType: types.StringType},
-			"refresh_token_duration":                             types.Int32Type,
-			"refresh_token_rolling_duration":                     types.Int32Type,
-			"refresh_token_rolling_grace_period_duration":        types.Int32Type,
-			"require_signed_request_object":                      types.BoolType,
-			"response_types":                                     types.SetType{ElemType: types.StringType},
-			"support_unsigned_request_object":                    types.BoolType,
-			"target_link_uri":                                    types.StringType,
-			"token_endpoint_auth_method":                         types.StringType,
-			"type":                                               types.StringType,
+			"client_id": types.StringType,
 		},
+		applicationOidcOptionsCommonTFObjectTypes,
 	)
 
 	applicationOidcMobileAppTFObjectTypes = map[string]attr.Type{
@@ -3536,7 +3555,7 @@ func (p *applicationResourceModelV1) toState(ctx context.Context, apiObject *man
 
 		// Service specific attributes
 		p.Tags = types.SetNull(types.StringType)
-		p.OIDCOptions = types.ObjectNull(applicationOidcOptionsTFObjectTypes)
+		p.OIDCOptions = types.ObjectNull(applicationOidcOptionsResourceTFObjectTypes)
 		p.SAMLOptions = types.ObjectNull(applicationSamlOptionsTFObjectTypes)
 		p.WSFedOptions = types.ObjectNull(applicationWsfedOptionsTFObjectTypes)
 
@@ -3618,7 +3637,7 @@ func (p *applicationResourceModelV1) toState(ctx context.Context, apiObject *man
 
 		// Service specific attributes
 		p.Tags = types.SetNull(types.StringType)
-		p.OIDCOptions = types.ObjectNull(applicationOidcOptionsTFObjectTypes)
+		p.OIDCOptions = types.ObjectNull(applicationOidcOptionsResourceTFObjectTypes)
 
 		p.SAMLOptions, d = applicationSamlOptionsToTF(v)
 		diags = append(diags, d...)
@@ -3654,7 +3673,7 @@ func (p *applicationResourceModelV1) toState(ctx context.Context, apiObject *man
 
 		// Service specific attributes
 		p.Tags = types.SetNull(types.StringType)
-		p.OIDCOptions = types.ObjectNull(applicationOidcOptionsTFObjectTypes)
+		p.OIDCOptions = types.ObjectNull(applicationOidcOptionsResourceTFObjectTypes)
 		p.SAMLOptions = types.ObjectNull(applicationSamlOptionsTFObjectTypes)
 		p.ExternalLinkOptions = types.ObjectNull(applicationExternalLinkOptionsTFObjectTypes)
 

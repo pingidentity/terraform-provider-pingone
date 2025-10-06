@@ -786,7 +786,7 @@ func (p *applicationResourceModelV0) schemaUpgradeExternalLinkOptionsV0toV1(ctx 
 func (p *applicationResourceModelV0) schemaUpgradeOIDCOptionsV0toV1(ctx context.Context) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	attributeTypes := applicationOidcOptionsTFObjectTypes
+	attributeTypes := applicationOidcOptionsResourceTFObjectTypes
 	planAttribute := p.OIDCOptions
 
 	if planAttribute.IsNull() {
@@ -818,35 +818,37 @@ func (p *applicationResourceModelV0) schemaUpgradeOIDCOptionsV0toV1(ctx context.
 		const devicePollingIntervalDefault = 5
 
 		upgradedStateData := applicationOIDCOptionsResourceModelV1{
-			ApplicationOIDCOptionsResourceModelV1:         beta.SchemaUpgradeV0toV1(priorStateData[0].ClientId),
-			AdditionalRefreshTokenReplayProtectionEnabled: priorStateData[0].AdditionalRefreshTokenReplayProtectionEnabled,
-			AllowWildcardsInRedirectUris:                  priorStateData[0].AllowWildcardsInRedirectUris,
-			CertificateBasedAuthentication:                certificateBasedAuthentication,
-			CorsSettings:                                  corsSettings,
-			DevicePathId:                                  types.StringNull(),
-			DeviceCustomVerificationUri:                   types.StringNull(),
-			DeviceTimeout:                                 types.Int32Value(deviceTimeoutDefault),
-			DevicePollingInterval:                         types.Int32Value(devicePollingIntervalDefault),
-			GrantTypes:                                    priorStateData[0].GrantTypes,
-			HomePageUrl:                                   priorStateData[0].HomePageUrl,
-			InitiateLoginUri:                              priorStateData[0].InitiateLoginUri,
-			Jwks:                                          priorStateData[0].Jwks,
-			JwksUrl:                                       priorStateData[0].JwksUrl,
-			MobileApp:                                     mobileApp,
-			ParRequirement:                                priorStateData[0].ParRequirement,
-			ParTimeout:                                    priorStateData[0].ParTimeout,
-			PKCEEnforcement:                               priorStateData[0].PKCEEnforcement,
-			PostLogoutRedirectUris:                        priorStateData[0].PostLogoutRedirectUris,
-			RedirectUris:                                  priorStateData[0].RedirectUris,
-			RefreshTokenDuration:                          priorStateData[0].RefreshTokenDuration,
-			RefreshTokenRollingDuration:                   priorStateData[0].RefreshTokenRollingDuration,
-			RefreshTokenRollingGracePeriodDuration:        priorStateData[0].RefreshTokenRollingGracePeriodDuration,
-			RequireSignedRequestObject:                    priorStateData[0].RequireSignedRequestObject,
-			ResponseTypes:                                 priorStateData[0].ResponseTypes,
-			SupportUnsignedRequestObject:                  priorStateData[0].SupportUnsignedRequestObject,
-			TargetLinkUri:                                 priorStateData[0].TargetLinkUri,
-			TokenEndpointAuthnMethod:                      priorStateData[0].TokenEndpointAuthnMethod,
-			Type:                                          priorStateData[0].Type,
+			ApplicationOIDCOptionsResourceModelV1: beta.SchemaUpgradeV0toV1(priorStateData[0].ClientId),
+			applicationOIDCOptionsCommonModelV1: applicationOIDCOptionsCommonModelV1{
+				AdditionalRefreshTokenReplayProtectionEnabled: priorStateData[0].AdditionalRefreshTokenReplayProtectionEnabled,
+				AllowWildcardsInRedirectUris:                  priorStateData[0].AllowWildcardsInRedirectUris,
+				CertificateBasedAuthentication:                certificateBasedAuthentication,
+				CorsSettings:                                  corsSettings,
+				DevicePathId:                                  types.StringNull(),
+				DeviceCustomVerificationUri:                   types.StringNull(),
+				DeviceTimeout:                                 types.Int32Value(deviceTimeoutDefault),
+				DevicePollingInterval:                         types.Int32Value(devicePollingIntervalDefault),
+				GrantTypes:                                    priorStateData[0].GrantTypes,
+				HomePageUrl:                                   priorStateData[0].HomePageUrl,
+				InitiateLoginUri:                              priorStateData[0].InitiateLoginUri,
+				Jwks:                                          priorStateData[0].Jwks,
+				JwksUrl:                                       priorStateData[0].JwksUrl,
+				MobileApp:                                     mobileApp,
+				ParRequirement:                                priorStateData[0].ParRequirement,
+				ParTimeout:                                    priorStateData[0].ParTimeout,
+				PKCEEnforcement:                               priorStateData[0].PKCEEnforcement,
+				PostLogoutRedirectUris:                        priorStateData[0].PostLogoutRedirectUris,
+				RedirectUris:                                  priorStateData[0].RedirectUris,
+				RefreshTokenDuration:                          priorStateData[0].RefreshTokenDuration,
+				RefreshTokenRollingDuration:                   priorStateData[0].RefreshTokenRollingDuration,
+				RefreshTokenRollingGracePeriodDuration:        priorStateData[0].RefreshTokenRollingGracePeriodDuration,
+				RequireSignedRequestObject:                    priorStateData[0].RequireSignedRequestObject,
+				ResponseTypes:                                 priorStateData[0].ResponseTypes,
+				SupportUnsignedRequestObject:                  priorStateData[0].SupportUnsignedRequestObject,
+				TargetLinkUri:                                 priorStateData[0].TargetLinkUri,
+				TokenEndpointAuthnMethod:                      priorStateData[0].TokenEndpointAuthnMethod,
+				Type:                                          priorStateData[0].Type,
+			},
 		}
 
 		returnVar, d := types.ObjectValueFrom(ctx, attributeTypes, upgradedStateData)
