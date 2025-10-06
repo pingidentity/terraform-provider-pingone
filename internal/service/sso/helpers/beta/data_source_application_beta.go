@@ -1,6 +1,6 @@
 // Copyright © 2025 Ping Identity Corporation
 
-// This file relates to a beta feature described in CDI-492
+// This file relates to a beta feature described in CDI-492 and should be modified or removed on completion of CDI-631
 
 //go:build beta
 
