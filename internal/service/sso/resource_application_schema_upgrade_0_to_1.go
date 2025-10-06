@@ -818,7 +818,7 @@ func (p *applicationResourceModelV0) schemaUpgradeOIDCOptionsV0toV1(ctx context.
 		const devicePollingIntervalDefault = 5
 
 		upgradedStateData := applicationOIDCOptionsResourceModelV1{
-			ApplicationOIDCOptionsResourceModelV1Beta:     beta.SchemaUpgradeV0toV1(priorStateData[0].ClientId),
+			ApplicationOIDCOptionsResourceModelV1:         beta.SchemaUpgradeV0toV1(priorStateData[0].ClientId),
 			AdditionalRefreshTokenReplayProtectionEnabled: priorStateData[0].AdditionalRefreshTokenReplayProtectionEnabled,
 			AllowWildcardsInRedirectUris:                  priorStateData[0].AllowWildcardsInRedirectUris,
 			CertificateBasedAuthentication:                certificateBasedAuthentication,

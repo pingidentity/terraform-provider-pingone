@@ -109,7 +109,7 @@ func applicationOidcOptionsToTF(ctx context.Context, apiObject *management.Appli
 	diags.Append(d...)
 
 	attributesMap := utils.MergeAttributeValueMapsRtn(
-		beta.ApplicationBetaToTF(apiObject, stateValue.ApplicationOIDCOptionsResourceModelV1Beta),
+		beta.ApplicationBetaToTF(apiObject, stateValue.ApplicationOIDCOptionsResourceModelV1),
 		map[string]attr.Value{
 			"additional_refresh_token_replay_protection_enabled": framework.BoolOkToTF(apiObject.GetAdditionalRefreshTokenReplayProtectionEnabledOk()),
 			"allow_wildcard_in_redirect_uris":                    framework.BoolOkToTF(apiObject.GetAllowWildcardInRedirectUrisOk()),

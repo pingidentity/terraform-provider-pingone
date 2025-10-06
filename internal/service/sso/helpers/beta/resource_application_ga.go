@@ -17,7 +17,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 )
 
-type ApplicationOIDCOptionsResourceModelV1Beta struct {
+type ApplicationOIDCOptionsResourceModelV1 struct {
 	ClientId types.String `tfsdk:"client_id"`
 }
 
@@ -39,15 +39,15 @@ func ResourceSchemaItems() map[string]schema.Attribute {
 }
 
 // no-op
-func AddBeta(data *management.ApplicationOIDC, plan ApplicationOIDCOptionsResourceModelV1Beta) {}
+func AddBeta(data *management.ApplicationOIDC, plan ApplicationOIDCOptionsResourceModelV1) {}
 
-func SchemaUpgradeV0toV1(clientId pingonetypes.ResourceIDValue) ApplicationOIDCOptionsResourceModelV1Beta {
-	return ApplicationOIDCOptionsResourceModelV1Beta{
+func SchemaUpgradeV0toV1(clientId pingonetypes.ResourceIDValue) ApplicationOIDCOptionsResourceModelV1 {
+	return ApplicationOIDCOptionsResourceModelV1{
 		ClientId: types.StringValue(clientId.ValueString()),
 	}
 }
 
-func ApplicationBetaToTF(apiObject *management.ApplicationOIDC, stateValue ApplicationOIDCOptionsResourceModelV1Beta) map[string]attr.Value {
+func ApplicationBetaToTF(apiObject *management.ApplicationOIDC, stateValue ApplicationOIDCOptionsResourceModelV1) map[string]attr.Value {
 	return map[string]attr.Value{
 		"client_id": framework.StringOkToTF(apiObject.GetIdOk()),
 	}

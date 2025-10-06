@@ -17,7 +17,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 )
 
-type ApplicationOIDCOptionsResourceModelV1Beta struct {
+type ApplicationOIDCOptionsResourceModelV1 struct {
 	ClientId            types.String `tfsdk:"client_id"`
 	InitialClientSecret types.String `tfsdk:"initial_client_secret"`
 }
@@ -51,7 +51,7 @@ func ResourceSchemaItems() map[string]schema.Attribute {
 	}
 }
 
-func AddBeta(data *management.ApplicationOIDC, plan ApplicationOIDCOptionsResourceModelV1Beta) {
+func AddBeta(data *management.ApplicationOIDC, plan ApplicationOIDCOptionsResourceModelV1) {
 	if !plan.ClientId.IsNull() && !plan.ClientId.IsUnknown() {
 		data.SetClientId(plan.ClientId.ValueString())
 	}
@@ -60,14 +60,14 @@ func AddBeta(data *management.ApplicationOIDC, plan ApplicationOIDCOptionsResour
 	}
 }
 
-func SchemaUpgradeV0toV1(clientId pingonetypes.ResourceIDValue) ApplicationOIDCOptionsResourceModelV1Beta {
-	return ApplicationOIDCOptionsResourceModelV1Beta{
+func SchemaUpgradeV0toV1(clientId pingonetypes.ResourceIDValue) ApplicationOIDCOptionsResourceModelV1 {
+	return ApplicationOIDCOptionsResourceModelV1{
 		ClientId:            types.StringValue(clientId.ValueString()),
 		InitialClientSecret: types.StringNull(),
 	}
 }
 
-func ApplicationBetaToTF(apiObject *management.ApplicationOIDC, stateValue ApplicationOIDCOptionsResourceModelV1Beta) map[string]attr.Value {
+func ApplicationBetaToTF(apiObject *management.ApplicationOIDC, stateValue ApplicationOIDCOptionsResourceModelV1) map[string]attr.Value {
 	clientId := framework.StringOkToTF(apiObject.GetClientIdOk())
 
 	if clientId.IsNull() {

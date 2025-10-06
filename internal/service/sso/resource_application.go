@@ -73,7 +73,7 @@ type applicationExternalLinkOptionsResourceModelV1 struct {
 }
 
 type applicationOIDCOptionsResourceModelV1 struct {
-	beta.ApplicationOIDCOptionsResourceModelV1Beta
+	beta.ApplicationOIDCOptionsResourceModelV1
 	AdditionalRefreshTokenReplayProtectionEnabled types.Bool   `tfsdk:"additional_refresh_token_replay_protection_enabled"`
 	AllowWildcardsInRedirectUris                  types.Bool   `tfsdk:"allow_wildcard_in_redirect_uris"`
 	CertificateBasedAuthentication                types.Object `tfsdk:"certificate_based_authentication"`
@@ -2771,7 +2771,7 @@ func (p *applicationResourceModelV1) expandApplicationOIDC(ctx context.Context) 
 			data.SetMobile(*mobile)
 		}
 
-		beta.AddBeta(data, plan.ApplicationOIDCOptionsResourceModelV1Beta)
+		beta.AddBeta(data, plan.ApplicationOIDCOptionsResourceModelV1)
 	}
 
 	return data, diags
