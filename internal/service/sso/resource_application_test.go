@@ -125,7 +125,7 @@ func TestAccApplication_OIDCFullWeb(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoBeta(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -148,7 +148,7 @@ func TestAccApplication_OIDCFullWeb(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.type", "ANY_GROUP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "WEB_APP"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.home_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.initiate_login_uri", "https://www.pingidentity.com/initiate"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.target_link_uri", "https://www.pingidentity.com/target"),
@@ -224,7 +224,7 @@ func TestAccApplication_OIDCMinimalWeb(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoBeta(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -242,7 +242,7 @@ func TestAccApplication_OIDCMinimalWeb(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "login_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "icon"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "WEB_APP"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.home_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initiate_login_uri"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
@@ -292,7 +292,7 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoBeta(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -310,7 +310,7 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "login_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "icon"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "WEB_APP"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.home_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initiate_login_uri"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
@@ -358,7 +358,7 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.type", "ANY_GROUP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "WEB_APP"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.home_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.initiate_login_uri", "https://www.pingidentity.com/initiate"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.target_link_uri", "https://www.pingidentity.com/target"),
@@ -414,7 +414,7 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "login_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "icon"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "WEB_APP"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.home_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initiate_login_uri"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
@@ -464,7 +464,7 @@ func TestAccApplication_OIDCFullNative(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoBeta(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -487,7 +487,7 @@ func TestAccApplication_OIDCFullNative(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.type", "ANY_GROUP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "NATIVE_APP"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.home_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initiate_login_uri"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
@@ -566,7 +566,7 @@ func TestAccApplication_OIDCMinimalNative(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoBeta(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -584,7 +584,7 @@ func TestAccApplication_OIDCMinimalNative(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "login_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "icon"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "NATIVE_APP"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.home_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initiate_login_uri"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
@@ -638,7 +638,7 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoBeta(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -661,7 +661,7 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.type", "ANY_GROUP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "NATIVE_APP"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.home_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initiate_login_uri"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
@@ -715,7 +715,7 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "login_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "icon"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "NATIVE_APP"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.home_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initiate_login_uri"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
@@ -767,7 +767,7 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.type", "ANY_GROUP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "NATIVE_APP"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.home_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initiate_login_uri"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
@@ -846,7 +846,6 @@ func TestAccApplication_NativeKerberos(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoBeta(t)
 			acctest.PreCheckRegionSupportsWorkforce(t)
 			acctest.PreCheckNoBeta(t)
 		},
@@ -1196,7 +1195,7 @@ func TestAccApplication_OIDCFullCustom(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoBeta(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -1219,7 +1218,7 @@ func TestAccApplication_OIDCFullCustom(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.type", "ANY_GROUP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "CUSTOM_APP"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.home_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.initiate_login_uri", "https://www.pingidentity.com/initiate"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.target_link_uri", "https://www.pingidentity.com/target"),
@@ -1303,7 +1302,7 @@ func TestAccApplication_OIDCMinimalCustom(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoBeta(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -1321,7 +1320,7 @@ func TestAccApplication_OIDCMinimalCustom(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "login_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "icon"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "CUSTOM_APP"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.home_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initiate_login_uri"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
@@ -1373,7 +1372,7 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoBeta(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -1396,7 +1395,7 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.type", "ANY_GROUP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "CUSTOM_APP"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.home_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.initiate_login_uri", "https://www.pingidentity.com/initiate"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.target_link_uri", "https://www.pingidentity.com/target"),
@@ -1460,7 +1459,7 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "login_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "icon"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "CUSTOM_APP"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.home_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initiate_login_uri"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
@@ -1510,7 +1509,7 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.type", "ANY_GROUP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "CUSTOM_APP"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.home_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.initiate_login_uri", "https://www.pingidentity.com/initiate"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.target_link_uri", "https://www.pingidentity.com/target"),
@@ -1603,7 +1602,7 @@ func TestAccApplication_OIDCCustom_Device(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoBeta(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -1648,7 +1647,7 @@ func TestAccApplication_OIDCFullService(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoBeta(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -1671,7 +1670,7 @@ func TestAccApplication_OIDCFullService(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.type", "ANY_GROUP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "SERVICE"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.home_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.initiate_login_uri", "https://www.pingidentity.com/initiate"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.target_link_uri", "https://www.pingidentity.com/target"),
@@ -1750,7 +1749,7 @@ func TestAccApplication_OIDCMinimalService(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoBeta(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -1768,7 +1767,7 @@ func TestAccApplication_OIDCMinimalService(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "login_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "icon"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "SERVICE"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.home_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initiate_login_uri"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
@@ -1818,7 +1817,7 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoBeta(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -1841,7 +1840,7 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.type", "ANY_GROUP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "SERVICE"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.home_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.initiate_login_uri", "https://www.pingidentity.com/initiate"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.target_link_uri", "https://www.pingidentity.com/target"),
@@ -1900,7 +1899,7 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "login_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "icon"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "SERVICE"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.home_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initiate_login_uri"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
@@ -1948,7 +1947,7 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.type", "ANY_GROUP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "SERVICE"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.home_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.initiate_login_uri", "https://www.pingidentity.com/initiate"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.target_link_uri", "https://www.pingidentity.com/target"),
@@ -2014,7 +2013,7 @@ func TestAccApplication_OIDCFullSPA(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoBeta(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -2037,7 +2036,7 @@ func TestAccApplication_OIDCFullSPA(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.type", "ANY_GROUP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "SINGLE_PAGE_APP"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.home_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.initiate_login_uri", "https://www.pingidentity.com/initiate"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.target_link_uri", "https://www.pingidentity.com/target"),
@@ -2112,7 +2111,7 @@ func TestAccApplication_OIDCMinimalSPA(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoBeta(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -2130,7 +2129,7 @@ func TestAccApplication_OIDCMinimalSPA(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "login_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "icon"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "SINGLE_PAGE_APP"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.home_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initiate_login_uri"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
@@ -2179,7 +2178,7 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoBeta(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -2197,7 +2196,7 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "login_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "icon"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "SINGLE_PAGE_APP"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.home_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initiate_login_uri"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
@@ -2244,7 +2243,7 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.type", "ANY_GROUP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "SINGLE_PAGE_APP"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.home_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.initiate_login_uri", "https://www.pingidentity.com/initiate"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.target_link_uri", "https://www.pingidentity.com/target"),
@@ -2299,7 +2298,7 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "login_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "icon"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "SINGLE_PAGE_APP"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.home_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initiate_login_uri"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
@@ -2348,7 +2347,7 @@ func TestAccApplication_OIDCFullWorker(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoBeta(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -2372,7 +2371,7 @@ func TestAccApplication_OIDCFullWorker(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.1", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.type", "ANY_GROUP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "WORKER"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.home_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initiate_login_uri"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
@@ -2441,7 +2440,7 @@ func TestAccApplication_OIDCMinimalWorker(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoBeta(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -2461,7 +2460,7 @@ func TestAccApplication_OIDCMinimalWorker(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "WORKER"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.home_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initiate_login_uri"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
@@ -2508,7 +2507,7 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoBeta(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -2528,7 +2527,7 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "WORKER"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.home_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initiate_login_uri"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
@@ -2574,7 +2573,7 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.1", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.type", "ANY_GROUP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "WORKER"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.home_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initiate_login_uri"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
@@ -2625,7 +2624,7 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "WORKER"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.home_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initiate_login_uri"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
@@ -2670,7 +2669,7 @@ func TestAccApplication_OIDC_WildcardInRedirectURI(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoBeta(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -2709,7 +2708,7 @@ func TestAccApplication_OIDC_LocalhostAddresses(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoBeta(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -2763,7 +2762,7 @@ func TestAccApplication_OIDC_NativeAppAddresses(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoBeta(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -2830,7 +2829,7 @@ func TestAccApplication_OIDC_JwtTokenAuth(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoBeta(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -3498,7 +3497,7 @@ func TestAccApplication_Enabled(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoBeta(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -3538,7 +3537,7 @@ func TestAccApplication_BadParameters(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoBeta(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,

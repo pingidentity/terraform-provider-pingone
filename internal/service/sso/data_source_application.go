@@ -952,7 +952,7 @@ func (p *applicationDataSourceModel) toState(ctx context.Context, apiObject *man
 
 		// Service specific attributes
 		p.Tags = types.SetNull(types.StringType)
-		p.OIDCOptions = types.ObjectNull(applicationOidcOptionsTFObjectTypes)
+		p.OIDCOptions = types.ObjectNull(applicationOidcOptionsDataSourceTFObjectTypes)
 		p.SAMLOptions = types.ObjectNull(applicationSamlOptionsTFObjectTypes)
 
 		p.ExternalLinkOptions, d = applicationExternalLinkOptionsToTF(v)
@@ -987,7 +987,7 @@ func (p *applicationDataSourceModel) toState(ctx context.Context, apiObject *man
 		// Service specific attributes
 		p.Tags = framework.EnumSetOkToTF(v.GetTagsOk())
 
-		var oidcOptionsState applicationOIDCOptionsResourceModelV1
+		var oidcOptionsState applicationOIDCOptionsDataSourceModelV1
 		if !p.OIDCOptions.IsNull() && !p.OIDCOptions.IsUnknown() {
 			d := p.OIDCOptions.As(ctx, &oidcOptionsState, basetypes.ObjectAsOptions{
 				UnhandledNullAsEmpty:    false,
@@ -998,7 +998,7 @@ func (p *applicationDataSourceModel) toState(ctx context.Context, apiObject *man
 				return diags
 			}
 		}
-		p.OIDCOptions, d = applicationOidcOptionsToTF(ctx, v, oidcOptionsState)
+		p.OIDCOptions, d = applicationOidcOptionsDataSourceToTF(ctx, v, oidcOptionsState)
 		diags = append(diags, d...)
 
 		p.SAMLOptions = types.ObjectNull(applicationSamlOptionsTFObjectTypes)
@@ -1032,7 +1032,7 @@ func (p *applicationDataSourceModel) toState(ctx context.Context, apiObject *man
 
 		// Service specific attributes
 		p.Tags = types.SetNull(types.StringType)
-		p.OIDCOptions = types.ObjectNull(applicationOidcOptionsTFObjectTypes)
+		p.OIDCOptions = types.ObjectNull(applicationOidcOptionsDataSourceTFObjectTypes)
 
 		p.SAMLOptions, d = applicationSamlOptionsToTF(v)
 		diags = append(diags, d...)
@@ -1067,7 +1067,7 @@ func (p *applicationDataSourceModel) toState(ctx context.Context, apiObject *man
 
 		// Service specific attributes
 		p.Tags = types.SetNull(types.StringType)
-		p.OIDCOptions = types.ObjectNull(applicationOidcOptionsTFObjectTypes)
+		p.OIDCOptions = types.ObjectNull(applicationOidcOptionsDataSourceTFObjectTypes)
 		p.SAMLOptions = types.ObjectNull(applicationSamlOptionsTFObjectTypes)
 		p.ExternalLinkOptions = types.ObjectNull(applicationExternalLinkOptionsTFObjectTypes)
 
