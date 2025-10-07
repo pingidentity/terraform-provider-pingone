@@ -54,6 +54,25 @@ var (
 		"time_unit": types.StringType,
 	}
 
+	aadhaarOtpCooldownDataSourceServiceTFObjectTypes = map[string]attr.Type{
+		"duration":  types.Int32Type,
+		"time_unit": types.StringType,
+	}
+
+	aadhaarOtpDeliveriesDataSourceServiceTFObjectTypes = map[string]attr.Type{
+		"count":    types.Int32Type,
+		"cooldown": types.ObjectType{AttrTypes: aadhaarOtpCooldownDataSourceServiceTFObjectTypes},
+	}
+
+	aadhaarOtpDataSourceServiceTFObjectTypes = map[string]attr.Type{
+		"deliveries": types.ObjectType{AttrTypes: aadhaarOtpDeliveriesDataSourceServiceTFObjectTypes},
+	}
+
+	aadhaarDataSourceServiceTFObjectTypes = map[string]attr.Type{
+		"enabled": types.BoolType,
+		"otp":     types.ObjectType{AttrTypes: aadhaarOtpDataSourceServiceTFObjectTypes},
+	}
+
 	governmentIdDataSourceServiceTFObjectTypes = map[string]attr.Type{
 		"verify":          types.StringType,
 		"inspection_type": types.StringType,
@@ -62,6 +81,7 @@ var (
 		"provider_manual": types.StringType,
 		"retry_attempts":  types.Int32Type,
 		"verify_aamva":    types.BoolType,
+		"aadhaar":         types.ObjectType{AttrTypes: aadhaarDataSourceServiceTFObjectTypes},
 	}
 
 	facialComparisonDataSourceServiceTFObjectTypes = map[string]attr.Type{
@@ -180,6 +200,13 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 	const attrMinRetryAttempts = 0
 	const attrMaxRetryAttempts = 3
 
+	const attrMinAadhaarDurationSeconds = 60
+	const attrMaxAadhaarDurationSeconds = 1800
+	const attrMinAadhaarDurationMinutes = 1
+	const attrMaxAadhaarDurationMinutes = 30
+	const attrMinAadhaarCount = 1
+	const attrMaxAadhaarCount = 3
+
 	// defaults
 	const defaultNotificationTemplate = "email_phone_verification"
 
@@ -201,6 +228,11 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 
 	const defaultProviderAuto = verify.ENUMPROVIDERAUTO_MITEK
 	const defaultProviderManual = verify.ENUMPROVIDERAUTO_MITEK
+
+	const defaultAadhaarEnabled = false
+	const defaultAadhaarDuration = 60
+	const defaultAadhaarTimeUnit = verify.ENUMTIMEUNIT_SECONDS
+	const defaultAadhaarCount = 3
 
 	dataSourceExactlyOneOfRelativePaths := []string{
 		"verify_policy_id",
@@ -356,6 +388,29 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 		"Threshold for successful comparison.",
 	).AllowedValuesEnum(verify.AllowedEnumThresholdEnumValues)
 
+	aadhaarDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Aadhaar configuration for India-based government Aadhaar documents;`facial_comparison.verify` must be `REQUIRED` to enable.",
+	)
+
+	aadhaarEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Whether Aadhaar verification is enabled.",
+	).DefaultValue(defaultAadhaarEnabled)
+
+	aadhaarOtpDeliveriesCountDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("Number of OTP deliveries permitted. The allowed range is `%d - %d`.", attrMinAadhaarCount, attrMaxAadhaarCount),
+	).DefaultValue(int32(defaultAadhaarCount))
+
+	aadhaarOtpDeliveriesCooldownDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Cooldown duration for Aadhaar OTP deliveries.\n" +
+			fmt.Sprintf("    - If `cooldown.time_unit` is `MINUTES`, the allowed range is `%d - %d`.\n", attrMinAadhaarDurationMinutes, attrMaxAadhaarDurationMinutes) +
+			fmt.Sprintf("    - If `cooldown.time_unit` is `SECONDS`, the allowed range is `%d - %d`.\n", attrMinAadhaarDurationSeconds, attrMaxAadhaarDurationSeconds) +
+			fmt.Sprintf("    - Defaults to `%d %s`.\n", defaultAadhaarDuration, defaultAadhaarTimeUnit),
+	)
+
+	aadhaarOtpDeliveriesCooldownTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Time unit of the Aadhaar OTP cooldown duration.",
+	).AllowedValuesEnum(verify.AllowedEnumTimeUnitEnumValues).DefaultValue(string(defaultAadhaarTimeUnit))
+
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		Description: "Data source to retrieve the default PingOne Verify Policy or to find a PingOne Verify Policy by its Verify Policy Id or Name.",
@@ -449,6 +504,55 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 					"verify_aamva": schema.BoolAttribute{
 						Description: "When enabled, the AAMVA DLDV system is used to validate identity documents issued by participating states.",
 						Computed:    true,
+					},
+					"aadhaar": schema.SingleNestedAttribute{
+						Description:         aadhaarDescription.Description,
+						MarkdownDescription: aadhaarDescription.MarkdownDescription,
+						Computed:            true,
+
+						Attributes: map[string]schema.Attribute{
+							"enabled": schema.BoolAttribute{
+								Description:         aadhaarEnabledDescription.Description,
+								MarkdownDescription: aadhaarEnabledDescription.MarkdownDescription,
+								Computed:            true,
+							},
+							"otp": schema.SingleNestedAttribute{
+								Description: "Aadhaar one-time password (OTP) configuration.",
+								Computed:    true,
+
+								Attributes: map[string]schema.Attribute{
+									"deliveries": schema.SingleNestedAttribute{
+										Description: "OTP delivery configuration.",
+										Computed:    true,
+
+										Attributes: map[string]schema.Attribute{
+											"count": schema.Int32Attribute{
+												Description:         aadhaarOtpDeliveriesCountDescription.Description,
+												MarkdownDescription: aadhaarOtpDeliveriesCountDescription.MarkdownDescription,
+												Computed:            true,
+											},
+											"cooldown": schema.SingleNestedAttribute{
+												Description: "Cooldown (waiting period between OTP deliveries) configuration.",
+												Computed:    true,
+
+												Attributes: map[string]schema.Attribute{
+													"duration": schema.Int32Attribute{
+														Description:         aadhaarOtpDeliveriesCooldownDurationDescription.Description,
+														MarkdownDescription: aadhaarOtpDeliveriesCooldownDurationDescription.MarkdownDescription,
+														Computed:            true,
+													},
+													"time_unit": schema.StringAttribute{
+														Description:         aadhaarOtpDeliveriesCooldownTimeUnitDescription.Description,
+														MarkdownDescription: aadhaarOtpDeliveriesCooldownTimeUnitDescription.MarkdownDescription,
+														Computed:            true,
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -1139,6 +1243,59 @@ func (p *verifyPolicyDataSourceModel) toStateGovernmentId(apiObject *verify.Gove
 			"GovernmentId data object contained unexpected null value for the `provider` data object.  Please report this issue to the provider maintainers.")
 	}
 
+	aadhaarObject := types.ObjectNull(aadhaarDataSourceServiceTFObjectTypes)
+	if v, ok := apiObject.GetAadhaarOk(); ok {
+		var d diag.Diagnostics
+
+		aadhaarOtpObject := types.ObjectNull(aadhaarOtpDataSourceServiceTFObjectTypes)
+		if otpV, otpOk := v.GetOtpOk(); otpOk {
+			aadhaarOtpDeliveriesObject := types.ObjectNull(aadhaarOtpDeliveriesDataSourceServiceTFObjectTypes)
+			if deliveriesV, deliveriesOk := otpV.GetDeliveriesOk(); deliveriesOk {
+				aadhaarOtpCooldownObject := types.ObjectNull(aadhaarOtpCooldownDataSourceServiceTFObjectTypes)
+				if cooldownV, cooldownOk := deliveriesV.GetCooldownOk(); cooldownOk {
+					cooldownAttrs := map[string]attr.Value{
+						"duration":  framework.Int32OkToTF(cooldownV.GetDurationOk()),
+						"time_unit": framework.EnumOkToTF(cooldownV.GetTimeUnitOk()),
+					}
+
+					objValue, d := types.ObjectValue(aadhaarOtpCooldownDataSourceServiceTFObjectTypes, cooldownAttrs)
+					diags.Append(d...)
+
+					aadhaarOtpCooldownObject = objValue
+				}
+
+				deliveriesAttrs := map[string]attr.Value{
+					"count":    framework.Int32OkToTF(deliveriesV.GetCountOk()),
+					"cooldown": aadhaarOtpCooldownObject,
+				}
+
+				objValue, d := types.ObjectValue(aadhaarOtpDeliveriesDataSourceServiceTFObjectTypes, deliveriesAttrs)
+				diags.Append(d...)
+
+				aadhaarOtpDeliveriesObject = objValue
+			}
+
+			otpAttrs := map[string]attr.Value{
+				"deliveries": aadhaarOtpDeliveriesObject,
+			}
+
+			objValue, d := types.ObjectValue(aadhaarOtpDataSourceServiceTFObjectTypes, otpAttrs)
+			diags.Append(d...)
+
+			aadhaarOtpObject = objValue
+		}
+
+		aadhaarAttrs := map[string]attr.Value{
+			"enabled": framework.BoolOkToTF(v.GetEnabledOk()),
+			"otp":     aadhaarOtpObject,
+		}
+
+		objValue, d := types.ObjectValue(aadhaarDataSourceServiceTFObjectTypes, aadhaarAttrs)
+		diags.Append(d...)
+
+		aadhaarObject = objValue
+	}
+
 	objValue, d := types.ObjectValue(governmentIdDataSourceServiceTFObjectTypes, map[string]attr.Value{
 		"verify":          framework.EnumOkToTF(apiObject.GetVerifyOk()),
 		"inspection_type": framework.EnumOkToTF(apiObject.GetInspectionTypeOk()),
@@ -1147,6 +1304,7 @@ func (p *verifyPolicyDataSourceModel) toStateGovernmentId(apiObject *verify.Gove
 		"provider_manual": framework.EnumOkToTF(provider.GetManualOk()),
 		"retry_attempts":  retryAttempts,
 		"verify_aamva":    framework.BoolOkToTF(apiObject.GetVerifyAamvaOk()),
+		"aadhaar":         aadhaarObject,
 	})
 	diags.Append(d...)
 
