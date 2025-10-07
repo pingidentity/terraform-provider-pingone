@@ -207,63 +207,6 @@ Read-Only:
 
 
 
-<a id="nestedatt--identity_record_matching"></a>
-### Nested Schema for `identity_record_matching`
-
-Read-Only:
-
-- `address` (Attributes) Configuration for address verification. (see [below for nested schema](#nestedatt--identity_record_matching--address))
-- `birth_date` (Attributes) Configuration for birth date verification. (see [below for nested schema](#nestedatt--identity_record_matching--birth_date))
-- `family_name` (Attributes) Configuration for family name verification. (see [below for nested schema](#nestedatt--identity_record_matching--family_name))
-- `given_name` (Attributes) Configuration for given name verification. (see [below for nested schema](#nestedatt--identity_record_matching--given_name))
-- `name` (Attributes) Configuration for full name verification. (see [below for nested schema](#nestedatt--identity_record_matching--name))
-
-<a id="nestedatt--identity_record_matching--address"></a>
-### Nested Schema for `identity_record_matching.address`
-
-Read-Only:
-
-- `field_required` (Boolean) Whether the field is required.
-- `threshold` (String) Threshold for successful comparison.  Options are `HIGH`, `LOW`, `MEDIUM`.
-
-
-<a id="nestedatt--identity_record_matching--birth_date"></a>
-### Nested Schema for `identity_record_matching.birth_date`
-
-Read-Only:
-
-- `field_required` (Boolean) Whether the field is required.
-- `threshold` (String) Threshold for successful comparison.  Options are `HIGH`, `LOW`, `MEDIUM`.
-
-
-<a id="nestedatt--identity_record_matching--family_name"></a>
-### Nested Schema for `identity_record_matching.family_name`
-
-Read-Only:
-
-- `field_required` (Boolean) Whether the field is required.
-- `threshold` (String) Threshold for successful comparison.  Options are `HIGH`, `LOW`, `MEDIUM`.
-
-
-<a id="nestedatt--identity_record_matching--given_name"></a>
-### Nested Schema for `identity_record_matching.given_name`
-
-Read-Only:
-
-- `field_required` (Boolean) Whether the field is required.
-- `threshold` (String) Threshold for successful comparison.  Options are `HIGH`, `LOW`, `MEDIUM`.
-
-
-<a id="nestedatt--identity_record_matching--name"></a>
-### Nested Schema for `identity_record_matching.name`
-
-Read-Only:
-
-- `field_required` (Boolean) Whether the field is required.
-- `threshold` (String) Threshold for successful comparison.  Options are `HIGH`, `LOW`, `MEDIUM`.
-
-
-
 <a id="nestedatt--liveness"></a>
 ### Nested Schema for `liveness`
 
