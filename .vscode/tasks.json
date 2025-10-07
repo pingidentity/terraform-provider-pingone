@@ -77,10 +77,7 @@
         "showReuseMessage": true,
         "clear": true
       },
-      "problemMatcher": "$go",
-      "runOptions": {
-        "runOn": "folderOpen"
-      }
+      "problemMatcher": "$go"
     },
     {
       "label": "Run Acceptance Tests - SSO Service",
