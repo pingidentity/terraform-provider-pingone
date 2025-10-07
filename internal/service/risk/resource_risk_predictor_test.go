@@ -198,8 +198,8 @@ func TestAccRiskPredictor_Composite(t *testing.T) {
 	fullCheck1 := resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr(resourceFullName, "type", "COMPOSITE"),
 		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.0.condition_json", "{\"not\":{\"or\":[{\"equals\":0,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.geoVelocity.level}\"},{\"and\":[{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}],\"type\":\"AND\"}],\"type\":\"OR\"},\"type\":\"NOT\"}"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.0.condition", "{\"not\":{\"or\":[{\"equals\":0,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.geoVelocity.level}\"},{\"and\":[{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}],\"type\":\"AND\"}],\"type\":\"OR\"},\"type\":\"NOT\"}"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.0.condition_json", "{\"not\":{\"or\":[{\"equals\":0,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.geoVelocity.level}\"},{\"and\":[{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"contains\":\"${event.user.groups}\",\"list\":[\"Group Name\"],\"type\":\"GROUPS_INTERSECTION\"}],\"type\":\"AND\"}],\"type\":\"OR\"},\"type\":\"NOT\"}"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.0.condition", "{\"not\":{\"or\":[{\"equals\":0,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.geoVelocity.level}\"},{\"and\":[{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"contains\":\"${event.user.groups}\",\"list\":[\"Group Name\"],\"type\":\"GROUPS_INTERSECTION\"}],\"type\":\"AND\"}],\"type\":\"OR\"},\"type\":\"NOT\"}"),
 		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.0.level", "HIGH"),
 		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.1.condition_json", "{\"and\":[{\"equals\":5,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"low\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"and\":[{\"equals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"or\":[{\"notEquals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}]}]}]}"),
 		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.1.condition", "{\"and\":[{\"equals\":5,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"low\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"and\":[{\"equals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"or\":[{\"notEquals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}],\"type\":\"OR\"}],\"type\":\"AND\"}],\"type\":\"AND\"}"),
@@ -2750,6 +2750,10 @@ resource "pingone_risk_predictor" "%[2]s" {
                 "equals" : "High",
                 "value" : "$${details.anonymousNetwork.level}",
                 "type" : "VALUE_COMPARISON"
+                }, {
+                "list" : ["Group Name"],
+                "contains" : "$${event.user.groups}",
+                "type" : "GROUPS_INTERSECTION"
               }],
               "type" : "AND"
             }],
