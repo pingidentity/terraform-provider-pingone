@@ -92,6 +92,9 @@ jobs:
       PINGONE_REGION_CODE: ${{ matrix.region }}
       PINGONE_LICENSE_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_LICENSE_ID', matrix.region)] }}
       PINGONE_ORGANIZATION_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_ORG_ID', matrix.region)] }}
+      # Two vars needed for application data source acceptance tests - can be removed when CDI-631 is done
+      PINGONE_KEY_PKCS7_CERT: ${{ secrets.PINGONE_KEY_PKCS7_CERT }}
+      PINGONE_KEY_PEM_CERT: ${{ secrets.PINGONE_KEY_PEM_CERT }}
 
     timeout-minutes: 45
 
