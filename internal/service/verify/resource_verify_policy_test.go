@@ -177,6 +177,17 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "voice.reference_data.update_on_reenrollment", "true"),
 		resource.TestCheckResourceAttr(resourceFullName, "voice.reference_data.update_on_verification", "true"),
 
+		resource.TestCheckResourceAttr(resourceFullName, "identity_record_matching.address.threshold", "LOW"),
+		resource.TestCheckResourceAttr(resourceFullName, "identity_record_matching.address.field_required", "false"),
+		resource.TestCheckResourceAttr(resourceFullName, "identity_record_matching.birth_date.threshold", "MEDIUM"),
+		resource.TestCheckResourceAttr(resourceFullName, "identity_record_matching.birth_date.field_required", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "identity_record_matching.family_name.threshold", "MEDIUM"),
+		resource.TestCheckResourceAttr(resourceFullName, "identity_record_matching.family_name.field_required", "false"),
+		resource.TestCheckResourceAttr(resourceFullName, "identity_record_matching.given_name.threshold", "MEDIUM"),
+		resource.TestCheckResourceAttr(resourceFullName, "identity_record_matching.given_name.field_required", "false"),
+		resource.TestCheckResourceAttr(resourceFullName, "identity_record_matching.name.threshold", "HIGH"),
+		resource.TestCheckResourceAttr(resourceFullName, "identity_record_matching.name.field_required", "true"),
+
 		resource.TestMatchResourceAttr(resourceFullName, "created_at", validation.RFC3339Regexp),
 		resource.TestMatchResourceAttr(resourceFullName, "updated_at", validation.RFC3339Regexp),
 	)
@@ -234,6 +245,8 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "voice.reference_data.retain_original_recordings", "false"),
 		resource.TestCheckResourceAttr(resourceFullName, "voice.reference_data.update_on_reenrollment", "true"),
 		resource.TestCheckResourceAttr(resourceFullName, "voice.reference_data.update_on_verification", "true"),
+
+		resource.TestCheckNoResourceAttr(resourceFullName, "identity_record_matching"),
 
 		resource.TestMatchResourceAttr(resourceFullName, "created_at", validation.RFC3339Regexp),
 		resource.TestMatchResourceAttr(resourceFullName, "updated_at", validation.RFC3339Regexp),
@@ -408,6 +421,21 @@ func TestAccVerifyPolicy_ValidationChecks(t *testing.T) {
 			{
 				Config:      testAccVerifyPolicy_GovernmentIdInspectionTypeNotAllowed(resourceName, name),
 				ExpectError: regexp.MustCompile("Error: Invalid Attribute Value Match"),
+				Destroy:     true,
+			},
+			{
+				Config:      testAccVerifyPolicy_IdentityRecordMatchingEmpty(resourceName, name),
+				ExpectError: regexp.MustCompile("Error: Missing Required Configuration"),
+				Destroy:     true,
+			},
+			{
+				Config:      testAccVerifyPolicy_IdentityRecordMatchingWithDisabledGovernmentId(resourceName, name),
+				ExpectError: regexp.MustCompile("Error: Invalid argument combination"),
+				Destroy:     true,
+			},
+			{
+				Config:      testAccVerifyPolicy_IdentityRecordMatchingMissingThreshold(resourceName, name),
+				ExpectError: regexp.MustCompile("Error: Incorrect attribute value type"),
 				Destroy:     true,
 			},
 		},
@@ -592,6 +620,28 @@ resource "pingone_verify_policy" "%[2]s" {
     }
   }
 
+  identity_record_matching = {
+    address = {
+      threshold      = "LOW"
+      field_required = false
+    }
+    birth_date = {
+      threshold      = "MEDIUM"
+      field_required = true
+    }
+    family_name = {
+      threshold      = "MEDIUM"
+      field_required = false
+    }
+    given_name = {
+      threshold      = "MEDIUM"
+      field_required = false
+    }
+    name = {
+      threshold      = "HIGH"
+      field_required = true
+    }
+  }
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
@@ -857,6 +907,65 @@ resource "pingone_verify_policy" "%[2]s" {
     }
   }
 
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccVerifyPolicy_IdentityRecordMatchingEmpty(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+resource "pingone_verify_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "%[3]s"
+
+  government_id = {
+    verify = "REQUIRED"
+  }
+
+  identity_record_matching = {}
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccVerifyPolicy_IdentityRecordMatchingWithDisabledGovernmentId(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+resource "pingone_verify_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "%[3]s"
+
+  government_id = {
+    verify = "DISABLED"
+  }
+
+  identity_record_matching = {
+    address = {
+      threshold = "LOW"
+    }
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccVerifyPolicy_IdentityRecordMatchingMissingThreshold(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+resource "pingone_verify_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "%[3]s"
+
+  government_id = {
+    verify = "REQUIRED"
+  }
+
+  identity_record_matching = {
+    address = {
+      field_required = true
+    }
+  }
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
