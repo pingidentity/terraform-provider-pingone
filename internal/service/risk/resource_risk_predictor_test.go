@@ -13,7 +13,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
-	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
+	baselegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/risk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -42,7 +43,7 @@ func TestAccRiskPredictor_RemovalDrift(t *testing.T) {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoBeta(t)
-			p1Client = acctest.PreCheckTestClient(ctx, t)
+			p1Client = acctestlegacysdk.PreCheckTestClient(ctx, t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             risk.RiskPredictor_CheckDestroy,
@@ -67,7 +68,7 @@ func TestAccRiskPredictor_RemovalDrift(t *testing.T) {
 			},
 			{
 				PreConfig: func() {
-					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
+					baselegacysdk.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -197,8 +198,8 @@ func TestAccRiskPredictor_Composite(t *testing.T) {
 	fullCheck1 := resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr(resourceFullName, "type", "COMPOSITE"),
 		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.0.condition_json", "{\"not\":{\"or\":[{\"equals\":0,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.geoVelocity.level}\"},{\"and\":[{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}],\"type\":\"AND\"}],\"type\":\"OR\"},\"type\":\"NOT\"}"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.0.condition", "{\"not\":{\"or\":[{\"equals\":0,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.geoVelocity.level}\"},{\"and\":[{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}],\"type\":\"AND\"}],\"type\":\"OR\"},\"type\":\"NOT\"}"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.0.condition_json", "{\"not\":{\"or\":[{\"equals\":0,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.geoVelocity.level}\"},{\"and\":[{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"contains\":\"${event.user.groups}\",\"list\":[\"Group Name\"],\"type\":\"GROUPS_INTERSECTION\"}],\"type\":\"AND\"}],\"type\":\"OR\"},\"type\":\"NOT\"}"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.0.condition", "{\"not\":{\"or\":[{\"equals\":0,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.geoVelocity.level}\"},{\"and\":[{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"contains\":\"${event.user.groups}\",\"list\":[\"Group Name\"],\"type\":\"GROUPS_INTERSECTION\"}],\"type\":\"AND\"}],\"type\":\"OR\"},\"type\":\"NOT\"}"),
 		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.0.level", "HIGH"),
 		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.1.condition_json", "{\"and\":[{\"equals\":5,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"low\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"and\":[{\"equals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"or\":[{\"notEquals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}]}]}]}"),
 		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.1.condition", "{\"and\":[{\"equals\":5,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"low\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"and\":[{\"equals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"or\":[{\"notEquals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}],\"type\":\"OR\"}],\"type\":\"AND\"}],\"type\":\"AND\"}"),
@@ -2508,7 +2509,7 @@ resource "pingone_risk_predictor" "%[3]s" {
 
   predictor_anonymous_network = {}
 
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccRiskPredictorConfig_Full(resourceName, name string) string {
@@ -2749,6 +2750,10 @@ resource "pingone_risk_predictor" "%[2]s" {
                 "equals" : "High",
                 "value" : "$${details.anonymousNetwork.level}",
                 "type" : "VALUE_COMPARISON"
+                }, {
+                "list" : ["Group Name"],
+                "contains" : "$${event.user.groups}",
+                "type" : "GROUPS_INTERSECTION"
               }],
               "type" : "AND"
             }],

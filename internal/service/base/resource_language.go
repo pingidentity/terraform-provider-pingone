@@ -14,6 +14,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -86,7 +87,7 @@ func resourceLanguageCreate(ctx context.Context, d *schema.ResourceData, meta in
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := apiClient.LanguagesApi.CreateLanguage(ctx, d.Get("environment_id").(string)).Language(language).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"CreateLanguage",
 		sdk.DefaultCustomError,
@@ -114,7 +115,7 @@ func resourceLanguageRead(ctx context.Context, d *schema.ResourceData, meta inte
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := apiClient.LanguagesApi.ReadOneLanguage(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOneLanguage",
 		sdk.CustomErrorResourceNotFoundWarning,
@@ -167,7 +168,7 @@ func resourceLanguageDelete(ctx context.Context, d *schema.ResourceData, meta in
 
 		func() (any, *http.Response, error) {
 			fR, fErr := apiClient.LanguagesApi.DeleteLanguage(ctx, d.Get("environment_id").(string), d.Id()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), nil, fR, fErr)
 		},
 		"DeleteLanguage",
 		sdk.CustomErrorResourceNotFoundWarning,

@@ -30,6 +30,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	int32validatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/int32validator"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
 	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -571,7 +572,7 @@ func (r *FIDO2PolicyResource) Configure(ctx context.Context, req resource.Config
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -616,15 +617,15 @@ func (r *FIDO2PolicyResource) Create(ctx context.Context, req resource.CreateReq
 
 	// Run the API call
 	var response *mfa.FIDO2Policy
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.MFAAPIClient.FIDO2PolicyApi.CreateFIDO2Policy(ctx, plan.EnvironmentId.ValueString()).FIDO2Policy(*fido2Policy).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateFIDO2Policy",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
@@ -658,15 +659,15 @@ func (r *FIDO2PolicyResource) Read(ctx context.Context, req resource.ReadRequest
 
 	// Run the API call
 	var response *mfa.FIDO2Policy
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.MFAAPIClient.FIDO2PolicyApi.ReadOneFIDO2Policy(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneFIDO2Policy",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
@@ -710,15 +711,15 @@ func (r *FIDO2PolicyResource) Update(ctx context.Context, req resource.UpdateReq
 
 	// Run the API call
 	var response *mfa.FIDO2Policy
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.MFAAPIClient.FIDO2PolicyApi.UpdateFIDO2Policy(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).FIDO2Policy(*fido2Policy).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateFIDO2Policy",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		nil,
 		&response,
 	)...)
@@ -751,12 +752,12 @@ func (r *FIDO2PolicyResource) Delete(ctx context.Context, req resource.DeleteReq
 	}
 
 	// Run the API call
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fR, fErr := r.Client.MFAAPIClient.FIDO2PolicyApi.DeleteFIDO2Policy(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteFIDO2Policy",
 		mfaFido2PolicyDeleteCustomError,
@@ -785,7 +786,7 @@ var mfaFido2PolicyDeleteCustomError = func(r *http.Response, p1Error *model.P1Er
 		}
 	}
 
-	diags.Append(framework.CustomErrorResourceNotFoundWarning(r, p1Error)...)
+	diags.Append(legacysdk.CustomErrorResourceNotFoundWarning(r, p1Error)...)
 	return diags
 }
 

@@ -12,7 +12,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
-	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
+	baselegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/sso"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -41,7 +42,7 @@ func TestAccPopulationDefault_RemovalDrift(t *testing.T) {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoBeta(t)
-			p1Client = acctest.PreCheckTestClient(ctx, t)
+			p1Client = acctestlegacysdk.PreCheckTestClient(ctx, t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.PopulationDefault_CheckDestroy,
@@ -54,7 +55,7 @@ func TestAccPopulationDefault_RemovalDrift(t *testing.T) {
 			},
 			{
 				PreConfig: func() {
-					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
+					baselegacysdk.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -287,7 +288,7 @@ resource "pingone_population_default" "%[3]s" {
   theme = {
     id = pingone_branding_theme.%[3]s.id
   }
-}`, acctest.MinimalSandboxEnvironmentNoPopulation(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctestlegacysdk.MinimalSandboxEnvironmentNoPopulation(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccPopulationDefaultConfig_Minimal(environmentName, licenseID, resourceName, name string) string {
@@ -297,7 +298,7 @@ func testAccPopulationDefaultConfig_Minimal(environmentName, licenseID, resource
 resource "pingone_population_default" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s"
-}`, acctest.MinimalSandboxEnvironmentNoPopulation(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctestlegacysdk.MinimalSandboxEnvironmentNoPopulation(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccPopulationDefaultConfig_PasswordPolicyNested(environmentName, licenseID, resourceName, name string) string {
@@ -314,7 +315,7 @@ resource "pingone_population_default" "%[3]s" {
   password_policy = {
     id = pingone_password_policy.%[3]s.id
   }
-}`, acctest.MinimalSandboxEnvironmentNoPopulation(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctestlegacysdk.MinimalSandboxEnvironmentNoPopulation(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccPopulationDefaultConfig_PasswordPolicyString(environmentName, licenseID, resourceName, name string) string {
@@ -329,7 +330,7 @@ resource "pingone_population_default" "%[3]s" {
   environment_id     = pingone_environment.%[2]s.id
   name               = "%[4]s"
   password_policy_id = pingone_password_policy.%[3]s.id
-}`, acctest.MinimalSandboxEnvironmentNoPopulation(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctestlegacysdk.MinimalSandboxEnvironmentNoPopulation(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccPopulationDefaultConfig_PasswordPolicyConflict(environmentName, licenseID, resourceName, name string) string {
@@ -347,5 +348,5 @@ resource "pingone_population_default" "%[3]s" {
     id = pingone_password_policy.%[3]s.id
   }
   password_policy_id = pingone_password_policy.%[3]s.id
-}`, acctest.MinimalSandboxEnvironmentNoPopulation(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctestlegacysdk.MinimalSandboxEnvironmentNoPopulation(environmentName, licenseID), environmentName, resourceName, name)
 }

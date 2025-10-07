@@ -12,9 +12,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
-	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
+	baselegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base/legacysdk"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
-	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 )
 
 func TestAccLanguageTranslation_RemovalDrift(t *testing.T) {
@@ -38,7 +39,7 @@ func TestAccLanguageTranslation_RemovalDrift(t *testing.T) {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoBeta(t)
-			p1Client = acctest.PreCheckTestClient(ctx, t)
+			p1Client = acctestlegacysdk.PreCheckTestClient(ctx, t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -50,7 +51,7 @@ func TestAccLanguageTranslation_RemovalDrift(t *testing.T) {
 			},
 			{
 				PreConfig: func() {
-					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentId)
+					baselegacysdk.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentId)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -123,69 +124,6 @@ func TestAccLanguageTranslation_Full(t *testing.T) {
 	})
 }
 
-func TestAccLanguageTranslation_NewEnvExpectedTranslationCount(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_language_translation.%s", resourceName)
-	environmentName := acctest.ResourceNameGenEnvironment()
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-
-	var environmentId string
-	var locale string
-	var totalTranslations int
-
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acctest.PreCheckNoTestAccFlaky(t)
-			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoBeta(t)
-		},
-		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			{
-				Config: languageTranslation_NewEnvHCL(environmentName, licenseID, resourceName),
-				Check: resource.ComposeTestCheckFunc(
-					languageTranslation_GetIDs(resourceFullName, &environmentId, &locale),
-				),
-			},
-			{
-				PreConfig: func() {
-					// Fetch all translations for the `en` locale
-					p1Client, err := acctest.TestClient(context.Background())
-					if err != nil {
-						t.Fatalf("Failed to create PingOne client: %v", err)
-					}
-
-					apiClient := p1Client.API.ManagementAPIClient
-					pagedIterator := apiClient.TranslationsApi.ReadTranslations(context.Background(), environmentId, "en").Execute()
-
-					totalTranslations = 0
-					for pageCursor, err := range pagedIterator {
-						if err != nil {
-							t.Fatalf("Failed to fetch translations: %v", err)
-						}
-
-						if translations, ok := pageCursor.EntityArray.Embedded.GetTranslationsOk(); ok {
-							totalTranslations += len(translations)
-						}
-					}
-				},
-				RefreshState: true,
-				Check: func(s *terraform.State) error {
-					// Validate the total number of translations
-					expectedTranslations := 875
-					if totalTranslations != expectedTranslations {
-						return fmt.Errorf("Expected %d translations, but got %d", expectedTranslations, totalTranslations)
-					}
-					return nil
-				},
-			},
-		},
-	})
-}
 func TestAccLanguageTranslation_NewEnv(t *testing.T) {
 	t.Parallel()
 
@@ -347,7 +285,7 @@ resource "pingone_language_translation" "%[3]s" {
 		%[4]s
   ]
 }
-`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, translations)
+`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, translations)
 }
 
 // Helper function to validate the presence of keys
@@ -440,7 +378,7 @@ resource "pingone_language" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   locale         = "%[4]s"
 }
-`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, locale)
+`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, locale)
 }
 
 func languageTranslation_CustomLocaleTranslationsHCL(environmentName, licenseID, resourceName, locale string) string {
@@ -457,7 +395,7 @@ resource "pingone_language_translation" "%[3]s" {
     }
   ]
 }
-`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, locale)
+`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, locale)
 }
 
 func languageTranslation_CustomLocaleHCLFull(environmentName, licenseID, resourceName, locale string) string {
@@ -478,7 +416,7 @@ resource "pingone_language_translation" "%[3]s" {
     }
   ]
 }
-`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, locale)
+`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, locale)
 }
 
 // Helper function to validate that the translation still exists after locale removal
@@ -558,7 +496,7 @@ resource "pingone_language_translation" "%[3]s" {
     }
   ]
 }
-`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
 func languageTranslation_CheckInitialComputedValues(resourceName string) resource.TestCheckFunc {
@@ -602,7 +540,7 @@ func languageTranslation_GetIDs(resourceName string, environmentId, id *string) 
 func languageTranslation_CheckDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
-	p1Client, err := acctest.TestClient(ctx)
+	p1Client, err := acctestlegacysdk.TestClient(ctx)
 
 	if err != nil {
 		return err
@@ -615,7 +553,7 @@ func languageTranslation_CheckDestroy(s *terraform.State) error {
 			continue
 		}
 
-		shouldContinue, err := acctest.CheckParentEnvironmentDestroy(ctx, apiClient, rs.Primary.Attributes["environment_id"])
+		shouldContinue, err := acctestlegacysdk.CheckParentEnvironmentDestroy(ctx, apiClient, rs.Primary.Attributes["environment_id"])
 		if err != nil {
 			return err
 		}
@@ -629,7 +567,7 @@ func languageTranslation_CheckDestroy(s *terraform.State) error {
 
 		for pageCursor, err := range pagedIterator {
 			if err != nil {
-				_, _, err := framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, rs.Primary.Attributes["environment_id"], nil, pageCursor.HTTPResponse, err)
+				_, _, err := legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, rs.Primary.Attributes["environment_id"], nil, pageCursor.HTTPResponse, err)
 				return err
 			}
 

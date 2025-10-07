@@ -15,7 +15,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
-	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -35,15 +35,15 @@ func populationWaitForAssignedThemeId(ctx context.Context, client *pingone.Clien
 		},
 		Refresh: func() (interface{}, string, error) {
 			var responseData *management.Population
-			diags.Append(framework.ParseResponse(
+			diags.Append(legacysdk.ParseResponse(
 				ctx,
 
 				func() (any, *http.Response, error) {
 					fO, fR, fErr := client.ManagementAPIClient.PopulationsApi.ReadOnePopulation(ctx, envId, populationId).Execute()
-					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, client.ManagementAPIClient, envId, fO, fR, fErr)
+					return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, client.ManagementAPIClient, envId, fO, fR, fErr)
 				},
 				"WaitForPopulationThemeId",
-				framework.DefaultCustomError,
+				legacysdk.DefaultCustomError,
 				sdk.DefaultCreateReadRetryable,
 				&responseData,
 			)...)
@@ -135,7 +135,7 @@ func (r *populationResource) readUsers(ctx context.Context, environmentID, popul
 
 		// Run the API call
 		var users []management.User
-		diags.Append(framework.ParseResponse(
+		diags.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
@@ -147,7 +147,7 @@ func (r *populationResource) readUsers(ctx context.Context, environmentID, popul
 
 				for pageCursor, err := range pagedIterator {
 					if err != nil {
-						return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, environmentID, nil, pageCursor.HTTPResponse, err)
+						return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, environmentID, nil, pageCursor.HTTPResponse, err)
 					}
 
 					if initialHttpResponse == nil {
@@ -162,7 +162,7 @@ func (r *populationResource) readUsers(ctx context.Context, environmentID, popul
 				return foundUsers, initialHttpResponse, nil
 			},
 			"ReadAllUsers",
-			framework.DefaultCustomError,
+			legacysdk.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
 			&users,
 		)...)
@@ -190,15 +190,15 @@ func (r *populationResource) checkEnvironmentControls(ctx context.Context, envir
 	if r.options.Population.ContainsUsersForceDelete {
 		// Check if the environment is a sandbox type.  We'll only delete users in sandbox environments
 		var environmentResponse *management.Environment
-		diags.Append(framework.ParseResponse(
+		diags.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
 				fO, fR, fErr := r.Client.ManagementAPIClient.EnvironmentsApi.ReadOneEnvironment(ctx, environmentID).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, environmentID, fO, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, environmentID, fO, fR, fErr)
 			},
 			"ReadOneEnvironment-DeletePopulation",
-			framework.DefaultCustomError,
+			legacysdk.DefaultCustomError,
 			nil,
 			&environmentResponse,
 		)...)
@@ -246,15 +246,15 @@ func (r *populationResource) checkControlsAndDeletePopulationUsers(ctx context.C
 			} else {
 				for _, user := range users {
 					var entityArray *management.EntityArray
-					diags.Append(framework.ParseResponse(
+					diags.Append(legacysdk.ParseResponse(
 						ctx,
 
 						func() (any, *http.Response, error) {
 							fR, fErr := r.Client.ManagementAPIClient.UsersApi.DeleteUser(ctx, environmentID, user.GetId()).Execute()
-							return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, environmentID, nil, fR, fErr)
+							return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, environmentID, nil, fR, fErr)
 						},
 						"DeleteUser-DeletePopulation",
-						framework.DefaultCustomError,
+						legacysdk.DefaultCustomError,
 						nil,
 						&entityArray,
 					)...)

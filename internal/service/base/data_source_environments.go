@@ -15,6 +15,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 )
 
 // Types
@@ -74,7 +75,7 @@ func (r *EnvironmentsDataSource) Configure(ctx context.Context, req datasource.C
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -111,7 +112,7 @@ func (r *EnvironmentsDataSource) Read(ctx context.Context, req datasource.ReadRe
 	}
 
 	var environments []management.Environment
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
@@ -138,7 +139,7 @@ func (r *EnvironmentsDataSource) Read(ctx context.Context, req datasource.ReadRe
 			return returnEnvironments, initialHttpResponse, nil
 		},
 		"ReadAllEnvironments",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		nil,
 		&environments,
 	)...)

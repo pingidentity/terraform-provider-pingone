@@ -33,7 +33,21 @@ func TestAccGroupDataSource_ByNameFull(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccGroupDataSourceConfig_ByNameFull(resourceName, name),
+				Config: testAccGroupDataSourceConfig_ByNameFull(resourceName, name, false),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "environment_id", resourceFullName, "environment_id"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "group_id", resourceFullName, "id"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "name", resourceFullName, "name"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "description", resourceFullName, "description"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "population_id", resourceFullName, "population_id"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "user_filter", resourceFullName, "user_filter"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "external_id", resourceFullName, "external_id"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "custom_data", resourceFullName, "custom_data"),
+				),
+			},
+			{
+				Config: testAccGroupDataSourceConfig_ByNameFull(resourceName, name, true),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "environment_id", resourceFullName, "environment_id"),
@@ -114,7 +128,14 @@ func TestAccGroupDataSource_NotFound(t *testing.T) {
 	})
 }
 
-func testAccGroupDataSourceConfig_ByNameFull(resourceName, name string) string {
+func testAccGroupDataSourceConfig_ByNameFull(resourceName, name string, insensitivityCheck bool) string {
+
+	// If insensitivityCheck is true, alter the case of the name
+	nameComparator := name
+	if insensitivityCheck {
+		nameComparator = acctest.AlterStringCasing(nameComparator)
+	}
+
 	return fmt.Sprintf(`
 	%[1]s
 
@@ -139,9 +160,11 @@ resource "pingone_group" "%[2]s" {
 data "pingone_group" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
-  name = pingone_group.%[2]s.name
+  name = "%[4]s"
+
+  depends_on = [pingone_group.%[2]s]
 }
-`, acctest.GenericSandboxEnvironment(), resourceName, name)
+`, acctest.GenericSandboxEnvironment(), resourceName, name, nameComparator)
 }
 
 func testAccGroupDataSourceConfig_ByIDFull(resourceName, name string) string {

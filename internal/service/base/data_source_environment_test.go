@@ -10,7 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
-	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	baselegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -45,11 +45,11 @@ func TestAccEnvironmentDataSource_ByNameFull(t *testing.T) {
 			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.Environment_CheckDestroy,
+		CheckDestroy:             baselegacysdk.Environment_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccEnvironmentDataSourceConfig_ByNameFull(resourceName, name, description, environmentType, region, licenseID, solution, serviceOneType, serviceTwoType, serviceTwoURL, serviceTwoBookmarkNameOne, serviceTwoBookmarkURLOne, serviceTwoBookmarkNameTwo, serviceTwoBookmarkURLTwo),
+				Config: testAccEnvironmentDataSourceConfig_ByNameFull(resourceName, name, description, environmentType, region, licenseID, solution, serviceOneType, serviceTwoType, serviceTwoURL, serviceTwoBookmarkNameOne, serviceTwoBookmarkURLOne, serviceTwoBookmarkNameTwo, serviceTwoBookmarkURLTwo, false),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -61,6 +61,14 @@ func TestAccEnvironmentDataSource_ByNameFull(t *testing.T) {
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "license_id", resourceFullName, "license_id"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "organization_id", resourceFullName, "organization_id"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "service.%", resourceFullName, "service.%"),
+				),
+			},
+			// Case insensitivity check
+			{
+				Config: testAccEnvironmentDataSourceConfig_ByNameFull(resourceName, name, description, environmentType, region, licenseID, solution, serviceOneType, serviceTwoType, serviceTwoURL, serviceTwoBookmarkNameOne, serviceTwoBookmarkURLOne, serviceTwoBookmarkNameTwo, serviceTwoBookmarkURLTwo, true),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "name", resourceFullName, "name"),
 				),
 			},
 		},
@@ -87,7 +95,7 @@ func TestAccEnvironmentDataSource_ByNameMinimal(t *testing.T) {
 			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.Environment_CheckDestroy,
+		CheckDestroy:             baselegacysdk.Environment_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -140,7 +148,7 @@ func TestAccEnvironmentDataSource_ByIDFull(t *testing.T) {
 			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.Environment_CheckDestroy,
+		CheckDestroy:             baselegacysdk.Environment_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -182,7 +190,7 @@ func TestAccEnvironmentDataSource_ByIDMinimal(t *testing.T) {
 			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.Environment_CheckDestroy,
+		CheckDestroy:             baselegacysdk.Environment_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -261,7 +269,7 @@ func TestAccEnvironmentDataSource_NotFound(t *testing.T) {
 			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.Environment_CheckDestroy,
+		CheckDestroy:             baselegacysdk.Environment_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
@@ -276,7 +284,14 @@ func TestAccEnvironmentDataSource_NotFound(t *testing.T) {
 	})
 }
 
-func testAccEnvironmentDataSourceConfig_ByNameFull(resourceName, name, description, environmentType, region, licenseID, solution, serviceOneType, serviceTwoType, serviceTwoURL, serviceTwoBookmarkNameOne, serviceTwoBookmarkURLOne, serviceTwoBookmarkNameTwo, serviceTwoBookmarkURLTwo string) string {
+func testAccEnvironmentDataSourceConfig_ByNameFull(resourceName, name, description, environmentType, region, licenseID, solution, serviceOneType, serviceTwoType, serviceTwoURL, serviceTwoBookmarkNameOne, serviceTwoBookmarkURLOne, serviceTwoBookmarkNameTwo, serviceTwoBookmarkURLTwo string, insensitivityCheck bool) string {
+
+	// If insensitivityCheck is true, alter the case of the name
+	nameComparator := name
+	if insensitivityCheck {
+		nameComparator = acctest.AlterStringCasing(nameComparator)
+	}
+
 	return fmt.Sprintf(`
 resource "pingone_environment" "%[1]s" {
   name        = "%[2]s"
@@ -307,12 +322,12 @@ resource "pingone_environment" "%[1]s" {
 }
 
 data "pingone_environment" "%[1]s" {
-  name = "%[2]s"
+  name = "%[15]s"
 
   depends_on = [
     pingone_environment.%[1]s
   ]
-}`, resourceName, name, description, environmentType, region, licenseID, solution, serviceOneType, serviceTwoType, serviceTwoURL, serviceTwoBookmarkNameOne, serviceTwoBookmarkURLOne, serviceTwoBookmarkNameTwo, serviceTwoBookmarkURLTwo)
+}`, resourceName, name, description, environmentType, region, licenseID, solution, serviceOneType, serviceTwoType, serviceTwoURL, serviceTwoBookmarkNameOne, serviceTwoBookmarkURLOne, serviceTwoBookmarkNameTwo, serviceTwoBookmarkURLTwo, nameComparator)
 }
 
 func testAccEnvironmentDataSourceConfig_ByNameMinimal(resourceName, name, environmentType, region, licenseID string) string {

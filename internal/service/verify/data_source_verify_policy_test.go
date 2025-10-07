@@ -10,6 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/verify"
 	validation "github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -179,11 +180,15 @@ func TestAccVerifyPolicyDataSource_All(t *testing.T) {
 				Destroy: true,
 			},
 			{
-				Config: testAccVerifyPolicy_FindByName(environmentName, licenseID, resourceName, updatedName),
+				Config: testAccVerifyPolicy_FindByName(environmentName, licenseID, resourceName, updatedName, false),
 				Check:  findByName,
 			},
 			{
-				Config:  testAccVerifyPolicy_FindByName(environmentName, licenseID, resourceName, updatedName),
+				Config: testAccVerifyPolicy_FindByName(environmentName, licenseID, resourceName, updatedName, true),
+				Check:  findByName,
+			},
+			{
+				Config:  testAccVerifyPolicy_FindByName(environmentName, licenseID, resourceName, updatedName, false),
 				Destroy: true,
 			},
 			{
@@ -327,10 +332,17 @@ data "pingone_verify_policy" "%[3]s" {
   verify_policy_id = pingone_verify_policy.%[3]s.id
 
   depends_on = [pingone_verify_policy.%[3]s]
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
-func testAccVerifyPolicy_FindByName(environmentName, licenseID, resourceName, name string) string {
+func testAccVerifyPolicy_FindByName(environmentName, licenseID, resourceName, name string, insensitivityCheck bool) string {
+
+	// If insensitivityCheck is true, alter the case of the name
+	nameComparator := name
+	if insensitivityCheck {
+		nameComparator = acctest.AlterStringCasing(nameComparator)
+	}
+
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_verify_voice_phrase" "%[3]s" {
@@ -371,10 +383,10 @@ resource "pingone_verify_policy" "%[3]s" {
 
 data "pingone_verify_policy" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  name           = "%[4]s"
+  name           = "%[5]s"
 
   depends_on = [pingone_verify_policy.%[3]s]
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, nameComparator)
 }
 
 func testAccVerifyPolicy_FindDefaultPolicy(environmentName, licenseID, resourceName, name string) string {
@@ -386,7 +398,7 @@ data "pingone_verify_policy" "%[3]s" {
   default        = true
 
   depends_on = [pingone_environment.%[2]s]
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccVerifyPolicy_FindByIDFail(environmentName, licenseID, resourceName, name string) string {
@@ -398,7 +410,7 @@ data "pingone_verify_policy" "%[3]s" {
   verify_policy_id = "9c052a8a-14be-44e4-8f07-2662569994ce" // dummy ID that conforms to UUID v4
 
 
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccVerifyPolicy_FindByNameFail(environmentName, licenseID, resourceName, name string) string {
@@ -409,5 +421,5 @@ data "pingone_verify_policy" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s"
 
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }

@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -17,6 +18,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
@@ -96,7 +98,7 @@ func (r *SchemaDataSource) Configure(ctx context.Context, req datasource.Configu
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -147,15 +149,15 @@ func (r *SchemaDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 
 		// Run the API call
 		var response *management.Schema
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
 				fO, fR, fErr := r.Client.ManagementAPIClient.SchemasApi.ReadOneSchema(ctx, data.EnvironmentId.ValueString(), data.SchemaId.ValueString()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"ReadOneSchema",
-			framework.DefaultCustomError,
+			legacysdk.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
 			&response,
 		)...)
@@ -203,7 +205,7 @@ func fetchSchemaFromName(ctx context.Context, apiClient *management.APIClient, e
 	var schema *management.Schema
 
 	// Run the API call
-	diags.Append(framework.ParseResponse(
+	diags.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
@@ -213,7 +215,7 @@ func fetchSchemaFromName(ctx context.Context, apiClient *management.APIClient, e
 
 			for pageCursor, err := range pagedIterator {
 				if err != nil {
-					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentId, nil, pageCursor.HTTPResponse, err)
+					return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentId, nil, pageCursor.HTTPResponse, err)
 				}
 
 				if initialHttpResponse == nil {
@@ -224,7 +226,7 @@ func fetchSchemaFromName(ctx context.Context, apiClient *management.APIClient, e
 
 					for _, schemaItem := range schemas {
 
-						if schemaItem.GetName() == schemaName {
+						if strings.EqualFold(schemaItem.GetName(), schemaName) {
 							return &schemaItem, pageCursor.HTTPResponse, nil
 						}
 					}
@@ -235,7 +237,7 @@ func fetchSchemaFromName(ctx context.Context, apiClient *management.APIClient, e
 			return nil, initialHttpResponse, nil
 		},
 		"ReadAllSchemas",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&schema,
 	)...)

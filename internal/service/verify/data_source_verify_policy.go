@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
@@ -21,6 +22,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/verify"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
@@ -793,7 +795,7 @@ func (r *VerifyPolicyDataSource) Configure(ctx context.Context, req datasource.C
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -833,15 +835,15 @@ func (r *VerifyPolicyDataSource) Read(ctx context.Context, req datasource.ReadRe
 
 	if !data.VerifyPolicyId.IsNull() {
 		// Run the API call
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
 				fO, fR, fErr := r.Client.VerifyAPIClient.VerifyPoliciesApi.ReadOneVerifyPolicy(ctx, data.EnvironmentId.ValueString(), data.VerifyPolicyId.ValueString()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"ReadOneVerifyPolicy",
-			framework.DefaultCustomError,
+			legacysdk.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
 			&verifyPolicy,
 		)...)
@@ -851,7 +853,7 @@ func (r *VerifyPolicyDataSource) Read(ctx context.Context, req datasource.ReadRe
 
 	} else if !data.Name.IsNull() {
 		// Run the API call
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
@@ -861,7 +863,7 @@ func (r *VerifyPolicyDataSource) Read(ctx context.Context, req datasource.ReadRe
 
 				for pageCursor, err := range pagedIterator {
 					if err != nil {
-						return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+						return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
 					}
 
 					if initialHttpResponse == nil {
@@ -872,7 +874,7 @@ func (r *VerifyPolicyDataSource) Read(ctx context.Context, req datasource.ReadRe
 
 						for _, verifyPolicyItem := range verifyPolicies {
 
-							if verifyPolicyItem.GetName() == data.Name.ValueString() {
+							if strings.EqualFold(verifyPolicyItem.GetName(), data.Name.ValueString()) {
 								return &verifyPolicyItem, pageCursor.HTTPResponse, nil
 							}
 						}
@@ -882,7 +884,7 @@ func (r *VerifyPolicyDataSource) Read(ctx context.Context, req datasource.ReadRe
 				return nil, initialHttpResponse, nil
 			},
 			"ReadAllVerifyPolicies",
-			framework.DefaultCustomError,
+			legacysdk.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
 			&verifyPolicy,
 		)...)
@@ -900,7 +902,7 @@ func (r *VerifyPolicyDataSource) Read(ctx context.Context, req datasource.ReadRe
 
 	} else if data.Default.ValueBool() {
 		// Run the API call
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
@@ -910,7 +912,7 @@ func (r *VerifyPolicyDataSource) Read(ctx context.Context, req datasource.ReadRe
 
 				for pageCursor, err := range pagedIterator {
 					if err != nil {
-						return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+						return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
 					}
 
 					if initialHttpResponse == nil {
@@ -932,7 +934,7 @@ func (r *VerifyPolicyDataSource) Read(ctx context.Context, req datasource.ReadRe
 				return nil, initialHttpResponse, nil
 			},
 			"ReadAllVerifyPolicies",
-			framework.DefaultCustomError,
+			legacysdk.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
 			&verifyPolicy,
 		)...)
