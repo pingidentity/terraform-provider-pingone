@@ -1,5 +1,46 @@
 ## 1.13.0 (8 October 2025)
 
+NOTES:
+
+* bump `github.com/hashicorp/terraform-plugin-go` 0.28.0 => 0.29.0 ([#1136](https://github.com/pingidentity/terraform-provider-pingone/issues/1136))
+* bump `github.com/hashicorp/terraform-plugin-mux` 0.20.0 => 0.21.0 ([#1136](https://github.com/pingidentity/terraform-provider-pingone/issues/1136))
+* bump `github.com/hashicorp/terraform-plugin-sdk/v2` 2.37.0 => 2.38.1 ([#1136](https://github.com/pingidentity/terraform-provider-pingone/issues/1136))
+* bump `github.com/hashicorp/terraform-plugintesting` 1.13.2 => 1.13.3 ([#1136](https://github.com/pingidentity/terraform-provider-pingone/issues/1136))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` v0.8.1 => v0.8.2 ([#1134](https://github.com/pingidentity/terraform-provider-pingone/issues/1134))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` v0.11.1 => v0.12.0 ([#1143](https://github.com/pingidentity/terraform-provider-pingone/issues/1143))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.60.0 => v0.61.0 ([#1132](https://github.com/pingidentity/terraform-provider-pingone/issues/1132))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.23.1 => v0.23.2 ([#1133](https://github.com/pingidentity/terraform-provider-pingone/issues/1133))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/risk` v0.19.1 => v0.21.0 ([#1143](https://github.com/pingidentity/terraform-provider-pingone/issues/1143))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/verify` v0.9.1 => v0.10.0 ([#1143](https://github.com/pingidentity/terraform-provider-pingone/issues/1143))
+* new dependency `github.com/pingidentity/pingone-go-client` 0.2.0 ([#1106](https://github.com/pingidentity/terraform-provider-pingone/issues/1106))
+
+ENHANCEMENTS:
+
+* `data_source/pingone_role`: Added support for `Authorize Gateway Policy Evaluator` and `Help Desk Admin` roles. ([#1132](https://github.com/pingidentity/terraform-provider-pingone/issues/1132))
+* `resource/pingone_risk_predictor`: Added support for `GROUPS_INTERSECTION` in composite condition type. ([#1143](https://github.com/pingidentity/terraform-provider-pingone/issues/1143))
+* `resource/pingone_verify_policy`: Added support for aadhaar to government_id config. ([#1145](https://github.com/pingidentity/terraform-provider-pingone/issues/1145))
+* `resource/pingone_verify_policy`: Added support for identity_record_matching. ([#1140](https://github.com/pingidentity/terraform-provider-pingone/issues/1140))
+* `resource/pingone_verify_policy`: Added support for verify_aamva to government_id config. ([#1142](https://github.com/pingidentity/terraform-provider-pingone/issues/1142))
+
+BUG FIXES:
+
+* `data-source/pingone_agreement`: Corrected lookup by name to be case insensitive. ([#1127](https://github.com/pingidentity/terraform-provider-pingone/issues/1127))
+* `data-source/pingone_application`: Corrected lookup by name to be case insensitive. ([#1127](https://github.com/pingidentity/terraform-provider-pingone/issues/1127))
+* `data-source/pingone_certificate`: Corrected lookup by name to be case insensitive. ([#1127](https://github.com/pingidentity/terraform-provider-pingone/issues/1127))
+* `data-source/pingone_digital_wallet_application`: Corrected lookup by name to be case insensitive. ([#1127](https://github.com/pingidentity/terraform-provider-pingone/issues/1127))
+* `data-source/pingone_environment`: Corrected lookup by name to be case insensitive. ([#1127](https://github.com/pingidentity/terraform-provider-pingone/issues/1127))
+* `data-source/pingone_gateway`: Corrected lookup by name to be case insensitive. ([#1127](https://github.com/pingidentity/terraform-provider-pingone/issues/1127))
+* `data-source/pingone_group`: Corrected lookup by name to be case insensitive. ([#1127](https://github.com/pingidentity/terraform-provider-pingone/issues/1127))
+* `data-source/pingone_organization`: Corrected lookup by name to be case insensitive. ([#1127](https://github.com/pingidentity/terraform-provider-pingone/issues/1127))
+* `data-source/pingone_password_policy`: Corrected lookup by name to be case insensitive. ([#1127](https://github.com/pingidentity/terraform-provider-pingone/issues/1127))
+* `data-source/pingone_population`: Corrected lookup by name to be case insensitive. ([#1127](https://github.com/pingidentity/terraform-provider-pingone/issues/1127))
+* `data-source/pingone_resource_attribute`: Corrected lookup by name to be case insensitive. ([#1127](https://github.com/pingidentity/terraform-provider-pingone/issues/1127))
+* `data-source/pingone_schema`: Corrected lookup by name to be case insensitive. ([#1127](https://github.com/pingidentity/terraform-provider-pingone/issues/1127))
+* `data-source/pingone_trusted_email_domain`: Corrected lookup by domain_name to be case insensitive. ([#1127](https://github.com/pingidentity/terraform-provider-pingone/issues/1127))
+* `data-source/pingone_user`: Corrected lookup by username or email to be case insensitive. ([#1127](https://github.com/pingidentity/terraform-provider-pingone/issues/1127))
+* `data-source/pingone_verify_policy`: Corrected lookup by name to be case insensitive. ([#1127](https://github.com/pingidentity/terraform-provider-pingone/issues/1127))
+* `data-source/pingone_verify_voice_phrase`: Corrected lookup by display_name to be case insensitive. ([#1127](https://github.com/pingidentity/terraform-provider-pingone/issues/1127))
+
 ## 1.12.0 (10 September 2025)
 
 NOTES:
