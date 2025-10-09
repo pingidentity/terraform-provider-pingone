@@ -208,7 +208,7 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "government_id.inspection_type", "AUTOMATIC"),
 		resource.TestCheckResourceAttr(resourceFullName, "government_id.provider_auto", "MITEK"),
 		resource.TestCheckResourceAttr(resourceFullName, "government_id.provider_manual", "MITEK"),
-		resource.TestCheckResourceAttr(resourceFullName, "government_id.verify_aamva", isRegionNA()),
+		resource.TestCheckResourceAttr(resourceFullName, "government_id.verify_aamva", isRegionNA()), // AAMVA is only valid in NA region
 
 		resource.TestCheckResourceAttr(resourceFullName, "facial_comparison.verify", "DISABLED"),
 		resource.TestCheckResourceAttr(resourceFullName, "facial_comparison.threshold", "MEDIUM"),
