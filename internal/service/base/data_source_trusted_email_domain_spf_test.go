@@ -31,7 +31,7 @@ func TestAccTrustedEmailDomainSPFDataSource_Full(t *testing.T) {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoBeta(t)
-			acctest.PreCheckTrustedEmailDomain(t)
+			acctest.PreCheckNewTrustedEmailDomain(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -59,7 +59,7 @@ func TestAccTrustedEmailDomainSPFDataSource_NotFound(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoBeta(t)
-			acctest.PreCheckTrustedEmailDomain(t)
+			acctest.PreCheckNewTrustedEmailDomain(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		ErrorCheck:               acctest.ErrorCheck(t),

@@ -41,7 +41,7 @@ func TestAccCustomDomain_RemovalDrift(t *testing.T) {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoBeta(t)
-			acctest.PreCheckCustomDomain(t)
+			acctest.PreCheckNewCustomDomain(t)
 			p1Client = acctestlegacysdk.PreCheckTestClient(ctx, t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -93,7 +93,7 @@ func TestAccCustomDomain_Full(t *testing.T) {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoBeta(t)
-			acctest.PreCheckCustomDomain(t)
+			acctest.PreCheckNewCustomDomain(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.CustomDomain_CheckDestroy,
@@ -147,7 +147,7 @@ func TestAccCustomDomain_BadParameters(t *testing.T) {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoBeta(t)
-			acctest.PreCheckCustomDomain(t)
+			acctest.PreCheckNewCustomDomain(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.CustomDomain_CheckDestroy,

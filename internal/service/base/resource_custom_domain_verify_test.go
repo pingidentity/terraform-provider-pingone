@@ -30,7 +30,7 @@ func TestAccCustomDomainVerify_CannotVerifyNXDOMAIN(t *testing.T) {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoBeta(t)
-			acctest.PreCheckCustomDomain(t)
+			acctest.PreCheckNewCustomDomain(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.CustomDomainVerify_CheckDestroy,
