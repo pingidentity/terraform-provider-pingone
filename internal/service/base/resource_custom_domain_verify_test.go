@@ -18,7 +18,7 @@ func TestAccCustomDomainVerify_CannotVerifyNXDOMAIN(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	domainPrefix := acctest.ResourceNameGen()
+	domainPrefix := resourceName
 
 	environmentName := acctest.ResourceNameGenEnvironment()
 
@@ -30,6 +30,7 @@ func TestAccCustomDomainVerify_CannotVerifyNXDOMAIN(t *testing.T) {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoBeta(t)
+			acctest.PreCheckCustomDomain(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.CustomDomainVerify_CheckDestroy,
@@ -50,7 +51,7 @@ func testAccCustomDomainVerifyConfig_CannotVerifyNXDOMAIN(environmentName, licen
 resource "pingone_custom_domain" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
-  domain_name = "%[4]s.terraformdev-verify.ping-eng.com"
+  domain_name = "%[4]s.cdi-team-terraform-custom-domain-test.ping-eng.com"
 }
 
 resource "pingone_custom_domain_verify" "%[3]s" {
