@@ -158,7 +158,7 @@ func TestAccTrustedEmailAddress_NotVerified(t *testing.T) {
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	domainPrefix := acctest.ResourceNameGen()
-	unverifiedDomain := fmt.Sprintf("%s.cdi-team-terraform-email-domain-test.ping-eng.com", domainPrefix)
+	unverifiedDomain := fmt.Sprintf("%s.cdi-team-terraform-ted-test.ping-eng.com", domainPrefix)
 	unverifiedEmailAddress := fmt.Sprintf("noreply@%s", unverifiedDomain)
 
 	resource.Test(t, resource.TestCase{

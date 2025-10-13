@@ -83,7 +83,7 @@ func testAccTrustedEmailDomainSPFDataSourceConfig_Full(environmentName, licenseI
 resource "pingone_trusted_email_domain" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
-  domain_name = "%[4]s.cdi-team-terraform-email-domain-test.ping-eng.com"
+  domain_name = "%[4]s.cdi-team-terraform-ted-test.ping-eng.com"
 }
 
 data "pingone_trusted_email_domain_spf" "%[3]s" {

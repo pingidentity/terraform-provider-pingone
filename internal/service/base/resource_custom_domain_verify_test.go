@@ -51,7 +51,7 @@ func testAccCustomDomainVerifyConfig_CannotVerifyNXDOMAIN(environmentName, licen
 resource "pingone_custom_domain" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
-  domain_name = "%[4]s.cdi-team-terraform-custom-domain-test.ping-eng.com"
+  domain_name = "%[4]s.cdi-team-terraform-cd-test.ping-eng.com"
 }
 
 resource "pingone_custom_domain_verify" "%[3]s" {

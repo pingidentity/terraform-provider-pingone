@@ -104,7 +104,7 @@ func TestAccTrustedEmailDomain_Full(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "domain_name", fmt.Sprintf("%s.cdi-team-terraform-email-domain-test.ping-eng.com", domainPrefix)),
+					resource.TestCheckResourceAttr(resourceFullName, "domain_name", fmt.Sprintf("%s.cdi-team-terraform-ted-test.ping-eng.com", domainPrefix)),
 				),
 			},
 			// Test importing the resource
@@ -182,6 +182,6 @@ func testAccTrustedEmailDomainConfig_Full(environmentName, licenseID, resourceNa
 resource "pingone_trusted_email_domain" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
-  domain_name = "%[4]s.cdi-team-terraform-email-domain-test.ping-eng.com"
+  domain_name = "%[4]s.cdi-team-terraform-ted-test.ping-eng.com"
 }`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, domainPrefix)
 }
