@@ -47,6 +47,11 @@ jobs:
       # Two vars needed for application data source acceptance tests - can be removed when CDI-631 is done
       PINGONE_KEY_PKCS7_CERT: ${{ secrets.PINGONE_KEY_PKCS7_CERT }}
       PINGONE_KEY_PEM_CERT: ${{ secrets.PINGONE_KEY_PEM_CERT }}
+      # Set skips
+      PINGONE_TWILIO_TEST_SKIP: true
+      PINGONE_SYNIVERSE_TEST_SKIP: true
+      PINGONE_EMAIL_DOMAIN_TEST_ENABLE: false
+      PINGONE_CUSTOM_DOMAIN_TEST_ENABLE: false
 
     timeout-minutes: 45
     strategy:

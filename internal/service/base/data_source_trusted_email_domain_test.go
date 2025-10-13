@@ -27,7 +27,7 @@ func TestAccTrustedEmailDomainDataSource_ByNameFull(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoBeta(t)
-			acctest.PreCheckDomainVerification(t)
+			acctest.PreCheckTrustedEmailDomainVerification(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             nil, // The test environment is static and no resources are created, nothing to check on destroy
@@ -69,7 +69,7 @@ func TestAccTrustedEmailDomainDataSource_ByIDFull(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoBeta(t)
-			acctest.PreCheckDomainVerification(t)
+			acctest.PreCheckTrustedEmailDomainVerification(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             nil, // The test environment is static and no resources are created, nothing to check on destroy
@@ -98,7 +98,7 @@ func TestAccTrustedEmailDomainDataSource_NotFound(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoBeta(t)
-			acctest.PreCheckDomainVerification(t)
+			acctest.PreCheckTrustedEmailDomainVerification(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             nil, // The test environment is static and no resources are created, nothing to check on destroy

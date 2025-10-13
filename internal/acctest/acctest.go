@@ -141,17 +141,32 @@ func PreCheckNewEnvironment(t *testing.T) {
 	}
 }
 
-func PreCheckDomainVerification(t *testing.T) {
-
-	skipEmailDomainVerified, err := strconv.ParseBool(os.Getenv("PINGONE_EMAIL_DOMAIN_TEST_SKIP"))
+func PreCheckNewCustomDomain(t *testing.T) {
+	enableCustomDomain := false // disable by default
+	enableCustomDomain, err := strconv.ParseBool(os.Getenv("PINGONE_CUSTOM_DOMAIN_TEST_ENABLE"))
 	if err != nil {
-		skipEmailDomainVerified = false
+		enableCustomDomain = false
 	}
 
-	if skipEmailDomainVerified {
-		t.Skipf("Email domain verified integration tests are skipped")
+	if !enableCustomDomain {
+		t.Skipf("Integration tests that create new custom domains are skipped")
+	}
+}
+
+func PreCheckNewTrustedEmailDomain(t *testing.T) {
+
+	enableEmailDomainVerified := false // disable by default
+	enableEmailDomainVerified, err := strconv.ParseBool(os.Getenv("PINGONE_EMAIL_DOMAIN_TEST_ENABLE"))
+	if err != nil {
+		enableEmailDomainVerified = false
 	}
 
+	if !enableEmailDomainVerified {
+		t.Skipf("Integration tests that create new trusted email domains are skipped")
+	}
+}
+
+func PreCheckTrustedEmailDomainVerification(t *testing.T) {
 	if v := os.Getenv("PINGONE_VERIFIED_EMAIL_DOMAIN"); v == "" {
 		t.Fatal("PINGONE_VERIFIED_EMAIL_DOMAIN is missing and must be set")
 	}
