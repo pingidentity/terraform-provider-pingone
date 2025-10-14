@@ -198,22 +198,22 @@ func TestAccRiskPredictor_Composite(t *testing.T) {
 	fullCheck1 := resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr(resourceFullName, "type", "COMPOSITE"),
 		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.0.condition_json", "{\"not\":{\"or\":[{\"equals\":0,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.geoVelocity.level}\"},{\"and\":[{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"contains\":\"${event.user.groups}\",\"list\":[\"Group Name\"],\"type\":\"GROUPS_INTERSECTION\"}],\"type\":\"AND\"}],\"type\":\"OR\"},\"type\":\"NOT\"}"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.0.condition", "{\"not\":{\"or\":[{\"equals\":0,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.geoVelocity.level}\"},{\"and\":[{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"contains\":\"${event.user.groups}\",\"list\":[\"Group Name\"],\"type\":\"GROUPS_INTERSECTION\"}],\"type\":\"AND\"}],\"type\":\"OR\"},\"type\":\"NOT\"}"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.0.condition_json", "{\"not\":{\"or\":[{\"equals\":0,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.geoVelocity.level}\"},{\"startsWith\":\"admin\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${event.user.name}\"},{\"endsWith\":\"@example.com\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${event.user.name}\"},{\"and\":[{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"contains\":\"${event.user.groups}\",\"list\":[\"Group Name\"],\"type\":\"GROUPS_INTERSECTION\"}],\"type\":\"AND\"}],\"type\":\"OR\"},\"type\":\"NOT\"}"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.0.condition", "{\"not\":{\"or\":[{\"equals\":0,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.geoVelocity.level}\"},{\"startsWith\":\"admin\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${event.user.name}\"},{\"endsWith\":\"@example.com\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${event.user.name}\"},{\"and\":[{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"contains\":\"${event.user.groups}\",\"list\":[\"Group Name\"],\"type\":\"GROUPS_INTERSECTION\"}],\"type\":\"AND\"}],\"type\":\"OR\"},\"type\":\"NOT\"}"),
 		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.0.level", "HIGH"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.1.condition_json", "{\"and\":[{\"equals\":5,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"low\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"and\":[{\"equals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"or\":[{\"notEquals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}]}]}]}"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.1.condition", "{\"and\":[{\"equals\":5,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"low\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"and\":[{\"equals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"or\":[{\"notEquals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}],\"type\":\"OR\"}],\"type\":\"AND\"}],\"type\":\"AND\"}"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.1.condition_json", "{\"and\":[{\"equals\":5,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"low\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"startsWith\":\"test\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${event.user.name}\"},{\"and\":[{\"equals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"or\":[{\"notEquals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}]}]}]}"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.1.condition", "{\"and\":[{\"equals\":5,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"low\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"startsWith\":\"test\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${event.user.name}\"},{\"and\":[{\"equals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"or\":[{\"notEquals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}],\"type\":\"OR\"}],\"type\":\"AND\"}],\"type\":\"AND\"}"),
 		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.1.level", "LOW"),
 	)
 
 	fullCheck2 := resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr(resourceFullName, "type", "COMPOSITE"),
 		resource.TestCheckResourceAttr(resourceFullName, "deletable", "true"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.0.condition_json", "{\"and\":[{\"equals\":5,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"low\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"and\":[{\"equals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"or\":[{\"notEquals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}]}]}]}"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.0.condition", "{\"and\":[{\"equals\":5,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"low\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"and\":[{\"equals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"or\":[{\"notEquals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}],\"type\":\"OR\"}],\"type\":\"AND\"}],\"type\":\"AND\"}"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.0.condition_json", "{\"and\":[{\"equals\":5,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"low\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"endsWith\":\"@test.org\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${event.user.name}\"},{\"and\":[{\"equals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"or\":[{\"notEquals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}]}]}]}"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.0.condition", "{\"and\":[{\"equals\":5,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"low\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"endsWith\":\"@test.org\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${event.user.name}\"},{\"and\":[{\"equals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"},{\"or\":[{\"notEquals\":\"high\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}],\"type\":\"OR\"}],\"type\":\"AND\"}],\"type\":\"AND\"}"),
 		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.0.level", "LOW"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.1.condition_json", "{\"not\":{\"or\":[{\"equals\":0,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.geoVelocity.level}\"},{\"and\":[{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}],\"type\":\"AND\"}],\"type\":\"OR\"},\"type\":\"NOT\"}"),
-		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.1.condition", "{\"not\":{\"or\":[{\"equals\":0,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.geoVelocity.level}\"},{\"and\":[{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}],\"type\":\"AND\"}],\"type\":\"OR\"},\"type\":\"NOT\"}"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.1.condition_json", "{\"not\":{\"or\":[{\"equals\":0,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.geoVelocity.level}\"},{\"startsWith\":\"user\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${event.user.name}\"},{\"and\":[{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}],\"type\":\"AND\"}],\"type\":\"OR\"},\"type\":\"NOT\"}"),
+		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.1.condition", "{\"not\":{\"or\":[{\"equals\":0,\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.counters.predictorLevels.medium}\"},{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.geoVelocity.level}\"},{\"startsWith\":\"user\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${event.user.name}\"},{\"and\":[{\"equals\":\"High\",\"type\":\"VALUE_COMPARISON\",\"value\":\"${details.anonymousNetwork.level}\"}],\"type\":\"AND\"}],\"type\":\"OR\"},\"type\":\"NOT\"}"),
 		resource.TestCheckResourceAttr(resourceFullName, "predictor_composite.compositions.1.level", "HIGH"),
 	)
 
@@ -2746,6 +2746,14 @@ resource "pingone_risk_predictor" "%[2]s" {
               "value" : "$${details.geoVelocity.level}",
               "type" : "VALUE_COMPARISON"
               }, {
+              "startsWith" : "admin",
+              "value" : "$${event.user.name}",
+              "type" : "VALUE_COMPARISON"
+              }, {
+              "endsWith" : "@example.com",
+              "value" : "$${event.user.name}",
+              "type" : "VALUE_COMPARISON"
+              }, {
               "and" : [{
                 "equals" : "High",
                 "value" : "$${details.anonymousNetwork.level}",
@@ -2775,6 +2783,11 @@ resource "pingone_risk_predictor" "%[2]s" {
             {
               "value" : "$${details.anonymousNetwork.level}",
               "equals" : "low",
+              "type" : "VALUE_COMPARISON"
+            },
+            {
+              "startsWith" : "test",
+              "value" : "$${event.user.name}",
               "type" : "VALUE_COMPARISON"
             },
             {
@@ -2832,6 +2845,11 @@ resource "pingone_risk_predictor" "%[2]s" {
               "type" : "VALUE_COMPARISON"
             },
             {
+              "endsWith" : "@test.org",
+              "value" : "$${event.user.name}",
+              "type" : "VALUE_COMPARISON"
+            },
+            {
               "and" : [
                 {
                   "value" : "$${details.anonymousNetwork.level}",
@@ -2864,6 +2882,10 @@ resource "pingone_risk_predictor" "%[2]s" {
               }, {
               "equals" : "High",
               "value" : "$${details.geoVelocity.level}",
+              "type" : "VALUE_COMPARISON"
+              }, {
+              "startsWith" : "user",
+              "value" : "$${event.user.name}",
               "type" : "VALUE_COMPARISON"
               }, {
               "and" : [{
