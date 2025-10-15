@@ -50,8 +50,8 @@ jobs:
       # Set skips
       PINGONE_TWILIO_TEST_SKIP: true
       PINGONE_SYNIVERSE_TEST_SKIP: true
-      PINGONE_EMAIL_DOMAIN_TEST_ENABLE: false
-      PINGONE_CUSTOM_DOMAIN_TEST_ENABLE: false
+      PINGONE_EMAIL_DOMAIN_TEST_SKIP: false
+      PINGONE_CUSTOM_DOMAIN_TEST_SKIP: false
 
     timeout-minutes: 45
     strategy:

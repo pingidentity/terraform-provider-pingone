@@ -143,23 +143,23 @@ func PreCheckNewEnvironment(t *testing.T) {
 }
 
 func PreCheckNewCustomDomain(t *testing.T) {
-	enableCustomDomain, err := strconv.ParseBool(os.Getenv("PINGONE_CUSTOM_DOMAIN_TEST_ENABLE"))
+	skipCustomDomain, err := strconv.ParseBool(os.Getenv("PINGONE_CUSTOM_DOMAIN_TEST_SKIP"))
 	if err != nil {
-		enableCustomDomain = false
+		skipCustomDomain = false
 	}
 
-	if !enableCustomDomain {
+	if skipCustomDomain {
 		t.Skipf("Integration tests that create new custom domains are skipped")
 	}
 }
 
 func PreCheckNewTrustedEmailDomain(t *testing.T) {
-	enableEmailDomainVerified, err := strconv.ParseBool(os.Getenv("PINGONE_EMAIL_DOMAIN_TEST_ENABLE"))
+	skipEmailDomainVerified, err := strconv.ParseBool(os.Getenv("PINGONE_EMAIL_DOMAIN_TEST_SKIP"))
 	if err != nil {
-		enableEmailDomainVerified = false
+		skipEmailDomainVerified = false
 	}
 
-	if !enableEmailDomainVerified {
+	if skipEmailDomainVerified {
 		t.Skipf("Integration tests that create new trusted email domains are skipped")
 	}
 }
