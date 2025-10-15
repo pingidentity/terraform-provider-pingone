@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
@@ -317,6 +318,13 @@ func ResourceNameGen() string {
 
 func ResourceNameGenEnvironment() string {
 	return fmt.Sprintf("tf-testacc-dynamic-%s", ResourceNameGen())
+}
+
+func DomainNamePrefixWithTimestampGen() string {
+	base := ResourceNameGen()
+	// Format timestamp as YYYYMMDD-HHMMSS so that it is a valid domain name
+	timestamp := time.Now().Format("20060102-150405")
+	return fmt.Sprintf("%s-%s", strings.ToLower(base), timestamp)
 }
 
 func TestClient(ctx context.Context) (*pingone.APIClient, error) {

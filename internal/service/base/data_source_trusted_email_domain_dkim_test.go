@@ -17,7 +17,7 @@ func TestAccTrustedEmailDomainDKIMDataSource_Full(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	domainPrefix := acctest.ResourceNameGen()
+	domainPrefix := acctest.DomainNamePrefixWithTimestampGen()
 	resourceFullName := fmt.Sprintf("pingone_trusted_email_domain_dkim.%s", resourceName)
 	dataSourceFullName := fmt.Sprintf("data.%s", resourceFullName)
 
@@ -62,7 +62,6 @@ func TestAccTrustedEmailDomainDKIMDataSource_NotFound(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoBeta(t)
-			acctest.PreCheckNewTrustedEmailDomain(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		ErrorCheck:               acctest.ErrorCheck(t),

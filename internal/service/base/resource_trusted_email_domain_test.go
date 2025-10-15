@@ -23,7 +23,7 @@ func TestAccTrustedEmailDomain_RemovalDrift(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	domainPrefix := acctest.ResourceNameGen()
+	domainPrefix := acctest.DomainNamePrefixWithTimestampGen()
 	resourceFullName := fmt.Sprintf("pingone_trusted_email_domain.%s", resourceName)
 
 	environmentName := acctest.ResourceNameGenEnvironment()
@@ -80,7 +80,7 @@ func TestAccTrustedEmailDomain_Full(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	domainPrefix := acctest.ResourceNameGen()
+	domainPrefix := acctest.DomainNamePrefixWithTimestampGen()
 	resourceFullName := fmt.Sprintf("pingone_trusted_email_domain.%s", resourceName)
 
 	environmentName := acctest.ResourceNameGenEnvironment()
@@ -130,7 +130,7 @@ func TestAccTrustedEmailDomain_BadParameters(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	domainPrefix := acctest.ResourceNameGen()
+	domainPrefix := acctest.DomainNamePrefixWithTimestampGen()
 	resourceFullName := fmt.Sprintf("pingone_trusted_email_domain.%s", resourceName)
 
 	environmentName := acctest.ResourceNameGenEnvironment()

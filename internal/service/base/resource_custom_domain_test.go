@@ -23,7 +23,7 @@ func TestAccCustomDomain_RemovalDrift(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	domainPrefix := resourceName
+	domainPrefix := acctest.DomainNamePrefixWithTimestampGen()
 	resourceFullName := fmt.Sprintf("pingone_custom_domain.%s", resourceName)
 
 	environmentName := acctest.ResourceNameGenEnvironment()
@@ -80,7 +80,7 @@ func TestAccCustomDomain_Full(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	domainPrefix := resourceName
+	domainPrefix := acctest.DomainNamePrefixWithTimestampGen()
 	resourceFullName := fmt.Sprintf("pingone_custom_domain.%s", resourceName)
 
 	environmentName := acctest.ResourceNameGenEnvironment()
@@ -134,7 +134,7 @@ func TestAccCustomDomain_BadParameters(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	domainPrefix := resourceName
+	domainPrefix := acctest.DomainNamePrefixWithTimestampGen()
 	resourceFullName := fmt.Sprintf("pingone_custom_domain.%s", resourceName)
 
 	environmentName := acctest.ResourceNameGenEnvironment()
