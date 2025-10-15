@@ -142,7 +142,6 @@ func PreCheckNewEnvironment(t *testing.T) {
 }
 
 func PreCheckNewCustomDomain(t *testing.T) {
-	enableCustomDomain := false // disable by default
 	enableCustomDomain, err := strconv.ParseBool(os.Getenv("PINGONE_CUSTOM_DOMAIN_TEST_ENABLE"))
 	if err != nil {
 		enableCustomDomain = false
@@ -154,8 +153,6 @@ func PreCheckNewCustomDomain(t *testing.T) {
 }
 
 func PreCheckNewTrustedEmailDomain(t *testing.T) {
-
-	enableEmailDomainVerified := false // disable by default
 	enableEmailDomainVerified, err := strconv.ParseBool(os.Getenv("PINGONE_EMAIL_DOMAIN_TEST_ENABLE"))
 	if err != nil {
 		enableEmailDomainVerified = false
