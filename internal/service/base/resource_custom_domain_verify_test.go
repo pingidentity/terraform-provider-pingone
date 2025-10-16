@@ -18,7 +18,7 @@ func TestAccCustomDomainVerify_CannotVerifyNXDOMAIN(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	domainPrefix := resourceName
+	domainPrefix := acctest.DomainNamePrefixWithTimestampGen()
 
 	environmentName := acctest.ResourceNameGenEnvironment()
 

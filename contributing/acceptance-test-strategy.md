@@ -201,14 +201,6 @@ acctest.PreCheckPEMCert(t)                     // PEM format certificates
 
 #### **Third-Party Integration Pre-Checks**
 
-**Domain Verification**
-```go
-acctest.PreCheckDomainVerification(t)
-```
-- **Required Environment Variables**: `PINGONE_VERIFIED_EMAIL_DOMAIN`
-- **Optional Skip**: `PINGONE_EMAIL_DOMAIN_TEST_SKIP=true`
-- **When to Use**: Tests requiring verified email domains
-
 **Google/Firebase Integration**
 ```go
 acctest.PreCheckGoogleJSONKey(t)               // Google Play integrity
