@@ -154,17 +154,26 @@ func PreCheckNewCustomDomain(t *testing.T) {
 }
 
 func PreCheckNewTrustedEmailDomain(t *testing.T) {
-	skipEmailDomainVerified, err := strconv.ParseBool(os.Getenv("PINGONE_EMAIL_DOMAIN_TEST_SKIP"))
+	skipNewTrustedEmailDomain, err := strconv.ParseBool(os.Getenv("PINGONE_EMAIL_DOMAIN_TEST_SKIP"))
 	if err != nil {
-		skipEmailDomainVerified = false
+		skipNewTrustedEmailDomain = false
 	}
 
-	if skipEmailDomainVerified {
+	if skipNewTrustedEmailDomain {
 		t.Skipf("Integration tests that create new trusted email domains are skipped")
 	}
 }
 
 func PreCheckTrustedEmailDomainVerification(t *testing.T) {
+	skipVerifiedTrustedEmailDomain, err := strconv.ParseBool(os.Getenv("PINGONE_VERIFIED_EMAIL_DOMAIN_TEST_SKIP"))
+	if err != nil {
+		skipVerifiedTrustedEmailDomain = false
+	}
+
+	if skipVerifiedTrustedEmailDomain {
+		t.Skipf("Integration tests that create verified trusted email domains are skipped")
+	}
+
 	if v := os.Getenv("PINGONE_VERIFIED_EMAIL_DOMAIN"); v == "" {
 		t.Fatal("PINGONE_VERIFIED_EMAIL_DOMAIN is missing and must be set")
 	}
