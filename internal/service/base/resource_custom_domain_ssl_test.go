@@ -18,7 +18,6 @@ func TestAccCustomDomainSSL_Full(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	domainPrefix := acctest.DomainNamePrefixWithTimestampGen()
 
 	environmentName := acctest.ResourceNameGenEnvironment()
 
@@ -42,21 +41,21 @@ func TestAccCustomDomainSSL_Full(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccCustomDomainSSLConfig_Full(environmentName, licenseID, resourceName, domainPrefix, certificateFile, intermediateFile, privateKeyFile),
+				Config:      testAccCustomDomainSSLConfig_Full(environmentName, licenseID, resourceName, certificateFile, intermediateFile, privateKeyFile),
 				ExpectError: regexp.MustCompile(`Cannot add SSL certificate settings to the custom domain - Custom domain status must be 'SSL_CERTIFICATE_REQUIRED' or 'ACTIVE' in order to import a certificate`),
 			},
 		},
 	})
 }
 
-func testAccCustomDomainSSLConfig_Full(environmentName, licenseID, resourceName, domainPrefix, certificateFile, intermediateFile, privateKeyFile string) string {
+func testAccCustomDomainSSLConfig_Full(environmentName, licenseID, resourceName, certificateFile, intermediateFile, privateKeyFile string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
 resource "pingone_custom_domain" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
-  domain_name = "%[4]s.cdi-team-terraform-cd-test.ping-eng.com"
+  domain_name = "terraformdev.ping-eng.com"
 }
 
 resource "pingone_custom_domain_ssl" "%[3]s" {
@@ -65,14 +64,14 @@ resource "pingone_custom_domain_ssl" "%[3]s" {
   custom_domain_id = pingone_custom_domain.%[3]s.id
 
   certificate_pem_file               = <<EOT
-%[5]s
+%[4]s
 EOT
   intermediate_certificates_pem_file = <<EOT
-%[6]s
+%[5]s
 EOT
   private_key_pem_file               = <<EOT
-%[7]s
+%[6]s
 EOT
 
-}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, domainPrefix, certificateFile, intermediateFile, privateKeyFile)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, certificateFile, intermediateFile, privateKeyFile)
 }
