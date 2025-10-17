@@ -38,7 +38,6 @@ func TestAccTrustedEmailAddress_RemovalDrift(t *testing.T) {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoBeta(t)
-			acctest.PreCheckNewTrustedEmailDomain(t)
 			acctest.PreCheckTrustedEmailDomainVerification(t)
 
 			p1Client = acctestlegacysdk.PreCheckTestClient(ctx, t)
@@ -110,7 +109,6 @@ func TestAccTrustedEmailAddress_Full(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoBeta(t)
-			acctest.PreCheckNewTrustedEmailDomain(t)
 			acctest.PreCheckTrustedEmailDomainVerification(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -195,7 +193,6 @@ func TestAccTrustedEmailAddress_BadParameters(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoBeta(t)
-			acctest.PreCheckNewTrustedEmailDomain(t)
 			acctest.PreCheckTrustedEmailDomainVerification(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
