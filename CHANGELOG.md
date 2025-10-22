@@ -18,6 +18,7 @@ ENHANCEMENTS:
 
 * `data_source/pingone_role`: Added support for `Authorize Gateway Policy Evaluator` and `Help Desk Admin` roles. ([#1132](https://github.com/pingidentity/terraform-provider-pingone/issues/1132))
 * `resource/pingone_risk_predictor`: Added support for `GROUPS_INTERSECTION` in composite condition type. ([#1143](https://github.com/pingidentity/terraform-provider-pingone/issues/1143))
+* `resource/pingone_risk_predictor`: Added support for `startsWith` and `endsWith` conditions. ([#1143](https://github.com/pingidentity/terraform-provider-pingone/issues/1143))
 * `resource/pingone_verify_policy`: Added support for aadhaar to government_id config. ([#1145](https://github.com/pingidentity/terraform-provider-pingone/issues/1145))
 * `resource/pingone_verify_policy`: Added support for identity_record_matching. ([#1140](https://github.com/pingidentity/terraform-provider-pingone/issues/1140))
 * `resource/pingone_verify_policy`: Added support for verify_aamva to government_id config. ([#1142](https://github.com/pingidentity/terraform-provider-pingone/issues/1142))
