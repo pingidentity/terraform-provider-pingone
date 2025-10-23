@@ -13,7 +13,3 @@ bump `github.com/patrickcping/pingone-go-sdk-v2/verify` v0.9.1 => v0.10.0
 ```release-note:enhancement
 `resource/pingone_risk_predictor`: Added support for `GROUPS_INTERSECTION` in composite condition type.
 ```
-
-```release-note:enhancement
-`resource/pingone_risk_predictor`: Added support for `startsWith` and `endsWith` conditions.
-```
