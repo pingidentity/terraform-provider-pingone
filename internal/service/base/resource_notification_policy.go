@@ -47,6 +47,7 @@ type NotificationPolicyResourceModel struct {
 	Default               types.Bool                   `tfsdk:"default"`
 	CountryLimit          types.Object                 `tfsdk:"country_limit"`
 	CooldownConfiguration types.Object                 `tfsdk:"cooldown_configuration"`
+	ProviderConfiguration types.Object                 `tfsdk:"provider_configuration"`
 	Quota                 types.Set                    `tfsdk:"quota"`
 	Id                    pingonetypes.ResourceIDValue `tfsdk:"id"`
 }
@@ -82,6 +83,20 @@ type NotificationPolicyCooldownConfigurationMethodResourceModel struct {
 type NotificationPolicyCooldownConfigurationMethodPeriodResourceModel struct {
 	Duration types.Int32  `tfsdk:"duration"`
 	TimeUnit types.String `tfsdk:"time_unit"`
+}
+
+type NotificationPolicyProviderConfigurationResourceModel struct {
+	Conditions types.List `tfsdk:"conditions"`
+}
+
+type NotificationPolicyProviderConfigurationConditionResourceModel struct {
+	DeliveryMethods types.Set  `tfsdk:"delivery_methods"`
+	Countries       types.Set  `tfsdk:"countries"`
+	FallbackChain   types.List `tfsdk:"fallback_chain"`
+}
+
+type NotificationPolicyProviderConfigurationFallbackChainItemResourceModel struct {
+	Id pingonetypes.ResourceIDValue `tfsdk:"id"`
 }
 
 var (
@@ -121,6 +136,44 @@ var (
 		"voice":     types.ObjectType{AttrTypes: cooldownConfigurationMethodTFObjectTypes},
 		"whats_app": types.ObjectType{AttrTypes: cooldownConfigurationMethodTFObjectTypes},
 	}
+
+	fallbackChainItemTFObjectTypes = map[string]attr.Type{
+		"id": pingonetypes.ResourceIDType{},
+	}
+
+	providerConfigurationConditionTFObjectTypes = map[string]attr.Type{
+		"delivery_methods": types.SetType{ElemType: types.StringType},
+		"countries":        types.SetType{ElemType: types.StringType},
+		"fallback_chain": types.ListType{
+			ElemType: types.ObjectType{AttrTypes: fallbackChainItemTFObjectTypes},
+		},
+	}
+
+	providerConfigurationTFObjectTypes = map[string]attr.Type{
+		"conditions": types.ListType{
+			ElemType: types.ObjectType{AttrTypes: providerConfigurationConditionTFObjectTypes},
+		},
+	}
+
+	cooldownConfigurationMethodDefault = types.ObjectValueMust(
+		cooldownConfigurationMethodTFObjectTypes,
+		map[string]attr.Value{
+			"enabled":      types.BoolValue(false),
+			"periods":      types.ListNull(types.ObjectType{AttrTypes: cooldownConfigurationPeriodTFObjectTypes}),
+			"group_by":     types.StringNull(),
+			"resend_limit": types.Int32Null(),
+		},
+	)
+
+	cooldownConfigurationDefault = types.ObjectValueMust(
+		cooldownConfigurationTFObjectTypes,
+		map[string]attr.Value{
+			"email":     cooldownConfigurationMethodDefault,
+			"sms":       cooldownConfigurationMethodDefault,
+			"voice":     cooldownConfigurationMethodDefault,
+			"whats_app": cooldownConfigurationMethodDefault,
+		},
+	)
 )
 
 // Framework interfaces
@@ -198,6 +251,30 @@ func (r *NotificationPolicyResource) Schema(ctx context.Context, req resource.Sc
 
 	quotaUnusedDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The maximum number of notifications that can be received and not responded to each day. Must be configured with `used` and cannot be configured with `total`.",
+	)
+
+	providerConfigurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object to specify the custom notification providers to use for different countries and delivery methods (SMS and Voice).",
+	)
+
+	providerConfigurationConditionsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A list of condition objects that define the provider fallback order to use for specific groups of countries and delivery methods. Note that the list must contain at least one condition without the `countries` field, which serves as the default fallback order for all countries not specified in other conditions.",
+	)
+
+	providerConfigurationConditionsDeliveryMethodsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The delivery methods for which the fallback order should be applied.",
+	).AllowedValuesEnum(management.AllowedEnumNotificationsPolicyProviderConfigurationConditionsDeliveryMethodsEnumValues)
+
+	providerConfigurationConditionsCountriesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The countries for which the fallback order should be used. Use the two-letter country codes from ISO 3166-1. At least one condition in the list must not specify countries, serving as the default for all other countries.",
+	)
+
+	providerConfigurationConditionsFallbackChainDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A list of custom provider IDs in the order they should be used if available.",
+	)
+
+	providerConfigurationConditionsFallbackChainIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The ID of a custom provider. Reference the `id` attribute of a `pingone_phone_delivery_settings` resource.",
 	)
 
 	resp.Schema = schema.Schema{
@@ -302,6 +379,9 @@ func (r *NotificationPolicyResource) Schema(ctx context.Context, req resource.Sc
 			"cooldown_configuration": schema.SingleNestedAttribute{
 				Description: "A single object to specify a period of time that users must wait before requesting an additional notification such as an additional OTP.",
 				Optional:    true,
+				Computed:    true,
+
+				Default: objectdefault.StaticValue(cooldownConfigurationDefault),
 
 				Attributes: map[string]schema.Attribute{
 					"email": schema.SingleNestedAttribute{
@@ -326,6 +406,84 @@ func (r *NotificationPolicyResource) Schema(ctx context.Context, req resource.Sc
 						Description: "Contains the notification cooldown period settings for WhatsApp notifications.",
 						Required:    true,
 						Attributes:  cooldownConfigurationMethodSchema(),
+					},
+				},
+			},
+
+			"provider_configuration": schema.SingleNestedAttribute{
+				Description:         providerConfigurationDescription.Description,
+				MarkdownDescription: providerConfigurationDescription.MarkdownDescription,
+				Optional:            true,
+
+				Attributes: map[string]schema.Attribute{
+					"conditions": schema.ListNestedAttribute{
+						Description:         providerConfigurationConditionsDescription.Description,
+						MarkdownDescription: providerConfigurationConditionsDescription.MarkdownDescription,
+						Required:            true,
+
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"delivery_methods": schema.SetAttribute{
+									Description:         providerConfigurationConditionsDeliveryMethodsDescription.Description,
+									MarkdownDescription: providerConfigurationConditionsDeliveryMethodsDescription.MarkdownDescription,
+									Optional:            true,
+
+									ElementType: types.StringType,
+
+									Validators: []validator.Set{
+										setvalidator.SizeAtLeast(attrMinLength),
+										setvalidator.ValueStringsAre(
+											stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumNotificationsPolicyProviderConfigurationConditionsDeliveryMethodsEnumValues)...),
+										),
+									},
+								},
+
+								"countries": schema.SetAttribute{
+									Description:         providerConfigurationConditionsCountriesDescription.Description,
+									MarkdownDescription: providerConfigurationConditionsCountriesDescription.MarkdownDescription,
+									Optional:            true,
+
+									ElementType: types.StringType,
+
+									Validators: []validator.Set{
+										setvalidator.SizeAtLeast(attrMinLength),
+										setvalidator.ValueStringsAre(
+											stringvalidator.RegexMatches(verify.IsTwoCharCountryCode, "must be a valid two character country code"),
+										),
+									},
+								},
+
+								"fallback_chain": schema.ListNestedAttribute{
+									Description:         providerConfigurationConditionsFallbackChainDescription.Description,
+									MarkdownDescription: providerConfigurationConditionsFallbackChainDescription.MarkdownDescription,
+									Required:            true,
+
+									NestedObject: schema.NestedAttributeObject{
+										Attributes: map[string]schema.Attribute{
+											"id": schema.StringAttribute{
+												Description:         providerConfigurationConditionsFallbackChainIdDescription.Description,
+												MarkdownDescription: providerConfigurationConditionsFallbackChainIdDescription.MarkdownDescription,
+												Required:            true,
+
+												CustomType: pingonetypes.ResourceIDType{},
+
+												Validators: []validator.String{
+													stringvalidator.LengthAtLeast(attrMinLength),
+												},
+											},
+										},
+									},
+
+									Validators: []validator.List{
+										listvalidator.SizeAtLeast(attrMinLength),
+									},
+								},
+							},
+						},
+
+						Validators: []validator.List{
+							listvalidator.SizeAtLeast(attrMinLength),
+						},
 					},
 				},
 			},
@@ -933,6 +1091,25 @@ func (p *NotificationPolicyResourceModel) expand(ctx context.Context) (*manageme
 		data.SetCooldownConfiguration(*cooldownConfig)
 	}
 
+	if !p.ProviderConfiguration.IsNull() && !p.ProviderConfiguration.IsUnknown() {
+		var providerConfigPlan NotificationPolicyProviderConfigurationResourceModel
+		diags.Append(p.ProviderConfiguration.As(ctx, &providerConfigPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		providerConfig, d := expandProviderConfiguration(ctx, &providerConfigPlan)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetProviderConfiguration(*providerConfig)
+	}
+
 	return data, diags
 }
 
@@ -1013,6 +1190,79 @@ func expandCooldownConfigurationMethod(ctx context.Context, methodObj types.Obje
 	return method, diags
 }
 
+func expandProviderConfiguration(ctx context.Context, plan *NotificationPolicyProviderConfigurationResourceModel) (*management.NotificationsPolicyProviderConfiguration, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	providerConfig := management.NewNotificationsPolicyProviderConfiguration()
+
+	if !plan.Conditions.IsNull() && !plan.Conditions.IsUnknown() {
+		var conditionsPlan []NotificationPolicyProviderConfigurationConditionResourceModel
+		diags.Append(plan.Conditions.ElementsAs(ctx, &conditionsPlan, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		conditions := make([]management.NotificationsPolicyProviderConfigurationConditionsInner, 0, len(conditionsPlan))
+		for _, c := range conditionsPlan {
+			condition := management.NewNotificationsPolicyProviderConfigurationConditionsInner()
+
+			// Delivery methods
+			if !c.DeliveryMethods.IsNull() && !c.DeliveryMethods.IsUnknown() {
+				var deliveryMethodsPlan []types.String
+				diags.Append(c.DeliveryMethods.ElementsAs(ctx, &deliveryMethodsPlan, false)...)
+				if diags.HasError() {
+					return nil, diags
+				}
+
+				deliveryMethods := make([]management.EnumNotificationsPolicyProviderConfigurationConditionsDeliveryMethods, 0, len(deliveryMethodsPlan))
+				for _, dm := range deliveryMethodsPlan {
+					deliveryMethods = append(deliveryMethods, management.EnumNotificationsPolicyProviderConfigurationConditionsDeliveryMethods(dm.ValueString()))
+				}
+				condition.SetDeliveryMethods(deliveryMethods)
+			}
+
+			// Countries
+			if !c.Countries.IsNull() && !c.Countries.IsUnknown() {
+				var countriesPlan []types.String
+				diags.Append(c.Countries.ElementsAs(ctx, &countriesPlan, false)...)
+				if diags.HasError() {
+					return nil, diags
+				}
+
+				countries, d := framework.TFTypeStringSliceToStringSlice(countriesPlan, path.Root("provider_configuration").AtName("conditions").AtListIndex(0).AtName("countries"))
+				diags.Append(d...)
+				if diags.HasError() {
+					return nil, diags
+				}
+
+				condition.SetCountries(countries)
+			}
+
+			// Fallback chain
+			if !c.FallbackChain.IsNull() && !c.FallbackChain.IsUnknown() {
+				var fallbackChainPlan []NotificationPolicyProviderConfigurationFallbackChainItemResourceModel
+				diags.Append(c.FallbackChain.ElementsAs(ctx, &fallbackChainPlan, false)...)
+				if diags.HasError() {
+					return nil, diags
+				}
+
+				fallbackChain := make([]management.NotificationsPolicyProviderConfigurationConditionsInnerFallbackChainInner, 0, len(fallbackChainPlan))
+				for _, fb := range fallbackChainPlan {
+					fallbackItem := management.NewNotificationsPolicyProviderConfigurationConditionsInnerFallbackChainInner(fb.Id.ValueString())
+					fallbackChain = append(fallbackChain, *fallbackItem)
+				}
+				condition.SetFallbackChain(fallbackChain)
+			}
+
+			conditions = append(conditions, *condition)
+		}
+
+		providerConfig.SetConditions(conditions)
+	}
+
+	return providerConfig, diags
+}
+
 func (p *NotificationPolicyResourceModel) toState(apiObject *management.NotificationsPolicy) diag.Diagnostics {
 	var diags diag.Diagnostics
 
@@ -1038,6 +1288,9 @@ func (p *NotificationPolicyResourceModel) toState(apiObject *management.Notifica
 	diags.Append(d...)
 
 	p.CooldownConfiguration, d = toStateCooldownConfiguration(apiObject.GetCooldownConfigurationOk())
+	diags.Append(d...)
+
+	p.ProviderConfiguration, d = toStateProviderConfiguration(apiObject.GetProviderConfigurationOk())
 	diags.Append(d...)
 
 	return diags
@@ -1166,6 +1419,125 @@ func toStateCooldownConfigurationMethodPeriods(periods []management.Notification
 		}
 
 		flattenedObj, d := types.ObjectValue(cooldownConfigurationPeriodTFObjectTypes, periodMap)
+		diags.Append(d...)
+
+		flattenedList = append(flattenedList, flattenedObj)
+	}
+
+	returnVar, d := types.ListValue(tfObjType, flattenedList)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func toStateProviderConfiguration(apiObject *management.NotificationsPolicyProviderConfiguration, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(providerConfigurationTFObjectTypes), diags
+	}
+
+	conditions, d := toStateProviderConfigurationConditions(apiObject.GetConditionsOk())
+	diags.Append(d...)
+
+	objMap := map[string]attr.Value{
+		"conditions": conditions,
+	}
+
+	objValue, d := types.ObjectValue(providerConfigurationTFObjectTypes, objMap)
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func toStateProviderConfigurationConditions(conditions []management.NotificationsPolicyProviderConfigurationConditionsInner, ok bool) (types.List, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	tfObjType := types.ObjectType{AttrTypes: providerConfigurationConditionTFObjectTypes}
+
+	if !ok || len(conditions) == 0 {
+		return types.ListNull(tfObjType), diags
+	}
+
+	flattenedList := []attr.Value{}
+	for _, c := range conditions {
+		deliveryMethods, d := toStateProviderConfigurationDeliveryMethods(c.GetDeliveryMethodsOk())
+		diags.Append(d...)
+
+		countries, d := toStateProviderConfigurationCountries(c.GetCountriesOk())
+		diags.Append(d...)
+
+		fallbackChain, d := toStateProviderConfigurationFallbackChain(c.GetFallbackChainOk())
+		diags.Append(d...)
+
+		conditionMap := map[string]attr.Value{
+			"delivery_methods": deliveryMethods,
+			"countries":        countries,
+			"fallback_chain":   fallbackChain,
+		}
+
+		flattenedObj, d := types.ObjectValue(providerConfigurationConditionTFObjectTypes, conditionMap)
+		diags.Append(d...)
+
+		flattenedList = append(flattenedList, flattenedObj)
+	}
+
+	returnVar, d := types.ListValue(tfObjType, flattenedList)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func toStateProviderConfigurationDeliveryMethods(deliveryMethods []management.EnumNotificationsPolicyProviderConfigurationConditionsDeliveryMethods, ok bool) (types.Set, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || len(deliveryMethods) == 0 {
+		return types.SetNull(types.StringType), diags
+	}
+
+	flattenedList := []attr.Value{}
+	for _, dm := range deliveryMethods {
+		flattenedList = append(flattenedList, types.StringValue(string(dm)))
+	}
+
+	returnVar, d := types.SetValue(types.StringType, flattenedList)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func toStateProviderConfigurationCountries(countries []string, ok bool) (types.Set, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || len(countries) == 0 {
+		return types.SetNull(types.StringType), diags
+	}
+
+	flattenedList := []attr.Value{}
+	for _, country := range countries {
+		flattenedList = append(flattenedList, types.StringValue(country))
+	}
+
+	returnVar, d := types.SetValue(types.StringType, flattenedList)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func toStateProviderConfigurationFallbackChain(fallbackChain []management.NotificationsPolicyProviderConfigurationConditionsInnerFallbackChainInner, ok bool) (types.List, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	tfObjType := types.ObjectType{AttrTypes: fallbackChainItemTFObjectTypes}
+
+	if !ok || len(fallbackChain) == 0 {
+		return types.ListNull(tfObjType), diags
+	}
+
+	flattenedList := []attr.Value{}
+	for _, fb := range fallbackChain {
+		fallbackMap := map[string]attr.Value{
+			"id": framework.PingOneResourceIDOkToTF(fb.GetIdOk()),
+		}
+
+		flattenedObj, d := types.ObjectValue(fallbackChainItemTFObjectTypes, fallbackMap)
 		diags.Append(d...)
 
 		flattenedList = append(flattenedList, flattenedObj)
