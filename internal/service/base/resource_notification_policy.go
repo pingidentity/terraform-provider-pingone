@@ -258,7 +258,7 @@ func (r *NotificationPolicyResource) Schema(ctx context.Context, req resource.Sc
 	)
 
 	providerConfigurationConditionsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A list of condition objects that define the provider fallback order to use for specific groups of countries and delivery methods. Note that the list must contain at least one condition without the `countries` field, which serves as the default fallback order for all countries not specified in other conditions.",
+		"A list of condition objects that define the provider fallback order to use for specific groups of countries and delivery methods. The **last condition** in the list must not have the `countries` field configured, which makes it serve as the default fallback order for all countries not specified in the preceding conditions.",
 	)
 
 	providerConfigurationConditionsDeliveryMethodsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -266,7 +266,7 @@ func (r *NotificationPolicyResource) Schema(ctx context.Context, req resource.Sc
 	).AllowedValuesEnum(management.AllowedEnumNotificationsPolicyProviderConfigurationConditionsDeliveryMethodsEnumValues)
 
 	providerConfigurationConditionsCountriesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The countries for which the fallback order should be used. Use the two-letter country codes from ISO 3166-1. At least one condition in the list must not specify countries, serving as the default for all other countries.",
+		"The countries for which the fallback order should be used. Use the two-letter country codes from ISO 3166-1.",
 	)
 
 	providerConfigurationConditionsFallbackChainDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -479,9 +479,7 @@ func (r *NotificationPolicyResource) Schema(ctx context.Context, req resource.Sc
 									},
 								},
 							},
-						},
-
-						Validators: []validator.List{
+						}, Validators: []validator.List{
 							listvalidator.SizeAtLeast(attrMinLength),
 						},
 					},
