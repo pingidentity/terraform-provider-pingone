@@ -9,6 +9,7 @@ import (
 	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int32validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -27,7 +28,10 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	int32validatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/int32validator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
+	listvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/listvalidator"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/schemavalidator"
 	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
@@ -38,12 +42,13 @@ import (
 type NotificationPolicyResource serviceClientType
 
 type NotificationPolicyResourceModel struct {
-	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
-	Name          types.String                 `tfsdk:"name"`
-	Default       types.Bool                   `tfsdk:"default"`
-	CountryLimit  types.Object                 `tfsdk:"country_limit"`
-	Quota         types.Set                    `tfsdk:"quota"`
-	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId         pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Name                  types.String                 `tfsdk:"name"`
+	Default               types.Bool                   `tfsdk:"default"`
+	CountryLimit          types.Object                 `tfsdk:"country_limit"`
+	CooldownConfiguration types.Object                 `tfsdk:"cooldown_configuration"`
+	Quota                 types.Set                    `tfsdk:"quota"`
+	Id                    pingonetypes.ResourceIDValue `tfsdk:"id"`
 }
 
 type NotificationPolicyQuotaResourceModel struct {
@@ -58,6 +63,25 @@ type NotificationPolicyCountryLimitResourceModel struct {
 	Type            types.String `tfsdk:"type"`
 	DeliveryMethods types.Set    `tfsdk:"delivery_methods"`
 	Countries       types.Set    `tfsdk:"countries"`
+}
+
+type NotificationPolicyCooldownConfigurationResourceModel struct {
+	Email    types.Object `tfsdk:"email"`
+	Sms      types.Object `tfsdk:"sms"`
+	Voice    types.Object `tfsdk:"voice"`
+	WhatsApp types.Object `tfsdk:"whats_app"`
+}
+
+type NotificationPolicyCooldownConfigurationMethodResourceModel struct {
+	Enabled     types.Bool   `tfsdk:"enabled"`
+	Periods     types.List   `tfsdk:"periods"`
+	GroupBy     types.String `tfsdk:"group_by"`
+	ResendLimit types.Int32  `tfsdk:"resend_limit"`
+}
+
+type NotificationPolicyCooldownConfigurationMethodPeriodResourceModel struct {
+	Duration types.Int32  `tfsdk:"duration"`
+	TimeUnit types.String `tfsdk:"time_unit"`
 }
 
 var (
@@ -75,6 +99,27 @@ var (
 		"type":             types.StringType,
 		"delivery_methods": types.SetType{ElemType: types.StringType},
 		"countries":        types.SetType{ElemType: types.StringType},
+	}
+
+	cooldownConfigurationPeriodTFObjectTypes = map[string]attr.Type{
+		"duration":  types.Int32Type,
+		"time_unit": types.StringType,
+	}
+
+	cooldownConfigurationMethodTFObjectTypes = map[string]attr.Type{
+		"enabled": types.BoolType,
+		"periods": types.ListType{
+			ElemType: types.ObjectType{AttrTypes: cooldownConfigurationPeriodTFObjectTypes},
+		},
+		"group_by":     types.StringType,
+		"resend_limit": types.Int32Type,
+	}
+
+	cooldownConfigurationTFObjectTypes = map[string]attr.Type{
+		"email":     types.ObjectType{AttrTypes: cooldownConfigurationMethodTFObjectTypes},
+		"sms":       types.ObjectType{AttrTypes: cooldownConfigurationMethodTFObjectTypes},
+		"voice":     types.ObjectType{AttrTypes: cooldownConfigurationMethodTFObjectTypes},
+		"whats_app": types.ObjectType{AttrTypes: cooldownConfigurationMethodTFObjectTypes},
 	}
 )
 
@@ -254,6 +299,37 @@ func (r *NotificationPolicyResource) Schema(ctx context.Context, req resource.Sc
 				},
 			},
 
+			"cooldown_configuration": schema.SingleNestedAttribute{
+				Description: "A single object to specify a period of time that users must wait before requesting an additional notification such as an additional OTP.",
+				Optional:    true,
+
+				Attributes: map[string]schema.Attribute{
+					"email": schema.SingleNestedAttribute{
+						Description: "Contains the notification cooldown period settings for email notifications.",
+						Required:    true,
+						Attributes:  cooldownConfigurationMethodSchema(),
+					},
+
+					"sms": schema.SingleNestedAttribute{
+						Description: "Contains the notification cooldown period settings for SMS notifications.",
+						Required:    true,
+						Attributes:  cooldownConfigurationMethodSchema(),
+					},
+
+					"voice": schema.SingleNestedAttribute{
+						Description: "Contains the notification cooldown period settings for voice notifications.",
+						Required:    true,
+						Attributes:  cooldownConfigurationMethodSchema(),
+					},
+
+					"whats_app": schema.SingleNestedAttribute{
+						Description: "Contains the notification cooldown period settings for WhatsApp notifications.",
+						Required:    true,
+						Attributes:  cooldownConfigurationMethodSchema(),
+					},
+				},
+			},
+
 			"quota": schema.SetNestedAttribute{
 				Description:         quotaDescription.Description,
 				MarkdownDescription: quotaDescription.MarkdownDescription,
@@ -334,6 +410,124 @@ func (r *NotificationPolicyResource) Schema(ctx context.Context, req resource.Sc
 
 				Validators: []validator.Set{
 					setvalidator.SizeAtMost(maxQuotaLimit),
+				},
+			},
+		},
+	}
+}
+
+func cooldownConfigurationMethodSchema() map[string]schema.Attribute {
+	const cooldownPeriodMinDurationSeconds = 10
+	const cooldownPeriodMaxDurationSeconds = 600
+	const cooldownPeriodMinDurationMinutes = 1
+	const cooldownPeriodMaxDurationMinutes = 10
+	const cooldownPeriodsArraySize = 3
+	const cooldownResendLimitMin = 1
+	const cooldownResendLimitMax = 10
+
+	cooldownEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Set to `true` if you want to specify notification cooldown periods for the authentication method. Set to `false` if you don't want notification cooldown periods for this authentication method.",
+	)
+
+	cooldownPeriodsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Use the periods array to specify the amount of time the user has to wait before requesting another notification such as another OTP. The array should contain three objects: the time to wait before the first retry, the time to wait before the second retry, and the time to wait before any subsequent retries. Required when `enabled` is `true`.",
+	)
+
+	cooldownPeriodDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Used in conjunction with `time_unit` to specify the waiting period.",
+	).AppendMarkdownString(fmt.Sprintf("If `time_unit` is `%s`, the allowed range is %d-%d.", string(management.ENUMNOTIFICATIONSPOLICYCOOLDOWNCONFIGURATIONMETHODPERIODTIMEUNIT_SECONDS), cooldownPeriodMinDurationSeconds, cooldownPeriodMaxDurationSeconds)).AppendMarkdownString(fmt.Sprintf("If `time_unit` is `%s`, the allowed range is %d-%d.", string(management.ENUMNOTIFICATIONSPOLICYCOOLDOWNCONFIGURATIONMETHODPERIODTIMEUNIT_MINUTES), cooldownPeriodMinDurationMinutes, cooldownPeriodMaxDurationMinutes))
+
+	cooldownPeriodTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Used in conjunction with `duration` to specify the waiting period.",
+	).AllowedValuesEnum(management.AllowedEnumNotificationsPolicyCooldownConfigurationMethodPeriodTimeUnitEnumValues)
+
+	cooldownGroupByDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"If you want the settings to be applied at the single-user level for the address/number, set this to `USER_ID`.",
+	)
+
+	cooldownResendLimitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The maximum number of requests that a user can send to receive another notification, such as another OTP, before they are blocked for 30 minutes. Required when `enabled` is `true`.",
+	)
+
+	return map[string]schema.Attribute{
+		"enabled": schema.BoolAttribute{
+			Description:         cooldownEnabledDescription.Description,
+			MarkdownDescription: cooldownEnabledDescription.MarkdownDescription,
+			Required:            true,
+		},
+
+		"periods": schema.ListNestedAttribute{
+			Description:         cooldownPeriodsDescription.Description,
+			MarkdownDescription: cooldownPeriodsDescription.MarkdownDescription,
+			Optional:            true,
+
+			NestedObject: schema.NestedAttributeObject{
+				Attributes: map[string]schema.Attribute{
+					"duration": schema.Int32Attribute{
+						Description:         cooldownPeriodDurationDescription.Description,
+						MarkdownDescription: cooldownPeriodDurationDescription.MarkdownDescription,
+						Required:            true,
+						Validators: []validator.Int32{
+							int32validator.Any(
+								int32validator.All(
+									int32validator.Between(cooldownPeriodMinDurationSeconds, cooldownPeriodMaxDurationSeconds),
+									int32validatorinternal.RegexMatchesPathValue(
+										regexp.MustCompile(`SECONDS`),
+										fmt.Sprintf("If `time_unit` is `SECONDS`, the allowed duration range is %d - %d.", cooldownPeriodMinDurationSeconds, cooldownPeriodMaxDurationSeconds),
+										path.MatchRelative().AtParent().AtName("time_unit"),
+									),
+								),
+								int32validator.All(
+									int32validator.Between(cooldownPeriodMinDurationMinutes, cooldownPeriodMaxDurationMinutes),
+									int32validatorinternal.RegexMatchesPathValue(
+										regexp.MustCompile(`MINUTES`),
+										fmt.Sprintf("If `time_unit` is `MINUTES`, the allowed duration range is %d - %d.", cooldownPeriodMinDurationMinutes, cooldownPeriodMaxDurationMinutes),
+										path.MatchRelative().AtParent().AtName("time_unit"),
+									),
+								),
+							),
+						},
+					},
+
+					"time_unit": schema.StringAttribute{
+						Description:         cooldownPeriodTimeUnitDescription.Description,
+						MarkdownDescription: cooldownPeriodTimeUnitDescription.MarkdownDescription,
+						Required:            true,
+						Validators: []validator.String{
+							stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumNotificationsPolicyCooldownConfigurationMethodPeriodTimeUnitEnumValues)...),
+						},
+					},
+				},
+			},
+
+			Validators: []validator.List{
+				listvalidator.SizeAtLeast(cooldownPeriodsArraySize),
+				listvalidator.SizeAtMost(cooldownPeriodsArraySize),
+				listvalidatorinternal.IsRequiredIfMatchesPathValue(
+					types.StringValue("true"),
+					path.MatchRelative().AtParent().AtName("enabled"),
+				),
+			},
+		},
+
+		"group_by": schema.StringAttribute{
+			Description:         cooldownGroupByDescription.Description,
+			MarkdownDescription: cooldownGroupByDescription.MarkdownDescription,
+			Optional:            true,
+		},
+
+		"resend_limit": schema.Int32Attribute{
+			Description:         cooldownResendLimitDescription.Description,
+			MarkdownDescription: cooldownResendLimitDescription.MarkdownDescription,
+			Optional:            true,
+			Validators: []validator.Int32{
+				int32validator.AtLeast(cooldownResendLimitMin),
+				int32validator.AtMost(cooldownResendLimitMax),
+				schemavalidator.IsRequiredIfMatchesPathValueValidator{
+					TargetValue: types.StringValue("true"),
+					Expressions: path.Expressions{
+						path.MatchRelative().AtParent().AtName("enabled"),
+					},
 				},
 			},
 		},
@@ -720,7 +914,103 @@ func (p *NotificationPolicyResourceModel) expand(ctx context.Context) (*manageme
 		data.SetCountryLimit(countryLimit)
 	}
 
+	if !p.CooldownConfiguration.IsNull() && !p.CooldownConfiguration.IsUnknown() {
+		var cooldownConfigPlan NotificationPolicyCooldownConfigurationResourceModel
+		diags.Append(p.CooldownConfiguration.As(ctx, &cooldownConfigPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		cooldownConfig, d := expandCooldownConfiguration(ctx, &cooldownConfigPlan)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetCooldownConfiguration(*cooldownConfig)
+	}
+
 	return data, diags
+}
+
+func expandCooldownConfiguration(ctx context.Context, plan *NotificationPolicyCooldownConfigurationResourceModel) (*management.NotificationsPolicyCooldownConfiguration, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	email, d := expandCooldownConfigurationMethod(ctx, plan.Email)
+	diags.Append(d...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	sms, d := expandCooldownConfigurationMethod(ctx, plan.Sms)
+	diags.Append(d...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	voice, d := expandCooldownConfigurationMethod(ctx, plan.Voice)
+	diags.Append(d...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	whatsApp, d := expandCooldownConfigurationMethod(ctx, plan.WhatsApp)
+	diags.Append(d...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	cooldownConfig := management.NewNotificationsPolicyCooldownConfiguration(*email, *sms, *voice, *whatsApp)
+
+	return cooldownConfig, diags
+}
+
+func expandCooldownConfigurationMethod(ctx context.Context, methodObj types.Object) (*management.NotificationsPolicyCooldownConfigurationMethod, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var methodPlan NotificationPolicyCooldownConfigurationMethodResourceModel
+	diags.Append(methodObj.As(ctx, &methodPlan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: false,
+	})...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	method := &management.NotificationsPolicyCooldownConfigurationMethod{
+		Enabled: methodPlan.Enabled.ValueBool(),
+	}
+
+	if methodPlan.Enabled.ValueBool() {
+		var periodsPlan []NotificationPolicyCooldownConfigurationMethodPeriodResourceModel
+		diags.Append(methodPlan.Periods.ElementsAs(ctx, &periodsPlan, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		periods := make([]management.NotificationsPolicyCooldownConfigurationMethodPeriodsInner, 0, len(periodsPlan))
+		for _, p := range periodsPlan {
+			period := management.NewNotificationsPolicyCooldownConfigurationMethodPeriodsInner(
+				p.Duration.ValueInt32(),
+				management.EnumNotificationsPolicyCooldownConfigurationMethodPeriodTimeUnit(p.TimeUnit.ValueString()),
+			)
+			periods = append(periods, *period)
+		}
+		method.Periods = periods
+
+		if !methodPlan.ResendLimit.IsNull() && !methodPlan.ResendLimit.IsUnknown() {
+			method.SetResendLimit(methodPlan.ResendLimit.ValueInt32())
+		}
+	}
+
+	if !methodPlan.GroupBy.IsNull() && !methodPlan.GroupBy.IsUnknown() {
+		method.SetGroupBy(methodPlan.GroupBy.ValueString())
+	}
+
+	return method, diags
 }
 
 func (p *NotificationPolicyResourceModel) toState(apiObject *management.NotificationsPolicy) diag.Diagnostics {
@@ -745,6 +1035,9 @@ func (p *NotificationPolicyResourceModel) toState(apiObject *management.Notifica
 	diags.Append(d...)
 
 	p.CountryLimit, d = toStateCountryLimit(apiObject.GetCountryLimitOk())
+	diags.Append(d...)
+
+	p.CooldownConfiguration, d = toStateCooldownConfiguration(apiObject.GetCooldownConfigurationOk())
 	diags.Append(d...)
 
 	return diags
@@ -800,4 +1093,86 @@ func toStateCountryLimit(apiObject *management.NotificationsPolicyCountryLimit, 
 
 	return returnVar, diags
 
+}
+
+func toStateCooldownConfiguration(apiObject *management.NotificationsPolicyCooldownConfiguration, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(cooldownConfigurationTFObjectTypes), diags
+	}
+
+	email, d := toStateCooldownConfigurationMethod(apiObject.GetEmailOk())
+	diags.Append(d...)
+
+	sms, d := toStateCooldownConfigurationMethod(apiObject.GetSmsOk())
+	diags.Append(d...)
+
+	voice, d := toStateCooldownConfigurationMethod(apiObject.GetVoiceOk())
+	diags.Append(d...)
+
+	whatsApp, d := toStateCooldownConfigurationMethod(apiObject.GetWhatsAppOk())
+	diags.Append(d...)
+
+	cooldownConfigMap := map[string]attr.Value{
+		"email":     email,
+		"sms":       sms,
+		"voice":     voice,
+		"whats_app": whatsApp,
+	}
+
+	returnVar, d := types.ObjectValue(cooldownConfigurationTFObjectTypes, cooldownConfigMap)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func toStateCooldownConfigurationMethod(apiObject *management.NotificationsPolicyCooldownConfigurationMethod, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(cooldownConfigurationMethodTFObjectTypes), diags
+	}
+
+	periods, d := toStateCooldownConfigurationMethodPeriods(apiObject.GetPeriodsOk())
+	diags.Append(d...)
+
+	methodMap := map[string]attr.Value{
+		"enabled":      framework.BoolOkToTF(apiObject.GetEnabledOk()),
+		"periods":      periods,
+		"group_by":     framework.StringOkToTF(apiObject.GetGroupByOk()),
+		"resend_limit": framework.Int32OkToTF(apiObject.GetResendLimitOk()),
+	}
+
+	returnVar, d := types.ObjectValue(cooldownConfigurationMethodTFObjectTypes, methodMap)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func toStateCooldownConfigurationMethodPeriods(periods []management.NotificationsPolicyCooldownConfigurationMethodPeriodsInner, ok bool) (types.List, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	tfObjType := types.ObjectType{AttrTypes: cooldownConfigurationPeriodTFObjectTypes}
+
+	if !ok || len(periods) == 0 {
+		return types.ListNull(tfObjType), diags
+	}
+
+	flattenedList := []attr.Value{}
+	for _, p := range periods {
+		periodMap := map[string]attr.Value{
+			"duration":  framework.Int32OkToTF(p.GetDurationOk()),
+			"time_unit": framework.EnumOkToTF(p.GetTimeUnitOk()),
+		}
+
+		flattenedObj, d := types.ObjectValue(cooldownConfigurationPeriodTFObjectTypes, periodMap)
+		diags.Append(d...)
+
+		flattenedList = append(flattenedList, flattenedObj)
+	}
+
+	returnVar, d := types.ListValue(tfObjType, flattenedList)
+	diags.Append(d...)
+
+	return returnVar, diags
 }
