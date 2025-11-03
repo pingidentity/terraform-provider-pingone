@@ -684,7 +684,9 @@ func cooldownConfigurationMethodSchema() map[string]schema.Attribute {
 			},
 		},
 	}
-} // ModifyPlan
+}
+
+// ModifyPlan
 func (r *NotificationPolicyResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
 
 	var plan *NotificationPolicyCountryLimitResourceModel
