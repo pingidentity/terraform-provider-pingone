@@ -425,10 +425,26 @@ func TestAccNotificationPolicy_CooldownConfiguration(t *testing.T) {
 	cooldownDisabled := resource.TestStep{
 		Config: testAccNotificationPolicyConfig_CooldownDisabled(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
+			// Email disabled
 			resource.TestCheckResourceAttr(resourceFullName, "cooldown_configuration.email.enabled", "false"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "cooldown_configuration.email.group_by"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "cooldown_configuration.email.resend_limit"),
+			resource.TestCheckResourceAttr(resourceFullName, "cooldown_configuration.email.periods.#", "0"),
+			// SMS disabled
 			resource.TestCheckResourceAttr(resourceFullName, "cooldown_configuration.sms.enabled", "false"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "cooldown_configuration.sms.group_by"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "cooldown_configuration.sms.resend_limit"),
+			resource.TestCheckResourceAttr(resourceFullName, "cooldown_configuration.sms.periods.#", "0"),
+			// Voice disabled
 			resource.TestCheckResourceAttr(resourceFullName, "cooldown_configuration.voice.enabled", "false"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "cooldown_configuration.voice.group_by"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "cooldown_configuration.voice.resend_limit"),
+			resource.TestCheckResourceAttr(resourceFullName, "cooldown_configuration.voice.periods.#", "0"),
+			// WhatsApp disabled
 			resource.TestCheckResourceAttr(resourceFullName, "cooldown_configuration.whats_app.enabled", "false"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "cooldown_configuration.whats_app.group_by"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "cooldown_configuration.whats_app.resend_limit"),
+			resource.TestCheckResourceAttr(resourceFullName, "cooldown_configuration.whats_app.periods.#", "0"),
 		),
 	}
 
@@ -459,8 +475,14 @@ func TestAccNotificationPolicy_CooldownConfiguration(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "cooldown_configuration.sms.periods.2.time_unit", "MINUTES"),
 			// Voice disabled
 			resource.TestCheckResourceAttr(resourceFullName, "cooldown_configuration.voice.enabled", "false"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "cooldown_configuration.voice.group_by"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "cooldown_configuration.voice.resend_limit"),
+			resource.TestCheckResourceAttr(resourceFullName, "cooldown_configuration.voice.periods.#", "0"),
 			// WhatsApp disabled
 			resource.TestCheckResourceAttr(resourceFullName, "cooldown_configuration.whats_app.enabled", "false"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "cooldown_configuration.whats_app.group_by"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "cooldown_configuration.whats_app.resend_limit"),
+			resource.TestCheckResourceAttr(resourceFullName, "cooldown_configuration.whats_app.periods.#", "0"),
 		),
 	}
 
@@ -474,6 +496,9 @@ func TestAccNotificationPolicy_CooldownConfiguration(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "cooldown_configuration.email.periods.#", "3"),
 			// SMS disabled
 			resource.TestCheckResourceAttr(resourceFullName, "cooldown_configuration.sms.enabled", "false"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "cooldown_configuration.sms.group_by"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "cooldown_configuration.sms.resend_limit"),
+			resource.TestCheckResourceAttr(resourceFullName, "cooldown_configuration.sms.periods.#", "0"),
 			// Voice enabled
 			resource.TestCheckResourceAttr(resourceFullName, "cooldown_configuration.voice.enabled", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "cooldown_configuration.voice.group_by", "PHONE"),
@@ -481,6 +506,9 @@ func TestAccNotificationPolicy_CooldownConfiguration(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "cooldown_configuration.voice.periods.#", "3"),
 			// WhatsApp disabled
 			resource.TestCheckResourceAttr(resourceFullName, "cooldown_configuration.whats_app.enabled", "false"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "cooldown_configuration.whats_app.group_by"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "cooldown_configuration.whats_app.resend_limit"),
+			resource.TestCheckResourceAttr(resourceFullName, "cooldown_configuration.whats_app.periods.#", "0"),
 		),
 	}
 
@@ -533,7 +561,7 @@ func TestAccNotificationPolicy_ProviderConfiguration(t *testing.T) {
 	providerConfigBasic := resource.TestStep{
 		Config: testAccNotificationPolicyConfig_ProviderConfigBasic(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			// Two conditions
+			// Provider Configuration - Two conditions
 			resource.TestCheckResourceAttr(resourceFullName, "provider_configuration.conditions.#", "2"),
 			// First condition - specific countries
 			resource.TestCheckResourceAttr(resourceFullName, "provider_configuration.conditions.0.delivery_methods.#", "2"),
@@ -557,7 +585,14 @@ func TestAccNotificationPolicy_ProviderConfiguration(t *testing.T) {
 	providerConfigMultiple := resource.TestStep{
 		Config: testAccNotificationPolicyConfig_ProviderConfigMultiple(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			// Three conditions
+			// Not configured
+			resource.TestCheckResourceAttr(resourceFullName, "quota.#", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "country_limit.type", "NONE"),
+			resource.TestCheckResourceAttr(resourceFullName, "cooldown_configuration.email.enabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "cooldown_configuration.sms.enabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "cooldown_configuration.voice.enabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "cooldown_configuration.whats_app.enabled", "false"),
+			// Provider Configuration - Three conditions
 			resource.TestCheckResourceAttr(resourceFullName, "provider_configuration.conditions.#", "3"),
 			// First condition - US only with multiple providers
 			resource.TestCheckResourceAttr(resourceFullName, "provider_configuration.conditions.0.countries.#", "1"),
