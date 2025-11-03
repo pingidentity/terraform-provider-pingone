@@ -9,3 +9,7 @@ bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.61.0 => v0.62.0
 ```release-note:new-data-source
 pingone_notification_policy
 ```
+
+```release-note:bug
+`resource/pingone_alert_channel`: Added support for `RATE_LIMIT_EXCEEDED` and `RATE_LIMIT_WARNING` alert types.
+```
