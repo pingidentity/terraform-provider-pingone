@@ -198,7 +198,7 @@ resource "pingone_phone_delivery_settings" "%[2]s_provider_1" {
   environment_id = data.pingone_environment.general_test.id
 
   provider_custom = {
-    name = "Test Provider 1"
+    name = "%[2]s Provider 1"
     authentication = {
       method   = "BASIC"
       username = "test-user-1"
@@ -216,7 +216,7 @@ resource "pingone_phone_delivery_settings" "%[2]s_provider_2" {
   environment_id = data.pingone_environment.general_test.id
 
   provider_custom = {
-    name = "Test Provider 2"
+    name = "%[2]s Provider 2"
     authentication = {
       method   = "BASIC"
       username = "test-user-2"
