@@ -182,11 +182,11 @@ func TestAccNotificationPolicyDataSource_FailureChecks(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccNotificationPolicyDataSource_FindByIDFail(resourceName),
-				ExpectError: regexp.MustCompile("Notification policy not found"),
+				ExpectError: regexp.MustCompile("Error: Error when calling `ReadOneNotificationsPolicy`:"),
 			},
 			{
 				Config:      testAccNotificationPolicyDataSource_FindByNameFail(resourceName),
-				ExpectError: regexp.MustCompile("Notification policy not found"),
+				ExpectError: regexp.MustCompile("Error: Cannot find notification policy from name"),
 			},
 		},
 	})
