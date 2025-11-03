@@ -546,6 +546,51 @@ func TestAccNotificationPolicy_CooldownConfiguration(t *testing.T) {
 			cooldownEnabled,
 			cooldownMixed,
 			cooldownDisabled,
+			{
+				Config:  testAccNotificationPolicyConfig_CooldownDisabled(resourceName, name),
+				Destroy: true,
+			},
+			// Invalid - periods must have exactly 3 elements
+			{
+				Config:      testAccNotificationPolicyConfig_CooldownInvalidPeriodsTooFew(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid Attribute Value`),
+			},
+			{
+				Config:      testAccNotificationPolicyConfig_CooldownInvalidPeriodsTooMany(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid Attribute Value`),
+			},
+			// Invalid - resend_limit required when enabled
+			{
+				Config:      testAccNotificationPolicyConfig_CooldownInvalidMissingResendLimit(resourceName, name),
+				ExpectError: regexp.MustCompile(`Missing required argument`),
+			},
+			// Invalid - resend_limit out of range
+			{
+				Config:      testAccNotificationPolicyConfig_CooldownInvalidResendLimitTooLow(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid Attribute Value`),
+			},
+			{
+				Config:      testAccNotificationPolicyConfig_CooldownInvalidResendLimitTooHigh(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid Attribute Value`),
+			},
+			// Invalid - duration out of range for SECONDS
+			{
+				Config:      testAccNotificationPolicyConfig_CooldownInvalidDurationSecondsTooLow(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid Attribute Value`),
+			},
+			{
+				Config:      testAccNotificationPolicyConfig_CooldownInvalidDurationSecondsTooHigh(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid Attribute Value`),
+			},
+			// Invalid - duration out of range for MINUTES
+			{
+				Config:      testAccNotificationPolicyConfig_CooldownInvalidDurationMinutesTooLow(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid Attribute Value`),
+			},
+			{
+				Config:      testAccNotificationPolicyConfig_CooldownInvalidDurationMinutesTooHigh(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid Attribute Value`),
+			},
 		},
 	})
 }
@@ -636,6 +681,20 @@ func TestAccNotificationPolicy_ProviderConfiguration(t *testing.T) {
 			// Update
 			providerConfigBasic,
 			providerConfigMultiple,
+			{
+				Config:  testAccNotificationPolicyConfig_ProviderConfigMultiple(resourceName, name),
+				Destroy: true,
+			},
+			// Invalid - conditions must have at least one element
+			{
+				Config:      testAccNotificationPolicyConfig_ProviderConfigInvalidNoConditions(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid Attribute Value`),
+			},
+			// Invalid - fallback_chain must have at least one element
+			{
+				Config:      testAccNotificationPolicyConfig_ProviderConfigInvalidNoFallbackChain(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid Attribute Value`),
+			},
 		},
 	})
 }
@@ -1425,5 +1484,444 @@ resource "pingone_notification_policy" "%[2]s" {
     pingone_phone_delivery_settings.%[2]s_provider_3,
     pingone_phone_delivery_settings.%[2]s_provider_4
   ]
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccNotificationPolicyConfig_CooldownInvalidPeriodsTooFew(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+resource "pingone_notification_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  cooldown_configuration = {
+    email = {
+      enabled      = true
+      group_by     = "USER"
+      resend_limit = 5
+      periods = [
+        {
+          duration  = 30
+          time_unit = "SECONDS"
+        },
+        {
+          duration  = 60
+          time_unit = "SECONDS"
+        }
+      ]
+    }
+
+    sms = {
+      enabled = false
+    }
+
+    voice = {
+      enabled = false
+    }
+
+    whats_app = {
+      enabled = false
+    }
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccNotificationPolicyConfig_CooldownInvalidPeriodsTooMany(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+resource "pingone_notification_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  cooldown_configuration = {
+    email = {
+      enabled      = true
+      group_by     = "USER"
+      resend_limit = 5
+      periods = [
+        {
+          duration  = 30
+          time_unit = "SECONDS"
+        },
+        {
+          duration  = 60
+          time_unit = "SECONDS"
+        },
+        {
+          duration  = 2
+          time_unit = "MINUTES"
+        },
+        {
+          duration  = 3
+          time_unit = "MINUTES"
+        }
+      ]
+    }
+
+    sms = {
+      enabled = false
+    }
+
+    voice = {
+      enabled = false
+    }
+
+    whats_app = {
+      enabled = false
+    }
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccNotificationPolicyConfig_CooldownInvalidMissingResendLimit(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+resource "pingone_notification_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  cooldown_configuration = {
+    email = {
+      enabled  = true
+      group_by = "USER"
+      periods = [
+        {
+          duration  = 30
+          time_unit = "SECONDS"
+        },
+        {
+          duration  = 60
+          time_unit = "SECONDS"
+        },
+        {
+          duration  = 2
+          time_unit = "MINUTES"
+        }
+      ]
+    }
+
+    sms = {
+      enabled = false
+    }
+
+    voice = {
+      enabled = false
+    }
+
+    whats_app = {
+      enabled = false
+    }
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccNotificationPolicyConfig_CooldownInvalidResendLimitTooLow(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+resource "pingone_notification_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  cooldown_configuration = {
+    email = {
+      enabled      = true
+      group_by     = "USER"
+      resend_limit = 0
+      periods = [
+        {
+          duration  = 30
+          time_unit = "SECONDS"
+        },
+        {
+          duration  = 60
+          time_unit = "SECONDS"
+        },
+        {
+          duration  = 2
+          time_unit = "MINUTES"
+        }
+      ]
+    }
+
+    sms = {
+      enabled = false
+    }
+
+    voice = {
+      enabled = false
+    }
+
+    whats_app = {
+      enabled = false
+    }
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccNotificationPolicyConfig_CooldownInvalidResendLimitTooHigh(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+resource "pingone_notification_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  cooldown_configuration = {
+    email = {
+      enabled      = true
+      group_by     = "USER"
+      resend_limit = 11
+      periods = [
+        {
+          duration  = 30
+          time_unit = "SECONDS"
+        },
+        {
+          duration  = 60
+          time_unit = "SECONDS"
+        },
+        {
+          duration  = 2
+          time_unit = "MINUTES"
+        }
+      ]
+    }
+
+    sms = {
+      enabled = false
+    }
+
+    voice = {
+      enabled = false
+    }
+
+    whats_app = {
+      enabled = false
+    }
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccNotificationPolicyConfig_CooldownInvalidDurationSecondsTooLow(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+resource "pingone_notification_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  cooldown_configuration = {
+    email = {
+      enabled      = true
+      group_by     = "USER"
+      resend_limit = 5
+      periods = [
+        {
+          duration  = 9
+          time_unit = "SECONDS"
+        },
+        {
+          duration  = 60
+          time_unit = "SECONDS"
+        },
+        {
+          duration  = 2
+          time_unit = "MINUTES"
+        }
+      ]
+    }
+
+    sms = {
+      enabled = false
+    }
+
+    voice = {
+      enabled = false
+    }
+
+    whats_app = {
+      enabled = false
+    }
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccNotificationPolicyConfig_CooldownInvalidDurationSecondsTooHigh(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+resource "pingone_notification_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  cooldown_configuration = {
+    email = {
+      enabled      = true
+      group_by     = "USER"
+      resend_limit = 5
+      periods = [
+        {
+          duration  = 601
+          time_unit = "SECONDS"
+        },
+        {
+          duration  = 60
+          time_unit = "SECONDS"
+        },
+        {
+          duration  = 2
+          time_unit = "MINUTES"
+        }
+      ]
+    }
+
+    sms = {
+      enabled = false
+    }
+
+    voice = {
+      enabled = false
+    }
+
+    whats_app = {
+      enabled = false
+    }
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccNotificationPolicyConfig_CooldownInvalidDurationMinutesTooLow(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+resource "pingone_notification_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  cooldown_configuration = {
+    email = {
+      enabled      = true
+      group_by     = "USER"
+      resend_limit = 5
+      periods = [
+        {
+          duration  = 30
+          time_unit = "SECONDS"
+        },
+        {
+          duration  = 60
+          time_unit = "SECONDS"
+        },
+        {
+          duration  = 0
+          time_unit = "MINUTES"
+        }
+      ]
+    }
+
+    sms = {
+      enabled = false
+    }
+
+    voice = {
+      enabled = false
+    }
+
+    whats_app = {
+      enabled = false
+    }
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccNotificationPolicyConfig_CooldownInvalidDurationMinutesTooHigh(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+resource "pingone_notification_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  cooldown_configuration = {
+    email = {
+      enabled      = true
+      group_by     = "USER"
+      resend_limit = 5
+      periods = [
+        {
+          duration  = 30
+          time_unit = "SECONDS"
+        },
+        {
+          duration  = 60
+          time_unit = "SECONDS"
+        },
+        {
+          duration  = 11
+          time_unit = "MINUTES"
+        }
+      ]
+    }
+
+    sms = {
+      enabled = false
+    }
+
+    voice = {
+      enabled = false
+    }
+
+    whats_app = {
+      enabled = false
+    }
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccNotificationPolicyConfig_ProviderConfigInvalidNoConditions(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+resource "pingone_notification_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  provider_configuration = {
+    conditions = []
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccNotificationPolicyConfig_ProviderConfigInvalidNoFallbackChain(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+resource "pingone_notification_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  provider_configuration = {
+    conditions = [
+      {
+        delivery_methods = ["SMS", "VOICE"]
+        fallback_chain   = []
+      }
+    ]
+  }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

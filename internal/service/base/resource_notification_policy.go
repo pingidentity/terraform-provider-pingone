@@ -31,7 +31,6 @@ import (
 	int32validatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/int32validator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	listvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/listvalidator"
-	"github.com/pingidentity/terraform-provider-pingone/internal/framework/schemavalidator"
 	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
@@ -657,10 +656,9 @@ func cooldownConfigurationMethodSchema() map[string]schema.Attribute {
 			},
 
 			Validators: []validator.List{
-				listvalidator.SizeAtLeast(cooldownPeriodsArraySize),
-				listvalidator.SizeAtMost(cooldownPeriodsArraySize),
-				listvalidatorinternal.IsRequiredIfMatchesPathValue(
-					types.StringValue("true"),
+				listvalidator.SizeBetween(cooldownPeriodsArraySize, cooldownPeriodsArraySize),
+				listvalidatorinternal.IsRequiredIfMatchesPathBoolValue(
+					types.BoolValue(true),
 					path.MatchRelative().AtParent().AtName("enabled"),
 				),
 			},
@@ -679,18 +677,14 @@ func cooldownConfigurationMethodSchema() map[string]schema.Attribute {
 			Validators: []validator.Int32{
 				int32validator.AtLeast(cooldownResendLimitMin),
 				int32validator.AtMost(cooldownResendLimitMax),
-				schemavalidator.IsRequiredIfMatchesPathValueValidator{
-					TargetValue: types.StringValue("true"),
-					Expressions: path.Expressions{
-						path.MatchRelative().AtParent().AtName("enabled"),
-					},
-				},
+				int32validatorinternal.IsRequiredIfMatchesPathBoolValue(
+					types.BoolValue(true),
+					path.MatchRelative().AtParent().AtName("enabled"),
+				),
 			},
 		},
 	}
-}
-
-// ModifyPlan
+} // ModifyPlan
 func (r *NotificationPolicyResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
 
 	var plan *NotificationPolicyCountryLimitResourceModel
