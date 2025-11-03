@@ -1151,11 +1151,10 @@ func expandCooldownConfigurationMethod(ctx context.Context, methodObj types.Obje
 		return nil, diags
 	}
 
-	method := &management.NotificationsPolicyCooldownConfigurationMethod{
-		Enabled: methodPlan.Enabled.ValueBool(),
-	}
+	method := management.NewNotificationsPolicyCooldownConfigurationMethod(methodPlan.Enabled.ValueBool())
 
-	if methodPlan.Enabled.ValueBool() {
+	// Expand periods if present
+	if !methodPlan.Periods.IsNull() && !methodPlan.Periods.IsUnknown() {
 		var periodsPlan []NotificationPolicyCooldownConfigurationMethodPeriodResourceModel
 		diags.Append(methodPlan.Periods.ElementsAs(ctx, &periodsPlan, false)...)
 		if diags.HasError() {
@@ -1171,12 +1170,14 @@ func expandCooldownConfigurationMethod(ctx context.Context, methodObj types.Obje
 			periods = append(periods, *period)
 		}
 		method.Periods = periods
-
-		if !methodPlan.ResendLimit.IsNull() && !methodPlan.ResendLimit.IsUnknown() {
-			method.SetResendLimit(methodPlan.ResendLimit.ValueInt32())
-		}
 	}
 
+	// Expand resend_limit if present
+	if !methodPlan.ResendLimit.IsNull() && !methodPlan.ResendLimit.IsUnknown() {
+		method.SetResendLimit(methodPlan.ResendLimit.ValueInt32())
+	}
+
+	// Expand group_by if present
 	if !methodPlan.GroupBy.IsNull() && !methodPlan.GroupBy.IsUnknown() {
 		method.SetGroupBy(methodPlan.GroupBy.ValueString())
 	}
