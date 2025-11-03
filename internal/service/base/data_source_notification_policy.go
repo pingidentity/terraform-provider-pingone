@@ -57,17 +57,23 @@ func (r *NotificationPolicyDataSource) Schema(ctx context.Context, req datasourc
 
 	const attrMinLength = 1
 
+	dataSourceExactlyOneOfRelativePaths := []string{
+		"notification_policy_id",
+		"name",
+		"default",
+	}
+
 	notificationPolicyIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the ID of the notification policy to retrieve configuration for.  Must be a valid PingOne resource ID.",
-	).ExactlyOneOf([]string{"notification_policy_id", "name"})
+	).ExactlyOneOf(dataSourceExactlyOneOfRelativePaths)
 
 	notificationPolicyNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the name of the notification policy to retrieve configuration for.",
-	).ExactlyOneOf([]string{"notification_policy_id", "name"})
+	).ExactlyOneOf(dataSourceExactlyOneOfRelativePaths)
 
 	defaultDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A boolean to provide an indication of whether this policy is the default notification policy for the environment.",
-	)
+		"Set value to `true` to return the default notification policy. There is only one default policy per environment.",
+	).ExactlyOneOf(dataSourceExactlyOneOfRelativePaths)
 
 	countryLimitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A single object to limit the countries where you can send SMS and voice notifications.",
@@ -163,7 +169,10 @@ func (r *NotificationPolicyDataSource) Schema(ctx context.Context, req datasourc
 				CustomType: pingonetypes.ResourceIDType{},
 
 				Validators: []validator.String{
-					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("name")),
+					stringvalidator.ExactlyOneOf(
+						path.MatchRelative().AtParent().AtName("name"),
+						path.MatchRelative().AtParent().AtName("default"),
+					),
 				},
 			},
 
@@ -172,7 +181,6 @@ func (r *NotificationPolicyDataSource) Schema(ctx context.Context, req datasourc
 				MarkdownDescription: notificationPolicyNameDescription.MarkdownDescription,
 				Optional:            true,
 				Validators: []validator.String{
-					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("notification_policy_id")),
 					stringvalidator.LengthAtLeast(attrMinLength),
 				},
 			},
@@ -180,6 +188,7 @@ func (r *NotificationPolicyDataSource) Schema(ctx context.Context, req datasourc
 			"default": schema.BoolAttribute{
 				MarkdownDescription: defaultDescription.MarkdownDescription,
 				Description:         defaultDescription.Description,
+				Optional:            true,
 				Computed:            true,
 			},
 
@@ -455,61 +464,122 @@ func (r *NotificationPolicyDataSource) Read(ctx context.Context, req datasource.
 
 	var notificationPolicy *management.NotificationsPolicy
 
-	if data.Name.IsNull() && data.NotificationPolicyId.IsNull() {
-		resp.Diagnostics.AddError(
-			"Missing parameter",
-			"Cannot find the requested notification policy. notification_policy_id or name must be set.",
-		)
-		return
-	}
+	if !data.NotificationPolicyId.IsNull() {
+		// Run the API call
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
+			ctx,
 
-	// Run the API call
-	resp.Diagnostics.Append(legacysdk.ParseResponse(
-		ctx,
+			func() (any, *http.Response, error) {
+				fO, fR, fErr := r.Client.ManagementAPIClient.NotificationsPoliciesApi.ReadOneNotificationsPolicy(ctx, data.EnvironmentId.ValueString(), data.NotificationPolicyId.ValueString()).Execute()
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			},
+			"ReadOneNotificationsPolicy",
+			legacysdk.DefaultCustomError,
+			sdk.DefaultCreateReadRetryable,
+			&notificationPolicy,
+		)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
 
-		func() (any, *http.Response, error) {
-			pagedIterator := r.Client.ManagementAPIClient.NotificationsPoliciesApi.ReadAllNotificationsPolicies(ctx, data.EnvironmentId.ValueString()).Execute()
+	} else if !data.Name.IsNull() {
+		// Run the API call
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
+			ctx,
 
-			var initialHttpResponse *http.Response
+			func() (any, *http.Response, error) {
+				pagedIterator := r.Client.ManagementAPIClient.NotificationsPoliciesApi.ReadAllNotificationsPolicies(ctx, data.EnvironmentId.ValueString()).Execute()
 
-			for pageCursor, err := range pagedIterator {
-				if err != nil {
-					return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
-				}
+				var initialHttpResponse *http.Response
 
-				if initialHttpResponse == nil {
-					initialHttpResponse = pageCursor.HTTPResponse
-				}
+				for pageCursor, err := range pagedIterator {
+					if err != nil {
+						return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+					}
 
-				if pageCursor.EntityArray.Embedded != nil && pageCursor.EntityArray.Embedded.NotificationsPolicies != nil {
-					for _, p := range pageCursor.EntityArray.Embedded.GetNotificationsPolicies() {
+					if initialHttpResponse == nil {
+						initialHttpResponse = pageCursor.HTTPResponse
+					}
 
-						if !data.Name.IsNull() && strings.EqualFold(p.GetName(), data.Name.ValueString()) {
-							return &p, pageCursor.HTTPResponse, nil
-						}
-
-						if !data.NotificationPolicyId.IsNull() && strings.EqualFold(p.GetId(), data.NotificationPolicyId.ValueString()) {
-							return &p, pageCursor.HTTPResponse, nil
+					if notificationPolicies, ok := pageCursor.EntityArray.Embedded.GetNotificationsPoliciesOk(); ok {
+						for _, notificationPolicy := range notificationPolicies {
+							if strings.EqualFold(notificationPolicy.GetName(), data.Name.ValueString()) {
+								return &notificationPolicy, pageCursor.HTTPResponse, nil
+							}
 						}
 					}
 				}
-			}
 
-			return nil, initialHttpResponse, nil
-		},
-		"ReadAllNotificationsPolicies",
-		legacysdk.DefaultCustomError,
-		sdk.DefaultCreateReadRetryable,
-		&notificationPolicy,
-	)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+				return nil, initialHttpResponse, nil
+			},
+			"ReadAllNotificationsPolicies",
+			legacysdk.DefaultCustomError,
+			sdk.DefaultCreateReadRetryable,
+			&notificationPolicy,
+		)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
 
-	if notificationPolicy == nil {
+		if notificationPolicy == nil {
+			resp.Diagnostics.AddError(
+				"Cannot find notification policy from name",
+				fmt.Sprintf("The notification policy name %s for environment %s cannot be found", data.Name.String(), data.EnvironmentId.String()),
+			)
+			return
+		}
+
+	} else if data.Default.ValueBool() {
+		// Run the API call
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
+			ctx,
+
+			func() (any, *http.Response, error) {
+				pagedIterator := r.Client.ManagementAPIClient.NotificationsPoliciesApi.ReadAllNotificationsPolicies(ctx, data.EnvironmentId.ValueString()).Execute()
+
+				var initialHttpResponse *http.Response
+
+				for pageCursor, err := range pagedIterator {
+					if err != nil {
+						return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+					}
+
+					if initialHttpResponse == nil {
+						initialHttpResponse = pageCursor.HTTPResponse
+					}
+
+					if notificationPolicies, ok := pageCursor.EntityArray.Embedded.GetNotificationsPoliciesOk(); ok {
+						for _, notificationPolicy := range notificationPolicies {
+							if notificationPolicy.GetDefault() {
+								return &notificationPolicy, pageCursor.HTTPResponse, nil
+							}
+						}
+					}
+				}
+
+				return nil, initialHttpResponse, nil
+			},
+			"ReadAllNotificationsPolicies",
+			legacysdk.DefaultCustomError,
+			sdk.DefaultCreateReadRetryable,
+			&notificationPolicy,
+		)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		if notificationPolicy == nil {
+			resp.Diagnostics.AddError(
+				"Cannot find default notification policy",
+				fmt.Sprintf("The default notification policy for environment %s cannot be found", data.EnvironmentId.String()),
+			)
+			return
+		}
+
+	} else {
 		resp.Diagnostics.AddError(
-			"Notification policy not found",
-			fmt.Sprintf("The notification policy with name %s or ID %s in environment %s cannot be found", data.Name.ValueString(), data.NotificationPolicyId.ValueString(), data.EnvironmentId.ValueString()),
+			"Missing parameter",
+			"Cannot find the requested PingOne Notification Policy: notification_policy_id, name, or default argument must be set.",
 		)
 		return
 	}
