@@ -891,11 +891,6 @@ resource "pingone_notification_policy" "%[2]s" {
       }
     ]
   }
-
-  depends_on = [
-    pingone_phone_delivery_settings.%[2]s_provider_1,
-    pingone_phone_delivery_settings.%[2]s_provider_2
-  ]
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -1353,11 +1348,6 @@ resource "pingone_notification_policy" "%[2]s" {
       }
     ]
   }
-
-  depends_on = [
-    pingone_phone_delivery_settings.%[2]s_provider_1,
-    pingone_phone_delivery_settings.%[2]s_provider_2
-  ]
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -1471,13 +1461,6 @@ resource "pingone_notification_policy" "%[2]s" {
       }
     ]
   }
-
-  depends_on = [
-    pingone_phone_delivery_settings.%[2]s_provider_1,
-    pingone_phone_delivery_settings.%[2]s_provider_2,
-    pingone_phone_delivery_settings.%[2]s_provider_3,
-    pingone_phone_delivery_settings.%[2]s_provider_4
-  ]
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
