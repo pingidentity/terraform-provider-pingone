@@ -32,10 +32,8 @@ require (
 	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.23.1
 	github.com/patrickcping/pingone-go-sdk-v2/risk v0.19.1
 	github.com/patrickcping/pingone-go-sdk-v2/verify v0.9.1
-	github.com/pingidentity/pingone-go-client v0.2.0
+	github.com/pingidentity/pingone-go-client v0.2.1-0.20251103171129-effc8cbd1f71
 )
-
-replace github.com/pingidentity/pingone-go-client v0.2.0 => ../pingone-go-client
 
 require (
 	4d63.com/gocheckcompilerdirectives v1.3.0 // indirect
@@ -392,7 +390,7 @@ require (
 	golang.org/x/crypto v0.39.0 // indirect
 	golang.org/x/mod v0.25.0 // indirect
 	golang.org/x/net v0.40.0 // indirect
-	golang.org/x/oauth2 v0.30.0 // indirect
+	golang.org/x/oauth2 v0.32.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/text v0.26.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
