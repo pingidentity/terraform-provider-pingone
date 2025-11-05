@@ -64,19 +64,33 @@ type resourceScopesDataSourceModel struct {
 }
 
 func (r *resourceScopesDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	idsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A set of IDs of all resource scopes that belong to the specified resource.  The IDs can be used with the `pingone_resource_scope` data source to retrieve full scope details.",
+	)
+
+	resourceIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The ID of the resource to retrieve scopes from.  Can be a custom resource, or a built-in resource such as `openid` or `PingOne API`.",
+	)
+
 	resp.Schema = schema.Schema{
-		Description: "Data source to retrieve all resource_scopes.",
+		Description: "Data source to retrieve the IDs of all OAuth 2.0 resource scopes for a specified resource in a PingOne environment.",
+
 		Attributes: map[string]schema.Attribute{
 			"environment_id": framework.Attr_LinkID(
-				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to read scopes from. Must be a valid PingOne resource ID."),
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment that contains the resource."),
 			),
+
 			"ids": schema.SetAttribute{
-				ElementType: pingonetypes.ResourceIDType{},
-				Computed:    true,
-				Description: "The list of resulting IDs of resource_scopes objects that have been successfully retrieved.",
+				Description:         idsDescription.Description,
+				MarkdownDescription: idsDescription.MarkdownDescription,
+				ElementType:         pingonetypes.ResourceIDType{},
+				Computed:            true,
 			},
+
 			"resource_id": schema.StringAttribute{
-				Required: true,
+				Description:         resourceIdDescription.Description,
+				MarkdownDescription: resourceIdDescription.MarkdownDescription,
+				Required:            true,
 			},
 		},
 	}
