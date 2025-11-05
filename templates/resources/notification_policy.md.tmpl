@@ -21,6 +21,14 @@ description: |-
 
 {{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-user.tf") }}
 
+## Example Usage - Cooldown Configuration
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-cooldown.tf") }}
+
+## Example Usage - Provider Configuration
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-provider-configuration.tf") }}
+
 {{ .SchemaMarkdown | trimspace }}
 
 {{ if .HasImport -}}
