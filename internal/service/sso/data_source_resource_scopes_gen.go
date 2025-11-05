@@ -12,10 +12,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
-	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 )
 
 var (
@@ -38,7 +37,7 @@ func (r *resourceScopesDataSource) Configure(ctx context.Context, req datasource
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -48,7 +47,7 @@ func (r *resourceScopesDataSource) Configure(ctx context.Context, req datasource
 		return
 	}
 
-	r.Client = resourceConfig.LegacyClient.API
+	r.Client = resourceConfig.Client.API
 	if r.Client == nil {
 		resp.Diagnostics.AddError(
 			"Client not initialised",
@@ -60,7 +59,6 @@ func (r *resourceScopesDataSource) Configure(ctx context.Context, req datasource
 
 type resourceScopesDataSourceModel struct {
 	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
-	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
 	Ids           types.Set                    `tfsdk:"ids"`
 	ResourceId    types.String                 `tfsdk:"resource_id"`
 }
@@ -72,7 +70,6 @@ func (r *resourceScopesDataSource) Schema(ctx context.Context, req datasource.Sc
 			"environment_id": framework.Attr_LinkID(
 				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to read scopes from. Must be a valid PingOne resource ID."),
 			),
-			"id": framework.Attr_ID(),
 			"ids": schema.SetAttribute{
 				ElementType: pingonetypes.ResourceIDType{},
 				Computed:    true,
@@ -85,14 +82,9 @@ func (r *resourceScopesDataSource) Schema(ctx context.Context, req datasource.Sc
 	}
 }
 
-func (state *resourceScopesDataSourceModel) readClientResponse(response *management.ResourceScope) diag.Diagnostics {
-	var respDiags, diags diag.Diagnostics
-	// id
-	idValue := framework.PingOneResourceIDToTF(response.GetId())
-	state.Id = idValue
-	// ids
-	state.Ids, diags = types.SetValueFrom(context.Background(), pingonetypes.ResourceIDType{}, response.Ids)
-	respDiags.Append(diags...)
+func (state *resourceScopesDataSourceModel) readClientResponse(response []string) diag.Diagnostics {
+	var respDiags diag.Diagnostics
+	state.Ids, respDiags = framework.StringSliceToTFSet(response)
 	return respDiags
 }
 
@@ -114,37 +106,21 @@ func (r *resourceScopesDataSource) Read(ctx context.Context, req datasource.Read
 	}
 
 	// Read API call logic
-	var responseData *management.ResourceScope
-	// If an id is provided, read the data source by id
+	var responseIDs []string
 	if !data.ResourceId.IsNull() {
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
-				fO, fR, fErr := r.Client.ManagementAPIClient.ResourceScopesApi.ReadOneResourceScope(ctx, data.EnvironmentId.ValueString(), data.ResourceId.ValueString()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsErrorLegacySdk(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
-			},
-			"ReadOneResourceScope",
-			framework.DefaultCustomError,
-			sdk.DefaultCreateReadRetryable,
-			&responseData,
-		)...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-	} else if !data.Name.IsNull() {
-		// Get all objects and find the one with the expected name
-		resp.Diagnostics.Append(framework.ParseResponse(
-			ctx,
-
-			func() (any, *http.Response, error) {
-				pagedIterator := r.Client.ManagementAPIClient.ResourceScopesApi.ReadAllResourceScopes(ctx, data.EnvironmentId.ValueString()).Execute()
+				pagedIterator := r.Client.ManagementAPIClient.ResourceScopesApi.ReadAllResourceScopes(ctx, data.EnvironmentId.ValueString(), data.ResourceId.ValueString()).Execute()
 
 				var initialHttpResponse *http.Response
 
+				foundIDs := make([]string, 0)
+
 				for pageCursor, err := range pagedIterator {
 					if err != nil {
-						return framework.CheckEnvironmentExistsOnPermissionsErrorLegacySdk(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+						return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
 					}
 
 					if initialHttpResponse == nil {
@@ -152,43 +128,38 @@ func (r *resourceScopesDataSource) Read(ctx context.Context, req datasource.Read
 					}
 
 					if results, ok := pageCursor.EntityArray.Embedded.GetScopesOk(); ok {
-
-						for _, resultObj := range results {
-							if resultObj.Name == data.Name.ValueString() {
-								return resultObj, pageCursor.HTTPResponse, nil
+						for _, resourceScope := range results {
+							if id, ok := resourceScope.GetIdOk(); ok {
+								foundIDs = append(foundIDs, *id)
 							}
 						}
 					}
+
 				}
 
-				return nil, initialHttpResponse, nil
+				return foundIDs, initialHttpResponse, nil
 			},
 			"ReadAllResourceScopes",
-			framework.DefaultCustomError,
-			sdk.DefaultCreateReadRetryable,
-			&responseData,
+			legacysdk.DefaultCustomError,
+			nil,
+			&responseIDs,
 		)...)
 		if resp.Diagnostics.HasError() {
-			return
-		}
-
-		if responseData == nil {
-			resp.Diagnostics.AddError(
-				"Cannot find the resource_scopes from name",
-				fmt.Sprintf("The resource_scopes name %s for environment %s cannot be found", data.Name.ValueString(), data.EnvironmentId.ValueString()),
-			)
 			return
 		}
 	} else {
 		resp.Diagnostics.AddError(
 			"Missing parameter",
-			"Cannot find the requested resource_scopes. resource_id or name must be set.",
+			"Cannot find the requested resource_scopes. resource_id must be set.",
 		)
+		return
+	}
+	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Read response into the model
-	resp.Diagnostics.Append(data.readClientResponse(responseData)...)
+	resp.Diagnostics.Append(data.readClientResponse(responseIDs)...)
 
 	if resp.Diagnostics.HasError() {
 		return
