@@ -1551,8 +1551,8 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			"box_selection_enabled": types.BoolValue(response.GraphData.BoxSelectionEnabled),
 			"data":                  graphDataDataValue,
 			"elements":              graphDataElementsValue,
-			"max_zoom":              types.NumberValue(response.GraphData.MaxZoom.Float),
-			"min_zoom":              types.NumberValue(response.GraphData.MinZoom.Float),
+			"max_zoom":              types.NumberValue(&response.GraphData.MaxZoom),
+			"min_zoom":              types.NumberValue(&response.GraphData.MinZoom),
 			"pan":                   graphDataPanValue,
 			"panning_enabled":       types.BoolValue(response.GraphData.PanningEnabled),
 			"renderer":              graphDataRendererValue,
@@ -1681,6 +1681,13 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			settingsCssLinksValue, diags = types.SetValueFrom(context.Background(), types.StringType, response.Settings.CssLinks)
 			respDiags.Append(diags...)
 		}
+		var flowTimeoutInSecondsValue types.Int32
+		if response.Settings.FlowTimeoutInSeconds == nil {
+			flowTimeoutInSecondsValue = types.Int32Null()
+		} else {
+			// Truncate timeout to int32 to match the schema
+			flowTimeoutInSecondsValue = types.Int32Value(int32(*response.Settings.FlowTimeoutInSeconds))
+		}
 		var intermediateLoadingScreenCSSValue types.String
 		if response.Settings.IntermediateLoadingScreenCSS == nil {
 			intermediateLoadingScreenCSSValue = types.StringNull()
@@ -1758,7 +1765,7 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			"custom_title":                       types.StringPointerValue(response.Settings.CustomTitle),
 			"default_error_screen_brand_logo":    types.BoolPointerValue(response.Settings.DefaultErrorScreenBrandLogo),
 			"flow_http_timeout_in_seconds":       types.Int32PointerValue(response.Settings.FlowHttpTimeoutInSeconds),
-			"flow_timeout_in_seconds":            types.Int32PointerValue(response.Settings.FlowTimeoutInSeconds),
+			"flow_timeout_in_seconds":            flowTimeoutInSecondsValue,
 			"intermediate_loading_screen_css":    intermediateLoadingScreenCSSValue,
 			"intermediate_loading_screen_html":   intermediateLoadingScreenHTMLValue,
 			"js_custom_flow_player":              types.StringPointerValue(response.Settings.JsCustomFlowPlayer),
