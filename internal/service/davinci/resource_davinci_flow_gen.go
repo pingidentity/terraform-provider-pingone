@@ -367,10 +367,10 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 						Optional: true,
 					},
 					"max_zoom": schema.NumberAttribute{
-						Optional: true,
+						Required: true,
 					},
 					"min_zoom": schema.NumberAttribute{
-						Optional: true,
+						Required: true,
 					},
 					"pan": schema.SingleNestedAttribute{
 						Attributes: map[string]schema.Attribute{
