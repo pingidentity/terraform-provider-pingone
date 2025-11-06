@@ -936,8 +936,16 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 		settingsValue.DefaultErrorScreenBrandLogo = settingsAttrs["default_error_screen_brand_logo"].(types.Bool).ValueBoolPointer()
 		settingsValue.FlowHttpTimeoutInSeconds = settingsAttrs["flow_http_timeout_in_seconds"].(types.Int32).ValueInt32Pointer()
 		settingsValue.FlowTimeoutInSeconds = settingsAttrs["flow_timeout_in_seconds"].(types.Int32).ValueInt32Pointer()
-		settingsValue.IntermediateLoadingScreenCSS = settingsAttrs["intermediate_loading_screen_css"].(types.String).ValueStringPointer()
-		settingsValue.IntermediateLoadingScreenHTML = settingsAttrs["intermediate_loading_screen_html"].(types.String).ValueStringPointer()
+		if !settingsAttrs["intermediate_loading_screen_css"].IsNull() && !settingsAttrs["intermediate_loading_screen_css"].IsUnknown() {
+			settingsIntermediateLoadingScreenCSSValue := &pingone.DaVinciFlowSettingsRequestIntermediateLoadingScreenCSS{}
+			settingsIntermediateLoadingScreenCSSValue.String = settingsAttrs["intermediate_loading_screen_css"].(types.String).ValueStringPointer()
+			settingsValue.IntermediateLoadingScreenCSS = settingsIntermediateLoadingScreenCSSValue
+		}
+		if !settingsAttrs["intermediate_loading_screen_html"].IsNull() && !settingsAttrs["intermediate_loading_screen_html"].IsUnknown() {
+			settingsIntermediateLoadingScreenHTMLValue := &pingone.DaVinciFlowSettingsRequestIntermediateLoadingScreenHTML{}
+			settingsIntermediateLoadingScreenHTMLValue.String = settingsAttrs["intermediate_loading_screen_html"].(types.String).ValueStringPointer()
+			settingsValue.IntermediateLoadingScreenHTML = settingsIntermediateLoadingScreenHTMLValue
+		}
 		settingsValue.JsCustomFlowPlayer = settingsAttrs["js_custom_flow_player"].(types.String).ValueStringPointer()
 		if !settingsAttrs["js_links"].IsNull() && !settingsAttrs["js_links"].IsUnknown() {
 			settingsValue.JsLinks = []pingone.DaVinciFlowSettingsRequestJsLink{}
@@ -1228,8 +1236,16 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 		settingsValue.DefaultErrorScreenBrandLogo = settingsAttrs["default_error_screen_brand_logo"].(types.Bool).ValueBoolPointer()
 		settingsValue.FlowHttpTimeoutInSeconds = settingsAttrs["flow_http_timeout_in_seconds"].(types.Int32).ValueInt32Pointer()
 		settingsValue.FlowTimeoutInSeconds = settingsAttrs["flow_timeout_in_seconds"].(types.Int32).ValueInt32Pointer()
-		settingsValue.IntermediateLoadingScreenCSS = settingsAttrs["intermediate_loading_screen_css"].(types.String).ValueStringPointer()
-		settingsValue.IntermediateLoadingScreenHTML = settingsAttrs["intermediate_loading_screen_html"].(types.String).ValueStringPointer()
+		if !settingsAttrs["intermediate_loading_screen_css"].IsNull() && !settingsAttrs["intermediate_loading_screen_css"].IsUnknown() {
+			settingsIntermediateLoadingScreenCSSValue := &pingone.DaVinciFlowSettingsRequestIntermediateLoadingScreenCSS{}
+			settingsIntermediateLoadingScreenCSSValue.String = settingsAttrs["intermediate_loading_screen_css"].(types.String).ValueStringPointer()
+			settingsValue.IntermediateLoadingScreenCSS = settingsIntermediateLoadingScreenCSSValue
+		}
+		if !settingsAttrs["intermediate_loading_screen_html"].IsNull() && !settingsAttrs["intermediate_loading_screen_html"].IsUnknown() {
+			settingsIntermediateLoadingScreenHTMLValue := &pingone.DaVinciFlowSettingsRequestIntermediateLoadingScreenHTML{}
+			settingsIntermediateLoadingScreenHTMLValue.String = settingsAttrs["intermediate_loading_screen_html"].(types.String).ValueStringPointer()
+			settingsValue.IntermediateLoadingScreenHTML = settingsIntermediateLoadingScreenHTMLValue
+		}
 		settingsValue.JsCustomFlowPlayer = settingsAttrs["js_custom_flow_player"].(types.String).ValueStringPointer()
 		if !settingsAttrs["js_links"].IsNull() && !settingsAttrs["js_links"].IsUnknown() {
 			settingsValue.JsLinks = []pingone.DaVinciFlowSettingsRequestJsLink{}
@@ -1665,6 +1681,44 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			settingsCssLinksValue, diags = types.SetValueFrom(context.Background(), types.StringType, response.Settings.CssLinks)
 			respDiags.Append(diags...)
 		}
+		var intermediateLoadingScreenCSSValue types.String
+		if response.Settings.IntermediateLoadingScreenCSS == nil {
+			intermediateLoadingScreenCSSValue = types.StringNull()
+		} else {
+			// If string is set or if neither object nor string is set, just use the .String value
+			if response.Settings.IntermediateLoadingScreenCSS.String != nil || response.Settings.IntermediateLoadingScreenCSS.Object == nil {
+				intermediateLoadingScreenCSSValue = types.StringPointerValue(response.Settings.IntermediateLoadingScreenCSS.String)
+			} else {
+				// Otherwise, marshal the .Object field to a JSON string
+				intermediateLoadingScreenCSSValueBytes, err := json.Marshal(response.Settings.IntermediateLoadingScreenCSS.Object)
+				if err != nil {
+					respDiags.AddError(
+						"Error Marshaling settings.intermediateLoadingScreenCSS.object",
+						fmt.Sprintf("An error occurred while marshaling: %s", err.Error()),
+					)
+				}
+				intermediateLoadingScreenCSSValue = types.StringValue(string(intermediateLoadingScreenCSSValueBytes))
+			}
+		}
+		var intermediateLoadingScreenHTMLValue types.String
+		if response.Settings.IntermediateLoadingScreenHTML == nil {
+			intermediateLoadingScreenHTMLValue = types.StringNull()
+		} else {
+			// If string is set or if neither object nor string is set, just use the .String value
+			if response.Settings.IntermediateLoadingScreenHTML.String != nil || response.Settings.IntermediateLoadingScreenHTML.Object == nil {
+				intermediateLoadingScreenHTMLValue = types.StringPointerValue(response.Settings.IntermediateLoadingScreenHTML.String)
+			} else {
+				// Otherwise, marshal the .Object field to a JSON string
+				intermediateLoadingScreenHTMLValueBytes, err := json.Marshal(response.Settings.IntermediateLoadingScreenHTML.Object)
+				if err != nil {
+					respDiags.AddError(
+						"Error Marshaling settings.intermediateLoadingScreenHTML.object",
+						fmt.Sprintf("An error occurred while marshaling: %s", err.Error()),
+					)
+				}
+				intermediateLoadingScreenHTMLValue = types.StringValue(string(intermediateLoadingScreenHTMLValueBytes))
+			}
+		}
 		var settingsJsLinksValue types.Set
 		if response.Settings.JsLinks == nil {
 			settingsJsLinksValue = types.SetNull(settingsJsLinksElementType)
@@ -1705,8 +1759,8 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			"default_error_screen_brand_logo":    types.BoolPointerValue(response.Settings.DefaultErrorScreenBrandLogo),
 			"flow_http_timeout_in_seconds":       types.Int32PointerValue(response.Settings.FlowHttpTimeoutInSeconds),
 			"flow_timeout_in_seconds":            types.Int32PointerValue(response.Settings.FlowTimeoutInSeconds),
-			"intermediate_loading_screen_css":    types.StringPointerValue(response.Settings.IntermediateLoadingScreenCSS),
-			"intermediate_loading_screen_html":   types.StringPointerValue(response.Settings.IntermediateLoadingScreenHTML),
+			"intermediate_loading_screen_css":    intermediateLoadingScreenCSSValue,
+			"intermediate_loading_screen_html":   intermediateLoadingScreenHTMLValue,
 			"js_custom_flow_player":              types.StringPointerValue(response.Settings.JsCustomFlowPlayer),
 			"js_links":                           settingsJsLinksValue,
 			"log_level":                          types.Int32PointerValue(response.Settings.LogLevel),
