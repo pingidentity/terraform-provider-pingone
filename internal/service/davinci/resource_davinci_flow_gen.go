@@ -497,7 +497,7 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 				Attributes: map[string]schema.Attribute{
 					"output": schema.StringAttribute{
 						CustomType: jsontypes.NormalizedType{},
-						Optional:   true,
+						Required:   true,
 					},
 				},
 				Optional: true,
@@ -670,36 +670,36 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 							"mfa": schema.SingleNestedAttribute{
 								Attributes: map[string]schema.Attribute{
 									"enabled": schema.BoolAttribute{
-										Optional: true,
+										Required: true,
 									},
 									"time": schema.Float32Attribute{
-										Optional: true,
+										Required: true,
 									},
 									"time_format": schema.StringAttribute{
-										Optional: true,
+										Required: true,
 										Validators: []validator.String{
 											stringvalidator.LengthBetween(0, 50),
 										},
 									},
 								},
-								Optional: true,
+								Required: true,
 							},
 							"pwd": schema.SingleNestedAttribute{
 								Attributes: map[string]schema.Attribute{
 									"enabled": schema.BoolAttribute{
-										Optional: true,
+										Required: true,
 									},
 									"time": schema.Float32Attribute{
-										Optional: true,
+										Required: true,
 									},
 									"time_format": schema.StringAttribute{
-										Optional: true,
+										Required: true,
 										Validators: []validator.String{
 											stringvalidator.LengthBetween(0, 50),
 										},
 									},
 								},
-								Optional: true,
+								Required: true,
 							},
 						},
 						Optional: true,
@@ -709,6 +709,7 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 						Validators: []validator.String{
 							stringvalidator.OneOf(
 								"AUTHENTICATION",
+								"SCHEDULE",
 							),
 							stringvalidator.LengthAtLeast(1),
 						},
@@ -828,14 +829,10 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 			graphDataValue.Elements = graphDataElementsValue
 		}
 		if !graphDataAttrs["max_zoom"].IsNull() && !graphDataAttrs["max_zoom"].IsUnknown() {
-			graphDataValue.MaxZoom = &pingone.BigFloat{
-				Float: graphDataAttrs["max_zoom"].(types.Number).ValueBigFloat(),
-			}
+			graphDataValue.MaxZoom = graphDataAttrs["max_zoom"].(types.Number).ValueBigFloat()
 		}
 		if !graphDataAttrs["min_zoom"].IsNull() && !graphDataAttrs["min_zoom"].IsUnknown() {
-			graphDataValue.MinZoom = &pingone.BigFloat{
-				Float: graphDataAttrs["min_zoom"].(types.Number).ValueBigFloat(),
-			}
+			graphDataValue.MinZoom = graphDataAttrs["min_zoom"].(types.Number).ValueBigFloat()
 		}
 		if !graphDataAttrs["pan"].IsNull() && !graphDataAttrs["pan"].IsUnknown() {
 			graphDataPanValue := &pingone.DaVinciFlowGraphDataRequestPan{}
@@ -903,7 +900,7 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 	result.Name = model.Name.ValueString()
 	// output_schema
 	if !model.OutputSchema.IsNull() && !model.OutputSchema.IsUnknown() {
-		outputSchemaValue := &pingone.DaVinciFlowCreateRequestOutputSchema{}
+		outputSchemaValue := &pingone.DaVinciFlowOutputSchemaRequest{}
 		outputSchemaAttrs := model.OutputSchema.Attributes()
 		if !outputSchemaAttrs["output"].IsNull() && !outputSchemaAttrs["output"].IsUnknown() {
 			var unmarshaled map[string]interface{}
@@ -977,30 +974,30 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 
 	// trigger
 	if !model.Trigger.IsNull() && !model.Trigger.IsUnknown() {
-		triggerValue := &pingone.DaVinciFlowCreateRequestTrigger{}
+		triggerValue := &pingone.DaVinciFlowTriggerRequest{}
 		triggerAttrs := model.Trigger.Attributes()
 		if !triggerAttrs["configuration"].IsNull() && !triggerAttrs["configuration"].IsUnknown() {
-			triggerConfigurationValue := &pingone.DaVinciFlowCreateRequestTriggerConfiguration{}
+			triggerConfigurationValue := &pingone.DaVinciFlowTriggerRequestConfiguration{}
 			triggerConfigurationAttrs := triggerAttrs["configuration"].(types.Object).Attributes()
 			if !triggerConfigurationAttrs["mfa"].IsNull() && !triggerConfigurationAttrs["mfa"].IsUnknown() {
-				triggerConfigurationMfaValue := &pingone.DaVinciFlowCreateRequestTriggerConfigurationMFA{}
+				triggerConfigurationMfaValue := pingone.DaVinciFlowTriggerRequestConfigurationMFA{}
 				triggerConfigurationMfaAttrs := triggerConfigurationAttrs["mfa"].(types.Object).Attributes()
-				triggerConfigurationMfaValue.Enabled = triggerConfigurationMfaAttrs["enabled"].(types.Bool).ValueBoolPointer()
-				triggerConfigurationMfaValue.Time = triggerConfigurationMfaAttrs["time"].(types.Float32).ValueFloat32Pointer()
-				triggerConfigurationMfaValue.TimeFormat = triggerConfigurationMfaAttrs["time_format"].(types.String).ValueStringPointer()
+				triggerConfigurationMfaValue.Enabled = triggerConfigurationMfaAttrs["enabled"].(types.Bool).ValueBool()
+				triggerConfigurationMfaValue.Time = triggerConfigurationMfaAttrs["time"].(types.Float32).ValueFloat32()
+				triggerConfigurationMfaValue.TimeFormat = triggerConfigurationMfaAttrs["time_format"].(types.String).ValueString()
 				triggerConfigurationValue.Mfa = triggerConfigurationMfaValue
 			}
 			if !triggerConfigurationAttrs["pwd"].IsNull() && !triggerConfigurationAttrs["pwd"].IsUnknown() {
-				triggerConfigurationPwdValue := &pingone.DaVinciFlowCreateRequestTriggerConfigurationPassword{}
+				triggerConfigurationPwdValue := pingone.DaVinciFlowTriggerRequestConfigurationPassword{}
 				triggerConfigurationPwdAttrs := triggerConfigurationAttrs["pwd"].(types.Object).Attributes()
-				triggerConfigurationPwdValue.Enabled = triggerConfigurationPwdAttrs["enabled"].(types.Bool).ValueBoolPointer()
-				triggerConfigurationPwdValue.Time = triggerConfigurationPwdAttrs["time"].(types.Float32).ValueFloat32Pointer()
-				triggerConfigurationPwdValue.TimeFormat = triggerConfigurationPwdAttrs["time_format"].(types.String).ValueStringPointer()
+				triggerConfigurationPwdValue.Enabled = triggerConfigurationPwdAttrs["enabled"].(types.Bool).ValueBool()
+				triggerConfigurationPwdValue.Time = triggerConfigurationPwdAttrs["time"].(types.Float32).ValueFloat32()
+				triggerConfigurationPwdValue.TimeFormat = triggerConfigurationPwdAttrs["time_format"].(types.String).ValueString()
 				triggerConfigurationValue.Pwd = triggerConfigurationPwdValue
 			}
 			triggerValue.Configuration = triggerConfigurationValue
 		}
-		triggerTypeValue, err := pingone.NewDaVinciFlowCreateRequestTriggerTypeFromValue(triggerAttrs["type"].(types.String).ValueString())
+		triggerTypeValue, err := pingone.NewDaVinciFlowTriggerRequestTypeFromValue(triggerAttrs["type"].(types.String).ValueString())
 		if err != nil {
 			respDiags.AddAttributeError(
 				path.Root("type"),
@@ -1124,14 +1121,10 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 			graphDataValue.Elements = graphDataElementsValue
 		}
 		if !graphDataAttrs["max_zoom"].IsNull() && !graphDataAttrs["max_zoom"].IsUnknown() {
-			graphDataValue.MaxZoom = &pingone.BigFloat{
-				Float: graphDataAttrs["max_zoom"].(types.Number).ValueBigFloat(),
-			}
+			graphDataValue.MaxZoom = graphDataAttrs["max_zoom"].(types.Number).ValueBigFloat()
 		}
 		if !graphDataAttrs["min_zoom"].IsNull() && !graphDataAttrs["min_zoom"].IsUnknown() {
-			graphDataValue.MinZoom = &pingone.BigFloat{
-				Float: graphDataAttrs["min_zoom"].(types.Number).ValueBigFloat(),
-			}
+			graphDataValue.MinZoom = graphDataAttrs["min_zoom"].(types.Number).ValueBigFloat()
 		}
 		if !graphDataAttrs["pan"].IsNull() && !graphDataAttrs["pan"].IsUnknown() {
 			graphDataPanValue := &pingone.DaVinciFlowGraphDataRequestPan{}
@@ -1199,7 +1192,7 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 	result.Name = model.Name.ValueString()
 	// output_schema
 	if !model.OutputSchema.IsNull() && !model.OutputSchema.IsUnknown() {
-		outputSchemaValue := &pingone.DaVinciFlowReplaceRequestOutputSchema{}
+		outputSchemaValue := &pingone.DaVinciFlowOutputSchemaRequest{}
 		outputSchemaAttrs := model.OutputSchema.Attributes()
 		if !outputSchemaAttrs["output"].IsNull() && !outputSchemaAttrs["output"].IsUnknown() {
 			var unmarshaled map[string]interface{}
@@ -1273,30 +1266,30 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 
 	// trigger
 	if !model.Trigger.IsNull() && !model.Trigger.IsUnknown() {
-		triggerValue := &pingone.DaVinciFlowReplaceRequestTrigger{}
+		triggerValue := &pingone.DaVinciFlowTriggerRequest{}
 		triggerAttrs := model.Trigger.Attributes()
 		if !triggerAttrs["configuration"].IsNull() && !triggerAttrs["configuration"].IsUnknown() {
-			triggerConfigurationValue := &pingone.DaVinciFlowReplaceRequestTriggerConfiguration{}
+			triggerConfigurationValue := &pingone.DaVinciFlowTriggerRequestConfiguration{}
 			triggerConfigurationAttrs := triggerAttrs["configuration"].(types.Object).Attributes()
 			if !triggerConfigurationAttrs["mfa"].IsNull() && !triggerConfigurationAttrs["mfa"].IsUnknown() {
-				triggerConfigurationMfaValue := &pingone.DaVinciFlowReplaceRequestTriggerConfigurationMFA{}
+				triggerConfigurationMfaValue := pingone.DaVinciFlowTriggerRequestConfigurationMFA{}
 				triggerConfigurationMfaAttrs := triggerConfigurationAttrs["mfa"].(types.Object).Attributes()
-				triggerConfigurationMfaValue.Enabled = triggerConfigurationMfaAttrs["enabled"].(types.Bool).ValueBoolPointer()
-				triggerConfigurationMfaValue.Time = triggerConfigurationMfaAttrs["time"].(types.Float32).ValueFloat32Pointer()
-				triggerConfigurationMfaValue.TimeFormat = triggerConfigurationMfaAttrs["time_format"].(types.String).ValueStringPointer()
+				triggerConfigurationMfaValue.Enabled = triggerConfigurationMfaAttrs["enabled"].(types.Bool).ValueBool()
+				triggerConfigurationMfaValue.Time = triggerConfigurationMfaAttrs["time"].(types.Float32).ValueFloat32()
+				triggerConfigurationMfaValue.TimeFormat = triggerConfigurationMfaAttrs["time_format"].(types.String).ValueString()
 				triggerConfigurationValue.Mfa = triggerConfigurationMfaValue
 			}
 			if !triggerConfigurationAttrs["pwd"].IsNull() && !triggerConfigurationAttrs["pwd"].IsUnknown() {
-				triggerConfigurationPwdValue := &pingone.DaVinciFlowReplaceRequestTriggerConfigurationPassword{}
+				triggerConfigurationPwdValue := pingone.DaVinciFlowTriggerRequestConfigurationPassword{}
 				triggerConfigurationPwdAttrs := triggerConfigurationAttrs["pwd"].(types.Object).Attributes()
-				triggerConfigurationPwdValue.Enabled = triggerConfigurationPwdAttrs["enabled"].(types.Bool).ValueBoolPointer()
-				triggerConfigurationPwdValue.Time = triggerConfigurationPwdAttrs["time"].(types.Float32).ValueFloat32Pointer()
-				triggerConfigurationPwdValue.TimeFormat = triggerConfigurationPwdAttrs["time_format"].(types.String).ValueStringPointer()
+				triggerConfigurationPwdValue.Enabled = triggerConfigurationPwdAttrs["enabled"].(types.Bool).ValueBool()
+				triggerConfigurationPwdValue.Time = triggerConfigurationPwdAttrs["time"].(types.Float32).ValueFloat32()
+				triggerConfigurationPwdValue.TimeFormat = triggerConfigurationPwdAttrs["time_format"].(types.String).ValueString()
 				triggerConfigurationValue.Pwd = triggerConfigurationPwdValue
 			}
 			triggerValue.Configuration = triggerConfigurationValue
 		}
-		triggerTypeValue, err := pingone.NewDaVinciFlowReplaceRequestTriggerTypeFromValue(triggerAttrs["type"].(types.String).ValueString())
+		triggerTypeValue, err := pingone.NewDaVinciFlowTriggerRequestTypeFromValue(triggerAttrs["type"].(types.String).ValueString())
 		if err != nil {
 			respDiags.AddAttributeError(
 				path.Root("type"),
@@ -1775,12 +1768,7 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			})
 			respDiags.Append(diags...)
 		}
-		var triggerTypePtrValue *string
-		if response.Trigger.Type != nil {
-			triggerTypeStringValue := string(*response.Trigger.Type)
-			triggerTypePtrValue = &triggerTypeStringValue
-		}
-		triggerTypeValue := types.StringPointerValue(triggerTypePtrValue)
+		triggerTypeValue := types.StringValue(string(response.Trigger.Type))
 		triggerValue, diags = types.ObjectValue(triggerAttrTypes, map[string]attr.Value{
 			"configuration": triggerConfigurationValue,
 			"type":          triggerTypeValue,
