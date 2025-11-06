@@ -1,5 +1,32 @@
 ## 1.14.0 (6 November 2025)
 
+NOTES:
+
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.61.0 => v0.62.0 ([#1160](https://github.com/pingidentity/terraform-provider-pingone/issues/1160))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.14.0 => v0.14.3 ([#1161](https://github.com/pingidentity/terraform-provider-pingone/issues/1161))
+* data-source/pingone_verify_policy: Deprecation notice: The `voice` attribute is deprecated and will be removed in a future release. Please use alternative verification methods. ([#1164](https://github.com/pingidentity/terraform-provider-pingone/issues/1164))
+* data-source/pingone_verify_voice_phrase: Deprecation notice: This data source is deprecated and will be removed in a future release. Please use alternative verification methods. ([#1164](https://github.com/pingidentity/terraform-provider-pingone/issues/1164))
+* data-source/pingone_verify_voice_phrase_content: Deprecation notice: This data source is deprecated and will be removed in a future release. Please use alternative verification methods. ([#1164](https://github.com/pingidentity/terraform-provider-pingone/issues/1164))
+* data-source/pingone_verify_voice_phrase_contents: Deprecation notice: This data source is deprecated and will be removed in a future release. Please use alternative verification methods. ([#1164](https://github.com/pingidentity/terraform-provider-pingone/issues/1164))
+* resource/pingone_verify_policy: Deprecation notice: The `voice` attribute is deprecated and will be removed in a future release. Please use alternative verification methods. ([#1164](https://github.com/pingidentity/terraform-provider-pingone/issues/1164))
+* resource/pingone_verify_voice_phrase: Deprecation notice: This resource is deprecated and will be removed in a future release. Please use alternative verification methods. ([#1164](https://github.com/pingidentity/terraform-provider-pingone/issues/1164))
+* resource/pingone_verify_voice_phrase_content: Deprecation notice: This resource is deprecated and will be removed in a future release. Please use alternative verification methods. ([#1164](https://github.com/pingidentity/terraform-provider-pingone/issues/1164))
+
+FEATURES:
+
+* **New Data Source:** `pingone_notification_policy` ([#1162](https://github.com/pingidentity/terraform-provider-pingone/issues/1162))
+* **New Data Source:** `pingone_resource_scopes` ([#1163](https://github.com/pingidentity/terraform-provider-pingone/issues/1163))
+
+ENHANCEMENTS:
+
+* `resource/pingone_notification_policy`: Added support for `cooldown_configuration` and `provider_configuration` attributes. ([#1162](https://github.com/pingidentity/terraform-provider-pingone/issues/1162))
+* `resource/pingone_risk_predictor`: Verified support of `startsWith` and `endsWith` composite predictor conditions. ([#1155](https://github.com/pingidentity/terraform-provider-pingone/issues/1155))
+
+BUG FIXES:
+
+* `resource/pingone_alert_channel`: Added support for `RATE_LIMIT_EXCEEDED` and `RATE_LIMIT_WARNING` alert types. ([#1160](https://github.com/pingidentity/terraform-provider-pingone/issues/1160))
+* `resource/pingone_branding_theme`: `use_default_background` can now be configured with either `background_color` or `background_image`. ([#1157](https://github.com/pingidentity/terraform-provider-pingone/issues/1157))
+
 ## 1.13.0 (8 October 2025)
 
 NOTES:
