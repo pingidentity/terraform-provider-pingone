@@ -5,7 +5,7 @@ description: |-
   Resource to configure the requirements to verify a user, including the parameters for verification.
   A verify policy defines which of the following one or more checks are performed for a verification transaction and configures the parameters of each check. If a type is optional, then the transaction can be processed with or without the documents for that type. If the documents are provided for that type and the optional type verification fails, it will not cause the entire transaction to fail.
   Verify policies can perform any of the following checks:
-  Government identity document - Validate a government-issued identity document, which includes a photograph.Facial comparison - Compare a mobile phone self-image to a reference photograph, such as on a government ID or previously verified photograph.Liveness - Inspect a mobile phone self-image for evidence that the subject is alive and not a representation, such as a photograph or mask.Email - Receive a one-time password (OTP) on an email address and return the OTP to the service.Phone - Receive a one-time password (OTP) on a mobile phone and return the OTP to the service.Voice - Compare a voice recording to a previously submitted reference voice recording.Identity Record Matching - Compare submitted biographic data (address, birth date, full name, given name, or family name) to an identity record.
+  Government identity document - Validate a government-issued identity document, which includes a photograph.Facial comparison - Compare a mobile phone self-image to a reference photograph, such as on a government ID or previously verified photograph.Liveness - Inspect a mobile phone self-image for evidence that the subject is alive and not a representation, such as a photograph or mask.Email - Receive a one-time password (OTP) on an email address and return the OTP to the service.Phone - Receive a one-time password (OTP) on a mobile phone and return the OTP to the service.Voice - [Deprecation notice: This field is deprecated and will be removed in a future release. Please use alternative verification methods.] Compare a voice recording to a previously submitted reference voice recording.Identity Record Matching - Compare submitted biographic data (address, birth date, full name, given name, or family name) to an identity record.
 ---
 
 # pingone_verify_policy (Resource)
@@ -20,7 +20,7 @@ Verify policies can perform any of the following checks:
 - Liveness - Inspect a mobile phone self-image for evidence that the subject is alive and not a representation, such as a photograph or mask.
 - Email - Receive a one-time password (OTP) on an email address and return the OTP to the service.
 - Phone - Receive a one-time password (OTP) on a mobile phone and return the OTP to the service.
-- Voice - Compare a voice recording to a previously submitted reference voice recording.
+- Voice - **[Deprecation notice: This field is deprecated and will be removed in a future release. Please use alternative verification methods.]** Compare a voice recording to a previously submitted reference voice recording.
 - Identity Record Matching - Compare submitted biographic data (address, birth date, full name, given name, or family name) to an identity record.
 
 ## Example Usage
@@ -199,7 +199,7 @@ resource "pingone_verify_policy" "my_verify_everything_policy" {
 - `liveness` (Attributes) Defines the verification requirements to inspect a mobile phone self-image for evidence that the subject is alive and not a representation, such as a photograph or mask. (see [below for nested schema](#nestedatt--liveness))
 - `phone` (Attributes) Defines the verification requirements to validate a mobile phone number using a one-time password (OTP). (see [below for nested schema](#nestedatt--phone))
 - `transaction` (Attributes) Defines the requirements for transactions invoked by the policy. (see [below for nested schema](#nestedatt--transaction))
-- `voice` (Attributes) Defines the requirements for comparing a voice recording against a reference voice recording. (see [below for nested schema](#nestedatt--voice))
+- `voice` (Attributes, Deprecated) **[Deprecation notice: This field is deprecated and will be removed in a future release. Please use alternative verification methods.]** Defines the requirements for comparing a voice recording against a reference voice recording. (see [below for nested schema](#nestedatt--voice))
 
 ### Read-Only
 

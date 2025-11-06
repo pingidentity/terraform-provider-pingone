@@ -590,7 +590,7 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 			"- Liveness - Inspect a mobile phone self-image for evidence that the subject is alive and not a representation, such as a photograph or mask.\n" +
 			"- Email - Receive a one-time password (OTP) on an email address and return the OTP to the service.\n" +
 			"- Phone - Receive a one-time password (OTP) on a mobile phone and return the OTP to the service.\n" +
-			"- Voice - Compare a voice recording to a previously submitted reference voice recording.\n" +
+			"- Voice - **[Deprecation notice: This field is deprecated and will be removed in a future release. Please use alternative verification methods.]** Compare a voice recording to a previously submitted reference voice recording.\n" +
 			"- Identity Record Matching - Compare submitted biographic data (address, birth date, full name, given name, or family name) to an identity record.\n\n ",
 
 		Attributes: map[string]schema.Attribute{
@@ -1562,10 +1562,10 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 			},
 
 			"voice": schema.SingleNestedAttribute{
-				Description: "Defines the requirements for comparing a voice recording against a reference voice recording.",
-				Optional:    true,
-				Computed:    true,
-
+				Description:        "**[Deprecation notice: This field is deprecated and will be removed in a future release. Please use alternative verification methods.]** Defines the requirements for comparing a voice recording against a reference voice recording.",
+				DeprecationMessage: "Deprecation notice: This field is deprecated and will be removed in a future release. Please use alternative verification methods.",
+				Optional:           true,
+				Computed:           true,
 				Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
 					o := map[string]attr.Value{
 						"samples":         types.Int32Value(defaultVoiceSamples),
