@@ -1,3 +1,5 @@
+## 1.14.0 (6 November 2025)
+
 ## 1.13.0 (8 October 2025)
 
 NOTES:
