@@ -7,6 +7,8 @@ description: |-
 
 # pingone_verify_voice_phrase_contents (Data Source)
 
+!> **Deprecation Notice** This data source is deprecated and will be removed in a future release. Please use alternative verification methods.
+
 Data source to retrieve a list of PingOne Verify Voice Phrase Contents. Filtering the list by SCIM or data filter currently is not supported.
 
 ## Example Usage

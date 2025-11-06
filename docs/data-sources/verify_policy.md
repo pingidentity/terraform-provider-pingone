@@ -54,7 +54,7 @@ data "pingone_verify_policy" "find_default_policy_example" {
 - `phone` (Attributes) Defines the verification requirements to validate a mobile phone number using a one-time password (OTP). (see [below for nested schema](#nestedatt--phone))
 - `transaction` (Attributes) Defines the requirements for transactions invoked by the policy. (see [below for nested schema](#nestedatt--transaction))
 - `updated_at` (String) Date and time the verify policy was updated. Can be null.
-- `voice` (Attributes) Defines the requirements for transactions invoked by the policy. (see [below for nested schema](#nestedatt--voice))
+- `voice` (Attributes, Deprecated) **[Deprecation notice: This field is deprecated and will be removed in a future release. Please use alternative verification methods.]** Defines the requirements for transactions invoked by the policy. (see [below for nested schema](#nestedatt--voice))
 
 <a id="nestedatt--email"></a>
 ### Nested Schema for `email`
