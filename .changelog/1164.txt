@@ -1,27 +1,27 @@
 ```release-note:note
-resource/pingone_verify_voice_phrase: Deprecate resource
+resource/pingone_verify_voice_phrase: Deprecation notice: This resource is deprecated and will be removed in a future release. Please use alternative verification methods.
 ```
 
 ```release-note:note
-resource/pingone_verify_voice_phrase_content: Deprecate resource
+resource/pingone_verify_voice_phrase_content: Deprecation notice: This resource is deprecated and will be removed in a future release. Please use alternative verification methods.
 ```
 
 ```release-note:note
-data-source/pingone_verify_voice_phrase: Deprecate data source
+data-source/pingone_verify_voice_phrase: Deprecation notice: This data source is deprecated and will be removed in a future release. Please use alternative verification methods.
 ```
 
 ```release-note:note
-data-source/pingone_verify_voice_phrase_content: Deprecate data source
+data-source/pingone_verify_voice_phrase_content: Deprecation notice: This data source is deprecated and will be removed in a future release. Please use alternative verification methods.
 ```
 
 ```release-note:note
-data-source/pingone_verify_voice_phrase_contents: Deprecate data source
+data-source/pingone_verify_voice_phrase_contents: Deprecation notice: This data source is deprecated and will be removed in a future release. Please use alternative verification methods.
 ```
 
 ```release-note:note
-resource/pingone_verify_policy: Deprecate `voice` attribute
+resource/pingone_verify_policy: Deprecation notice: The `voice` attribute is deprecated and will be removed in a future release. Please use alternative verification methods.
 ```
 
 ```release-note:note
-data-source/pingone_verify_policy: Deprecate `voice` attribute
+data-source/pingone_verify_policy: Deprecation notice: The `voice` attribute is deprecated and will be removed in a future release. Please use alternative verification methods.
 ```
