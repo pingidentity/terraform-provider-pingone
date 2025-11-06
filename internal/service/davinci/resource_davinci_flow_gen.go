@@ -495,9 +495,20 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 			},
 			"output_schema": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
-					"output": schema.StringAttribute{
-						CustomType: jsontypes.NormalizedType{},
-						Required:   true,
+					"output": schema.SingleNestedAttribute{
+						Required: true,
+						Attributes: map[string]schema.Attribute{
+							"type": schema.StringAttribute{
+								Required: true,
+							},
+							"properties": schema.StringAttribute{
+								CustomType: jsontypes.NormalizedType{},
+								Optional:   true,
+							},
+							"additional_properties": schema.BoolAttribute{
+								Optional: true,
+							},
+						},
 					},
 				},
 				Optional: true,
@@ -903,15 +914,31 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 		outputSchemaValue := &pingone.DaVinciFlowOutputSchemaRequest{}
 		outputSchemaAttrs := model.OutputSchema.Attributes()
 		if !outputSchemaAttrs["output"].IsNull() && !outputSchemaAttrs["output"].IsUnknown() {
-			var unmarshaled map[string]interface{}
-			err := json.Unmarshal([]byte(outputSchemaAttrs["output"].(jsontypes.Normalized).ValueString()), &unmarshaled)
-			if err != nil {
-				respDiags.AddError(
-					"Error Parsing JSON val",
-					fmt.Sprintf("The value provided for output could not be parsed as json: %s", err.Error()),
-				)
+			outputSchemaOutputValue := pingone.DaVinciFlowOutputSchemaRequestOutput{}
+			outputSchemaOutputAttrs := outputSchemaAttrs["output"].(types.Object).Attributes()
+			outputSchemaOutputValue.AdditionalPropertiesField = outputSchemaOutputAttrs["additional_properties"].(types.Bool).ValueBoolPointer()
+			if !outputSchemaOutputAttrs["properties"].IsNull() && !outputSchemaOutputAttrs["properties"].IsUnknown() {
+				var unmarshaled map[string]interface{}
+				err := json.Unmarshal([]byte(outputSchemaOutputAttrs["properties"].(jsontypes.Normalized).ValueString()), &unmarshaled)
+				if err != nil {
+					respDiags.AddError(
+						"Error Parsing JSON val",
+						fmt.Sprintf("The value provided for output.output_schema.properties could not be parsed as json: %s", err.Error()),
+					)
+				}
+				outputSchemaOutputValue.Properties = unmarshaled
 			}
-			outputSchemaValue.Output = unmarshaled
+			outputSchemaOutputTypeValue, err := pingone.NewDaVinciFlowOutputSchemaRequestOutputTypeFromValue(outputSchemaOutputAttrs["type"].(types.String).ValueString())
+			if err != nil {
+				respDiags.AddAttributeError(
+					path.Root("output_schema.output.type"),
+					"Provided value is not valid",
+					fmt.Sprintf("The value provided for output_schema.output.type is not valid: %s", err.Error()),
+				)
+			} else {
+				outputSchemaOutputValue.Type = *outputSchemaOutputTypeValue
+			}
+			outputSchemaValue.Output = outputSchemaOutputValue
 		}
 		result.OutputSchema = outputSchemaValue
 	}
@@ -1203,15 +1230,31 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 		outputSchemaValue := &pingone.DaVinciFlowOutputSchemaRequest{}
 		outputSchemaAttrs := model.OutputSchema.Attributes()
 		if !outputSchemaAttrs["output"].IsNull() && !outputSchemaAttrs["output"].IsUnknown() {
-			var unmarshaled map[string]interface{}
-			err := json.Unmarshal([]byte(outputSchemaAttrs["output"].(jsontypes.Normalized).ValueString()), &unmarshaled)
-			if err != nil {
-				respDiags.AddError(
-					"Error Parsing JSON val",
-					fmt.Sprintf("The value provided for output could not be parsed as json: %s", err.Error()),
-				)
+			outputSchemaOutputValue := pingone.DaVinciFlowOutputSchemaRequestOutput{}
+			outputSchemaOutputAttrs := outputSchemaAttrs["output"].(types.Object).Attributes()
+			outputSchemaOutputValue.AdditionalPropertiesField = outputSchemaOutputAttrs["additional_properties"].(types.Bool).ValueBoolPointer()
+			if !outputSchemaOutputAttrs["properties"].IsNull() && !outputSchemaOutputAttrs["properties"].IsUnknown() {
+				var unmarshaled map[string]interface{}
+				err := json.Unmarshal([]byte(outputSchemaOutputAttrs["properties"].(jsontypes.Normalized).ValueString()), &unmarshaled)
+				if err != nil {
+					respDiags.AddError(
+						"Error Parsing JSON val",
+						fmt.Sprintf("The value provided for output.output_schema.properties could not be parsed as json: %s", err.Error()),
+					)
+				}
+				outputSchemaOutputValue.Properties = unmarshaled
 			}
-			outputSchemaValue.Output = unmarshaled
+			outputSchemaOutputTypeValue, err := pingone.NewDaVinciFlowOutputSchemaRequestOutputTypeFromValue(outputSchemaOutputAttrs["type"].(types.String).ValueString())
+			if err != nil {
+				respDiags.AddAttributeError(
+					path.Root("output_schema.output.type"),
+					"Provided value is not valid",
+					fmt.Sprintf("The value provided for output_schema.output.type is not valid: %s", err.Error()),
+				)
+			} else {
+				outputSchemaOutputValue.Type = *outputSchemaOutputTypeValue
+			}
+			outputSchemaValue.Output = outputSchemaOutputValue
 		}
 		result.OutputSchema = outputSchemaValue
 	}
@@ -1603,27 +1646,38 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 	// name
 	state.Name = types.StringValue(response.Name)
 	// output_schema
+	outputSchemaOutputAttrTypes := map[string]attr.Type{
+		"additional_properties": types.BoolType,
+		"properties":            jsontypes.NormalizedType{},
+		"type":                  types.StringType,
+	}
 	outputSchemaAttrTypes := map[string]attr.Type{
-		"output": jsontypes.NormalizedType{},
+		"output": types.ObjectType{AttrTypes: outputSchemaOutputAttrTypes},
 	}
 	var outputSchemaValue types.Object
 	if response.OutputSchema == nil {
 		outputSchemaValue = types.ObjectNull(outputSchemaAttrTypes)
 	} else {
-		var outputSchemaOutputValue jsontypes.Normalized
-		if response.OutputSchema.Output == nil {
-			outputSchemaOutputValue = jsontypes.NewNormalizedNull()
+		var outputSchemaOutputPropertiesValue jsontypes.Normalized
+		if response.OutputSchema.Output.Properties == nil {
+			outputSchemaOutputPropertiesValue = jsontypes.NewNormalizedNull()
 		} else {
-			outputSchemaOutputBytes, err := json.Marshal(response.OutputSchema.Output)
+			outputSchemaOutputPropertiesBytes, err := json.Marshal(response.OutputSchema.Output.Properties)
 			if err != nil {
 				respDiags.AddError(
-					"Error Marshaling outputSchema.output",
+					"Error Marshaling outputSchema.output.properties",
 					fmt.Sprintf("An error occurred while marshaling: %s", err.Error()),
 				)
 			} else {
-				outputSchemaOutputValue = jsontypes.NewNormalizedValue(string(outputSchemaOutputBytes))
+				outputSchemaOutputPropertiesValue = jsontypes.NewNormalizedValue(string(outputSchemaOutputPropertiesBytes))
 			}
 		}
+		outputSchemaOutputValue, diags := types.ObjectValue(outputSchemaOutputAttrTypes, map[string]attr.Value{
+			"additional_properties": types.BoolPointerValue(response.OutputSchema.Output.AdditionalPropertiesField),
+			"properties":            outputSchemaOutputPropertiesValue,
+			"type":                  types.StringValue(string(response.OutputSchema.Output.Type)),
+		})
+		respDiags.Append(diags...)
 		outputSchemaValue, diags = types.ObjectValue(outputSchemaAttrTypes, map[string]attr.Value{
 			"output": outputSchemaOutputValue,
 		})
