@@ -1,0 +1,27 @@
+```release-note:note
+resource/pingone_verify_voice_phrase: Deprecate resource
+```
+
+```release-note:note
+resource/pingone_verify_voice_phrase_content: Deprecate resource
+```
+
+```release-note:note
+data-source/pingone_verify_voice_phrase: Deprecate data source
+```
+
+```release-note:note
+data-source/pingone_verify_voice_phrase_content: Deprecate data source
+```
+
+```release-note:note
+data-source/pingone_verify_voice_phrase_contents: Deprecate data source
+```
+
+```release-note:note
+resource/pingone_verify_policy: Deprecate `voice` attribute
+```
+
+```release-note:note
+data-source/pingone_verify_policy: Deprecate `voice` attribute
+```
