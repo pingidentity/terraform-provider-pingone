@@ -27,6 +27,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/pingidentity/pingone-go-client/pingone"
+	pingonetypes "github.com/pingidentity/pingone-go-client/types"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	internalstringvalidator "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -840,10 +841,14 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 			graphDataValue.Elements = graphDataElementsValue
 		}
 		if !graphDataAttrs["max_zoom"].IsNull() && !graphDataAttrs["max_zoom"].IsUnknown() {
-			graphDataValue.MaxZoom = graphDataAttrs["max_zoom"].(types.Number).ValueBigFloat()
+			graphDataValue.MaxZoom = &pingonetypes.BigFloat{
+				Float: graphDataAttrs["max_zoom"].(types.Number).ValueBigFloat(),
+			}
 		}
 		if !graphDataAttrs["min_zoom"].IsNull() && !graphDataAttrs["min_zoom"].IsUnknown() {
-			graphDataValue.MinZoom = graphDataAttrs["min_zoom"].(types.Number).ValueBigFloat()
+			graphDataValue.MinZoom = &pingonetypes.BigFloat{
+				Float: graphDataAttrs["min_zoom"].(types.Number).ValueBigFloat(),
+			}
 		}
 		if !graphDataAttrs["pan"].IsNull() && !graphDataAttrs["pan"].IsUnknown() {
 			graphDataPanValue := &pingone.DaVinciFlowGraphDataRequestPan{}
@@ -1156,10 +1161,14 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 			graphDataValue.Elements = graphDataElementsValue
 		}
 		if !graphDataAttrs["max_zoom"].IsNull() && !graphDataAttrs["max_zoom"].IsUnknown() {
-			graphDataValue.MaxZoom = graphDataAttrs["max_zoom"].(types.Number).ValueBigFloat()
+			graphDataValue.MaxZoom = &pingonetypes.BigFloat{
+				Float: graphDataAttrs["max_zoom"].(types.Number).ValueBigFloat(),
+			}
 		}
 		if !graphDataAttrs["min_zoom"].IsNull() && !graphDataAttrs["min_zoom"].IsUnknown() {
-			graphDataValue.MinZoom = graphDataAttrs["min_zoom"].(types.Number).ValueBigFloat()
+			graphDataValue.MinZoom = &pingonetypes.BigFloat{
+				Float: graphDataAttrs["min_zoom"].(types.Number).ValueBigFloat(),
+			}
 		}
 		if !graphDataAttrs["pan"].IsNull() && !graphDataAttrs["pan"].IsUnknown() {
 			graphDataPanValue := &pingone.DaVinciFlowGraphDataRequestPan{}
@@ -1594,8 +1603,8 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			"box_selection_enabled": types.BoolValue(response.GraphData.BoxSelectionEnabled),
 			"data":                  graphDataDataValue,
 			"elements":              graphDataElementsValue,
-			"max_zoom":              types.NumberValue(&response.GraphData.MaxZoom),
-			"min_zoom":              types.NumberValue(&response.GraphData.MinZoom),
+			"max_zoom":              types.NumberValue(response.GraphData.MaxZoom.Float),
+			"min_zoom":              types.NumberValue(response.GraphData.MinZoom.Float),
 			"pan":                   graphDataPanValue,
 			"panning_enabled":       types.BoolValue(response.GraphData.PanningEnabled),
 			"renderer":              graphDataRendererValue,

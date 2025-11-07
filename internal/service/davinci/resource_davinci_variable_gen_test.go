@@ -553,11 +553,11 @@ resource "pingone_davinci_flow" "%[2]s" {
   }
 
   output_schema = {
-    output = jsonencode({
-      "type" : "object",
-      "properties" : {},
-      "additionalProperties" : true
-    })
+    output = {
+      type = "object",
+      properties = jsonencode({}),
+      additionalProperties = true
+    }
   }
 
   trigger = {
@@ -783,11 +783,11 @@ resource "pingone_davinci_flow" "%[2]s" {
   }
 
   output_schema = {
-    output = jsonencode({
-      "type" : "object",
-      "properties" : {},
-      "additionalProperties" : true
-    })
+    output = {
+      type = "object",
+      properties = jsonencode({}),
+      additionalProperties = true
+    }
   }
 
   trigger = {
