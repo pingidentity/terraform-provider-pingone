@@ -32,7 +32,7 @@ require (
 	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.23.2
 	github.com/patrickcping/pingone-go-sdk-v2/risk v0.21.0
 	github.com/patrickcping/pingone-go-sdk-v2/verify v0.10.0
-	github.com/pingidentity/pingone-go-client v0.2.0
+	github.com/pingidentity/pingone-go-client v0.3.0
 )
 
 require (
@@ -286,7 +286,7 @@ require (
 	github.com/ssgreg/nlreturn/v2 v2.2.1 // indirect
 	github.com/stbenjam/no-sprintf-host-port v0.2.0 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
-	github.com/stretchr/testify v1.10.0 // indirect
+	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/tdakkota/asciicheck v0.4.1 // indirect
 	github.com/terraform-linters/tflint v0.57.0 // indirect
