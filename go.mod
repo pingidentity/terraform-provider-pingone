@@ -32,7 +32,7 @@ require (
 	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.23.1
 	github.com/patrickcping/pingone-go-sdk-v2/risk v0.19.1
 	github.com/patrickcping/pingone-go-sdk-v2/verify v0.9.1
-	github.com/pingidentity/pingone-go-client v0.3.1-0.20251106221917-a36eac1d8f0a
+	github.com/pingidentity/pingone-go-client v0.3.1-0.20251117224159-0cf427981cb9
 )
 
 require (
