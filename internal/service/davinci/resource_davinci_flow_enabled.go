@@ -133,6 +133,8 @@ func (state *davinciFlowEnabledResourceModel) readClientResponseFlow(response *p
 	var respDiags diag.Diagnostics
 	// enabled
 	state.Enabled = types.BoolPointerValue(response.Enabled)
+	// flow_id
+	state.FlowId = types.StringValue(response.Id)
 	// id
 	state.Id = types.StringValue(response.Id)
 	return respDiags
@@ -337,7 +339,7 @@ func (r *davinciFlowEnabledResource) ImportState(ctx context.Context, req resour
 		},
 		{
 			Label:     "flow_id",
-			Regexp:    verify.P1ResourceIDRegexp,
+			Regexp:    verify.P1DVResourceIDRegexp,
 			PrimaryID: true,
 		},
 	}
