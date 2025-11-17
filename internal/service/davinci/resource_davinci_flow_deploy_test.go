@@ -4,7 +4,6 @@ package davinci_test
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"regexp"
@@ -19,10 +18,6 @@ import (
 	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/testhcl"
-)
-
-var (
-	lastDeployTime string
 )
 
 func TestAccDavinciFlowDeploy_RemovalDrift(t *testing.T) {
@@ -92,7 +87,7 @@ func testAccDavinciFlow(t *testing.T, withBootstrap bool) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	flowResourceFullName := fmt.Sprintf("pingone_davinci_flow.%s", resourceName)
+	var lastDeployTime string
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -106,42 +101,41 @@ func testAccDavinciFlow(t *testing.T, withBootstrap bool) {
 			{
 				// Create the flow
 				Config: davinciFlowDeploy_FlowOnlyHCL(t, resourceName, withBootstrap),
-				Check:  davinciFlowDeploy_GetDeployedTimestamp(flowResourceFullName, &lastDeployTime),
 			},
 			{
 				// Initial deploy on create
 				Config: davinciFlowDeploy_FirstDeployHCL(t, resourceName, withBootstrap),
 				Check: resource.ComposeTestCheckFunc(
-					davinciFlowDeploy_checkExpectedDeployTimestamp(resourceName, true),
+					davinciFlowDeploy_checkExpectedDeployTimestamp(true, &lastDeployTime),
 					davinciFlowDeploy_CheckComputedValues(resourceName),
-					davinciFlowDeploy_GetDeployedTimestamp(flowResourceFullName, &lastDeployTime),
+					davinciFlowDeploy_GetDeployedTimestamp(&lastDeployTime),
 				),
 			},
 			{
 				// Expect no additional deploy
 				Config: davinciFlowDeploy_FirstNoDeployHCL(t, resourceName, withBootstrap),
 				Check: resource.ComposeTestCheckFunc(
-					davinciFlowDeploy_checkExpectedDeployTimestamp(resourceName, false),
+					davinciFlowDeploy_checkExpectedDeployTimestamp(false, &lastDeployTime),
 					davinciFlowDeploy_CheckComputedValues(resourceName),
-					davinciFlowDeploy_GetDeployedTimestamp(flowResourceFullName, &lastDeployTime),
+					davinciFlowDeploy_GetDeployedTimestamp(&lastDeployTime),
 				),
 			},
 			{
 				// Expect deploy
 				Config: davinciFlowDeploy_SecondDeployHCL(t, resourceName, withBootstrap),
 				Check: resource.ComposeTestCheckFunc(
-					davinciFlowDeploy_checkExpectedDeployTimestamp(resourceName, true),
+					davinciFlowDeploy_checkExpectedDeployTimestamp(true, &lastDeployTime),
 					davinciFlowDeploy_CheckComputedValues(resourceName),
-					davinciFlowDeploy_GetDeployedTimestamp(flowResourceFullName, &lastDeployTime),
+					davinciFlowDeploy_GetDeployedTimestamp(&lastDeployTime),
 				),
 			},
 			{
 				// Expect no additional deploy
 				Config: davinciFlowDeploy_SecondNoDeployHCL(t, resourceName, withBootstrap),
 				Check: resource.ComposeTestCheckFunc(
-					davinciFlowDeploy_checkExpectedDeployTimestamp(resourceName, false),
+					davinciFlowDeploy_checkExpectedDeployTimestamp(false, &lastDeployTime),
 					davinciFlowDeploy_CheckComputedValues(resourceName),
-					davinciFlowDeploy_GetDeployedTimestamp(flowResourceFullName, &lastDeployTime),
+					davinciFlowDeploy_GetDeployedTimestamp(&lastDeployTime),
 				),
 			},
 			// Import is not supported in this resource
@@ -226,7 +220,7 @@ func davinciFlowDeploy_GetIDs(resourceName string, environmentId, id *string) re
 	}
 }
 
-func davinciFlowDeploy_GetDeployedTimestamp(resourceFullName string, lastDeploy *string) resource.TestCheckFunc {
+func davinciFlowDeploy_GetDeployedTimestamp(lastDeploy *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		var ctx = context.Background()
 
@@ -263,14 +257,20 @@ func davinciFlowDeploy_CheckComputedValues(resourceName string) resource.TestChe
 	)
 }
 
-func davinciFlowDeploy_checkExpectedDeployTimestamp(resourceName string, expectRedeploy bool) resource.TestCheckFunc {
+func davinciFlowDeploy_checkExpectedDeployTimestamp(expectRedeploy bool, lastDeployTime *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		var currentDeployTimestamp string
-		davinciFlowDeploy_GetDeployedTimestamp(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), &currentDeployTimestamp)
-		if currentDeployTimestamp != lastDeployTime && !expectRedeploy {
-			return errors.New("Current flow was redeployed unexpectedly")
-		} else if currentDeployTimestamp == lastDeployTime && expectRedeploy {
-			return errors.New("Expected the current flow to have been redeployed, but it was not")
+		err := davinciFlowDeploy_GetDeployedTimestamp(&currentDeployTimestamp)(s)
+		if err != nil {
+			return err
+		}
+		if lastDeployTime == nil {
+			return fmt.Errorf("lastDeployTime pointer is nil")
+		}
+		if currentDeployTimestamp != *lastDeployTime && !expectRedeploy {
+			return fmt.Errorf("Current flow was redeployed unexpectedly. Previous deploy time: %s, Current deploy time: %s", *lastDeployTime, currentDeployTimestamp)
+		} else if currentDeployTimestamp == *lastDeployTime && expectRedeploy {
+			return fmt.Errorf("Expected the current flow to have been redeployed, but it was not. Previous deploy time: %s, Current deploy time: %s", *lastDeployTime, currentDeployTimestamp)
 		}
 		return nil
 	}
