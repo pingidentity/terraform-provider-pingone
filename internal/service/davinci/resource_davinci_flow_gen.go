@@ -27,6 +27,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/pingidentity/pingone-go-client/pingone"
+	pingonetypes "github.com/pingidentity/pingone-go-client/types"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	internalstringvalidator "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -495,9 +496,20 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 			},
 			"output_schema": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
-					"output": schema.StringAttribute{
-						CustomType: jsontypes.NormalizedType{},
-						Optional:   true,
+					"output": schema.SingleNestedAttribute{
+						Required: true,
+						Attributes: map[string]schema.Attribute{
+							"type": schema.StringAttribute{
+								Required: true,
+							},
+							"properties": schema.StringAttribute{
+								CustomType: jsontypes.NormalizedType{},
+								Optional:   true,
+							},
+							"additional_properties": schema.BoolAttribute{
+								Optional: true,
+							},
+						},
 					},
 				},
 				Optional: true,
@@ -670,36 +682,36 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 							"mfa": schema.SingleNestedAttribute{
 								Attributes: map[string]schema.Attribute{
 									"enabled": schema.BoolAttribute{
-										Optional: true,
+										Required: true,
 									},
 									"time": schema.Float32Attribute{
-										Optional: true,
+										Required: true,
 									},
 									"time_format": schema.StringAttribute{
-										Optional: true,
+										Required: true,
 										Validators: []validator.String{
 											stringvalidator.LengthBetween(0, 50),
 										},
 									},
 								},
-								Optional: true,
+								Required: true,
 							},
 							"pwd": schema.SingleNestedAttribute{
 								Attributes: map[string]schema.Attribute{
 									"enabled": schema.BoolAttribute{
-										Optional: true,
+										Required: true,
 									},
 									"time": schema.Float32Attribute{
-										Optional: true,
+										Required: true,
 									},
 									"time_format": schema.StringAttribute{
-										Optional: true,
+										Required: true,
 										Validators: []validator.String{
 											stringvalidator.LengthBetween(0, 50),
 										},
 									},
 								},
-								Optional: true,
+								Required: true,
 							},
 						},
 						Optional: true,
@@ -709,6 +721,7 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 						Validators: []validator.String{
 							stringvalidator.OneOf(
 								"AUTHENTICATION",
+								"SCHEDULE",
 							),
 							stringvalidator.LengthAtLeast(1),
 						},
@@ -828,12 +841,12 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 			graphDataValue.Elements = graphDataElementsValue
 		}
 		if !graphDataAttrs["max_zoom"].IsNull() && !graphDataAttrs["max_zoom"].IsUnknown() {
-			graphDataValue.MaxZoom = &pingone.BigFloat{
+			graphDataValue.MaxZoom = &pingonetypes.BigFloatUnquoted{
 				Float: graphDataAttrs["max_zoom"].(types.Number).ValueBigFloat(),
 			}
 		}
 		if !graphDataAttrs["min_zoom"].IsNull() && !graphDataAttrs["min_zoom"].IsUnknown() {
-			graphDataValue.MinZoom = &pingone.BigFloat{
+			graphDataValue.MinZoom = &pingonetypes.BigFloatUnquoted{
 				Float: graphDataAttrs["min_zoom"].(types.Number).ValueBigFloat(),
 			}
 		}
@@ -903,18 +916,34 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 	result.Name = model.Name.ValueString()
 	// output_schema
 	if !model.OutputSchema.IsNull() && !model.OutputSchema.IsUnknown() {
-		outputSchemaValue := &pingone.DaVinciFlowCreateRequestOutputSchema{}
+		outputSchemaValue := &pingone.DaVinciFlowOutputSchemaRequest{}
 		outputSchemaAttrs := model.OutputSchema.Attributes()
 		if !outputSchemaAttrs["output"].IsNull() && !outputSchemaAttrs["output"].IsUnknown() {
-			var unmarshaled map[string]interface{}
-			err := json.Unmarshal([]byte(outputSchemaAttrs["output"].(jsontypes.Normalized).ValueString()), &unmarshaled)
-			if err != nil {
-				respDiags.AddError(
-					"Error Parsing JSON val",
-					fmt.Sprintf("The value provided for output could not be parsed as json: %s", err.Error()),
-				)
+			outputSchemaOutputValue := pingone.DaVinciFlowOutputSchemaRequestOutput{}
+			outputSchemaOutputAttrs := outputSchemaAttrs["output"].(types.Object).Attributes()
+			outputSchemaOutputValue.AdditionalPropertiesField = outputSchemaOutputAttrs["additional_properties"].(types.Bool).ValueBoolPointer()
+			if !outputSchemaOutputAttrs["properties"].IsNull() && !outputSchemaOutputAttrs["properties"].IsUnknown() {
+				var unmarshaled map[string]interface{}
+				err := json.Unmarshal([]byte(outputSchemaOutputAttrs["properties"].(jsontypes.Normalized).ValueString()), &unmarshaled)
+				if err != nil {
+					respDiags.AddError(
+						"Error Parsing JSON val",
+						fmt.Sprintf("The value provided for output.output_schema.properties could not be parsed as json: %s", err.Error()),
+					)
+				}
+				outputSchemaOutputValue.Properties = unmarshaled
 			}
-			outputSchemaValue.Output = unmarshaled
+			outputSchemaOutputTypeValue, err := pingone.NewDaVinciFlowOutputSchemaRequestOutputTypeFromValue(outputSchemaOutputAttrs["type"].(types.String).ValueString())
+			if err != nil {
+				respDiags.AddAttributeError(
+					path.Root("output_schema.output.type"),
+					"Provided value is not valid",
+					fmt.Sprintf("The value provided for output_schema.output.type is not valid: %s", err.Error()),
+				)
+			} else {
+				outputSchemaOutputValue.Type = *outputSchemaOutputTypeValue
+			}
+			outputSchemaValue.Output = outputSchemaOutputValue
 		}
 		result.OutputSchema = outputSchemaValue
 	}
@@ -939,8 +968,16 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 		settingsValue.DefaultErrorScreenBrandLogo = settingsAttrs["default_error_screen_brand_logo"].(types.Bool).ValueBoolPointer()
 		settingsValue.FlowHttpTimeoutInSeconds = settingsAttrs["flow_http_timeout_in_seconds"].(types.Int32).ValueInt32Pointer()
 		settingsValue.FlowTimeoutInSeconds = settingsAttrs["flow_timeout_in_seconds"].(types.Int32).ValueInt32Pointer()
-		settingsValue.IntermediateLoadingScreenCSS = settingsAttrs["intermediate_loading_screen_css"].(types.String).ValueStringPointer()
-		settingsValue.IntermediateLoadingScreenHTML = settingsAttrs["intermediate_loading_screen_html"].(types.String).ValueStringPointer()
+		if !settingsAttrs["intermediate_loading_screen_css"].IsNull() && !settingsAttrs["intermediate_loading_screen_css"].IsUnknown() {
+			settingsIntermediateLoadingScreenCSSValue := &pingone.DaVinciFlowSettingsRequestIntermediateLoadingScreenCSS{}
+			settingsIntermediateLoadingScreenCSSValue.String = settingsAttrs["intermediate_loading_screen_css"].(types.String).ValueStringPointer()
+			settingsValue.IntermediateLoadingScreenCSS = settingsIntermediateLoadingScreenCSSValue
+		}
+		if !settingsAttrs["intermediate_loading_screen_html"].IsNull() && !settingsAttrs["intermediate_loading_screen_html"].IsUnknown() {
+			settingsIntermediateLoadingScreenHTMLValue := &pingone.DaVinciFlowSettingsRequestIntermediateLoadingScreenHTML{}
+			settingsIntermediateLoadingScreenHTMLValue.String = settingsAttrs["intermediate_loading_screen_html"].(types.String).ValueStringPointer()
+			settingsValue.IntermediateLoadingScreenHTML = settingsIntermediateLoadingScreenHTMLValue
+		}
 		settingsValue.JsCustomFlowPlayer = settingsAttrs["js_custom_flow_player"].(types.String).ValueStringPointer()
 		if !settingsAttrs["js_links"].IsNull() && !settingsAttrs["js_links"].IsUnknown() {
 			settingsValue.JsLinks = []pingone.DaVinciFlowSettingsRequestJsLink{}
@@ -977,30 +1014,30 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 
 	// trigger
 	if !model.Trigger.IsNull() && !model.Trigger.IsUnknown() {
-		triggerValue := &pingone.DaVinciFlowCreateRequestTrigger{}
+		triggerValue := &pingone.DaVinciFlowTriggerRequest{}
 		triggerAttrs := model.Trigger.Attributes()
 		if !triggerAttrs["configuration"].IsNull() && !triggerAttrs["configuration"].IsUnknown() {
-			triggerConfigurationValue := &pingone.DaVinciFlowCreateRequestTriggerConfiguration{}
+			triggerConfigurationValue := &pingone.DaVinciFlowTriggerRequestConfiguration{}
 			triggerConfigurationAttrs := triggerAttrs["configuration"].(types.Object).Attributes()
 			if !triggerConfigurationAttrs["mfa"].IsNull() && !triggerConfigurationAttrs["mfa"].IsUnknown() {
-				triggerConfigurationMfaValue := &pingone.DaVinciFlowCreateRequestTriggerConfigurationMFA{}
+				triggerConfigurationMfaValue := pingone.DaVinciFlowTriggerRequestConfigurationMFA{}
 				triggerConfigurationMfaAttrs := triggerConfigurationAttrs["mfa"].(types.Object).Attributes()
-				triggerConfigurationMfaValue.Enabled = triggerConfigurationMfaAttrs["enabled"].(types.Bool).ValueBoolPointer()
-				triggerConfigurationMfaValue.Time = triggerConfigurationMfaAttrs["time"].(types.Float32).ValueFloat32Pointer()
-				triggerConfigurationMfaValue.TimeFormat = triggerConfigurationMfaAttrs["time_format"].(types.String).ValueStringPointer()
+				triggerConfigurationMfaValue.Enabled = triggerConfigurationMfaAttrs["enabled"].(types.Bool).ValueBool()
+				triggerConfigurationMfaValue.Time = triggerConfigurationMfaAttrs["time"].(types.Float32).ValueFloat32()
+				triggerConfigurationMfaValue.TimeFormat = triggerConfigurationMfaAttrs["time_format"].(types.String).ValueString()
 				triggerConfigurationValue.Mfa = triggerConfigurationMfaValue
 			}
 			if !triggerConfigurationAttrs["pwd"].IsNull() && !triggerConfigurationAttrs["pwd"].IsUnknown() {
-				triggerConfigurationPwdValue := &pingone.DaVinciFlowCreateRequestTriggerConfigurationPassword{}
+				triggerConfigurationPwdValue := pingone.DaVinciFlowTriggerRequestConfigurationPassword{}
 				triggerConfigurationPwdAttrs := triggerConfigurationAttrs["pwd"].(types.Object).Attributes()
-				triggerConfigurationPwdValue.Enabled = triggerConfigurationPwdAttrs["enabled"].(types.Bool).ValueBoolPointer()
-				triggerConfigurationPwdValue.Time = triggerConfigurationPwdAttrs["time"].(types.Float32).ValueFloat32Pointer()
-				triggerConfigurationPwdValue.TimeFormat = triggerConfigurationPwdAttrs["time_format"].(types.String).ValueStringPointer()
+				triggerConfigurationPwdValue.Enabled = triggerConfigurationPwdAttrs["enabled"].(types.Bool).ValueBool()
+				triggerConfigurationPwdValue.Time = triggerConfigurationPwdAttrs["time"].(types.Float32).ValueFloat32()
+				triggerConfigurationPwdValue.TimeFormat = triggerConfigurationPwdAttrs["time_format"].(types.String).ValueString()
 				triggerConfigurationValue.Pwd = triggerConfigurationPwdValue
 			}
 			triggerValue.Configuration = triggerConfigurationValue
 		}
-		triggerTypeValue, err := pingone.NewDaVinciFlowCreateRequestTriggerTypeFromValue(triggerAttrs["type"].(types.String).ValueString())
+		triggerTypeValue, err := pingone.NewDaVinciFlowTriggerRequestTypeFromValue(triggerAttrs["type"].(types.String).ValueString())
 		if err != nil {
 			respDiags.AddAttributeError(
 				path.Root("type"),
@@ -1124,12 +1161,12 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 			graphDataValue.Elements = graphDataElementsValue
 		}
 		if !graphDataAttrs["max_zoom"].IsNull() && !graphDataAttrs["max_zoom"].IsUnknown() {
-			graphDataValue.MaxZoom = &pingone.BigFloat{
+			graphDataValue.MaxZoom = &pingonetypes.BigFloatUnquoted{
 				Float: graphDataAttrs["max_zoom"].(types.Number).ValueBigFloat(),
 			}
 		}
 		if !graphDataAttrs["min_zoom"].IsNull() && !graphDataAttrs["min_zoom"].IsUnknown() {
-			graphDataValue.MinZoom = &pingone.BigFloat{
+			graphDataValue.MinZoom = &pingonetypes.BigFloatUnquoted{
 				Float: graphDataAttrs["min_zoom"].(types.Number).ValueBigFloat(),
 			}
 		}
@@ -1199,18 +1236,34 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 	result.Name = model.Name.ValueString()
 	// output_schema
 	if !model.OutputSchema.IsNull() && !model.OutputSchema.IsUnknown() {
-		outputSchemaValue := &pingone.DaVinciFlowReplaceRequestOutputSchema{}
+		outputSchemaValue := &pingone.DaVinciFlowOutputSchemaRequest{}
 		outputSchemaAttrs := model.OutputSchema.Attributes()
 		if !outputSchemaAttrs["output"].IsNull() && !outputSchemaAttrs["output"].IsUnknown() {
-			var unmarshaled map[string]interface{}
-			err := json.Unmarshal([]byte(outputSchemaAttrs["output"].(jsontypes.Normalized).ValueString()), &unmarshaled)
-			if err != nil {
-				respDiags.AddError(
-					"Error Parsing JSON val",
-					fmt.Sprintf("The value provided for output could not be parsed as json: %s", err.Error()),
-				)
+			outputSchemaOutputValue := pingone.DaVinciFlowOutputSchemaRequestOutput{}
+			outputSchemaOutputAttrs := outputSchemaAttrs["output"].(types.Object).Attributes()
+			outputSchemaOutputValue.AdditionalPropertiesField = outputSchemaOutputAttrs["additional_properties"].(types.Bool).ValueBoolPointer()
+			if !outputSchemaOutputAttrs["properties"].IsNull() && !outputSchemaOutputAttrs["properties"].IsUnknown() {
+				var unmarshaled map[string]interface{}
+				err := json.Unmarshal([]byte(outputSchemaOutputAttrs["properties"].(jsontypes.Normalized).ValueString()), &unmarshaled)
+				if err != nil {
+					respDiags.AddError(
+						"Error Parsing JSON val",
+						fmt.Sprintf("The value provided for output.output_schema.properties could not be parsed as json: %s", err.Error()),
+					)
+				}
+				outputSchemaOutputValue.Properties = unmarshaled
 			}
-			outputSchemaValue.Output = unmarshaled
+			outputSchemaOutputTypeValue, err := pingone.NewDaVinciFlowOutputSchemaRequestOutputTypeFromValue(outputSchemaOutputAttrs["type"].(types.String).ValueString())
+			if err != nil {
+				respDiags.AddAttributeError(
+					path.Root("output_schema.output.type"),
+					"Provided value is not valid",
+					fmt.Sprintf("The value provided for output_schema.output.type is not valid: %s", err.Error()),
+				)
+			} else {
+				outputSchemaOutputValue.Type = *outputSchemaOutputTypeValue
+			}
+			outputSchemaValue.Output = outputSchemaOutputValue
 		}
 		result.OutputSchema = outputSchemaValue
 	}
@@ -1235,8 +1288,16 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 		settingsValue.DefaultErrorScreenBrandLogo = settingsAttrs["default_error_screen_brand_logo"].(types.Bool).ValueBoolPointer()
 		settingsValue.FlowHttpTimeoutInSeconds = settingsAttrs["flow_http_timeout_in_seconds"].(types.Int32).ValueInt32Pointer()
 		settingsValue.FlowTimeoutInSeconds = settingsAttrs["flow_timeout_in_seconds"].(types.Int32).ValueInt32Pointer()
-		settingsValue.IntermediateLoadingScreenCSS = settingsAttrs["intermediate_loading_screen_css"].(types.String).ValueStringPointer()
-		settingsValue.IntermediateLoadingScreenHTML = settingsAttrs["intermediate_loading_screen_html"].(types.String).ValueStringPointer()
+		if !settingsAttrs["intermediate_loading_screen_css"].IsNull() && !settingsAttrs["intermediate_loading_screen_css"].IsUnknown() {
+			settingsIntermediateLoadingScreenCSSValue := &pingone.DaVinciFlowSettingsRequestIntermediateLoadingScreenCSS{}
+			settingsIntermediateLoadingScreenCSSValue.String = settingsAttrs["intermediate_loading_screen_css"].(types.String).ValueStringPointer()
+			settingsValue.IntermediateLoadingScreenCSS = settingsIntermediateLoadingScreenCSSValue
+		}
+		if !settingsAttrs["intermediate_loading_screen_html"].IsNull() && !settingsAttrs["intermediate_loading_screen_html"].IsUnknown() {
+			settingsIntermediateLoadingScreenHTMLValue := &pingone.DaVinciFlowSettingsRequestIntermediateLoadingScreenHTML{}
+			settingsIntermediateLoadingScreenHTMLValue.String = settingsAttrs["intermediate_loading_screen_html"].(types.String).ValueStringPointer()
+			settingsValue.IntermediateLoadingScreenHTML = settingsIntermediateLoadingScreenHTMLValue
+		}
 		settingsValue.JsCustomFlowPlayer = settingsAttrs["js_custom_flow_player"].(types.String).ValueStringPointer()
 		if !settingsAttrs["js_links"].IsNull() && !settingsAttrs["js_links"].IsUnknown() {
 			settingsValue.JsLinks = []pingone.DaVinciFlowSettingsRequestJsLink{}
@@ -1273,30 +1334,30 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 
 	// trigger
 	if !model.Trigger.IsNull() && !model.Trigger.IsUnknown() {
-		triggerValue := &pingone.DaVinciFlowReplaceRequestTrigger{}
+		triggerValue := &pingone.DaVinciFlowTriggerRequest{}
 		triggerAttrs := model.Trigger.Attributes()
 		if !triggerAttrs["configuration"].IsNull() && !triggerAttrs["configuration"].IsUnknown() {
-			triggerConfigurationValue := &pingone.DaVinciFlowReplaceRequestTriggerConfiguration{}
+			triggerConfigurationValue := &pingone.DaVinciFlowTriggerRequestConfiguration{}
 			triggerConfigurationAttrs := triggerAttrs["configuration"].(types.Object).Attributes()
 			if !triggerConfigurationAttrs["mfa"].IsNull() && !triggerConfigurationAttrs["mfa"].IsUnknown() {
-				triggerConfigurationMfaValue := &pingone.DaVinciFlowReplaceRequestTriggerConfigurationMFA{}
+				triggerConfigurationMfaValue := pingone.DaVinciFlowTriggerRequestConfigurationMFA{}
 				triggerConfigurationMfaAttrs := triggerConfigurationAttrs["mfa"].(types.Object).Attributes()
-				triggerConfigurationMfaValue.Enabled = triggerConfigurationMfaAttrs["enabled"].(types.Bool).ValueBoolPointer()
-				triggerConfigurationMfaValue.Time = triggerConfigurationMfaAttrs["time"].(types.Float32).ValueFloat32Pointer()
-				triggerConfigurationMfaValue.TimeFormat = triggerConfigurationMfaAttrs["time_format"].(types.String).ValueStringPointer()
+				triggerConfigurationMfaValue.Enabled = triggerConfigurationMfaAttrs["enabled"].(types.Bool).ValueBool()
+				triggerConfigurationMfaValue.Time = triggerConfigurationMfaAttrs["time"].(types.Float32).ValueFloat32()
+				triggerConfigurationMfaValue.TimeFormat = triggerConfigurationMfaAttrs["time_format"].(types.String).ValueString()
 				triggerConfigurationValue.Mfa = triggerConfigurationMfaValue
 			}
 			if !triggerConfigurationAttrs["pwd"].IsNull() && !triggerConfigurationAttrs["pwd"].IsUnknown() {
-				triggerConfigurationPwdValue := &pingone.DaVinciFlowReplaceRequestTriggerConfigurationPassword{}
+				triggerConfigurationPwdValue := pingone.DaVinciFlowTriggerRequestConfigurationPassword{}
 				triggerConfigurationPwdAttrs := triggerConfigurationAttrs["pwd"].(types.Object).Attributes()
-				triggerConfigurationPwdValue.Enabled = triggerConfigurationPwdAttrs["enabled"].(types.Bool).ValueBoolPointer()
-				triggerConfigurationPwdValue.Time = triggerConfigurationPwdAttrs["time"].(types.Float32).ValueFloat32Pointer()
-				triggerConfigurationPwdValue.TimeFormat = triggerConfigurationPwdAttrs["time_format"].(types.String).ValueStringPointer()
+				triggerConfigurationPwdValue.Enabled = triggerConfigurationPwdAttrs["enabled"].(types.Bool).ValueBool()
+				triggerConfigurationPwdValue.Time = triggerConfigurationPwdAttrs["time"].(types.Float32).ValueFloat32()
+				triggerConfigurationPwdValue.TimeFormat = triggerConfigurationPwdAttrs["time_format"].(types.String).ValueString()
 				triggerConfigurationValue.Pwd = triggerConfigurationPwdValue
 			}
 			triggerValue.Configuration = triggerConfigurationValue
 		}
-		triggerTypeValue, err := pingone.NewDaVinciFlowReplaceRequestTriggerTypeFromValue(triggerAttrs["type"].(types.String).ValueString())
+		triggerTypeValue, err := pingone.NewDaVinciFlowTriggerRequestTypeFromValue(triggerAttrs["type"].(types.String).ValueString())
 		if err != nil {
 			respDiags.AddAttributeError(
 				path.Root("type"),
@@ -1523,6 +1584,18 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			"nodes": graphDataElementsNodesValue,
 		})
 		respDiags.Append(diags...)
+		var maxZoomValue types.Number
+		if response.GraphData.MaxZoom == nil || response.GraphData.MaxZoom.Float == nil {
+			maxZoomValue = types.NumberNull()
+		} else {
+			maxZoomValue = types.NumberValue(response.GraphData.MaxZoom.Float)
+		}
+		var minZoomValue types.Number
+		if response.GraphData.MinZoom == nil || response.GraphData.MinZoom.Float == nil {
+			minZoomValue = types.NumberNull()
+		} else {
+			minZoomValue = types.NumberValue(response.GraphData.MinZoom.Float)
+		}
 		graphDataPanValue, diags := types.ObjectValue(graphDataPanAttrTypes, map[string]attr.Value{
 			"x": types.Float32Value(response.GraphData.Pan.X),
 			"y": types.Float32Value(response.GraphData.Pan.Y),
@@ -1542,8 +1615,8 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			"box_selection_enabled": types.BoolValue(response.GraphData.BoxSelectionEnabled),
 			"data":                  graphDataDataValue,
 			"elements":              graphDataElementsValue,
-			"max_zoom":              types.NumberValue(response.GraphData.MaxZoom.Float),
-			"min_zoom":              types.NumberValue(response.GraphData.MinZoom.Float),
+			"max_zoom":              maxZoomValue,
+			"min_zoom":              minZoomValue,
 			"pan":                   graphDataPanValue,
 			"panning_enabled":       types.BoolValue(response.GraphData.PanningEnabled),
 			"renderer":              graphDataRendererValue,
@@ -1594,27 +1667,38 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 	// name
 	state.Name = types.StringValue(response.Name)
 	// output_schema
+	outputSchemaOutputAttrTypes := map[string]attr.Type{
+		"additional_properties": types.BoolType,
+		"properties":            jsontypes.NormalizedType{},
+		"type":                  types.StringType,
+	}
 	outputSchemaAttrTypes := map[string]attr.Type{
-		"output": jsontypes.NormalizedType{},
+		"output": types.ObjectType{AttrTypes: outputSchemaOutputAttrTypes},
 	}
 	var outputSchemaValue types.Object
 	if response.OutputSchema == nil {
 		outputSchemaValue = types.ObjectNull(outputSchemaAttrTypes)
 	} else {
-		var outputSchemaOutputValue jsontypes.Normalized
-		if response.OutputSchema.Output == nil {
-			outputSchemaOutputValue = jsontypes.NewNormalizedNull()
+		var outputSchemaOutputPropertiesValue jsontypes.Normalized
+		if response.OutputSchema.Output.Properties == nil {
+			outputSchemaOutputPropertiesValue = jsontypes.NewNormalizedNull()
 		} else {
-			outputSchemaOutputBytes, err := json.Marshal(response.OutputSchema.Output)
+			outputSchemaOutputPropertiesBytes, err := json.Marshal(response.OutputSchema.Output.Properties)
 			if err != nil {
 				respDiags.AddError(
-					"Error Marshaling outputSchema.output",
+					"Error Marshaling outputSchema.output.properties",
 					fmt.Sprintf("An error occurred while marshaling: %s", err.Error()),
 				)
 			} else {
-				outputSchemaOutputValue = jsontypes.NewNormalizedValue(string(outputSchemaOutputBytes))
+				outputSchemaOutputPropertiesValue = jsontypes.NewNormalizedValue(string(outputSchemaOutputPropertiesBytes))
 			}
 		}
+		outputSchemaOutputValue, diags := types.ObjectValue(outputSchemaOutputAttrTypes, map[string]attr.Value{
+			"additional_properties": types.BoolPointerValue(response.OutputSchema.Output.AdditionalPropertiesField),
+			"properties":            outputSchemaOutputPropertiesValue,
+			"type":                  types.StringValue(string(response.OutputSchema.Output.Type)),
+		})
+		respDiags.Append(diags...)
 		outputSchemaValue, diags = types.ObjectValue(outputSchemaAttrTypes, map[string]attr.Value{
 			"output": outputSchemaOutputValue,
 		})
@@ -1672,6 +1756,51 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			settingsCssLinksValue, diags = types.SetValueFrom(context.Background(), types.StringType, response.Settings.CssLinks)
 			respDiags.Append(diags...)
 		}
+		var flowTimeoutInSecondsValue types.Int32
+		if response.Settings.FlowTimeoutInSeconds == nil {
+			flowTimeoutInSecondsValue = types.Int32Null()
+		} else {
+			// Truncate timeout to int32 to match the schema
+			flowTimeoutInSecondsValue = types.Int32Value(int32(*response.Settings.FlowTimeoutInSeconds))
+		}
+		var intermediateLoadingScreenCSSValue types.String
+		if response.Settings.IntermediateLoadingScreenCSS == nil {
+			intermediateLoadingScreenCSSValue = types.StringNull()
+		} else {
+			// If string is set or if neither object nor string is set, just use the .String value
+			if response.Settings.IntermediateLoadingScreenCSS.String != nil || response.Settings.IntermediateLoadingScreenCSS.Object == nil {
+				intermediateLoadingScreenCSSValue = types.StringPointerValue(response.Settings.IntermediateLoadingScreenCSS.String)
+			} else {
+				// Otherwise, marshal the .Object field to a JSON string
+				intermediateLoadingScreenCSSValueBytes, err := json.Marshal(response.Settings.IntermediateLoadingScreenCSS.Object)
+				if err != nil {
+					respDiags.AddError(
+						"Error Marshaling settings.intermediateLoadingScreenCSS.object",
+						fmt.Sprintf("An error occurred while marshaling: %s", err.Error()),
+					)
+				}
+				intermediateLoadingScreenCSSValue = types.StringValue(string(intermediateLoadingScreenCSSValueBytes))
+			}
+		}
+		var intermediateLoadingScreenHTMLValue types.String
+		if response.Settings.IntermediateLoadingScreenHTML == nil {
+			intermediateLoadingScreenHTMLValue = types.StringNull()
+		} else {
+			// If string is set or if neither object nor string is set, just use the .String value
+			if response.Settings.IntermediateLoadingScreenHTML.String != nil || response.Settings.IntermediateLoadingScreenHTML.Object == nil {
+				intermediateLoadingScreenHTMLValue = types.StringPointerValue(response.Settings.IntermediateLoadingScreenHTML.String)
+			} else {
+				// Otherwise, marshal the .Object field to a JSON string
+				intermediateLoadingScreenHTMLValueBytes, err := json.Marshal(response.Settings.IntermediateLoadingScreenHTML.Object)
+				if err != nil {
+					respDiags.AddError(
+						"Error Marshaling settings.intermediateLoadingScreenHTML.object",
+						fmt.Sprintf("An error occurred while marshaling: %s", err.Error()),
+					)
+				}
+				intermediateLoadingScreenHTMLValue = types.StringValue(string(intermediateLoadingScreenHTMLValueBytes))
+			}
+		}
 		var settingsJsLinksValue types.Set
 		if response.Settings.JsLinks == nil {
 			settingsJsLinksValue = types.SetNull(settingsJsLinksElementType)
@@ -1711,9 +1840,9 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			"custom_title":                       types.StringPointerValue(response.Settings.CustomTitle),
 			"default_error_screen_brand_logo":    types.BoolPointerValue(response.Settings.DefaultErrorScreenBrandLogo),
 			"flow_http_timeout_in_seconds":       types.Int32PointerValue(response.Settings.FlowHttpTimeoutInSeconds),
-			"flow_timeout_in_seconds":            types.Int32PointerValue(response.Settings.FlowTimeoutInSeconds),
-			"intermediate_loading_screen_css":    types.StringPointerValue(response.Settings.IntermediateLoadingScreenCSS),
-			"intermediate_loading_screen_html":   types.StringPointerValue(response.Settings.IntermediateLoadingScreenHTML),
+			"flow_timeout_in_seconds":            flowTimeoutInSecondsValue,
+			"intermediate_loading_screen_css":    intermediateLoadingScreenCSSValue,
+			"intermediate_loading_screen_html":   intermediateLoadingScreenHTMLValue,
 			"js_custom_flow_player":              types.StringPointerValue(response.Settings.JsCustomFlowPlayer),
 			"js_links":                           settingsJsLinksValue,
 			"log_level":                          types.Int32PointerValue(response.Settings.LogLevel),
@@ -1775,12 +1904,7 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			})
 			respDiags.Append(diags...)
 		}
-		var triggerTypePtrValue *string
-		if response.Trigger.Type != nil {
-			triggerTypeStringValue := string(*response.Trigger.Type)
-			triggerTypePtrValue = &triggerTypeStringValue
-		}
-		triggerTypeValue := types.StringPointerValue(triggerTypePtrValue)
+		triggerTypeValue := types.StringValue(string(response.Trigger.Type))
 		triggerValue, diags = types.ObjectValue(triggerAttrTypes, map[string]attr.Value{
 			"configuration": triggerConfigurationValue,
 			"type":          triggerTypeValue,
