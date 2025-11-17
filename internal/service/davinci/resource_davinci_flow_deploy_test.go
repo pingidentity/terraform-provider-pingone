@@ -195,8 +195,8 @@ func testAccDavinciFlowDeploy_BrokenFlow(t *testing.T, withBootstrap bool) {
 		Steps: []resource.TestStep{
 			{
 				Config: davinciFlowDeploy_BrokenFlowHCL(t, resourceName, withBootstrap),
-				//TODO determine real error message
-				ExpectError: regexp.MustCompile(`Error deploying flow`),
+				// Right now attempting to deploy this broken flow returns a 500 error from the API
+				ExpectError: regexp.MustCompile(`There was an unexpected error with the service`),
 			},
 		},
 	})
@@ -413,11 +413,11 @@ resource "pingone_davinci_flow" "%[3]s" {
   }
 
   output_schema = {
-    output = jsonencode({
-      "type" : "object",
-      "properties" : {},
-      "additionalProperties" : true
-    })
+    output = {
+      type = "object"
+      properties = jsonencode({})
+      additionalProperties = true
+    }
   }
 
   trigger = {
