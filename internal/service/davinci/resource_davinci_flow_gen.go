@@ -808,7 +808,7 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 					nodesDataValue.Name = nodesDataAttrs["name"].(types.String).ValueStringPointer()
 					nodesDataValue.NodeType = nodesDataAttrs["node_type"].(types.String).ValueString()
 					if !nodesDataAttrs["properties"].IsNull() && !nodesDataAttrs["properties"].IsUnknown() {
-						var unmarshaled pingone.DaVinciFlowGraphDataRequestElementsNodeDataProperties
+						var unmarshaled map[string]interface{}
 						err := json.Unmarshal([]byte(nodesDataAttrs["properties"].(jsontypes.Normalized).ValueString()), &unmarshaled)
 						if err != nil {
 							respDiags.AddError(
@@ -816,7 +816,7 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 								fmt.Sprintf("The value provided for properties could not be parsed as json: %s", err.Error()),
 							)
 						}
-						nodesDataValue.Properties = &unmarshaled
+						nodesDataValue.Properties = unmarshaled
 					}
 					nodesDataValue.Status = nodesDataAttrs["status"].(types.String).ValueStringPointer()
 					nodesDataValue.Type = nodesDataAttrs["type"].(types.String).ValueStringPointer()
@@ -1128,7 +1128,7 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 					nodesDataValue.Name = nodesDataAttrs["name"].(types.String).ValueStringPointer()
 					nodesDataValue.NodeType = nodesDataAttrs["node_type"].(types.String).ValueString()
 					if !nodesDataAttrs["properties"].IsNull() && !nodesDataAttrs["properties"].IsUnknown() {
-						var unmarshaled pingone.DaVinciFlowGraphDataRequestElementsNodeDataProperties
+						var unmarshaled map[string]interface{}
 						err := json.Unmarshal([]byte(nodesDataAttrs["properties"].(jsontypes.Normalized).ValueString()), &unmarshaled)
 						if err != nil {
 							respDiags.AddError(
@@ -1136,7 +1136,7 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 								fmt.Sprintf("The value provided for properties could not be parsed as json: %s", err.Error()),
 							)
 						}
-						nodesDataValue.Properties = &unmarshaled
+						nodesDataValue.Properties = unmarshaled
 					}
 					nodesDataValue.Status = nodesDataAttrs["status"].(types.String).ValueStringPointer()
 					nodesDataValue.Type = nodesDataAttrs["type"].(types.String).ValueStringPointer()
