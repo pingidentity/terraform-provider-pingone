@@ -185,7 +185,7 @@ func (r *davinciFlowDeployResource) Create(ctx context.Context, req resource.Cre
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciFlowsApi.DeployFlow(ctx, environmentIdUuid, data.FlowId.ValueString()).Execute()
+			fO, fR, fErr := r.Client.DaVinciFlowsApi.DeployFlowByIdAsDeployJson(ctx, environmentIdUuid, data.FlowId.ValueString()).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"DeployFlow",

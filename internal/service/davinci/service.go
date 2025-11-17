@@ -20,6 +20,8 @@ func Resources() []func() resource.Resource {
 		NewDavinciApplicationSecretResource,
 		NewDavinciConnectorInstanceResource,
 		NewDavinciFlowResource,
+		NewDavinciFlowDeployResource,
+		NewDavinciFlowEnabledResource,
 		NewDavinciVariableResource,
 	}
 }

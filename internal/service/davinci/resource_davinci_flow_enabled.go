@@ -111,15 +111,15 @@ func (r *davinciFlowEnabledResource) Schema(ctx context.Context, req resource.Sc
 	}
 }
 
-func (model *davinciFlowEnabledResourceModel) buildClientStruct() (*pingone.DavinciFlowEnabledCreateRequest, diag.Diagnostics) {
-	result := &pingone.DavinciFlowEnabledCreateRequest{}
+func (model *davinciFlowEnabledResourceModel) buildClientStruct() (*pingone.DaVinciFlowEnableRequest, diag.Diagnostics) {
+	result := &pingone.DaVinciFlowEnableRequest{}
 	var respDiags diag.Diagnostics
 	// enabled
 	result.Enabled = model.Enabled.ValueBool()
 	return result, respDiags
 }
 
-func (state *davinciFlowEnabledResourceModel) readClientResponse(response *pingone.DavinciFlowEnabledResponse) diag.Diagnostics {
+func (state *davinciFlowEnabledResourceModel) readClientResponse(response *pingone.DaVinciFlowEnabledResponse) diag.Diagnostics {
 	var respDiags diag.Diagnostics
 	// enabled
 	state.Enabled = types.BoolValue(response.Enabled)
@@ -171,12 +171,12 @@ func (r *davinciFlowEnabledResource) Create(ctx context.Context, req resource.Cr
 		)
 		return
 	}
-	var responseData *pingone.DavinciFlowEnabledResponse
+	var responseData *pingone.DaVinciFlowEnabledResponse
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DavinciFlowEnabledsApi.EnableFlow(ctx, environmentIdUuid).DavinciFlowEnabledCreateRequest(*clientData).Execute()
+			fO, fR, fErr := r.Client.DaVinciFlowsApi.UpdateEnabledByFlowId(ctx, environmentIdUuid, data.FlowId.ValueString()).DaVinciFlowEnableRequest(*clientData).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"EnableFlow",
@@ -295,12 +295,12 @@ func (r *davinciFlowEnabledResource) Update(ctx context.Context, req resource.Up
 		)
 		return
 	}
-	var responseData *pingone.DavinciFlowEnabledResponse
+	var responseData *pingone.DaVinciFlowEnabledResponse
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DavinciFlowEnabledsApi.EnableFlow(ctx, environmentIdUuid).DavinciFlowEnabledCreateRequest(*clientData).Execute()
+			fO, fR, fErr := r.Client.DaVinciFlowsApi.UpdateEnabledByFlowId(ctx, environmentIdUuid, data.FlowId.ValueString()).DaVinciFlowEnableRequest(*clientData).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"EnableFlow",
