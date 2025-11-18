@@ -17,6 +17,7 @@ func Resources() []func() resource.Resource {
 		NewApplicationPushCredentialResource,
 		NewFIDO2PolicyResource,
 		NewMFADevicePolicyResource,
+		NewMFADevicePolicyDefaultResource,
 		NewMFASettingsResource,
 	}
 	resources = append(resources, BetaResources()...)
