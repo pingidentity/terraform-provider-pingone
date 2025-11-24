@@ -1108,6 +1108,7 @@ func (r *MFADevicePolicyResource) Create(ctx context.Context, req resource.Creat
 
 	// Run the API call
 	var response *mfa.DeviceAuthenticationPolicyPostResponse
+
 	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
@@ -1394,15 +1395,15 @@ func (p *MFADevicePolicyResourceModel) expand(ctx context.Context, apiClient *ma
 	}
 
 	// Main object
-	data := mfa.NewDeviceAuthenticationPolicy(
+	pingOneMFAPolicy := mfa.NewDeviceAuthenticationPolicyPingOneMFA(
 		p.Name.ValueString(),
 		*sms,
 		*voice,
 		*email,
-		*mobile,
 		*totp,
 		false,
 		false,
+		*mobile,
 	)
 
 	// FIDO2
@@ -1418,7 +1419,7 @@ func (p *MFADevicePolicyResourceModel) expand(ctx context.Context, apiClient *ma
 
 		fido2 := fido2Plan.expand()
 
-		data.SetFido2(*fido2)
+		pingOneMFAPolicy.SetFido2(*fido2)
 	}
 
 	// Authentication
@@ -1441,28 +1442,34 @@ func (p *MFADevicePolicyResourceModel) expand(ctx context.Context, apiClient *ma
 
 	// New Device Notification
 	if !p.NewDeviceNotification.IsNull() && !p.NewDeviceNotification.IsUnknown() {
-		data.SetNewDeviceNotification(
+		pingOneMFAPolicy.SetNewDeviceNotification(
 			mfa.EnumMFADevicePolicyNewDeviceNotification(p.NewDeviceNotification.ValueString()),
 		)
 	}
 
 	if !p.Default.IsNull() && !p.Default.IsUnknown() {
-		data.SetDefault(p.Default.ValueBool())
+		pingOneMFAPolicy.SetDefault(p.Default.ValueBool())
 	} else {
-		data.SetDefault(false)
+		pingOneMFAPolicy.SetDefault(false)
 	}
 
-	return data, diags
+	// Wrap PingOneMFA policy in union type
+	data := mfa.DeviceAuthenticationPolicyPingOneMFAAsDeviceAuthenticationPolicy(pingOneMFAPolicy)
+
+	return &data, diags
 }
 
 func (p *MFADevicePolicyResourceModel) expandCreate(ctx context.Context, apiClient *management.APIClient) (*mfa.DeviceAuthenticationPolicyPost, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	data, diags := p.expand(ctx, apiClient)
+	if diags.HasError() {
+		return nil, diags
+	}
 
-	return &mfa.DeviceAuthenticationPolicyPost{
-		DeviceAuthenticationPolicy: data,
-	}, diags
+	result := mfa.DeviceAuthenticationPolicyAsDeviceAuthenticationPolicyPost(data)
+
+	return &result, diags
 }
 
 func (p *MFADevicePolicySmsResourceModel) expand(ctx context.Context) (*mfa.DeviceAuthenticationPolicyOfflineDevice, diag.Diagnostics) {
@@ -1595,7 +1602,7 @@ func (p *MFADevicePolicyMobileResourceModel) expand(ctx context.Context, apiClie
 		return nil, diags
 	}
 
-	failure, d := otpFailurePlan.expand(ctx)
+	failure, d := otpFailurePlan.expandMobile(ctx)
 	diags.Append(d...)
 	if diags.HasError() {
 		return nil, diags
@@ -1985,35 +1992,44 @@ func (p *MFADevicePolicyResourceModel) toState(apiObject *mfa.DeviceAuthenticati
 		return diags
 	}
 
+	pingOneMFAPolicy := apiObject.DeviceAuthenticationPolicyPingOneMFA
+	if pingOneMFAPolicy == nil {
+		diags.AddError(
+			"Incorrect policy type",
+			"Expected a PingOne MFA device policy but received a different type. This resource only supports PingOne MFA policies.",
+		)
+		return diags
+	}
+
 	var d diag.Diagnostics
 
-	p.Id = framework.PingOneResourceIDToTF(apiObject.GetId())
-	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
-	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
+	p.Id = framework.PingOneResourceIDToTF(pingOneMFAPolicy.GetId())
+	p.EnvironmentId = framework.PingOneResourceIDToTF(*pingOneMFAPolicy.GetEnvironment().Id)
+	p.Name = framework.StringOkToTF(pingOneMFAPolicy.GetNameOk())
 
-	p.Authentication, d = toStateMfaDevicePolicyAuthentication(apiObject.GetAuthenticationOk())
+	p.Authentication, d = toStateMfaDevicePolicyAuthentication(pingOneMFAPolicy.GetAuthenticationOk())
 	diags.Append(d...)
 
-	p.NewDeviceNotification = framework.EnumOkToTF(apiObject.GetNewDeviceNotificationOk())
+	p.NewDeviceNotification = framework.EnumOkToTF(pingOneMFAPolicy.GetNewDeviceNotificationOk())
 
-	p.Default = framework.BoolOkToTF(apiObject.GetDefaultOk())
+	p.Default = framework.BoolOkToTF(pingOneMFAPolicy.GetDefaultOk())
 
-	p.Sms, d = toStateMfaDevicePolicySms(apiObject.GetSmsOk())
+	p.Sms, d = toStateMfaDevicePolicySms(pingOneMFAPolicy.GetSmsOk())
 	diags.Append(d...)
 
-	p.Voice, d = toStateMfaDevicePolicyVoice(apiObject.GetVoiceOk())
+	p.Voice, d = toStateMfaDevicePolicyVoice(pingOneMFAPolicy.GetVoiceOk())
 	diags.Append(d...)
 
-	p.Email, d = toStateMfaDevicePolicyEmail(apiObject.GetEmailOk())
+	p.Email, d = toStateMfaDevicePolicyEmail(pingOneMFAPolicy.GetEmailOk())
 	diags.Append(d...)
 
-	p.Mobile, d = toStateMfaDevicePolicyMobile(apiObject.GetMobileOk())
+	p.Mobile, d = toStateMfaDevicePolicyMobile(pingOneMFAPolicy.GetMobileOk())
 	diags.Append(d...)
 
-	p.Totp, d = toStateMfaDevicePolicyTotp(apiObject.GetTotpOk())
+	p.Totp, d = toStateMfaDevicePolicyTotp(pingOneMFAPolicy.GetTotpOk())
 	diags.Append(d...)
 
-	p.Fido2, d = toStateMfaDevicePolicyFido2(apiObject.GetFido2Ok())
+	p.Fido2, d = toStateMfaDevicePolicyFido2(pingOneMFAPolicy.GetFido2Ok())
 	diags.Append(d...)
 
 	return diags
@@ -2026,6 +2042,14 @@ func (p *MFADevicePolicyResourceModel) toStateCreate(apiObject *mfa.DeviceAuthen
 		diags.AddError(
 			"Data object missing",
 			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
+		)
+		return diags
+	}
+
+	if apiObject.DeviceAuthenticationPolicy == nil {
+		diags.AddError(
+			"Unexpected response type",
+			"Expected a DeviceAuthenticationPolicy in the response but received a different type. Please report this to the provider maintainers.",
 		)
 		return diags
 	}
@@ -2484,7 +2508,7 @@ func toStateMfaDevicePolicyMobileOtp(apiObject *mfa.DeviceAuthenticationPolicyCo
 	return objValue, diags
 }
 
-func toStateMfaDevicePolicyMobileOtpFailure(apiObject *mfa.DeviceAuthenticationPolicyOfflineDeviceOtpFailure, ok bool) (types.Object, diag.Diagnostics) {
+func toStateMfaDevicePolicyMobileOtpFailure(apiObject *mfa.DeviceAuthenticationPolicyPingOneMFAAllOfMobileOtpFailure, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -2508,7 +2532,7 @@ func toStateMfaDevicePolicyMobileOtpFailure(apiObject *mfa.DeviceAuthenticationP
 	return objValue, diags
 }
 
-func toStateMfaDevicePolicyMobileOtpFailureCooldown(apiObject *mfa.DeviceAuthenticationPolicyOfflineDeviceOtpFailureCoolDown, ok bool) (types.Object, diag.Diagnostics) {
+func toStateMfaDevicePolicyMobileOtpFailureCooldown(apiObject *mfa.DeviceAuthenticationPolicyPingOneMFAAllOfMobileOtpFailureCoolDown, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
