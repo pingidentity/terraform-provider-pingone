@@ -23,7 +23,7 @@ func TestAccCustomDomain_RemovalDrift(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	domainPrefix := acctest.ResourceNameGen()
+	domainPrefix := acctest.DomainNamePrefixWithTimestampGen()
 	resourceFullName := fmt.Sprintf("pingone_custom_domain.%s", resourceName)
 
 	environmentName := acctest.ResourceNameGenEnvironment()
@@ -40,8 +40,8 @@ func TestAccCustomDomain_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
-
+			acctest.PreCheckNoBeta(t)
+			acctest.PreCheckNewCustomDomain(t)
 			p1Client = acctestlegacysdk.PreCheckTestClient(ctx, t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -80,7 +80,7 @@ func TestAccCustomDomain_Full(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	domainPrefix := acctest.ResourceNameGen()
+	domainPrefix := acctest.DomainNamePrefixWithTimestampGen()
 	resourceFullName := fmt.Sprintf("pingone_custom_domain.%s", resourceName)
 
 	environmentName := acctest.ResourceNameGenEnvironment()
@@ -92,7 +92,8 @@ func TestAccCustomDomain_Full(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
+			acctest.PreCheckNewCustomDomain(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.CustomDomain_CheckDestroy,
@@ -103,7 +104,7 @@ func TestAccCustomDomain_Full(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "domain_name", fmt.Sprintf("%s.terraformdev.ping-eng.com", domainPrefix)),
+					resource.TestCheckResourceAttr(resourceFullName, "domain_name", fmt.Sprintf("%s.cdi-team-terraform-cd-test.ping-eng.com", domainPrefix)),
 					resource.TestCheckResourceAttr(resourceFullName, "status", "VERIFICATION_REQUIRED"),
 					resource.TestMatchResourceAttr(resourceFullName, "canonical_name", regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.[0-9a-zA-Z]+\.pingone.[a-z]+\.$`)),
 					resource.TestCheckNoResourceAttr(resourceFullName, "certificate_expires_at"),
@@ -133,7 +134,7 @@ func TestAccCustomDomain_BadParameters(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	domainPrefix := acctest.ResourceNameGen()
+	domainPrefix := acctest.DomainNamePrefixWithTimestampGen()
 	resourceFullName := fmt.Sprintf("pingone_custom_domain.%s", resourceName)
 
 	environmentName := acctest.ResourceNameGenEnvironment()
@@ -145,7 +146,8 @@ func TestAccCustomDomain_BadParameters(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
+			acctest.PreCheckNewCustomDomain(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.CustomDomain_CheckDestroy,
@@ -184,6 +186,6 @@ func testAccCustomDomainConfig_Full(environmentName, licenseID, resourceName, do
 resource "pingone_custom_domain" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
-  domain_name = "%[4]s.terraformdev.ping-eng.com"
+  domain_name = "%[4]s.cdi-team-terraform-cd-test.ping-eng.com"
 }`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, domainPrefix)
 }

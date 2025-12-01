@@ -1,0 +1,186 @@
+name: Multi-region Acceptance Tests (Beta)
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * *'
+jobs:
+  # ensure the code builds...
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v5
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+        id: go
+
+      - name: Get dependencies
+        run: |
+          go mod download
+
+      - name: Build
+        run: |
+          make build BETA=true
+
+  prepare:
+    name: Prepare ${{ matrix.region }}
+    needs: [build]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        region: [AP, CA, EU, NA, SG]
+
+    env:
+      TESTACC_BETA: true
+      PINGONE_TESTING_PROVIDER_VERSION: test
+      PINGONE_CLIENT_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_CLIENT_ID_CLIENT_SECRET_BASIC', matrix.region)] }}
+      PINGONE_CLIENT_SECRET: ${{ secrets[format('PINGONE_PROD_{0}_FF_CLIENT_SECRET_CLIENT_SECRET_BASIC', matrix.region)] }}
+      PINGONE_ENVIRONMENT_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_ENVIRONMENT_ID', matrix.region)] }}
+      PINGONE_REGION_CODE: ${{ matrix.region }}
+      PINGONE_LICENSE_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_LICENSE_ID', matrix.region)] }}
+      PINGONE_ORGANIZATION_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_ORG_ID', matrix.region)] }}
+
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v5
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+        id: go
+
+      - name: Get dependencies
+        run: |
+          go mod download
+
+      - name: Sweep to prepare
+        run: |
+          make sweep BETA=true
+
+  # run acceptance tests in a matrix with Terraform core versions and regions
+  test:
+    name: Acceptance Test ${{ matrix.region }}
+    needs: [prepare]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        region: [AP, CA, EU, NA, SG]
+        # list whatever Terraform versions here you would like to support
+        terraform:
+          - '1.13.*'
+      # If we have issues due to simultaneous tests across regions, max-parallel can be set to 1 to run sequentially
+      #max-parallel: 1
+
+    env:
+      TESTACC_BETA: true
+      PINGONE_TESTING_PROVIDER_VERSION: test
+      PINGONE_CLIENT_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_CLIENT_ID_CLIENT_SECRET_BASIC', matrix.region)] }}
+      PINGONE_CLIENT_SECRET: ${{ secrets[format('PINGONE_PROD_{0}_FF_CLIENT_SECRET_CLIENT_SECRET_BASIC', matrix.region)] }}
+      PINGONE_ENVIRONMENT_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_ENVIRONMENT_ID', matrix.region)] }}
+      PINGONE_REGION_CODE: ${{ matrix.region }}
+      PINGONE_LICENSE_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_LICENSE_ID', matrix.region)] }}
+      PINGONE_ORGANIZATION_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_ORG_ID', matrix.region)] }}
+      # Two vars needed for application data source acceptance tests - can be removed when CDI-631 is done
+      PINGONE_KEY_PKCS7_CERT: ${{ secrets.PINGONE_KEY_PKCS7_CERT }}
+      PINGONE_KEY_PEM_CERT: ${{ secrets.PINGONE_KEY_PEM_CERT }}
+      # Set skips
+      PINGONE_TWILIO_TEST_SKIP: true
+      PINGONE_SYNIVERSE_TEST_SKIP: true
+      PINGONE_EMAIL_DOMAIN_TEST_SKIP: false
+      PINGONE_CUSTOM_DOMAIN_TEST_SKIP: false
+
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v5
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+        id: go
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ matrix.terraform }}
+          terraform_wrapper: false
+
+      - name: Get dependencies
+        run: |
+          go mod download
+
+      - name: TF acceptance tests
+        timeout-minutes: 45
+        run: |
+          make testacc BETA=true
+
+  cleanup:
+    name: Clean up ${{ matrix.region }}
+    needs: [test]
+    runs-on: ubuntu-latest
+    if: always()
+    strategy:
+      fail-fast: false
+      matrix:
+        region: [AP, CA, EU, NA, SG]
+
+    env:
+      TESTACC_BETA: true
+      PINGONE_TESTING_PROVIDER_VERSION: test
+      PINGONE_CLIENT_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_CLIENT_ID_CLIENT_SECRET_BASIC', matrix.region)] }}
+      PINGONE_CLIENT_SECRET: ${{ secrets[format('PINGONE_PROD_{0}_FF_CLIENT_SECRET_CLIENT_SECRET_BASIC', matrix.region)] }}
+      PINGONE_ENVIRONMENT_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_ENVIRONMENT_ID', matrix.region)] }}
+      PINGONE_REGION_CODE: ${{ matrix.region }}
+      PINGONE_LICENSE_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_LICENSE_ID', matrix.region)] }}
+      PINGONE_ORGANIZATION_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_ORG_ID', matrix.region)] }}
+
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v5
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+        id: go
+
+      - name: Get dependencies
+        run: |
+          go mod download
+
+      - name: Sweep to cleanup
+        run: |
+          make sweep BETA=true
+
+  onfailure:
+    if: ${{ failure() && github.event_name == 'schedule' }}
+    needs: [build, prepare, test, cleanup]
+    name: Send failure webhook
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          curl --silent --request POST "${{ secrets.FAILURE_WEBHOOK_URL }}" \
+          --header 'Accept: application/json' \
+          --header 'Content-Type: text/plain' \
+          --data-raw '{
+              "WorkflowName": "${{ github.workflow }}",
+              "WorkflowURL": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+              "RepoName" : "${{ github.repository }}",
+          }'

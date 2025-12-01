@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -72,28 +72,23 @@ func (r *BrandingThemeResource) Metadata(ctx context.Context, req resource.Metad
 func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 
 	const attrMinLength = 1
+	const defaultBoolFalse = false
 
 	templateDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The template name of the branding theme associated with the environment.",
 	).AllowedValuesEnum(management.AllowedEnumBrandingThemeTemplateEnumValues)
 
-	backgroundExactlyOneOfRelativePaths := []string{
-		"background_image",
-		"background_color",
-		"use_default_background",
-	}
-
 	backgroundColorDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The background color for the theme. It must be a valid hexadecimal color code.",
-	).ExactlyOneOf(backgroundExactlyOneOfRelativePaths)
+	).ConflictsWith([]string{"background_image"})
 
 	useDefaultBackgroundDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean to specify that the background should be set to the theme template's default.",
-	).ExactlyOneOf(backgroundExactlyOneOfRelativePaths)
+	).DefaultValue(bool(defaultBoolFalse))
 
 	backgroundImageDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A single object that specifies the HREF and ID for the background image.",
-	).ExactlyOneOf(backgroundExactlyOneOfRelativePaths)
+	).ConflictsWith([]string{"background_color"})
 
 	logoDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A single object that specifies the HREF and ID for the company logo, for this branding template.  If not set, the environment's default logo (set with the `pingone_branding_settings` resource) will be applied.",
@@ -185,6 +180,12 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 				MarkdownDescription: backgroundImageDescription.MarkdownDescription,
 				Optional:            true,
 
+				Validators: []validator.Object{
+					objectvalidator.ConflictsWith(
+						path.MatchRelative().AtParent().AtName("background_color"),
+					),
+				},
+
 				Attributes: map[string]schema.Attribute{
 					"id": schema.StringAttribute{
 						Description:         backgroundImageIdDescription.Description,
@@ -209,13 +210,6 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 				Description:         backgroundColorDescription.Description,
 				MarkdownDescription: backgroundColorDescription.MarkdownDescription,
 				Optional:            true,
-				Validators: []validator.String{
-					stringvalidator.ExactlyOneOf(
-						path.MatchRelative().AtParent().AtName("background_color"),
-						path.MatchRelative().AtParent().AtName("use_default_background"),
-						path.MatchRelative().AtParent().AtName("background_image"),
-					),
-				},
 			},
 
 			"use_default_background": schema.BoolAttribute{
@@ -225,14 +219,6 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 				Computed:            true,
 
 				Default: booldefault.StaticBool(false),
-
-				Validators: []validator.Bool{
-					boolvalidator.ExactlyOneOf(
-						path.MatchRelative().AtParent().AtName("background_color"),
-						path.MatchRelative().AtParent().AtName("use_default_background"),
-						path.MatchRelative().AtParent().AtName("background_image"),
-					),
-				},
 			},
 
 			"body_text_color": schema.StringAttribute{
@@ -591,11 +577,11 @@ func (p *brandingThemeResourceModelV1) expand(ctx context.Context) (*management.
 		configuration.SetLogo(*management.NewBrandingThemeConfigurationLogo(logo.Href.ValueString(), logo.Id.ValueString()))
 	}
 
-	if backgroundType == management.ENUMBRANDINGTHEMEBACKGROUNDTYPE_IMAGE {
+	if !background.Href.IsNull() && !background.Href.IsUnknown() && !background.Id.IsNull() && !background.Id.IsUnknown() {
 		configuration.SetBackgroundImage(*management.NewBrandingThemeConfigurationBackgroundImage(background.Href.ValueString(), background.Id.ValueString()))
 	}
 
-	if backgroundType == management.ENUMBRANDINGTHEMEBACKGROUNDTYPE_COLOR {
+	if backgroundColour != "" {
 		configuration.SetBackgroundColor(backgroundColour)
 	}
 

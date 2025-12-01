@@ -1,8 +1,1 @@
-* @henryrecker-pingidentity
-/.github/ @pingidentity/cloud-solutions-cicd-terraform
-/contributing/ @pingidentity/cloud-solutions-cicd-terraform
-/docs/ @pingidentity/cloud-solutions-cicd-terraform
-/CONTRIBUTING.md @pingidentity/cloud-solutions-cicd-terraform
-/LICENSE @pingidentity/cloud-solutions-cicd-terraform
-/README.md @pingidentity/cloud-solutions-cicd-terraform
-*.go @pingidentity/cloud-solutions-cicd-terraform
+* @pingidentity/devops-eng

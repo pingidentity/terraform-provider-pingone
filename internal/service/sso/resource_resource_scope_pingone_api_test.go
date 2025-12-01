@@ -41,8 +41,7 @@ func TestAccResourceScopePingOneAPI_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
-
+			acctest.PreCheckNoBeta(t)
 			p1Client = acctestlegacysdk.PreCheckTestClient(ctx, t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -89,7 +88,7 @@ func TestAccResourceScopePingOneAPI_Full(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.ResourceScopePingOneAPI_CheckDestroy,
@@ -121,6 +120,20 @@ func TestAccResourceScopePingOneAPI_Full(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "schema_attributes.*", "name.family"),
 				),
 			},
+			{
+				Config: testAccResourceScopePingOneAPIConfig_Full(resourceName, "p1:update:user:email-only"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "name", "p1:update:user:email-only"),
+					resource.TestCheckResourceAttr(resourceFullName, "description", "My resource scope"),
+					resource.TestCheckResourceAttr(resourceFullName, "schema_attributes.#", "2"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "schema_attributes.*", "name.given"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "schema_attributes.*", "name.family"),
+				),
+			},
+
 			// Test importing the resource
 			{
 				ResourceName: resourceFullName,
@@ -153,7 +166,7 @@ func TestAccResourceScopePingOneAPI_Minimal(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.ResourceScopePingOneAPI_CheckDestroy,
@@ -197,7 +210,7 @@ func TestAccResourceScopePingOneAPI_Change(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.ResourceScopePingOneAPI_CheckDestroy,
@@ -259,7 +272,7 @@ func TestAccResourceScopePingOneAPI_OverridePredefined(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.ResourceScopePingOneAPI_CheckDestroy,
@@ -309,7 +322,7 @@ func TestAccResourceScopePingOneAPI_InvalidParameters(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.ResourceScopePingOneAPI_CheckDestroy,
@@ -318,6 +331,14 @@ func TestAccResourceScopePingOneAPI_InvalidParameters(t *testing.T) {
 			{
 				Config:      testAccResourceScopePingOneAPIConfig_Minimal(resourceName, "testscope"),
 				ExpectError: regexp.MustCompile("Invalid Attribute Value Match"),
+			},
+			{
+				Config:      testAccResourceScopePingOneAPIConfig_Minimal(resourceName, "p1:read:user:testscöpe"),
+				ExpectError: regexp.MustCompile("Invalid Attribute Value Match"),
+			},
+			{
+				Config:      testAccResourceScopePingOneAPIConfig_Minimal(resourceName, ""),
+				ExpectError: regexp.MustCompile("Invalid Attribute Value Length"),
 			},
 			{
 				Config:      testAccResourceScopePingOneAPIConfig_Full(resourceName, "p1:read:user"),

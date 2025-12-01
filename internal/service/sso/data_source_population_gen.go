@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -285,10 +286,10 @@ func (r *populationDataSource) Read(ctx context.Context, req datasource.ReadRequ
 				if results, ok := pageCursor.EntityArray.Embedded.GetPopulationsOk(); ok {
 
 					for _, resultObj := range results {
-						if !data.Name.IsNull() && resultObj.GetName() == data.Name.ValueString() {
+						if !data.Name.IsNull() && strings.EqualFold(resultObj.GetName(), data.Name.ValueString()) {
 							return &resultObj, pageCursor.HTTPResponse, nil
 						}
-						if !data.PopulationId.IsNull() && resultObj.GetId() == data.PopulationId.ValueString() {
+						if !data.PopulationId.IsNull() && strings.EqualFold(resultObj.GetId(), data.PopulationId.ValueString()) {
 							return &resultObj, pageCursor.HTTPResponse, nil
 						}
 					}

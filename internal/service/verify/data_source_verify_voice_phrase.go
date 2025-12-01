@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -70,6 +71,8 @@ func (r *VoicePhraseDataSource) Schema(ctx context.Context, req datasource.Schem
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		Description: "Data source to find a PingOne Verify Voice Phrase by its Voice Phrase Id or Name.",
+
+		DeprecationMessage: "Deprecation notice: This data source is deprecated and will be removed in a future release. Please use alternative verification methods.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
@@ -207,7 +210,7 @@ func (r *VoicePhraseDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 						for _, voicePhraseItem := range voicePhrases {
 
-							if voicePhraseItem.GetDisplayName() == data.DisplayName.ValueString() {
+							if strings.EqualFold(voicePhraseItem.GetDisplayName(), data.DisplayName.ValueString()) {
 								return &voicePhraseItem, pageCursor.HTTPResponse, nil
 							}
 						}

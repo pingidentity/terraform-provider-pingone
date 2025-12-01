@@ -107,10 +107,23 @@ resource "pingone_risk_predictor" "my_awesome_composite_predictor" {
               "value" : "$${details.${pingone_risk_predictor.my_awesome_geovelocity_anomaly_predictor.compact_name}.level}",
               "type" : "VALUE_COMPARISON"
               }, {
+              "startsWith" : "admin",
+              "value" : "$${event.user.name}",
+              "type" : "VALUE_COMPARISON"
+              }, {
+              "endsWith" : "@contractor.example.com",
+              "value" : "$${event.user.name}",
+              "type" : "VALUE_COMPARISON"
+              }, {
               "and" : [{
                 "equals" : "High",
                 "value" : "$${details.${pingone_risk_predictor.my_awesome_anonymous_network_predictor.compact_name}.level}",
                 "type" : "VALUE_COMPARISON"
+                },
+                {
+                  "list" : ["Group Name"],
+                  "contains" : "$${event.user.groups}",
+                  "type" : "GROUPS_INTERSECTION"
               }],
               "type" : "AND"
             }],

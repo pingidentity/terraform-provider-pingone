@@ -63,6 +63,8 @@ func (r *VoicePhraseResource) Schema(ctx context.Context, req resource.SchemaReq
 		Description: "Resource to configure the requirements to manage the named container for `voice_phrase_contents`. The named container is a prerequisite to manage specific voice phrase contents.\n\n" +
 			"A `voice_phrase` is a container with a name. The actual phrases to speak are in contents, where the content has a locale and the phrase to speak written in the language required by the locale.",
 
+		DeprecationMessage: "Deprecation notice: This resource is deprecated and will be removed in a future release. Please use alternative verification methods.",
+
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
