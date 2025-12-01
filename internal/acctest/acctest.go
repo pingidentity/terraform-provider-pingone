@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
@@ -141,15 +142,36 @@ func PreCheckNewEnvironment(t *testing.T) {
 	}
 }
 
-func PreCheckDomainVerification(t *testing.T) {
-
-	skipEmailDomainVerified, err := strconv.ParseBool(os.Getenv("PINGONE_EMAIL_DOMAIN_TEST_SKIP"))
+func PreCheckNewCustomDomain(t *testing.T) {
+	skipCustomDomain, err := strconv.ParseBool(os.Getenv("PINGONE_CUSTOM_DOMAIN_TEST_SKIP"))
 	if err != nil {
-		skipEmailDomainVerified = false
+		skipCustomDomain = false
 	}
 
-	if skipEmailDomainVerified {
-		t.Skipf("Email domain verified integration tests are skipped")
+	if skipCustomDomain {
+		t.Skipf("Integration tests that create new custom domains are skipped")
+	}
+}
+
+func PreCheckNewTrustedEmailDomain(t *testing.T) {
+	skipNewTrustedEmailDomain, err := strconv.ParseBool(os.Getenv("PINGONE_EMAIL_DOMAIN_TEST_SKIP"))
+	if err != nil {
+		skipNewTrustedEmailDomain = false
+	}
+
+	if skipNewTrustedEmailDomain {
+		t.Skipf("Integration tests that create new trusted email domains are skipped")
+	}
+}
+
+func PreCheckTrustedEmailDomainVerification(t *testing.T) {
+	skipVerifiedTrustedEmailDomain, err := strconv.ParseBool(os.Getenv("PINGONE_VERIFIED_EMAIL_DOMAIN_TEST_SKIP"))
+	if err != nil {
+		skipVerifiedTrustedEmailDomain = false
+	}
+
+	if skipVerifiedTrustedEmailDomain {
+		t.Skipf("Integration tests that create verified trusted email domains are skipped")
 	}
 
 	if v := os.Getenv("PINGONE_VERIFIED_EMAIL_DOMAIN"); v == "" {
@@ -305,6 +327,13 @@ func ResourceNameGen() string {
 
 func ResourceNameGenEnvironment() string {
 	return fmt.Sprintf("tf-testacc-dynamic-%s", ResourceNameGen())
+}
+
+func DomainNamePrefixWithTimestampGen() string {
+	base := ResourceNameGen()
+	// Format timestamp as YYYYMMDD-HHMMSS so that it is a valid domain name
+	timestamp := time.Now().Format("20060102-150405")
+	return fmt.Sprintf("%s-%s", strings.ToLower(base), timestamp)
 }
 
 func TestClient(ctx context.Context) (*pingone.APIClient, error) {

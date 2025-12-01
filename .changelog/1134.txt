@@ -1,0 +1,3 @@
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` v0.8.1 => v0.8.2
+```

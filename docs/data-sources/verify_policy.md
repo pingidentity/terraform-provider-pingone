@@ -49,11 +49,12 @@ data "pingone_verify_policy" "find_default_policy_example" {
 - `facial_comparison` (Attributes) Defines the verification requirements to compare a mobile phone self-image to a reference photograph, such as on a government ID or previously verified photograph. (see [below for nested schema](#nestedatt--facial_comparison))
 - `government_id` (Attributes) Defines the verification requirements for a government-issued identity document, which includes a photograph. (see [below for nested schema](#nestedatt--government_id))
 - `id` (String) The ID of this resource.
+- `identity_record_matching` (Attributes) Defines the verification requirements for identity record matching. (see [below for nested schema](#nestedatt--identity_record_matching))
 - `liveness` (Attributes) Defines the verification requirements to inspect a mobile phone self-image for evidence that the subject is alive and not a representation, such as a photograph or mask. (see [below for nested schema](#nestedatt--liveness))
 - `phone` (Attributes) Defines the verification requirements to validate a mobile phone number using a one-time password (OTP). (see [below for nested schema](#nestedatt--phone))
 - `transaction` (Attributes) Defines the requirements for transactions invoked by the policy. (see [below for nested schema](#nestedatt--transaction))
 - `updated_at` (String) Date and time the verify policy was updated. Can be null.
-- `voice` (Attributes) Defines the requirements for transactions invoked by the policy. (see [below for nested schema](#nestedatt--voice))
+- `voice` (Attributes, Deprecated) **[Deprecation notice: This field is deprecated and will be removed in a future release. Please use alternative verification methods.]** Defines the requirements for transactions invoked by the policy. (see [below for nested schema](#nestedatt--voice))
 
 <a id="nestedatt--email"></a>
 ### Nested Schema for `email`
@@ -140,12 +141,109 @@ Read-Only:
 
 Read-Only:
 
+- `aadhaar` (Attributes) Aadhaar configuration for India-based government Aadhaar documents;`facial_comparison.verify` must be `REQUIRED` to enable. (see [below for nested schema](#nestedatt--government_id--aadhaar))
 - `fail_expired_id` (Boolean) When enabled, Government ID verification fails if the document is expired.
 - `inspection_type` (String) Determine whether document authentication is automated, manual, or possibly both.  Options are `AUTOMATIC`, `MANUAL`, `STEP_UP`.
 - `provider_auto` (String) Provider to use for the automatic verification service.  Options are `MITEK`, `VERIFF`.  Defaults to `MITEK`.
 - `provider_manual` (String) Provider to use for the manual verification service.  Options are `MITEK`.  Defaults to `MITEK`.
 - `retry_attempts` (Number) Number of retries permitted when submitting images.  The allowed range is `0 - 3`.
 - `verify` (String) Controls Government ID verification requirements.  Options are `DISABLED`, `OPTIONAL`, `REQUIRED`.  Defaults to `DISABLED`.
+- `verify_aamva` (Boolean) When enabled, the AAMVA DLDV system is used to validate identity documents issued by participating states.
+
+<a id="nestedatt--government_id--aadhaar"></a>
+### Nested Schema for `government_id.aadhaar`
+
+Read-Only:
+
+- `enabled` (Boolean) Whether Aadhaar verification is enabled.  Defaults to `false`.
+- `otp` (Attributes) Aadhaar one-time password (OTP) configuration. (see [below for nested schema](#nestedatt--government_id--aadhaar--otp))
+
+<a id="nestedatt--government_id--aadhaar--otp"></a>
+### Nested Schema for `government_id.aadhaar.otp`
+
+Read-Only:
+
+- `deliveries` (Attributes) OTP delivery configuration. (see [below for nested schema](#nestedatt--government_id--aadhaar--otp--deliveries))
+
+<a id="nestedatt--government_id--aadhaar--otp--deliveries"></a>
+### Nested Schema for `government_id.aadhaar.otp.deliveries`
+
+Read-Only:
+
+- `cooldown` (Attributes) Cooldown (waiting period between OTP deliveries) configuration. (see [below for nested schema](#nestedatt--government_id--aadhaar--otp--deliveries--cooldown))
+- `count` (Number) Number of OTP deliveries permitted. The allowed range is `1 - 3`.  Defaults to `3`.
+
+<a id="nestedatt--government_id--aadhaar--otp--deliveries--cooldown"></a>
+### Nested Schema for `government_id.aadhaar.otp.deliveries.cooldown`
+
+Read-Only:
+
+- `duration` (Number) Cooldown duration for Aadhaar OTP deliveries.
+    - If `cooldown.time_unit` is `MINUTES`, the allowed range is `1 - 30`.
+    - If `cooldown.time_unit` is `SECONDS`, the allowed range is `60 - 1800`.
+    - Defaults to `60 SECONDS`.
+- `time_unit` (String) Time unit of the Aadhaar OTP cooldown duration.  Options are `MINUTES`, `SECONDS`.  Defaults to `SECONDS`.
+
+
+
+
+
+
+<a id="nestedatt--identity_record_matching"></a>
+### Nested Schema for `identity_record_matching`
+
+Read-Only:
+
+- `address` (Attributes) Configuration for address verification. (see [below for nested schema](#nestedatt--identity_record_matching--address))
+- `birth_date` (Attributes) Configuration for birth date verification. (see [below for nested schema](#nestedatt--identity_record_matching--birth_date))
+- `family_name` (Attributes) Configuration for family name verification. (see [below for nested schema](#nestedatt--identity_record_matching--family_name))
+- `given_name` (Attributes) Configuration for given name verification. (see [below for nested schema](#nestedatt--identity_record_matching--given_name))
+- `name` (Attributes) Configuration for full name verification. (see [below for nested schema](#nestedatt--identity_record_matching--name))
+
+<a id="nestedatt--identity_record_matching--address"></a>
+### Nested Schema for `identity_record_matching.address`
+
+Read-Only:
+
+- `field_required` (Boolean) Whether the field is required.
+- `threshold` (String) Threshold for successful comparison.  Options are `HIGH`, `LOW`, `MEDIUM`.
+
+
+<a id="nestedatt--identity_record_matching--birth_date"></a>
+### Nested Schema for `identity_record_matching.birth_date`
+
+Read-Only:
+
+- `field_required` (Boolean) Whether the field is required.
+- `threshold` (String) Threshold for successful comparison.  Options are `HIGH`, `LOW`, `MEDIUM`.
+
+
+<a id="nestedatt--identity_record_matching--family_name"></a>
+### Nested Schema for `identity_record_matching.family_name`
+
+Read-Only:
+
+- `field_required` (Boolean) Whether the field is required.
+- `threshold` (String) Threshold for successful comparison.  Options are `HIGH`, `LOW`, `MEDIUM`.
+
+
+<a id="nestedatt--identity_record_matching--given_name"></a>
+### Nested Schema for `identity_record_matching.given_name`
+
+Read-Only:
+
+- `field_required` (Boolean) Whether the field is required.
+- `threshold` (String) Threshold for successful comparison.  Options are `HIGH`, `LOW`, `MEDIUM`.
+
+
+<a id="nestedatt--identity_record_matching--name"></a>
+### Nested Schema for `identity_record_matching.name`
+
+Read-Only:
+
+- `field_required` (Boolean) Whether the field is required.
+- `threshold` (String) Threshold for successful comparison.  Options are `HIGH`, `LOW`, `MEDIUM`.
+
 
 
 <a id="nestedatt--liveness"></a>
