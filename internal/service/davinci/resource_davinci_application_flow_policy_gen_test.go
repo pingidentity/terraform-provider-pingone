@@ -305,8 +305,8 @@ resource "pingone_davinci_flow" "%[2]s" {
 
   output_schema = {
     output = {
-      type = "object",
-      properties = jsonencode({}),
+      type                 = "object",
+      properties           = jsonencode({}),
       additionalProperties = true
     }
   }
@@ -427,8 +427,8 @@ resource "pingone_davinci_flow" "%[2]s-first" {
 
   output_schema = {
     output = {
-      type = "object",
-      properties = jsonencode({}),
+      type                 = "object",
+      properties           = jsonencode({}),
       additionalProperties = true
     }
   }
@@ -554,8 +554,8 @@ resource "pingone_davinci_flow" "%[2]s-second" {
 
   output_schema = {
     output = {
-      type = "object",
-      properties = jsonencode({}),
+      type                 = "object",
+      properties           = jsonencode({}),
       additionalProperties = true
     }
   }
@@ -716,8 +716,8 @@ resource "pingone_davinci_flow" "%[2]s-first" {
 
   output_schema = {
     output = {
-      type = "object",
-      properties = jsonencode({}),
+      type                 = "object",
+      properties           = jsonencode({}),
       additionalProperties = true
     }
   }
@@ -843,8 +843,8 @@ resource "pingone_davinci_flow" "%[2]s-second" {
 
   output_schema = {
     output = {
-      type = "object",
-      properties = jsonencode({}),
+      type                 = "object",
+      properties           = jsonencode({}),
       additionalProperties = true
     }
   }
@@ -1004,8 +1004,8 @@ resource "pingone_davinci_flow" "%[2]s" {
 
   output_schema = {
     output = {
-      type = "object",
-      properties = jsonencode({}),
+      type                 = "object",
+      properties           = jsonencode({}),
       additionalProperties = true
     }
   }
