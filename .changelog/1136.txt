@@ -1,0 +1,15 @@
+```release-note:note
+bump `github.com/hashicorp/terraform-plugin-go` 0.28.0 => 0.29.0
+```
+
+```release-note:note
+bump `github.com/hashicorp/terraform-plugin-mux` 0.20.0 => 0.21.0
+```
+
+```release-note:note
+bump `github.com/hashicorp/terraform-plugin-sdk/v2` 2.37.0 => 2.38.1
+```
+
+```release-note:note
+bump `github.com/hashicorp/terraform-plugintesting` 1.13.2 => 1.13.3
+```

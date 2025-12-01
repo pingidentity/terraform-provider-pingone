@@ -13,16 +13,19 @@ type serviceClientType struct {
 }
 
 func Resources() []func() resource.Resource {
-	return []func() resource.Resource{
+	resources := []func() resource.Resource{
 		NewCredentialIssuerProfileResource,
 		NewCredentialTypeResource,
 		NewDigitalWalletApplicationResource,
 		NewCredentialIssuanceRuleResource,
 	}
+	resources = append(resources, BetaResources()...)
+
+	return resources
 }
 
 func DataSources() []func() datasource.DataSource {
-	return []func() datasource.DataSource{
+	dataSources := []func() datasource.DataSource{
 		NewCredentialIssuerProfileDataSource,
 		NewDigitalWalletApplicationDataSource,
 		NewDigitalWalletApplicationsDataSource,
@@ -30,4 +33,7 @@ func DataSources() []func() datasource.DataSource {
 		NewCredentialTypesDataSource,
 		NewCredentialIssuanceRuleDataSource,
 	}
+	dataSources = append(dataSources, BetaDataSources()...)
+
+	return dataSources
 }

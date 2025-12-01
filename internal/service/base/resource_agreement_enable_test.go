@@ -47,9 +47,9 @@ func TestAccAgreementEnable_RemovalDrift(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
 			acctest.PreCheckTestAccFlaky(t)
 
+			acctest.PreCheckNoBeta(t)
 			p1Client = acctestlegacysdk.PreCheckTestClient(ctx, t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -112,8 +112,8 @@ func TestAccAgreementEnable_Full(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
 			acctest.PreCheckTestAccFlaky(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.AgreementEnable_CheckDestroy,
@@ -181,7 +181,7 @@ func TestAccAgreementEnable_BadParameters(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.AgreementEnable_CheckDestroy,

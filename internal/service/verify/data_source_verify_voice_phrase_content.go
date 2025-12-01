@@ -63,6 +63,8 @@ func (r *VoicePhraseContentDataSource) Schema(ctx context.Context, req datasourc
 		// This description is used by the documentation generator and the language server.
 		Description: "Data source to find PingOne Verify Voice Phrase Contents from a specified PingOne Verify Voice Phrase.",
 
+		DeprecationMessage: "Deprecation notice: This data source is deprecated and will be removed in a future release. Please use alternative verification methods.",
+
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 

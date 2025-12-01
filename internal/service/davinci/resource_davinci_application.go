@@ -1,5 +1,7 @@
 // Copyright © 2025 Ping Identity Corporation
 
+//go:build beta
+
 package davinci
 
 import (

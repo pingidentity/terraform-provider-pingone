@@ -41,8 +41,7 @@ func TestAccVerifyPolicy_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
-
+			acctest.PreCheckNoBeta(t)
 			p1Client = acctestlegacysdk.PreCheckTestClient(ctx, t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -94,7 +93,7 @@ func TestAccVerifyPolicy_NewEnv(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             verify.VerifyPolicy_CheckDestroy,
@@ -132,6 +131,11 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "government_id.provider_auto", "VERIFF"),
 		resource.TestCheckResourceAttr(resourceFullName, "government_id.provider_manual", "MITEK"),
 		resource.TestCheckResourceAttr(resourceFullName, "government_id.retry_attempts", "2"),
+		resource.TestCheckResourceAttr(resourceFullName, "government_id.verify_aamva", "false"),
+		resource.TestCheckResourceAttr(resourceFullName, "government_id.aadhaar.enabled", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "government_id.aadhaar.otp.deliveries.count", "3"),
+		resource.TestCheckResourceAttr(resourceFullName, "government_id.aadhaar.otp.deliveries.cooldown.duration", "120"),
+		resource.TestCheckResourceAttr(resourceFullName, "government_id.aadhaar.otp.deliveries.cooldown.time_unit", "SECONDS"),
 
 		resource.TestCheckResourceAttr(resourceFullName, "facial_comparison.verify", "REQUIRED"),
 		resource.TestCheckResourceAttr(resourceFullName, "facial_comparison.threshold", "HIGH"),
@@ -178,6 +182,17 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "voice.reference_data.update_on_reenrollment", "true"),
 		resource.TestCheckResourceAttr(resourceFullName, "voice.reference_data.update_on_verification", "true"),
 
+		resource.TestCheckResourceAttr(resourceFullName, "identity_record_matching.address.threshold", "LOW"),
+		resource.TestCheckResourceAttr(resourceFullName, "identity_record_matching.address.field_required", "false"),
+		resource.TestCheckResourceAttr(resourceFullName, "identity_record_matching.birth_date.threshold", "MEDIUM"),
+		resource.TestCheckResourceAttr(resourceFullName, "identity_record_matching.birth_date.field_required", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "identity_record_matching.family_name.threshold", "MEDIUM"),
+		resource.TestCheckResourceAttr(resourceFullName, "identity_record_matching.family_name.field_required", "false"),
+		resource.TestCheckResourceAttr(resourceFullName, "identity_record_matching.given_name.threshold", "MEDIUM"),
+		resource.TestCheckResourceAttr(resourceFullName, "identity_record_matching.given_name.field_required", "false"),
+		resource.TestCheckResourceAttr(resourceFullName, "identity_record_matching.name.threshold", "HIGH"),
+		resource.TestCheckResourceAttr(resourceFullName, "identity_record_matching.name.field_required", "true"),
+
 		resource.TestMatchResourceAttr(resourceFullName, "created_at", validation.RFC3339Regexp),
 		resource.TestMatchResourceAttr(resourceFullName, "updated_at", validation.RFC3339Regexp),
 	)
@@ -193,6 +208,7 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "government_id.inspection_type", "AUTOMATIC"),
 		resource.TestCheckResourceAttr(resourceFullName, "government_id.provider_auto", "MITEK"),
 		resource.TestCheckResourceAttr(resourceFullName, "government_id.provider_manual", "MITEK"),
+		resource.TestCheckResourceAttr(resourceFullName, "government_id.verify_aamva", isRegionNA()), // AAMVA is only valid in NA region
 
 		resource.TestCheckResourceAttr(resourceFullName, "facial_comparison.verify", "DISABLED"),
 		resource.TestCheckResourceAttr(resourceFullName, "facial_comparison.threshold", "MEDIUM"),
@@ -236,6 +252,8 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "voice.reference_data.update_on_reenrollment", "true"),
 		resource.TestCheckResourceAttr(resourceFullName, "voice.reference_data.update_on_verification", "true"),
 
+		resource.TestCheckNoResourceAttr(resourceFullName, "identity_record_matching"),
+
 		resource.TestMatchResourceAttr(resourceFullName, "created_at", validation.RFC3339Regexp),
 		resource.TestMatchResourceAttr(resourceFullName, "updated_at", validation.RFC3339Regexp),
 	)
@@ -249,6 +267,7 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 
 		resource.TestCheckResourceAttr(resourceFullName, "government_id.verify", "DISABLED"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "government_id.inspection_type"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "government_id.verify_aamva"),
 
 		resource.TestCheckResourceAttr(resourceFullName, "facial_comparison.verify", "REQUIRED"),
 		resource.TestCheckResourceAttr(resourceFullName, "facial_comparison.threshold", "HIGH"),
@@ -301,7 +320,7 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             verify.VerifyPolicy_CheckDestroy,
@@ -364,6 +383,14 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 	})
 }
 
+func isRegionNA() string {
+	region := os.Getenv("PINGONE_REGION_CODE")
+	if region == "NA" {
+		return "true"
+	}
+	return "false"
+}
+
 func TestAccVerifyPolicy_ValidationChecks(t *testing.T) {
 	t.Parallel()
 
@@ -375,7 +402,7 @@ func TestAccVerifyPolicy_ValidationChecks(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             verify.VerifyPolicy_CheckDestroy,
@@ -411,6 +438,31 @@ func TestAccVerifyPolicy_ValidationChecks(t *testing.T) {
 				ExpectError: regexp.MustCompile("Error: Invalid Attribute Value Match"),
 				Destroy:     true,
 			},
+			{
+				Config:      testAccVerifyPolicy_GovernmentIdVerifyAamvaTrueWhenVerifyDisabled(resourceName, name),
+				ExpectError: regexp.MustCompile("Error: Invalid Attribute Combination"),
+				Destroy:     true,
+			},
+			{
+				Config:      testAccVerifyPolicy_IdentityRecordMatchingEmpty(resourceName, name),
+				ExpectError: regexp.MustCompile("Error: Missing Required Configuration"),
+				Destroy:     true,
+			},
+			{
+				Config:      testAccVerifyPolicy_IdentityRecordMatchingWithDisabledGovernmentId(resourceName, name),
+				ExpectError: regexp.MustCompile("Error: Invalid argument combination"),
+				Destroy:     true,
+			},
+			{
+				Config:      testAccVerifyPolicy_IdentityRecordMatchingMissingThreshold(resourceName, name),
+				ExpectError: regexp.MustCompile("Error: Incorrect attribute value type"),
+				Destroy:     true,
+			},
+			{
+				Config:      testAccVerifyPolicy_AadhaarEnabledWhenFacialRecognitionNotRequired(resourceName, name),
+				ExpectError: regexp.MustCompile("Error: Invalid Attribute Combination"),
+				Destroy:     true,
+			},
 		},
 	})
 }
@@ -427,7 +479,7 @@ func TestAccVerifyPolicy_BadParameters(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             verify.VerifyPolicy_CheckDestroy,
@@ -498,6 +550,19 @@ resource "pingone_verify_policy" "%[2]s" {
     provider_auto   = "VERIFF"
     provider_manual = "MITEK"
     retry_attempts  = "2"
+    verify_aamva    = false
+    aadhaar = {
+      enabled = true
+      otp = {
+        deliveries = {
+          count = 3
+          cooldown = {
+            duration  = "120"
+            time_unit = "SECONDS"
+          }
+        }
+      }
+    }
   }
 
   facial_comparison = {
@@ -593,6 +658,28 @@ resource "pingone_verify_policy" "%[2]s" {
     }
   }
 
+  identity_record_matching = {
+    address = {
+      threshold      = "LOW"
+      field_required = false
+    }
+    birth_date = {
+      threshold      = "MEDIUM"
+      field_required = true
+    }
+    family_name = {
+      threshold      = "MEDIUM"
+      field_required = false
+    }
+    given_name = {
+      threshold      = "MEDIUM"
+      field_required = false
+    }
+    name = {
+      threshold      = "HIGH"
+      field_required = true
+    }
+  }
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
@@ -835,8 +922,8 @@ resource "pingone_verify_policy" "%[2]s" {
   description    = "%[3]s"
 
   government_id = {
-    verify    = "DISABLED"
-    threshold = "STEP_UP"
+    verify          = "DISABLED"
+    inspection_type = "STEP_UP"
   }
 
   facial_comparison = {
@@ -858,6 +945,133 @@ resource "pingone_verify_policy" "%[2]s" {
     }
   }
 
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccVerifyPolicy_GovernmentIdVerifyAamvaTrueWhenVerifyDisabled(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+resource "pingone_verify_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "%[3]s"
+
+  government_id = {
+    verify       = "DISABLED"
+    verify_aamva = true
+  }
+
+  facial_comparison = {
+    verify    = "REQUIRED"
+    threshold = "HIGH"
+  }
+
+  transaction = {
+    timeout = {
+      duration  = "35"
+      time_unit = "MINUTES"
+    }
+
+    data_collection = {
+      timeout = {
+        duration  = "2000"
+        time_unit = "SECONDS"
+      }
+    }
+  }
+
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccVerifyPolicy_IdentityRecordMatchingEmpty(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+resource "pingone_verify_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "%[3]s"
+
+  government_id = {
+    verify = "REQUIRED"
+  }
+
+  identity_record_matching = {}
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccVerifyPolicy_IdentityRecordMatchingWithDisabledGovernmentId(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+resource "pingone_verify_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "%[3]s"
+
+  government_id = {
+    verify = "DISABLED"
+  }
+
+  identity_record_matching = {
+    address = {
+      threshold = "LOW"
+    }
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccVerifyPolicy_IdentityRecordMatchingMissingThreshold(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+resource "pingone_verify_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "%[3]s"
+
+  government_id = {
+    verify = "REQUIRED"
+  }
+
+  identity_record_matching = {
+    address = {
+      field_required = true
+    }
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccVerifyPolicy_AadhaarEnabledWhenFacialRecognitionNotRequired(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+resource "pingone_verify_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  description    = "Description for %[3]s with Aadhaar validation error"
+
+  government_id = {
+    verify = "REQUIRED"
+    aadhaar = {
+      enabled = true
+      otp = {
+        deliveries = {
+          count = 2
+          cooldown = {
+            duration  = 90
+            time_unit = "SECONDS"
+          }
+        }
+      }
+    }
+  }
+
+  facial_comparison = {
+    verify    = "OPTIONAL"
+    threshold = "MEDIUM"
+  }
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

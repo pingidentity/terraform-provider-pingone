@@ -37,6 +37,7 @@ import (
 	objectplanmodifierinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectplanmodifier"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service"
+	"github.com/pingidentity/terraform-provider-pingone/internal/service/sso/helpers/beta"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -71,11 +72,10 @@ type applicationExternalLinkOptionsResourceModelV1 struct {
 	HomePageUrl types.String `tfsdk:"home_page_url"`
 }
 
-type applicationOIDCOptionsResourceModelV1 struct {
+type applicationOIDCOptionsCommonModelV1 struct {
 	AdditionalRefreshTokenReplayProtectionEnabled types.Bool   `tfsdk:"additional_refresh_token_replay_protection_enabled"`
 	AllowWildcardsInRedirectUris                  types.Bool   `tfsdk:"allow_wildcard_in_redirect_uris"`
 	CertificateBasedAuthentication                types.Object `tfsdk:"certificate_based_authentication"`
-	ClientId                                      types.String `tfsdk:"client_id"`
 	CorsSettings                                  types.Object `tfsdk:"cors_settings"`
 	DevicePathId                                  types.String `tfsdk:"device_path_id"`
 	DeviceCustomVerificationUri                   types.String `tfsdk:"device_custom_verification_uri"`
@@ -102,6 +102,17 @@ type applicationOIDCOptionsResourceModelV1 struct {
 	TargetLinkUri                                 types.String `tfsdk:"target_link_uri"`
 	TokenEndpointAuthnMethod                      types.String `tfsdk:"token_endpoint_auth_method"`
 	Type                                          types.String `tfsdk:"type"`
+}
+
+type applicationOIDCOptionsResourceModelV1 struct {
+	beta.ApplicationOIDCOptionsResourceModelV1
+	applicationOIDCOptionsCommonModelV1
+}
+
+type applicationOIDCOptionsDataSourceModelV1 struct {
+	// The data source is the same whether in beta or GA. These split models can be merged again on completion of CDI-631
+	ClientId types.String `tfsdk:"client_id"`
+	applicationOIDCOptionsCommonModelV1
 }
 
 type applicationCorsSettingsResourceModelV1 struct {
@@ -231,11 +242,10 @@ var (
 		"key_id":    pingonetypes.ResourceIDType{},
 	}
 
-	applicationOidcOptionsTFObjectTypes = map[string]attr.Type{
+	applicationOidcOptionsCommonTFObjectTypes = map[string]attr.Type{
 		"additional_refresh_token_replay_protection_enabled": types.BoolType,
 		"allow_wildcard_in_redirect_uris":                    types.BoolType,
 		"certificate_based_authentication":                   types.ObjectType{AttrTypes: applicationOidcOptionsCertificateAuthenticationTFObjectTypes},
-		"client_id":                                          types.StringType,
 		"cors_settings":                                      types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes},
 		"device_path_id":                                     types.StringType,
 		"device_custom_verification_uri":                     types.StringType,
@@ -263,6 +273,18 @@ var (
 		"token_endpoint_auth_method":                         types.StringType,
 		"type":                                               types.StringType,
 	}
+
+	applicationOidcOptionsResourceTFObjectTypes = utils.MergeAttributeTypeMapsRtn(
+		beta.ApplicationOidcOptionsTFObjectTypes,
+		applicationOidcOptionsCommonTFObjectTypes,
+	)
+
+	applicationOidcOptionsDataSourceTFObjectTypes = utils.MergeAttributeTypeMapsRtn(
+		map[string]attr.Type{
+			"client_id": types.StringType,
+		},
+		applicationOidcOptionsCommonTFObjectTypes,
+	)
 
 	applicationOidcMobileAppTFObjectTypes = map[string]attr.Type{
 		"bundle_id":                types.StringType,
@@ -910,544 +932,538 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 				MarkdownDescription: oidcOptionsDescription.MarkdownDescription,
 				Optional:            true,
 
-				Attributes: map[string]schema.Attribute{
-					"type": schema.StringAttribute{
-						Description:         oidcOptionsTypeDescription.Description,
-						MarkdownDescription: oidcOptionsTypeDescription.MarkdownDescription,
-						Required:            true,
-
-						PlanModifiers: []planmodifier.String{
-							stringplanmodifier.RequiresReplace(),
-						},
-
-						Validators: []validator.String{
-							stringvalidator.OneOf(
-								string(management.ENUMAPPLICATIONTYPE_WEB_APP),
-								string(management.ENUMAPPLICATIONTYPE_NATIVE_APP),
-								string(management.ENUMAPPLICATIONTYPE_SINGLE_PAGE_APP),
-								string(management.ENUMAPPLICATIONTYPE_WORKER),
-								string(management.ENUMAPPLICATIONTYPE_CUSTOM_APP),
-								string(management.ENUMAPPLICATIONTYPE_SERVICE),
-							),
-						},
-					},
-
-					"home_page_url": schema.StringAttribute{
-						Description:         oidcOptionsHomePageURLDescription.Description,
-						MarkdownDescription: oidcOptionsHomePageURLDescription.MarkdownDescription,
-						Optional:            true,
-
-						Validators: []validator.String{
-							stringvalidator.RegexMatches(regexp.MustCompile(`^(http:\/\/((localhost)|(127\.0\.0\.1))(:[0-9]+)?(\/?(.+))?$|(https:\/\/).*)`), "Expected value to have a url with schema of \"https\".  \"http\" urls are permitted when using localhost hosts \"localhost\" and \"127.0.0.1\"."),
-						},
-					},
-
-					"device_path_id": schema.StringAttribute{
-						Description:         oidcOptionsDevicePathIdDescription.Description,
-						MarkdownDescription: oidcOptionsDevicePathIdDescription.MarkdownDescription,
-						Optional:            true,
-
-						Validators: []validator.String{
-							stringvalidator.RegexMatches(regexp.MustCompile(`^[a-zA-Z0-9_-]*`), "The string can contain any letters, numbers, underscore and dash characters"),
-							stringvalidator.LengthBetween(oidcOptionsDevicePathIdMin, oidcOptionsDevicePathIdMax),
-						},
-					},
-
-					"device_custom_verification_uri": schema.StringAttribute{
-						Description:         oidcOptionsDeviceCustomVerificationUriDescription.Description,
-						MarkdownDescription: oidcOptionsDeviceCustomVerificationUriDescription.MarkdownDescription,
-						Optional:            true,
-					},
-
-					"device_timeout": schema.Int32Attribute{
-						Description:         oidcOptionsDeviceTimeoutDescription.Description,
-						MarkdownDescription: oidcOptionsDeviceTimeoutDescription.MarkdownDescription,
-						Optional:            true,
-						Computed:            true,
-
-						Default: int32default.StaticInt32(oidcOptionsDeviceTimeoutDefault),
-
-						Validators: []validator.Int32{
-							int32validator.Between(oidcOptionsDeviceTimeoutMin, oidcOptionsDeviceTimeoutMax),
-						},
-					},
-
-					"device_polling_interval": schema.Int32Attribute{
-						Description:         oidcOptionsDevicePollingIntervalDescription.Description,
-						MarkdownDescription: oidcOptionsDevicePollingIntervalDescription.MarkdownDescription,
-						Optional:            true,
-						Computed:            true,
-
-						Default: int32default.StaticInt32(oidcOptionsDevicePollingIntervalDefault),
-
-						Validators: []validator.Int32{
-							int32validator.Between(oidcOptionsDevicePollingIntervalMin, oidcOptionsDevicePollingIntervalMax),
-						},
-					},
-
-					"idp_signoff": schema.BoolAttribute{
-						Description:         oidcOptionsIdpSignoffDescription.Description,
-						MarkdownDescription: oidcOptionsIdpSignoffDescription.MarkdownDescription,
-						Optional:            true,
-						Computed:            true,
-
-						Default: booldefault.StaticBool(false),
-					},
-
-					"initiate_login_uri": schema.StringAttribute{
-						Description:         oidcOptionsInitiateLoginUriDescription.Description,
-						MarkdownDescription: oidcOptionsInitiateLoginUriDescription.MarkdownDescription,
-						Optional:            true,
-
-						Validators: []validator.String{
-							stringvalidator.RegexMatches(regexp.MustCompile(`^(http:\/\/((localhost)|(127\.0\.0\.1))(:[0-9]+)?(\/?(.+))?$|(https:\/\/).*)`), "Expected value to have a url with schema of \"https\".  \"http\" urls are permitted when using localhost hosts \"localhost\" and \"127.0.0.1\"."),
-						},
-					},
-
-					"jwks": schema.StringAttribute{
-						Description:         oidcOptionsJwksDescription.Description,
-						MarkdownDescription: oidcOptionsJwksDescription.MarkdownDescription,
-						Optional:            true,
-
-						Validators: []validator.String{
-							stringvalidator.ConflictsWith(
-								path.MatchRelative().AtParent().AtName("jwks_url"),
-								path.MatchRelative().AtParent().AtName("jwks"),
-							),
-						},
-					},
-
-					"jwks_url": schema.StringAttribute{
-						Description:         oidcOptionsJwksUrlDescription.Description,
-						MarkdownDescription: oidcOptionsJwksUrlDescription.MarkdownDescription,
-						Optional:            true,
-
-						Validators: []validator.String{
-							stringvalidator.ConflictsWith(
-								path.MatchRelative().AtParent().AtName("jwks_url"),
-								path.MatchRelative().AtParent().AtName("jwks"),
-							),
-							stringvalidator.RegexMatches(regexp.MustCompile(`^(https:\/\/).*`), "Expected value to have a url with schema of \"https\"."),
-						},
-					},
-
-					"target_link_uri": schema.StringAttribute{
-						Description:         oidcOptionsTargetLinkUriDescription.Description,
-						MarkdownDescription: oidcOptionsTargetLinkUriDescription.MarkdownDescription,
-						Optional:            true,
-
-						Validators: []validator.String{
-							stringvalidator.RegexMatches(regexp.MustCompile(`^(\S+:\/\/).+`), "Expected value to have a url with schema of \"https\", \"http\" or a custom mobile native schema (e.g., `org.bxretail.app://target`)."),
-						},
-					},
-
-					"grant_types": schema.SetAttribute{
-						Description:         oidcOptionsGrantTypesDescription.Description,
-						MarkdownDescription: oidcOptionsGrantTypesDescription.MarkdownDescription,
-						Required:            true,
-
-						ElementType: types.StringType,
-
-						Validators: []validator.Set{
-							setvalidator.ValueStringsAre(
-								stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationOIDCGrantTypeEnumValues)...),
-							),
-						},
-					},
-
-					"response_types": schema.SetAttribute{
-						Description:         oidcOptionsResponseTypesDescription.Description,
-						MarkdownDescription: oidcOptionsResponseTypesDescription.MarkdownDescription,
-						Optional:            true,
-
-						ElementType: types.StringType,
-
-						Validators: []validator.Set{
-							setvalidator.ValueStringsAre(
-								stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationOIDCResponseTypeEnumValues)...),
-							),
-						},
-					},
-
-					"token_endpoint_auth_method": schema.StringAttribute{
-						Description:         oidcOptionsTokenEndpointAuthnMethod.Description,
-						MarkdownDescription: oidcOptionsTokenEndpointAuthnMethod.MarkdownDescription,
-						Required:            true,
-
-						Validators: []validator.String{
-							stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationOIDCTokenAuthMethodEnumValues)...),
-						},
-					},
-
-					"par_requirement": schema.StringAttribute{
-						Description:         oidcOptionsParRequirementDescription.Description,
-						MarkdownDescription: oidcOptionsParRequirementDescription.MarkdownDescription,
-						Optional:            true,
-						Computed:            true,
-
-						Default: stringdefault.StaticString(string(management.ENUMAPPLICATIONOIDCPARREQUIREMENT_OPTIONAL)),
-
-						Validators: []validator.String{
-							stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationOIDCPARRequirementEnumValues)...),
-						},
-					},
-
-					"par_timeout": schema.Int32Attribute{
-						Description:         oidcOptionsParTimeoutDescription.Description,
-						MarkdownDescription: oidcOptionsParTimeoutDescription.MarkdownDescription,
-						Optional:            true,
-						Computed:            true,
-
-						Default: int32default.StaticInt32(oidcOptionsParTimeoutDefault),
-
-						Validators: []validator.Int32{
-							int32validator.Between(oidcOptionsParTimeoutMin, oidcOptionsParTimeoutMax),
-						},
-					},
-
-					"pkce_enforcement": schema.StringAttribute{
-						Description:         oidcOptionsPKCEEnforcementDescription.Description,
-						MarkdownDescription: oidcOptionsPKCEEnforcementDescription.MarkdownDescription,
-						Optional:            true,
-						Computed:            true,
-
-						Default: stringdefault.StaticString(string(management.ENUMAPPLICATIONOIDCPKCEOPTION_OPTIONAL)),
-
-						Validators: []validator.String{
-							stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationOIDCPKCEOptionEnumValues)...),
-						},
-					},
-
-					"redirect_uris": schema.SetAttribute{
-						Description:         oidcOptionsRedirectUrisDescription.Description,
-						MarkdownDescription: oidcOptionsRedirectUrisDescription.MarkdownDescription,
-						Optional:            true,
-
-						ElementType: types.StringType,
-
-						Validators: []validator.Set{
-							setvalidator.ValueStringsAre(
-								stringvalidator.RegexMatches(regexp.MustCompile(`^(http:\/\/((localhost)|(127\.0\.0\.1))(:[0-9]+)?(\/?(.+))?$|(\S+:\/\/).+)`), "Expected value to have a url with schema of \"https\" or a custom mobile native schema (e.g., `org.bxretail.app://callback`).  \"http\" urls are permitted when using localhost hosts \"localhost\" and \"127.0.0.1\"."),
-							),
-						},
-					},
-
-					"allow_wildcard_in_redirect_uris": schema.BoolAttribute{
-						Description:         oidcOptionsAllowWildcardsInRedirectUrisDescription.Description,
-						MarkdownDescription: oidcOptionsAllowWildcardsInRedirectUrisDescription.MarkdownDescription,
-						Optional:            true,
-						Computed:            true,
-
-						Default: booldefault.StaticBool(false),
-					},
-
-					"post_logout_redirect_uris": schema.SetAttribute{
-						Description:         oidcOptionsPostLogoutRedirectUrisDescription.Description,
-						MarkdownDescription: oidcOptionsPostLogoutRedirectUrisDescription.MarkdownDescription,
-						Optional:            true,
-
-						ElementType: types.StringType,
-
-						Validators: []validator.Set{
-							setvalidator.ValueStringsAre(
-								stringvalidator.RegexMatches(regexp.MustCompile(`^(\S+:\/\/).+`), "Expected value to have a url with schema of \"https\", \"http\" or a custom mobile native schema (e.g., `org.bxretail.app://logout`)."),
-							),
-						},
-					},
-
-					"refresh_token_duration": schema.Int32Attribute{
-						Description:         oidcOptionsRefreshTokenDurationDescription.Description,
-						MarkdownDescription: oidcOptionsRefreshTokenDurationDescription.MarkdownDescription,
-						Optional:            true,
-						Computed:            true,
-
-						Default: int32default.StaticInt32(oidcOptionsRefreshTokenDurationDefault),
-
-						Validators: []validator.Int32{
-							int32validator.Between(oidcOptionsRefreshTokenDurationMin, oidcOptionsRefreshTokenDurationMax),
-						},
-					},
-
-					"refresh_token_rolling_duration": schema.Int32Attribute{
-						Description:         oidcOptionsRefreshTokenRollingDurationDescription.Description,
-						MarkdownDescription: oidcOptionsRefreshTokenRollingDurationDescription.MarkdownDescription,
-						Optional:            true,
-						Computed:            true,
-
-						Default: int32default.StaticInt32(oidcOptionsRefreshTokenRollingDurationDefault),
-
-						Validators: []validator.Int32{
-							int32validator.Between(oidcOptionsRefreshTokenRollingDurationMin, oidcOptionsRefreshTokenRollingDurationMax),
-						},
-					},
-
-					"refresh_token_rolling_grace_period_duration": schema.Int32Attribute{
-						Description:         oidcOptionsRefreshTokenRollingGracePeriodDurationDescription.Description,
-						MarkdownDescription: oidcOptionsRefreshTokenRollingGracePeriodDurationDescription.MarkdownDescription,
-						Optional:            true,
-
-						Validators: []validator.Int32{
-							int32validator.Between(oidcOptionsRefreshTokenRollingGracePeriodDurationMin, oidcOptionsRefreshTokenRollingGracePeriodDurationMax),
-						},
-					},
-
-					"additional_refresh_token_replay_protection_enabled": schema.BoolAttribute{
-						Description:         oidcOptionsAdditionalRefreshTokenReplayProtectionEnabledDescription.Description,
-						MarkdownDescription: oidcOptionsAdditionalRefreshTokenReplayProtectionEnabledDescription.MarkdownDescription,
-						Optional:            true,
-						Computed:            true,
-
-						Default: booldefault.StaticBool(true),
-					},
-
-					"support_unsigned_request_object": schema.BoolAttribute{
-						Description:         oidcOptionsSupportUnsignedRequestObjectDescription.Description,
-						MarkdownDescription: oidcOptionsSupportUnsignedRequestObjectDescription.MarkdownDescription,
-						Optional:            true,
-						Computed:            true,
-
-						Default: booldefault.StaticBool(false),
-					},
-
-					"require_signed_request_object": schema.BoolAttribute{
-						Description:         oidcOptionsRequireSignedRequestObjectDescription.Description,
-						MarkdownDescription: oidcOptionsRequireSignedRequestObjectDescription.MarkdownDescription,
-						Optional:            true,
-						Computed:            true,
-
-						Default: booldefault.StaticBool(false),
-					},
-
-					"certificate_based_authentication": schema.SingleNestedAttribute{
-						Description:         oidcOptionsCertificateBasedAuthenticationDescription.Description,
-						MarkdownDescription: oidcOptionsCertificateBasedAuthenticationDescription.MarkdownDescription,
-						Optional:            true,
-
-						Attributes: map[string]schema.Attribute{
-							"key_id": schema.StringAttribute{
-								Description:         oidcOptionsCertificateBasedAuthenticationKeyIdDescription.Description,
-								MarkdownDescription: oidcOptionsCertificateBasedAuthenticationKeyIdDescription.MarkdownDescription,
-								Required:            true,
-
-								CustomType: pingonetypes.ResourceIDType{},
-							},
-						},
-					},
-
-					"client_id": schema.StringAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the application ID used to authenticate to the authorization server.").Description,
-						Computed:    true,
-
-						PlanModifiers: []planmodifier.String{
-							stringplanmodifier.UseStateForUnknown(),
-						},
-					},
-
-					"mobile_app": schema.SingleNestedAttribute{
-						Description:         oidcOptionsMobileAppDescription.Description,
-						MarkdownDescription: oidcOptionsMobileAppDescription.MarkdownDescription,
-						Optional:            true,
-						Computed:            true,
-
-						Attributes: map[string]schema.Attribute{
-							"bundle_id": schema.StringAttribute{
-								Description:         oidcOptionsMobileAppBundleIdDescription.Description,
-								MarkdownDescription: oidcOptionsMobileAppBundleIdDescription.MarkdownDescription,
-								Optional:            true,
-
-								PlanModifiers: []planmodifier.String{
-									stringplanmodifier.RequiresReplace(),
-								},
-
-								Validators: []validator.String{
-									stringvalidator.LengthAtLeast(1),
-								},
+				Attributes: utils.MergeResourceSchemaAttributeMapsRtn(
+					beta.ResourceSchemaItems(),
+					map[string]schema.Attribute{
+						"type": schema.StringAttribute{
+							Description:         oidcOptionsTypeDescription.Description,
+							MarkdownDescription: oidcOptionsTypeDescription.MarkdownDescription,
+							Required:            true,
+
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.RequiresReplace(),
 							},
 
-							"package_name": schema.StringAttribute{
-								Description:         oidcOptionsMobileAppPackageNameDescription.Description,
-								MarkdownDescription: oidcOptionsMobileAppPackageNameDescription.MarkdownDescription,
-								Optional:            true,
+							Validators: []validator.String{
+								stringvalidator.OneOf(
+									string(management.ENUMAPPLICATIONTYPE_WEB_APP),
+									string(management.ENUMAPPLICATIONTYPE_NATIVE_APP),
+									string(management.ENUMAPPLICATIONTYPE_SINGLE_PAGE_APP),
+									string(management.ENUMAPPLICATIONTYPE_WORKER),
+									string(management.ENUMAPPLICATIONTYPE_CUSTOM_APP),
+									string(management.ENUMAPPLICATIONTYPE_SERVICE),
+								),
+							},
+						},
 
-								PlanModifiers: []planmodifier.String{
-									stringplanmodifier.RequiresReplace(),
-								},
+						"home_page_url": schema.StringAttribute{
+							Description:         oidcOptionsHomePageURLDescription.Description,
+							MarkdownDescription: oidcOptionsHomePageURLDescription.MarkdownDescription,
+							Optional:            true,
 
-								Validators: []validator.String{
-									stringvalidator.LengthAtLeast(1),
+							Validators: []validator.String{
+								stringvalidator.RegexMatches(regexp.MustCompile(`^(http:\/\/((localhost)|(127\.0\.0\.1))(:[0-9]+)?(\/?(.+))?$|(https:\/\/).*)`), "Expected value to have a url with schema of \"https\".  \"http\" urls are permitted when using localhost hosts \"localhost\" and \"127.0.0.1\"."),
+							},
+						},
+
+						"device_path_id": schema.StringAttribute{
+							Description:         oidcOptionsDevicePathIdDescription.Description,
+							MarkdownDescription: oidcOptionsDevicePathIdDescription.MarkdownDescription,
+							Optional:            true,
+
+							Validators: []validator.String{
+								stringvalidator.RegexMatches(regexp.MustCompile(`^[a-zA-Z0-9_-]*`), "The string can contain any letters, numbers, underscore and dash characters"),
+								stringvalidator.LengthBetween(oidcOptionsDevicePathIdMin, oidcOptionsDevicePathIdMax),
+							},
+						},
+
+						"device_custom_verification_uri": schema.StringAttribute{
+							Description:         oidcOptionsDeviceCustomVerificationUriDescription.Description,
+							MarkdownDescription: oidcOptionsDeviceCustomVerificationUriDescription.MarkdownDescription,
+							Optional:            true,
+						},
+
+						"device_timeout": schema.Int32Attribute{
+							Description:         oidcOptionsDeviceTimeoutDescription.Description,
+							MarkdownDescription: oidcOptionsDeviceTimeoutDescription.MarkdownDescription,
+							Optional:            true,
+							Computed:            true,
+
+							Default: int32default.StaticInt32(oidcOptionsDeviceTimeoutDefault),
+
+							Validators: []validator.Int32{
+								int32validator.Between(oidcOptionsDeviceTimeoutMin, oidcOptionsDeviceTimeoutMax),
+							},
+						},
+
+						"device_polling_interval": schema.Int32Attribute{
+							Description:         oidcOptionsDevicePollingIntervalDescription.Description,
+							MarkdownDescription: oidcOptionsDevicePollingIntervalDescription.MarkdownDescription,
+							Optional:            true,
+							Computed:            true,
+
+							Default: int32default.StaticInt32(oidcOptionsDevicePollingIntervalDefault),
+
+							Validators: []validator.Int32{
+								int32validator.Between(oidcOptionsDevicePollingIntervalMin, oidcOptionsDevicePollingIntervalMax),
+							},
+						},
+
+						"idp_signoff": schema.BoolAttribute{
+							Description:         oidcOptionsIdpSignoffDescription.Description,
+							MarkdownDescription: oidcOptionsIdpSignoffDescription.MarkdownDescription,
+							Optional:            true,
+							Computed:            true,
+
+							Default: booldefault.StaticBool(false),
+						},
+
+						"initiate_login_uri": schema.StringAttribute{
+							Description:         oidcOptionsInitiateLoginUriDescription.Description,
+							MarkdownDescription: oidcOptionsInitiateLoginUriDescription.MarkdownDescription,
+							Optional:            true,
+
+							Validators: []validator.String{
+								stringvalidator.RegexMatches(regexp.MustCompile(`^(http:\/\/((localhost)|(127\.0\.0\.1))(:[0-9]+)?(\/?(.+))?$|(https:\/\/).*)`), "Expected value to have a url with schema of \"https\".  \"http\" urls are permitted when using localhost hosts \"localhost\" and \"127.0.0.1\"."),
+							},
+						},
+
+						"jwks": schema.StringAttribute{
+							Description:         oidcOptionsJwksDescription.Description,
+							MarkdownDescription: oidcOptionsJwksDescription.MarkdownDescription,
+							Optional:            true,
+
+							Validators: []validator.String{
+								stringvalidator.ConflictsWith(
+									path.MatchRelative().AtParent().AtName("jwks_url"),
+									path.MatchRelative().AtParent().AtName("jwks"),
+								),
+							},
+						},
+
+						"jwks_url": schema.StringAttribute{
+							Description:         oidcOptionsJwksUrlDescription.Description,
+							MarkdownDescription: oidcOptionsJwksUrlDescription.MarkdownDescription,
+							Optional:            true,
+
+							Validators: []validator.String{
+								stringvalidator.ConflictsWith(
+									path.MatchRelative().AtParent().AtName("jwks_url"),
+									path.MatchRelative().AtParent().AtName("jwks"),
+								),
+								stringvalidator.RegexMatches(regexp.MustCompile(`^(https:\/\/).*`), "Expected value to have a url with schema of \"https\"."),
+							},
+						},
+
+						"target_link_uri": schema.StringAttribute{
+							Description:         oidcOptionsTargetLinkUriDescription.Description,
+							MarkdownDescription: oidcOptionsTargetLinkUriDescription.MarkdownDescription,
+							Optional:            true,
+
+							Validators: []validator.String{
+								stringvalidator.RegexMatches(regexp.MustCompile(`^(\S+:\/\/).+`), "Expected value to have a url with schema of \"https\", \"http\" or a custom mobile native schema (e.g., `org.bxretail.app://target`)."),
+							},
+						},
+
+						"grant_types": schema.SetAttribute{
+							Description:         oidcOptionsGrantTypesDescription.Description,
+							MarkdownDescription: oidcOptionsGrantTypesDescription.MarkdownDescription,
+							Required:            true,
+
+							ElementType: types.StringType,
+
+							Validators: []validator.Set{
+								setvalidator.ValueStringsAre(
+									stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationOIDCGrantTypeEnumValues)...),
+								),
+							},
+						},
+
+						"response_types": schema.SetAttribute{
+							Description:         oidcOptionsResponseTypesDescription.Description,
+							MarkdownDescription: oidcOptionsResponseTypesDescription.MarkdownDescription,
+							Optional:            true,
+
+							ElementType: types.StringType,
+
+							Validators: []validator.Set{
+								setvalidator.ValueStringsAre(
+									stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationOIDCResponseTypeEnumValues)...),
+								),
+							},
+						},
+
+						"token_endpoint_auth_method": schema.StringAttribute{
+							Description:         oidcOptionsTokenEndpointAuthnMethod.Description,
+							MarkdownDescription: oidcOptionsTokenEndpointAuthnMethod.MarkdownDescription,
+							Required:            true,
+
+							Validators: []validator.String{
+								stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationOIDCTokenAuthMethodEnumValues)...),
+							},
+						},
+
+						"par_requirement": schema.StringAttribute{
+							Description:         oidcOptionsParRequirementDescription.Description,
+							MarkdownDescription: oidcOptionsParRequirementDescription.MarkdownDescription,
+							Optional:            true,
+							Computed:            true,
+
+							Default: stringdefault.StaticString(string(management.ENUMAPPLICATIONOIDCPARREQUIREMENT_OPTIONAL)),
+
+							Validators: []validator.String{
+								stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationOIDCPARRequirementEnumValues)...),
+							},
+						},
+
+						"par_timeout": schema.Int32Attribute{
+							Description:         oidcOptionsParTimeoutDescription.Description,
+							MarkdownDescription: oidcOptionsParTimeoutDescription.MarkdownDescription,
+							Optional:            true,
+							Computed:            true,
+
+							Default: int32default.StaticInt32(oidcOptionsParTimeoutDefault),
+
+							Validators: []validator.Int32{
+								int32validator.Between(oidcOptionsParTimeoutMin, oidcOptionsParTimeoutMax),
+							},
+						},
+
+						"pkce_enforcement": schema.StringAttribute{
+							Description:         oidcOptionsPKCEEnforcementDescription.Description,
+							MarkdownDescription: oidcOptionsPKCEEnforcementDescription.MarkdownDescription,
+							Optional:            true,
+							Computed:            true,
+
+							Default: stringdefault.StaticString(string(management.ENUMAPPLICATIONOIDCPKCEOPTION_OPTIONAL)),
+
+							Validators: []validator.String{
+								stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationOIDCPKCEOptionEnumValues)...),
+							},
+						},
+
+						"redirect_uris": schema.SetAttribute{
+							Description:         oidcOptionsRedirectUrisDescription.Description,
+							MarkdownDescription: oidcOptionsRedirectUrisDescription.MarkdownDescription,
+							Optional:            true,
+
+							ElementType: types.StringType,
+
+							Validators: []validator.Set{
+								setvalidator.ValueStringsAre(
+									stringvalidator.RegexMatches(regexp.MustCompile(`^(http:\/\/((localhost)|(127\.0\.0\.1))(:[0-9]+)?(\/?(.+))?$|(\S+:\/\/).+)`), "Expected value to have a url with schema of \"https\" or a custom mobile native schema (e.g., `org.bxretail.app://callback`).  \"http\" urls are permitted when using localhost hosts \"localhost\" and \"127.0.0.1\"."),
+								),
+							},
+						},
+
+						"allow_wildcard_in_redirect_uris": schema.BoolAttribute{
+							Description:         oidcOptionsAllowWildcardsInRedirectUrisDescription.Description,
+							MarkdownDescription: oidcOptionsAllowWildcardsInRedirectUrisDescription.MarkdownDescription,
+							Optional:            true,
+							Computed:            true,
+
+							Default: booldefault.StaticBool(false),
+						},
+
+						"post_logout_redirect_uris": schema.SetAttribute{
+							Description:         oidcOptionsPostLogoutRedirectUrisDescription.Description,
+							MarkdownDescription: oidcOptionsPostLogoutRedirectUrisDescription.MarkdownDescription,
+							Optional:            true,
+
+							ElementType: types.StringType,
+
+							Validators: []validator.Set{
+								setvalidator.ValueStringsAre(
+									stringvalidator.RegexMatches(regexp.MustCompile(`^(\S+:\/\/).+`), "Expected value to have a url with schema of \"https\", \"http\" or a custom mobile native schema (e.g., `org.bxretail.app://logout`)."),
+								),
+							},
+						},
+
+						"refresh_token_duration": schema.Int32Attribute{
+							Description:         oidcOptionsRefreshTokenDurationDescription.Description,
+							MarkdownDescription: oidcOptionsRefreshTokenDurationDescription.MarkdownDescription,
+							Optional:            true,
+							Computed:            true,
+
+							Default: int32default.StaticInt32(oidcOptionsRefreshTokenDurationDefault),
+
+							Validators: []validator.Int32{
+								int32validator.Between(oidcOptionsRefreshTokenDurationMin, oidcOptionsRefreshTokenDurationMax),
+							},
+						},
+
+						"refresh_token_rolling_duration": schema.Int32Attribute{
+							Description:         oidcOptionsRefreshTokenRollingDurationDescription.Description,
+							MarkdownDescription: oidcOptionsRefreshTokenRollingDurationDescription.MarkdownDescription,
+							Optional:            true,
+							Computed:            true,
+
+							Default: int32default.StaticInt32(oidcOptionsRefreshTokenRollingDurationDefault),
+
+							Validators: []validator.Int32{
+								int32validator.Between(oidcOptionsRefreshTokenRollingDurationMin, oidcOptionsRefreshTokenRollingDurationMax),
+							},
+						},
+
+						"refresh_token_rolling_grace_period_duration": schema.Int32Attribute{
+							Description:         oidcOptionsRefreshTokenRollingGracePeriodDurationDescription.Description,
+							MarkdownDescription: oidcOptionsRefreshTokenRollingGracePeriodDurationDescription.MarkdownDescription,
+							Optional:            true,
+
+							Validators: []validator.Int32{
+								int32validator.Between(oidcOptionsRefreshTokenRollingGracePeriodDurationMin, oidcOptionsRefreshTokenRollingGracePeriodDurationMax),
+							},
+						},
+
+						"additional_refresh_token_replay_protection_enabled": schema.BoolAttribute{
+							Description:         oidcOptionsAdditionalRefreshTokenReplayProtectionEnabledDescription.Description,
+							MarkdownDescription: oidcOptionsAdditionalRefreshTokenReplayProtectionEnabledDescription.MarkdownDescription,
+							Optional:            true,
+							Computed:            true,
+
+							Default: booldefault.StaticBool(true),
+						},
+
+						"support_unsigned_request_object": schema.BoolAttribute{
+							Description:         oidcOptionsSupportUnsignedRequestObjectDescription.Description,
+							MarkdownDescription: oidcOptionsSupportUnsignedRequestObjectDescription.MarkdownDescription,
+							Optional:            true,
+							Computed:            true,
+
+							Default: booldefault.StaticBool(false),
+						},
+
+						"require_signed_request_object": schema.BoolAttribute{
+							Description:         oidcOptionsRequireSignedRequestObjectDescription.Description,
+							MarkdownDescription: oidcOptionsRequireSignedRequestObjectDescription.MarkdownDescription,
+							Optional:            true,
+							Computed:            true,
+
+							Default: booldefault.StaticBool(false),
+						},
+
+						"certificate_based_authentication": schema.SingleNestedAttribute{
+							Description:         oidcOptionsCertificateBasedAuthenticationDescription.Description,
+							MarkdownDescription: oidcOptionsCertificateBasedAuthenticationDescription.MarkdownDescription,
+							Optional:            true,
+
+							Attributes: map[string]schema.Attribute{
+								"key_id": schema.StringAttribute{
+									Description:         oidcOptionsCertificateBasedAuthenticationKeyIdDescription.Description,
+									MarkdownDescription: oidcOptionsCertificateBasedAuthenticationKeyIdDescription.MarkdownDescription,
+									Required:            true,
+
+									CustomType: pingonetypes.ResourceIDType{},
 								},
 							},
+						},
 
-							"huawei_app_id": schema.StringAttribute{
-								Description:         oidcOptionsMobileAppHuaweiAppIdDescription.Description,
-								MarkdownDescription: oidcOptionsMobileAppHuaweiAppIdDescription.MarkdownDescription,
-								Optional:            true,
+						"mobile_app": schema.SingleNestedAttribute{
+							Description:         oidcOptionsMobileAppDescription.Description,
+							MarkdownDescription: oidcOptionsMobileAppDescription.MarkdownDescription,
+							Optional:            true,
+							Computed:            true,
 
-								PlanModifiers: []planmodifier.String{
-									stringplanmodifier.RequiresReplace(),
-								},
+							Attributes: map[string]schema.Attribute{
+								"bundle_id": schema.StringAttribute{
+									Description:         oidcOptionsMobileAppBundleIdDescription.Description,
+									MarkdownDescription: oidcOptionsMobileAppBundleIdDescription.MarkdownDescription,
+									Optional:            true,
 
-								Validators: []validator.String{
-									stringvalidator.LengthAtLeast(1),
-									stringvalidator.AlsoRequires(
-										path.MatchRelative().AtParent().AtName("huawei_app_id"),
-										path.MatchRelative().AtParent().AtName("huawei_package_name"),
-									),
-								},
-							},
-
-							"huawei_package_name": schema.StringAttribute{
-								Description:         oidcOptionsMobileAppHuaweiPackageNameDescription.Description,
-								MarkdownDescription: oidcOptionsMobileAppHuaweiPackageNameDescription.MarkdownDescription,
-								Optional:            true,
-
-								PlanModifiers: []planmodifier.String{
-									stringplanmodifier.RequiresReplace(),
-								},
-
-								Validators: []validator.String{
-									stringvalidator.LengthAtLeast(1),
-									stringvalidator.AlsoRequires(
-										path.MatchRelative().AtParent().AtName("huawei_app_id"),
-										path.MatchRelative().AtParent().AtName("huawei_package_name"),
-									),
-								},
-							},
-
-							"passcode_refresh_seconds": schema.Int32Attribute{
-								Description:         oidcOptionsMobileAppPasscodeRefreshSecondsDescription.Description,
-								MarkdownDescription: oidcOptionsMobileAppPasscodeRefreshSecondsDescription.MarkdownDescription,
-								Optional:            true,
-								Computed:            true,
-
-								Default: int32default.StaticInt32(oidcOptionsMobileAppPasscodeRefreshSecondsDefault),
-
-								Validators: []validator.Int32{
-									int32validator.Between(oidcOptionsMobileAppPasscodeRefreshSecondsMin, oidcOptionsMobileAppPasscodeRefreshSecondsMax),
-								},
-							},
-
-							"universal_app_link": schema.StringAttribute{
-								Description:         oidcOptionsMobileAppUniversalAppLinkDescription.Description,
-								MarkdownDescription: oidcOptionsMobileAppUniversalAppLinkDescription.MarkdownDescription,
-								Optional:            true,
-
-								Validators: []validator.String{
-									stringvalidator.LengthAtLeast(1),
-								},
-							},
-
-							"integrity_detection": schema.SingleNestedAttribute{
-								Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies mobile application integrity detection settings.").Description,
-								Optional:    true,
-								Computed:    true,
-
-								Attributes: map[string]schema.Attribute{
-									"enabled": schema.BoolAttribute{
-										Description:         oidcOptionsMobileAppIntegrityDetectionEnabledDescription.Description,
-										MarkdownDescription: oidcOptionsMobileAppIntegrityDetectionEnabledDescription.MarkdownDescription,
-										Optional:            true,
-										Computed:            true,
-
-										Default: booldefault.StaticBool(false),
+									PlanModifiers: []planmodifier.String{
+										stringplanmodifier.RequiresReplace(),
 									},
 
-									"excluded_platforms": schema.SetAttribute{
-										Description:         oidcOptionsMobileAppIntegrityDetectionExcludedPlatformsDescription.Description,
-										MarkdownDescription: oidcOptionsMobileAppIntegrityDetectionExcludedPlatformsDescription.MarkdownDescription,
-										Optional:            true,
+									Validators: []validator.String{
+										stringvalidator.LengthAtLeast(1),
+									},
+								},
 
-										ElementType: types.StringType,
+								"package_name": schema.StringAttribute{
+									Description:         oidcOptionsMobileAppPackageNameDescription.Description,
+									MarkdownDescription: oidcOptionsMobileAppPackageNameDescription.MarkdownDescription,
+									Optional:            true,
 
-										Validators: []validator.Set{
-											setvalidator.SizeAtMost(1),
-											setvalidator.ValueStringsAre(
-												stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumMobileIntegrityDetectionPlatformEnumValues)...),
-											),
+									PlanModifiers: []planmodifier.String{
+										stringplanmodifier.RequiresReplace(),
+									},
+
+									Validators: []validator.String{
+										stringvalidator.LengthAtLeast(1),
+									},
+								},
+
+								"huawei_app_id": schema.StringAttribute{
+									Description:         oidcOptionsMobileAppHuaweiAppIdDescription.Description,
+									MarkdownDescription: oidcOptionsMobileAppHuaweiAppIdDescription.MarkdownDescription,
+									Optional:            true,
+
+									PlanModifiers: []planmodifier.String{
+										stringplanmodifier.RequiresReplace(),
+									},
+
+									Validators: []validator.String{
+										stringvalidator.LengthAtLeast(1),
+										stringvalidator.AlsoRequires(
+											path.MatchRelative().AtParent().AtName("huawei_app_id"),
+											path.MatchRelative().AtParent().AtName("huawei_package_name"),
+										),
+									},
+								},
+
+								"huawei_package_name": schema.StringAttribute{
+									Description:         oidcOptionsMobileAppHuaweiPackageNameDescription.Description,
+									MarkdownDescription: oidcOptionsMobileAppHuaweiPackageNameDescription.MarkdownDescription,
+									Optional:            true,
+
+									PlanModifiers: []planmodifier.String{
+										stringplanmodifier.RequiresReplace(),
+									},
+
+									Validators: []validator.String{
+										stringvalidator.LengthAtLeast(1),
+										stringvalidator.AlsoRequires(
+											path.MatchRelative().AtParent().AtName("huawei_app_id"),
+											path.MatchRelative().AtParent().AtName("huawei_package_name"),
+										),
+									},
+								},
+
+								"passcode_refresh_seconds": schema.Int32Attribute{
+									Description:         oidcOptionsMobileAppPasscodeRefreshSecondsDescription.Description,
+									MarkdownDescription: oidcOptionsMobileAppPasscodeRefreshSecondsDescription.MarkdownDescription,
+									Optional:            true,
+									Computed:            true,
+
+									Default: int32default.StaticInt32(oidcOptionsMobileAppPasscodeRefreshSecondsDefault),
+
+									Validators: []validator.Int32{
+										int32validator.Between(oidcOptionsMobileAppPasscodeRefreshSecondsMin, oidcOptionsMobileAppPasscodeRefreshSecondsMax),
+									},
+								},
+
+								"universal_app_link": schema.StringAttribute{
+									Description:         oidcOptionsMobileAppUniversalAppLinkDescription.Description,
+									MarkdownDescription: oidcOptionsMobileAppUniversalAppLinkDescription.MarkdownDescription,
+									Optional:            true,
+
+									Validators: []validator.String{
+										stringvalidator.LengthAtLeast(1),
+									},
+								},
+
+								"integrity_detection": schema.SingleNestedAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies mobile application integrity detection settings.").Description,
+									Optional:    true,
+									Computed:    true,
+
+									Attributes: map[string]schema.Attribute{
+										"enabled": schema.BoolAttribute{
+											Description:         oidcOptionsMobileAppIntegrityDetectionEnabledDescription.Description,
+											MarkdownDescription: oidcOptionsMobileAppIntegrityDetectionEnabledDescription.MarkdownDescription,
+											Optional:            true,
+											Computed:            true,
+
+											Default: booldefault.StaticBool(false),
 										},
-									},
 
-									"cache_duration": schema.SingleNestedAttribute{
-										Description:         oidcOptionsMobileAppIntegrityDetectionCacheDurationDescription.Description,
-										MarkdownDescription: oidcOptionsMobileAppIntegrityDetectionCacheDurationDescription.MarkdownDescription,
-										Optional:            true,
+										"excluded_platforms": schema.SetAttribute{
+											Description:         oidcOptionsMobileAppIntegrityDetectionExcludedPlatformsDescription.Description,
+											MarkdownDescription: oidcOptionsMobileAppIntegrityDetectionExcludedPlatformsDescription.MarkdownDescription,
+											Optional:            true,
 
-										Attributes: map[string]schema.Attribute{
-											"amount": schema.Int32Attribute{
-												Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the number of minutes or hours that specify the duration between successful integrity detection calls.").Description,
-												Required:    true,
+											ElementType: types.StringType,
+
+											Validators: []validator.Set{
+												setvalidator.SizeAtMost(1),
+												setvalidator.ValueStringsAre(
+													stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumMobileIntegrityDetectionPlatformEnumValues)...),
+												),
 											},
+										},
 
-											"units": schema.StringAttribute{
-												Description:         oidcOptionsMobileAppIntegrityDetectionCacheDurationUnitsDescription.Description,
-												MarkdownDescription: oidcOptionsMobileAppIntegrityDetectionCacheDurationUnitsDescription.MarkdownDescription,
-												Optional:            true,
-												Computed:            true,
+										"cache_duration": schema.SingleNestedAttribute{
+											Description:         oidcOptionsMobileAppIntegrityDetectionCacheDurationDescription.Description,
+											MarkdownDescription: oidcOptionsMobileAppIntegrityDetectionCacheDurationDescription.MarkdownDescription,
+											Optional:            true,
 
-												Default: stringdefault.StaticString(string(management.ENUMDURATIONUNITMINSHOURS_MINUTES)),
+											Attributes: map[string]schema.Attribute{
+												"amount": schema.Int32Attribute{
+													Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the number of minutes or hours that specify the duration between successful integrity detection calls.").Description,
+													Required:    true,
+												},
 
-												Validators: []validator.String{
-													stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumDurationUnitMinsHoursEnumValues)...),
+												"units": schema.StringAttribute{
+													Description:         oidcOptionsMobileAppIntegrityDetectionCacheDurationUnitsDescription.Description,
+													MarkdownDescription: oidcOptionsMobileAppIntegrityDetectionCacheDurationUnitsDescription.MarkdownDescription,
+													Optional:            true,
+													Computed:            true,
+
+													Default: stringdefault.StaticString(string(management.ENUMDURATIONUNITMINSHOURS_MINUTES)),
+
+													Validators: []validator.String{
+														stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumDurationUnitMinsHoursEnumValues)...),
+													},
 												},
 											},
 										},
-									},
 
-									"google_play": schema.SingleNestedAttribute{
-										Description:         oidcOptionsMobileAppIntegrityDetectionGooglePlayDescription.Description,
-										MarkdownDescription: oidcOptionsMobileAppIntegrityDetectionGooglePlayDescription.MarkdownDescription,
-										Optional:            true,
+										"google_play": schema.SingleNestedAttribute{
+											Description:         oidcOptionsMobileAppIntegrityDetectionGooglePlayDescription.Description,
+											MarkdownDescription: oidcOptionsMobileAppIntegrityDetectionGooglePlayDescription.MarkdownDescription,
+											Optional:            true,
 
-										Attributes: map[string]schema.Attribute{
-											"decryption_key": schema.StringAttribute{
-												Description:         oidcOptionsMobileAppIntegrityDetectionGooglePlayDecryptionKeyDescription.Description,
-												MarkdownDescription: oidcOptionsMobileAppIntegrityDetectionGooglePlayDecryptionKeyDescription.MarkdownDescription,
-												Optional:            true,
-												Sensitive:           true,
+											Attributes: map[string]schema.Attribute{
+												"decryption_key": schema.StringAttribute{
+													Description:         oidcOptionsMobileAppIntegrityDetectionGooglePlayDecryptionKeyDescription.Description,
+													MarkdownDescription: oidcOptionsMobileAppIntegrityDetectionGooglePlayDecryptionKeyDescription.MarkdownDescription,
+													Optional:            true,
+													Sensitive:           true,
 
-												Validators: []validator.String{
-													stringvalidator.ConflictsWith(
-														path.MatchRelative().AtParent().AtName("service_account_credentials_json"),
-													),
+													Validators: []validator.String{
+														stringvalidator.ConflictsWith(
+															path.MatchRelative().AtParent().AtName("service_account_credentials_json"),
+														),
+													},
 												},
-											},
 
-											"service_account_credentials_json": schema.StringAttribute{
-												Description:         oidcOptionsMobileAppIntegrityDetectionGooglePlayServiceAccountCredentialsJsonDescription.Description,
-												MarkdownDescription: oidcOptionsMobileAppIntegrityDetectionGooglePlayServiceAccountCredentialsJsonDescription.MarkdownDescription,
-												Optional:            true,
-												Sensitive:           true,
+												"service_account_credentials_json": schema.StringAttribute{
+													Description:         oidcOptionsMobileAppIntegrityDetectionGooglePlayServiceAccountCredentialsJsonDescription.Description,
+													MarkdownDescription: oidcOptionsMobileAppIntegrityDetectionGooglePlayServiceAccountCredentialsJsonDescription.MarkdownDescription,
+													Optional:            true,
+													Sensitive:           true,
 
-												CustomType: jsontypes.NormalizedType{},
+													CustomType: jsontypes.NormalizedType{},
 
-												Validators: []validator.String{
-													stringvalidator.ConflictsWith(
-														path.MatchRelative().AtParent().AtName("decryption_key"),
-														path.MatchRelative().AtParent().AtName("verification_key"),
-													),
+													Validators: []validator.String{
+														stringvalidator.ConflictsWith(
+															path.MatchRelative().AtParent().AtName("decryption_key"),
+															path.MatchRelative().AtParent().AtName("verification_key"),
+														),
+													},
 												},
-											},
 
-											"verification_key": schema.StringAttribute{
-												Description:         oidcOptionsMobileAppIntegrityDetectionGooglePlayVerificationKeyDescription.Description,
-												MarkdownDescription: oidcOptionsMobileAppIntegrityDetectionGooglePlayVerificationKeyDescription.MarkdownDescription,
-												Optional:            true,
-												Sensitive:           true,
+												"verification_key": schema.StringAttribute{
+													Description:         oidcOptionsMobileAppIntegrityDetectionGooglePlayVerificationKeyDescription.Description,
+													MarkdownDescription: oidcOptionsMobileAppIntegrityDetectionGooglePlayVerificationKeyDescription.MarkdownDescription,
+													Optional:            true,
+													Sensitive:           true,
 
-												Validators: []validator.String{
-													stringvalidator.ConflictsWith(
-														path.MatchRelative().AtParent().AtName("service_account_credentials_json"),
-													),
+													Validators: []validator.String{
+														stringvalidator.ConflictsWith(
+															path.MatchRelative().AtParent().AtName("service_account_credentials_json"),
+														),
+													},
 												},
-											},
 
-											"verification_type": schema.StringAttribute{
-												Description:         oidcOptionsMobileAppIntegrityDetectionGooglePlayVerificationTypeDescription.Description,
-												MarkdownDescription: oidcOptionsMobileAppIntegrityDetectionGooglePlayVerificationTypeDescription.MarkdownDescription,
-												Required:            true,
+												"verification_type": schema.StringAttribute{
+													Description:         oidcOptionsMobileAppIntegrityDetectionGooglePlayVerificationTypeDescription.Description,
+													MarkdownDescription: oidcOptionsMobileAppIntegrityDetectionGooglePlayVerificationTypeDescription.MarkdownDescription,
+													Required:            true,
 
-												Validators: []validator.String{
-													stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationNativeGooglePlayVerificationTypeEnumValues)...),
+													Validators: []validator.String{
+														stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationNativeGooglePlayVerificationTypeEnumValues)...),
+													},
 												},
 											},
 										},
@@ -1455,10 +1471,9 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 								},
 							},
 						},
-					},
 
-					"cors_settings": resourceApplicationSchemaCorsSettings(),
-				},
+						"cors_settings": resourceApplicationSchemaCorsSettings(),
+					}),
 
 				Validators: []validator.Object{
 					objectvalidator.ExactlyOneOf(
@@ -2774,6 +2789,8 @@ func (p *applicationResourceModelV1) expandApplicationOIDC(ctx context.Context) 
 
 			data.SetMobile(*mobile)
 		}
+
+		beta.AddBeta(data, plan.ApplicationOIDCOptionsResourceModelV1)
 	}
 
 	return data, diags
@@ -3538,7 +3555,7 @@ func (p *applicationResourceModelV1) toState(ctx context.Context, apiObject *man
 
 		// Service specific attributes
 		p.Tags = types.SetNull(types.StringType)
-		p.OIDCOptions = types.ObjectNull(applicationOidcOptionsTFObjectTypes)
+		p.OIDCOptions = types.ObjectNull(applicationOidcOptionsResourceTFObjectTypes)
 		p.SAMLOptions = types.ObjectNull(applicationSamlOptionsTFObjectTypes)
 		p.WSFedOptions = types.ObjectNull(applicationWsfedOptionsTFObjectTypes)
 
@@ -3620,7 +3637,7 @@ func (p *applicationResourceModelV1) toState(ctx context.Context, apiObject *man
 
 		// Service specific attributes
 		p.Tags = types.SetNull(types.StringType)
-		p.OIDCOptions = types.ObjectNull(applicationOidcOptionsTFObjectTypes)
+		p.OIDCOptions = types.ObjectNull(applicationOidcOptionsResourceTFObjectTypes)
 
 		p.SAMLOptions, d = applicationSamlOptionsToTF(v)
 		diags = append(diags, d...)
@@ -3656,7 +3673,7 @@ func (p *applicationResourceModelV1) toState(ctx context.Context, apiObject *man
 
 		// Service specific attributes
 		p.Tags = types.SetNull(types.StringType)
-		p.OIDCOptions = types.ObjectNull(applicationOidcOptionsTFObjectTypes)
+		p.OIDCOptions = types.ObjectNull(applicationOidcOptionsResourceTFObjectTypes)
 		p.SAMLOptions = types.ObjectNull(applicationSamlOptionsTFObjectTypes)
 		p.ExternalLinkOptions = types.ObjectNull(applicationExternalLinkOptionsTFObjectTypes)
 

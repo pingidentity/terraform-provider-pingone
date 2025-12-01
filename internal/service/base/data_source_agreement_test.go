@@ -27,14 +27,14 @@ func TestAccAgreementDataSource_ByNameFull(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.Agreement_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccAgreementDataSourceConfig_ByNameFull(resourceName, name),
+				Config: testAccAgreementDataSourceConfig_ByNameFull(resourceName, name, false),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "agreement_id", verify.P1ResourceIDRegexpFullString),
@@ -46,6 +46,14 @@ func TestAccAgreementDataSource_ByNameFull(t *testing.T) {
 					resource.TestCheckResourceAttr(dataSourceFullName, "total_user_consent_count", "0"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "expired_user_consent_count", "0"),
 					resource.TestMatchResourceAttr(dataSourceFullName, "consent_counts_updated_at", regexp.MustCompile(`^(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d)|(\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d)$`)),
+				),
+			},
+			// Case insensitivity check
+			{
+				Config: testAccAgreementDataSourceConfig_ByNameFull(resourceName, name, true),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(dataSourceFullName, "name", name),
 				),
 			},
 		},
@@ -65,7 +73,7 @@ func TestAccAgreementDataSource_ByIDFull(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.Agreement_CheckDestroy,
@@ -99,7 +107,7 @@ func TestAccAgreementDataSource_NotFound(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.Agreement_CheckDestroy,
@@ -117,8 +125,14 @@ func TestAccAgreementDataSource_NotFound(t *testing.T) {
 	})
 }
 
-func testAccAgreementDataSourceConfig_ByNameFull(resourceName, name string) string {
+func testAccAgreementDataSourceConfig_ByNameFull(resourceName, name string, insensitivityCheck bool) string {
 	date := time.Now().In(time.UTC).Add(time.Hour * time.Duration(1))
+
+	// If insensitivityCheck is true, alter the case of the name
+	nameComparator := name
+	if insensitivityCheck {
+		nameComparator = acctest.AlterStringCasing(nameComparator)
+	}
 
 	return fmt.Sprintf(`
 	%[1]s
@@ -152,7 +166,7 @@ resource "pingone_agreement_localization_revision" "%[2]s" {
   agreement_localization_id = pingone_agreement_localization.%[2]s.id
 
   content_type      = "text/html"
-  effective_at      = "%[4]s"
+  effective_at      = "%[5]s"
   require_reconsent = true
   text              = <<EOT
   <h1>Test</h1>
@@ -163,13 +177,13 @@ EOT
 data "pingone_agreement" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
-  name = pingone_agreement.%[2]s.name
+  name = "%[4]s"
 
   depends_on = [
     pingone_agreement_localization_revision.%[2]s
   ]
 }
-`, acctest.GenericSandboxEnvironment(), resourceName, name, date.Format(time.RFC3339))
+`, acctest.GenericSandboxEnvironment(), resourceName, name, nameComparator, date.Format(time.RFC3339))
 }
 
 func testAccAgreementDataSourceConfig_ByIDFull(resourceName, name string) string {

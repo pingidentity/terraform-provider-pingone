@@ -17,7 +17,7 @@ func TestAccTrustedEmailDomainSPFDataSource_Full(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	domainPrefix := acctest.ResourceNameGen()
+	domainPrefix := acctest.DomainNamePrefixWithTimestampGen()
 	resourceFullName := fmt.Sprintf("pingone_trusted_email_domain_spf.%s", resourceName)
 	dataSourceFullName := fmt.Sprintf("data.%s", resourceFullName)
 
@@ -30,7 +30,8 @@ func TestAccTrustedEmailDomainSPFDataSource_Full(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
+			acctest.PreCheckNewTrustedEmailDomain(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -57,7 +58,7 @@ func TestAccTrustedEmailDomainSPFDataSource_NotFound(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -81,7 +82,7 @@ func testAccTrustedEmailDomainSPFDataSourceConfig_Full(environmentName, licenseI
 resource "pingone_trusted_email_domain" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
-  domain_name = "%[4]s.terraformdev.ping-eng.com"
+  domain_name = "%[4]s.cdi-team-terraform-ted-test.ping-eng.com"
 }
 
 data "pingone_trusted_email_domain_spf" "%[3]s" {
