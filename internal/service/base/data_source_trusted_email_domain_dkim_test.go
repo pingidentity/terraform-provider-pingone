@@ -17,7 +17,7 @@ func TestAccTrustedEmailDomainDKIMDataSource_Full(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	domainPrefix := acctest.ResourceNameGen()
+	domainPrefix := acctest.DomainNamePrefixWithTimestampGen()
 	resourceFullName := fmt.Sprintf("pingone_trusted_email_domain_dkim.%s", resourceName)
 	dataSourceFullName := fmt.Sprintf("data.%s", resourceFullName)
 
@@ -31,6 +31,7 @@ func TestAccTrustedEmailDomainDKIMDataSource_Full(t *testing.T) {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoBeta(t)
+			acctest.PreCheckNewTrustedEmailDomain(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -84,7 +85,7 @@ func testAccTrustedEmailDomainDKIMDataSourceConfig_Full(environmentName, license
 resource "pingone_trusted_email_domain" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
-  domain_name = "%[4]s.terraformdev.ping-eng.com"
+  domain_name = "%[4]s.cdi-team-terraform-ted-test.ping-eng.com"
 }
 
 data "pingone_trusted_email_domain_dkim" "%[3]s" {

@@ -50,7 +50,7 @@ data "pingone_role" "role_by_id" {
 
 ### Optional
 
-- `name` (String) The name of the role to look up.  Options are `Advanced Identity Cloud Super Admin`, `Advanced Identity Cloud Tenant Admin`, `Application Owner`, `Client Application Developer`, `Configuration Read Only`, `Custom Roles Admin`, `DaVinci Admin`, `DaVinci Admin Read Only`, `Environment Admin`, `Identity Data Admin`, `Identity Data Read Only`, `Organization Admin`, `PingFederate Administrator`, `PingFederate Auditor`, `PingFederate Crypto Administrator`, `PingFederate Expression Administrator`, `PingFederate User Administrator`.  Exactly one of the following must be defined: `name`, `role_id`.
+- `name` (String) The name of the role to look up.  Options are `Advanced Identity Cloud Super Admin`, `Advanced Identity Cloud Tenant Admin`, `Application Owner`, `Authorize Gateway Policy Evaluator`, `Client Application Developer`, `Configuration Read Only`, `Custom Roles Admin`, `DaVinci Admin`, `DaVinci Admin Read Only`, `Environment Admin`, `Help Desk Admin`, `Identity Data Admin`, `Identity Data Read Only`, `Organization Admin`, `PingFederate Administrator`, `PingFederate Auditor`, `PingFederate Crypto Administrator`, `PingFederate Expression Administrator`, `PingFederate User Administrator`.  Exactly one of the following must be defined: `name`, `role_id`.
 - `role_id` (String) The ID of the role to retrieve.  Must be a valid PingOne resource ID.  Exactly one of the following must be defined: `name`, `role_id`.
 
 ### Read-Only

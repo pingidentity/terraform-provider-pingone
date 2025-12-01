@@ -33,6 +33,7 @@ func TestAccCustomDomainSSL_Full(t *testing.T) {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoBeta(t)
 			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNewCustomDomain(t)
 			acctest.PreCheckCustomDomainSSL(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,

@@ -315,6 +315,35 @@ func TestAccBrandingTheme_Change(t *testing.T) {
 	})
 }
 
+func TestAccBrandingTheme_ValidationChecks(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	name := acctest.ResourceNameGen()
+
+	backgroundData, _ := os.ReadFile("../../acctest/test_assets/image/image-background.jpg")
+	background := base64.StdEncoding.EncodeToString(backgroundData)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             base.BrandingTheme_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccBrandingThemeConfig_BackgroundColorAndBackgroundImageConflict(resourceName, name, background),
+				ExpectError: regexp.MustCompile(`Error: Invalid Attribute Combination`),
+				Destroy:     true,
+			},
+		},
+	})
+}
+
 func TestAccBrandingTheme_BadParameters(t *testing.T) {
 	t.Parallel()
 
@@ -412,6 +441,8 @@ resource "pingone_branding_theme" "%[2]s" {
     href = pingone_image.%[2]s-background.uploaded_image.href
   }
 
+  use_default_background = false
+
   button_text_color  = "#FF6C6C"
   heading_text_color = "#FF0005"
   card_color         = "#0FFF39"
@@ -443,4 +474,36 @@ resource "pingone_branding_theme" "%[2]s" {
   button_color       = "#0CFFFB"
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccBrandingThemeConfig_BackgroundColorAndBackgroundImageConflict(resourceName, name, background string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_image" "%[2]s-background" {
+  environment_id = data.pingone_environment.general_test.id
+
+  image_file_base64 = "%[4]s"
+}
+
+resource "pingone_branding_theme" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name     = "%[3]s"
+  template = "split"
+
+  background_color = "#FF00F0"
+  background_image = {
+    id   = pingone_image.%[2]s-background.id
+    href = pingone_image.%[2]s-background.uploaded_image.href
+  }
+
+  button_text_color  = "#FF6C6C"
+  heading_text_color = "#FF0005"
+  card_color         = "#0FFF39"
+  body_text_color    = "#8620FF"
+  link_text_color    = "#8A7F06"
+  button_color       = "#0CFFFB"
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, background)
 }
