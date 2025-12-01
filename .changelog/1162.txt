@@ -1,0 +1,7 @@
+```release-note:enhancement
+`resource/pingone_notification_policy`: Added support for `cooldown_configuration` and `provider_configuration` attributes.
+```
+
+```release-note:new-data-source
+pingone_notification_policy
+```

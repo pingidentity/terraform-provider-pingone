@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
@@ -29,27 +30,47 @@ import (
 type VerifyPolicyDataSource serviceClientType
 
 type verifyPolicyDataSourceModel struct {
-	Id               pingonetypes.ResourceIDValue `tfsdk:"id"`
-	EnvironmentId    pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
-	VerifyPolicyId   pingonetypes.ResourceIDValue `tfsdk:"verify_policy_id"`
-	Name             types.String                 `tfsdk:"name"`
-	Default          types.Bool                   `tfsdk:"default"`
-	Description      types.String                 `tfsdk:"description"`
-	GovernmentId     types.Object                 `tfsdk:"government_id"`
-	FacialComparison types.Object                 `tfsdk:"facial_comparison"`
-	Liveness         types.Object                 `tfsdk:"liveness"`
-	Email            types.Object                 `tfsdk:"email"`
-	Phone            types.Object                 `tfsdk:"phone"`
-	Transaction      types.Object                 `tfsdk:"transaction"`
-	Voice            types.Object                 `tfsdk:"voice"`
-	CreatedAt        timetypes.RFC3339            `tfsdk:"created_at"`
-	UpdatedAt        timetypes.RFC3339            `tfsdk:"updated_at"`
+	Id                     pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId          pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	VerifyPolicyId         pingonetypes.ResourceIDValue `tfsdk:"verify_policy_id"`
+	Name                   types.String                 `tfsdk:"name"`
+	Default                types.Bool                   `tfsdk:"default"`
+	Description            types.String                 `tfsdk:"description"`
+	GovernmentId           types.Object                 `tfsdk:"government_id"`
+	FacialComparison       types.Object                 `tfsdk:"facial_comparison"`
+	Liveness               types.Object                 `tfsdk:"liveness"`
+	Email                  types.Object                 `tfsdk:"email"`
+	Phone                  types.Object                 `tfsdk:"phone"`
+	Transaction            types.Object                 `tfsdk:"transaction"`
+	Voice                  types.Object                 `tfsdk:"voice"`
+	IdentityRecordMatching types.Object                 `tfsdk:"identity_record_matching"`
+	CreatedAt              timetypes.RFC3339            `tfsdk:"created_at"`
+	UpdatedAt              timetypes.RFC3339            `tfsdk:"updated_at"`
 }
 
 var (
 	genericTimeoutDataSourceServiceTFObjectTypes = map[string]attr.Type{
 		"duration":  types.Int32Type,
 		"time_unit": types.StringType,
+	}
+
+	aadhaarOtpCooldownDataSourceServiceTFObjectTypes = map[string]attr.Type{
+		"duration":  types.Int32Type,
+		"time_unit": types.StringType,
+	}
+
+	aadhaarOtpDeliveriesDataSourceServiceTFObjectTypes = map[string]attr.Type{
+		"count":    types.Int32Type,
+		"cooldown": types.ObjectType{AttrTypes: aadhaarOtpCooldownDataSourceServiceTFObjectTypes},
+	}
+
+	aadhaarOtpDataSourceServiceTFObjectTypes = map[string]attr.Type{
+		"deliveries": types.ObjectType{AttrTypes: aadhaarOtpDeliveriesDataSourceServiceTFObjectTypes},
+	}
+
+	aadhaarDataSourceServiceTFObjectTypes = map[string]attr.Type{
+		"enabled": types.BoolType,
+		"otp":     types.ObjectType{AttrTypes: aadhaarOtpDataSourceServiceTFObjectTypes},
 	}
 
 	governmentIdDataSourceServiceTFObjectTypes = map[string]attr.Type{
@@ -59,6 +80,8 @@ var (
 		"provider_auto":   types.StringType,
 		"provider_manual": types.StringType,
 		"retry_attempts":  types.Int32Type,
+		"verify_aamva":    types.BoolType,
+		"aadhaar":         types.ObjectType{AttrTypes: aadhaarDataSourceServiceTFObjectTypes},
 	}
 
 	facialComparisonDataSourceServiceTFObjectTypes = map[string]attr.Type{
@@ -128,6 +151,19 @@ var (
 		"update_on_reenrollment":     types.BoolType,
 		"update_on_verification":     types.BoolType,
 	}
+
+	identityRecordMatchingDataSourceServiceTFObjectTypes = map[string]attr.Type{
+		"address":     types.ObjectType{AttrTypes: identityRecordMatchingFieldDataSourceServiceTFObjectTypes},
+		"birth_date":  types.ObjectType{AttrTypes: identityRecordMatchingFieldDataSourceServiceTFObjectTypes},
+		"family_name": types.ObjectType{AttrTypes: identityRecordMatchingFieldDataSourceServiceTFObjectTypes},
+		"given_name":  types.ObjectType{AttrTypes: identityRecordMatchingFieldDataSourceServiceTFObjectTypes},
+		"name":        types.ObjectType{AttrTypes: identityRecordMatchingFieldDataSourceServiceTFObjectTypes},
+	}
+
+	identityRecordMatchingFieldDataSourceServiceTFObjectTypes = map[string]attr.Type{
+		"field_required": types.BoolType,
+		"threshold":      types.StringType,
+	}
 )
 
 // Framework interfaces
@@ -164,6 +200,13 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 	const attrMinRetryAttempts = 0
 	const attrMaxRetryAttempts = 3
 
+	const attrMinAadhaarDurationSeconds = 60
+	const attrMaxAadhaarDurationSeconds = 1800
+	const attrMinAadhaarDurationMinutes = 1
+	const attrMaxAadhaarDurationMinutes = 30
+	const attrMinAadhaarCount = 1
+	const attrMaxAadhaarCount = 3
+
 	// defaults
 	const defaultNotificationTemplate = "email_phone_verification"
 
@@ -185,6 +228,11 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 
 	const defaultProviderAuto = verify.ENUMPROVIDERAUTO_MITEK
 	const defaultProviderManual = verify.ENUMPROVIDERAUTO_MITEK
+
+	const defaultAadhaarEnabled = false
+	const defaultAadhaarDuration = 60
+	const defaultAadhaarTimeUnit = verify.ENUMTIMEUNIT_SECONDS
+	const defaultAadhaarCount = 3
 
 	dataSourceExactlyOneOfRelativePaths := []string{
 		"verify_policy_id",
@@ -336,6 +384,33 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 		"Provider to use for the manual verification service.",
 	).AllowedValuesEnum(verify.AllowedEnumProviderManualEnumValues).DefaultValue(string(defaultProviderManual))
 
+	identityRecordMatchingThresholdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Threshold for successful comparison.",
+	).AllowedValuesEnum(verify.AllowedEnumThresholdEnumValues)
+
+	aadhaarDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Aadhaar configuration for India-based government Aadhaar documents;`facial_comparison.verify` must be `REQUIRED` to enable.",
+	)
+
+	aadhaarEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Whether Aadhaar verification is enabled.",
+	).DefaultValue(defaultAadhaarEnabled)
+
+	aadhaarOtpDeliveriesCountDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("Number of OTP deliveries permitted. The allowed range is `%d - %d`.", attrMinAadhaarCount, attrMaxAadhaarCount),
+	).DefaultValue(int32(defaultAadhaarCount))
+
+	aadhaarOtpDeliveriesCooldownDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Cooldown duration for Aadhaar OTP deliveries.\n" +
+			fmt.Sprintf("    - If `cooldown.time_unit` is `MINUTES`, the allowed range is `%d - %d`.\n", attrMinAadhaarDurationMinutes, attrMaxAadhaarDurationMinutes) +
+			fmt.Sprintf("    - If `cooldown.time_unit` is `SECONDS`, the allowed range is `%d - %d`.\n", attrMinAadhaarDurationSeconds, attrMaxAadhaarDurationSeconds) +
+			fmt.Sprintf("    - Defaults to `%d %s`.\n", defaultAadhaarDuration, defaultAadhaarTimeUnit),
+	)
+
+	aadhaarOtpDeliveriesCooldownTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Time unit of the Aadhaar OTP cooldown duration.",
+	).AllowedValuesEnum(verify.AllowedEnumTimeUnitEnumValues).DefaultValue(string(defaultAadhaarTimeUnit))
+
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		Description: "Data source to retrieve the default PingOne Verify Policy or to find a PingOne Verify Policy by its Verify Policy Id or Name.",
@@ -425,6 +500,59 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 						Description:         retryAttemptsDescription.Description,
 						MarkdownDescription: retryAttemptsDescription.MarkdownDescription,
 						Computed:            true,
+					},
+					"verify_aamva": schema.BoolAttribute{
+						Description: "When enabled, the AAMVA DLDV system is used to validate identity documents issued by participating states.",
+						Computed:    true,
+					},
+					"aadhaar": schema.SingleNestedAttribute{
+						Description:         aadhaarDescription.Description,
+						MarkdownDescription: aadhaarDescription.MarkdownDescription,
+						Computed:            true,
+
+						Attributes: map[string]schema.Attribute{
+							"enabled": schema.BoolAttribute{
+								Description:         aadhaarEnabledDescription.Description,
+								MarkdownDescription: aadhaarEnabledDescription.MarkdownDescription,
+								Computed:            true,
+							},
+							"otp": schema.SingleNestedAttribute{
+								Description: "Aadhaar one-time password (OTP) configuration.",
+								Computed:    true,
+
+								Attributes: map[string]schema.Attribute{
+									"deliveries": schema.SingleNestedAttribute{
+										Description: "OTP delivery configuration.",
+										Computed:    true,
+
+										Attributes: map[string]schema.Attribute{
+											"count": schema.Int32Attribute{
+												Description:         aadhaarOtpDeliveriesCountDescription.Description,
+												MarkdownDescription: aadhaarOtpDeliveriesCountDescription.MarkdownDescription,
+												Computed:            true,
+											},
+											"cooldown": schema.SingleNestedAttribute{
+												Description: "Cooldown (waiting period between OTP deliveries) configuration.",
+												Computed:    true,
+
+												Attributes: map[string]schema.Attribute{
+													"duration": schema.Int32Attribute{
+														Description:         aadhaarOtpDeliveriesCooldownDurationDescription.Description,
+														MarkdownDescription: aadhaarOtpDeliveriesCooldownDurationDescription.MarkdownDescription,
+														Computed:            true,
+													},
+													"time_unit": schema.StringAttribute{
+														Description:         aadhaarOtpDeliveriesCooldownTimeUnitDescription.Description,
+														MarkdownDescription: aadhaarOtpDeliveriesCooldownTimeUnitDescription.MarkdownDescription,
+														Computed:            true,
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -705,10 +833,9 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 			},
 
 			"voice": schema.SingleNestedAttribute{
-				Description: "Defines the requirements for transactions invoked by the policy.",
-				Computed:    true,
-
-				Attributes: map[string]schema.Attribute{
+				Description:        "**[Deprecation notice: This field is deprecated and will be removed in a future release. Please use alternative verification methods.]** Defines the requirements for transactions invoked by the policy.",
+				DeprecationMessage: "Deprecation notice: This field is deprecated and will be removed in a future release. Please use alternative verification methods.",
+				Computed:           true, Attributes: map[string]schema.Attribute{
 					"verify": schema.StringAttribute{
 						Description:         voiceVerifyDescription.Description,
 						MarkdownDescription: voiceVerifyDescription.MarkdownDescription,
@@ -764,6 +891,89 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 							"update_on_verification": schema.BoolAttribute{
 								Description:         referenceDataUpdateOnVerificationDescription.Description,
 								MarkdownDescription: referenceDataUpdateOnVerificationDescription.MarkdownDescription,
+								Computed:            true,
+							},
+						},
+					},
+				},
+			},
+
+			"identity_record_matching": schema.SingleNestedAttribute{
+				Description: "Defines the verification requirements for identity record matching.",
+				Computed:    true,
+
+				Attributes: map[string]schema.Attribute{
+					"address": schema.SingleNestedAttribute{
+						Description: "Configuration for address verification.",
+						Computed:    true,
+						Attributes: map[string]schema.Attribute{
+							"field_required": schema.BoolAttribute{
+								Description: "Whether the field is required.",
+								Computed:    true,
+							},
+							"threshold": schema.StringAttribute{
+								Description:         identityRecordMatchingThresholdDescription.Description,
+								MarkdownDescription: identityRecordMatchingThresholdDescription.MarkdownDescription,
+								Computed:            true,
+							},
+						},
+					},
+					"birth_date": schema.SingleNestedAttribute{
+						Description: "Configuration for birth date verification.",
+						Computed:    true,
+						Attributes: map[string]schema.Attribute{
+							"field_required": schema.BoolAttribute{
+								Description: "Whether the field is required.",
+								Computed:    true,
+							},
+							"threshold": schema.StringAttribute{
+								Description:         identityRecordMatchingThresholdDescription.Description,
+								MarkdownDescription: identityRecordMatchingThresholdDescription.MarkdownDescription,
+								Computed:            true,
+							},
+						},
+					},
+					"family_name": schema.SingleNestedAttribute{
+						Description: "Configuration for family name verification.",
+						Computed:    true,
+						Attributes: map[string]schema.Attribute{
+							"field_required": schema.BoolAttribute{
+								Description: "Whether the field is required.",
+								Computed:    true,
+							},
+							"threshold": schema.StringAttribute{
+								Description:         identityRecordMatchingThresholdDescription.Description,
+								MarkdownDescription: identityRecordMatchingThresholdDescription.MarkdownDescription,
+								Computed:            true,
+							},
+						},
+					},
+					"given_name": schema.SingleNestedAttribute{
+						Description: "Configuration for given name verification.",
+						Computed:    true,
+						Attributes: map[string]schema.Attribute{
+							"field_required": schema.BoolAttribute{
+								Description: "Whether the field is required.",
+								Computed:    true,
+							},
+							"threshold": schema.StringAttribute{
+								Description:         identityRecordMatchingThresholdDescription.Description,
+								MarkdownDescription: identityRecordMatchingThresholdDescription.MarkdownDescription,
+								Computed:            true,
+							},
+						},
+					},
+					"name": schema.SingleNestedAttribute{
+						Description: "Configuration for full name verification.",
+						Computed:    true,
+						Attributes: map[string]schema.Attribute{
+							"field_required": schema.BoolAttribute{
+								Description: "Whether the field is required.",
+								Computed:    true,
+							},
+							"threshold": schema.StringAttribute{
+								Description:         identityRecordMatchingThresholdDescription.Description,
+								MarkdownDescription: identityRecordMatchingThresholdDescription.MarkdownDescription,
 								Computed:            true,
 							},
 						},
@@ -873,7 +1083,7 @@ func (r *VerifyPolicyDataSource) Read(ctx context.Context, req datasource.ReadRe
 
 						for _, verifyPolicyItem := range verifyPolicies {
 
-							if verifyPolicyItem.GetName() == data.Name.ValueString() {
+							if strings.EqualFold(verifyPolicyItem.GetName(), data.Name.ValueString()) {
 								return &verifyPolicyItem, pageCursor.HTTPResponse, nil
 							}
 						}
@@ -1005,6 +1215,9 @@ func (p *verifyPolicyDataSourceModel) toState(apiObject *verify.VerifyPolicy) di
 	p.Voice, d = p.toStateVoice(apiObject.GetVoiceOk())
 	diags.Append(d...)
 
+	p.IdentityRecordMatching, d = p.toStateIdentityRecordMatching(apiObject.GetIdentityRecordMatchingOk())
+	diags.Append(d...)
+
 	return diags
 }
 
@@ -1029,6 +1242,59 @@ func (p *verifyPolicyDataSourceModel) toStateGovernmentId(apiObject *verify.Gove
 			"GovernmentId data object contained unexpected null value for the `provider` data object.  Please report this issue to the provider maintainers.")
 	}
 
+	aadhaarObject := types.ObjectNull(aadhaarDataSourceServiceTFObjectTypes)
+	if v, ok := apiObject.GetAadhaarOk(); ok {
+		var d diag.Diagnostics
+
+		aadhaarOtpObject := types.ObjectNull(aadhaarOtpDataSourceServiceTFObjectTypes)
+		if otpV, otpOk := v.GetOtpOk(); otpOk {
+			aadhaarOtpDeliveriesObject := types.ObjectNull(aadhaarOtpDeliveriesDataSourceServiceTFObjectTypes)
+			if deliveriesV, deliveriesOk := otpV.GetDeliveriesOk(); deliveriesOk {
+				aadhaarOtpCooldownObject := types.ObjectNull(aadhaarOtpCooldownDataSourceServiceTFObjectTypes)
+				if cooldownV, cooldownOk := deliveriesV.GetCooldownOk(); cooldownOk {
+					cooldownAttrs := map[string]attr.Value{
+						"duration":  framework.Int32OkToTF(cooldownV.GetDurationOk()),
+						"time_unit": framework.EnumOkToTF(cooldownV.GetTimeUnitOk()),
+					}
+
+					objValue, d := types.ObjectValue(aadhaarOtpCooldownDataSourceServiceTFObjectTypes, cooldownAttrs)
+					diags.Append(d...)
+
+					aadhaarOtpCooldownObject = objValue
+				}
+
+				deliveriesAttrs := map[string]attr.Value{
+					"count":    framework.Int32OkToTF(deliveriesV.GetCountOk()),
+					"cooldown": aadhaarOtpCooldownObject,
+				}
+
+				objValue, d := types.ObjectValue(aadhaarOtpDeliveriesDataSourceServiceTFObjectTypes, deliveriesAttrs)
+				diags.Append(d...)
+
+				aadhaarOtpDeliveriesObject = objValue
+			}
+
+			otpAttrs := map[string]attr.Value{
+				"deliveries": aadhaarOtpDeliveriesObject,
+			}
+
+			objValue, d := types.ObjectValue(aadhaarOtpDataSourceServiceTFObjectTypes, otpAttrs)
+			diags.Append(d...)
+
+			aadhaarOtpObject = objValue
+		}
+
+		aadhaarAttrs := map[string]attr.Value{
+			"enabled": framework.BoolOkToTF(v.GetEnabledOk()),
+			"otp":     aadhaarOtpObject,
+		}
+
+		objValue, d := types.ObjectValue(aadhaarDataSourceServiceTFObjectTypes, aadhaarAttrs)
+		diags.Append(d...)
+
+		aadhaarObject = objValue
+	}
+
 	objValue, d := types.ObjectValue(governmentIdDataSourceServiceTFObjectTypes, map[string]attr.Value{
 		"verify":          framework.EnumOkToTF(apiObject.GetVerifyOk()),
 		"inspection_type": framework.EnumOkToTF(apiObject.GetInspectionTypeOk()),
@@ -1036,6 +1302,8 @@ func (p *verifyPolicyDataSourceModel) toStateGovernmentId(apiObject *verify.Gove
 		"provider_auto":   framework.EnumOkToTF(provider.GetAutoOk()),
 		"provider_manual": framework.EnumOkToTF(provider.GetManualOk()),
 		"retry_attempts":  retryAttempts,
+		"verify_aamva":    framework.BoolOkToTF(apiObject.GetVerifyAamvaOk()),
+		"aadhaar":         aadhaarObject,
 	})
 	diags.Append(d...)
 
@@ -1281,6 +1549,60 @@ func (p *verifyPolicyDataSourceModel) toStateVoice(apiObject *verify.VoiceConfig
 		"liveness_threshold":   framework.EnumOkToTF(apiObject.GetLiveness().Threshold, ok),
 		"text_dependent":       textDependent,
 		"reference_data":       referenceData,
+	})
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func (p *verifyPolicyDataSourceModel) toStateIdentityRecordMatching(apiObject *verify.IdentityRecordMatching, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(identityRecordMatchingDataSourceServiceTFObjectTypes), diags
+	}
+
+	address, d := p.toStateIdentityRecordMatchingField(apiObject.GetAddressOk())
+	diags.Append(d...)
+
+	birthDate, d := p.toStateIdentityRecordMatchingField(apiObject.GetBirthDateOk())
+	diags.Append(d...)
+
+	familyName, d := p.toStateIdentityRecordMatchingField(apiObject.GetFamilyNameOk())
+	diags.Append(d...)
+
+	givenName, d := p.toStateIdentityRecordMatchingField(apiObject.GetGivenNameOk())
+	diags.Append(d...)
+
+	name, d := p.toStateIdentityRecordMatchingField(apiObject.GetNameOk())
+	diags.Append(d...)
+
+	objValue, d := types.ObjectValue(identityRecordMatchingDataSourceServiceTFObjectTypes, map[string]attr.Value{
+		"address":     address,
+		"birth_date":  birthDate,
+		"family_name": familyName,
+		"given_name":  givenName,
+		"name":        name,
+	})
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+// toStateIdentityRecordMatchingField converts any identity record matching field type to TF state for data source
+func (p *verifyPolicyDataSourceModel) toStateIdentityRecordMatchingField(apiObject IdentityRecordMatchingField, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(identityRecordMatchingFieldDataSourceServiceTFObjectTypes), diags
+	}
+
+	fieldRequired, fieldRequiredOk := apiObject.GetFieldRequiredOk()
+	threshold, thresholdOk := apiObject.GetThresholdOk()
+
+	objValue, d := types.ObjectValue(identityRecordMatchingFieldDataSourceServiceTFObjectTypes, map[string]attr.Value{
+		"field_required": framework.BoolOkToTF(fieldRequired, fieldRequiredOk),
+		"threshold":      framework.EnumOkToTF(threshold, thresholdOk),
 	})
 	diags.Append(d...)
 

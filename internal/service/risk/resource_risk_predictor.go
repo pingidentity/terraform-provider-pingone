@@ -430,7 +430,6 @@ func (r *RiskPredictorResource) Metadata(ctx context.Context, req resource.Metad
 func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 
 	const attrMinLength = 1
-	const emailAddressMaxLength = 5
 	const attrDescriptionMaxLength = 1024
 	const defaultWeightValue = 5
 
@@ -2095,7 +2094,12 @@ func (p *riskPredictorResourceModel) expand(ctx context.Context, apiClient *risk
 			}
 
 			dataDefaultResult := risk.NewRiskPredictorCommonDefaultResult(risk.EnumResultType(defaultResultPlan.ResultType.ValueString()))
-			dataDefaultResult.SetLevel(risk.EnumRiskLevel(defaultResultPlan.Level.ValueString()))
+
+			if !defaultResultPlan.Level.IsNull() && !defaultResultPlan.Level.IsUnknown() {
+				dataDefaultResult.SetLevel(risk.EnumRiskLevel(defaultResultPlan.Level.ValueString()))
+			} else {
+				dataDefaultResult.Level = nil
+			}
 			dataDefault.SetResult(*dataDefaultResult)
 
 			riskPredictorCommonData.SetDefault(*dataDefault)

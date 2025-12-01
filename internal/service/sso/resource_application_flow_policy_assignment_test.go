@@ -5,6 +5,7 @@ package sso_test
 import (
 	"context"
 	"fmt"
+	"os"
 	"regexp"
 	"testing"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
+	baselegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/sso"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -23,11 +25,11 @@ func TestAccApplicationFlowPolicyAssignment_RemovalDrift(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_application_flow_policy_assignment.%s", resourceName)
 
-	// environmentName := acctest.ResourceNameGenEnvironment()
+	environmentName := acctest.ResourceNameGenEnvironment()
 
 	name := resourceName
 
-	// licenseID := os.Getenv("PINGONE_LICENSE_ID")
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	var flowPolicyAssignmentID, applicationID, environmentID string
 
@@ -36,11 +38,11 @@ func TestAccApplicationFlowPolicyAssignment_RemovalDrift(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			t.Skip("Skipping until DaVinci capability merged")
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI)
-
+			acctest.PreCheckNoBeta(t)
 			p1Client = acctestlegacysdk.PreCheckTestClient(ctx, t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -72,17 +74,17 @@ func TestAccApplicationFlowPolicyAssignment_RemovalDrift(t *testing.T) {
 				ExpectNonEmptyPlan: true,
 			},
 			// Test removal of the environment
-			// {
-			// 	Config: testAccApplicationFlowPolicyAssignmentConfig_Single(environmentName, licenseID, resourceName, name),
-			// 	Check:  sso.TestAccGetApplicationFlowPolicyAssignmentIDs(resourceFullName, &environmentID, &applicationID, &flowPolicyAssignmentID),
-			// },
-			// {
-			// 	PreConfig: func() {
-			// 		base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
-			// 	},
-			// 	RefreshState:       true,
-			// 	ExpectNonEmptyPlan: true,
-			// },
+			{
+				Config: testAccApplicationFlowPolicyAssignmentConfig_NewEnv(environmentName, licenseID, resourceName, name),
+				Check:  sso.ApplicationFlowPolicyAssignment_GetIDs(resourceFullName, &environmentID, &applicationID, &flowPolicyAssignmentID),
+			},
+			{
+				PreConfig: func() {
+					baselegacysdk.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
 		},
 	})
 }
@@ -135,9 +137,10 @@ func TestAccApplicationFlowPolicyAssignment_Full(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			t.Skip("Skipping until DaVinci capability merged")
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.ApplicationFlowPolicyAssignment_CheckDestroy,
@@ -190,9 +193,10 @@ func TestAccApplicationFlowPolicyAssignment_SystemApplication(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			t.Skip("Skipping until DaVinci capability merged")
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.ApplicationFlowPolicyAssignment_CheckDestroy,
@@ -238,9 +242,10 @@ func TestAccApplicationFlowPolicyAssignment_BadParameters(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			t.Skip("Skipping until DaVinci capability merged")
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckFeatureFlag(t, acctest.ENUMFEATUREFLAG_DAVINCI)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.ApplicationFlowPolicyAssignment_CheckDestroy,
@@ -272,12 +277,12 @@ func TestAccApplicationFlowPolicyAssignment_BadParameters(t *testing.T) {
 	})
 }
 
-func testAccApplicationFlowPolicyAssignmentConfig_Single(resourceName, name string) string {
+func testAccApplicationFlowPolicyAssignmentConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
-		%[1]s
+%[1]s
 
 resource "pingone_application" "%[2]s" {
-  environment_id = data.pingone_environment.davinci_test.id
+  environment_id = pingone_environment.%[2]s.id
   name           = "%[3]s"
   enabled        = true
 
@@ -292,27 +297,32 @@ resource "pingone_application" "%[2]s" {
 }
 
 data "pingone_flow_policies" "%[2]s" {
-  environment_id = data.pingone_environment.davinci_test.id
+  environment_id = pingone_environment.%[2]s.id
 
   scim_filter = "(trigger.type eq \"AUTHENTICATION\")"
+
+  depends_on = [
+    davinci_application_flow_policy.%[2]s-1,
+    davinci_application_flow_policy.%[2]s-2,
+  ]
 }
 
 resource "pingone_application_flow_policy_assignment" "%[2]s" {
-  environment_id = data.pingone_environment.davinci_test.id
+  environment_id = pingone_environment.%[2]s.id
   application_id = pingone_application.%[2]s.id
 
   flow_policy_id = data.pingone_flow_policies.%[2]s.ids[0]
 
   priority = 1
-}`, acctest.DaVinciFlowPolicySandboxEnvironment(), resourceName, name)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), resourceName, name)
 }
 
-func testAccApplicationFlowPolicyAssignmentConfig_Change(resourceName, name string) string {
+func testAccApplicationFlowPolicyAssignmentConfig_Single(resourceName, name string) string {
 	return fmt.Sprintf(`
-		%[1]s
+%[1]s
 
 resource "pingone_application" "%[2]s" {
-  environment_id = data.pingone_environment.davinci_test.id
+  environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   enabled        = true
 
@@ -327,27 +337,72 @@ resource "pingone_application" "%[2]s" {
 }
 
 data "pingone_flow_policies" "%[2]s" {
-  environment_id = data.pingone_environment.davinci_test.id
+  environment_id = data.pingone_environment.general_test.id
 
   scim_filter = "(trigger.type eq \"AUTHENTICATION\")"
+
+  depends_on = [
+    davinci_application_flow_policy.%[2]s-1,
+    davinci_application_flow_policy.%[2]s-2,
+  ]
 }
 
 resource "pingone_application_flow_policy_assignment" "%[2]s" {
-  environment_id = data.pingone_environment.davinci_test.id
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
+
+  flow_policy_id = data.pingone_flow_policies.%[2]s.ids[0]
+
+  priority = 1
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationFlowPolicyAssignmentConfig_Change(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  oidc_options = {
+    type                       = "SINGLE_PAGE_APP"
+    grant_types                = ["AUTHORIZATION_CODE"]
+    response_types             = ["CODE"]
+    pkce_enforcement           = "S256_REQUIRED"
+    token_endpoint_auth_method = "NONE"
+    redirect_uris              = ["https://www.pingidentity.com"]
+  }
+}
+
+data "pingone_flow_policies" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  scim_filter = "(trigger.type eq \"AUTHENTICATION\")"
+
+  depends_on = [
+    davinci_application_flow_policy.%[2]s-1,
+    davinci_application_flow_policy.%[2]s-2,
+  ]
+}
+
+resource "pingone_application_flow_policy_assignment" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
   application_id = pingone_application.%[2]s.id
 
   flow_policy_id = data.pingone_flow_policies.%[2]s.ids[1]
 
   priority = 1
-}`, acctest.DaVinciFlowPolicySandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationFlowPolicyAssignmentConfig_Multiple(resourceName, name string) string {
 	return fmt.Sprintf(`
-		%[1]s
+%[1]s
 
 resource "pingone_application" "%[2]s" {
-  environment_id = data.pingone_environment.davinci_test.id
+  environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   enabled        = true
 
@@ -362,13 +417,18 @@ resource "pingone_application" "%[2]s" {
 }
 
 data "pingone_flow_policies" "%[2]s" {
-  environment_id = data.pingone_environment.davinci_test.id
+  environment_id = data.pingone_environment.general_test.id
 
   scim_filter = "(trigger.type eq \"AUTHENTICATION\")"
+
+  depends_on = [
+    davinci_application_flow_policy.%[2]s-1,
+    davinci_application_flow_policy.%[2]s-2,
+  ]
 }
 
 resource "pingone_application_flow_policy_assignment" "%[2]s" {
-  environment_id = data.pingone_environment.davinci_test.id
+  environment_id = data.pingone_environment.general_test.id
   application_id = pingone_application.%[2]s.id
 
   flow_policy_id = data.pingone_flow_policies.%[2]s.ids[0]
@@ -377,37 +437,42 @@ resource "pingone_application_flow_policy_assignment" "%[2]s" {
 }
 
 resource "pingone_application_flow_policy_assignment" "%[2]s-2" {
-  environment_id = data.pingone_environment.davinci_test.id
+  environment_id = data.pingone_environment.general_test.id
   application_id = pingone_application.%[2]s.id
 
   flow_policy_id = data.pingone_flow_policies.%[2]s.ids[1]
 
   priority = 1
-}`, acctest.DaVinciFlowPolicySandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationFlowPolicyAssignmentConfig_SystemApplication(resourceName, name string) string {
 	return fmt.Sprintf(`
-		%[1]s
+%[1]s
 
 resource "pingone_system_application" "%[2]s" {
-  environment_id = data.pingone_environment.davinci_test.id
+  environment_id = data.pingone_environment.general_test.id
   type           = "PING_ONE_PORTAL"
   enabled        = true
 }
 
 data "pingone_flow_policies" "%[2]s" {
-  environment_id = data.pingone_environment.davinci_test.id
+  environment_id = data.pingone_environment.general_test.id
 
   scim_filter = "(trigger.type eq \"AUTHENTICATION\")"
+
+  depends_on = [
+    davinci_application_flow_policy.%[2]s-1,
+    davinci_application_flow_policy.%[2]s-2,
+  ]
 }
 
 resource "pingone_application_flow_policy_assignment" "%[2]s" {
-  environment_id = data.pingone_environment.davinci_test.id
+  environment_id = data.pingone_environment.general_test.id
   application_id = pingone_system_application.%[2]s.id
 
   flow_policy_id = data.pingone_flow_policies.%[2]s.ids[0]
 
   priority = 1
-}`, acctest.DaVinciFlowPolicySandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

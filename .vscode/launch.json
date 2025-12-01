@@ -5,29 +5,218 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Acceptance Tests",
-            "type": "go",
-            "request": "launch",
-            "mode": "test",
-            // this assumes your workspace is the root of the repo
-            "program": "${fileDirname}",
-            "env": {
-                "TF_ACC": "1",
-            },
-            "args": [],
-        },
-        {
-            "name": "Debug - Attach External CLI",
+            "name": "Debug Provider (Attach to Terraform)",
             "type": "go",
             "request": "launch",
             "mode": "debug",
-            // this assumes your workspace is the root of the repo
+            "program": "${workspaceFolder}",
+            "env": {
+                "TF_LOG": "DEBUG",
+                "TF_LOG_PROVIDER": "DEBUG"
+            },
+            "args": [
+                "-debug"
+            ],
+            "console": "integratedTerminal",
+            "showLog": true
+        },
+        {
+            "name": "Acceptance Tests - Current File",
+            "type": "go",
+            "request": "launch",
+            "mode": "test",
+            "program": "${fileDirname}",
+            "env": {
+                "TF_ACC": "1",
+                "TF_LOG": "DEBUG",
+                "TF_LOG_PATH": "${workspaceFolder}/debug.log"
+            },
+            "args": [
+                "-test.v",
+                "-test.timeout=120m"
+            ],
+            "console": "integratedTerminal",
+            "showLog": true
+        },
+        {
+            "name": "Acceptance Tests - Specific Test",
+            "type": "go",
+            "request": "launch",
+            "mode": "test",
+            "program": "${fileDirname}",
+            "env": {
+                "TF_ACC": "1",
+                "TF_LOG": "DEBUG",
+                "TF_LOG_PATH": "${workspaceFolder}/debug.log"
+            },
+            "args": [
+                "-test.v",
+                "-test.run=${input:testName}",
+                "-test.timeout=120m"
+            ],
+            "console": "integratedTerminal",
+            "showLog": true
+        },
+        {
+            "name": "Acceptance Tests - SSO Service",
+            "type": "go",
+            "request": "launch",
+            "mode": "test",
+            "program": "${workspaceFolder}/internal/service/sso",
+            "env": {
+                "TF_ACC": "1",
+                "TF_LOG": "DEBUG",
+                "TF_LOG_PATH": "${workspaceFolder}/debug.log"
+            },
+            "args": [
+                "-test.v",
+                "-test.timeout=120m"
+            ],
+            "console": "integratedTerminal",
+            "showLog": true
+        },
+        {
+            "name": "Acceptance Tests - Base Service",
+            "type": "go",
+            "request": "launch",
+            "mode": "test",
+            "program": "${workspaceFolder}/internal/service/base",
+            "env": {
+                "TF_ACC": "1",
+                "TF_LOG": "DEBUG",
+                "TF_LOG_PATH": "${workspaceFolder}/debug.log"
+            },
+            "args": [
+                "-test.v",
+                "-test.timeout=120m"
+            ],
+            "console": "integratedTerminal",
+            "showLog": true
+        },
+        {
+            "name": "Acceptance Tests - MFA Service",
+            "type": "go",
+            "request": "launch",
+            "mode": "test",
+            "program": "${workspaceFolder}/internal/service/mfa",
+            "env": {
+                "TF_ACC": "1",
+                "TF_LOG": "DEBUG",
+                "TF_LOG_PATH": "${workspaceFolder}/debug.log"
+            },
+            "args": [
+                "-test.v",
+                "-test.timeout=120m"
+            ],
+            "console": "integratedTerminal",
+            "showLog": true
+        },
+        {
+            "name": "Acceptance Tests - Risk Service",
+            "type": "go",
+            "request": "launch",
+            "mode": "test",
+            "program": "${workspaceFolder}/internal/service/risk",
+            "env": {
+                "TF_ACC": "1",
+                "TF_LOG": "DEBUG",
+                "TF_LOG_PATH": "${workspaceFolder}/debug.log"
+            },
+            "args": [
+                "-test.v",
+                "-test.timeout=120m"
+            ],
+            "console": "integratedTerminal",
+            "showLog": true
+        },
+        {
+            "name": "Acceptance Tests - Verify Service",
+            "type": "go",
+            "request": "launch",
+            "mode": "test",
+            "program": "${workspaceFolder}/internal/service/verify",
+            "env": {
+                "TF_ACC": "1",
+                "TF_LOG": "DEBUG",
+                "TF_LOG_PATH": "${workspaceFolder}/debug.log"
+            },
+            "args": [
+                "-test.v",
+                "-test.timeout=120m"
+            ],
+            "console": "integratedTerminal",
+            "showLog": true
+        },
+        {
+            "name": "Acceptance Tests - Credentials Service",
+            "type": "go",
+            "request": "launch",
+            "mode": "test",
+            "program": "${workspaceFolder}/internal/service/credentials",
+            "env": {
+                "TF_ACC": "1",
+                "TF_LOG": "DEBUG",
+                "TF_LOG_PATH": "${workspaceFolder}/debug.log"
+            },
+            "args": [
+                "-test.v",
+                "-test.timeout=120m"
+            ],
+            "console": "integratedTerminal",
+            "showLog": true
+        },
+        {
+            "name": "Acceptance Tests - Authorize Service",
+            "type": "go",
+            "request": "launch",
+            "mode": "test",
+            "program": "${workspaceFolder}/internal/service/authorize",
+            "env": {
+                "TF_ACC": "1",
+                "TF_LOG": "DEBUG",
+                "TF_LOG_PATH": "${workspaceFolder}/debug.log"
+            },
+            "args": [
+                "-test.v",
+                "-test.timeout=120m"
+            ],
+            "console": "integratedTerminal",
+            "showLog": true
+        },
+        {
+            "name": "Unit Tests - Current File",
+            "type": "go",
+            "request": "launch",
+            "mode": "test",
+            "program": "${fileDirname}",
+            "env": {
+                "TF_LOG": "DEBUG"
+            },
+            "args": [
+                "-test.v",
+                "-test.timeout=5m"
+            ],
+            "console": "integratedTerminal",
+            "showLog": true
+        },
+        {
+            "name": "Build Provider",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
             "program": "${workspaceFolder}",
             "env": {},
-            "args": [
-                // pass the debug flag for reattaching
-                "-debug",
-            ],
+            "args": [],
+            "console": "integratedTerminal",
+            "showLog": true
+        }
+    ],
+    "inputs": [
+        {
+            "id": "testName",
+            "description": "Enter the test function name (e.g., TestAccUserDataSource_ByName)",
+            "default": "TestAcc",
+            "type": "promptString"
         }
     ]
 }

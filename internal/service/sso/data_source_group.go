@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -224,11 +225,11 @@ func (r *GroupDataSource) Read(ctx context.Context, req datasource.ReadRequest, 
 				if groups, ok := pageCursor.EntityArray.Embedded.GetGroupsOk(); ok {
 					for _, g := range groups {
 
-						if !data.Name.IsNull() && g.GetName() == data.Name.ValueString() {
+						if !data.Name.IsNull() && strings.EqualFold(g.GetName(), data.Name.ValueString()) {
 							return &g, pageCursor.HTTPResponse, nil
 						}
 
-						if !data.GroupId.IsNull() && g.GetId() == data.GroupId.ValueString() {
+						if !data.GroupId.IsNull() && strings.EqualFold(g.GetId(), data.GroupId.ValueString()) {
 							return &g, pageCursor.HTTPResponse, nil
 						}
 					}
