@@ -30,7 +30,7 @@ func testAccDavinciConnectorDataSource_ByIDFull(t *testing.T, withBootstrap bool
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -51,7 +51,7 @@ func TestAccDavinciConnectorDataSource_NotFound(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -120,15 +120,15 @@ func davinciConnectorDataSource_CheckComputedValuesComplete(resourceName string)
 		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_connector.%s-pingauthadapter", resourceName), "name", "PingOne Authorize - API Access Management"),
 		resource.TestCheckResourceAttrSet(fmt.Sprintf("data.pingone_davinci_connector.%s-pingauthadapter", resourceName), "version"),
 		// PingOne Forms Connector
-		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_connector.%s-pingoneforms", resourceName), "description", "Enhance your DaVinci flows with the forms and branding you create in PingOne."),
+		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_connector.%s-pingoneforms", resourceName), "description", "Show an interactive form or basic message that uses your branding and selected theme."),
 		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_connector.%s-pingoneforms", resourceName), "id", "pingOneFormsConnector"),
 		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_connector.%s-pingoneforms", resourceName), "metadata.colors.canvas", "#E3F0FF"),
 		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_connector.%s-pingoneforms", resourceName), "metadata.colors.canvas_text", "#212529"),
 		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_connector.%s-pingoneforms", resourceName), "metadata.colors.dark", "#2B90C9"),
 		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_connector.%s-pingoneforms", resourceName), "metadata.logos.canvas.image_file_name", "pingone-forms.svg"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_connector.%s-pingoneforms", resourceName), "metadata.type", "ping"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_connector.%s-pingoneforms", resourceName), "metadata.type", "core"),
 		resource.TestCheckNoResourceAttr(fmt.Sprintf("data.pingone_davinci_connector.%s-pingoneforms", resourceName), "metadata.vendor"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_connector.%s-pingoneforms", resourceName), "name", "PingOne Forms"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_connector.%s-pingoneforms", resourceName), "name", "Form"),
 		resource.TestCheckResourceAttrSet(fmt.Sprintf("data.pingone_davinci_connector.%s-pingoneforms", resourceName), "version"),
 	)
 }

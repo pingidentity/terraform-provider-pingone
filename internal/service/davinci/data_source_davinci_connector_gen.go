@@ -149,7 +149,7 @@ func (r *davinciConnectorDataSource) Schema(ctx context.Context, req datasource.
 func (state *davinciConnectorDataSourceModel) readClientResponse(response *pingone.DaVinciConnectorMinimalResponse) diag.Diagnostics {
 	var respDiags, diags diag.Diagnostics
 	// description
-	state.Description = types.StringValue(response.Description)
+	state.Description = types.StringPointerValue(response.Description)
 	// id
 	state.Id = types.StringValue(response.Id)
 	// metadata

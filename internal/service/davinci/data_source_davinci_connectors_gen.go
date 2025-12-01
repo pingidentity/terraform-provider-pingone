@@ -224,7 +224,7 @@ func (state *davinciConnectorsDataSourceModel) readClientResponse(response *ping
 		})
 		respDiags.Append(diags...)
 		connectorsValue, diags := types.ObjectValue(connectorsAttrTypes, map[string]attr.Value{
-			"description": types.StringValue(connectorsResponseValue.Description),
+			"description": types.StringPointerValue(connectorsResponseValue.Description),
 			"id":          types.StringValue(connectorsResponseValue.Id),
 			"metadata":    connectorsMetadataValue,
 			"name":        types.StringValue(connectorsResponseValue.Name),
