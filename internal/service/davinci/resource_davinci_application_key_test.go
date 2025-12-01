@@ -103,7 +103,7 @@ func TestAccDavinciApplicationKey_Rotate(t *testing.T) {
 				// Initial rotation on create
 				Config: davinciApplicationKey_FirstRotateHCL(resourceName),
 				Check: resource.ComposeTestCheckFunc(
-					davinciApplicationKey_checkExpectedKey(t, resourceName, true),
+					davinciApplicationKey_checkExpectedKey(resourceName, true),
 					davinciApplicationKey_CheckComputedValues(resourceName),
 					davinciApplicationKey_GetApplicationApiKey(resourceFullName, &currentApiKey),
 				),
@@ -112,7 +112,7 @@ func TestAccDavinciApplicationKey_Rotate(t *testing.T) {
 				// Expect no additional rotation
 				Config: davinciApplicationKey_FirstNoRotateHCL(resourceName),
 				Check: resource.ComposeTestCheckFunc(
-					davinciApplicationKey_checkExpectedKey(t, resourceName, false),
+					davinciApplicationKey_checkExpectedKey(resourceName, false),
 					davinciApplicationKey_CheckComputedValues(resourceName),
 					davinciApplicationKey_GetApplicationApiKey(resourceFullName, &currentApiKey),
 				),
@@ -121,7 +121,7 @@ func TestAccDavinciApplicationKey_Rotate(t *testing.T) {
 				// Expect rotation
 				Config: davinciApplicationKey_SecondRotateHCL(resourceName),
 				Check: resource.ComposeTestCheckFunc(
-					davinciApplicationKey_checkExpectedKey(t, resourceName, true),
+					davinciApplicationKey_checkExpectedKey(resourceName, true),
 					davinciApplicationKey_CheckComputedValues(resourceName),
 					davinciApplicationKey_GetApplicationApiKey(resourceFullName, &currentApiKey),
 				),
@@ -130,7 +130,7 @@ func TestAccDavinciApplicationKey_Rotate(t *testing.T) {
 				// Expect no additional rotation
 				Config: davinciApplicationKey_SecondNoRotateHCL(resourceName),
 				Check: resource.ComposeTestCheckFunc(
-					davinciApplicationKey_checkExpectedKey(t, resourceName, false),
+					davinciApplicationKey_checkExpectedKey(resourceName, false),
 					davinciApplicationKey_CheckComputedValues(resourceName),
 					davinciApplicationKey_GetApplicationApiKey(resourceFullName, &currentApiKey),
 				),
@@ -267,7 +267,7 @@ func davinciApplicationKey_CheckComputedValues(resourceName string) resource.Tes
 	)
 }
 
-func davinciApplicationKey_checkExpectedKey(_ *testing.T, resourceName string, expectRotation bool) resource.TestCheckFunc {
+func davinciApplicationKey_checkExpectedKey(resourceName string, expectRotation bool) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		err := resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_key.%s", resourceName), "api_key.value", currentApiKey)(s)
 		if err != nil && !expectRotation {

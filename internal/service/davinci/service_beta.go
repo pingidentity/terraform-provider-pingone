@@ -21,5 +21,12 @@ func BetaResources() []func() resource.Resource {
 }
 
 func BetaDataSources() []func() datasource.DataSource {
-	return []func() datasource.DataSource{}
+	return []func() datasource.DataSource{
+		NewDavinciApplicationDataSource,
+		NewDavinciApplicationsDataSource,
+		NewDavinciConnectorDataSource,
+		NewDavinciConnectorsDataSource,
+		NewDavinciConnectorInstanceDataSource,
+		NewDavinciConnectorInstancesDataSource,
+	}
 }

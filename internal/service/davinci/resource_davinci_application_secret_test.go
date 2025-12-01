@@ -103,7 +103,7 @@ func TestAccDavinciApplicationSecret_Rotate(t *testing.T) {
 				// Initial rotation on create
 				Config: davinciApplicationSecret_FirstRotateHCL(resourceName),
 				Check: resource.ComposeTestCheckFunc(
-					davinciApplicationSecret_checkExpectedSecret(t, resourceName, true),
+					davinciApplicationSecret_checkExpectedSecret(resourceName, true),
 					davinciApplicationSecret_CheckComputedValues(resourceName),
 					davinciApplicationSecret_GetApplicationSecret(resourceFullName, &currentClientSecret),
 				),
@@ -112,7 +112,7 @@ func TestAccDavinciApplicationSecret_Rotate(t *testing.T) {
 				// Expect no additional rotation
 				Config: davinciApplicationSecret_FirstNoRotateHCL(resourceName),
 				Check: resource.ComposeTestCheckFunc(
-					davinciApplicationSecret_checkExpectedSecret(t, resourceName, false),
+					davinciApplicationSecret_checkExpectedSecret(resourceName, false),
 					davinciApplicationSecret_CheckComputedValues(resourceName),
 					davinciApplicationSecret_GetApplicationSecret(resourceFullName, &currentClientSecret),
 				),
@@ -121,7 +121,7 @@ func TestAccDavinciApplicationSecret_Rotate(t *testing.T) {
 				// Expect rotation
 				Config: davinciApplicationSecret_SecondRotateHCL(resourceName),
 				Check: resource.ComposeTestCheckFunc(
-					davinciApplicationSecret_checkExpectedSecret(t, resourceName, true),
+					davinciApplicationSecret_checkExpectedSecret(resourceName, true),
 					davinciApplicationSecret_CheckComputedValues(resourceName),
 					davinciApplicationSecret_GetApplicationSecret(resourceFullName, &currentClientSecret),
 				),
@@ -130,7 +130,7 @@ func TestAccDavinciApplicationSecret_Rotate(t *testing.T) {
 				// Expect no additional rotation
 				Config: davinciApplicationSecret_SecondNoRotateHCL(resourceName),
 				Check: resource.ComposeTestCheckFunc(
-					davinciApplicationSecret_checkExpectedSecret(t, resourceName, false),
+					davinciApplicationSecret_checkExpectedSecret(resourceName, false),
 					davinciApplicationSecret_CheckComputedValues(resourceName),
 					davinciApplicationSecret_GetApplicationSecret(resourceFullName, &currentClientSecret),
 				),
@@ -266,7 +266,7 @@ func davinciApplicationSecret_CheckComputedValues(resourceName string) resource.
 	)
 }
 
-func davinciApplicationSecret_checkExpectedSecret(_ *testing.T, resourceName string, expectRotation bool) resource.TestCheckFunc {
+func davinciApplicationSecret_checkExpectedSecret(resourceName string, expectRotation bool) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		err := resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_secret.%s", resourceName), "oauth.client_secret", currentClientSecret)(s)
 		if err != nil && !expectRotation {
