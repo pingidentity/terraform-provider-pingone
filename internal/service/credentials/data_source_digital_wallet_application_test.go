@@ -25,7 +25,7 @@ func TestAccDigitalWalletApplicationDataSource_ByIDFull(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             credentials.DigitalWalletApplication_CheckDestroy,
@@ -58,7 +58,7 @@ func TestAccDigitalWalletApplicationDataSource_ByApplicationIDFull(t *testing.T)
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             credentials.DigitalWalletApplication_CheckDestroy,
@@ -91,14 +91,25 @@ func TestAccDigitalWalletApplicationDataSource_ByNameFull(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             credentials.DigitalWalletApplication_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDigitalWalletApplicationDataSource_ByNameFull(resourceName, name),
+				Config: testAccDigitalWalletApplicationDataSource_ByNameFull(resourceName, name, false),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "digital_wallet_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(dataSourceFullName, "name", name),
+					resource.TestCheckResourceAttr(dataSourceFullName, "app_open_url", fmt.Sprintf("https://www.example.com/%s", name)),
+				),
+			},
+			{
+				Config: testAccDigitalWalletApplicationDataSource_ByNameFull(resourceName, name, true),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -121,7 +132,7 @@ func TestAccDigitalWalletApplicationDataSource_NotFound(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             credentials.DigitalWalletApplication_CheckDestroy,
@@ -221,7 +232,14 @@ data "pingone_digital_wallet_application" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccDigitalWalletApplicationDataSource_ByNameFull(resourceName, name string) string {
+func testAccDigitalWalletApplicationDataSource_ByNameFull(resourceName, name string, insensitivityCheck bool) string {
+
+	// If insensitivityCheck is true, alter the case of the name
+	nameComparator := name
+	if insensitivityCheck {
+		nameComparator = acctest.AlterStringCasing(nameComparator)
+	}
+
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_application" "%[2]s-appname" {
@@ -253,11 +271,11 @@ resource "pingone_digital_wallet_application" "%[2]s-walletappname" {
 
 data "pingone_digital_wallet_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s"
+  name           = "%[4]s"
 
   depends_on = [resource.pingone_digital_wallet_application.%[2]s-walletappname]
 
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, nameComparator)
 }
 
 func testAccDigitalWalletApplicationDataSource_NotFoundByID(resourceName string) string {

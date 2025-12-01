@@ -23,7 +23,7 @@ func TestAccTrustedEmailDomain_RemovalDrift(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	domainPrefix := acctest.ResourceNameGen()
+	domainPrefix := acctest.DomainNamePrefixWithTimestampGen()
 	resourceFullName := fmt.Sprintf("pingone_trusted_email_domain.%s", resourceName)
 
 	environmentName := acctest.ResourceNameGenEnvironment()
@@ -40,8 +40,8 @@ func TestAccTrustedEmailDomain_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
-
+			acctest.PreCheckNoBeta(t)
+			acctest.PreCheckNewTrustedEmailDomain(t)
 			p1Client = acctestlegacysdk.PreCheckTestClient(ctx, t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -80,7 +80,7 @@ func TestAccTrustedEmailDomain_Full(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	domainPrefix := acctest.ResourceNameGen()
+	domainPrefix := acctest.DomainNamePrefixWithTimestampGen()
 	resourceFullName := fmt.Sprintf("pingone_trusted_email_domain.%s", resourceName)
 
 	environmentName := acctest.ResourceNameGenEnvironment()
@@ -92,7 +92,8 @@ func TestAccTrustedEmailDomain_Full(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
+			acctest.PreCheckNewTrustedEmailDomain(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.TrustedEmailDomain_CheckDestroy,
@@ -103,7 +104,7 @@ func TestAccTrustedEmailDomain_Full(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "domain_name", fmt.Sprintf("%s.terraformdev.ping-eng.com", domainPrefix)),
+					resource.TestCheckResourceAttr(resourceFullName, "domain_name", fmt.Sprintf("%s.cdi-team-terraform-ted-test.ping-eng.com", domainPrefix)),
 				),
 			},
 			// Test importing the resource
@@ -129,7 +130,7 @@ func TestAccTrustedEmailDomain_BadParameters(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	domainPrefix := acctest.ResourceNameGen()
+	domainPrefix := acctest.DomainNamePrefixWithTimestampGen()
 	resourceFullName := fmt.Sprintf("pingone_trusted_email_domain.%s", resourceName)
 
 	environmentName := acctest.ResourceNameGenEnvironment()
@@ -141,7 +142,8 @@ func TestAccTrustedEmailDomain_BadParameters(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
+			acctest.PreCheckNewTrustedEmailDomain(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.TrustedEmailDomain_CheckDestroy,
@@ -180,6 +182,6 @@ func testAccTrustedEmailDomainConfig_Full(environmentName, licenseID, resourceNa
 resource "pingone_trusted_email_domain" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
-  domain_name = "%[4]s.terraformdev.ping-eng.com"
+  domain_name = "%[4]s.cdi-team-terraform-ted-test.ping-eng.com"
 }`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, domainPrefix)
 }

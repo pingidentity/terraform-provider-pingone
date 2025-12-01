@@ -14,6 +14,8 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/service/sso/helpers/beta"
+	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 )
 
 func applicationExternalLinkOptionsToTF(apiObject *management.ApplicationExternalLink) (types.Object, diag.Diagnostics) {
@@ -78,11 +80,53 @@ func applicationCorsSettingsOkToTF(apiObject *management.ApplicationCorsSettings
 	return returnVar, diags
 }
 
+func applicationOidcOptionsDataSourceToTF(ctx context.Context, apiObject *management.ApplicationOIDC, stateValue applicationOIDCOptionsDataSourceModelV1) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	commonAttrs, d := applicationOidcOptionsCommonToTF(ctx, apiObject, stateValue.applicationOIDCOptionsCommonModelV1)
+	diags.Append(d...)
+
+	if commonAttrs == nil {
+		return types.ObjectNull(applicationOidcOptionsDataSourceTFObjectTypes), diags
+	}
+
+	attributesMap := utils.MergeAttributeValueMapsRtn(
+		map[string]attr.Value{
+			"client_id": framework.StringOkToTF(apiObject.GetIdOk()),
+		},
+		commonAttrs,
+	)
+
+	returnVar, d := types.ObjectValue(applicationOidcOptionsDataSourceTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
 func applicationOidcOptionsToTF(ctx context.Context, apiObject *management.ApplicationOIDC, stateValue applicationOIDCOptionsResourceModelV1) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	commonAttrs, d := applicationOidcOptionsCommonToTF(ctx, apiObject, stateValue.applicationOIDCOptionsCommonModelV1)
+	diags.Append(d...)
+
+	if commonAttrs == nil {
+		return types.ObjectNull(applicationOidcOptionsResourceTFObjectTypes), diags
+	}
+
+	attributesMap := utils.MergeAttributeValueMapsRtn(
+		beta.ApplicationBetaToTF(apiObject, stateValue.ApplicationOIDCOptionsResourceModelV1),
+		commonAttrs,
+	)
+
+	returnVar, d := types.ObjectValue(applicationOidcOptionsResourceTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func applicationOidcOptionsCommonToTF(ctx context.Context, apiObject *management.ApplicationOIDC, stateValue applicationOIDCOptionsCommonModelV1) (map[string]attr.Value, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if apiObject == nil || apiObject.GetId() == "" {
-		return types.ObjectNull(applicationOidcOptionsTFObjectTypes), diags
+		return nil, diags
 	}
 
 	kerberos, d := applicationOidcOptionsCertificateBasedAuthenticationToTF(apiObject.GetKerberosOk())
@@ -100,17 +144,16 @@ func applicationOidcOptionsToTF(ctx context.Context, apiObject *management.Appli
 		})
 		diags.Append(d...)
 		if diags.HasError() {
-			return types.ObjectNull(applicationOidcOptionsTFObjectTypes), diags
+			return nil, diags
 		}
 	}
 	mobileApp, d := applicationMobileAppOkToTF(ctx, mobileAppObject, ok, mobileAppState)
 	diags.Append(d...)
 
-	attributesMap := map[string]attr.Value{
+	return map[string]attr.Value{
 		"additional_refresh_token_replay_protection_enabled": framework.BoolOkToTF(apiObject.GetAdditionalRefreshTokenReplayProtectionEnabledOk()),
 		"allow_wildcard_in_redirect_uris":                    framework.BoolOkToTF(apiObject.GetAllowWildcardInRedirectUrisOk()),
 		"certificate_based_authentication":                   kerberos,
-		"client_id":                                          framework.StringOkToTF(apiObject.GetIdOk()),
 		"cors_settings":                                      corsSettings,
 		"device_path_id":                                     framework.StringOkToTF(apiObject.GetDevicePathIdOk()),
 		"device_custom_verification_uri":                     framework.StringOkToTF(apiObject.GetDeviceCustomVerificationUriOk()),
@@ -137,12 +180,7 @@ func applicationOidcOptionsToTF(ctx context.Context, apiObject *management.Appli
 		"target_link_uri":                                    framework.StringOkToTF(apiObject.GetTargetLinkUriOk()),
 		"token_endpoint_auth_method":                         framework.EnumOkToTF(apiObject.GetTokenEndpointAuthMethodOk()),
 		"type":                                               framework.EnumOkToTF(apiObject.GetTypeOk()),
-	}
-
-	returnVar, d := types.ObjectValue(applicationOidcOptionsTFObjectTypes, attributesMap)
-	diags.Append(d...)
-
-	return returnVar, diags
+	}, diags
 }
 
 func applicationOidcOptionsCertificateBasedAuthenticationToTF(apiObject *management.ApplicationOIDCAllOfKerberos, ok bool) (types.Object, diag.Diagnostics) {

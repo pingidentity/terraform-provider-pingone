@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -142,7 +143,7 @@ func datasourcePingOneCertificateRead(ctx context.Context, d *schema.ResourceDat
 			found := false
 			for _, certificate := range certificates {
 
-				if certificate.GetName() == v.(string) {
+				if strings.EqualFold(certificate.GetName(), v.(string)) {
 					respObject = certificate
 					found = true
 					break

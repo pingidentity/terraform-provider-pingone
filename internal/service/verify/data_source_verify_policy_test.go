@@ -45,6 +45,11 @@ func TestAccVerifyPolicyDataSource_All(t *testing.T) {
 		resource.TestCheckResourceAttr(dataSourceFullName, "government_id.provider_auto", "VERIFF"),
 		resource.TestCheckResourceAttr(dataSourceFullName, "government_id.provider_manual", "MITEK"),
 		resource.TestCheckResourceAttr(dataSourceFullName, "government_id.retry_attempts", "1"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "government_id.verify_aamva", "false"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "government_id.aadhaar.enabled", "true"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "government_id.aadhaar.otp.deliveries.count", "2"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "government_id.aadhaar.otp.deliveries.cooldown.duration", "90"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "government_id.aadhaar.otp.deliveries.cooldown.time_unit", "SECONDS"),
 
 		resource.TestCheckResourceAttr(dataSourceFullName, "facial_comparison.verify", "REQUIRED"),
 		resource.TestCheckResourceAttr(dataSourceFullName, "facial_comparison.threshold", "HIGH"),
@@ -91,6 +96,17 @@ func TestAccVerifyPolicyDataSource_All(t *testing.T) {
 		resource.TestCheckResourceAttr(dataSourceFullName, "transaction.data_collection.timeout.time_unit", "MINUTES"),
 		resource.TestCheckResourceAttr(dataSourceFullName, "transaction.data_collection_only", "false"),
 
+		resource.TestCheckResourceAttr(dataSourceFullName, "identity_record_matching.address.threshold", "LOW"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "identity_record_matching.address.field_required", "false"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "identity_record_matching.birth_date.threshold", "MEDIUM"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "identity_record_matching.birth_date.field_required", "true"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "identity_record_matching.family_name.threshold", "MEDIUM"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "identity_record_matching.family_name.field_required", "false"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "identity_record_matching.given_name.threshold", "MEDIUM"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "identity_record_matching.given_name.field_required", "false"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "identity_record_matching.name.threshold", "HIGH"),
+		resource.TestCheckResourceAttr(dataSourceFullName, "identity_record_matching.name.field_required", "true"),
+
 		resource.TestMatchResourceAttr(dataSourceFullName, "created_at", validation.RFC3339Regexp),
 		resource.TestMatchResourceAttr(dataSourceFullName, "updated_at", validation.RFC3339Regexp),
 	)
@@ -104,6 +120,7 @@ func TestAccVerifyPolicyDataSource_All(t *testing.T) {
 
 		resource.TestCheckResourceAttr(dataSourceFullName, "government_id.verify", "DISABLED"),
 		resource.TestCheckNoResourceAttr(dataSourceFullName, "government_id.inspection_type"),
+		resource.TestCheckNoResourceAttr(dataSourceFullName, "government_id.verify_aamva"),
 
 		resource.TestCheckResourceAttr(dataSourceFullName, "facial_comparison.verify", "DISABLED"),
 		resource.TestCheckResourceAttr(dataSourceFullName, "facial_comparison.threshold", "MEDIUM"),
@@ -165,7 +182,7 @@ func TestAccVerifyPolicyDataSource_All(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             verify.VerifyPolicy_CheckDestroy,
@@ -180,11 +197,15 @@ func TestAccVerifyPolicyDataSource_All(t *testing.T) {
 				Destroy: true,
 			},
 			{
-				Config: testAccVerifyPolicy_FindByName(environmentName, licenseID, resourceName, updatedName),
+				Config: testAccVerifyPolicy_FindByName(environmentName, licenseID, resourceName, updatedName, false),
 				Check:  findByName,
 			},
 			{
-				Config:  testAccVerifyPolicy_FindByName(environmentName, licenseID, resourceName, updatedName),
+				Config: testAccVerifyPolicy_FindByName(environmentName, licenseID, resourceName, updatedName, true),
+				Check:  findByName,
+			},
+			{
+				Config:  testAccVerifyPolicy_FindByName(environmentName, licenseID, resourceName, updatedName, false),
 				Destroy: true,
 			},
 			{
@@ -210,7 +231,7 @@ func TestAccVerifyPolicyDataSource_FailureChecks(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             verify.VerifyPolicy_CheckDestroy,
@@ -243,6 +264,19 @@ resource "pingone_verify_policy" "%[3]s" {
     provider_auto   = "VERIFF"
     provider_manual = "MITEK"
     retry_attempts  = "1"
+    verify_aamva    = false
+    aadhaar = {
+      enabled = true
+      otp = {
+        deliveries = {
+          count = 2
+          cooldown = {
+            duration  = 90
+            time_unit = "SECONDS"
+          }
+        }
+      }
+    }
   }
 
   facial_comparison = {
@@ -320,6 +354,29 @@ resource "pingone_verify_policy" "%[3]s" {
     data_collection_only = false
   }
 
+  identity_record_matching = {
+    address = {
+      threshold      = "LOW"
+      field_required = false
+    }
+    birth_date = {
+      threshold      = "MEDIUM"
+      field_required = true
+    }
+    family_name = {
+      threshold      = "MEDIUM"
+      field_required = false
+    }
+    given_name = {
+      threshold      = "MEDIUM"
+      field_required = false
+    }
+    name = {
+      threshold      = "HIGH"
+      field_required = true
+    }
+  }
+
   depends_on = [pingone_environment.%[2]s]
 }
 
@@ -331,7 +388,14 @@ data "pingone_verify_policy" "%[3]s" {
 }`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
-func testAccVerifyPolicy_FindByName(environmentName, licenseID, resourceName, name string) string {
+func testAccVerifyPolicy_FindByName(environmentName, licenseID, resourceName, name string, insensitivityCheck bool) string {
+
+	// If insensitivityCheck is true, alter the case of the name
+	nameComparator := name
+	if insensitivityCheck {
+		nameComparator = acctest.AlterStringCasing(nameComparator)
+	}
+
 	return fmt.Sprintf(`
 	%[1]s
 resource "pingone_verify_voice_phrase" "%[3]s" {
@@ -372,10 +436,10 @@ resource "pingone_verify_policy" "%[3]s" {
 
 data "pingone_verify_policy" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  name           = "%[4]s"
+  name           = "%[5]s"
 
   depends_on = [pingone_verify_policy.%[3]s]
-}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, nameComparator)
 }
 
 func testAccVerifyPolicy_FindDefaultPolicy(environmentName, licenseID, resourceName, name string) string {

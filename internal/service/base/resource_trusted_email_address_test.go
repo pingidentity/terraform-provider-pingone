@@ -37,8 +37,8 @@ func TestAccTrustedEmailAddress_RemovalDrift(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
-			acctest.PreCheckDomainVerification(t)
+			acctest.PreCheckNoBeta(t)
+			acctest.PreCheckTrustedEmailDomainVerification(t)
 
 			p1Client = acctestlegacysdk.PreCheckTestClient(ctx, t)
 		},
@@ -108,8 +108,8 @@ func TestAccTrustedEmailAddress_Full(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
-			acctest.PreCheckDomainVerification(t)
+			acctest.PreCheckNoBeta(t)
+			acctest.PreCheckTrustedEmailDomainVerification(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.TrustedEmailAddress_CheckDestroy,
@@ -155,8 +155,8 @@ func TestAccTrustedEmailAddress_NotVerified(t *testing.T) {
 	environmentName := acctest.ResourceNameGenEnvironment()
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-	domainPrefix := acctest.ResourceNameGen()
-	unverifiedDomain := fmt.Sprintf("%s.terraformdev.ping-eng.com", domainPrefix)
+	domainPrefix := acctest.DomainNamePrefixWithTimestampGen()
+	unverifiedDomain := fmt.Sprintf("%s.cdi-team-terraform-ted-test.ping-eng.com", domainPrefix)
 	unverifiedEmailAddress := fmt.Sprintf("noreply@%s", unverifiedDomain)
 
 	resource.Test(t, resource.TestCase{
@@ -164,7 +164,8 @@ func TestAccTrustedEmailAddress_NotVerified(t *testing.T) {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
+			acctest.PreCheckNewTrustedEmailDomain(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.TrustedEmailAddress_CheckDestroy,
@@ -191,8 +192,8 @@ func TestAccTrustedEmailAddress_BadParameters(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
-			acctest.PreCheckDomainVerification(t)
+			acctest.PreCheckNoBeta(t)
+			acctest.PreCheckTrustedEmailDomainVerification(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.TrustedEmailAddress_CheckDestroy,
