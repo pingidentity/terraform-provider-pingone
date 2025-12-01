@@ -1,0 +1,3 @@
+```release-note:bug
+`resource/pingone_branding_theme`: `use_default_background` can now be configured with either `background_color` or `background_image`.
+```

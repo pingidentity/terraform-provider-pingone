@@ -25,14 +25,14 @@ func TestAccPasswordPolicyDataSource_ByNameFull(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.PasswordPolicy_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccPasswordPolicyDataSourceConfig_ByNameFull(resourceName, name),
+				Config: testAccPasswordPolicyDataSourceConfig_ByNameFull(resourceName, name, false),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "environment_id"),
@@ -54,6 +54,13 @@ func TestAccPasswordPolicyDataSource_ByNameFull(t *testing.T) {
 					//resource.TestCheckResourceAttrPair(dataSourceFullName, "population_count", resourceFullName, "population_count"),
 				),
 			},
+			{
+				Config: testAccPasswordPolicyDataSourceConfig_ByNameFull(resourceName, name, true),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "name", resourceFullName, "name"),
+				),
+			},
 		},
 	})
 }
@@ -71,7 +78,7 @@ func TestAccPasswordPolicyDataSource_ByIDFull(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.PasswordPolicy_CheckDestroy,
@@ -113,7 +120,7 @@ func TestAccPasswordPolicyDataSource_NotFound(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.PasswordPolicy_CheckDestroy,
@@ -131,7 +138,14 @@ func TestAccPasswordPolicyDataSource_NotFound(t *testing.T) {
 	})
 }
 
-func testAccPasswordPolicyDataSourceConfig_ByNameFull(resourceName, name string) string {
+func testAccPasswordPolicyDataSourceConfig_ByNameFull(resourceName, name string, insensitivityCheck bool) string {
+
+	// If insensitivityCheck is true, alter the case of the name
+	nameComparator := name
+	if insensitivityCheck {
+		nameComparator = acctest.AlterStringCasing(nameComparator)
+	}
+
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -178,12 +192,12 @@ resource "pingone_password_policy" "%[2]s" {
 data "pingone_password_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
-  name = "%[3]s"
+  name = "%[4]s"
 
   depends_on = [
     pingone_password_policy.%[2]s
   ]
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, nameComparator)
 }
 
 func testAccPasswordPolicyDataSourceConfig_ByIDFull(resourceName, name string) string {

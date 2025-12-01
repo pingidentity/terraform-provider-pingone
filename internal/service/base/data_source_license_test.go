@@ -27,13 +27,9 @@ func TestAccLicenseDataSource_ByIDFull(t *testing.T) {
 	positiveIntegerRegex := regexp.MustCompile(`^[1-9][0-9]*$`)
 
 	terminatesAtCheck := resource.TestCheckNoResourceAttr(dataSourceFullName, "terminates_at")
-	allowDataConsentCheck := resource.TestCheckResourceAttr(dataSourceFullName, "intelligence.allow_data_consent", "true")
-	allowAdvancedPredictorsCheck := resource.TestCheckResourceAttr(dataSourceFullName, "intelligence.allow_advanced_predictors", "true")
 	if os.Getenv("PINGONE_REGION_CODE") == "SG" {
-		// The SG license has a few differences
+		// The SG license has a terminates_at field
 		terminatesAtCheck = resource.TestMatchResourceAttr(dataSourceFullName, "terminates_at", verify.RFC3339Regexp)
-		allowDataConsentCheck = resource.TestCheckResourceAttr(dataSourceFullName, "intelligence.allow_data_consent", "false")
-		allowAdvancedPredictorsCheck = resource.TestCheckResourceAttr(dataSourceFullName, "intelligence.allow_advanced_predictors", "false")
 	}
 
 	resource.Test(t, resource.TestCase{
@@ -42,6 +38,7 @@ func TestAccLicenseDataSource_ByIDFull(t *testing.T) {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckOrganisationID(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.License_CheckDestroy,
@@ -92,9 +89,9 @@ func TestAccLicenseDataSource_ByIDFull(t *testing.T) {
 					resource.TestCheckResourceAttr(dataSourceFullName, "intelligence.allow_geo_velocity", "true"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "intelligence.allow_anonymous_network_detection", "true"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "intelligence.allow_reputation", "true"),
-					allowDataConsentCheck,
+					resource.TestCheckResourceAttr(dataSourceFullName, "intelligence.allow_data_consent", "true"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "intelligence.allow_risk", "true"),
-					allowAdvancedPredictorsCheck,
+					resource.TestCheckResourceAttr(dataSourceFullName, "intelligence.allow_advanced_predictors", "true"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "mfa.allow_push_notification", "true"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "mfa.allow_notification_outside_whitelist", "true"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "mfa.allow_fido2_devices", "true"),
@@ -139,7 +136,7 @@ func TestAccLicenseDataSource_NotFound(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		ErrorCheck:               acctest.ErrorCheck(t),

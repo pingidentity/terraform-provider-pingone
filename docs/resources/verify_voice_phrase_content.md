@@ -7,6 +7,8 @@ description: |-
 
 # pingone_verify_voice_phrase_content (Resource)
 
+!> **Deprecation Notice** This resource is deprecated and will be removed in a future release. Please use alternative verification methods.
+
 Resource to configure the phrases to speak during voice verification enrollment or validation.
 
 ## Example Usage

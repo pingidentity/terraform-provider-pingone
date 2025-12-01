@@ -5,7 +5,7 @@ description: |-
   Resource to configure the requirements to verify a user, including the parameters for verification.
   A verify policy defines which of the following one or more checks are performed for a verification transaction and configures the parameters of each check. If a type is optional, then the transaction can be processed with or without the documents for that type. If the documents are provided for that type and the optional type verification fails, it will not cause the entire transaction to fail.
   Verify policies can perform any of the following checks:
-  Government identity document - Validate a government-issued identity document, which includes a photograph.Facial comparison - Compare a mobile phone self-image to a reference photograph, such as on a government ID or previously verified photograph.Liveness - Inspect a mobile phone self-image for evidence that the subject is alive and not a representation, such as a photograph or mask.Email - Receive a one-time password (OTP) on an email address and return the OTP to the service.Phone - Receive a one-time password (OTP) on a mobile phone and return the OTP to the service.Voice - Compare a voice recording to a previously submitted reference voice recording.
+  Government identity document - Validate a government-issued identity document, which includes a photograph.Facial comparison - Compare a mobile phone self-image to a reference photograph, such as on a government ID or previously verified photograph.Liveness - Inspect a mobile phone self-image for evidence that the subject is alive and not a representation, such as a photograph or mask.Email - Receive a one-time password (OTP) on an email address and return the OTP to the service.Phone - Receive a one-time password (OTP) on a mobile phone and return the OTP to the service.Identity Record Matching - Compare submitted biographic data (address, birth date, full name, given name, or family name) to an identity record.
 ---
 
 # pingone_verify_policy (Resource)
@@ -20,7 +20,7 @@ Verify policies can perform any of the following checks:
 - Liveness - Inspect a mobile phone self-image for evidence that the subject is alive and not a representation, such as a photograph or mask.
 - Email - Receive a one-time password (OTP) on an email address and return the OTP to the service.
 - Phone - Receive a one-time password (OTP) on a mobile phone and return the OTP to the service.
-- Voice - Compare a voice recording to a previously submitted reference voice recording.
+- Identity Record Matching - Compare submitted biographic data (address, birth date, full name, given name, or family name) to an identity record.
 
 ## Example Usage
 
@@ -51,6 +51,19 @@ resource "pingone_verify_policy" "my_verify_everything_policy" {
     provider_auto   = "VERIFF"
     fail_expired_id = true
     retry_attempts  = "2"
+    verify_aamva    = true
+    aadhaar = {
+      enabled = true
+      otp = {
+        deliveries = {
+          count = 3
+          cooldown = {
+            duration  = 60
+            time_unit = "SECONDS"
+          }
+        }
+      }
+    }
   }
 
   facial_comparison = {
@@ -141,6 +154,29 @@ resource "pingone_verify_policy" "my_verify_everything_policy" {
 
     data_collection_only = false
   }
+
+  identity_record_matching = {
+    address = {
+      threshold      = "LOW"
+      field_required = false
+    }
+    birth_date = {
+      threshold      = "MEDIUM"
+      field_required = true
+    }
+    family_name = {
+      threshold      = "MEDIUM"
+      field_required = false
+    }
+    given_name = {
+      threshold      = "MEDIUM"
+      field_required = false
+    }
+    name = {
+      threshold      = "HIGH"
+      field_required = true
+    }
+  }
 }
 ```
 
@@ -158,10 +194,11 @@ resource "pingone_verify_policy" "my_verify_everything_policy" {
 - `email` (Attributes) Defines the verification requirements to validate an email address using a one-time password (OTP). (see [below for nested schema](#nestedatt--email))
 - `facial_comparison` (Attributes) Defines the verification requirements to compare a mobile phone self-image to a reference photograph, such as on a government ID or previously verified photograph. (see [below for nested schema](#nestedatt--facial_comparison))
 - `government_id` (Attributes) Defines the verification requirements for a government-issued identity document, which includes a photograph. (see [below for nested schema](#nestedatt--government_id))
+- `identity_record_matching` (Attributes) Defines the verification requirements for identity record matching. If `government_id.verify` is `DISABLED`, then identity record matching is disabled. (see [below for nested schema](#nestedatt--identity_record_matching))
 - `liveness` (Attributes) Defines the verification requirements to inspect a mobile phone self-image for evidence that the subject is alive and not a representation, such as a photograph or mask. (see [below for nested schema](#nestedatt--liveness))
 - `phone` (Attributes) Defines the verification requirements to validate a mobile phone number using a one-time password (OTP). (see [below for nested schema](#nestedatt--phone))
 - `transaction` (Attributes) Defines the requirements for transactions invoked by the policy. (see [below for nested schema](#nestedatt--transaction))
-- `voice` (Attributes) Defines the requirements for transactions invoked by the policy. (see [below for nested schema](#nestedatt--voice))
+- `voice` (Attributes, Deprecated) **[Deprecation notice: This field is deprecated and will be removed in a future release. Please use alternative verification methods.]** Defines the requirements for comparing a voice recording against a reference voice recording. (see [below for nested schema](#nestedatt--voice))
 
 ### Read-Only
 
@@ -268,11 +305,126 @@ Required:
 
 Optional:
 
+- `aadhaar` (Attributes) Aadhaar configuration for India-based government Aadhaar documents;`facial_comparison.verify` must be `REQUIRED` to enable. (see [below for nested schema](#nestedatt--government_id--aadhaar))
 - `fail_expired_id` (Boolean) When enabled, Government ID verification fails if the document is expired.
 - `inspection_type` (String) Determine whether document authentication is automated, manual, or possibly both.  Options are `AUTOMATIC`, `MANUAL`, `STEP_UP`.
 - `provider_auto` (String) Provider to use for the automatic verification service.  Options are `MITEK`, `VERIFF`.  Defaults to `MITEK`.
 - `provider_manual` (String) Provider to use for the manual verification service.  Options are `MITEK`.  Defaults to `MITEK`.
 - `retry_attempts` (Number) Number of retries permitted when submitting images.  The allowed range is `0 - 3`.
+- `verify_aamva` (Boolean) When enabled, the AAMVA DLDV system is used to validate identity documents issued by participating states. If license allows, defaults to `true` when `government_id.inspection_type` is `REQUIRED` or `OPTIONAL`; otherwise disabled.
+
+<a id="nestedatt--government_id--aadhaar"></a>
+### Nested Schema for `government_id.aadhaar`
+
+Optional:
+
+- `enabled` (Boolean) Whether Aadhaar verification is enabled.  Defaults to `false`.
+- `otp` (Attributes) Aadhaar one-time password (OTP) configuration. (see [below for nested schema](#nestedatt--government_id--aadhaar--otp))
+
+<a id="nestedatt--government_id--aadhaar--otp"></a>
+### Nested Schema for `government_id.aadhaar.otp`
+
+Optional:
+
+- `deliveries` (Attributes) OTP delivery configuration. If omitted, defaults to 3 deliveries with a cooldown of 60 seconds. (see [below for nested schema](#nestedatt--government_id--aadhaar--otp--deliveries))
+
+<a id="nestedatt--government_id--aadhaar--otp--deliveries"></a>
+### Nested Schema for `government_id.aadhaar.otp.deliveries`
+
+Required:
+
+- `cooldown` (Attributes) Cooldown (waiting period between OTP deliveries) configuration. (see [below for nested schema](#nestedatt--government_id--aadhaar--otp--deliveries--cooldown))
+
+Optional:
+
+- `count` (Number) Number of OTP deliveries permitted. The allowed range is `1 - 3`.  Defaults to `3`.
+
+<a id="nestedatt--government_id--aadhaar--otp--deliveries--cooldown"></a>
+### Nested Schema for `government_id.aadhaar.otp.deliveries.cooldown`
+
+Required:
+
+- `duration` (Number) Cooldown duration for Aadhaar OTP deliveries.
+    - If `cooldown.time_unit` is `MINUTES`, the allowed range is `1 - 30`.
+    - If `cooldown.time_unit` is `SECONDS`, the allowed range is `60 - 1800`.
+    - Defaults to `60 SECONDS`.
+- `time_unit` (String) Time unit of the Aadhaar OTP cooldown duration.  Options are `MINUTES`, `SECONDS`.  Defaults to `SECONDS`.
+
+
+
+
+
+
+<a id="nestedatt--identity_record_matching"></a>
+### Nested Schema for `identity_record_matching`
+
+Optional:
+
+- `address` (Attributes) Configuration for address verification. (see [below for nested schema](#nestedatt--identity_record_matching--address))
+- `birth_date` (Attributes) Configuration for birth date verification. (see [below for nested schema](#nestedatt--identity_record_matching--birth_date))
+- `family_name` (Attributes) Configuration for family name verification. (see [below for nested schema](#nestedatt--identity_record_matching--family_name))
+- `given_name` (Attributes) Configuration for given name verification. (see [below for nested schema](#nestedatt--identity_record_matching--given_name))
+- `name` (Attributes) Configuration for full name verification. (see [below for nested schema](#nestedatt--identity_record_matching--name))
+
+<a id="nestedatt--identity_record_matching--address"></a>
+### Nested Schema for `identity_record_matching.address`
+
+Required:
+
+- `threshold` (String) Threshold for successful comparison.  Options are `HIGH`, `LOW`, `MEDIUM`.
+
+Optional:
+
+- `field_required` (Boolean) Whether the field is required.
+
+
+<a id="nestedatt--identity_record_matching--birth_date"></a>
+### Nested Schema for `identity_record_matching.birth_date`
+
+Required:
+
+- `threshold` (String) Threshold for successful comparison.  Options are `HIGH`, `LOW`, `MEDIUM`.
+
+Optional:
+
+- `field_required` (Boolean) Whether the field is required.
+
+
+<a id="nestedatt--identity_record_matching--family_name"></a>
+### Nested Schema for `identity_record_matching.family_name`
+
+Required:
+
+- `threshold` (String) Threshold for successful comparison.  Options are `HIGH`, `LOW`, `MEDIUM`.
+
+Optional:
+
+- `field_required` (Boolean) Whether the field is required.
+
+
+<a id="nestedatt--identity_record_matching--given_name"></a>
+### Nested Schema for `identity_record_matching.given_name`
+
+Required:
+
+- `threshold` (String) Threshold for successful comparison.  Options are `HIGH`, `LOW`, `MEDIUM`.
+
+Optional:
+
+- `field_required` (Boolean) Whether the field is required.
+
+
+<a id="nestedatt--identity_record_matching--name"></a>
+### Nested Schema for `identity_record_matching.name`
+
+Required:
+
+- `threshold` (String) Threshold for successful comparison.  Options are `HIGH`, `LOW`, `MEDIUM`.
+
+Optional:
+
+- `field_required` (Boolean) Whether the field is required.
+
 
 
 <a id="nestedatt--liveness"></a>

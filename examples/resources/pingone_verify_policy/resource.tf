@@ -24,6 +24,19 @@ resource "pingone_verify_policy" "my_verify_everything_policy" {
     provider_auto   = "VERIFF"
     fail_expired_id = true
     retry_attempts  = "2"
+    verify_aamva    = true
+    aadhaar = {
+      enabled = true
+      otp = {
+        deliveries = {
+          count = 3
+          cooldown = {
+            duration  = 60
+            time_unit = "SECONDS"
+          }
+        }
+      }
+    }
   }
 
   facial_comparison = {
@@ -113,5 +126,28 @@ resource "pingone_verify_policy" "my_verify_everything_policy" {
     }
 
     data_collection_only = false
+  }
+
+  identity_record_matching = {
+    address = {
+      threshold      = "LOW"
+      field_required = false
+    }
+    birth_date = {
+      threshold      = "MEDIUM"
+      field_required = true
+    }
+    family_name = {
+      threshold      = "MEDIUM"
+      field_required = false
+    }
+    given_name = {
+      threshold      = "MEDIUM"
+      field_required = false
+    }
+    name = {
+      threshold      = "HIGH"
+      field_required = true
+    }
   }
 }

@@ -14,23 +14,23 @@ If you wish to work on the provider, you'll first need [Go](http://www.golang.or
 Clone repository to: `$HOME/development/pingidentity/`
 
 ```sh
-$ mkdir -p $HOME/development/pingidentity/; cd $HOME/development/pingidentity/
-$ git clone git@github.com:pingidentity/terraform-provider-pingone.git
+mkdir -p $HOME/development/pingidentity/; cd $HOME/development/pingidentity/
+git clone git@github.com:pingidentity/terraform-provider-pingone.git
 ...
 ```
 
 To compile the provider, run `make build`.
 
 ```sh
-$ make build
+make build
 ```
 
 To install the provider for local use, run `make install`. This will build the provider and put the provider binary in the `$GOPATH/bin` directory.
 
 ```sh
-$ make install
+make install
 ...
-$ $GOPATH/bin/terraform-provider-pingone
+$GOPATH/bin/terraform-provider-pingone
 ...
 ```
 
@@ -39,7 +39,7 @@ $ $GOPATH/bin/terraform-provider-pingone
 In order to test the provider locally with no connection to PingOne, you can run `make test`.
 
 ```sh
-$ make test
+make test
 ```
 
 In order to run the full suite of Acceptance tests against a live PingOne tenant, run `make testacc`.
@@ -47,7 +47,7 @@ In order to run the full suite of Acceptance tests against a live PingOne tenant
 *Note:* Acceptance tests create real configuration in PingOne.  Please ensure you have a trial PingOne account or licensed subscription to proceed with these tests.
 
 ```sh
-$ make testacc
+make testacc
 ```
 
 ## Using the Provider
@@ -88,5 +88,5 @@ require (
 Once updated, run the following to build the project:
 
 ```shell
-$ make build
+make build
 ```
