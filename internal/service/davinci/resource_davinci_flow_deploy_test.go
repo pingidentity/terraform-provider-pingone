@@ -1,5 +1,7 @@
 // Copyright © 2025 Ping Identity Corporation
 
+//go:build beta
+
 package davinci_test
 
 import (
@@ -39,7 +41,7 @@ func TestAccDavinciFlowDeploy_RemovalDrift(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckBeta(t)
 
 			p1Client = acctest.PreCheckTestClient(ctx, t)
 		},
@@ -92,7 +94,7 @@ func testAccDavinciFlow(t *testing.T, withBootstrap bool) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             davinciFlow_CheckDestroy,
@@ -156,7 +158,7 @@ func TestAccDavinciFlowDeploy_NewEnv(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             davinciFlow_CheckDestroy,
@@ -187,7 +189,7 @@ func testAccDavinciFlowDeploy_BrokenFlow(t *testing.T, withBootstrap bool) {
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             davinciFlow_CheckDestroy,
@@ -290,7 +292,7 @@ func davinciFlowDeploy_FirstDeployHCL(t *testing.T, resourceName string, withBoo
 
 resource "pingone_davinci_flow_deploy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  flow_id = pingone_davinci_flow.%[2]s.id
+  flow_id        = pingone_davinci_flow.%[2]s.id
 }
 `, davinciFlowDeploy_FlowOnlyHCL(t, resourceName, withBootstrap), resourceName)
 }
@@ -302,7 +304,7 @@ func davinciFlowDeploy_FirstNoDeployHCL(t *testing.T, resourceName string, withB
 
 resource "pingone_davinci_flow_deploy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  flow_id = pingone_davinci_flow.%[2]s.id
+  flow_id        = pingone_davinci_flow.%[2]s.id
   deploy_trigger_values = {
     "trigger" = "initial"
   }
@@ -316,7 +318,7 @@ func davinciFlowDeploy_SecondDeployHCL(t *testing.T, resourceName string, withBo
 
 resource "pingone_davinci_flow_deploy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  flow_id = pingone_davinci_flow.%[2]s.id
+  flow_id        = pingone_davinci_flow.%[2]s.id
   deploy_trigger_values = {
     "trigger"    = "updated"
     "newtrigger" = "new"
@@ -332,7 +334,7 @@ func davinciFlowDeploy_SecondNoDeployHCL(t *testing.T, resourceName string, with
 
 resource "pingone_davinci_flow_deploy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  flow_id = pingone_davinci_flow.%[2]s.id
+  flow_id        = pingone_davinci_flow.%[2]s.id
   deploy_trigger_values = {
     "trigger" = "updated"
   }
@@ -414,8 +416,8 @@ resource "pingone_davinci_flow" "%[3]s" {
 
   output_schema = {
     output = {
-      type = "object"
-      properties = jsonencode({})
+      type                 = "object"
+      properties           = jsonencode({})
       additionalProperties = true
     }
   }
@@ -427,7 +429,7 @@ resource "pingone_davinci_flow" "%[3]s" {
 
 resource "pingone_davinci_flow_deploy" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  flow_id = pingone_davinci_flow.%[3]s.id
+  flow_id        = pingone_davinci_flow.%[3]s.id
   deploy_trigger_values = {
     "trigger" = "initial"
   }
@@ -449,22 +451,22 @@ resource "pingone_davinci_connector_instance" "%[2]s-errors" {
 
 resource "pingone_davinci_flow" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  
-  name        = "brokenFlow"
-  color       = "#FFC8C1"
+
+  name  = "brokenFlow"
+  color = "#FFC8C1"
 
   graph_data = {
     elements = {
       nodes = [
         {
           data = {
-            id          = "zlgncqvws2"
-            node_type   = "CONNECTION"
+            id            = "zlgncqvws2"
+            node_type     = "CONNECTION"
             connection_id = pingone_davinci_connector_instance.%[2]s-errors.id
-            connector_id = "errorConnector"
-            name        = "Error Message"
-            label       = "Error Message"
-            status      = "unconfigured"
+            connector_id  = "errorConnector"
+            name          = "Error Message"
+            label         = "Error Message"
+            status        = "unconfigured"
           }
           position = {
             x = 400
@@ -481,13 +483,13 @@ resource "pingone_davinci_flow" "%[2]s" {
         }
       ]
     }
-    data = "{}"
-    zooming_enabled = true
+    data                 = "{}"
+    zooming_enabled      = true
     user_zooming_enabled = true
-    zoom = 1
-    min_zoom = 1e-50
-    max_zoom = 1e+50
-    panning_enabled = true
+    zoom                 = 1
+    min_zoom             = 1e-50
+    max_zoom             = 1e+50
+    panning_enabled      = true
     user_panning_enabled = true
     pan = {
       x = 0
@@ -495,14 +497,14 @@ resource "pingone_davinci_flow" "%[2]s" {
     }
     box_selection_enabled = true
     renderer = jsonencode({
-      "name": "null"
+      "name" : "null"
     })
   }
 }
 
 resource "pingone_davinci_flow_deploy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  flow_id = pingone_davinci_flow.%[2]s.id
+  flow_id        = pingone_davinci_flow.%[2]s.id
 }
 `, acctest.DaVinciSandboxEnvironment(withBootstrap), resourceName)
 }
