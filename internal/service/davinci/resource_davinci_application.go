@@ -46,7 +46,7 @@ var (
 		"sp_jwks_url":                   types.StringType,
 	}, map[string]attr.Value{
 		"client_secret":                 types.StringUnknown(),
-		"enforce_signed_request_openid": types.BoolNull(),
+		"enforce_signed_request_openid": types.BoolValue(false),
 		"grant_types":                   davinciApplicationOauthGrantTypesDefault,
 		"logout_uris":                   emptySetDefault,
 		"redirect_uris":                 emptySetDefault,
