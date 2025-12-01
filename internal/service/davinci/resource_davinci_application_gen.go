@@ -81,45 +81,6 @@ type davinciApplicationResourceModel struct {
 }
 
 func (r *davinciApplicationResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
-	apiKeyDefault, diags := types.ObjectValue(map[string]attr.Type{
-		"enabled": types.BoolType,
-		"value":   types.StringType,
-	}, map[string]attr.Value{
-		"enabled": types.BoolValue(true),
-		"value":   types.StringUnknown(),
-	})
-	resp.Diagnostics.Append(diags...)
-	oauthGrantTypesDefault, diags := types.SetValue(types.StringType, []attr.Value{
-		types.StringValue("authorizationCode"),
-	})
-	resp.Diagnostics.Append(diags...)
-	oauthScopesDefault, diags := types.SetValue(types.StringType, []attr.Value{
-		types.StringValue("openid"),
-		types.StringValue("profile"),
-	})
-	resp.Diagnostics.Append(diags...)
-	emptySetDefault, diags := types.SetValue(types.StringType, nil)
-	resp.Diagnostics.Append(diags...)
-	oauthDefault, diags := types.ObjectValue(map[string]attr.Type{
-		"client_secret":                 types.StringType,
-		"enforce_signed_request_openid": types.BoolType,
-		"grant_types":                   types.SetType{ElemType: types.StringType},
-		"logout_uris":                   types.SetType{ElemType: types.StringType},
-		"redirect_uris":                 types.SetType{ElemType: types.StringType},
-		"scopes":                        types.SetType{ElemType: types.StringType},
-		"sp_jwks_openid":                types.StringType,
-		"sp_jwks_url":                   types.StringType,
-	}, map[string]attr.Value{
-		"client_secret":                 types.StringUnknown(),
-		"enforce_signed_request_openid": types.BoolValue(false),
-		"grant_types":                   oauthGrantTypesDefault,
-		"logout_uris":                   emptySetDefault,
-		"redirect_uris":                 emptySetDefault,
-		"scopes":                        oauthScopesDefault,
-		"sp_jwks_openid":                types.StringNull(),
-		"sp_jwks_url":                   types.StringNull(),
-	})
-	resp.Diagnostics.Append(diags...)
 	resp.Schema = schema.Schema{
 		Description: "Resource to create and manage a DaVinci application.",
 		Attributes: map[string]schema.Attribute{

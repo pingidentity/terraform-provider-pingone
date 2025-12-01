@@ -40,7 +40,7 @@ func TestAccDavinciApplicationFlowPolicy_RemovalDrift(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckBeta(t)
 
 			p1Client = acctest.PreCheckTestClient(ctx, t)
 		},
@@ -94,7 +94,7 @@ func testAccDavinciApplicationFlowPolicy_MinimalMaximal(t *testing.T, withBootst
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             davinciApplicationFlowPolicy_CheckDestroy,
@@ -167,7 +167,7 @@ func TestAccDavinciApplicationFlowPolicy_NewEnv(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             davinciApplicationFlowPolicy_CheckDestroy,
@@ -190,7 +190,7 @@ func TestAccDavinciApplicationFlowPolicy_BadParameters(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             davinciApplicationFlowPolicy_CheckDestroy,
