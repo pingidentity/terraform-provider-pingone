@@ -72,6 +72,14 @@ func (r *RateLimitConfigurationResource) Schema(ctx context.Context, req resourc
 		"The IP address (IPv4 or IPv6), or a CIDR range, for the IP address or addresses to be excluded from rate limiting.",
 	)
 
+	createdAtDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the time the resource was created.",
+	)
+
+	updatedAtDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the time the resource was last updated.",
+	)
+
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		MarkdownDescription: providerDescription.MarkdownDescription,
@@ -109,13 +117,17 @@ func (r *RateLimitConfigurationResource) Schema(ctx context.Context, req resourc
 			},
 
 			"created_at": schema.StringAttribute{
-				Computed:   true,
-				CustomType: timetypes.RFC3339Type{},
+				MarkdownDescription: createdAtDescription.MarkdownDescription,
+				Description:         createdAtDescription.Description,
+				Computed:            true,
+				CustomType:          timetypes.RFC3339Type{},
 			},
 
 			"updated_at": schema.StringAttribute{
-				Computed:   true,
-				CustomType: timetypes.RFC3339Type{},
+				MarkdownDescription: updatedAtDescription.MarkdownDescription,
+				Description:         updatedAtDescription.Description,
+				Computed:            true,
+				CustomType:          timetypes.RFC3339Type{},
 			},
 		},
 	}
