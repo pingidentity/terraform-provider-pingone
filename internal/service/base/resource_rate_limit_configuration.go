@@ -58,8 +58,6 @@ func (r *RateLimitConfigurationResource) Metadata(ctx context.Context, req resou
 // Schema
 func (r *RateLimitConfigurationResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 
-	const rateLimitConfigurationTypeWhitelist = "WHITELIST"
-
 	providerDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Resource to create and manage rate limit configurations in PingOne. Rate limit configurations allow you to exclude specific IP addresses or CIDR ranges from rate limiting.",
 	)
@@ -95,12 +93,12 @@ func (r *RateLimitConfigurationResource) Schema(ctx context.Context, req resourc
 				Description:         typeDescription.Description,
 				Optional:            true,
 				Computed:            true,
-				Default:             stringdefault.StaticString(rateLimitConfigurationTypeWhitelist),
+				Default:             stringdefault.StaticString(string(management.ENUMRATELIMITCONFIGURATIONTYPE_WHITELIST)),
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
 				Validators: []validator.String{
-					stringvalidator.OneOf(rateLimitConfigurationTypeWhitelist),
+					stringvalidator.OneOf(string(management.ENUMRATELIMITCONFIGURATIONTYPE_WHITELIST)),
 				},
 			},
 
