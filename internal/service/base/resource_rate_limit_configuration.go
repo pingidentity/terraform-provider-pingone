@@ -66,7 +66,7 @@ func (r *RateLimitConfigurationResource) Schema(ctx context.Context, req resourc
 
 	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The type of rate limit configuration. Currently, the only type supported is `WHITELIST`, indicating that the IP address in `value` is to be excluded from rate limiting.",
-	)
+	).DefaultValue(string(management.ENUMRATELIMITCONFIGURATIONTYPE_WHITELIST))
 
 	valueDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The IP address (IPv4 or IPv6), or a CIDR range, for the IP address or addresses to be excluded from rate limiting.",
