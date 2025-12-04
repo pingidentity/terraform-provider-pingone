@@ -2551,9 +2551,9 @@ func (p *applicationResourceModelV1) expandApplicationOIDC(ctx context.Context) 
 			p.Name.ValueString(),
 			management.ENUMAPPLICATIONPROTOCOL_OPENID_CONNECT,
 			management.EnumApplicationType(plan.Type.ValueString()),
-			grantTypes,
 			management.EnumApplicationOIDCTokenAuthMethod(plan.TokenEndpointAuthnMethod.ValueString()),
 		)
+		data.SetGrantTypes(grantTypes)
 
 		applicationCommon, d := p.expandApplicationCommon(ctx)
 		diags.Append(d...)
