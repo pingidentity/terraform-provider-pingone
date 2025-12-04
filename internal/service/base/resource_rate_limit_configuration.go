@@ -323,10 +323,8 @@ func (r *RateLimitConfigurationResource) ImportState(ctx context.Context, req re
 }
 
 func (p *RateLimitConfigurationResourceModel) expand() *management.RateLimitConfiguration {
-	typeEnum := management.ENUMRATELIMITCONFIGURATIONTYPE_WHITELIST
-
 	data := management.NewRateLimitConfiguration(
-		typeEnum,
+		management.EnumRateLimitConfigurationType(p.Type.ValueString()),
 		p.Value.ValueString(),
 	)
 
