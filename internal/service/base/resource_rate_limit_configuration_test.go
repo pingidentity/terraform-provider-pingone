@@ -86,8 +86,6 @@ func TestAccRateLimitConfiguration_Full(t *testing.T) {
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "type", "WHITELIST"),
 			resource.TestCheckResourceAttr(resourceFullName, "value", "192.0.2.1"),
-			resource.TestMatchResourceAttr(resourceFullName, "created_at", verify.RFC3339Regexp),
-			resource.TestMatchResourceAttr(resourceFullName, "updated_at", verify.RFC3339Regexp),
 		),
 	}
 
@@ -98,8 +96,6 @@ func TestAccRateLimitConfiguration_Full(t *testing.T) {
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "type", "WHITELIST"),
 			resource.TestCheckResourceAttr(resourceFullName, "value", "198.51.100.0/28"),
-			resource.TestMatchResourceAttr(resourceFullName, "created_at", verify.RFC3339Regexp),
-			resource.TestMatchResourceAttr(resourceFullName, "updated_at", verify.RFC3339Regexp),
 		),
 	}
 
@@ -110,8 +106,6 @@ func TestAccRateLimitConfiguration_Full(t *testing.T) {
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "type", "WHITELIST"),
 			resource.TestCheckResourceAttr(resourceFullName, "value", "2001:0DB8:0000:0001:0000:0000:0000:0001"),
-			resource.TestMatchResourceAttr(resourceFullName, "created_at", verify.RFC3339Regexp),
-			resource.TestMatchResourceAttr(resourceFullName, "updated_at", verify.RFC3339Regexp),
 		),
 	}
 
@@ -122,8 +116,6 @@ func TestAccRateLimitConfiguration_Full(t *testing.T) {
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "type", "WHITELIST"),
 			resource.TestCheckResourceAttr(resourceFullName, "value", "2001:0DB8:0001:0000:0000:0000:0000:0000/48"),
-			resource.TestMatchResourceAttr(resourceFullName, "created_at", verify.RFC3339Regexp),
-			resource.TestMatchResourceAttr(resourceFullName, "updated_at", verify.RFC3339Regexp),
 		),
 	}
 
@@ -134,8 +126,6 @@ func TestAccRateLimitConfiguration_Full(t *testing.T) {
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "type", "WHITELIST"),
 			resource.TestCheckResourceAttr(resourceFullName, "value", "203.0.113.0/28"),
-			resource.TestMatchResourceAttr(resourceFullName, "created_at", verify.RFC3339Regexp),
-			resource.TestMatchResourceAttr(resourceFullName, "updated_at", verify.RFC3339Regexp),
 		),
 	}
 

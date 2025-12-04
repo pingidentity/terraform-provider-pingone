@@ -61,7 +61,7 @@ func (r *RateLimitConfigurationResource) Schema(ctx context.Context, req resourc
 	const rateLimitConfigurationTypeWhitelist = "WHITELIST"
 
 	providerDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Resource to create and manage rate limit configurations in PingOne. Rate limit configurations allow you to exclude specific IP addresses or CIDR ranges from rate limiting. See [Rate Limiting](https://apidocs.pingidentity.com/pingone/platform/v1/api/#rate-limiting) in the PingOne Platform API documentation.",
+		"Resource to create and manage rate limit configurations in PingOne. Rate limit configurations allow you to exclude specific IP addresses or CIDR ranges from rate limiting.",
 	)
 
 	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -69,15 +69,7 @@ func (r *RateLimitConfigurationResource) Schema(ctx context.Context, req resourc
 	)
 
 	valueDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The IP address (IPv4 or IPv6), or a CIDR range, for the IP address or addresses to be excluded from rate limiting. Examples: `192.0.2.1`, `2001:db8::1`, `192.0.2.0/24`, `2001:db8::/32`.",
-	)
-
-	createdAtDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The date and time the rate limit configuration was created (ISO 8601 format).",
-	)
-
-	updatedAtDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The date and time the rate limit configuration was last updated (ISO 8601 format).",
+		"The IP address (IPv4 or IPv6), or a CIDR range, for the IP address or addresses to be excluded from rate limiting.",
 	)
 
 	resp.Schema = schema.Schema{
@@ -117,17 +109,13 @@ func (r *RateLimitConfigurationResource) Schema(ctx context.Context, req resourc
 			},
 
 			"created_at": schema.StringAttribute{
-				MarkdownDescription: createdAtDescription.MarkdownDescription,
-				Description:         createdAtDescription.Description,
-				Computed:            true,
-				CustomType:          timetypes.RFC3339Type{},
+				Computed:   true,
+				CustomType: timetypes.RFC3339Type{},
 			},
 
 			"updated_at": schema.StringAttribute{
-				MarkdownDescription: updatedAtDescription.MarkdownDescription,
-				Description:         updatedAtDescription.Description,
-				Computed:            true,
-				CustomType:          timetypes.RFC3339Type{},
+				Computed:   true,
+				CustomType: timetypes.RFC3339Type{},
 			},
 		},
 	}
