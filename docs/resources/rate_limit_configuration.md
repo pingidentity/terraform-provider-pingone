@@ -34,7 +34,7 @@ resource "pingone_rate_limit_configuration" "my_rate_limit_configuration" {
 
 ### Optional
 
-- `type` (String) The type of rate limit configuration. Currently, the only type supported is `WHITELIST`, indicating that the IP address in `value` is to be excluded from rate limiting.
+- `type` (String) The type of rate limit configuration. Currently, the only type supported is `WHITELIST`, indicating that the IP address in `value` is to be excluded from rate limiting.  Defaults to `WHITELIST`.
 
 ### Read-Only
 
