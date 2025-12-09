@@ -1,0 +1,1 @@
+terraform import pingone_davinci_application_flow_policy.example <environment_id>/<application_id>/<flow_policy_id>

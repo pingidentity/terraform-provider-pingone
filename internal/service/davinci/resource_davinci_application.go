@@ -10,12 +10,50 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/pingidentity/pingone-go-client/pingone"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+)
+
+var (
+	davinciApplicationApiKeyDefault = types.ObjectValueMust(map[string]attr.Type{
+		"enabled": types.BoolType,
+		"value":   types.StringType,
+	}, map[string]attr.Value{
+		"enabled": types.BoolValue(true),
+		"value":   types.StringUnknown(),
+	})
+	davinciApplicationOauthGrantTypesDefault = types.SetValueMust(types.StringType, []attr.Value{
+		types.StringValue("authorizationCode"),
+	})
+	davinciApplicationOauthScopesDefault = types.SetValueMust(types.StringType, []attr.Value{
+		types.StringValue("openid"),
+		types.StringValue("profile"),
+	})
+	emptySetDefault                = types.SetValueMust(types.StringType, nil)
+	davinciApplicationOauthDefault = types.ObjectValueMust(map[string]attr.Type{
+		"client_secret":                 types.StringType,
+		"enforce_signed_request_openid": types.BoolType,
+		"grant_types":                   types.SetType{ElemType: types.StringType},
+		"logout_uris":                   types.SetType{ElemType: types.StringType},
+		"redirect_uris":                 types.SetType{ElemType: types.StringType},
+		"scopes":                        types.SetType{ElemType: types.StringType},
+		"sp_jwks_openid":                types.StringType,
+		"sp_jwks_url":                   types.StringType,
+	}, map[string]attr.Value{
+		"client_secret":                 types.StringUnknown(),
+		"enforce_signed_request_openid": types.BoolValue(false),
+		"grant_types":                   davinciApplicationOauthGrantTypesDefault,
+		"logout_uris":                   emptySetDefault,
+		"redirect_uris":                 emptySetDefault,
+		"scopes":                        davinciApplicationOauthScopesDefault,
+		"sp_jwks_openid":                types.StringNull(),
+		"sp_jwks_url":                   types.StringNull(),
+	})
 )
 
 // Build the PUT client struct to be used after initial creation
