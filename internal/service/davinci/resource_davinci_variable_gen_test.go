@@ -167,6 +167,16 @@ func TestAccDavinciVariable_Boolean(t *testing.T) {
 				Config: davinciVariable_BooleanHCL(resourceName, true),
 				Check:  davinciVariable_CheckComputedValuesMinimal(resourceName),
 			},
+			{
+				// Delete the resource
+				Config:  davinciVariable_BooleanHCL(resourceName, true),
+				Destroy: true,
+			},
+			{
+				// Create from scratch with false value
+				Config: davinciVariable_BooleanHCL(resourceName, false),
+				Check:  davinciVariable_CheckComputedValuesMinimal(resourceName),
+			},
 		},
 	})
 }
