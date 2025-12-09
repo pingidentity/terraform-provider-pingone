@@ -21,7 +21,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -127,6 +129,7 @@ var (
 	_ resource.Resource                = &MFADevicePolicyDefaultResource{}
 	_ resource.ResourceWithConfigure   = &MFADevicePolicyDefaultResource{}
 	_ resource.ResourceWithImportState = &MFADevicePolicyDefaultResource{}
+	_ resource.ResourceWithModifyPlan  = &MFADevicePolicyDefaultResource{}
 )
 
 // New Object
@@ -255,6 +258,10 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the type of MFA device policy. Set to `PINGONE_MFA` for standard PingOne MFA environments, or `PINGID` for environments with PingID integration. This field is immutable and will trigger a replace plan if changed.").Description,
 				Required:    true,
 
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+
 				Validators: []validator.String{
 					stringvalidator.OneOf(POLICY_TYPE_PINGONE_MFA, POLICY_TYPE_PINGID),
 				},
@@ -327,7 +334,8 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 								path.MatchRoot("policy_type"),
 							),
 						},
-					},					"applications": schema.MapNestedAttribute{
+					},
+					"applications": schema.MapNestedAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A map of objects that specifies settings for a configured Mobile Application.  The ID of the application should be configured as the map key.").Description,
 						Optional:    true,
 
@@ -731,7 +739,7 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 					map[string]attr.Value{
 						"enabled":                        types.BoolValue(false),
 						"fido2_policy_id":                framework.PingOneResourceIDToTF(""),
-						"pairing_disabled":               types.BoolNull(),
+						"pairing_disabled":               types.BoolValue(false),
 						"prompt_for_nickname_on_pairing": types.BoolNull(),
 					}),
 				),
@@ -769,11 +777,16 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 				Optional:    true,
 
 				Validators: []validator.Object{
+					objectvalidator.IsRequiredIfMatchesPathValue(
+						types.StringValue(POLICY_TYPE_PINGID),
+						path.MatchRoot("policy_type"),
+					),
 					objectvalidator.ConflictsIfMatchesPathValue(
 						types.StringValue(POLICY_TYPE_PINGONE_MFA),
 						path.MatchRoot("policy_type"),
 					),
-				},				Attributes: map[string]schema.Attribute{
+				},
+				Attributes: map[string]schema.Attribute{
 					"enabled": schema.BoolAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the desktop device method is enabled or disabled in the policy.").Description,
 						Required:    true,
@@ -782,7 +795,26 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 					"otp": schema.SingleNestedAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies OTP failure settings for desktop devices.").Description,
 						Optional:    true,
+						Computed:    true,
 
+						Default: objectdefault.StaticValue(types.ObjectValueMust(
+							MFADevicePolicyPingIDDeviceOtpTFObjectTypes,
+							map[string]attr.Value{
+								"failure": types.ObjectValueMust(
+									MFADevicePolicyFailureTFObjectTypes,
+									map[string]attr.Value{
+										"count": types.Int32Value(3),
+										"cool_down": types.ObjectValueMust(
+											MFADevicePolicyTimePeriodTFObjectTypes,
+											map[string]attr.Value{
+												"duration":  types.Int32Value(2),
+												"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
+											},
+										),
+									},
+								),
+							},
+						)),
 						Attributes: map[string]schema.Attribute{
 							"failure": schema.SingleNestedAttribute{
 								Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that allows configuration of OTP failure settings.").Description,
@@ -848,11 +880,23 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 					"pairing_disabled": schema.BoolAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that, when set to `true`, prevents users from pairing new desktop devices.").Description,
 						Optional:    true,
+						Computed:    true,
+
+						Default: booldefault.StaticBool(false),
 					},
 
 					"pairing_key_lifetime": schema.SingleNestedAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies pairing key lifetime settings for desktop devices.").Description,
 						Optional:    true,
+						Computed:    true,
+
+						Default: objectdefault.StaticValue(types.ObjectValueMust(
+							MFADevicePolicyTimePeriodTFObjectTypes,
+							map[string]attr.Value{
+								"duration":  types.Int32Value(48),
+								"time_unit": types.StringValue(string(mfa.ENUMTIMEUNITPAIRINGKEYLIFETIME_HOURS)),
+							},
+						)),
 
 						Attributes: map[string]schema.Attribute{
 							"duration": schema.Int32Attribute{
@@ -906,11 +950,16 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 				Optional:    true,
 
 				Validators: []validator.Object{
+					objectvalidator.IsRequiredIfMatchesPathValue(
+						types.StringValue(POLICY_TYPE_PINGID),
+						path.MatchRoot("policy_type"),
+					),
 					objectvalidator.ConflictsIfMatchesPathValue(
 						types.StringValue(POLICY_TYPE_PINGONE_MFA),
 						path.MatchRoot("policy_type"),
 					),
-				},				Attributes: map[string]schema.Attribute{
+				},
+				Attributes: map[string]schema.Attribute{
 					"enabled": schema.BoolAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the Yubikey device method is enabled or disabled in the policy.").Description,
 						Required:    true,
@@ -919,7 +968,26 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 					"otp": schema.SingleNestedAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies OTP failure settings for Yubikey devices.").Description,
 						Optional:    true,
+						Computed:    true,
 
+						Default: objectdefault.StaticValue(types.ObjectValueMust(
+							MFADevicePolicyPingIDDeviceOtpTFObjectTypes,
+							map[string]attr.Value{
+								"failure": types.ObjectValueMust(
+									MFADevicePolicyFailureTFObjectTypes,
+									map[string]attr.Value{
+										"count": types.Int32Value(3),
+										"cool_down": types.ObjectValueMust(
+											MFADevicePolicyTimePeriodTFObjectTypes,
+											map[string]attr.Value{
+												"duration":  types.Int32Value(2),
+												"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
+											},
+										),
+									},
+								),
+							},
+						)),
 						Attributes: map[string]schema.Attribute{
 							"failure": schema.SingleNestedAttribute{
 								Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that allows configuration of OTP failure settings.").Description,
@@ -985,6 +1053,9 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 					"pairing_disabled": schema.BoolAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that, when set to `true`, prevents users from pairing new Yubikey devices.").Description,
 						Optional:    true,
+						Computed:    true,
+
+						Default: booldefault.StaticBool(false),
 					},
 
 					"pairing_key_lifetime": schema.SingleNestedAttribute{
@@ -1163,6 +1234,16 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	}
 }
 
+func (r *MFADevicePolicyDefaultResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	// Destruction plan
+	if req.Plan.Raw.IsNull() {
+		resp.Diagnostics.AddWarning(
+			"State change warning",
+			"A destroy plan has been detected for the \"pingone_mfa_device_policy_default\" resource.  The default MFA device policy will be removed from Terraform's state.  The policy itself will not be removed from the PingOne service and will retain its current configuration.",
+		)
+	}
+}
+
 func (r *MFADevicePolicyDefaultResource) devicePolicyOfflineDeviceSchemaAttribute(descriptionMethod string) schema.SingleNestedAttribute {
 	// Reuse the implementation from MFADevicePolicyResource
 	mfaDevicePolicyResource := &MFADevicePolicyResource{}
@@ -1266,7 +1347,9 @@ func (r *MFADevicePolicyDefaultResource) Create(ctx context.Context, req resourc
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response)...)
+	// For default policies, only update computed fields (ID)
+	// All other fields preserve the plan values to prevent inconsistent result errors
+	state.Id = framework.PingOneResourceIDToTF(response.GetId())
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -1299,8 +1382,19 @@ func (r *MFADevicePolicyDefaultResource) Read(ctx context.Context, req resource.
 		return
 	}
 
+	// Determine policy type - either from state (set by ImportState) or from API
+	policyType := data.PolicyType.ValueString()
+	if policyType == "" {
+		policyType = determinePolicyType(response)
+	}
+
+	// Populate state from API response
+	resp.Diagnostics.Append(data.toState(response, policyType)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -1365,7 +1459,9 @@ func (r *MFADevicePolicyDefaultResource) Update(ctx context.Context, req resourc
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response)...)
+	// For default policies, only update computed fields (ID)
+	// All other fields preserve the plan values to prevent inconsistent result errors
+	state.Id = framework.PingOneResourceIDToTF(response.GetId())
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -1385,14 +1481,6 @@ func (r *MFADevicePolicyDefaultResource) Delete(ctx context.Context, req resourc
 		return
 	}
 
-	// Note: We don't actually delete the default policy or modify it.
-	// We simply remove it from Terraform's state and leave it as-is in PingOne.
-	// The API prevents deletion of the default policy, so this is the expected behavior.
-
-	resp.Diagnostics.AddWarning(
-		"State change warning",
-		"The \"pingone_mfa_device_policy_default\" resource has been destroyed.  The default MFA device policy has been removed from Terraform's state.  The policy itself has not been removed from the PingOne service.",
-	)
 }
 
 func (r *MFADevicePolicyDefaultResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
@@ -1413,15 +1501,28 @@ func (r *MFADevicePolicyDefaultResource) ImportState(ctx context.Context, req re
 		return
 	}
 
-	for _, idComponent := range idComponents {
-		pathKey := idComponent.Label
-
-		if idComponent.PrimaryID {
-			pathKey = "id"
-		}
-
-		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
+	// Fetch the default policy to get its ID
+	response, d := FetchDefaultMFADevicePolicy(ctx, r.Client.MFAAPIClient, r.Client.ManagementAPIClient, attributes["environment_id"], false)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
+
+	if response == nil {
+		resp.Diagnostics.AddError(
+			"Default MFA device policy not found",
+			"Unable to find the default MFA device policy for the environment.",
+		)
+		return
+	}
+
+	// Determine policy type from API response
+	policyType := determinePolicyType(response)
+
+	// Set the required attributes in state for Read to work
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes["environment_id"])...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("policy_type"), policyType)...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), response.GetId())...)
 }
 
 // extractPolicyIDFromUnion extracts the policy ID from a DeviceAuthenticationPolicy
@@ -1434,6 +1535,21 @@ func extractPolicyIDFromUnion(response *mfa.DeviceAuthenticationPolicy, policyTy
 		return "", fmt.Errorf("response is nil")
 	}
 	return response.GetId(), nil
+}
+
+// determinePolicyType determines the policy type from an API response
+// by checking for PingID-specific fields
+func determinePolicyType(response *mfa.DeviceAuthenticationPolicy) string {
+	if response == nil {
+		return POLICY_TYPE_PINGONE_MFA
+	}
+
+	// Check for PingID-specific fields
+	if response.Desktop != nil || response.Yubikey != nil {
+		return POLICY_TYPE_PINGID
+	}
+
+	return POLICY_TYPE_PINGONE_MFA
 }
 
 func FetchDefaultMFADevicePolicy(ctx context.Context, apiClient *mfa.APIClient, managementAPIClient *management.APIClient, environmentID string, warnOnNotFound bool) (*mfa.DeviceAuthenticationPolicy, diag.Diagnostics) {
@@ -1784,7 +1900,7 @@ func (p *MFADevicePolicyDesktopResourceModel) expand(ctx context.Context) (*mfa.
 		data.SetPairingKeyLifetime(
 			mfa.DeviceAuthenticationPolicyPingIDDevicePairingKeyLifetime{
 				Duration: pairingKeyLifetimePlan.Duration.ValueInt32(),
-				TimeUnit: mfa.EnumTimeUnit(pairingKeyLifetimePlan.TimeUnit.ValueString()),
+				TimeUnit: mfa.EnumTimeUnitPairingKeyLifetime(pairingKeyLifetimePlan.TimeUnit.ValueString()),
 			},
 		)
 	}
@@ -1846,7 +1962,7 @@ func (p *MFADevicePolicyOathTokenResourceModel) expand(ctx context.Context) (*mf
 		data.SetPairingKeyLifetime(
 			mfa.DeviceAuthenticationPolicyPingIDDevicePairingKeyLifetime{
 				Duration: pairingKeyLifetimePlan.Duration.ValueInt32(),
-				TimeUnit: mfa.EnumTimeUnit(pairingKeyLifetimePlan.TimeUnit.ValueString()),
+				TimeUnit: mfa.EnumTimeUnitPairingKeyLifetime(pairingKeyLifetimePlan.TimeUnit.ValueString()),
 			},
 		)
 	}
@@ -1889,7 +2005,7 @@ func (p *MFADevicePolicyPingIDDeviceOtpResourceModel) expand(ctx context.Context
 	return otp, diags
 }
 
-func (p *MFADevicePolicyDefaultResourceModel) toState(apiObject *mfa.DeviceAuthenticationPolicy) diag.Diagnostics {
+func (p *MFADevicePolicyDefaultResourceModel) toState(apiObject *mfa.DeviceAuthenticationPolicy, policyType string) diag.Diagnostics {
 	var diags, d diag.Diagnostics
 
 	if apiObject == nil {
@@ -1900,27 +2016,14 @@ func (p *MFADevicePolicyDefaultResourceModel) toState(apiObject *mfa.DeviceAuthe
 		return diags
 	}
 
-	// With flattened SDK, determine policy type by checking for PingID-specific fields
-	// If Desktop, Yubikey are present (and not null), it's a PingID policy
-	// OathToken can be on both policy types, so we check Desktop/Yubikey first
-	isPingID := false
-	if desktop, ok := apiObject.GetDesktopOk(); ok && desktop != nil {
-		isPingID = true
-	} else if yubikey, ok := apiObject.GetYubikeyOk(); ok && yubikey != nil {
-		isPingID = true
-	}
+	// Use provided policy type instead of detecting it
+	// This ensures we respect the user's configuration and don't cause inconsistencies
+	isPingID := (policyType == POLICY_TYPE_PINGID)
 
 	// Common fields for both policy types
 	p.Id = framework.PingOneResourceIDToTF(apiObject.GetId())
 	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
-
-	// Set policy type based on detection
-	if isPingID {
-		p.PolicyType = types.StringValue(POLICY_TYPE_PINGID)
-	} else {
-		p.PolicyType = types.StringValue(POLICY_TYPE_PINGONE_MFA)
-	}
 
 	// Common fields
 	p.Authentication, d = toStateMfaDevicePolicyAuthentication(apiObject.GetAuthenticationOk())
@@ -1946,6 +2049,9 @@ func (p *MFADevicePolicyDefaultResourceModel) toState(apiObject *mfa.DeviceAuthe
 	p.OathToken, d = toStateMfaDevicePolicyOathToken(apiObject.GetOathTokenOk())
 	diags.Append(d...)
 
+	p.Fido2, d = toStateMfaDevicePolicyFido2(apiObject.GetFido2Ok())
+	diags.Append(d...)
+
 	// Policy type specific fields
 	if isPingID {
 		// PingID-specific devices
@@ -1954,14 +2060,7 @@ func (p *MFADevicePolicyDefaultResourceModel) toState(apiObject *mfa.DeviceAuthe
 
 		p.Yubikey, d = toStateMfaDevicePolicyPingIDDevice(apiObject.GetYubikeyOk())
 		diags.Append(d...)
-
-		// Set PingOneMFA-specific field to null for PingID policies
-		p.Fido2 = types.ObjectNull(MFADevicePolicyFido2TFObjectTypes)
 	} else {
-		// PingOneMFA-specific field
-		p.Fido2, d = toStateMfaDevicePolicyFido2(apiObject.GetFido2Ok())
-		diags.Append(d...)
-
 		// Set PingID-specific fields to null for PingOneMFA policies
 		p.Desktop = types.ObjectNull(MFADevicePolicyPingIDDeviceTFObjectTypes)
 		p.Yubikey = types.ObjectNull(MFADevicePolicyPingIDDeviceTFObjectTypes)
@@ -2069,30 +2168,11 @@ func toStateMfaDevicePolicyOathToken(apiObject *mfa.DeviceAuthenticationPolicyOa
 	}
 
 	objValue, d := types.ObjectValue(MFADevicePolicyPingIDDeviceTFObjectTypes, map[string]attr.Value{
-		"enabled":                        types.BoolValue(apiObject.GetEnabled()),
+		"enabled":                        framework.BoolOkToTF(apiObject.GetEnabledOk()),
 		"otp":                            otp,
 		"pairing_disabled":               framework.BoolOkToTF(apiObject.GetPairingDisabledOk()),
 		"pairing_key_lifetime":           pairingKeyLifetime,
 		"prompt_for_nickname_on_pairing": framework.BoolOkToTF(apiObject.GetPromptForNicknameOnPairingOk()),
-	})
-	diags.Append(d...)
-
-	return objValue, diags
-}
-
-func toStateMfaDevicePolicyPingIDMobile(apiObject *mfa.DeviceAuthenticationPolicyCommonMobile, ok bool) (types.Object, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if !ok || apiObject == nil {
-		return types.ObjectNull(MFADevicePolicyMobileTFObjectTypes), diags
-	}
-
-	// PingID mobile is much simpler than PingOneMFA mobile - only has enabled field
-	// Set all PingOneMFA-specific fields to null
-	objValue, d := types.ObjectValue(MFADevicePolicyMobileTFObjectTypes, map[string]attr.Value{
-		"enabled":      types.BoolValue(apiObject.GetEnabled()),
-		"applications": types.ObjectNull(MFADevicePolicyMobileApplicationTFObjectTypes),
-		"otp":          types.ObjectNull(MFADevicePolicyMobileOtpTFObjectTypes),
 	})
 	diags.Append(d...)
 
