@@ -11,10 +11,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int32validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -274,7 +274,7 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	)
 
 	notificationsPolicyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A single object that specifies the notification policy to use for this MFA device policy. If not specified, the default notification policy for the environment will be used.",
+		"A single object that specifies the notification policy to use for this MFA device policy. If not specified, the default notification policy for the environment will be used.  **Note:** When destroying this resource, the `notifications_policy` will be unset (set to null) to release any dependencies, allowing the referenced notification policy to be deleted if needed.",
 	)
 
 	notificationsPolicyIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -1777,9 +1777,10 @@ func (r *MFADevicePolicyDefaultResource) Create(ctx context.Context, req resourc
 	state = plan
 
 	// Save updated data into Terraform state
-	// For default policies, only update computed fields (ID)
+	// For default policies, only update computed fields
 	// All other fields preserve the plan values to prevent inconsistent result errors
 	state.Id = framework.PingOneResourceIDToTF(response.GetId())
+	state.UpdatedAt = framework.TimeOkToTF(response.GetUpdatedAtOk())
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -1889,9 +1890,10 @@ func (r *MFADevicePolicyDefaultResource) Update(ctx context.Context, req resourc
 	state = plan
 
 	// Save updated data into Terraform state
-	// For default policies, only update computed fields (ID)
+	// For default policies, only update computed fields
 	// All other fields preserve the plan values to prevent inconsistent result errors
 	state.Id = framework.PingOneResourceIDToTF(response.GetId())
+	state.UpdatedAt = framework.TimeOkToTF(response.GetUpdatedAtOk())
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -1911,6 +1913,51 @@ func (r *MFADevicePolicyDefaultResource) Delete(ctx context.Context, req resourc
 		return
 	}
 
+	// If notifications_policy is set, we must unset it to allow the referenced policy to be deleted
+	if !data.NotificationsPolicy.IsNull() && !data.NotificationsPolicy.IsUnknown() {
+		// Fetch the default policy to get its ID
+		response, d := FetchDefaultMFADevicePolicy(ctx, r.Client.MFAAPIClient, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), false)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		if response == nil {
+			// Default MFA device policy not found, nothing to do
+			return
+		}
+
+		// Create a copy of data with NotificationsPolicy set to null
+		data.NotificationsPolicy = types.ObjectNull(data.NotificationsPolicy.AttributeTypes(ctx))
+
+		// Build the model for the API
+		mFADevicePolicy, d := data.expand(ctx, r.Client.ManagementAPIClient)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		// Extract ID from the union type based on policy_type
+		// We can use the ID from the fetched response directly
+		policyID := response.GetId()
+
+		// Run the API call
+		var updateResponse *mfa.DeviceAuthenticationPolicy
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
+			ctx,
+			func() (any, *http.Response, error) {
+				fO, fR, fErr := r.Client.MFAAPIClient.DeviceAuthenticationPolicyApi.UpdateDeviceAuthenticationPolicy(ctx, data.EnvironmentId.ValueString(), policyID).DeviceAuthenticationPolicy(mFADevicePolicy).Execute()
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			},
+			"UpdateDeviceAuthenticationPolicy-Default-Delete",
+			legacysdk.DefaultCustomError,
+			nil,
+			&updateResponse,
+		)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+	}
 }
 
 func (r *MFADevicePolicyDefaultResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
