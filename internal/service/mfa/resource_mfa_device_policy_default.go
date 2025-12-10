@@ -137,6 +137,7 @@ var (
 		"push_limit":                         types.ObjectType{AttrTypes: MFADevicePolicyMobileApplicationPushLimitTFObjectTypes},
 		"push_timeout":                       types.ObjectType{AttrTypes: MFADevicePolicyTimePeriodTFObjectTypes},
 		"new_request_duration_configuration": types.ObjectType{AttrTypes: MFADevicePolicyMobileApplicationNewRequestDurationConfigurationTFObjectTypes},
+		"type":                               types.StringType,
 	}
 
 	MFADevicePolicyMobileIpPairingConfigurationTFObjectTypes = map[string]attr.Type{
@@ -160,6 +161,26 @@ var (
 		"prompt_for_nickname_on_pairing": types.BoolType,
 		"ip_pairing_configuration":       types.ObjectType{AttrTypes: MFADevicePolicyMobileIpPairingConfigurationTFObjectTypes},
 	}
+
+	// Default value for remember_me
+	rememberMeDefault = types.ObjectValueMust(
+		MFADevicePolicyRememberMeTFObjectTypes,
+		map[string]attr.Value{
+			"web": types.ObjectValueMust(
+				MFADevicePolicyRememberMeWebTFObjectTypes,
+				map[string]attr.Value{
+					"enabled": types.BoolValue(false),
+					"life_time": types.ObjectValueMust(
+						MFADevicePolicyTimePeriodTFObjectTypes,
+						map[string]attr.Value{
+							"duration":  types.Int32Value(30),
+							"time_unit": types.StringValue(string(mfa.ENUMTIMEUNITREMEMBERMEWEBLIFETIME_MINUTES)),
+						},
+					),
+				},
+			),
+		},
+	)
 
 	// Default values for oath_token
 	oathTokenDefault = types.ObjectValueMust(
@@ -310,6 +331,10 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 		"An integer that specifies the timeout duration in seconds.",
 	).AllowedValuesEnum(mfa.ENUMTIMEUNIT_SECONDS)
 
+	mobileApplicationsTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the application type. For PingID policies, this value is automatically set to `pingIdAppConfig` by the backend. Only applicable when `policy_type` is `PINGID`.",
+	).DefaultValue(mfa.ENUMPINGIDAPPLICATIONTYPE_PING_ID_APP_CONFIG)
+
 	rememberMeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A single object that specifies 'remember me' settings so that users do not have to authenticate when accessing applications from a device they have used already.",
 	)
@@ -436,6 +461,9 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 				Description:         rememberMeDescription.Description,
 				MarkdownDescription: rememberMeDescription.MarkdownDescription,
 				Optional:            true,
+				Computed:            true,
+
+				Default: objectdefault.StaticValue(rememberMeDefault),
 
 				Attributes: map[string]schema.Attribute{
 					"web": schema.SingleNestedAttribute{
@@ -851,11 +879,15 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 										},
 									},
 								},
+
+								"type": schema.StringAttribute{
+									Description:         mobileApplicationsTypeDescription.Description,
+									MarkdownDescription: mobileApplicationsTypeDescription.MarkdownDescription,
+									Computed:            true,
+								},
 							},
 						},
-					},
-
-					"otp": schema.SingleNestedAttribute{
+					}, "otp": schema.SingleNestedAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies OTP settings for mobile applications in the policy.").Description,
 						Optional:    true,
 						Computed:    true,
@@ -2859,6 +2891,7 @@ func toStateMfaDevicePolicyMobileApplicationsForDefault(apiObject []mfa.DeviceAu
 			"push_limit":                         pushLimit,
 			"push_timeout":                       pushTimeout,
 			"new_request_duration_configuration": newRequestDurationConfiguration,
+			"type":                               framework.EnumOkToTF(application.GetTypeOk()),
 		}
 
 		objValue, d := types.ObjectValue(MFADevicePolicyDefaultMobileApplicationTFObjectTypes, o)
