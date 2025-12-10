@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/int32validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -59,6 +60,8 @@ type MFADevicePolicyDefaultResourceModel struct {
 	Name                  types.String                 `tfsdk:"name"`
 	Authentication        types.Object                 `tfsdk:"authentication"`
 	NewDeviceNotification types.String                 `tfsdk:"new_device_notification"`
+	IgnoreUserLock        types.Bool                   `tfsdk:"ignore_user_lock"`
+	NotificationsPolicy   types.Object                 `tfsdk:"notifications_policy"`
 	RememberMe            types.Object                 `tfsdk:"remember_me"`
 	Sms                   types.Object                 `tfsdk:"sms"`
 	Voice                 types.Object                 `tfsdk:"voice"`
@@ -69,6 +72,7 @@ type MFADevicePolicyDefaultResourceModel struct {
 	Desktop               types.Object                 `tfsdk:"desktop"`
 	Yubikey               types.Object                 `tfsdk:"yubikey"`
 	OathToken             types.Object                 `tfsdk:"oath_token"`
+	UpdatedAt             timetypes.RFC3339            `tfsdk:"updated_at"`
 }
 
 type MFADevicePolicyPingIDDeviceResourceModel struct {
@@ -152,6 +156,10 @@ var (
 
 	MFADevicePolicyRememberMeTFObjectTypes = map[string]attr.Type{
 		"web": types.ObjectType{AttrTypes: MFADevicePolicyRememberMeWebTFObjectTypes},
+	}
+
+	MFADevicePolicyNotificationsPolicyTFObjectTypes = map[string]attr.Type{
+		"id": types.StringType,
 	}
 
 	MFADevicePolicyDefaultMobileTFObjectTypes = map[string]attr.Type{
@@ -256,6 +264,22 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	newDeviceNotificationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that defines whether a user should be notified if a new authentication method has been added to their account.",
 	).AllowedValuesEnum(mfa.AllowedEnumMFADevicePolicyNewDeviceNotificationEnumValues).DefaultValue(string(mfa.ENUMMFADEVICEPOLICYNEWDEVICENOTIFICATION_NONE))
+
+	ignoreUserLockDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that, when set to `true`, allows PingOne to skip the account lock check during MFA authentication.",
+	).DefaultValue(false)
+
+	updatedAtDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The date and time the MFA device policy was last updated.",
+	)
+
+	notificationsPolicyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies the notification policy to use for this MFA device policy. If not specified, the default notification policy for the environment will be used.",
+	)
+
+	notificationsPolicyIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The ID of the notification policy to use. Must be a valid PingOne resource ID.",
+	)
 
 	mobileDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A single object that allows configuration of mobile push/OTP device authentication policy settings.  This factor requires embedding the PingOne MFA SDK into a customer facing mobile application, and configuring as a Native application using the `pingone_application` resource.",
@@ -454,6 +478,41 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 
 				Validators: []validator.String{
 					stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumMFADevicePolicyNewDeviceNotificationEnumValues)...),
+				},
+			},
+
+			"ignore_user_lock": schema.BoolAttribute{
+				Description:         ignoreUserLockDescription.Description,
+				MarkdownDescription: ignoreUserLockDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+
+				Default: booldefault.StaticBool(false),
+			},
+
+			"updated_at": schema.StringAttribute{
+				Description:         updatedAtDescription.Description,
+				MarkdownDescription: updatedAtDescription.MarkdownDescription,
+				Computed:            true,
+
+				CustomType: timetypes.RFC3339Type{},
+			},
+
+			"notifications_policy": schema.SingleNestedAttribute{
+				Description:         notificationsPolicyDescription.Description,
+				MarkdownDescription: notificationsPolicyDescription.MarkdownDescription,
+				Optional:            true,
+
+				Attributes: map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Description:         notificationsPolicyIdDescription.Description,
+						MarkdownDescription: notificationsPolicyIdDescription.MarkdownDescription,
+						Required:            true,
+
+						Validators: []validator.String{
+							verify.P1ResourceIDValidator(),
+						},
+					},
 				},
 			},
 
@@ -2203,6 +2262,26 @@ func (p *MFADevicePolicyDefaultResourceModel) expand(ctx context.Context, apiCli
 		)
 	}
 
+	// Ignore User Lock - both policy types
+	if !p.IgnoreUserLock.IsNull() && !p.IgnoreUserLock.IsUnknown() {
+		data.SetIgnoreUserLock(p.IgnoreUserLock.ValueBool())
+	}
+
+	// NotificationsPolicy - both policy types
+	if !p.NotificationsPolicy.IsNull() && !p.NotificationsPolicy.IsUnknown() {
+		var notificationsPolicyPlan struct {
+			Id types.String `tfsdk:"id"`
+		}
+		diags.Append(p.NotificationsPolicy.As(ctx, &notificationsPolicyPlan, basetypes.ObjectAsOptions{})...)
+		if diags.HasError() {
+			return mfa.DeviceAuthenticationPolicy{}, diags
+		}
+
+		data.SetNotificationsPolicy(
+			*mfa.NewDeviceAuthenticationPolicyCommonNotificationsPolicy(notificationsPolicyPlan.Id.ValueString()),
+		)
+	}
+
 	// RememberMe - both policy types
 	if !p.RememberMe.IsNull() && !p.RememberMe.IsUnknown() {
 		var rememberMePlan struct {
@@ -2611,6 +2690,13 @@ func (p *MFADevicePolicyDefaultResourceModel) toState(apiObject *mfa.DeviceAuthe
 	diags.Append(d...)
 
 	p.NewDeviceNotification = framework.EnumOkToTF(apiObject.GetNewDeviceNotificationOk())
+
+	p.IgnoreUserLock = framework.BoolOkToTF(apiObject.GetIgnoreUserLockOk())
+
+	p.UpdatedAt = framework.TimeOkToTF(apiObject.GetUpdatedAtOk())
+
+	p.NotificationsPolicy, d = toStateMfaDevicePolicyNotificationsPolicy(apiObject.GetNotificationsPolicyOk())
+	diags.Append(d...)
 
 	p.RememberMe, d = toStateMfaDevicePolicyRememberMe(apiObject.GetRememberMeOk())
 	diags.Append(d...)
@@ -3215,6 +3301,23 @@ func toStateMfaDevicePolicyMobileOtpFailureCooldownForDefault(apiObject *mfa.Dev
 	}
 
 	objValue, d := types.ObjectValue(MFADevicePolicyTimePeriodTFObjectTypes, o)
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func toStateMfaDevicePolicyNotificationsPolicy(apiObject *mfa.DeviceAuthenticationPolicyCommonNotificationsPolicy, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(MFADevicePolicyNotificationsPolicyTFObjectTypes), nil
+	}
+
+	o := map[string]attr.Value{
+		"id": framework.StringToTF(apiObject.GetId()),
+	}
+
+	objValue, d := types.ObjectValue(MFADevicePolicyNotificationsPolicyTFObjectTypes, o)
 	diags.Append(d...)
 
 	return objValue, diags
