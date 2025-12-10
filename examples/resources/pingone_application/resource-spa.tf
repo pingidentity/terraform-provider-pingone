@@ -10,6 +10,10 @@ resource "pingone_application" "my_awesome_spa" {
     pkce_enforcement           = "S256_REQUIRED"
     token_endpoint_auth_method = "NONE"
     redirect_uris              = ["https://my-website.com"]
+
+    include_x5t                                   = true
+    op_session_check_enabled                      = true
+    request_scopes_for_multiple_resources_enabled = true
   }
 }
 

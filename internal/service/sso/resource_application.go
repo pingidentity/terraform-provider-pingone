@@ -84,10 +84,12 @@ type applicationOIDCOptionsCommonModelV1 struct {
 	GrantTypes                                    types.Set    `tfsdk:"grant_types"`
 	HomePageUrl                                   types.String `tfsdk:"home_page_url"`
 	IdpSignoff                                    types.Bool   `tfsdk:"idp_signoff"`
+	IncludeX5t                                    types.Bool   `tfsdk:"include_x5t"`
 	InitiateLoginUri                              types.String `tfsdk:"initiate_login_uri"`
 	Jwks                                          types.String `tfsdk:"jwks"`
 	JwksUrl                                       types.String `tfsdk:"jwks_url"`
 	MobileApp                                     types.Object `tfsdk:"mobile_app"`
+	OpSessionCheckEnabled                         types.Bool   `tfsdk:"op_session_check_enabled"`
 	ParRequirement                                types.String `tfsdk:"par_requirement"`
 	ParTimeout                                    types.Int32  `tfsdk:"par_timeout"`
 	PKCEEnforcement                               types.String `tfsdk:"pkce_enforcement"`
@@ -96,6 +98,7 @@ type applicationOIDCOptionsCommonModelV1 struct {
 	RefreshTokenDuration                          types.Int32  `tfsdk:"refresh_token_duration"`
 	RefreshTokenRollingDuration                   types.Int32  `tfsdk:"refresh_token_rolling_duration"`
 	RefreshTokenRollingGracePeriodDuration        types.Int32  `tfsdk:"refresh_token_rolling_grace_period_duration"`
+	RequestScopesForMultipleResourcesEnabled      types.Bool   `tfsdk:"request_scopes_for_multiple_resources_enabled"`
 	RequireSignedRequestObject                    types.Bool   `tfsdk:"require_signed_request_object"`
 	ResponseTypes                                 types.Set    `tfsdk:"response_types"`
 	SupportUnsignedRequestObject                  types.Bool   `tfsdk:"support_unsigned_request_object"`
@@ -254,10 +257,12 @@ var (
 		"grant_types":                                        types.SetType{ElemType: types.StringType},
 		"home_page_url":                                      types.StringType,
 		"idp_signoff":                                        types.BoolType,
+		"include_x5t":                                        types.BoolType,
 		"initiate_login_uri":                                 types.StringType,
 		"jwks_url":                                           types.StringType,
 		"jwks":                                               types.StringType,
 		"mobile_app":                                         types.ObjectType{AttrTypes: applicationOidcMobileAppTFObjectTypes},
+		"op_session_check_enabled":                           types.BoolType,
 		"par_requirement":                                    types.StringType,
 		"par_timeout":                                        types.Int32Type,
 		"pkce_enforcement":                                   types.StringType,
@@ -266,6 +271,7 @@ var (
 		"refresh_token_duration":                             types.Int32Type,
 		"refresh_token_rolling_duration":                     types.Int32Type,
 		"refresh_token_rolling_grace_period_duration":        types.Int32Type,
+		"request_scopes_for_multiple_resources_enabled":      types.BoolType,
 		"require_signed_request_object":                      types.BoolType,
 		"response_types":                                     types.SetType{ElemType: types.StringType},
 		"support_unsigned_request_object":                    types.BoolType,
@@ -517,6 +523,10 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 		"A boolean flag to allow signoff without access to the session token cookie.",
 	).DefaultValue(false)
 
+	oidcOptionsIncludeX5tDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether tokens signed for this application include the `x5t` signature header in the signed JWT.",
+	).DefaultValue(false)
+
 	oidcOptionsInitiateLoginUriDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the URI to use for third-parties to begin the sign-on process for the application. If specified, PingOne redirects users to this URI to initiate SSO to PingOne. The application is responsible for implementing the relevant OIDC flow when the initiate login URI is requested. This property is required if you want the application to appear in the PingOne Application Portal. See the OIDC specification section of [Initiating Login from a Third Party](https://openid.net/specs/openid-connect-core-1_0.html#ThirdPartyInitiatedLogin) for more information.  The provided URL is expected to use the `https://` schema.  The `http` schema is permitted where the host is `localhost` or `127.0.0.1`.",
 	)
@@ -546,6 +556,10 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 	oidcOptionsTokenEndpointAuthnMethod := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the client authentication methods supported by the token endpoint.",
 	).AllowedValuesEnum(management.AllowedEnumApplicationOIDCTokenAuthMethodEnumValues).AppendMarkdownString(fmt.Sprintf("When `%s` is configured, either `jwks` or `jwks_url` must also be configured.", string(management.ENUMAPPLICATIONOIDCTOKENAUTHMETHOD_PRIVATE_KEY_JWT)))
+
+	oidcOptionsOpSessionCheckEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether the `session_state` parameter is included in the authentication response.",
+	).DefaultValue(false)
 
 	oidcOptionsParRequirementDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies whether pushed authorization requests (PAR) are required.",
@@ -593,6 +607,10 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 	oidcOptionsRefreshTokenRollingGracePeriodDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("The number of seconds that a refresh token may be reused after having been exchanged for a new set of tokens. This is useful in the case of network errors on the client. Valid values are between `%d` and `%d` seconds. `Null` is treated the same as `0`.", oidcOptionsRefreshTokenRollingGracePeriodDurationMin, oidcOptionsRefreshTokenRollingGracePeriodDurationMax),
 	)
+
+	oidcOptionsRequestScopesForMultipleResourcesEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether the application can request scopes from multiple custom resources.",
+	).DefaultValue(false)
 
 	oidcOptionsAdditionalRefreshTokenReplayProtectionEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that, when set to `true` (the default), if you attempt to reuse the refresh token, the authorization server immediately revokes the reused refresh token, as well as all descendant tokens. Setting this to null equates to a `false` setting.",
@@ -1018,6 +1036,15 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 							Default: booldefault.StaticBool(false),
 						},
 
+						"include_x5t": schema.BoolAttribute{
+							Description:         oidcOptionsIncludeX5tDescription.Description,
+							MarkdownDescription: oidcOptionsIncludeX5tDescription.MarkdownDescription,
+							Optional:            true,
+							Computed:            true,
+
+							Default: booldefault.StaticBool(false),
+						},
+
 						"initiate_login_uri": schema.StringAttribute{
 							Description:         oidcOptionsInitiateLoginUriDescription.Description,
 							MarkdownDescription: oidcOptionsInitiateLoginUriDescription.MarkdownDescription,
@@ -1026,6 +1053,15 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 							Validators: []validator.String{
 								stringvalidator.RegexMatches(regexp.MustCompile(`^(http:\/\/((localhost)|(127\.0\.0\.1))(:[0-9]+)?(\/?(.+))?$|(https:\/\/).*)`), "Expected value to have a url with schema of \"https\".  \"http\" urls are permitted when using localhost hosts \"localhost\" and \"127.0.0.1\"."),
 							},
+						},
+
+						"op_session_check_enabled": schema.BoolAttribute{
+							Description:         oidcOptionsOpSessionCheckEnabledDescription.Description,
+							MarkdownDescription: oidcOptionsOpSessionCheckEnabledDescription.MarkdownDescription,
+							Optional:            true,
+							Computed:            true,
+
+							Default: booldefault.StaticBool(false),
 						},
 
 						"jwks": schema.StringAttribute{
@@ -1213,6 +1249,15 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 							Validators: []validator.Int32{
 								int32validator.Between(oidcOptionsRefreshTokenRollingGracePeriodDurationMin, oidcOptionsRefreshTokenRollingGracePeriodDurationMax),
 							},
+						},
+
+						"request_scopes_for_multiple_resources_enabled": schema.BoolAttribute{
+							Description:         oidcOptionsRequestScopesForMultipleResourcesEnabledDescription.Description,
+							MarkdownDescription: oidcOptionsRequestScopesForMultipleResourcesEnabledDescription.MarkdownDescription,
+							Optional:            true,
+							Computed:            true,
+
+							Default: booldefault.StaticBool(false),
 						},
 
 						"additional_refresh_token_replay_protection_enabled": schema.BoolAttribute{
@@ -2551,9 +2596,10 @@ func (p *applicationResourceModelV1) expandApplicationOIDC(ctx context.Context) 
 			p.Name.ValueString(),
 			management.ENUMAPPLICATIONPROTOCOL_OPENID_CONNECT,
 			management.EnumApplicationType(plan.Type.ValueString()),
-			grantTypes,
 			management.EnumApplicationOIDCTokenAuthMethod(plan.TokenEndpointAuthnMethod.ValueString()),
 		)
+
+		data.SetGrantTypes(grantTypes)
 
 		applicationCommon, d := p.expandApplicationCommon(ctx)
 		diags.Append(d...)
@@ -2608,6 +2654,14 @@ func (p *applicationResourceModelV1) expandApplicationOIDC(ctx context.Context) 
 
 		if !plan.IdpSignoff.IsNull() && !plan.IdpSignoff.IsUnknown() {
 			data.SetIdpSignoff(plan.IdpSignoff.ValueBool())
+		}
+
+		if !plan.IncludeX5t.IsNull() && !plan.IncludeX5t.IsUnknown() {
+			data.SetIncludeX5t(plan.IncludeX5t.ValueBool())
+		}
+
+		if !plan.OpSessionCheckEnabled.IsNull() && !plan.OpSessionCheckEnabled.IsUnknown() {
+			data.SetOpSessionCheckEnabled(plan.OpSessionCheckEnabled.ValueBool())
 		}
 
 		if !plan.InitiateLoginUri.IsNull() && !plan.InitiateLoginUri.IsUnknown() {
@@ -2707,6 +2761,10 @@ func (p *applicationResourceModelV1) expandApplicationOIDC(ctx context.Context) 
 
 		if !plan.RefreshTokenRollingGracePeriodDuration.IsNull() && !plan.RefreshTokenRollingGracePeriodDuration.IsUnknown() {
 			data.SetRefreshTokenRollingGracePeriodDuration(plan.RefreshTokenRollingGracePeriodDuration.ValueInt32())
+		}
+
+		if !plan.RequestScopesForMultipleResourcesEnabled.IsNull() && !plan.RequestScopesForMultipleResourcesEnabled.IsUnknown() {
+			data.SetRequestScopesForMultipleResourcesEnabled(plan.RequestScopesForMultipleResourcesEnabled.ValueBool())
 		}
 
 		if !plan.AdditionalRefreshTokenReplayProtectionEnabled.IsNull() && !plan.AdditionalRefreshTokenReplayProtectionEnabled.IsUnknown() {

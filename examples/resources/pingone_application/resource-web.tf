@@ -9,6 +9,10 @@ resource "pingone_application" "my_awesome_web_app" {
     response_types             = ["CODE"]
     token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
     redirect_uris              = ["https://my-website.com"]
+
+    include_x5t                                   = true
+    op_session_check_enabled                      = true
+    request_scopes_for_multiple_resources_enabled = true
   }
 }
 

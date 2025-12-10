@@ -1,0 +1,7 @@
+```release-note:enhancement
+resource/pingone_application: Added `include_x5t`, `op_session_check_enabled` and `request_scopes_for_multiple_resources_enabled` attributes to the `oidc_options` block
+```
+
+```release-note:enhancement
+data-source/pingone_application: Added `include_x5t`, `op_session_check_enabled` and `request_scopes_for_multiple_resources_enabled` attributes to the `oidc_options` block
+```

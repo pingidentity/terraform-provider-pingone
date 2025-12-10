@@ -122,6 +122,18 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 		"A list of strings that specifies the URLs that the browser can be redirected to after logout.  The provided URLs are expected to use the `https://`, `http://` schema, or a custom mobile native schema (e.g., `org.bxretail.app://logout`).",
 	)
 
+	oidcOptionsRequestScopesForMultipleResourcesEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether the application can request scopes from multiple custom resources.",
+	)
+
+	oidcOptionsOpSessionCheckEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether the `session_state` parameter is included in the authentication response.",
+	)
+
+	oidcOptionsIncludeX5tDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether tokens signed for this application include the `x5t` signature header in the signed JWT.",
+	)
+
 	oidcAdditionalRefreshTokenReplayProtectionEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that, when set to `true`, if you attempt to reuse the refresh token, the authorization server immediately revokes the reused refresh token, as well as all descendant tokens.",
 	).DefaultValue("true")
@@ -294,9 +306,19 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean flag to allow signoff without access to the session token cookie.").Description,
 						Computed:    true,
 					},
+					"include_x5t": schema.BoolAttribute{
+						Description:         oidcOptionsIncludeX5tDescription.Description,
+						MarkdownDescription: oidcOptionsIncludeX5tDescription.MarkdownDescription,
+						Computed:            true,
+					},
 					"initiate_login_uri": schema.StringAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the URI to use for third-parties to begin the sign-on process for the application.").Description,
 						Computed:    true,
+					},
+					"op_session_check_enabled": schema.BoolAttribute{
+						Description:         oidcOptionsOpSessionCheckEnabledDescription.Description,
+						MarkdownDescription: oidcOptionsOpSessionCheckEnabledDescription.MarkdownDescription,
+						Computed:            true,
 					},
 					"jwks": schema.StringAttribute{
 						Description:         oidcJwksDescription.Description,
@@ -366,6 +388,11 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 					"refresh_token_rolling_grace_period_duration": schema.Int32Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("The number of seconds that a refresh token may be reused after having been exchanged for a new set of tokens.").Description,
 						Computed:    true,
+					},
+					"request_scopes_for_multiple_resources_enabled": schema.BoolAttribute{
+						Description:         oidcOptionsRequestScopesForMultipleResourcesEnabledDescription.Description,
+						MarkdownDescription: oidcOptionsRequestScopesForMultipleResourcesEnabledDescription.MarkdownDescription,
+						Computed:            true,
 					},
 					"additional_refresh_token_replay_protection_enabled": schema.BoolAttribute{
 						Description:         oidcAdditionalRefreshTokenReplayProtectionEnabledDescription.Description,

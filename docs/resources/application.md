@@ -24,6 +24,10 @@ resource "pingone_application" "my_awesome_spa" {
     pkce_enforcement           = "S256_REQUIRED"
     token_endpoint_auth_method = "NONE"
     redirect_uris              = ["https://my-website.com"]
+
+    include_x5t                                   = true
+    op_session_check_enabled                      = true
+    request_scopes_for_multiple_resources_enabled = true
   }
 }
 
@@ -55,6 +59,10 @@ resource "pingone_application" "my_awesome_web_app" {
     response_types             = ["CODE"]
     token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
     redirect_uris              = ["https://my-website.com"]
+
+    include_x5t                                   = true
+    op_session_check_enabled                      = true
+    request_scopes_for_multiple_resources_enabled = true
   }
 }
 
@@ -148,6 +156,10 @@ resource "pingone_application" "my_awesome_native_app" {
       "org.bxretail.app://callback"
     ]
 
+    include_x5t                                   = true
+    op_session_check_enabled                      = true
+    request_scopes_for_multiple_resources_enabled = true
+
     mobile_app = {
       bundle_id           = var.apple_bundle_id
       package_name        = var.android_package_name
@@ -202,6 +214,9 @@ resource "pingone_application" "my_awesome_worker_app" {
     type                       = "WORKER"
     grant_types                = ["CLIENT_CREDENTIALS"]
     token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
+
+    include_x5t                                   = true
+    request_scopes_for_multiple_resources_enabled = true
   }
 }
 
@@ -344,10 +359,12 @@ Optional:
 - `device_timeout` (Number) An integer that specifies the length of time (in seconds) that the `userCode` and `deviceCode` returned by the `/device_authorization` endpoint are valid. This property is required only for applications in which the `grant_types` property is set to `DEVICE_CODE`. The default value is `600` seconds. It can have a value of no more than `3600` seconds (min/max=`1`/`3600`).
 - `home_page_url` (String) A string that specifies the custom home page URL for the application.  The provided URL is expected to use the `https://` schema.  The `http` schema is permitted where the host is `localhost` or `127.0.0.1`.
 - `idp_signoff` (Boolean) A boolean flag to allow signoff without access to the session token cookie.  Defaults to `false`.
+- `include_x5t` (Boolean) A boolean that specifies whether tokens signed for this application include the `x5t` signature header in the signed JWT.  Defaults to `false`.
 - `initiate_login_uri` (String) A string that specifies the URI to use for third-parties to begin the sign-on process for the application. If specified, PingOne redirects users to this URI to initiate SSO to PingOne. The application is responsible for implementing the relevant OIDC flow when the initiate login URI is requested. This property is required if you want the application to appear in the PingOne Application Portal. See the OIDC specification section of [Initiating Login from a Third Party](https://openid.net/specs/openid-connect-core-1_0.html#ThirdPartyInitiatedLogin) for more information.  The provided URL is expected to use the `https://` schema.  The `http` schema is permitted where the host is `localhost` or `127.0.0.1`.
 - `jwks` (String) A string that specifies a JWKS string that validates the signature of signed JWTs for applications that use the `PRIVATE_KEY_JWT` option for the `token_endpoint_auth_method`. This property is required when `token_endpoint_auth_method` is `PRIVATE_KEY_JWT` and the `jwks_url` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-private_key_jwt-jwks-string). This property is also required if the optional `request` property JWT on the authorize endpoint is signed using the RS256 (or RS384, RS512) signing algorithm and the `jwks_url` property is empty. For more infornmation about signing the `request` property JWT, see [Create a request property JWT](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-request-property-jwt).  Conflicts with `jwks_url`.
 - `jwks_url` (String) A string that specifies a URL (supports `https://` only) that provides access to a JWKS string that validates the signature of signed JWTs for applications that use the `PRIVATE_KEY_JWT` option for the `token_endpoint_auth_method`. This property is required when `token_endpoint_auth_method` is `PRIVATE_KEY_JWT` and the `jwks` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-private_key_jwt-jwks-string). This property is also required if the optional `request` property JWT on the authorize endpoint is signed using the RS256 (or RS384, RS512) signing algorithm and the `jwks` property is empty. For more infornmation about signing the `request` property JWT, see [Create a request property JWT](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-request-property-jwt).  Conflicts with `jwks`.
 - `mobile_app` (Attributes) A single object that specifies Mobile application integration settings for `NATIVE_APP` type applications. (see [below for nested schema](#nestedatt--oidc_options--mobile_app))
+- `op_session_check_enabled` (Boolean) A boolean that specifies whether the `session_state` parameter is included in the authentication response.  Defaults to `false`.
 - `par_requirement` (String) A string that specifies whether pushed authorization requests (PAR) are required.  Options are `OPTIONAL`, `REQUIRED`.  Defaults to `OPTIONAL`.
 - `par_timeout` (Number) An integer that specifies the pushed authorization request (PAR) timeout in seconds.  Valid values are between `1` and `600`.  Defaults to `60`.
 - `pkce_enforcement` (String) A string that specifies how `PKCE` request parameters are handled on the authorize request.  Options are `OPTIONAL`, `REQUIRED`, `S256_REQUIRED`.  Defaults to `OPTIONAL`.
@@ -356,6 +373,7 @@ Optional:
 - `refresh_token_duration` (Number) An integer that specifies the lifetime in seconds of the refresh token. Valid values are between `60` and `2147483647`. If the `refresh_token_rolling_duration` property is specified for the application, then this property value must be less than or equal to the value of `refresh_token_rolling_duration`. After this property is set, the value cannot be nullified - this will reset the value back to the default. This value is used to generate the value for the exp claim when minting a new refresh token.  Defaults to `2592000`.
 - `refresh_token_rolling_duration` (Number) An integer that specifies the number of seconds a refresh token can be exchanged before re-authentication is required. Valid values are between `60` and `2147483647`. After this property is set, the value cannot be nullified - this will force recreation of the resource. This value is used to generate the value for the exp claim when minting a new refresh token.  Defaults to `15552000`.
 - `refresh_token_rolling_grace_period_duration` (Number) The number of seconds that a refresh token may be reused after having been exchanged for a new set of tokens. This is useful in the case of network errors on the client. Valid values are between `0` and `86400` seconds. `Null` is treated the same as `0`.
+- `request_scopes_for_multiple_resources_enabled` (Boolean) A boolean that specifies whether the application can request scopes from multiple custom resources.  Defaults to `false`.
 - `require_signed_request_object` (Boolean) A boolean that indicates that the Java Web Token (JWT) for the [request query](https://openid.net/specs/openid-connect-core-1_0.html#RequestObject) parameter is required to be signed. If `false` or null, a signed request object is not required. Both `support_unsigned_request_object` and this property cannot be set to `true`.  Defaults to `false`.
 - `response_types` (Set of String) A list that specifies the code or token type returned by an authorization request.  Options are `CODE`, `ID_TOKEN`, `TOKEN`.  Note that `CODE` cannot be used in an authorization request with `TOKEN` or `ID_TOKEN` because PingOne does not currently support OIDC hybrid flows.
 - `support_unsigned_request_object` (Boolean) A boolean that specifies whether the request query parameter JWT is allowed to be unsigned. If `false` or null, an unsigned request object is not allowed.  Defaults to `false`.
