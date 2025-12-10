@@ -561,7 +561,6 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 										},
 									},
 								},
-
 								"push_limit": schema.SingleNestedAttribute{
 									Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies push limit settings for the application in the policy.").Description,
 									Optional:    true,
@@ -1008,36 +1007,37 @@ func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttribute(descr
 						},
 					},
 
-				"lifetime": schema.SingleNestedAttribute{
-					Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("A single object that allows configuration of %s lifetime settings.", descriptionMethod)).Description,
-					Optional:    true,
-					Computed:    true,
+					"lifetime": schema.SingleNestedAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("A single object that allows configuration of %s lifetime settings.", descriptionMethod)).Description,
+						Optional:    true,
+						Computed:    true,
 
-					Default: objectdefault.StaticValue(types.ObjectValueMust(
-						MFADevicePolicyTimePeriodTFObjectTypes,
-						map[string]attr.Value{
-							"duration":  types.Int32Value(otpLifetimeDurationDefault),
-							"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
-						},
-					)),
+						Default: objectdefault.StaticValue(types.ObjectValueMust(
+							MFADevicePolicyTimePeriodTFObjectTypes,
+							map[string]attr.Value{
+								"duration":  types.Int32Value(otpLifetimeDurationDefault),
+								"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
+							},
+						)),
 
-					Attributes: map[string]schema.Attribute{
-						"duration": schema.Int32Attribute{
-							Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the duration (number of time units) that the passcode is valid before it expires.").Description,
-							Required:    true,
-						},
+						Attributes: map[string]schema.Attribute{
+							"duration": schema.Int32Attribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the duration (number of time units) that the passcode is valid before it expires.").Description,
+								Required:    true,
+							},
 
-						"time_unit": schema.StringAttribute{
-							Description:         otpCoolDownDescription.Description,
-							MarkdownDescription: otpCoolDownDescription.MarkdownDescription,
-							Required:            true,
+							"time_unit": schema.StringAttribute{
+								Description:         otpCoolDownDescription.Description,
+								MarkdownDescription: otpCoolDownDescription.MarkdownDescription,
+								Required:            true,
 
-							Validators: []validator.String{
-								stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumTimeUnitEnumValues)...),
+								Validators: []validator.String{
+									stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumTimeUnitEnumValues)...),
+								},
 							},
 						},
 					},
-				},					"otp_length": schema.Int32Attribute{
+					"otp_length": schema.Int32Attribute{
 						Description:         otpOtpLengthDescription.Description,
 						MarkdownDescription: otpOtpLengthDescription.MarkdownDescription,
 						Optional:            true,
