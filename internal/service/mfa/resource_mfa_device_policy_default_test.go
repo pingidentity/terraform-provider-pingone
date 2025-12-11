@@ -519,55 +519,55 @@ resource "pingone_mfa_device_policy_default" "%[3]s" {
 }`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
-// func TestAccMFADevicePolicyDefault_PingID_Full(t *testing.T) {
-// 	t.Parallel()
+func TestAccMFADevicePolicyDefault_PingID_Full(t *testing.T) {
+	t.Parallel()
 
-// 	resourceName := acctest.ResourceNameGen()
-// 	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy_default.%s", resourceName)
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy_default.%s", resourceName)
 
-// 	environmentName := acctest.ResourceNameGenEnvironment()
+	name := resourceName
 
-// 	name := resourceName
-
-// 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-
-// 	resource.Test(t, resource.TestCase{
-// 		PreCheck: func() {
-// 			acctest.PreCheckNoTestAccFlaky(t)
-// 			acctest.PreCheckClient(t)
-// 			acctest.PreCheckNewEnvironment(t)
-// 			acctest.PreCheckNoBeta(t)
-// 		},
-// 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-// 		CheckDestroy:             mfa.MFADevicePolicyDefault_CheckDestroy,
-// 		ErrorCheck:               acctest.ErrorCheck(t),
-// 		Steps: []resource.TestStep{
-// 			// Step 1: Create environment and let it initialize
-// 			{
-// 				Config: testAccMFADevicePolicyDefaultConfig_PingID_EnvironmentOnly(environmentName, licenseID),
-// 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestMatchResourceAttr(fmt.Sprintf("pingone_environment.%s", environmentName), "id", verify.P1ResourceIDRegexpFullString),
-// 				),
-// 			},
-// 			// Step 2: Now add the device policy after environment has initialized
-// 			{
-// 				Config: testAccMFADevicePolicyDefaultConfig_PingID_Full(environmentName, licenseID, resourceName, name),
-// 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-// 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-// 					resource.TestCheckResourceAttr(resourceFullName, "policy_type", "pingid"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
-// 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "true"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "desktop.enabled", "true"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "desktop.otp.failure.count", "5"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "yubikey.enabled", "true"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "oath_token.enabled", "true"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "oath_token.otp.failure.count", "3"),
-// 				),
-// 			},
-// 		},
-// 	})
-// }
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckRegionSupportsWorkforce(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             mfa.MFADevicePolicyDefault_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMFADevicePolicyDefaultConfig_PingID_Full(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "policy_type", "pingid"),
+					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+					resource.TestCheckResourceAttr(resourceFullName, "authentication.device_selection", "PROMPT_TO_SELECT"),
+					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
+					resource.TestCheckResourceAttr(resourceFullName, "ignore_user_lock", "true"),
+					resource.TestMatchResourceAttr(resourceFullName, "updated_at", verify.RFC3339Regexp),
+					resource.TestCheckResourceAttr(resourceFullName, "remember_me.web.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "sms.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "voice.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "email.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "mobile.applications.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "mobile.applications.0.biometrics_enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "mobile.applications.0.type", "pingIdAppConfig"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.otp.failure.count", "5"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.otp.failure.count", "3"),
+				),
+			},
+		},
+	})
+}
 
 // func TestAccMFADevicePolicyDefault_PingID_Minimal(t *testing.T) {
 // 	t.Parallel()
@@ -1054,4 +1054,239 @@ resource "pingone_mfa_device_policy_default" "%[3]s" {
     enabled = false
   }
 }`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}
+
+func testAccMFADevicePolicyDefaultConfig_PingID_Full(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+resource "pingone_notification_policy" "%[2]s" {
+  environment_id = data.pingone_environment.workforce_test.id
+  name           = "%[3]s"
+}
+
+data "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.workforce_test.id
+  name           = "PingID Mobile"
+}
+
+resource "pingone_mfa_device_policy_default" "%[2]s" {
+  environment_id = data.pingone_environment.workforce_test.id
+  policy_type    = "pingid"
+
+  name = "%[3]s"
+
+  authentication = {
+    device_selection = "PROMPT_TO_SELECT"
+  }
+
+  new_device_notification = "SMS_THEN_EMAIL"
+  ignore_user_lock        = true
+
+  notifications_policy = {
+    id = pingone_notification_policy.%[2]s.id
+  }
+
+  remember_me = {
+    web = {
+      enabled = true
+      life_time = {
+        duration  = 60
+        time_unit = "MINUTES"
+      }
+    }
+  }
+
+  sms = {
+    enabled                        = true
+    pairing_disabled               = false
+    prompt_for_nickname_on_pairing = true
+    otp = {
+      failure = {
+        count = 5
+        cool_down = {
+          duration  = 5
+          time_unit = "SECONDS"
+        }
+      }
+      lifetime = {
+        duration  = 75
+        time_unit = "SECONDS"
+      }
+      otp_length = 7
+    }
+  }
+
+  voice = {
+    enabled                        = true
+    pairing_disabled               = false
+    prompt_for_nickname_on_pairing = false
+    otp = {
+      failure = {
+        count = 4
+        cool_down = {
+          duration  = 3
+          time_unit = "MINUTES"
+        }
+      }
+      lifetime = {
+        duration  = 30
+        time_unit = "MINUTES"
+      }
+      otp_length = 8
+    }
+  }
+
+  email = {
+    enabled                        = true
+    pairing_disabled               = false
+    prompt_for_nickname_on_pairing = false
+    otp = {
+      failure = {
+        count = 3
+        cool_down = {
+          duration  = 2
+          time_unit = "MINUTES"
+        }
+      }
+      lifetime = {
+        duration  = 30
+        time_unit = "MINUTES"
+      }
+      otp_length = 6
+    }
+  }
+
+  mobile = {
+    enabled                        = true
+    prompt_for_nickname_on_pairing = false
+
+    applications = [
+      {
+        id = data.pingone_application.%[2]s.id
+
+        biometrics_enabled = true
+
+        integrity_detection = "permissive"
+
+        otp = {
+          enabled = true
+        }
+
+        pairing_disabled = false
+
+        pairing_key_lifetime = {
+          duration  = 15
+          time_unit = "MINUTES"
+        }
+
+        push = {
+          enabled = true
+          number_matching = {
+            enabled = true
+          }
+        }
+
+        push_limit = {
+          count = 10
+          lock_duration = {
+            duration  = 45
+            time_unit = "MINUTES"
+          }
+          time_period = {
+            duration  = 15
+            time_unit = "MINUTES"
+          }
+        }
+
+        new_request_duration_configuration = {
+          device_timeout = {
+            duration  = 30
+            time_unit = "SECONDS"
+          }
+          total_timeout = {
+            duration  = 60
+            time_unit = "SECONDS"
+          }
+        }
+
+        ip_pairing_configuration = {
+          any_ip_address = true
+        }
+      }
+    ]
+
+    otp = {
+      failure = {
+        count = 3
+        cool_down = {
+          duration  = 2
+          time_unit = "MINUTES"
+        }
+      }
+    }
+  }
+
+  totp = {
+    enabled                        = true
+    pairing_disabled               = false
+    prompt_for_nickname_on_pairing = false
+    otp = {
+      failure = {
+        count = 3
+        cool_down = {
+          duration  = 2
+          time_unit = "MINUTES"
+        }
+      }
+    }
+  }
+
+  desktop = {
+    enabled = true
+    otp = {
+      failure = {
+        count = 5
+        cool_down = {
+          duration  = 3
+          time_unit = "MINUTES"
+        }
+      }
+    }
+    pairing_key_lifetime = {
+      duration  = 48
+      time_unit = "HOURS"
+    }
+  }
+
+  yubikey = {
+    enabled          = true
+    otp = {
+      failure = {
+        count = 3
+        cool_down = {
+          duration  = 2
+          time_unit = "MINUTES"
+        }
+      }
+    }
+    pairing_disabled = false
+  }
+
+  oath_token = {
+    enabled                        = true
+    pairing_disabled               = false
+    prompt_for_nickname_on_pairing = false
+    otp = {
+      failure = {
+        count = 3
+        cool_down = {
+          duration  = 2
+          time_unit = "MINUTES"
+        }
+      }
+    }
+  }
+}
+`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name)
 }

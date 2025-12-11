@@ -4,7 +4,9 @@ package mfa
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -40,6 +42,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	listvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/listvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/objectvalidator"
+	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -92,7 +95,6 @@ type MFADevicePolicyDefaultMobileResourceModel struct {
 	Enabled                    types.Bool   `tfsdk:"enabled"`
 	Otp                        types.Object `tfsdk:"otp"`
 	PromptForNicknameOnPairing types.Bool   `tfsdk:"prompt_for_nickname_on_pairing"`
-	IpPairingConfiguration     types.Object `tfsdk:"ip_pairing_configuration"`
 }
 
 type MFADevicePolicyDefaultMobileApplicationResourceModel struct {
@@ -101,6 +103,7 @@ type MFADevicePolicyDefaultMobileApplicationResourceModel struct {
 	BiometricsEnabled               types.Bool   `tfsdk:"biometrics_enabled"`
 	DeviceAuthorization             types.Object `tfsdk:"device_authorization"`
 	IntegrityDetection              types.String `tfsdk:"integrity_detection"`
+	IpPairingConfiguration          types.Object `tfsdk:"ip_pairing_configuration"`
 	Otp                             types.Object `tfsdk:"otp"`
 	PairingDisabled                 types.Bool   `tfsdk:"pairing_disabled"`
 	PairingKeyLifetime              types.Object `tfsdk:"pairing_key_lifetime"`
@@ -109,6 +112,35 @@ type MFADevicePolicyDefaultMobileApplicationResourceModel struct {
 	PushTimeout                     types.Object `tfsdk:"push_timeout"`
 	NewRequestDurationConfiguration types.Object `tfsdk:"new_request_duration_configuration"`
 	Type                            types.String `tfsdk:"type"`
+}
+
+type MFADevicePolicyDefaultMobileApplicationOtpResourceModel struct {
+	Enabled types.Bool `tfsdk:"enabled"`
+}
+
+type MFADevicePolicyDefaultMobileApplicationPushResourceModel struct {
+	Enabled        types.Bool   `tfsdk:"enabled"`
+	NumberMatching types.Object `tfsdk:"number_matching"`
+}
+
+type MFADevicePolicyDefaultMobileApplicationPushNumberMatchingResourceModel struct {
+	Enabled types.Bool `tfsdk:"enabled"`
+}
+
+type MFADevicePolicyMobileApplicationPushLimitResourceModel struct {
+	Count        types.Int32  `tfsdk:"count"`
+	LockDuration types.Object `tfsdk:"lock_duration"`
+	TimePeriod   types.Object `tfsdk:"time_period"`
+}
+
+type MFADevicePolicyMobileApplicationNewRequestDurationConfigurationResourceModel struct {
+	DeviceTimeout types.Object `tfsdk:"device_timeout"`
+	TotalTimeout  types.Object `tfsdk:"total_timeout"`
+}
+
+type MFADevicePolicyMobileApplicationNewRequestDurationConfigurationTimeoutResourceModel struct {
+	Duration types.Int32  `tfsdk:"duration"`
+	TimeUnit types.String `tfsdk:"time_unit"`
 }
 
 // TF Object type definitions for PingID devices
@@ -159,6 +191,7 @@ var (
 		"push_timeout":                       types.ObjectType{AttrTypes: MFADevicePolicyTimePeriodTFObjectTypes},
 		"new_request_duration_configuration": types.ObjectType{AttrTypes: MFADevicePolicyMobileApplicationNewRequestDurationConfigurationTFObjectTypes},
 		"type":                               types.StringType,
+		"ip_pairing_configuration":           types.ObjectType{AttrTypes: MFADevicePolicyMobileIpPairingConfigurationTFObjectTypes},
 	}
 
 	MFADevicePolicyMobileIpPairingConfigurationTFObjectTypes = map[string]attr.Type{
@@ -184,7 +217,6 @@ var (
 		"enabled":                        types.BoolType,
 		"otp":                            types.ObjectType{AttrTypes: MFADevicePolicyMobileOtpTFObjectTypes},
 		"prompt_for_nickname_on_pairing": types.BoolType,
-		"ip_pairing_configuration":       types.ObjectType{AttrTypes: MFADevicePolicyMobileIpPairingConfigurationTFObjectTypes},
 	}
 
 	// Default value for remember_me
@@ -407,6 +439,10 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	mobileApplicationsPairingKeyLifetimeTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the type of time unit for `duration`.",
 	).AllowedValuesEnum(mfa.AllowedEnumTimeUnitPairingKeyLifetimeEnumValues)
+
+	mobileApplicationsPairingKeyLifetimeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies pairing key lifetime settings for the application in the policy. Defaults to 10 minutes for PingOne MFA policies and 48 hours for PingID policies.",
+	)
 
 	durationTimeUnitSecondsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("A string that specifies the type of time unit for `duration`. Currently, the only permitted value is `%s`.", mfa.ENUMTIMEUNIT_SECONDS),
@@ -647,10 +683,19 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 										verify.P1ResourceIDValidator(),
 									},
 								},
-
 								"auto_enrollment": schema.SingleNestedAttribute{
 									Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies auto enrollment settings for the application in the policy.").Description,
 									Optional:    true,
+
+									Validators: []validator.Object{
+										objectvalidator.IsRequiredIfMatchesPathValue(
+											types.StringValue(POLICY_TYPE_PINGONE_MFA),
+											path.MatchRoot("policy_type"),
+										),
+										objectvalidator.ConflictsIfMatchesPathValue(types.StringValue(POLICY_TYPE_PINGID),
+											path.MatchRoot("policy_type"),
+										),
+									},
 
 									Attributes: map[string]schema.Attribute{
 										"enabled": schema.BoolAttribute{
@@ -660,7 +705,6 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 										},
 									},
 								},
-
 								"biometrics_enabled": schema.BoolAttribute{
 									Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether biometric authentication methods (such as fingerprint or facial recognition) are enabled for MFA. Only applicable for PingID policies.").Description,
 									Optional:    true,
@@ -674,9 +718,20 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 											path.MatchRoot("policy_type"),
 										),
 									},
-								}, "device_authorization": schema.SingleNestedAttribute{
+								},
+								"device_authorization": schema.SingleNestedAttribute{
 									Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies device authorization settings for the application in the policy.").Description,
 									Optional:    true,
+
+									Validators: []validator.Object{
+										objectvalidator.IsRequiredIfMatchesPathValue(
+											types.StringValue(POLICY_TYPE_PINGONE_MFA),
+											path.MatchRoot("policy_type"),
+										),
+										objectvalidator.ConflictsIfMatchesPathValue(types.StringValue(POLICY_TYPE_PINGID),
+											path.MatchRoot("policy_type"),
+										),
+									},
 
 									Attributes: map[string]schema.Attribute{
 										"enabled": schema.BoolAttribute{
@@ -703,12 +758,15 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 
 									Validators: []validator.String{
 										stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumMFADevicePolicyMobileIntegrityDetectionEnumValues)...),
+										stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+											types.StringValue(POLICY_TYPE_PINGONE_MFA),
+											path.MatchRoot("policy_type"),
+										),
 									},
 								},
-
 								"otp": schema.SingleNestedAttribute{
 									Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies OTP settings for the application in the policy.").Description,
-									Optional:    true,
+									Required:    true,
 
 									Attributes: map[string]schema.Attribute{
 										"enabled": schema.BoolAttribute{
@@ -717,7 +775,6 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 										},
 									},
 								},
-
 								"pairing_disabled": schema.BoolAttribute{
 									Description:         mobileApplicationsPairingDisabledDescription.Description,
 									MarkdownDescription: mobileApplicationsPairingDisabledDescription.MarkdownDescription,
@@ -727,8 +784,9 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 									Default: booldefault.StaticBool(false),
 								},
 								"pairing_key_lifetime": schema.SingleNestedAttribute{
-									Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies pairing key lifetime settings for the application in the policy.").Description,
-									Optional:    true,
+									Description:         mobileApplicationsPairingKeyLifetimeDescription.Description,
+									MarkdownDescription: mobileApplicationsPairingKeyLifetimeDescription.MarkdownDescription,
+									Optional:            true,
 
 									Attributes: map[string]schema.Attribute{
 										"duration": schema.Int32Attribute{
@@ -761,6 +819,14 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 										"number_matching": schema.SingleNestedAttribute{
 											Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that configures number matching for push notifications. ").Description,
 											Optional:    true,
+											Computed:    true,
+
+											Default: objectdefault.StaticValue(types.ObjectValueMust(
+												MFADevicePolicyDefaultMobileApplicationPushNumberMatchingTFObjectTypes,
+												map[string]attr.Value{
+													"enabled": types.BoolValue(false),
+												},
+											)),
 
 											Attributes: map[string]schema.Attribute{
 												"enabled": schema.BoolAttribute{
@@ -862,6 +928,13 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 									Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies push timeout settings for the application in the policy.").Description,
 									Optional:    true,
 
+									Validators: []validator.Object{
+										objectvalidator.ConflictsIfMatchesPathValue(
+											types.StringValue(POLICY_TYPE_PINGID),
+											path.MatchRoot("policy_type"),
+										),
+									},
+
 									Attributes: map[string]schema.Attribute{
 										"duration": schema.Int32Attribute{
 											Description:         mobileApplicationsPushTimeoutDurationDescription.Description,
@@ -888,10 +961,15 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 									Description:         mobileApplicationsNewRequestDurationConfigurationDescription.Description,
 									MarkdownDescription: mobileApplicationsNewRequestDurationConfigurationDescription.MarkdownDescription,
 									Optional:            true,
+									Computed:            true,
 
 									Validators: []validator.Object{
 										objectvalidator.ConflictsIfMatchesPathValue(
 											types.StringValue(POLICY_TYPE_PINGONE_MFA),
+											path.MatchRoot("policy_type"),
+										),
+										objectvalidator.IsRequiredIfMatchesPathValue(
+											types.StringValue(POLICY_TYPE_PINGID),
 											path.MatchRoot("policy_type"),
 										),
 									}, Attributes: map[string]schema.Attribute{
@@ -967,6 +1045,51 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 									Computed:            true,
 
 									Default: stringdefault.StaticString(string(mfa.ENUMPINGIDAPPLICATIONTYPE_PING_ID_APP_CONFIG)),
+								},
+
+								"ip_pairing_configuration": schema.SingleNestedAttribute{
+									Description:         mobileIpPairingConfigurationDescription.Description,
+									MarkdownDescription: mobileIpPairingConfigurationDescription.MarkdownDescription,
+									Optional:            true,
+
+									Validators: []validator.Object{
+										objectvalidator.ConflictsIfMatchesPathValue(
+											types.StringValue(POLICY_TYPE_PINGONE_MFA),
+											path.MatchRoot("policy_type"),
+										),
+										objectvalidator.IsRequiredIfMatchesPathValue(
+											types.StringValue(POLICY_TYPE_PINGID),
+											path.MatchRoot("policy_type"),
+										),
+									},
+
+									Attributes: map[string]schema.Attribute{
+										"any_ip_address": schema.BoolAttribute{
+											Description:         mobileIpPairingConfigurationAnyIpAddressDescription.Description,
+											MarkdownDescription: mobileIpPairingConfigurationAnyIpAddressDescription.MarkdownDescription,
+											Optional:            true,
+											Computed:            true,
+
+											Default: booldefault.StaticBool(true),
+										},
+
+										"only_these_ip_addresses": schema.ListAttribute{
+											Description:         mobileIpPairingConfigurationOnlyTheseIpAddressesDescription.Description,
+											MarkdownDescription: mobileIpPairingConfigurationOnlyTheseIpAddressesDescription.MarkdownDescription,
+											ElementType:         types.StringType,
+											Optional:            true,
+
+											Validators: []validator.List{
+												listvalidator.ValueStringsAre(
+													stringvalidator.RegexMatches(regexp.MustCompile(`^(?:\d{1,3}\.){3}\d{1,3}/\d{1,2}$`), "Expected value to be in CIDR notation (e.g., 192.168.0.1/24 or 10.0.0.5/32)"),
+												),
+												listvalidatorinternal.IsRequiredIfMatchesPathBoolValue(
+													types.BoolValue(false),
+													path.MatchRelative().AtParent().AtName("any_ip_address"),
+												),
+											},
+										},
+									},
 								},
 							},
 						},
@@ -1045,47 +1168,6 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 						Description:         promptForNicknameOnPairingDescription.Description,
 						MarkdownDescription: promptForNicknameOnPairingDescription.MarkdownDescription,
 						Optional:            true,
-					},
-
-					"ip_pairing_configuration": schema.SingleNestedAttribute{
-						Description:         mobileIpPairingConfigurationDescription.Description,
-						MarkdownDescription: mobileIpPairingConfigurationDescription.MarkdownDescription,
-						Optional:            true,
-
-						Validators: []validator.Object{
-							objectvalidator.ConflictsIfMatchesPathValue(
-								types.StringValue(POLICY_TYPE_PINGONE_MFA),
-								path.MatchRoot("policy_type"),
-							),
-						},
-
-						Attributes: map[string]schema.Attribute{
-							"any_ip_address": schema.BoolAttribute{
-								Description:         mobileIpPairingConfigurationAnyIpAddressDescription.Description,
-								MarkdownDescription: mobileIpPairingConfigurationAnyIpAddressDescription.MarkdownDescription,
-								Optional:            true,
-								Computed:            true,
-
-								Default: booldefault.StaticBool(true),
-							},
-
-							"only_these_ip_addresses": schema.ListAttribute{
-								Description:         mobileIpPairingConfigurationOnlyTheseIpAddressesDescription.Description,
-								MarkdownDescription: mobileIpPairingConfigurationOnlyTheseIpAddressesDescription.MarkdownDescription,
-								ElementType:         types.StringType,
-								Optional:            true,
-
-								Validators: []validator.List{
-									listvalidator.ValueStringsAre(
-										stringvalidator.RegexMatches(regexp.MustCompile(`^(?:\d{1,3}\.){3}\d{1,3}/\d{1,2}$`), "Expected value to be in CIDR notation (e.g., 192.168.0.1/24 or 10.0.0.5/32)"),
-									),
-									listvalidatorinternal.IsRequiredIfMatchesPathBoolValue(
-										types.BoolValue(false),
-										path.MatchRelative().AtParent().AtName("any_ip_address"),
-									),
-								},
-							},
-						},
 					},
 				},
 			},
@@ -1782,6 +1864,14 @@ func (r *MFADevicePolicyDefaultResource) Create(ctx context.Context, req resourc
 
 	// Update the default policy
 	var response *mfa.DeviceAuthenticationPolicy
+
+	// Debug: Log the request body before sending
+	if requestBody, err := json.MarshalIndent(mFADevicePolicy, "", "  "); err == nil {
+		tflog.Debug(ctx, "DEBUG: Request body for UpdateDeviceAuthenticationPolicy", map[string]interface{}{
+			"body": string(requestBody),
+		})
+	}
+
 	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
@@ -1825,9 +1915,77 @@ func (r *MFADevicePolicyDefaultResource) Read(ctx context.Context, req resource.
 		return
 	}
 
-	// Run the API call
-	response, d := FetchDefaultMFADevicePolicy(ctx, r.Client.MFAAPIClient, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), true)
+	// First, fetch the default policy to get its ID (list endpoint returns summarized data)
+	defaultPolicy, d := FetchDefaultMFADevicePolicy(ctx, r.Client.MFAAPIClient, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), true)
 	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Remove from state if resource is not found
+	if defaultPolicy == nil {
+		resp.State.RemoveResource(ctx)
+		return
+	}
+
+	// Get the policy ID from the default policy
+	policyID := defaultPolicy.GetId()
+
+	// DEBUG: Make a raw API call to capture the HTTP response body
+	debugReq := r.Client.MFAAPIClient.DeviceAuthenticationPolicyApi.ReadOneDeviceAuthenticationPolicy(ctx, data.EnvironmentId.ValueString(), policyID)
+	debugResp, debugHttpResp, debugErr := debugReq.Execute()
+	if debugErr == nil && debugHttpResp != nil {
+		// Read and log the raw response body
+		if debugHttpResp.Body != nil {
+			bodyBytes, readErr := io.ReadAll(debugHttpResp.Body)
+			if readErr == nil {
+				tflog.Debug(ctx, "DEBUG: Raw HTTP response body", map[string]interface{}{
+					"body": string(bodyBytes),
+				})
+			}
+		}
+		// Log the raw applications from the parsed response
+		if mobile, mobileOk := debugResp.GetMobileOk(); mobileOk && mobile != nil {
+			apps, appsOk := mobile.GetApplicationsOk()
+			tflog.Debug(ctx, "DEBUG: Raw API applications data", map[string]interface{}{
+				"apps_ok":    appsOk,
+				"apps_count": len(apps),
+			})
+			for i, app := range apps {
+				biometricsVal, biometricsOk := app.GetBiometricsEnabledOk()
+				typeVal, typeOk := app.GetTypeOk()
+				nrdcVal, nrdcOk := app.GetNewRequestDurationConfigurationOk()
+				tflog.Debug(ctx, fmt.Sprintf("DEBUG: Application %d raw data", i), map[string]interface{}{
+					"id":                    app.GetId(),
+					"biometrics_enabled":    biometricsVal,
+					"biometrics_enabled_ok": biometricsOk,
+					"biometrics_ptr_nil":    biometricsVal == nil,
+					"type":                  typeVal,
+					"type_ok":               typeOk,
+					"type_ptr_nil":          typeVal == nil,
+					"nrdc":                  nrdcVal,
+					"nrdc_ok":               nrdcOk,
+					"nrdc_ptr_nil":          nrdcVal == nil,
+				})
+			}
+		}
+	}
+
+	// Now fetch the full policy details using ReadOneDeviceAuthenticationPolicy
+	// The list endpoint doesn't return all fields (e.g., biometrics_enabled, new_request_duration_configuration, type)
+	var response *mfa.DeviceAuthenticationPolicy
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
+		ctx,
+
+		func() (any, *http.Response, error) {
+			fO, fR, fErr := r.Client.MFAAPIClient.DeviceAuthenticationPolicyApi.ReadOneDeviceAuthenticationPolicy(ctx, data.EnvironmentId.ValueString(), policyID).Execute()
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+		},
+		"ReadOneDeviceAuthenticationPolicy-Default",
+		legacysdk.CustomErrorResourceNotFoundWarning,
+		sdk.DefaultCreateReadRetryable,
+		&response,
+	)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -2216,7 +2374,7 @@ func (p *MFADevicePolicyDefaultResourceModel) expand(ctx context.Context, apiCli
 	if diags.HasError() {
 		return mfa.DeviceAuthenticationPolicy{}, diags
 	}
-	mobile, d := expandMobileForDefault(ctx, mobilePlan, apiClient, p.EnvironmentId.ValueString())
+	mobile, d := expandMobileForDefault(ctx, mobilePlan, apiClient, p.EnvironmentId.ValueString(), policyType)
 	diags.Append(d...)
 	if diags.HasError() {
 		return mfa.DeviceAuthenticationPolicy{}, diags
@@ -2580,7 +2738,7 @@ func (p *MFADevicePolicyPingIDDeviceOtpResourceModel) expand(ctx context.Context
 	return otp, diags
 }
 
-func expandMobileForDefault(ctx context.Context, mobilePlan MFADevicePolicyDefaultMobileResourceModel, apiClient *management.APIClient, environmentID string) (*mfa.DeviceAuthenticationPolicyCommonMobile, diag.Diagnostics) {
+func expandMobileForDefault(ctx context.Context, mobilePlan MFADevicePolicyDefaultMobileResourceModel, apiClient *management.APIClient, environmentID string, policyType string) (*mfa.DeviceAuthenticationPolicyCommonMobile, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	// Handle OTP (required)
@@ -2618,7 +2776,6 @@ func expandMobileForDefault(ctx context.Context, mobilePlan MFADevicePolicyDefau
 		mobile.SetPromptForNicknameOnPairing(mobilePlan.PromptForNicknameOnPairing.ValueBool())
 	}
 
-	// Handle applications - just pass through the IDs, let the API handle the rest
 	if !mobilePlan.Applications.IsNull() && !mobilePlan.Applications.IsUnknown() {
 		var planApps []MFADevicePolicyDefaultMobileApplicationResourceModel
 		diags.Append(mobilePlan.Applications.ElementsAs(ctx, &planApps, false)...)
@@ -2628,162 +2785,238 @@ func expandMobileForDefault(ctx context.Context, mobilePlan MFADevicePolicyDefau
 
 		applications := make([]mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInner, 0, len(planApps))
 		for _, appPlan := range planApps {
-			// Create application with just the ID - API will fill in the rest
+
 			app := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInner(appPlan.Id.ValueString())
+
+			if !appPlan.AutoEnrolment.IsNull() && !appPlan.AutoEnrolment.IsUnknown() {
+				var autoEnrolPlan MFADevicePolicyMobileApplicationAutoEnrolmentResourceModel
+				diags.Append(appPlan.AutoEnrolment.As(ctx, &autoEnrolPlan, basetypes.ObjectAsOptions{
+					UnhandledNullAsEmpty:    false,
+					UnhandledUnknownAsEmpty: false,
+				})...)
+				if !diags.HasError() {
+					autoEnrol := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerAutoEnrollment(autoEnrolPlan.Enabled.ValueBool())
+					app.SetAutoEnrollment(*autoEnrol)
+				}
+			}
+
+			if !appPlan.BiometricsEnabled.IsNull() && !appPlan.BiometricsEnabled.IsUnknown() {
+				app.SetBiometricsEnabled(appPlan.BiometricsEnabled.ValueBool())
+			}
+
+			if !appPlan.DeviceAuthorization.IsNull() && !appPlan.DeviceAuthorization.IsUnknown() {
+				var devAuthPlan MFADevicePolicyMobileApplicationDeviceAuthorizationResourceModel
+				diags.Append(appPlan.DeviceAuthorization.As(ctx, &devAuthPlan, basetypes.ObjectAsOptions{
+					UnhandledNullAsEmpty:    false,
+					UnhandledUnknownAsEmpty: false,
+				})...)
+				if !diags.HasError() {
+					devAuth := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerDeviceAuthorization(devAuthPlan.Enabled.ValueBool())
+					if !devAuthPlan.ExtraVerification.IsNull() && !devAuthPlan.ExtraVerification.IsUnknown() {
+						devAuth.SetExtraVerification(mfa.EnumMFADevicePolicyMobileExtraVerification(devAuthPlan.ExtraVerification.ValueString()))
+					}
+					app.SetDeviceAuthorization(*devAuth)
+				}
+			}
+
+			if !appPlan.IntegrityDetection.IsNull() && !appPlan.IntegrityDetection.IsUnknown() {
+				app.SetIntegrityDetection(mfa.EnumMFADevicePolicyMobileIntegrityDetection(appPlan.IntegrityDetection.ValueString()))
+			}
+
+			// For PingID policies, we must send the type to get PingID-specific fields back from the API
+			tflog.Debug(ctx, "DEBUG: Application type value in expand", map[string]interface{}{
+				"app_id":          appPlan.Id.ValueString(),
+				"policy_type":     policyType,
+				"type_value":      appPlan.Type.ValueString(),
+				"type_is_null":    appPlan.Type.IsNull(),
+				"type_is_unknown": appPlan.Type.IsUnknown(),
+			})
+			// Only send type for PingID policies - the API will reject it for PingOne MFA policies
+			if policyType == "pingid" && !appPlan.Type.IsNull() && !appPlan.Type.IsUnknown() {
+				app.SetType(mfa.EnumPingIDApplicationType(appPlan.Type.ValueString()))
+			}
+
+			if !appPlan.PairingDisabled.IsNull() && !appPlan.PairingDisabled.IsUnknown() {
+				app.SetPairingDisabled(appPlan.PairingDisabled.ValueBool())
+			}
+
+			if !appPlan.Otp.IsNull() && !appPlan.Otp.IsUnknown() {
+				var otpPlan MFADevicePolicyDefaultMobileApplicationOtpResourceModel
+				diags.Append(appPlan.Otp.As(ctx, &otpPlan, basetypes.ObjectAsOptions{
+					UnhandledNullAsEmpty:    false,
+					UnhandledUnknownAsEmpty: false,
+				})...)
+				if !diags.HasError() {
+					otp := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerOtp(otpPlan.Enabled.ValueBool())
+					app.SetOtp(*otp)
+				}
+			}
+
+			if !appPlan.PairingKeyLifetime.IsNull() && !appPlan.PairingKeyLifetime.IsUnknown() {
+				var pklPlan MFADevicePolicyTimePeriodResourceModel
+				diags.Append(appPlan.PairingKeyLifetime.As(ctx, &pklPlan, basetypes.ObjectAsOptions{
+					UnhandledNullAsEmpty:    false,
+					UnhandledUnknownAsEmpty: false,
+				})...)
+				if !diags.HasError() {
+					pairingKeyLifetime := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerPairingKeyLifetime(
+						pklPlan.Duration.ValueInt32(),
+						mfa.EnumTimeUnitPairingKeyLifetime(pklPlan.TimeUnit.ValueString()),
+					)
+					app.SetPairingKeyLifetime(*pairingKeyLifetime)
+				}
+			}
+
+			if !appPlan.Push.IsNull() && !appPlan.Push.IsUnknown() {
+				var pushPlan MFADevicePolicyDefaultMobileApplicationPushResourceModel
+				diags.Append(appPlan.Push.As(ctx, &pushPlan, basetypes.ObjectAsOptions{
+					UnhandledNullAsEmpty:    false,
+					UnhandledUnknownAsEmpty: false,
+				})...)
+				if !diags.HasError() {
+					push := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerPush(pushPlan.Enabled.ValueBool())
+
+					// Expand number_matching
+					if !pushPlan.NumberMatching.IsNull() && !pushPlan.NumberMatching.IsUnknown() {
+						var nmPlan MFADevicePolicyDefaultMobileApplicationPushNumberMatchingResourceModel
+						diags.Append(pushPlan.NumberMatching.As(ctx, &nmPlan, basetypes.ObjectAsOptions{
+							UnhandledNullAsEmpty:    false,
+							UnhandledUnknownAsEmpty: false,
+						})...)
+						if !diags.HasError() {
+							numberMatching := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerPushNumberMatching(nmPlan.Enabled.ValueBool())
+							push.SetNumberMatching(*numberMatching)
+						}
+					}
+
+					app.SetPush(*push)
+				}
+			}
+
+			if !appPlan.PushLimit.IsNull() && !appPlan.PushLimit.IsUnknown() {
+				var pushLimitPlan MFADevicePolicyMobileApplicationPushLimitResourceModel
+				diags.Append(appPlan.PushLimit.As(ctx, &pushLimitPlan, basetypes.ObjectAsOptions{
+					UnhandledNullAsEmpty:    false,
+					UnhandledUnknownAsEmpty: false,
+				})...)
+				if !diags.HasError() {
+					pushLimit := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerPushLimit()
+
+					if !pushLimitPlan.Count.IsNull() && !pushLimitPlan.Count.IsUnknown() {
+						pushLimit.SetCount(pushLimitPlan.Count.ValueInt32())
+					}
+
+					if !pushLimitPlan.LockDuration.IsNull() && !pushLimitPlan.LockDuration.IsUnknown() {
+						var lockDurationPlan MFADevicePolicyTimePeriodResourceModel
+						diags.Append(pushLimitPlan.LockDuration.As(ctx, &lockDurationPlan, basetypes.ObjectAsOptions{
+							UnhandledNullAsEmpty:    false,
+							UnhandledUnknownAsEmpty: false,
+						})...)
+						if !diags.HasError() {
+							lockDuration := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerPushLimitLockDuration(
+								lockDurationPlan.Duration.ValueInt32(),
+								mfa.EnumTimeUnit(lockDurationPlan.TimeUnit.ValueString()),
+							)
+							pushLimit.SetLockDuration(*lockDuration)
+						}
+					}
+
+					if !pushLimitPlan.TimePeriod.IsNull() && !pushLimitPlan.TimePeriod.IsUnknown() {
+						var timePeriodPlan MFADevicePolicyTimePeriodResourceModel
+						diags.Append(pushLimitPlan.TimePeriod.As(ctx, &timePeriodPlan, basetypes.ObjectAsOptions{
+							UnhandledNullAsEmpty:    false,
+							UnhandledUnknownAsEmpty: false,
+						})...)
+						if !diags.HasError() {
+							timePeriod := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerPushLimitTimePeriod(
+								timePeriodPlan.Duration.ValueInt32(),
+								mfa.EnumTimeUnit(timePeriodPlan.TimeUnit.ValueString()),
+							)
+							pushLimit.SetTimePeriod(*timePeriod)
+						}
+					}
+
+					app.SetPushLimit(*pushLimit)
+				}
+			}
+
+			if !appPlan.PushTimeout.IsNull() && !appPlan.PushTimeout.IsUnknown() {
+				var pushTimeoutPlan MFADevicePolicyTimePeriodResourceModel
+				diags.Append(appPlan.PushTimeout.As(ctx, &pushTimeoutPlan, basetypes.ObjectAsOptions{
+					UnhandledNullAsEmpty:    false,
+					UnhandledUnknownAsEmpty: false,
+				})...)
+				if !diags.HasError() {
+					pushTimeout := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerPushTimeout(
+						pushTimeoutPlan.Duration.ValueInt32(),
+						mfa.EnumTimeUnitPushTimeout(pushTimeoutPlan.TimeUnit.ValueString()),
+					)
+					app.SetPushTimeout(*pushTimeout)
+				}
+			}
+
+			if !appPlan.NewRequestDurationConfiguration.IsNull() && !appPlan.NewRequestDurationConfiguration.IsUnknown() {
+				var nrdcPlan MFADevicePolicyMobileApplicationNewRequestDurationConfigurationResourceModel
+				diags.Append(appPlan.NewRequestDurationConfiguration.As(ctx, &nrdcPlan, basetypes.ObjectAsOptions{
+					UnhandledNullAsEmpty:    false,
+					UnhandledUnknownAsEmpty: false,
+				})...)
+				if !diags.HasError() {
+					var deviceTimeoutPlan, totalTimeoutPlan MFADevicePolicyMobileApplicationNewRequestDurationConfigurationTimeoutResourceModel
+
+					diags.Append(nrdcPlan.DeviceTimeout.As(ctx, &deviceTimeoutPlan, basetypes.ObjectAsOptions{
+						UnhandledNullAsEmpty:    false,
+						UnhandledUnknownAsEmpty: false,
+					})...)
+
+					diags.Append(nrdcPlan.TotalTimeout.As(ctx, &totalTimeoutPlan, basetypes.ObjectAsOptions{
+						UnhandledNullAsEmpty:    false,
+						UnhandledUnknownAsEmpty: false,
+					})...)
+
+					if !diags.HasError() {
+						deviceTimeout := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerNewRequestDurationConfigurationDeviceTimeout(
+							deviceTimeoutPlan.Duration.ValueInt32(),
+							mfa.EnumTimeUnitSeconds(deviceTimeoutPlan.TimeUnit.ValueString()),
+						)
+						totalTimeout := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerNewRequestDurationConfigurationTotalTimeout(
+							totalTimeoutPlan.Duration.ValueInt32(),
+							mfa.EnumTimeUnitSeconds(totalTimeoutPlan.TimeUnit.ValueString()),
+						)
+						newRequestDurationConfig := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerNewRequestDurationConfiguration(*deviceTimeout, *totalTimeout)
+						app.SetNewRequestDurationConfiguration(*newRequestDurationConfig)
+					}
+				}
+			}
+
+			if !appPlan.IpPairingConfiguration.IsNull() && !appPlan.IpPairingConfiguration.IsUnknown() {
+				ipConfig := mfa.NewDeviceAuthenticationPolicyCommonMobileIpPairingConfiguration()
+
+				ipConfigAttrs := appPlan.IpPairingConfiguration.Attributes()
+
+				if anyIPAttr, exists := ipConfigAttrs["any_ip_address"]; exists {
+					if anyIPVal, ok := anyIPAttr.(types.Bool); ok && !anyIPVal.IsNull() && !anyIPVal.IsUnknown() {
+						ipConfig.SetAnyIPAdress(anyIPVal.ValueBool())
+					}
+				}
+
+				if ipListAttr, exists := ipConfigAttrs["only_these_ip_addresses"]; exists {
+					if ipListVal, ok := ipListAttr.(types.List); ok && !ipListVal.IsNull() && !ipListVal.IsUnknown() {
+						var ipAddresses []string
+						diags.Append(ipListVal.ElementsAs(ctx, &ipAddresses, false)...)
+						if !diags.HasError() && len(ipAddresses) > 0 {
+							ipConfig.SetOnlyTheseIpAddresses(ipAddresses)
+						}
+					}
+				}
+
+				app.SetIpPairingConfiguration(*ipConfig)
+			}
+
 			applications = append(applications, *app)
 		}
 
 		mobile.SetApplications(applications)
-	}
-
-	if !mobilePlan.IpPairingConfiguration.IsNull() && !mobilePlan.IpPairingConfiguration.IsUnknown() {
-		ipConfig := mfa.NewDeviceAuthenticationPolicyCommonMobileIpPairingConfiguration()
-
-		ipConfigAttrs := mobilePlan.IpPairingConfiguration.Attributes()
-
-		if anyIPAttr, exists := ipConfigAttrs["any_ip_address"]; exists {
-			if anyIPVal, ok := anyIPAttr.(types.Bool); ok && !anyIPVal.IsNull() && !anyIPVal.IsUnknown() {
-				ipConfig.SetAnyIPAdress(anyIPVal.ValueBool())
-			}
-		}
-
-		if ipListAttr, exists := ipConfigAttrs["only_these_ip_addresses"]; exists {
-			if ipListVal, ok := ipListAttr.(types.List); ok && !ipListVal.IsNull() && !ipListVal.IsUnknown() {
-				var ipAddresses []string
-				diags.Append(ipListVal.ElementsAs(ctx, &ipAddresses, false)...)
-				if !diags.HasError() && len(ipAddresses) > 0 {
-					ipConfig.SetOnlyTheseIpAddresses(ipAddresses)
-				}
-			}
-		}
-
-		mobile.SetIpPairingConfiguration(*ipConfig)
-	}
-
-	// Add number_matching and biometrics_enabled handling for applications
-	if !mobilePlan.Applications.IsNull() && !mobilePlan.Applications.IsUnknown() {
-		var planApps []types.Object
-		diags.Append(mobilePlan.Applications.ElementsAs(ctx, &planApps, false)...)
-		if diags.HasError() {
-			return mobile, diags
-		}
-
-		mobileApps := mobile.GetApplications()
-
-		// Match plan apps to API apps by ID
-		for _, planAppObj := range planApps {
-			planAppAttrs := planAppObj.Attributes()
-
-			// Get the ID from the plan
-			planAppID, ok := planAppAttrs["id"].(types.String)
-			if !ok || planAppID.IsNull() || planAppID.IsUnknown() {
-				continue
-			}
-
-			// Find matching app in API response
-			for i, app := range mobileApps {
-				if appId, ok := app.GetIdOk(); ok && appId != nil && *appId == planAppID.ValueString() {
-
-					// Check for biometrics_enabled
-					if biometricsAttr, exists := planAppAttrs["biometrics_enabled"]; exists {
-						biometricsVal, ok := biometricsAttr.(types.Bool)
-						if ok && !biometricsVal.IsNull() && !biometricsVal.IsUnknown() {
-							mobileApps[i].SetBiometricsEnabled(biometricsVal.ValueBool())
-						}
-					}
-
-					// Check for push.number_matching
-					if pushAttr, exists := planAppAttrs["push"]; exists {
-						pushObj, ok := pushAttr.(types.Object)
-						if ok && !pushObj.IsNull() && !pushObj.IsUnknown() {
-							pushAttrs := pushObj.Attributes()
-
-							if nmAttr, exists := pushAttrs["number_matching"]; exists {
-								nmObj, ok := nmAttr.(types.Object)
-								if ok && !nmObj.IsNull() && !nmObj.IsUnknown() {
-									nmAttrs := nmObj.Attributes()
-
-									if enabledAttr, exists := nmAttrs["enabled"]; exists {
-										enabledVal, ok := enabledAttr.(types.Bool)
-										if ok && !enabledVal.IsNull() && !enabledVal.IsUnknown() {
-											// Set number_matching on the push object
-											if push, ok := mobileApps[i].GetPushOk(); ok && push != nil {
-												numberMatching := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerPushNumberMatching(
-													enabledVal.ValueBool(),
-												)
-												push.SetNumberMatching(*numberMatching)
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-
-					// Check for new_request_duration_configuration
-					if nrdcAttr, exists := planAppAttrs["new_request_duration_configuration"]; exists {
-						nrdcObj, ok := nrdcAttr.(types.Object)
-						if ok && !nrdcObj.IsNull() && !nrdcObj.IsUnknown() {
-							nrdcAttrs := nrdcObj.Attributes()
-
-							var deviceTimeoutDuration int32
-							var deviceTimeoutTimeUnit mfa.EnumTimeUnitSeconds = mfa.ENUMTIMEUNITSECONDS_SECONDS
-							var totalTimeoutDuration int32
-							var totalTimeoutTimeUnit mfa.EnumTimeUnitSeconds = mfa.ENUMTIMEUNITSECONDS_SECONDS
-
-							// Parse device_timeout
-							if deviceTimeoutAttr, exists := nrdcAttrs["device_timeout"]; exists {
-								deviceTimeoutObj, ok := deviceTimeoutAttr.(types.Object)
-								if ok && !deviceTimeoutObj.IsNull() && !deviceTimeoutObj.IsUnknown() {
-									deviceTimeoutAttrs := deviceTimeoutObj.Attributes()
-
-									if durationAttr, exists := deviceTimeoutAttrs["duration"]; exists {
-										if durationVal, ok := durationAttr.(types.Int32); ok && !durationVal.IsNull() && !durationVal.IsUnknown() {
-											deviceTimeoutDuration = durationVal.ValueInt32()
-										}
-									}
-
-									if timeUnitAttr, exists := deviceTimeoutAttrs["time_unit"]; exists {
-										if timeUnitVal, ok := timeUnitAttr.(types.String); ok && !timeUnitVal.IsNull() && !timeUnitVal.IsUnknown() {
-											deviceTimeoutTimeUnit = mfa.EnumTimeUnitSeconds(timeUnitVal.ValueString())
-										}
-									}
-								}
-							}
-
-							// Parse total_timeout
-							if totalTimeoutAttr, exists := nrdcAttrs["total_timeout"]; exists {
-								totalTimeoutObj, ok := totalTimeoutAttr.(types.Object)
-								if ok && !totalTimeoutObj.IsNull() && !totalTimeoutObj.IsUnknown() {
-									totalTimeoutAttrs := totalTimeoutObj.Attributes()
-
-									if durationAttr, exists := totalTimeoutAttrs["duration"]; exists {
-										if durationVal, ok := durationAttr.(types.Int32); ok && !durationVal.IsNull() && !durationVal.IsUnknown() {
-											totalTimeoutDuration = durationVal.ValueInt32()
-										}
-									}
-
-									if timeUnitAttr, exists := totalTimeoutAttrs["time_unit"]; exists {
-										if timeUnitVal, ok := timeUnitAttr.(types.String); ok && !timeUnitVal.IsNull() && !timeUnitVal.IsUnknown() {
-											totalTimeoutTimeUnit = mfa.EnumTimeUnitSeconds(timeUnitVal.ValueString())
-										}
-									}
-								}
-							}
-
-							// Create the configuration using SDK types
-							deviceTimeout := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerNewRequestDurationConfigurationDeviceTimeout(deviceTimeoutDuration, deviceTimeoutTimeUnit)
-							totalTimeout := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerNewRequestDurationConfigurationTotalTimeout(totalTimeoutDuration, totalTimeoutTimeUnit)
-							newRequestDurationConfig := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerNewRequestDurationConfiguration(*deviceTimeout, *totalTimeout)
-							mobileApps[i].SetNewRequestDurationConfiguration(*newRequestDurationConfig)
-						}
-					}
-					break // Found matching app, move to next plan app
-				}
-			}
-		}
-
-		mobile.SetApplications(mobileApps)
 	}
 
 	return mobile, diags
@@ -2834,7 +3067,8 @@ func (p *MFADevicePolicyDefaultResourceModel) toState(apiObject *mfa.DeviceAuthe
 	p.Email, d = toStateMfaDevicePolicyEmail(apiObject.GetEmailOk())
 	diags.Append(d...)
 
-	p.Mobile, d = toStateMfaDevicePolicyMobileForDefault(apiObject.GetMobileOk())
+	mobileApiObj, mobileOk := apiObject.GetMobileOk()
+	p.Mobile, d = toStateMfaDevicePolicyMobileForDefault(mobileApiObj, mobileOk, p.Mobile, policyType)
 	diags.Append(d...)
 
 	p.Totp, d = toStateMfaDevicePolicyTotp(apiObject.GetTotpOk())
@@ -2974,14 +3208,25 @@ func toStateMfaDevicePolicyOathToken(apiObject *mfa.DeviceAuthenticationPolicyOa
 }
 
 // Mobile toState functions for default resource with number_matching support
-func toStateMfaDevicePolicyMobileForDefault(apiObject *mfa.DeviceAuthenticationPolicyCommonMobile, ok bool) (types.Object, diag.Diagnostics) {
+// priorMobile contains the prior state's mobile object, used to preserve values that the API doesn't return
+func toStateMfaDevicePolicyMobileForDefault(apiObject *mfa.DeviceAuthenticationPolicyCommonMobile, ok bool, priorMobile types.Object, policyType string) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
 		return types.ObjectNull(MFADevicePolicyDefaultMobileTFObjectTypes), nil
 	}
 
-	applications, d := toStateMfaDevicePolicyMobileApplicationsForDefault(apiObject.GetApplicationsOk())
+	// Extract prior applications from the prior mobile state
+	var priorApplications types.List
+	if !priorMobile.IsNull() && !priorMobile.IsUnknown() {
+		priorMobileAttrs := priorMobile.Attributes()
+		if apps, ok := priorMobileAttrs["applications"].(types.List); ok {
+			priorApplications = apps
+		}
+	}
+
+	appsApiObj, appsOk := apiObject.GetApplicationsOk()
+	applications, d := toStateMfaDevicePolicyMobileApplicationsForDefault(appsApiObj, appsOk, priorApplications, policyType)
 	diags.Append(d...)
 	if diags.HasError() {
 		return types.ObjectNull(MFADevicePolicyDefaultMobileTFObjectTypes), diags
@@ -2993,32 +3238,9 @@ func toStateMfaDevicePolicyMobileForDefault(apiObject *mfa.DeviceAuthenticationP
 		return types.ObjectNull(MFADevicePolicyDefaultMobileTFObjectTypes), diags
 	}
 
-	ipPairingConfiguration := types.ObjectNull(MFADevicePolicyMobileIpPairingConfigurationTFObjectTypes)
-	if ipPairingConfigAPI, ok := apiObject.GetIpPairingConfigurationOk(); ok && ipPairingConfigAPI != nil {
-		var ipAddressesList types.List
-		if ipAddresses, ipOk := ipPairingConfigAPI.GetOnlyTheseIpAddressesOk(); ipOk && ipAddresses != nil && len(ipAddresses) > 0 {
-			ipElements := make([]attr.Value, len(ipAddresses))
-			for i, ip := range ipAddresses {
-				ipElements[i] = types.StringValue(ip)
-			}
-			ipAddressesList, d = types.ListValue(types.StringType, ipElements)
-			diags.Append(d...)
-		} else {
-			ipAddressesList = types.ListNull(types.StringType)
-		}
-
-		ipPairingConfigMap := map[string]attr.Value{
-			"any_ip_address":          framework.BoolOkToTF(ipPairingConfigAPI.GetAnyIPAdressOk()),
-			"only_these_ip_addresses": ipAddressesList,
-		}
-		ipPairingConfiguration, d = types.ObjectValue(MFADevicePolicyMobileIpPairingConfigurationTFObjectTypes, ipPairingConfigMap)
-		diags.Append(d...)
-	}
-
 	o := map[string]attr.Value{
 		"applications":                   applications,
 		"enabled":                        framework.BoolOkToTF(apiObject.GetEnabledOk()),
-		"ip_pairing_configuration":       ipPairingConfiguration,
 		"otp":                            otp,
 		"prompt_for_nickname_on_pairing": framework.BoolOkToTF(apiObject.GetPromptForNicknameOnPairingOk()),
 	}
@@ -3029,7 +3251,11 @@ func toStateMfaDevicePolicyMobileForDefault(apiObject *mfa.DeviceAuthenticationP
 	return objValue, diags
 }
 
-func toStateMfaDevicePolicyMobileApplicationsForDefault(apiObject []mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInner, ok bool) (types.List, diag.Diagnostics) {
+// toStateMfaDevicePolicyMobileApplicationsForDefault converts API mobile applications to Terraform state.
+// priorApplications contains the prior state, used to preserve values that the API doesn't return
+// (specifically: biometrics_enabled, type, new_request_duration_configuration for PingID applications).
+// policyType is used to conditionally ignore fields that conflict with the policy type.
+func toStateMfaDevicePolicyMobileApplicationsForDefault(apiObject []mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInner, ok bool, priorApplications types.List, policyType string) (types.List, diag.Diagnostics) {
 	var diags, d diag.Diagnostics
 
 	tfObjType := types.ObjectType{AttrTypes: MFADevicePolicyDefaultMobileApplicationTFObjectTypes}
@@ -3038,19 +3264,56 @@ func toStateMfaDevicePolicyMobileApplicationsForDefault(apiObject []mfa.DeviceAu
 		return types.ListNull(tfObjType), nil
 	}
 
+	isPingID := (policyType == POLICY_TYPE_PINGID)
+
+	// Build a map of prior state applications by ID for quick lookup
+	priorAppsMap := make(map[string]map[string]attr.Value)
+	if !priorApplications.IsNull() && !priorApplications.IsUnknown() {
+		priorElements := priorApplications.Elements()
+		for _, elem := range priorElements {
+			if obj, ok := elem.(types.Object); ok && !obj.IsNull() && !obj.IsUnknown() {
+				attrs := obj.Attributes()
+				if idAttr, ok := attrs["id"].(types.String); ok && !idAttr.IsNull() && !idAttr.IsUnknown() {
+					priorAppsMap[idAttr.ValueString()] = attrs
+				}
+			}
+		}
+	}
+
 	objectList := make([]attr.Value, 0, len(apiObject))
 	for _, application := range apiObject {
+		// Debug: log what the API returned for each application
+		biometricsVal, biometricsOk := application.GetBiometricsEnabledOk()
+		typeVal, typeOk := application.GetTypeOk()
+		nrdcVal, nrdcOk := application.GetNewRequestDurationConfigurationOk()
+		tflog.Debug(context.Background(), "Mobile application from API", map[string]interface{}{
+			"id":                                     application.GetId(),
+			"biometrics_enabled_value":               biometricsVal,
+			"biometrics_enabled_ok":                  biometricsOk,
+			"type_value":                             typeVal,
+			"type_ok":                                typeOk,
+			"new_request_duration_configuration_ok":  nrdcOk,
+			"new_request_duration_configuration_val": nrdcVal,
+		})
 
-		autoEnrolment, d := toStateMfaDevicePolicyMobileApplicationsAutoEnrolmentForDefault(application.GetAutoEnrollmentOk())
-		diags.Append(d...)
-		if diags.HasError() {
-			return types.ListNull(tfObjType), diags
-		}
+		// For PingID policies, auto_enrollment and device_authorization conflict - keep them null
+		var autoEnrolment types.Object
+		var deviceAuthorization types.Object
+		if isPingID {
+			autoEnrolment = types.ObjectNull(MFADevicePolicyMobileApplicationAutoEnrolmentTFObjectTypes)
+			deviceAuthorization = types.ObjectNull(MFADevicePolicyMobileApplicationDeviceAuthorizationTFObjectTypes)
+		} else {
+			autoEnrolment, d = toStateMfaDevicePolicyMobileApplicationsAutoEnrolmentForDefault(application.GetAutoEnrollmentOk())
+			diags.Append(d...)
+			if diags.HasError() {
+				return types.ListNull(tfObjType), diags
+			}
 
-		deviceAuthorization, d := toStateMfaDevicePolicyMobileApplicationsDeviceAuthorizationForDefault(application.GetDeviceAuthorizationOk())
-		diags.Append(d...)
-		if diags.HasError() {
-			return types.ListNull(tfObjType), diags
+			deviceAuthorization, d = toStateMfaDevicePolicyMobileApplicationsDeviceAuthorizationForDefault(application.GetDeviceAuthorizationOk())
+			diags.Append(d...)
+			if diags.HasError() {
+				return types.ListNull(tfObjType), diags
+			}
 		}
 
 		otp, d := toStateMfaDevicePolicyMobileApplicationsOtpForDefault(application.GetOtpOk())
@@ -3077,24 +3340,109 @@ func toStateMfaDevicePolicyMobileApplicationsForDefault(apiObject []mfa.DeviceAu
 			return types.ListNull(tfObjType), diags
 		}
 
-		pushTimeout, d := toStateMfaDevicePolicyMobileApplicationsPushTimeoutForDefault(application.GetPushTimeoutOk())
-		diags.Append(d...)
-		if diags.HasError() {
-			return types.ListNull(tfObjType), diags
-		}
-
 		newRequestDurationConfiguration, d := toStateMfaDevicePolicyMobileApplicationsNewRequestDurationConfigurationForDefault(application.GetNewRequestDurationConfigurationOk())
 		diags.Append(d...)
 		if diags.HasError() {
 			return types.ListNull(tfObjType), diags
 		}
 
+		// Handle policy-type specific fields
+		// For PingID: biometrics_enabled, type, new_request_duration_configuration, ip_pairing_configuration are valid
+		// For PingOne MFA: auto_enrollment, device_authorization, push_timeout are valid
+		var biometricsEnabled types.Bool
+		var typeAttr types.String
+		var pushTimeout types.Object
+		var ipPairingConfiguration types.Object
+
+		appID := application.GetId()
+
+		if isPingID {
+			// For PingID policies, the API may not return biometrics_enabled, type, or new_request_duration_configuration
+			// Preserve these values from the prior state if API didn't return them
+			biometricsEnabled = framework.BoolOkToTF(application.GetBiometricsEnabledOk())
+			typeAttr = framework.EnumOkToTF(application.GetTypeOk())
+
+			if priorAttrs, hasPrior := priorAppsMap[appID]; hasPrior {
+				// If API returned null for biometrics_enabled, use prior state value
+				if biometricsEnabled.IsNull() {
+					if priorBiometrics, ok := priorAttrs["biometrics_enabled"].(types.Bool); ok && !priorBiometrics.IsNull() && !priorBiometrics.IsUnknown() {
+						biometricsEnabled = priorBiometrics
+						tflog.Debug(context.Background(), "Preserving biometrics_enabled from prior state", map[string]interface{}{
+							"app_id": appID,
+							"value":  priorBiometrics.ValueBool(),
+						})
+					}
+				}
+
+				// If API returned null for type, use prior state value
+				if typeAttr.IsNull() {
+					if priorType, ok := priorAttrs["type"].(types.String); ok && !priorType.IsNull() && !priorType.IsUnknown() {
+						typeAttr = priorType
+						tflog.Debug(context.Background(), "Preserving type from prior state", map[string]interface{}{
+							"app_id": appID,
+							"value":  priorType.ValueString(),
+						})
+					}
+				}
+
+				// If API returned null for new_request_duration_configuration, use prior state value
+				if newRequestDurationConfiguration.IsNull() {
+					if priorNRDC, ok := priorAttrs["new_request_duration_configuration"].(types.Object); ok && !priorNRDC.IsNull() && !priorNRDC.IsUnknown() {
+						newRequestDurationConfiguration = priorNRDC
+						tflog.Debug(context.Background(), "Preserving new_request_duration_configuration from prior state", map[string]interface{}{
+							"app_id": appID,
+						})
+					}
+				}
+			}
+
+			// push_timeout conflicts with PingID - keep it null
+			pushTimeout = types.ObjectNull(MFADevicePolicyTimePeriodTFObjectTypes)
+
+			// Handle ip_pairing_configuration from API response (PingID only)
+			ipPairingConfiguration = types.ObjectNull(MFADevicePolicyMobileIpPairingConfigurationTFObjectTypes)
+			if ipPairingConfigAPI, ipOk := application.GetIpPairingConfigurationOk(); ipOk && ipPairingConfigAPI != nil {
+				var ipAddressesList types.List
+				if ipAddresses, addrOk := ipPairingConfigAPI.GetOnlyTheseIpAddressesOk(); addrOk && ipAddresses != nil && len(ipAddresses) > 0 {
+					ipElements := make([]attr.Value, len(ipAddresses))
+					for i, ip := range ipAddresses {
+						ipElements[i] = types.StringValue(ip)
+					}
+					ipAddressesList, d = types.ListValue(types.StringType, ipElements)
+					diags.Append(d...)
+				} else {
+					ipAddressesList = types.ListNull(types.StringType)
+				}
+
+				ipPairingConfigMap := map[string]attr.Value{
+					"any_ip_address":          framework.BoolOkToTF(ipPairingConfigAPI.GetAnyIPAdressOk()),
+					"only_these_ip_addresses": ipAddressesList,
+				}
+				ipPairingConfiguration, d = types.ObjectValue(MFADevicePolicyMobileIpPairingConfigurationTFObjectTypes, ipPairingConfigMap)
+				diags.Append(d...)
+			}
+		} else {
+			// For PingOne MFA policies, PingID-specific fields should be null
+			biometricsEnabled = types.BoolNull()
+			typeAttr = types.StringNull()
+			newRequestDurationConfiguration = types.ObjectNull(MFADevicePolicyMobileApplicationNewRequestDurationConfigurationTFObjectTypes)
+			ipPairingConfiguration = types.ObjectNull(MFADevicePolicyMobileIpPairingConfigurationTFObjectTypes)
+
+			// push_timeout is valid for PingOne MFA
+			pushTimeout, d = toStateMfaDevicePolicyMobileApplicationsPushTimeoutForDefault(application.GetPushTimeoutOk())
+			diags.Append(d...)
+			if diags.HasError() {
+				return types.ListNull(tfObjType), diags
+			}
+		}
+
 		o := map[string]attr.Value{
-			"id":                                 types.StringValue(application.GetId()),
+			"id":                                 types.StringValue(appID),
 			"auto_enrollment":                    autoEnrolment,
-			"biometrics_enabled":                 framework.BoolOkToTF(application.GetBiometricsEnabledOk()),
+			"biometrics_enabled":                 biometricsEnabled,
 			"device_authorization":               deviceAuthorization,
 			"integrity_detection":                framework.EnumOkToTF(application.GetIntegrityDetectionOk()),
+			"ip_pairing_configuration":           ipPairingConfiguration,
 			"otp":                                otp,
 			"pairing_disabled":                   framework.BoolOkToTF(application.GetPairingDisabledOk()),
 			"pairing_key_lifetime":               pairingKeyLifetime,
@@ -3102,7 +3450,7 @@ func toStateMfaDevicePolicyMobileApplicationsForDefault(apiObject []mfa.DeviceAu
 			"push_limit":                         pushLimit,
 			"push_timeout":                       pushTimeout,
 			"new_request_duration_configuration": newRequestDurationConfiguration,
-			"type":                               framework.EnumOkToTF(application.GetTypeOk()),
+			"type":                               typeAttr,
 		}
 
 		objValue, d := types.ObjectValue(MFADevicePolicyDefaultMobileApplicationTFObjectTypes, o)
