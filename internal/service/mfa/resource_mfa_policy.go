@@ -9,7 +9,6 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -568,7 +567,7 @@ func resourceMFAPolicyDelete(ctx context.Context, d *schema.ResourceData, meta i
 			if p1Error != nil && r.StatusCode == http.StatusConflict {
 				if details, ok := p1Error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
 					if target, ok := details[0].GetTargetOk(); ok && details[0].GetCode() == "INVALID_VALUE" && *target == "signOnPolicies" {
-						tflog.Warn(ctx, "Conflict detected when deleting MFA policy.  This is likely due to the policy being referenced by a sign-on policy.  Retrying..")
+						// tflog.Warn(ctx, "Conflict detected when deleting MFA policy.  This is likely due to the policy being referenced by a sign-on policy.  Retrying..")
 
 						return true
 					}

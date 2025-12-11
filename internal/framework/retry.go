@@ -5,13 +5,11 @@ package framework
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/url"
 	"regexp"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/pingidentity/pingone-go-client/pingone"
 )
@@ -26,7 +24,7 @@ var (
 			// Permissions may not have propagated by this point
 			m, err := regexp.MatchString("^The request could not be completed. You do not have access to this resource.", p1error.GetMessage())
 			if err == nil && m {
-				tflog.Warn(ctx, "Insufficient PingOne privileges detected")
+				// // tflog.Warn(ctx, "Insufficient PingOne privileges detected")
 				return true
 			}
 			if err != nil {
@@ -54,9 +52,9 @@ func RetryWrapper(ctx context.Context, timeout time.Duration, f SDKInterfaceFunc
 
 			switch t := err.(type) {
 			case pingone.APIError:
-				tflog.Error(ctx, fmt.Sprintf("Error when calling `%s`: %v\n\nResponse code: %d\nResponse content-type: %s\nFull response body: %+v", requestID, t.Error(), r.StatusCode, r.Header.Get("Content-Type"), r.Body))
+				// // tflog.Error(ctx, fmt.Sprintf("Error when calling `%s`: %v\n\nResponse code: %d\nResponse content-type: %s\nFull response body: %+v", requestID, t.Error(), r.StatusCode, r.Header.Get("Content-Type"), r.Body))
 			case *url.Error:
-				tflog.Warn(ctx, fmt.Sprintf("Detected HTTP error %s\n\nResponse code: %d\nResponse content-type: %s", t.Err.Error(), r.StatusCode, r.Header.Get("Content-Type")))
+				// // tflog.Warn(ctx, fmt.Sprintf("Detected HTTP error %s\n\nResponse code: %d\nResponse content-type: %s", t.Err.Error(), r.StatusCode, r.Header.Get("Content-Type")))
 			default:
 				// Attempt to marshal the error into pingone.GeneralError
 				errorUnmarshaled := false
@@ -70,12 +68,12 @@ func RetryWrapper(ctx context.Context, timeout time.Duration, f SDKInterfaceFunc
 					}
 				}
 				if !errorUnmarshaled {
-					tflog.Warn(ctx, fmt.Sprintf("Detected unknown error (SDK) %+v", t))
+					// // tflog.Warn(ctx, fmt.Sprintf("Detected unknown error (SDK) %+v", t))
 				}
 			}
 
 			if errorModel != nil && isRetryable != nil && isRetryable(ctx, r, errorModel) {
-				tflog.Warn(ctx, "Retrying ... ")
+				// // tflog.Warn(ctx, "Retrying ... ")
 				return retry.RetryableError(err)
 			}
 

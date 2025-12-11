@@ -25,7 +25,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -744,11 +743,11 @@ func (r *KeyResource) Delete(ctx context.Context, req resource.DeleteRequest, re
 				// It seems the key might not release itself immediately
 				m, err := regexp.MatchString("The Key must not be in use", p1error.GetMessage())
 				if err == nil && m {
-					tflog.Warn(ctx, "Key in use detected")
+					// tflog.Warn(ctx, "Key in use detected")
 					return true
 				}
 				if err != nil {
-					tflog.Warn(ctx, "Cannot match error string for retry (DeleteKey)")
+					// tflog.Warn(ctx, "Cannot match error string for retry (DeleteKey)")
 					return false
 				}
 

@@ -9,7 +9,6 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -413,11 +412,11 @@ var retryLanguageUpdateSequence2 = func(ctx context.Context, r *http.Response, p
 		// Language may not be enabled yet
 		m, err := regexp.MatchString("^The language must be enabled before it is set as the default", p1error.GetMessage())
 		if err == nil && m {
-			tflog.Warn(ctx, "Language not yet enabled, retrying to set as default")
+			// tflog.Warn(ctx, "Language not yet enabled, retrying to set as default")
 			return true
 		}
 		if err != nil {
-			tflog.Warn(ctx, "Cannot match error string for retry")
+			// tflog.Warn(ctx, "Cannot match error string for retry")
 			return false
 		}
 

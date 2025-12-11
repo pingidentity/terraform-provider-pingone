@@ -25,7 +25,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/mfa"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
@@ -1397,7 +1396,7 @@ var (
 
 		// Catch observed race condition
 		if r.StatusCode == http.StatusUnsupportedMediaType {
-			tflog.Warn(ctx, "Unexpected 415 Error detected. Available for retry..")
+			// tflog.Warn(ctx, "Unexpected 415 Error detected. Available for retry..")
 			return true
 		}
 

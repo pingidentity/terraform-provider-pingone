@@ -22,7 +22,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -616,10 +615,10 @@ func FetchDefaultPopulationWithTimeout(ctx context.Context, apiClient *managemen
 				return nil, "err", fmt.Errorf("Error reading populations")
 			}
 
-			tflog.Debug(ctx, "Find default population attempt", map[string]interface{}{
-				"population": defaultPopulation,
-				"result":     strings.ToLower(strconv.FormatBool(defaultPopulation != nil)),
-			})
+			// tflog.Debug(ctx, "Find default population attempt", map[string]interface{}{
+			// 	"population": defaultPopulation,
+			// 	"result":     strings.ToLower(strconv.FormatBool(defaultPopulation != nil)),
+			// })
 
 			return defaultPopulation, strings.ToLower(strconv.FormatBool(defaultPopulation != nil)), nil
 		},
@@ -631,10 +630,10 @@ func FetchDefaultPopulationWithTimeout(ctx context.Context, apiClient *managemen
 	population, err := stateConf.WaitForStateContext(ctx)
 
 	if err != nil {
-		tflog.Warn(ctx, "Cannot find default population for the environment", map[string]interface{}{
-			"environment": environmentID,
-			"err":         err,
-		})
+		// tflog.Warn(ctx, "Cannot find default population for the environment", map[string]interface{}{
+		// 	"environment": environmentID,
+		// 	"err":         err,
+		// })
 
 		return nil, diags
 	}

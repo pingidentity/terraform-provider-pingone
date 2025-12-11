@@ -24,7 +24,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -1059,11 +1058,11 @@ func credentialTypeRetryConditions(ctx context.Context, r *http.Response, p1erro
 			// detected issuer profile not fully deployed yet
 			m, err := regexp.MatchString("^issuerProfile must exist before creating credentialTypes", details[0].GetMessage())
 			if err == nil && m {
-				tflog.Warn(ctx, fmt.Sprintf("IssuerProfile (prerequisite) has not finished provisioning - %s.  Retrying...", details[0].GetMessage()))
+				// tflog.Warn(ctx, fmt.Sprintf("IssuerProfile (prerequisite) has not finished provisioning - %s.  Retrying...", details[0].GetMessage()))
 				return true
 			}
 			if err != nil {
-				tflog.Warn(ctx, "Cannot match error string for retry")
+				// tflog.Warn(ctx, "Cannot match error string for retry")
 				return false
 			}
 		}
@@ -1071,11 +1070,11 @@ func credentialTypeRetryConditions(ctx context.Context, r *http.Response, p1erro
 		// detected credentials service not fully deployed yet
 		m, err := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage())
 		if err == nil && m {
-			tflog.Warn(ctx, "Insufficient PingOne privileges detected")
+			// tflog.Warn(ctx, "Insufficient PingOne privileges detected")
 			return true
 		}
 		if err != nil {
-			tflog.Warn(ctx, "Cannot match error string for retry")
+			// tflog.Warn(ctx, "Cannot match error string for retry")
 			return false
 		}
 	}

@@ -21,7 +21,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
@@ -438,11 +437,11 @@ func credentialIssuerRetryConditions(ctx context.Context, r *http.Response, p1er
 
 			m, err := regexp.MatchString("^A resource with the specified name already exists", details[0].GetMessage())
 			if err == nil && m {
-				tflog.Warn(ctx, fmt.Sprintf("IssuerProfile (prerequisite) has not finished provisioning - %s.  Retrying...", details[0].GetMessage()))
+				// tflog.Warn(ctx, fmt.Sprintf("IssuerProfile (prerequisite) has not finished provisioning - %s.  Retrying...", details[0].GetMessage()))
 				return true
 			}
 			if err != nil {
-				tflog.Warn(ctx, "Cannot match error string for retry")
+				// tflog.Warn(ctx, "Cannot match error string for retry")
 				return false
 			}
 
@@ -451,22 +450,22 @@ func credentialIssuerRetryConditions(ctx context.Context, r *http.Response, p1er
 		// detected credentials service not fully deployed yet
 		m, err := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage())
 		if err == nil && m {
-			tflog.Warn(ctx, "Insufficient PingOne privileges detected. Retrying...")
+			// tflog.Warn(ctx, "Insufficient PingOne privileges detected. Retrying...")
 			return true
 		}
 		if err != nil {
-			tflog.Warn(ctx, "Cannot match error string for retry")
+			// tflog.Warn(ctx, "Cannot match error string for retry")
 			return false
 		}
 
 		// issuer not found could be the caused by delayed credential issuer
 		m, err = regexp.MatchString("^The requested resource object cannot be found.", p1error.GetMessage())
 		if err == nil && m {
-			tflog.Warn(ctx, "Credential Issuer not found. Retrying...")
+			// tflog.Warn(ctx, "Credential Issuer not found. Retrying...")
 			return true
 		}
 		if err != nil {
-			tflog.Warn(ctx, "Cannot match error string for retry")
+			// tflog.Warn(ctx, "Cannot match error string for retry")
 			return false
 		}
 

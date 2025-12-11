@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/patrickcping/pingone-go-sdk-v2/risk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 )
@@ -19,9 +18,9 @@ func CheckCompositeConditionStructure(ctx context.Context, jsonValue string) dia
 	var condition risk.RiskPredictorCompositeConditionBase
 	err := json.Unmarshal([]byte(jsonValue), &condition)
 	if err != nil {
-		tflog.Error(ctx, "Cannot parse the condition input JSON", map[string]interface{}{
-			"err": err,
-		})
+		// tflog.Error(ctx, "Cannot parse the condition input JSON", map[string]interface{}{
+		// 	"err": err,
+		// })
 		diags.AddError(
 			"Cannot parse the condition input JSON",
 			"The JSON string passed to the condition parameter cannot be parsed as a condition object.  Please check the policy is a valid structure.",
@@ -31,9 +30,9 @@ func CheckCompositeConditionStructure(ctx context.Context, jsonValue string) dia
 
 	jsonBytes, err := json.Marshal(condition)
 	if err != nil {
-		tflog.Error(ctx, "Failed to marshal condition object to bytes", map[string]interface{}{
-			"err": err,
-		})
+		// tflog.Error(ctx, "Failed to marshal condition object to bytes", map[string]interface{}{
+		// 	"err": err,
+		// })
 		diags.AddError(
 			"Failed to marshal condition object to bytes",
 			"The condition object cannot be converted back to string.  Please report this to the provider maintainers.",
@@ -44,9 +43,9 @@ func CheckCompositeConditionStructure(ctx context.Context, jsonValue string) dia
 
 	// Check equality of the JSON to see if anything stripped out.  This indicates an unsupported field value.
 	if !utils.DeepEqualJSON([]byte(jsonValue), jsonBytes) {
-		tflog.Warn(ctx, "Condition object has unsupported fields", map[string]interface{}{
-			"err": err,
-		})
+		// tflog.Warn(ctx, "Condition object has unsupported fields", map[string]interface{}{
+		// 	"err": err,
+		// })
 		diags.AddWarning(
 			"Composite condition import has unsupported fields",
 			"The composite condition import contains unsupported fields.  Unpredictable results may occur.",
@@ -63,9 +62,9 @@ func NormaliseCompositeCondition(ctx context.Context, jsonValue string) (*string
 	var condition map[string]interface{}
 	err := json.Unmarshal([]byte(jsonValue), &condition)
 	if err != nil {
-		tflog.Error(ctx, "Cannot parse the condition input JSON", map[string]interface{}{
-			"err": err,
-		})
+		// tflog.Error(ctx, "Cannot parse the condition input JSON", map[string]interface{}{
+		// 	"err": err,
+		// })
 		diags.AddError(
 			"Cannot parse the condition input JSON",
 			"The JSON string passed to the condition parameter cannot be parsed as a map.  Please check the policy is a valid structure.",
@@ -74,15 +73,15 @@ func NormaliseCompositeCondition(ctx context.Context, jsonValue string) (*string
 	}
 
 	// Walk the JSON tree and add "type" to "and", "or" and "not" objects if not set.
-	tflog.Debug(ctx, "Normalising condition object", map[string]interface{}{})
+	// tflog.Debug(ctx, "Normalising condition object", map[string]interface{}{})
 
 	condition = WalkAggregatedCondition(condition)
 
 	newJsonBytes, err := json.Marshal(condition)
 	if err != nil {
-		tflog.Warn(ctx, "Failed to marshal new condition map to bytes", map[string]interface{}{
-			"err": err,
-		})
+		// tflog.Warn(ctx, "Failed to marshal new condition map to bytes", map[string]interface{}{
+		// 	"err": err,
+		// })
 		diags.AddError(
 			"Failed to marshal new condition map to bytes",
 			"The condition map cannot be converted back to string.  Please report this to the provider maintainers.",
@@ -93,10 +92,10 @@ func NormaliseCompositeCondition(ctx context.Context, jsonValue string) (*string
 
 	returnVar := string(newJsonBytes)
 
-	tflog.Debug(ctx, "Normalised condition object", map[string]interface{}{
-		"jsonValue::normalised": returnVar,
-		"jsonValue::input":      jsonValue,
-	})
+	// tflog.Debug(ctx, "Normalised condition object", map[string]interface{}{
+	// 	"jsonValue::normalised": returnVar,
+	// 	"jsonValue::input":      jsonValue,
+	// })
 
 	return &returnVar, diags
 }

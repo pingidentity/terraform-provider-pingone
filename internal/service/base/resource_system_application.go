@@ -23,7 +23,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -851,11 +850,11 @@ func FetchApplicationsByTypeWithTimeout(ctx context.Context, apiClient *manageme
 				return nil, "err", fmt.Errorf("Error reading applications")
 			}
 
-			tflog.Debug(ctx, "Find applications by type attempt", map[string]interface{}{
-				"applicationResponse":      applicationResponse,
-				"len(applicationResponse)": len(applicationResponse),
-				"result":                   strings.ToLower(strconv.FormatBool(len(applicationResponse) > 0)),
-			})
+			// tflog.Debug(ctx, "Find applications by type attempt", map[string]interface{}{
+			// 	"applicationResponse":      applicationResponse,
+			// 	"len(applicationResponse)": len(applicationResponse),
+			// 	"result":                   strings.ToLower(strconv.FormatBool(len(applicationResponse) > 0)),
+			// })
 
 			if len(applicationResponse) == 0 && expectAtLeastOneResult {
 				return nil, "false", nil

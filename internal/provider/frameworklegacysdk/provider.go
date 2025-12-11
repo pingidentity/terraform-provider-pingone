@@ -17,7 +17,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/client"
 	pingone "github.com/pingidentity/terraform-provider-pingone/internal/client"
@@ -243,7 +242,7 @@ func (p *pingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest
 }
 
 func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
-	tflog.Debug(ctx, "[v6] [legacy sdk] Provider configure start")
+	// // tflog.Debug(ctx, "[v6] [legacy sdk] Provider configure start")
 	var data pingOneProviderModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
@@ -252,7 +251,7 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 	}
 
 	// Set the defaults
-	tflog.Info(ctx, "[v6] [legacy sdk] Provider setting defaults..")
+	// // tflog.Info(ctx, "[v6] [legacy sdk] Provider setting defaults..")
 
 	if v := strings.TrimSpace(os.Getenv("PINGONE_REGION")); v != "" {
 		resp.Diagnostics.AddWarning(
@@ -363,7 +362,7 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 
 	var resourceConfig legacysdk.ResourceType
 	resourceConfig.Client = apiClient
-	tflog.Info(ctx, "[v6] [legacy sdk] Provider initialized client")
+	// // tflog.Info(ctx, "[v6] [legacy sdk] Provider initialized client")
 
 	resp.ResourceData = resourceConfig
 	resp.DataSourceData = resourceConfig

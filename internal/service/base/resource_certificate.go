@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -245,7 +244,7 @@ func resourceCertificateDelete(ctx context.Context, d *schema.ResourceData, meta
 		func(ctx context.Context, r *http.Response, p1Error *model.P1Error) bool {
 			if p1Error != nil && r.StatusCode == http.StatusConflict {
 				if message, ok := p1Error.GetMessageOk(); ok && strings.Contains(*message, "Certificate must not be in use") {
-					tflog.Warn(ctx, "Certificate still in use. Retrying deletion...")
+					// tflog.Warn(ctx, "Certificate still in use. Retrying deletion...")
 					return true
 				}
 			}

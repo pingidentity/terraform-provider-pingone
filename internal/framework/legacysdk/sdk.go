@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -65,7 +64,7 @@ func CheckEnvironmentExistsOnPermissionsError(ctx context.Context, managementCli
 		_, fER, fEErr := managementClient.EnvironmentsApi.ReadOneEnvironment(ctx, environmentID).Execute()
 
 		if fER.StatusCode == http.StatusNotFound {
-			tflog.Warn(ctx, "API responded with 400, 401 or 403, and the provider determined the environment doesn't exist.  Overriding resource response.")
+			// // tflog.Warn(ctx, "API responded with 400, 401 or 403, and the provider determined the environment doesn't exist.  Overriding resource response.")
 			return fO, fER, fEErr
 		}
 	}
@@ -118,19 +117,19 @@ func ParseResponseWithCustomTimeout(ctx context.Context, f framework.SDKInterfac
 
 			diags.AddError(fmt.Sprintf("Error when calling `%s`: %v", requestID, t.Error()), "")
 
-			tflog.Error(ctx, fmt.Sprintf("Error when calling `%s`: %v\n\nResponse code: %d\nResponse content-type: %s\nFull response body: %+v", requestID, t.Error(), r.StatusCode, r.Header.Get("Content-Type"), r.Body))
+			// // tflog.Error(ctx, fmt.Sprintf("Error when calling `%s`: %v\n\nResponse code: %d\nResponse content-type: %s\nFull response body: %+v", requestID, t.Error(), r.StatusCode, r.Header.Get("Content-Type"), r.Body))
 
 			return diags
 
 		case *url.Error:
-			tflog.Warn(ctx, fmt.Sprintf("Detected HTTP error %s\n\nResponse code: %d\nResponse content-type: %s", t.Err.Error(), r.StatusCode, r.Header.Get("Content-Type")))
+			// // tflog.Warn(ctx, fmt.Sprintf("Detected HTTP error %s\n\nResponse code: %d\nResponse content-type: %s", t.Err.Error(), r.StatusCode, r.Header.Get("Content-Type")))
 
 			diags.AddError(fmt.Sprintf("Error when calling `%s`: %v", requestID, t.Error()), "")
 
 			return diags
 
 		default:
-			tflog.Warn(ctx, fmt.Sprintf("Detected unknown error (SDK) %+v", t))
+			// // tflog.Warn(ctx, fmt.Sprintf("Detected unknown error (SDK) %+v", t))
 
 			diags.AddError(fmt.Sprintf("Error when calling `%s`: %v", requestID, t.Error()), fmt.Sprintf("A generic error has occurred.\nError details: %+v", t))
 

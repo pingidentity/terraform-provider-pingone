@@ -16,7 +16,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/filter"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -173,11 +172,11 @@ func (r *populationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 		for _, v := range dataFilterIn {
 
 			values := framework.TFListToStringSlice(ctx, v.Values)
-			tflog.Debug(ctx, "Filter set loop", map[string]interface{}{
-				"name":          v.Name.ValueString(),
-				"len(elements)": fmt.Sprintf("%d", len(v.Values.Elements())),
-				"len(values)":   fmt.Sprintf("%d", len(values)),
-			})
+			// tflog.Debug(ctx, "Filter set loop", map[string]interface{}{
+			// 	"name":          v.Name.ValueString(),
+			// 	"len(elements)": fmt.Sprintf("%d", len(v.Values.Elements())),
+			// 	"len(values)":   fmt.Sprintf("%d", len(values)),
+			// })
 			filterSet = append(filterSet, map[string]interface{}{
 				"name":   v.Name.ValueString(),
 				"values": values,
@@ -186,9 +185,9 @@ func (r *populationsDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 		scimFilter := filter.BuildScimFilter(filterSet, map[string]string{})
 
-		tflog.Debug(ctx, "SCIM Filter", map[string]interface{}{
-			"scimFilter": scimFilter,
-		})
+		// tflog.Debug(ctx, "SCIM Filter", map[string]interface{}{
+		// 	"scimFilter": scimFilter,
+		// })
 
 		filterFunction = r.Client.ManagementAPIClient.PopulationsApi.ReadAllPopulations(ctx, data.EnvironmentId.ValueString()).Filter(scimFilter).Execute
 

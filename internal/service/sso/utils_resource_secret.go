@@ -11,7 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
@@ -50,10 +49,10 @@ func resourceOIDCSecretDataSourceRetryConditions(ctx context.Context, r *http.Re
 
 		m, err := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage())
 		if err == nil && m {
-			tflog.Warn(ctx, "Insufficient PingOne privileges detected")
+			// tflog.Warn(ctx, "Insufficient PingOne privileges detected")
 			return true
 		} else if err != nil {
-			tflog.Warn(ctx, "Cannot match error string for retry")
+			// tflog.Warn(ctx, "Cannot match error string for retry")
 			return false
 		}
 

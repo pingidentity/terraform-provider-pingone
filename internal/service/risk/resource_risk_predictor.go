@@ -34,7 +34,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/patrickcping/pingone-go-sdk-v2/risk"
@@ -2334,9 +2333,9 @@ func (p *predictorComposition) expandPredictorCompositeComposition(ctx context.C
 	if !p.Condition.IsNull() && !p.Condition.IsUnknown() {
 		err := json.Unmarshal([]byte(p.Condition.ValueString()), &condition)
 		if err != nil {
-			tflog.Error(ctx, "Cannot parse the `condition` JSON", map[string]interface{}{
-				"err": err,
-			})
+			// tflog.Error(ctx, "Cannot parse the `condition` JSON", map[string]interface{}{
+			// 	"err": err,
+			// })
 			diags.AddError(
 				"Cannot parse the `condition` JSON",
 				"The JSON string passed to the `condition` parameter cannot be parsed as JSON.  Please check the policy is a valid JSON structure.",

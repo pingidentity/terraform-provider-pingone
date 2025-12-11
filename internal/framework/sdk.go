@@ -14,7 +14,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/pingidentity/pingone-go-client/pingone"
 )
 
@@ -80,7 +79,7 @@ func CheckEnvironmentExistsOnPermissionsError(ctx context.Context, apiClient *pi
 		_, fER, fEErr := apiClient.EnvironmentsApi.GetEnvironmentById(ctx, environmentIdUuid).Execute()
 
 		if fER.StatusCode == http.StatusNotFound {
-			tflog.Warn(ctx, "API responded with 400, 401 or 403, and the provider determined the environment doesn't exist.  Overriding resource response.")
+			// // tflog.Warn(ctx, "API responded with 400, 401 or 403, and the provider determined the environment doesn't exist.  Overriding resource response.")
 			return fO, fER, fEErr
 		}
 	}
@@ -113,9 +112,9 @@ func ParseResponseWithCustomTimeout(ctx context.Context, f SDKInterfaceFunc, req
 		switch t := err.(type) {
 		case pingone.APIError:
 			diags.AddError(fmt.Sprintf("Error when calling `%s`: %v", requestID, t.Error()), "")
-			tflog.Error(ctx, fmt.Sprintf("Error when calling `%s`: %v\n\nResponse code: %d\nResponse content-type: %s\nFull response body: %+v", requestID, t.Error(), r.StatusCode, r.Header.Get("Content-Type"), r.Body))
+			// // tflog.Error(ctx, fmt.Sprintf("Error when calling `%s`: %v\n\nResponse code: %d\nResponse content-type: %s\nFull response body: %+v", requestID, t.Error(), r.StatusCode, r.Header.Get("Content-Type"), r.Body))
 		case *url.Error:
-			tflog.Warn(ctx, fmt.Sprintf("Detected HTTP error %s\n\nResponse code: %d\nResponse content-type: %s", t.Err.Error(), r.StatusCode, r.Header.Get("Content-Type")))
+			// // tflog.Warn(ctx, fmt.Sprintf("Detected HTTP error %s\n\nResponse code: %d\nResponse content-type: %s", t.Err.Error(), r.StatusCode, r.Header.Get("Content-Type")))
 			diags.AddError(fmt.Sprintf("Error when calling `%s`: %v", requestID, t.Error()), "")
 		default:
 			// Attempt to marshal the error into pingone.GeneralError
@@ -136,7 +135,7 @@ func ParseResponseWithCustomTimeout(ctx context.Context, f SDKInterfaceFunc, req
 				}
 			}
 			if !errorUnmarshaled {
-				tflog.Warn(ctx, fmt.Sprintf("Detected unknown error (SDK) %+v", t))
+				// // tflog.Warn(ctx, fmt.Sprintf("Detected unknown error (SDK) %+v", t))
 				diags.AddError(fmt.Sprintf("Error when calling `%s`: %v", requestID, t.Error()), fmt.Sprintf("A generic error has occurred.\nError details: %+v", t))
 			}
 		}

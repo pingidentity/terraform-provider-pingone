@@ -4,13 +4,11 @@ package sdk
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"net/url"
 	"regexp"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
@@ -35,11 +33,11 @@ var (
 			// Permissions may not have propagated by this point
 			m, err := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage())
 			if err == nil && m {
-				tflog.Warn(ctx, "Insufficient PingOne privileges detected")
+				// // tflog.Warn(ctx, "Insufficient PingOne privileges detected")
 				return true
 			}
 			if err != nil {
-				tflog.Warn(ctx, "Cannot match error string for retry")
+				// // tflog.Warn(ctx, "Cannot match error string for retry")
 				return false
 			}
 
@@ -71,14 +69,14 @@ func RetryWrapper(ctx context.Context, timeout time.Duration, f framework.SDKInt
 				if t.Model() != nil {
 					errorModel, err1 = model.RemarshalErrorObj(t.Model().(authorize.P1Error))
 					if err1 != nil {
-						tflog.Error(ctx, fmt.Sprintf("Cannot remarshal type %s", err1))
+						// // tflog.Error(ctx, fmt.Sprintf("Cannot remarshal type %s", err1))
 						return retry.NonRetryableError(err)
 					}
 				}
 
 				err, err1 = model.RemarshalGenericOpenAPIErrorObj(t)
 				if err1 != nil {
-					tflog.Error(ctx, fmt.Sprintf("Cannot remarshal type %s", err1))
+					// // tflog.Error(ctx, fmt.Sprintf("Cannot remarshal type %s", err1))
 					return retry.NonRetryableError(err)
 				}
 
@@ -87,14 +85,14 @@ func RetryWrapper(ctx context.Context, timeout time.Duration, f framework.SDKInt
 				if t.Model() != nil {
 					errorModel, err1 = model.RemarshalErrorObj(t.Model().(credentials.P1Error))
 					if err1 != nil {
-						tflog.Error(ctx, fmt.Sprintf("Cannot remarshal type %s", err1))
+						// // tflog.Error(ctx, fmt.Sprintf("Cannot remarshal type %s", err1))
 						return retry.NonRetryableError(err)
 					}
 				}
 
 				err, err1 = model.RemarshalGenericOpenAPIErrorObj(t)
 				if err1 != nil {
-					tflog.Error(ctx, fmt.Sprintf("Cannot remarshal type %s", err1))
+					// tflog.Error(ctx, fmt.Sprintf("Cannot remarshal type %s", err1))
 					return retry.NonRetryableError(err)
 				}
 
@@ -103,14 +101,14 @@ func RetryWrapper(ctx context.Context, timeout time.Duration, f framework.SDKInt
 				if t.Model() != nil {
 					errorModel, err1 = model.RemarshalErrorObj(t.Model().(management.P1Error))
 					if err1 != nil {
-						tflog.Error(ctx, fmt.Sprintf("Cannot remarshal type %s", err1))
+						// tflog.Error(ctx, fmt.Sprintf("Cannot remarshal type %s", err1))
 						return retry.NonRetryableError(err)
 					}
 				}
 
 				err, err1 = model.RemarshalGenericOpenAPIErrorObj(t)
 				if err1 != nil {
-					tflog.Error(ctx, fmt.Sprintf("Cannot remarshal type %s", err1))
+					// tflog.Error(ctx, fmt.Sprintf("Cannot remarshal type %s", err1))
 					return retry.NonRetryableError(err)
 				}
 
@@ -119,14 +117,14 @@ func RetryWrapper(ctx context.Context, timeout time.Duration, f framework.SDKInt
 				if t.Model() != nil {
 					errorModel, err1 = model.RemarshalErrorObj(t.Model().(mfa.P1Error))
 					if err1 != nil {
-						tflog.Error(ctx, fmt.Sprintf("Cannot remarshal type %s", err1))
+						// tflog.Error(ctx, fmt.Sprintf("Cannot remarshal type %s", err1))
 						return retry.NonRetryableError(err)
 					}
 				}
 
 				err, err1 = model.RemarshalGenericOpenAPIErrorObj(t)
 				if err1 != nil {
-					tflog.Error(ctx, fmt.Sprintf("Cannot remarshal type %s", err1))
+					// tflog.Error(ctx, fmt.Sprintf("Cannot remarshal type %s", err1))
 					return retry.NonRetryableError(err)
 				}
 
@@ -135,14 +133,14 @@ func RetryWrapper(ctx context.Context, timeout time.Duration, f framework.SDKInt
 				if t.Model() != nil {
 					errorModel, err1 = model.RemarshalErrorObj(t.Model().(risk.P1Error))
 					if err1 != nil {
-						tflog.Error(ctx, fmt.Sprintf("Cannot remarshal type %s", err1))
+						// tflog.Error(ctx, fmt.Sprintf("Cannot remarshal type %s", err1))
 						return retry.NonRetryableError(err)
 					}
 				}
 
 				err, err1 = model.RemarshalGenericOpenAPIErrorObj(t)
 				if err1 != nil {
-					tflog.Error(ctx, fmt.Sprintf("Cannot remarshal type %s", err1))
+					// tflog.Error(ctx, fmt.Sprintf("Cannot remarshal type %s", err1))
 					return retry.NonRetryableError(err)
 				}
 
@@ -151,26 +149,26 @@ func RetryWrapper(ctx context.Context, timeout time.Duration, f framework.SDKInt
 				if t.Model() != nil {
 					errorModel, err1 = model.RemarshalErrorObj(t.Model().(verify.P1Error))
 					if err1 != nil {
-						tflog.Error(ctx, fmt.Sprintf("Cannot remarshal type %s", err1))
+						// tflog.Error(ctx, fmt.Sprintf("Cannot remarshal type %s", err1))
 						return retry.NonRetryableError(err)
 					}
 				}
 
 				err, err1 = model.RemarshalGenericOpenAPIErrorObj(t)
 				if err1 != nil {
-					tflog.Error(ctx, fmt.Sprintf("Cannot remarshal type %s", err1))
+					// tflog.Error(ctx, fmt.Sprintf("Cannot remarshal type %s", err1))
 					return retry.NonRetryableError(err)
 				}
 
 			case *url.Error:
-				tflog.Warn(ctx, fmt.Sprintf("Detected HTTP error %s", t.Err.Error()))
+				// tflog.Warn(ctx, fmt.Sprintf("Detected HTTP error %s", t.Err.Error()))
 
 			default:
-				tflog.Warn(ctx, fmt.Sprintf("Detected unknown error (retry) %+v", t))
+				// tflog.Warn(ctx, fmt.Sprintf("Detected unknown error (retry) %+v", t))
 			}
 
 			if ((errorModel != nil && errorModel.Id != nil) || r != nil) && (isRetryable(ctx, r, errorModel) || DefaultRetryable(ctx, r, errorModel)) {
-				tflog.Warn(ctx, "Retrying ... ")
+				// tflog.Warn(ctx, "Retrying ... ")
 				return retry.RetryableError(err)
 			}
 
