@@ -338,12 +338,12 @@ func TestAccMFADevicePolicyDefault_PingOneMFA_Validation(t *testing.T) {
 			// Invalid remember_me duration for HOURS
 			{
 				Config:      testAccMFADevicePolicyDefaultConfig_InvalidRememberMeDurationHours(environmentName, licenseID, resourceName, name),
-				ExpectError: regexp.MustCompile(`Attribute remember_me.web.life_time.duration value must be at most 2160`),
+				ExpectError: regexp.MustCompile(`Attribute remember_me.web.life_time.duration value must be between 1 and`),
 			},
 			// Invalid remember_me duration for DAYS
 			{
 				Config:      testAccMFADevicePolicyDefaultConfig_InvalidRememberMeDurationDays(environmentName, licenseID, resourceName, name),
-				ExpectError: regexp.MustCompile(`Attribute remember_me.web.life_time.duration value must be at most 90`),
+				ExpectError: regexp.MustCompile(`Attribute remember_me.web.life_time.duration value must be between 1 and`),
 			},
 		},
 	})
