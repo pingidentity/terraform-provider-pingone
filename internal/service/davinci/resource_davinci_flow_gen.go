@@ -209,6 +209,8 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 									Attributes: map[string]schema.Attribute{
 										"classes": schema.StringAttribute{
 											Optional: true,
+											Computed: true,
+											Default:  stringdefault.StaticString(""),
 										},
 										"data": schema.SingleNestedAttribute{
 											Attributes: map[string]schema.Attribute{
