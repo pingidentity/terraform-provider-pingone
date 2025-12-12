@@ -25,6 +25,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -275,6 +276,8 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 									Attributes: map[string]schema.Attribute{
 										"classes": schema.StringAttribute{
 											Optional: true,
+											Computed: true,
+											Default:  stringdefault.StaticString(""),
 										},
 										"data": schema.SingleNestedAttribute{
 											Attributes: map[string]schema.Attribute{
@@ -298,7 +301,11 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 													},
 												},
 												"id_unique": schema.StringAttribute{
+													Optional: true,
 													Computed: true,
+													PlanModifiers: []planmodifier.String{
+														stringplanmodifier.UseStateForUnknown(),
+													},
 												},
 												"label": schema.StringAttribute{
 													Optional: true,
@@ -794,6 +801,7 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 					nodesDataValue.ConnectionId = nodesDataAttrs["connection_id"].(types.String).ValueStringPointer()
 					nodesDataValue.ConnectorId = nodesDataAttrs["connector_id"].(types.String).ValueStringPointer()
 					nodesDataValue.Id = nodesDataAttrs["id"].(types.String).ValueString()
+					nodesDataValue.IdUnique = nodesDataAttrs["id_unique"].(types.String).ValueStringPointer()
 					nodesDataValue.Label = nodesDataAttrs["label"].(types.String).ValueStringPointer()
 					nodesDataValue.Name = nodesDataAttrs["name"].(types.String).ValueStringPointer()
 					nodesDataValue.NodeType = nodesDataAttrs["node_type"].(types.String).ValueString()
@@ -1114,6 +1122,7 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 					nodesDataValue.ConnectionId = nodesDataAttrs["connection_id"].(types.String).ValueStringPointer()
 					nodesDataValue.ConnectorId = nodesDataAttrs["connector_id"].(types.String).ValueStringPointer()
 					nodesDataValue.Id = nodesDataAttrs["id"].(types.String).ValueString()
+					nodesDataValue.IdUnique = nodesDataAttrs["id_unique"].(types.String).ValueStringPointer()
 					nodesDataValue.Label = nodesDataAttrs["label"].(types.String).ValueStringPointer()
 					nodesDataValue.Name = nodesDataAttrs["name"].(types.String).ValueStringPointer()
 					nodesDataValue.NodeType = nodesDataAttrs["node_type"].(types.String).ValueString()
