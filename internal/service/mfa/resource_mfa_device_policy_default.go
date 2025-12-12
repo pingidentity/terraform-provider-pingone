@@ -4,9 +4,7 @@ package mfa
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -1865,13 +1863,6 @@ func (r *MFADevicePolicyDefaultResource) Create(ctx context.Context, req resourc
 	// Update the default policy
 	var response *mfa.DeviceAuthenticationPolicy
 
-	// Debug: Log the request body before sending
-	if requestBody, err := json.MarshalIndent(mFADevicePolicy, "", "  "); err == nil {
-		tflog.Debug(ctx, "DEBUG: Request body for UpdateDeviceAuthenticationPolicy", map[string]interface{}{
-			"body": string(requestBody),
-		})
-	}
-
 	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
@@ -1931,46 +1922,6 @@ func (r *MFADevicePolicyDefaultResource) Read(ctx context.Context, req resource.
 	// Get the policy ID from the default policy
 	policyID := defaultPolicy.GetId()
 
-	// DEBUG: Make a raw API call to capture the HTTP response body
-	debugReq := r.Client.MFAAPIClient.DeviceAuthenticationPolicyApi.ReadOneDeviceAuthenticationPolicy(ctx, data.EnvironmentId.ValueString(), policyID)
-	debugResp, debugHttpResp, debugErr := debugReq.Execute()
-	if debugErr == nil && debugHttpResp != nil {
-		// Read and log the raw response body
-		if debugHttpResp.Body != nil {
-			bodyBytes, readErr := io.ReadAll(debugHttpResp.Body)
-			if readErr == nil {
-				tflog.Debug(ctx, "DEBUG: Raw HTTP response body", map[string]interface{}{
-					"body": string(bodyBytes),
-				})
-			}
-		}
-		// Log the raw applications from the parsed response
-		if mobile, mobileOk := debugResp.GetMobileOk(); mobileOk && mobile != nil {
-			apps, appsOk := mobile.GetApplicationsOk()
-			tflog.Debug(ctx, "DEBUG: Raw API applications data", map[string]interface{}{
-				"apps_ok":    appsOk,
-				"apps_count": len(apps),
-			})
-			for i, app := range apps {
-				biometricsVal, biometricsOk := app.GetBiometricsEnabledOk()
-				typeVal, typeOk := app.GetTypeOk()
-				nrdcVal, nrdcOk := app.GetNewRequestDurationConfigurationOk()
-				tflog.Debug(ctx, fmt.Sprintf("DEBUG: Application %d raw data", i), map[string]interface{}{
-					"id":                    app.GetId(),
-					"biometrics_enabled":    biometricsVal,
-					"biometrics_enabled_ok": biometricsOk,
-					"biometrics_ptr_nil":    biometricsVal == nil,
-					"type":                  typeVal,
-					"type_ok":               typeOk,
-					"type_ptr_nil":          typeVal == nil,
-					"nrdc":                  nrdcVal,
-					"nrdc_ok":               nrdcOk,
-					"nrdc_ptr_nil":          nrdcVal == nil,
-				})
-			}
-		}
-	}
-
 	// Now fetch the full policy details using ReadOneDeviceAuthenticationPolicy
 	// The list endpoint doesn't return all fields (e.g., biometrics_enabled, new_request_duration_configuration, type)
 	var response *mfa.DeviceAuthenticationPolicy
@@ -2013,7 +1964,7 @@ func (r *MFADevicePolicyDefaultResource) Read(ctx context.Context, req resource.
 }
 
 func (r *MFADevicePolicyDefaultResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan, state MFADevicePolicyDefaultResourceModel
+	var plan MFADevicePolicyDefaultResourceModel
 
 	if r.Client.MFAAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -2069,15 +2020,12 @@ func (r *MFADevicePolicyDefaultResource) Update(ctx context.Context, req resourc
 		return
 	}
 
-	// Update the state to save
-	state = plan
-
 	// Save updated data into Terraform state
 	// For default policies, only update computed fields
 	// All other fields preserve the plan values to prevent inconsistent result errors
-	state.Id = framework.PingOneResourceIDToTF(response.GetId())
-	state.UpdatedAt = framework.TimeOkToTF(response.GetUpdatedAtOk())
-	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
+	plan.Id = framework.PingOneResourceIDToTF(response.GetId())
+	plan.UpdatedAt = framework.TimeOkToTF(response.GetUpdatedAtOk())
+	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
 }
 
 func (r *MFADevicePolicyDefaultResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
@@ -3779,23 +3727,6 @@ func toStateMfaDevicePolicyMobileOtpFailureCooldownForDefault(apiObject *mfa.Dev
 	return objValue, diags
 }
 
-func toStateMfaDevicePolicyNotificationsPolicy(apiObject *mfa.DeviceAuthenticationPolicyCommonNotificationsPolicy, ok bool) (types.Object, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if !ok || apiObject == nil {
-		return types.ObjectNull(MFADevicePolicyNotificationsPolicyTFObjectTypes), nil
-	}
-
-	o := map[string]attr.Value{
-		"id": framework.StringToTF(apiObject.GetId()),
-	}
-
-	objValue, d := types.ObjectValue(MFADevicePolicyNotificationsPolicyTFObjectTypes, o)
-	diags.Append(d...)
-
-	return objValue, diags
-}
-
 func toStateMfaDevicePolicyRememberMe(apiObject *mfa.DeviceAuthenticationPolicyCommonRememberMe, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -3850,6 +3781,28 @@ func toStateMfaDevicePolicyRememberMeWebLifeTime(apiObject *mfa.DeviceAuthentica
 	}
 
 	objValue, d := types.ObjectValue(MFADevicePolicyTimePeriodTFObjectTypes, o)
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func toStateMfaDevicePolicyNotificationsPolicy(apiObject *mfa.DeviceAuthenticationPolicyCommonNotificationsPolicy, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(MFADevicePolicyNotificationsPolicyTFObjectTypes), nil
+	}
+
+	id, idOk := apiObject.GetIdOk()
+	if !idOk {
+		return types.ObjectNull(MFADevicePolicyNotificationsPolicyTFObjectTypes), nil
+	}
+
+	o := map[string]attr.Value{
+		"id": types.StringValue(*id),
+	}
+
+	objValue, d := types.ObjectValue(MFADevicePolicyNotificationsPolicyTFObjectTypes, o)
 	diags.Append(d...)
 
 	return objValue, diags

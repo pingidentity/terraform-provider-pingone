@@ -479,6 +479,10 @@ resource "pingone_mfa_device_policy_default" "%[3]s" {
 resource "pingone_notification_policy" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[4]s"
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 `, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
