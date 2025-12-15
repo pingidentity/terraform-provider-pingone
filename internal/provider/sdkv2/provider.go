@@ -5,13 +5,17 @@ package sdkv2
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
+	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/terraform-provider-pingone/internal/pingcli"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/authorize"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/base"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/mfa"
@@ -59,6 +63,16 @@ func New(version string) func() *schema.Provider {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Description: "The access token used for provider resource management against the PingOne management API.  Default value can be set with the `PINGONE_API_ACCESS_TOKEN` environment variable.  Must provide only one of `api_access_token` (when obtaining the worker token outside of the provider) and `client_id` (when the provider should fetch the worker token during operations).",
+				},
+				"config_path": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "Path to a PingCLI configuration file containing authentication credentials. When set, the provider will read authentication settings from the specified profile in this file. Default value can be set with the `PINGCLI_CONFIG` environment variable. Cannot be used together with `client_id`, `client_secret`, `environment_id`, or `api_access_token`. If set, `config_profile` can optionally specify which profile to use (defaults to the active profile in the config file).",
+				},
+				"config_profile": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: "Name of the profile to use from the PingCLI configuration file. If not specified, uses the active profile defined in the config file. Default value can be set with the `PINGCLI_PROFILE` environment variable. Requires `config_path` to be set.",
 				},
 				"region_code": {
 					Type:        schema.TypeString,
@@ -158,27 +172,160 @@ func configure(version string) func(context.Context, *schema.ResourceData) (inte
 	return func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 		var diags diag.Diagnostics
 		var config client.Config
-
-		// Set the defaults
-		if v, ok := d.Get("client_id").(string); ok && v != "" {
-			config.ClientID = v
+		debug := os.Getenv("PINGCLI_DEBUG") == "1"
+		pdebug := func(format string, args ...any) {
+			if debug {
+				log.Printf("[provider pingone] "+format, args...)
+			}
 		}
 
-		if v, ok := d.Get("client_secret").(string); ok && v != "" {
-			config.ClientSecret = v
+		// Check if PingCLI config is being used
+		configPath := strings.TrimSpace(d.Get("config_path").(string))
+		if configPath == "" {
+			configPath = strings.TrimSpace(os.Getenv("PINGCLI_CONFIG"))
+		}
+		// Expand tilde in config_path like ~/.pingcli/config.yaml
+		if configPath != "" && strings.HasPrefix(configPath, "~") {
+			if home, herr := os.UserHomeDir(); herr == nil && home != "" {
+				configPath = filepath.Join(home, strings.TrimPrefix(configPath, "~"))
+			}
 		}
 
-		if v, ok := d.Get("environment_id").(string); ok && v != "" {
-			config.EnvironmentID = v
+		configProfile := strings.TrimSpace(d.Get("config_profile").(string))
+		if configProfile == "" {
+			configProfile = strings.TrimSpace(os.Getenv("PINGCLI_PROFILE"))
 		}
 
-		if v, ok := d.Get("api_access_token").(string); ok && v != "" {
-			config.AccessToken = v
-		}
+		usingPingCLIConfig := configPath != ""
+		pdebug("usingPingCLIConfig=%t config_path=%s config_profile=%s", usingPingCLIConfig, configPath, configProfile)
 
-		if v, ok := d.Get("region_code").(string); ok && v != "" {
-			regionCode := management.EnumRegionCode(v)
-			config.RegionCode = &regionCode
+		// If using PingCLI config, load it
+		if usingPingCLIConfig {
+			profileConfig, err := pingcli.LoadProfileConfig(configPath, configProfile)
+			if err != nil {
+				return nil, diag.FromErr(fmt.Errorf("failed to load PingCLI configuration: %w", err))
+			}
+			pdebug("profile loaded: grantType=%s envID=%s region=%s", profileConfig.GrantType, profileConfig.EnvironmentID, profileConfig.RegionCode)
+
+			// If no profile was specified, get the active profile name
+			if configProfile == "" {
+				pingCliConfig, err := pingcli.NewConfig(configPath)
+				if err != nil {
+					return nil, diag.FromErr(fmt.Errorf("failed to load PingCLI configuration: %w", err))
+				}
+				configProfile, err = pingCliConfig.GetActiveProfile()
+				if err != nil {
+					return nil, diag.FromErr(fmt.Errorf("failed to get active profile: %w", err))
+				}
+				pdebug("active profile=%s", configProfile)
+				// Log storage mode to clarify expectations
+				fileStorage := pingCliConfig.IsFileStorageEnabled(configProfile)
+				pdebug("login.storage.type=%s (secure_local means Keychain)", map[bool]string{true: "file_system", false: "secure_local"}[fileStorage])
+			}
+
+			// Try to load stored token (Keychain first, then file storage)
+			pdebug("attempting token load: profile=%s grant=%s envID=%s clientID=%s service=%s suffix=%s",
+				configProfile,
+				profileConfig.GrantType,
+				profileConfig.EnvironmentID,
+				profileConfig.ClientID,
+				"pingcli",
+				fmt.Sprintf("_pingone_%s_%s", strings.TrimSpace(profileConfig.GrantType), configProfile),
+			)
+			storedToken, err := pingcli.LoadStoredToken(profileConfig, configProfile)
+			if err != nil || storedToken == nil || !storedToken.Valid() {
+				pdebug("stored token not found or invalid: grantType=%s err=%v", profileConfig.GrantType, err)
+				// First fallback: explicit API access token supplied in provider config
+				if v, ok := d.Get("api_access_token").(string); ok && strings.TrimSpace(v) != "" {
+					config.AccessToken = strings.TrimSpace(v)
+					// Clear other fields to enforce bearer-only mode
+					config.ClientID = ""
+					config.ClientSecret = ""
+					config.EnvironmentID = ""
+					// Carry region code from profile or provider for endpoint selection
+					if rv := strings.TrimSpace(profileConfig.RegionCode); rv != "" {
+						rc := management.EnumRegionCode(rv)
+						config.RegionCode = &rc
+					} else if rv, ok := d.Get("region_code").(string); ok && strings.TrimSpace(rv) != "" {
+						rc := management.EnumRegionCode(strings.TrimSpace(rv))
+						config.RegionCode = &rc
+					}
+					pdebug("fallback to api_access_token: bearer-only mode region=%v", config.RegionCode)
+					// Second fallback: if client credentials are present in the PingCLI profile, use them regardless of grant type
+				} else if strings.TrimSpace(profileConfig.ClientID) != "" && strings.TrimSpace(profileConfig.ClientSecret) != "" && strings.TrimSpace(profileConfig.EnvironmentID) != "" {
+					config.ClientID = strings.TrimSpace(profileConfig.ClientID)
+					config.ClientSecret = strings.TrimSpace(profileConfig.ClientSecret)
+					config.EnvironmentID = strings.TrimSpace(profileConfig.EnvironmentID)
+					if v := strings.TrimSpace(profileConfig.RegionCode); v != "" {
+						rc := management.EnumRegionCode(v)
+						config.RegionCode = &rc
+					}
+					pdebug("fallback to client_credentials (profile creds present): client_id set envID set region=%v", config.RegionCode)
+					// Third fallback: provider-supplied client credentials even when config_path is set
+				} else if pid, pok := d.Get("client_id").(string); pok && strings.TrimSpace(pid) != "" {
+					psecret, sok := d.Get("client_secret").(string)
+					penv, eok := d.Get("environment_id").(string)
+					if sok && eok && strings.TrimSpace(psecret) != "" && strings.TrimSpace(penv) != "" {
+						config.ClientID = strings.TrimSpace(pid)
+						config.ClientSecret = strings.TrimSpace(psecret)
+						config.EnvironmentID = strings.TrimSpace(penv)
+						if rv, ok := d.Get("region_code").(string); ok && strings.TrimSpace(rv) != "" {
+							rc := management.EnumRegionCode(strings.TrimSpace(rv))
+							config.RegionCode = &rc
+						}
+						pdebug("fallback to provider client_credentials: client_id set envID set region=%v", config.RegionCode)
+					} else {
+						return nil, diag.Errorf("PingCLI configuration requires a valid stored token. Please run 'pingcli login' first. Error: %v", err)
+					}
+				} else {
+					return nil, diag.Errorf("PingCLI configuration requires a valid stored token. Please run 'pingcli login' first. Error: %v", err)
+				}
+			}
+			pdebug("stored token found: expires=%s hasRefresh=%t", storedToken.Expiry.Format(time.RFC3339), storedToken.RefreshToken != "")
+
+			// If we have a stored token, prefer bearer-only mode.
+			if storedToken != nil && storedToken.Valid() {
+				config.AccessToken = storedToken.AccessToken
+				config.ClientID = ""
+				config.ClientSecret = ""
+				config.EnvironmentID = ""
+				if profileConfig.RegionCode != "" {
+					regionCode := management.EnumRegionCode(profileConfig.RegionCode)
+					config.RegionCode = &regionCode
+				}
+				pdebug("bearer-only mode: client_id cleared, envID cleared, region=%v", config.RegionCode)
+			}
+		} else {
+			// Use explicit credentials from provider configuration or environment variables
+			// Set the defaults
+			if v, ok := d.Get("client_id").(string); ok && v != "" {
+				config.ClientID = v
+			}
+
+			if v, ok := d.Get("client_secret").(string); ok && v != "" {
+				config.ClientSecret = v
+			}
+
+			if v, ok := d.Get("environment_id").(string); ok && v != "" {
+				config.EnvironmentID = v
+			}
+
+			if v, ok := d.Get("api_access_token").(string); ok && v != "" {
+				// When a static token is provided, clear client credentials and environment ID
+				// to satisfy underlying SDK validation rules.
+				config.AccessToken = v
+				if config.ClientID != "" || config.ClientSecret != "" || config.EnvironmentID != "" {
+					pdebug("api_access_token provided; clearing client_id/client_secret/environment_id to satisfy SDK validation")
+				}
+				config.ClientID = ""
+				config.ClientSecret = ""
+				config.EnvironmentID = ""
+			}
+
+			if v, ok := d.Get("region_code").(string); ok && v != "" {
+				regionCode := management.EnumRegionCode(v)
+				config.RegionCode = &regionCode
+			}
 		}
 
 		config.GlobalOptions = &client.GlobalOptions{
