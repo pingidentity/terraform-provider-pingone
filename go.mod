@@ -28,7 +28,7 @@ require (
 	github.com/patrickcping/pingone-go-sdk-v2 v0.14.3
 	github.com/patrickcping/pingone-go-sdk-v2/authorize v0.8.2
 	github.com/patrickcping/pingone-go-sdk-v2/credentials v0.12.0
-	github.com/patrickcping/pingone-go-sdk-v2/management v0.62.0
+	github.com/patrickcping/pingone-go-sdk-v2/management v0.63.0
 	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.23.2
 	github.com/patrickcping/pingone-go-sdk-v2/risk v0.21.0
 	github.com/patrickcping/pingone-go-sdk-v2/verify v0.10.0
