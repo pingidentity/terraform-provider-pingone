@@ -154,7 +154,27 @@ func TestAccDavinciVariable_Boolean(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				// Create the resource with a minimal model
-				Config: davinciVariable_BooleanHCL(resourceName),
+				Config: davinciVariable_BooleanHCL(resourceName, true),
+				Check:  davinciVariable_CheckComputedValuesMinimal(resourceName),
+			},
+			{
+				// Swap the value to false
+				Config: davinciVariable_BooleanHCL(resourceName, false),
+				Check:  davinciVariable_CheckComputedValuesMinimal(resourceName),
+			},
+			{
+				// Swap the value back to true
+				Config: davinciVariable_BooleanHCL(resourceName, true),
+				Check:  davinciVariable_CheckComputedValuesMinimal(resourceName),
+			},
+			{
+				// Delete the resource
+				Config:  davinciVariable_BooleanHCL(resourceName, true),
+				Destroy: true,
+			},
+			{
+				// Create from scratch with false value
+				Config: davinciVariable_BooleanHCL(resourceName, false),
 				Check:  davinciVariable_CheckComputedValuesMinimal(resourceName),
 			},
 		},
@@ -600,8 +620,7 @@ resource "pingone_davinci_variable" "%[3]s" {
 `, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
-// TODO update to cover setting the value bool to false, which currently fails due to an API issue TRIAGE-27920
-func davinciVariable_BooleanHCL(resourceName string) string {
+func davinciVariable_BooleanHCL(resourceName string, boolValue bool) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -612,10 +631,10 @@ resource "pingone_davinci_variable" "%[2]s" {
   mutable        = true
   name           = "%[2]s"
   value = {
-    bool = true
+    bool = %[3]t
   }
 }
-`, acctest.GenericSandboxEnvironment(), resourceName)
+`, acctest.GenericSandboxEnvironment(), resourceName, boolValue)
 }
 
 func davinciVariable_NumberHCL(resourceName string) string {
