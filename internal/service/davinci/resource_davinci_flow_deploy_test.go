@@ -170,7 +170,7 @@ func testAccDavinciFlowDeploy_BrokenFlow(t *testing.T, withBootstrap bool) {
 		Steps: []resource.TestStep{
 			{
 				Config: davinciFlowDeploy_BrokenFlowHCL(t, resourceName, withBootstrap),
-				// Right now attempting to deploy this broken flow returns a 500 error from the API
+				// TRIAGE-31546: Right now attempting to deploy this broken flow returns a 500 error from the API
 				ExpectError: regexp.MustCompile(`There was an unexpected error with the service`),
 			},
 		},
