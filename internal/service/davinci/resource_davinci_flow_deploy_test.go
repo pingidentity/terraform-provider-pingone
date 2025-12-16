@@ -78,14 +78,14 @@ func TestAccDavinciFlowDeploy_RemovalDrift(t *testing.T) {
 }
 
 func TestAccDavinciFlowDeploy_Clean(t *testing.T) {
-	testAccDavinciFlow(t, false)
+	testAccDavinciFlowDeploy(t, false)
 }
 
 func TestAccDavinciFlowDeploy_WithBootstrap(t *testing.T) {
-	testAccDavinciFlow(t, true)
+	testAccDavinciFlowDeploy(t, true)
 }
 
-func testAccDavinciFlow(t *testing.T, withBootstrap bool) {
+func testAccDavinciFlowDeploy(t *testing.T, withBootstrap bool) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
