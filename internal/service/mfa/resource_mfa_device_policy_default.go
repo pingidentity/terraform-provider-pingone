@@ -1803,7 +1803,7 @@ func (r *MFADevicePolicyDefaultResource) Configure(ctx context.Context, req reso
 }
 
 func (r *MFADevicePolicyDefaultResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan, state MFADevicePolicyDefaultResourceModel
+	var plan MFADevicePolicyDefaultResourceModel
 
 	if r.Client.MFAAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -1818,66 +1818,12 @@ func (r *MFADevicePolicyDefaultResource) Create(ctx context.Context, req resourc
 		return
 	}
 
-	// Build the model for the API
-	mFADevicePolicy, d := plan.expand(ctx, r.Client.ManagementAPIClient)
-	resp.Diagnostics.Append(d...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// Run the API call to check if default exists
-	readResponse, d := FetchDefaultMFADevicePolicy(ctx, r.Client.MFAAPIClient, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), false)
-	resp.Diagnostics.Append(d...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// The API ensures a default policy always exists, so if we can't find it, something is wrong
-	if readResponse == nil {
-		resp.Diagnostics.AddError(
-			"Default MFA Device Policy Not Found",
-			"Cannot find the default MFA device policy for the environment.",
-		)
-		return
-	}
-
-	// Extract ID from the union type based on policy_type
-	policyID, err := extractPolicyIDFromUnion(readResponse, plan.PolicyType.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Invalid policy response",
-			err.Error(),
-		)
-		return
-	}
-
 	// Update the default policy
-	var response *mfa.DeviceAuthenticationPolicy
-
-	resp.Diagnostics.Append(legacysdk.ParseResponse(
-		ctx,
-
-		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.MFAAPIClient.DeviceAuthenticationPolicyApi.UpdateDeviceAuthenticationPolicy(ctx, plan.EnvironmentId.ValueString(), policyID).DeviceAuthenticationPolicy(mFADevicePolicy).Execute()
-			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
-		},
-		"UpdateDeviceAuthenticationPolicy-Default",
-		legacysdk.DefaultCustomError,
-		nil,
-		&response,
-	)...)
+	state, d := r.updateMFADevicePolicyDefault(ctx, plan, true)
+	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
-	// Populate state from API response
-	resp.Diagnostics.Append(state.toState(response, plan.PolicyType.ValueString())...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// PolicyType is not returned by API, preserve it from plan
-	state.PolicyType = plan.PolicyType
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
@@ -1944,58 +1890,12 @@ func (r *MFADevicePolicyDefaultResource) Update(ctx context.Context, req resourc
 		return
 	}
 
-	// Build the model for the API
-	mFADevicePolicy, d := plan.expand(ctx, r.Client.ManagementAPIClient)
+	// Update the default policy
+	state, d := r.updateMFADevicePolicyDefault(ctx, plan, false)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
-	// Run the API call to get the default policy ID
-	readResponse, d := FetchDefaultMFADevicePolicy(ctx, r.Client.MFAAPIClient, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), false)
-	resp.Diagnostics.Append(d...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// Extract ID from the union type based on policy_type
-	policyID, err := extractPolicyIDFromUnion(readResponse, plan.PolicyType.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Invalid policy response",
-			err.Error(),
-		)
-		return
-	}
-
-	var response *mfa.DeviceAuthenticationPolicy
-	resp.Diagnostics.Append(legacysdk.ParseResponse(
-		ctx,
-
-		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.MFAAPIClient.DeviceAuthenticationPolicyApi.UpdateDeviceAuthenticationPolicy(ctx, plan.EnvironmentId.ValueString(), policyID).DeviceAuthenticationPolicy(mFADevicePolicy).Execute()
-			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
-		},
-		"UpdateDeviceAuthenticationPolicy-Default",
-		legacysdk.DefaultCustomError,
-		nil,
-		&response,
-	)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// Create state from API response
-	var state MFADevicePolicyDefaultResourceModel
-
-	// Populate state from API response
-	resp.Diagnostics.Append(state.toState(response, plan.PolicyType.ValueString())...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// PolicyType is not returned by API, preserve it from plan
-	state.PolicyType = plan.PolicyType
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
@@ -2104,6 +2004,88 @@ func (r *MFADevicePolicyDefaultResource) ImportState(ctx context.Context, req re
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes["environment_id"])...)
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("policy_type"), policyType)...)
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), response.GetId())...)
+}
+
+func (r *MFADevicePolicyDefaultResource) updateMFADevicePolicyDefault(ctx context.Context, plan MFADevicePolicyDefaultResourceModel, isCreate bool) (MFADevicePolicyDefaultResourceModel, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	var state MFADevicePolicyDefaultResourceModel
+
+	if r.Client.MFAAPIClient == nil {
+		diags.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return state, diags
+	}
+
+	// Build the model for the API
+	mFADevicePolicy, d := plan.expand(ctx, r.Client.ManagementAPIClient)
+	diags.Append(d...)
+	if diags.HasError() {
+		return state, diags
+	}
+
+	// Run the API call to check if default exists
+	readResponse, d := FetchDefaultMFADevicePolicy(ctx, r.Client.MFAAPIClient, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), false)
+	diags.Append(d...)
+	if diags.HasError() {
+		return state, diags
+	}
+
+	// The API ensures a default policy always exists, so if we can't find it, something is wrong
+	if readResponse == nil {
+		if isCreate {
+			diags.AddError(
+				"Default MFA Device Policy Not Found",
+				"Cannot find the default MFA device policy for the environment.",
+			)
+		} else {
+			diags.AddError(
+				"Default MFA Device Policy Not Found",
+				"The default MFA device policy could not be found to update.",
+			)
+		}
+		return state, diags
+	}
+
+	// Extract ID from the union type based on policy_type
+	policyID, err := extractPolicyIDFromUnion(readResponse, plan.PolicyType.ValueString())
+	if err != nil {
+		diags.AddError(
+			"Invalid policy response",
+			err.Error(),
+		)
+		return state, diags
+	}
+
+	// Update the default policy
+	var response *mfa.DeviceAuthenticationPolicy
+
+	diags.Append(legacysdk.ParseResponse(
+		ctx,
+
+		func() (any, *http.Response, error) {
+			fO, fR, fErr := r.Client.MFAAPIClient.DeviceAuthenticationPolicyApi.UpdateDeviceAuthenticationPolicy(ctx, plan.EnvironmentId.ValueString(), policyID).DeviceAuthenticationPolicy(mFADevicePolicy).Execute()
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+		},
+		"UpdateDeviceAuthenticationPolicy-Default",
+		legacysdk.DefaultCustomError,
+		nil,
+		&response,
+	)...)
+	if diags.HasError() {
+		return state, diags
+	}
+
+	// Populate state from API response
+	diags.Append(state.toState(response, plan.PolicyType.ValueString())...)
+	if diags.HasError() {
+		return state, diags
+	}
+
+	// PolicyType is not returned by API, preserve it from plan
+	state.PolicyType = plan.PolicyType
+
+	return state, diags
 }
 
 // extractPolicyIDFromUnion extracts the policy ID from a DeviceAuthenticationPolicy
