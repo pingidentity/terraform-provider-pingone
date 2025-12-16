@@ -131,9 +131,9 @@ resource "pingone_davinci_connector_instance" "%[1]s" {
       "value" : [
         {
           "name" : "example",
-          "url" : "https://example.com",
+          "url" : "https://pingidentity.com",
           "token" : "mytoken",
-          "value" : "https://example.com"
+          "value" : "https://pingidentity.com"
         }
       ]
     }
@@ -183,7 +183,7 @@ func davinciConnectorInstanceDataSource_CheckComputedValuesComplete(resourceName
 		resource.TestMatchResourceAttr(fmt.Sprintf("data.pingone_davinci_connector_instance.%s", resourceName), "id", verify.P1DVResourceIDRegexp),
 		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_connector_instance.%s", resourceName), "name", resourceName),
 		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_connector_instance.%s", resourceName), "properties",
-			"{\"urls\":{\"companyId\":\"singularkey\",\"createdDate\":12345,\"customerId\":\"12345\",\"displayName\":\"Register URLs\",\"info\":\"POST requests will be made to these registered url as selected later.\",\"preferredControlType\":\"urlsTableView\",\"required\":true,\"type\":\"string\",\"value\":[{\"name\":\"example\",\"token\":\"mytoken\",\"url\":\"https://example.com\",\"value\":\"https://example.com\"}]}}"),
+			"{\"urls\":{\"companyId\":\"singularkey\",\"createdDate\":12345,\"customerId\":\"12345\",\"displayName\":\"Register URLs\",\"info\":\"POST requests will be made to these registered url as selected later.\",\"preferredControlType\":\"urlsTableView\",\"required\":true,\"type\":\"string\",\"value\":[{\"name\":\"example\",\"token\":\"mytoken\",\"url\":\"https://pingidentity.com\",\"value\":\"https://pingidentity.com\"}]}}"),
 	)
 }
 func davinciConnectorInstanceDataSource_CheckComputedValuesBootstrapConnection(resourceName string) resource.TestCheckFunc {

@@ -112,18 +112,18 @@ resource "pingone_davinci_application" "%[1]s" {
       "implicit",
     ]
     logout_uris = [
-      "https://example.com/logout",
+      "https://pingidentity.com/logout",
     ]
     redirect_uris = [
-      "https://example.com/callback",
-      "https://example.com/redirect",
+      "https://pingidentity.com/callback",
+      "https://pingidentity.com/redirect",
     ]
     scopes = [
       "profile",
       "flow_analytics",
       "openid",
     ]
-    sp_jwks_url = "https://example.com/jwks"
+    sp_jwks_url = "https://pingidentity.com/jwks"
   }
 }
 `, resourceName)
@@ -181,16 +181,16 @@ func davinciApplicationDataSource_CheckComputedValuesComplete(resourceName strin
 		resource.TestCheckTypeSetElemAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "oauth.grant_types.*", "authorizationCode"),
 		resource.TestCheckTypeSetElemAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "oauth.grant_types.*", "implicit"),
 		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "oauth.logout_uris.#", "1"),
-		resource.TestCheckTypeSetElemAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "oauth.logout_uris.*", "https://example.com/logout"),
+		resource.TestCheckTypeSetElemAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "oauth.logout_uris.*", "https://pingidentity.com/logout"),
 		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "oauth.redirect_uris.#", "2"),
-		resource.TestCheckTypeSetElemAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "oauth.redirect_uris.*", "https://example.com/callback"),
-		resource.TestCheckTypeSetElemAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "oauth.redirect_uris.*", "https://example.com/redirect"),
+		resource.TestCheckTypeSetElemAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "oauth.redirect_uris.*", "https://pingidentity.com/callback"),
+		resource.TestCheckTypeSetElemAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "oauth.redirect_uris.*", "https://pingidentity.com/redirect"),
 		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "oauth.scopes.#", "3"),
 		resource.TestCheckTypeSetElemAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "oauth.scopes.*", "profile"),
 		resource.TestCheckTypeSetElemAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "oauth.scopes.*", "flow_analytics"),
 		resource.TestCheckTypeSetElemAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "oauth.scopes.*", "openid"),
 		resource.TestCheckNoResourceAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "oauth.sp_jwks_openid"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "oauth.sp_jwks_url", "https://example.com/jwks"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_application.%s", resourceName), "oauth.sp_jwks_url", "https://pingidentity.com/jwks"),
 	)
 }
 

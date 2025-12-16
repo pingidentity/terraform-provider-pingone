@@ -76,9 +76,9 @@ resource "pingone_davinci_connector_instance" "%[2]s-first" {
       "value" : [
         {
           "name" : "example",
-          "url" : "https://example.com",
+          "url" : "https://pingidentity.com",
           "token" : "mytoken",
-          "value" : "https://example.com"
+          "value" : "https://pingidentity.com"
         }
       ]
     }
@@ -104,9 +104,9 @@ resource "pingone_davinci_connector_instance" "%[2]s-second" {
       "value" : [
         {
           "name" : "example",
-          "url" : "https://example.com",
+          "url" : "https://pingidentity.com",
           "token" : "mytoken",
-          "value" : "https://example.com"
+          "value" : "https://pingidentity.com"
         }
       ]
     }
@@ -131,12 +131,12 @@ func davinciConnectorInstancesDataSource_CheckComputedValuesComplete(resourceNam
 		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("data.pingone_davinci_connector_instances.%s", resourceName), "connector_instances.*", map[string]string{
 			"connector.id": "webhookConnector",
 			"name":         fmt.Sprintf("%s-first", resourceName),
-			"properties":   "{\"urls\":{\"companyId\":\"singularkey\",\"createdDate\":12345,\"customerId\":\"12345\",\"displayName\":\"Register URLs\",\"info\":\"POST requests will be made to these registered url as selected later.\",\"preferredControlType\":\"urlsTableView\",\"required\":true,\"type\":\"string\",\"value\":[{\"name\":\"example\",\"token\":\"mytoken\",\"url\":\"https://example.com\",\"value\":\"https://example.com\"}]}}",
+			"properties":   "{\"urls\":{\"companyId\":\"singularkey\",\"createdDate\":12345,\"customerId\":\"12345\",\"displayName\":\"Register URLs\",\"info\":\"POST requests will be made to these registered url as selected later.\",\"preferredControlType\":\"urlsTableView\",\"required\":true,\"type\":\"string\",\"value\":[{\"name\":\"example\",\"token\":\"mytoken\",\"url\":\"https://pingidentity.com\",\"value\":\"https://pingidentity.com\"}]}}",
 		}),
 		resource.TestCheckTypeSetElemNestedAttrs(fmt.Sprintf("data.pingone_davinci_connector_instances.%s", resourceName), "connector_instances.*", map[string]string{
 			"connector.id": "webhookConnector",
 			"name":         fmt.Sprintf("%s-second", resourceName),
-			"properties":   "{\"urls\":{\"companyId\":\"singularkey\",\"createdDate\":12345,\"customerId\":\"12345\",\"displayName\":\"Register URLs\",\"info\":\"POST requests will be made to these registered url as selected later.\",\"preferredControlType\":\"urlsTableView\",\"required\":true,\"type\":\"string\",\"value\":[{\"name\":\"example\",\"token\":\"mytoken\",\"url\":\"https://example.com\",\"value\":\"https://example.com\"}]}}",
+			"properties":   "{\"urls\":{\"companyId\":\"singularkey\",\"createdDate\":12345,\"customerId\":\"12345\",\"displayName\":\"Register URLs\",\"info\":\"POST requests will be made to these registered url as selected later.\",\"preferredControlType\":\"urlsTableView\",\"required\":true,\"type\":\"string\",\"value\":[{\"name\":\"example\",\"token\":\"mytoken\",\"url\":\"https://pingidentity.com\",\"value\":\"https://pingidentity.com\"}]}}",
 		}),
 	)
 }
