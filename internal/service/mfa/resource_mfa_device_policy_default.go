@@ -3041,7 +3041,7 @@ func (p *MFADevicePolicyDefaultResourceModel) toState(apiObject *mfa.DeviceAuthe
 	diags.Append(d...)
 
 	mobileApiObj, mobileOk := apiObject.GetMobileOk()
-	p.Mobile, d = toStateMfaDevicePolicyMobileForDefault(mobileApiObj, mobileOk, p.Mobile, policyType)
+	p.Mobile, d = toStateMfaDevicePolicyMobileForDefault(mobileApiObj, mobileOk, policyType)
 	diags.Append(d...)
 
 	p.Totp, d = toStateMfaDevicePolicyTotp(apiObject.GetTotpOk())
@@ -3181,25 +3181,15 @@ func toStateMfaDevicePolicyOathToken(apiObject *mfa.DeviceAuthenticationPolicyOa
 }
 
 // Mobile toState functions for default resource with number_matching support
-// priorMobile contains the prior state's mobile object, used to preserve values that the API doesn't return
-func toStateMfaDevicePolicyMobileForDefault(apiObject *mfa.DeviceAuthenticationPolicyCommonMobile, ok bool, priorMobile types.Object, policyType string) (types.Object, diag.Diagnostics) {
+func toStateMfaDevicePolicyMobileForDefault(apiObject *mfa.DeviceAuthenticationPolicyCommonMobile, ok bool, policyType string) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
 		return types.ObjectNull(MFADevicePolicyDefaultMobileTFObjectTypes), nil
 	}
 
-	// Extract prior applications from the prior mobile state
-	var priorApplications types.List
-	if !priorMobile.IsNull() && !priorMobile.IsUnknown() {
-		priorMobileAttrs := priorMobile.Attributes()
-		if apps, ok := priorMobileAttrs["applications"].(types.List); ok {
-			priorApplications = apps
-		}
-	}
-
 	appsApiObj, appsOk := apiObject.GetApplicationsOk()
-	applications, d := toStateMfaDevicePolicyMobileApplicationsForDefault(appsApiObj, appsOk, priorApplications, policyType)
+	applications, d := toStateMfaDevicePolicyMobileApplicationsForDefault(appsApiObj, appsOk, policyType)
 	diags.Append(d...)
 	if diags.HasError() {
 		return types.ObjectNull(MFADevicePolicyDefaultMobileTFObjectTypes), diags
@@ -3225,10 +3215,8 @@ func toStateMfaDevicePolicyMobileForDefault(apiObject *mfa.DeviceAuthenticationP
 }
 
 // toStateMfaDevicePolicyMobileApplicationsForDefault converts API mobile applications to Terraform state.
-// priorApplications contains the prior state, used to preserve values that the API doesn't return
-// (specifically: biometrics_enabled, type, new_request_duration_configuration for PingID applications).
 // policyType is used to conditionally ignore fields that conflict with the policy type.
-func toStateMfaDevicePolicyMobileApplicationsForDefault(apiObject []mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInner, ok bool, priorApplications types.List, policyType string) (types.List, diag.Diagnostics) {
+func toStateMfaDevicePolicyMobileApplicationsForDefault(apiObject []mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInner, ok bool, policyType string) (types.List, diag.Diagnostics) {
 	var diags, d diag.Diagnostics
 
 	tfObjType := types.ObjectType{AttrTypes: MFADevicePolicyDefaultMobileApplicationTFObjectTypes}
@@ -3238,20 +3226,6 @@ func toStateMfaDevicePolicyMobileApplicationsForDefault(apiObject []mfa.DeviceAu
 	}
 
 	isPingID := (policyType == POLICY_TYPE_PINGID)
-
-	// Build a map of prior state applications by ID for quick lookup
-	priorAppsMap := make(map[string]map[string]attr.Value)
-	if !priorApplications.IsNull() && !priorApplications.IsUnknown() {
-		priorElements := priorApplications.Elements()
-		for _, elem := range priorElements {
-			if obj, ok := elem.(types.Object); ok && !obj.IsNull() && !obj.IsUnknown() {
-				attrs := obj.Attributes()
-				if idAttr, ok := attrs["id"].(types.String); ok && !idAttr.IsNull() && !idAttr.IsUnknown() {
-					priorAppsMap[idAttr.ValueString()] = attrs
-				}
-			}
-		}
-	}
 
 	objectList := make([]attr.Value, 0, len(apiObject))
 	for _, application := range apiObject {
@@ -3327,47 +3301,11 @@ func toStateMfaDevicePolicyMobileApplicationsForDefault(apiObject []mfa.DeviceAu
 		var pushTimeout types.Object
 		var ipPairingConfiguration types.Object
 
-		appID := application.GetId()
-
 		if isPingID {
 			// For PingID policies, the API may not return biometrics_enabled, type, or new_request_duration_configuration
 			// Preserve these values from the prior state if API didn't return them
 			biometricsEnabled = framework.BoolOkToTF(application.GetBiometricsEnabledOk())
 			typeAttr = framework.EnumOkToTF(application.GetTypeOk())
-
-			if priorAttrs, hasPrior := priorAppsMap[appID]; hasPrior {
-				// If API returned null for biometrics_enabled, use prior state value
-				if biometricsEnabled.IsNull() {
-					if priorBiometrics, ok := priorAttrs["biometrics_enabled"].(types.Bool); ok && !priorBiometrics.IsNull() && !priorBiometrics.IsUnknown() {
-						biometricsEnabled = priorBiometrics
-						tflog.Debug(context.Background(), "Preserving biometrics_enabled from prior state", map[string]interface{}{
-							"app_id": appID,
-							"value":  priorBiometrics.ValueBool(),
-						})
-					}
-				}
-
-				// If API returned null for type, use prior state value
-				if typeAttr.IsNull() {
-					if priorType, ok := priorAttrs["type"].(types.String); ok && !priorType.IsNull() && !priorType.IsUnknown() {
-						typeAttr = priorType
-						tflog.Debug(context.Background(), "Preserving type from prior state", map[string]interface{}{
-							"app_id": appID,
-							"value":  priorType.ValueString(),
-						})
-					}
-				}
-
-				// If API returned null for new_request_duration_configuration, use prior state value
-				if newRequestDurationConfiguration.IsNull() {
-					if priorNRDC, ok := priorAttrs["new_request_duration_configuration"].(types.Object); ok && !priorNRDC.IsNull() && !priorNRDC.IsUnknown() {
-						newRequestDurationConfiguration = priorNRDC
-						tflog.Debug(context.Background(), "Preserving new_request_duration_configuration from prior state", map[string]interface{}{
-							"app_id": appID,
-						})
-					}
-				}
-			}
 
 			// push_timeout conflicts with PingID - keep it null
 			pushTimeout = types.ObjectNull(MFADevicePolicyTimePeriodTFObjectTypes)
@@ -3410,7 +3348,7 @@ func toStateMfaDevicePolicyMobileApplicationsForDefault(apiObject []mfa.DeviceAu
 		}
 
 		o := map[string]attr.Value{
-			"id":                                 types.StringValue(appID),
+			"id":                                 types.StringValue(application.GetId()),
 			"auto_enrollment":                    autoEnrolment,
 			"biometrics_enabled":                 biometricsEnabled,
 			"device_authorization":               deviceAuthorization,
