@@ -2020,7 +2020,7 @@ func (r *MFADevicePolicyDefaultResource) Delete(ctx context.Context, req resourc
 	// If notifications_policy is set, we must unset it to allow the referenced policy to be deleted
 	if !data.NotificationsPolicy.IsNull() && !data.NotificationsPolicy.IsUnknown() {
 		// Fetch the default policy to get its ID
-		response, d := FetchDefaultMFADevicePolicy(ctx, r.Client.MFAAPIClient, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), false)
+		response, d := FetchDefaultMFADevicePolicy(ctx, r.Client.MFAAPIClient, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), true)
 		resp.Diagnostics.Append(d...)
 		if resp.Diagnostics.HasError() {
 			return
