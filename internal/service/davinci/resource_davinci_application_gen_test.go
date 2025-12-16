@@ -328,19 +328,19 @@ resource "pingone_davinci_application" "%[2]s" {
       "implicit",
     ]
     logout_uris = [
-      "https://example.com/logout",
-      "https://example.com/logout3",
+      "https://pingidentity.com/logout",
+      "https://pingidentity.com/logout3",
     ]
     redirect_uris = [
-      "https://example.com/callback",
-      "https://example.com/redirect",
+      "https://pingidentity.com/callback",
+      "https://pingidentity.com/redirect",
     ]
     scopes = [
       "profile",
       "flow_analytics",
       "openid",
     ]
-    sp_jwks_url = "https://example.com/jwks"
+    sp_jwks_url = "https://pingidentity.com/jwks"
   }
 }
 `, acctest.DaVinciSandboxEnvironment(withBootstrapConfig), resourceName)
@@ -367,13 +367,13 @@ resource "pingone_davinci_application" "%[2]s" {
       "clientCredentials",
     ]
     logout_uris = [
-      "https://example.com/v2/logout",
-      "https://example.com/logout",
+      "https://pingidentity.com/v2/logout",
+      "https://pingidentity.com/logout",
     ]
     redirect_uris = [
-      "https://example.com/redirect",
-      "https://example.com/callback",
-      "https://example.com/someotherthing",
+      "https://pingidentity.com/redirect",
+      "https://pingidentity.com/callback",
+      "https://pingidentity.com/someotherthing",
     ]
     scopes = [
       "openid",
