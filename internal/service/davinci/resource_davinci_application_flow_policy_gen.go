@@ -71,7 +71,7 @@ func (r *davinciApplicationFlowPolicyResource) Configure(ctx context.Context, re
 }
 
 type davinciApplicationFlowPolicyResourceModel struct {
-	DaVinciApplicationId types.String `tfsdk:"da_vinci_application_id"`
+	DaVinciApplicationId types.String `tfsdk:"davinci_application_id"`
 	EnvironmentId        types.String `tfsdk:"environment_id"`
 	FlowDistributions    types.Set    `tfsdk:"flow_distributions"`
 	Id                   types.String `tfsdk:"id"`
@@ -84,7 +84,7 @@ func (r *davinciApplicationFlowPolicyResource) Schema(ctx context.Context, req r
 	resp.Schema = schema.Schema{
 		Description: "Resource to create and manage a DaVinci application flow policy.",
 		Attributes: map[string]schema.Attribute{
-			"da_vinci_application_id": schema.StringAttribute{
+			"davinci_application_id": schema.StringAttribute{
 				Required:    true,
 				Description: "This field is immutable and will trigger a replace plan if changed.",
 				PlanModifiers: []planmodifier.String{
@@ -760,7 +760,7 @@ func (r *davinciApplicationFlowPolicyResource) ImportState(ctx context.Context, 
 			Regexp: verify.P1ResourceIDRegexp,
 		},
 		{
-			Label:  "da_vinci_application_id",
+			Label:  "davinci_application_id",
 			Regexp: verify.P1DVResourceIDRegexp,
 		},
 		{
