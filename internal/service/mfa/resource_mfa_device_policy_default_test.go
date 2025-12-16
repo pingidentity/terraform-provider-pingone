@@ -524,7 +524,7 @@ resource "pingone_mfa_device_policy_default" "%[3]s" {
 }
 
 func TestAccMFADevicePolicyDefault_PingID_Full(t *testing.T) {
-	t.Parallel()
+	// t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy_default.%s", resourceName)
@@ -573,46 +573,45 @@ func TestAccMFADevicePolicyDefault_PingID_Full(t *testing.T) {
 	})
 }
 
-// func TestAccMFADevicePolicyDefault_PingID_Minimal(t *testing.T) {
-// 	t.Parallel()
+func TestAccMFADevicePolicyDefault_PingID_Minimal(t *testing.T) {
+	// t.Parallel()
 
-// 	resourceName := acctest.ResourceNameGen()
-// 	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy_default.%s", resourceName)
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy_default.%s", resourceName)
 
-// 	environmentName := acctest.ResourceNameGenEnvironment()
+	name := resourceName
 
-// 	name := resourceName
-
-// 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-
-// 	resource.Test(t, resource.TestCase{
-// 		PreCheck: func() {
-// 			acctest.PreCheckNoTestAccFlaky(t)
-// 			acctest.PreCheckClient(t)
-// 			acctest.PreCheckNewEnvironment(t)
-// 			acctest.PreCheckNoBeta(t)
-// 		},
-// 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-// 		CheckDestroy:             mfa.MFADevicePolicyDefault_CheckDestroy,
-// 		ErrorCheck:               acctest.ErrorCheck(t),
-// 		Steps: []resource.TestStep{
-// 			{
-// 				Config: testAccMFADevicePolicyDefaultConfig_PingID_Minimal(environmentName, licenseID, resourceName, name),
-// 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-// 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-// 					resource.TestCheckResourceAttr(resourceFullName, "policy_type", "pingid"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
-// 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "true"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "sms.enabled", "false"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "voice.enabled", "false"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "email.enabled", "false"),
-// 					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "false"),
-// 				),
-// 			},
-// 		},
-// 	})
-// }
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckRegionSupportsWorkforce(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             mfa.MFADevicePolicyDefault_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMFADevicePolicyDefaultConfig_PingID_Minimal(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "policy_type", "pingid"),
+					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "sms.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "voice.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "email.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.enabled", "false"),
+				),
+			},
+		},
+	})
+}
 
 // func TestAccMFADevicePolicyDefault_PingID_ValidationErrors(t *testing.T) {
 // 	t.Parallel()
@@ -738,37 +737,49 @@ func TestAccMFADevicePolicyDefault_PingID_Full(t *testing.T) {
 // }`, acctestlegacysdk.MinimalPingIDSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 // }
 
-// func testAccMFADevicePolicyDefaultConfig_PingID_Minimal(environmentName, licenseID, resourceName, name string) string {
-// 	return fmt.Sprintf(`
-// 		%[1]s
+func testAccMFADevicePolicyDefaultConfig_PingID_Minimal(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
 
-// resource "pingone_mfa_device_policy_default" "%[3]s" {
-//   environment_id = pingone_environment.%[2]s.id
-//   policy_type    = "pingid"
+resource "pingone_mfa_device_policy_default" "%[2]s" {
+  environment_id = data.pingone_environment.workforce_test.id
+  policy_type    = "pingid"
 
-//   name = "%[3]s"
+  name = "%[3]s"
 
-//   sms = {
-//     enabled = false
-//   }
+  sms = {
+    enabled = false
+  }
 
-//   voice = {
-//     enabled = false
-//   }
+  voice = {
+    enabled = false
+  }
 
-//   email = {
-//     enabled = true
-//   }
+  email = {
+    enabled = false
+  }
 
-//   mobile = {
-//     enabled = true
-//   }
+  mobile = {
+    enabled = true
+  }
 
-//   totp = {
-//     enabled = true
-//   }
-// }`, acctestlegacysdk.MinimalPingIDSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
-// }
+  totp = {
+    enabled = false
+  }
+
+  desktop = {
+    enabled = false
+  }
+
+  yubikey = {
+    enabled = false
+  }
+
+  oath_token = {
+    enabled = false
+  }
+}`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name)
+}
 
 // func testAccMFADevicePolicyDefaultConfig_PingID_DesktopWithPingOneMFA(environmentName, licenseID, resourceName, name string) string {
 // 	return fmt.Sprintf(`

@@ -1423,15 +1423,6 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 					"pairing_key_lifetime": schema.SingleNestedAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies pairing key lifetime settings for desktop devices.").Description,
 						Optional:    true,
-						Computed:    true,
-
-						Default: objectdefault.StaticValue(types.ObjectValueMust(
-							MFADevicePolicyTimePeriodTFObjectTypes,
-							map[string]attr.Value{
-								"duration":  types.Int32Value(48),
-								"time_unit": types.StringValue(string(mfa.ENUMTIMEUNITPAIRINGKEYLIFETIME_HOURS)),
-							},
-						)),
 
 						Attributes: map[string]schema.Attribute{
 							"duration": schema.Int32Attribute{
@@ -1879,14 +1870,16 @@ func (r *MFADevicePolicyDefaultResource) Create(ctx context.Context, req resourc
 		return
 	}
 
-	// Create the state to save
-	state = plan
+	// Populate state from API response
+	resp.Diagnostics.Append(state.toState(response, plan.PolicyType.ValueString())...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// PolicyType is not returned by API, preserve it from plan
+	state.PolicyType = plan.PolicyType
 
 	// Save updated data into Terraform state
-	// For default policies, only update computed fields
-	// All other fields preserve the plan values to prevent inconsistent result errors
-	state.Id = framework.PingOneResourceIDToTF(response.GetId())
-	state.UpdatedAt = framework.TimeOkToTF(response.GetUpdatedAtOk())
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -1919,48 +1912,20 @@ func (r *MFADevicePolicyDefaultResource) Read(ctx context.Context, req resource.
 		return
 	}
 
-	// Get the policy ID from the default policy
-	policyID := defaultPolicy.GetId()
-
-	// Now fetch the full policy details using ReadOneDeviceAuthenticationPolicy
-	// The list endpoint doesn't return all fields (e.g., biometrics_enabled, new_request_duration_configuration, type)
-	var response *mfa.DeviceAuthenticationPolicy
-	resp.Diagnostics.Append(legacysdk.ParseResponse(
-		ctx,
-
-		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.MFAAPIClient.DeviceAuthenticationPolicyApi.ReadOneDeviceAuthenticationPolicy(ctx, data.EnvironmentId.ValueString(), policyID).Execute()
-			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
-		},
-		"ReadOneDeviceAuthenticationPolicy-Default",
-		legacysdk.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultCreateReadRetryable,
-		&response,
-	)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// Remove from state if resource is not found
-	if response == nil {
-		resp.State.RemoveResource(ctx)
-		return
-	}
-
 	// Determine policy type - either from state (set by ImportState) or from API
 	policyType := data.PolicyType.ValueString()
 	if policyType == "" {
-		policyType = determinePolicyType(response)
+		policyType = determinePolicyType(defaultPolicy)
 	}
 
 	// Populate state from API response
-	resp.Diagnostics.Append(data.toState(response, policyType)...)
+	resp.Diagnostics.Append(data.toState(defaultPolicy, policyType)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, data)...)
 }
 
 func (r *MFADevicePolicyDefaultResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -2020,12 +1985,20 @@ func (r *MFADevicePolicyDefaultResource) Update(ctx context.Context, req resourc
 		return
 	}
 
+	// Create state from API response
+	var state MFADevicePolicyDefaultResourceModel
+
+	// Populate state from API response
+	resp.Diagnostics.Append(state.toState(response, plan.PolicyType.ValueString())...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// PolicyType is not returned by API, preserve it from plan
+	state.PolicyType = plan.PolicyType
+
 	// Save updated data into Terraform state
-	// For default policies, only update computed fields
-	// All other fields preserve the plan values to prevent inconsistent result errors
-	plan.Id = framework.PingOneResourceIDToTF(response.GetId())
-	plan.UpdatedAt = framework.TimeOkToTF(response.GetUpdatedAtOk())
-	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
 func (r *MFADevicePolicyDefaultResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
