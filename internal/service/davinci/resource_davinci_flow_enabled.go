@@ -309,7 +309,7 @@ func (r *davinciFlowEnabledResource) Update(ctx context.Context, req resource.Up
 		},
 		"EnableFlow",
 		framework.DefaultCustomError,
-		framework.InsufficientPrivilegeRetryable,
+		nil,
 		&responseData,
 	)...)
 
