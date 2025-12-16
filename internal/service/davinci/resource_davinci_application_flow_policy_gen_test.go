@@ -204,7 +204,7 @@ resource "pingone_davinci_application" "%[2]s" {
 }
 
 resource "pingone_davinci_application_flow_policy" "%[2]s" {
-  environment_id          = data.pingone_environment.general_test.id
+  environment_id         = data.pingone_environment.general_test.id
   davinci_application_id = pingone_davinci_application.%[2]s.id
   flow_distributions = [
     {
@@ -228,7 +228,7 @@ resource "pingone_davinci_application" "%[2]s" {
 }
 
 resource "pingone_davinci_application_flow_policy" "%[2]s" {
-  environment_id          = data.pingone_environment.general_test.id
+  environment_id         = data.pingone_environment.general_test.id
   davinci_application_id = pingone_davinci_application.%[2]s.id
   flow_distributions = [
     {
@@ -324,7 +324,7 @@ resource "pingone_davinci_application" "%[3]s" {
 }
 
 resource "pingone_davinci_application_flow_policy" "%[3]s" {
-  environment_id          = pingone_environment.%[2]s.id
+  environment_id         = pingone_environment.%[2]s.id
   davinci_application_id = pingone_davinci_application.%[3]s.id
   flow_distributions = [
     {
