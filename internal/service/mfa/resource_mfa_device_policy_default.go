@@ -1845,11 +1845,46 @@ func (r *MFADevicePolicyDefaultResource) Read(ctx context.Context, req resource.
 		return
 	}
 
-	// First, fetch the default policy to get its ID (list endpoint returns summarized data)
-	defaultPolicy, d := FetchDefaultMFADevicePolicy(ctx, r.Client.MFAAPIClient, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), true)
-	resp.Diagnostics.Append(d...)
-	if resp.Diagnostics.HasError() {
-		return
+	var defaultPolicy *mfa.DeviceAuthenticationPolicy
+	var d diag.Diagnostics
+
+	if !data.Id.IsNull() && !data.Id.IsUnknown() {
+		var response *mfa.DeviceAuthenticationPolicy
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
+			ctx,
+			func() (any, *http.Response, error) {
+				fO, fR, fErr := r.Client.MFAAPIClient.DeviceAuthenticationPolicyApi.ReadOneDeviceAuthenticationPolicy(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			},
+			"ReadOneDeviceAuthenticationPolicy-Default",
+			legacysdk.CustomErrorResourceNotFoundWarning,
+			nil,
+			&response,
+		)...)
+
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		if response != nil {
+			// Check if it is still the default policy
+			var isDefault bool
+			if v, ok := response.GetDefaultOk(); ok {
+				isDefault = *v
+			}
+
+			if isDefault {
+				defaultPolicy = response
+			}
+		}
+	}
+
+	if defaultPolicy == nil {
+		defaultPolicy, d = FetchDefaultMFADevicePolicy(ctx, r.Client.MFAAPIClient, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), true)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
 	}
 
 	// Remove from state if resource is not found
@@ -2025,10 +2060,45 @@ func (r *MFADevicePolicyDefaultResource) updateMFADevicePolicyDefault(ctx contex
 	}
 
 	// Run the API call to check if default exists
-	readResponse, d := FetchDefaultMFADevicePolicy(ctx, r.Client.MFAAPIClient, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), false)
-	diags.Append(d...)
-	if diags.HasError() {
-		return state, diags
+	var readResponse *mfa.DeviceAuthenticationPolicy
+
+	if !isCreate && !plan.Id.IsNull() && !plan.Id.IsUnknown() {
+		var response *mfa.DeviceAuthenticationPolicy
+		diags.Append(legacysdk.ParseResponse(
+			ctx,
+			func() (any, *http.Response, error) {
+				fO, fR, fErr := r.Client.MFAAPIClient.DeviceAuthenticationPolicyApi.ReadOneDeviceAuthenticationPolicy(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Execute()
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			},
+			"ReadOneDeviceAuthenticationPolicy-Default",
+			legacysdk.CustomErrorResourceNotFoundWarning,
+			nil,
+			&response,
+		)...)
+
+		if diags.HasError() {
+			return state, diags
+		}
+
+		if response != nil {
+			// Check if it is still the default policy
+			var isDefault bool
+			if v, ok := response.GetDefaultOk(); ok {
+				isDefault = *v
+			}
+
+			if isDefault {
+				readResponse = response
+			}
+		}
+	}
+
+	if readResponse == nil {
+		readResponse, d = FetchDefaultMFADevicePolicy(ctx, r.Client.MFAAPIClient, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), false)
+		diags.Append(d...)
+		if diags.HasError() {
+			return state, diags
+		}
 	}
 
 	// The API ensures a default policy always exists, so if we can't find it, something is wrong
