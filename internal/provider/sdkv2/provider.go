@@ -5,11 +5,9 @@ package sdkv2
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -172,12 +170,6 @@ func configure(version string) func(context.Context, *schema.ResourceData) (inte
 	return func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 		var diags diag.Diagnostics
 		var config client.Config
-		debug := os.Getenv("PINGCLI_DEBUG") == "1"
-		pdebug := func(format string, args ...any) {
-			if debug {
-				log.Printf("[provider pingone] "+format, args...)
-			}
-		}
 
 		// Check if PingCLI config is being used
 		configPath := strings.TrimSpace(d.Get("config_path").(string))
@@ -197,7 +189,6 @@ func configure(version string) func(context.Context, *schema.ResourceData) (inte
 		}
 
 		usingPingCLIConfig := configPath != ""
-		pdebug("usingPingCLIConfig=%t config_path=%s config_profile=%s", usingPingCLIConfig, configPath, configProfile)
 
 		// If using PingCLI config, load it
 		if usingPingCLIConfig {
@@ -205,7 +196,6 @@ func configure(version string) func(context.Context, *schema.ResourceData) (inte
 			if err != nil {
 				return nil, diag.FromErr(fmt.Errorf("failed to load PingCLI configuration: %w", err))
 			}
-			pdebug("profile loaded: grantType=%s envID=%s region=%s", profileConfig.GrantType, profileConfig.EnvironmentID, profileConfig.RegionCode)
 
 			// If no profile was specified, get the active profile name
 			if configProfile == "" {
@@ -217,24 +207,10 @@ func configure(version string) func(context.Context, *schema.ResourceData) (inte
 				if err != nil {
 					return nil, diag.FromErr(fmt.Errorf("failed to get active profile: %w", err))
 				}
-				pdebug("active profile=%s", configProfile)
-				// Log storage mode to clarify expectations
-				fileStorage := pingCliConfig.IsFileStorageEnabled(configProfile)
-				pdebug("login.storage.type=%s (secure_local means Keychain)", map[bool]string{true: "file_system", false: "secure_local"}[fileStorage])
 			}
 
-			// Try to load stored token (Keychain first, then file storage)
-			pdebug("attempting token load: profile=%s grant=%s envID=%s clientID=%s service=%s suffix=%s",
-				configProfile,
-				profileConfig.GrantType,
-				profileConfig.EnvironmentID,
-				profileConfig.ClientID,
-				"pingcli",
-				fmt.Sprintf("_pingone_%s_%s", strings.TrimSpace(profileConfig.GrantType), configProfile),
-			)
 			storedToken, err := pingcli.LoadStoredToken(profileConfig, configProfile)
 			if err != nil || storedToken == nil || !storedToken.Valid() {
-				pdebug("stored token not found or invalid: grantType=%s err=%v", profileConfig.GrantType, err)
 				// First fallback: explicit API access token supplied in provider config
 				if v, ok := d.Get("api_access_token").(string); ok && strings.TrimSpace(v) != "" {
 					config.AccessToken = strings.TrimSpace(v)
@@ -250,7 +226,6 @@ func configure(version string) func(context.Context, *schema.ResourceData) (inte
 						rc := management.EnumRegionCode(strings.TrimSpace(rv))
 						config.RegionCode = &rc
 					}
-					pdebug("fallback to api_access_token: bearer-only mode region=%v", config.RegionCode)
 					// Second fallback: if client credentials are present in the PingCLI profile, use them regardless of grant type
 				} else if strings.TrimSpace(profileConfig.ClientID) != "" && strings.TrimSpace(profileConfig.ClientSecret) != "" && strings.TrimSpace(profileConfig.EnvironmentID) != "" {
 					config.ClientID = strings.TrimSpace(profileConfig.ClientID)
@@ -260,7 +235,6 @@ func configure(version string) func(context.Context, *schema.ResourceData) (inte
 						rc := management.EnumRegionCode(v)
 						config.RegionCode = &rc
 					}
-					pdebug("fallback to client_credentials (profile creds present): client_id set envID set region=%v", config.RegionCode)
 					// Third fallback: provider-supplied client credentials even when config_path is set
 				} else if pid, pok := d.Get("client_id").(string); pok && strings.TrimSpace(pid) != "" {
 					psecret, sok := d.Get("client_secret").(string)
@@ -273,7 +247,6 @@ func configure(version string) func(context.Context, *schema.ResourceData) (inte
 							rc := management.EnumRegionCode(strings.TrimSpace(rv))
 							config.RegionCode = &rc
 						}
-						pdebug("fallback to provider client_credentials: client_id set envID set region=%v", config.RegionCode)
 					} else {
 						return nil, diag.Errorf("PingCLI configuration requires a valid stored token. Please run 'pingcli login' first. Error: %v", err)
 					}
@@ -281,7 +254,6 @@ func configure(version string) func(context.Context, *schema.ResourceData) (inte
 					return nil, diag.Errorf("PingCLI configuration requires a valid stored token. Please run 'pingcli login' first. Error: %v", err)
 				}
 			}
-			pdebug("stored token found: expires=%s hasRefresh=%t", storedToken.Expiry.Format(time.RFC3339), storedToken.RefreshToken != "")
 
 			// If we have a stored token, prefer bearer-only mode.
 			if storedToken != nil && storedToken.Valid() {
@@ -293,7 +265,6 @@ func configure(version string) func(context.Context, *schema.ResourceData) (inte
 					regionCode := management.EnumRegionCode(profileConfig.RegionCode)
 					config.RegionCode = &regionCode
 				}
-				pdebug("bearer-only mode: client_id cleared, envID cleared, region=%v", config.RegionCode)
 			}
 		} else {
 			// Use explicit credentials from provider configuration or environment variables
@@ -314,9 +285,6 @@ func configure(version string) func(context.Context, *schema.ResourceData) (inte
 				// When a static token is provided, clear client credentials and environment ID
 				// to satisfy underlying SDK validation rules.
 				config.AccessToken = v
-				if config.ClientID != "" || config.ClientSecret != "" || config.EnvironmentID != "" {
-					pdebug("api_access_token provided; clearing client_id/client_secret/environment_id to satisfy SDK validation")
-				}
 				config.ClientID = ""
 				config.ClientSecret = ""
 				config.EnvironmentID = ""

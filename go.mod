@@ -1,8 +1,5 @@
 module github.com/pingidentity/terraform-provider-pingone
 
-// replace github.com/hashicorp/terraform-plugin-sdk/v2 => ../terraform-plugin-sdk
-replace github.com/hashicorp/pingone-go-client => ../pingone-go-client
-
 go 1.24.6
 
 tool (
