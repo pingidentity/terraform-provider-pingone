@@ -336,7 +336,7 @@ resource "pingone_application" "%[3]s" {
 
 resource "pingone_mfa_device_policy_default" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  policy_type    = "pingone_mfa"
+  policy_type    = "PING_ONE_MFA"
 
   name = "%[4]s"
 
@@ -523,7 +523,7 @@ func testAccMFADevicePolicyDefaultConfig_Minimal(environmentName, licenseID, res
 
 resource "pingone_mfa_device_policy_default" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  policy_type    = "pingone_mfa"
+  policy_type    = "PING_ONE_MFA"
 
   name = "%[4]s"
 
@@ -577,7 +577,7 @@ func TestAccMFADevicePolicyDefault_PingID_Full(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "policy_type", "pingid"),
+					resource.TestCheckResourceAttr(resourceFullName, "policy_type", "PING_ONE_ID"),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "authentication.device_selection", "PROMPT_TO_SELECT"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
@@ -627,7 +627,7 @@ func TestAccMFADevicePolicyDefault_PingID_Minimal(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "policy_type", "pingid"),
+					resource.TestCheckResourceAttr(resourceFullName, "policy_type", "PING_ONE_ID"),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.enabled", "false"),
@@ -649,7 +649,7 @@ func testAccMFADevicePolicyDefaultConfig_PingID_Minimal(resourceName, name strin
 
 resource "pingone_mfa_device_policy_default" "%[2]s" {
   environment_id = data.pingone_environment.workforce_test.id
-  policy_type    = "pingid"
+  policy_type    = "PING_ONE_ID"
 
   name = "%[3]s"
 
@@ -698,7 +698,7 @@ resource "pingone_notification_policy" "%[2]s" {
 
 resource "pingone_mfa_device_policy_default" "%[2]s" {
   environment_id = data.pingone_environment.workforce_test.id
-  policy_type    = "pingid"
+  policy_type    = "PING_ONE_ID"
 
   name = "%[3]s"
 
@@ -742,7 +742,7 @@ func testAccMFADevicePolicyDefaultConfig_PingID_DesktopWithPingOneMFA(resourceNa
 
 resource "pingone_mfa_device_policy_default" "%[2]s" {
   environment_id = data.pingone_environment.workforce_test.id
-  policy_type    = "pingone_mfa"
+  policy_type    = "PING_ONE_MFA"
 
   name = "%[3]s"
 
@@ -782,7 +782,7 @@ func testAccMFADevicePolicyDefaultConfig_PingID_YubikeyWithPingOneMFA(resourceNa
 
 resource "pingone_mfa_device_policy_default" "%[2]s" {
   environment_id = data.pingone_environment.workforce_test.id
-  policy_type    = "pingone_mfa"
+  policy_type    = "PING_ONE_MFA"
 
   name = "%[3]s"
 
@@ -822,7 +822,7 @@ func testAccMFADevicePolicyDefaultConfig_PingID_MobileDisabled(resourceName, nam
 
 resource "pingone_mfa_device_policy_default" "%[2]s" {
   environment_id = data.pingone_environment.workforce_test.id
-  policy_type    = "pingid"
+  policy_type    = "PING_ONE_ID"
 
   name = "%[3]s"
 
@@ -854,7 +854,7 @@ func testAccMFADevicePolicyDefaultConfig_InvalidNotificationsPolicyID(environmen
 
 resource "pingone_mfa_device_policy_default" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  policy_type    = "pingone_mfa"
+  policy_type    = "PING_ONE_MFA"
 
   name = "%[4]s"
 
@@ -894,7 +894,7 @@ func testAccMFADevicePolicyDefaultConfig_InvalidRememberMeDurationMinutes(enviro
 
 resource "pingone_mfa_device_policy_default" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  policy_type    = "pingone_mfa"
+  policy_type    = "PING_ONE_MFA"
 
   name = "%[4]s"
 
@@ -940,7 +940,7 @@ func testAccMFADevicePolicyDefaultConfig_InvalidRememberMeDurationHours(environm
 
 resource "pingone_mfa_device_policy_default" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  policy_type    = "pingone_mfa"
+  policy_type    = "PING_ONE_MFA"
 
   name = "%[4]s"
 
@@ -986,7 +986,7 @@ func testAccMFADevicePolicyDefaultConfig_InvalidRememberMeDurationDays(environme
 
 resource "pingone_mfa_device_policy_default" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  policy_type    = "pingone_mfa"
+  policy_type    = "PING_ONE_MFA"
 
   name = "%[4]s"
 
@@ -1042,7 +1042,7 @@ data "pingone_application" "%[2]s" {
 
 resource "pingone_mfa_device_policy_default" "%[2]s" {
   environment_id = data.pingone_environment.workforce_test.id
-  policy_type    = "pingid"
+  policy_type    = "PING_ONE_ID"
 
   name = "%[3]s"
 
@@ -1286,7 +1286,7 @@ func TestAccMFADevicePolicyDefault_PingID_Change(t *testing.T) {
 			{
 				Config: testAccMFADevicePolicyDefaultConfig_PingID_Minimal_WithNotificationPolicy(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "policy_type", "pingid"),
+					resource.TestCheckResourceAttr(resourceFullName, "policy_type", "PING_ONE_ID"),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.enabled", "false"),
@@ -1301,7 +1301,7 @@ func TestAccMFADevicePolicyDefault_PingID_Change(t *testing.T) {
 			{
 				Config: testAccMFADevicePolicyDefaultConfig_PingID_Full(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "policy_type", "pingid"),
+					resource.TestCheckResourceAttr(resourceFullName, "policy_type", "PING_ONE_ID"),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.applications.0.type", "pingIdAppConfig"),
@@ -1392,17 +1392,17 @@ func TestAccMFADevicePolicyDefault_Validation(t *testing.T) {
 					// Missing auto_enrollment
 					{
 						Config:      testAccMFADevicePolicyDefaultConfig_PingOneMFA_MobileApp_MissingAutoEnrollment(environmentName, licenseID, resourceName, name),
-						ExpectError: regexp.MustCompile(`The argument mobile.applications\[0\].auto_enrollment is required because\s+policy_type is configured as:\s+"pingone_mfa"`),
+						ExpectError: regexp.MustCompile(`The argument mobile.applications\[0\].auto_enrollment is required because\s+policy_type is configured as:\s+"PING_ONE_MFA"`),
 					},
 					// Missing device_authorization
 					{
 						Config:      testAccMFADevicePolicyDefaultConfig_PingOneMFA_MobileApp_MissingDeviceAuthorization(environmentName, licenseID, resourceName, name),
-						ExpectError: regexp.MustCompile(`The argument mobile.applications\[0\].device_authorization is required because\s+policy_type is configured as:\s+"pingone_mfa"`),
+						ExpectError: regexp.MustCompile(`The argument mobile.applications\[0\].device_authorization is required because\s+policy_type is configured as:\s+"PING_ONE_MFA"`),
 					},
 					// Missing integrity_detection
 					{
 						Config:      testAccMFADevicePolicyDefaultConfig_PingOneMFA_MobileApp_MissingIntegrityDetection(environmentName, licenseID, resourceName, name),
-						ExpectError: regexp.MustCompile(`The argument mobile.applications\[0\].integrity_detection is required because\s+policy_type is configured as:\s+"pingone_mfa"`),
+						ExpectError: regexp.MustCompile(`The argument mobile.applications\[0\].integrity_detection is required because\s+policy_type is configured as:\s+"PING_ONE_MFA"`),
 					},
 					// Invalid integrity_detection
 					{
@@ -1412,17 +1412,17 @@ func TestAccMFADevicePolicyDefault_Validation(t *testing.T) {
 					// Biometrics enabled conflict
 					{
 						Config:      testAccMFADevicePolicyDefaultConfig_PingOneMFA_MobileApp_BiometricsEnabled(environmentName, licenseID, resourceName, name),
-						ExpectError: regexp.MustCompile(`The argument cannot be defined if the value "pingone_mfa" is present`),
+						ExpectError: regexp.MustCompile(`The argument cannot be defined if the value "PING_ONE_MFA" is present`),
 					},
 					// New request duration configuration conflict
 					{
 						Config:      testAccMFADevicePolicyDefaultConfig_PingOneMFA_MobileApp_NewRequestDuration(environmentName, licenseID, resourceName, name),
-						ExpectError: regexp.MustCompile(`The argument cannot be defined if the value "pingone_mfa" is present`),
+						ExpectError: regexp.MustCompile(`The argument cannot be defined if the value "PING_ONE_MFA" is present`),
 					},
 					// IP pairing configuration conflict
 					{
 						Config:      testAccMFADevicePolicyDefaultConfig_PingOneMFA_MobileApp_IPPairing(environmentName, licenseID, resourceName, name),
-						ExpectError: regexp.MustCompile(`The argument cannot be defined if the value "pingone_mfa" is present`),
+						ExpectError: regexp.MustCompile(`The argument cannot be defined if the value "PING_ONE_MFA" is present`),
 					},
 				},
 			})
@@ -1456,12 +1456,12 @@ func TestAccMFADevicePolicyDefault_Validation(t *testing.T) {
 					// Missing desktop block
 					{
 						Config:      testAccMFADevicePolicyDefaultConfig_PingID_MissingDesktop(resourceName, name),
-						ExpectError: regexp.MustCompile(`The argument desktop is required because\s+policy_type is configured as:\s+"pingid"`),
+						ExpectError: regexp.MustCompile(`The argument desktop is required because\s+policy_type is configured as:\s+"PING_ONE_ID"`),
 					},
 					// Missing yubikey block
 					{
 						Config:      testAccMFADevicePolicyDefaultConfig_PingID_MissingYubikey(resourceName, name),
-						ExpectError: regexp.MustCompile(`The argument yubikey is required because\s+policy_type is configured as:\s+"pingid"`),
+						ExpectError: regexp.MustCompile(`The argument yubikey is required because\s+policy_type is configured as:\s+"PING_ONE_ID"`),
 					},
 					// Mobile must be enabled for PingID policies
 					{
@@ -1471,22 +1471,22 @@ func TestAccMFADevicePolicyDefault_Validation(t *testing.T) {
 					// Auto enrollment conflict
 					{
 						Config:      testAccMFADevicePolicyDefaultConfig_PingID_MobileApp_AutoEnrollment(resourceName, name),
-						ExpectError: regexp.MustCompile(`The argument cannot be defined if the value "pingid" is present`),
+						ExpectError: regexp.MustCompile(`The argument cannot be defined if the value "PING_ONE_ID" is present`),
 					},
 					// Device authorization conflict
 					{
 						Config:      testAccMFADevicePolicyDefaultConfig_PingID_MobileApp_DeviceAuthorization(resourceName, name),
-						ExpectError: regexp.MustCompile(`The argument cannot be defined if the value "pingid" is present`),
+						ExpectError: regexp.MustCompile(`The argument cannot be defined if the value "PING_ONE_ID" is present`),
 					},
 					// Missing new_request_duration_configuration
 					{
 						Config:      testAccMFADevicePolicyDefaultConfig_PingID_MobileApp_MissingNewRequestDuration(resourceName, name),
-						ExpectError: regexp.MustCompile(`The argument mobile.applications\[0\].new_request_duration_configuration is\s+required because\s+policy_type is configured as:\s+"pingid"`),
+						ExpectError: regexp.MustCompile(`The argument mobile.applications\[0\].new_request_duration_configuration is\s+required because\s+policy_type is configured as:\s+"PING_ONE_ID"`),
 					},
 					// Missing ip_pairing_configuration
 					{
 						Config:      testAccMFADevicePolicyDefaultConfig_PingID_MobileApp_MissingIPPairing(resourceName, name),
-						ExpectError: regexp.MustCompile(`The argument mobile.applications\[0\].ip_pairing_configuration is\s+required\s+because\s+policy_type is configured as:\s+"pingid"`),
+						ExpectError: regexp.MustCompile(`The argument mobile.applications\[0\].ip_pairing_configuration is\s+required\s+because\s+policy_type is configured as:\s+"PING_ONE_ID"`),
 					},
 				},
 			})
@@ -1578,7 +1578,7 @@ func testAccMFADevicePolicyDefaultConfig_MobileIntegrityDetection(environmentNam
 
 resource "pingone_mfa_device_policy_default" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  policy_type    = "pingone_mfa"
+  policy_type    = "PING_ONE_MFA"
   name           = "%[4]s"
 
   mobile = {
@@ -1604,7 +1604,7 @@ func testAccMFADevicePolicyDefaultConfig_PingID_MissingDesktop(resourceName, nam
 
 resource "pingone_mfa_device_policy_default" "%[2]s" {
   environment_id = data.pingone_environment.workforce_test.id
-  policy_type    = "pingid"
+  policy_type    = "PING_ONE_ID"
   name           = "%[3]s"
 
   mobile = { enabled = true }
@@ -1622,7 +1622,7 @@ func testAccMFADevicePolicyDefaultConfig_PingID_MissingYubikey(resourceName, nam
 
 resource "pingone_mfa_device_policy_default" "%[2]s" {
   environment_id = data.pingone_environment.workforce_test.id
-  policy_type    = "pingid"
+  policy_type    = "PING_ONE_ID"
   name           = "%[3]s"
 
   mobile = { enabled = true }
@@ -1640,7 +1640,7 @@ func testAccMFADevicePolicyDefaultConfig_PingID_MobileApp_AutoEnrollment(resourc
 
 resource "pingone_mfa_device_policy_default" "%[2]s" {
   environment_id = data.pingone_environment.workforce_test.id
-  policy_type    = "pingid"
+  policy_type    = "PING_ONE_ID"
   name           = "%[3]s"
 
   mobile = {
@@ -1671,7 +1671,7 @@ func testAccMFADevicePolicyDefaultConfig_PingID_MobileApp_DeviceAuthorization(re
 
 resource "pingone_mfa_device_policy_default" "%[2]s" {
   environment_id = data.pingone_environment.workforce_test.id
-  policy_type    = "pingid"
+  policy_type    = "PING_ONE_ID"
   name           = "%[3]s"
 
   mobile = {
@@ -1702,7 +1702,7 @@ func testAccMFADevicePolicyDefaultConfig_PingID_MobileApp_MissingNewRequestDurat
 
 resource "pingone_mfa_device_policy_default" "%[2]s" {
   environment_id = data.pingone_environment.workforce_test.id
-  policy_type    = "pingid"
+  policy_type    = "PING_ONE_ID"
   name           = "%[3]s"
 
   mobile = {
@@ -1728,7 +1728,7 @@ func testAccMFADevicePolicyDefaultConfig_PingID_MobileApp_MissingIPPairing(resou
 
 resource "pingone_mfa_device_policy_default" "%[2]s" {
   environment_id = data.pingone_environment.workforce_test.id
-  policy_type    = "pingid"
+  policy_type    = "PING_ONE_ID"
   name           = "%[3]s"
 
   mobile = {
@@ -1757,7 +1757,7 @@ func testAccMFADevicePolicyDefaultConfig_PingOneMFA_MobileApp_MissingAutoEnrollm
 
 resource "pingone_mfa_device_policy_default" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  policy_type    = "pingone_mfa"
+  policy_type    = "PING_ONE_MFA"
   name           = "%[4]s"
 
   mobile = {
@@ -1782,7 +1782,7 @@ func testAccMFADevicePolicyDefaultConfig_PingOneMFA_MobileApp_MissingDeviceAutho
 
 resource "pingone_mfa_device_policy_default" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  policy_type    = "pingone_mfa"
+  policy_type    = "PING_ONE_MFA"
   name           = "%[4]s"
 
   mobile = {
@@ -1807,7 +1807,7 @@ func testAccMFADevicePolicyDefaultConfig_PingOneMFA_MobileApp_MissingIntegrityDe
 
 resource "pingone_mfa_device_policy_default" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  policy_type    = "pingone_mfa"
+  policy_type    = "PING_ONE_MFA"
   name           = "%[4]s"
 
   mobile = {
@@ -1832,7 +1832,7 @@ func testAccMFADevicePolicyDefaultConfig_PingOneMFA_MobileApp_BiometricsEnabled(
 
 resource "pingone_mfa_device_policy_default" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  policy_type    = "pingone_mfa"
+  policy_type    = "PING_ONE_MFA"
   name           = "%[4]s"
 
   mobile = {
@@ -1859,7 +1859,7 @@ func testAccMFADevicePolicyDefaultConfig_PingOneMFA_MobileApp_NewRequestDuration
 
 resource "pingone_mfa_device_policy_default" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  policy_type    = "pingone_mfa"
+  policy_type    = "PING_ONE_MFA"
   name           = "%[4]s"
 
   mobile = {
@@ -1889,7 +1889,7 @@ func testAccMFADevicePolicyDefaultConfig_PingOneMFA_MobileApp_IPPairing(environm
 
 resource "pingone_mfa_device_policy_default" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  policy_type    = "pingone_mfa"
+  policy_type    = "PING_ONE_MFA"
   name           = "%[4]s"
 
   mobile = {
@@ -1916,7 +1916,7 @@ func testAccMFADevicePolicyDefaultConfig_PingID_IPPairing_InvalidCIDR(resourceNa
 
 resource "pingone_mfa_device_policy_default" "%[2]s" {
   environment_id = data.pingone_environment.workforce_test.id
-  policy_type    = "pingid"
+  policy_type    = "PING_ONE_ID"
   name           = "%[3]s"
 
   mobile = {
@@ -1949,7 +1949,7 @@ func testAccMFADevicePolicyDefaultConfig_PingID_IPPairing_MissingIPs(resourceNam
 
 resource "pingone_mfa_device_policy_default" "%[2]s" {
   environment_id = data.pingone_environment.workforce_test.id
-  policy_type    = "pingid"
+  policy_type    = "PING_ONE_ID"
   name           = "%[3]s"
 
   mobile = {
@@ -1981,7 +1981,7 @@ func testAccMFADevicePolicyDefaultConfig_PingID_Desktop_OTPCountHigh(resourceNam
 
 resource "pingone_mfa_device_policy_default" "%[2]s" {
   environment_id = data.pingone_environment.workforce_test.id
-  policy_type    = "pingid"
+  policy_type    = "PING_ONE_ID"
   name           = "%[3]s"
 
   mobile = { enabled = true }
@@ -2008,7 +2008,7 @@ func testAccMFADevicePolicyDefaultConfig_PingID_Desktop_PairingKeyLifetimeHigh(r
 
 resource "pingone_mfa_device_policy_default" "%[2]s" {
   environment_id = data.pingone_environment.workforce_test.id
-  policy_type    = "pingid"
+  policy_type    = "PING_ONE_ID"
   name           = "%[3]s"
 
   mobile = { enabled = true }
@@ -2033,7 +2033,7 @@ func testAccMFADevicePolicyDefaultConfig_RememberMe_MinutesHigh(resourceName, na
 
 resource "pingone_mfa_device_policy_default" "%[2]s" {
   environment_id = data.pingone_environment.workforce_test.id
-  policy_type    = "pingid"
+  policy_type    = "PING_ONE_ID"
   name           = "%[3]s"
 
   remember_me = {
@@ -2062,7 +2062,7 @@ func testAccMFADevicePolicyDefaultConfig_RememberMe_HoursHigh(resourceName, name
 
 resource "pingone_mfa_device_policy_default" "%[2]s" {
   environment_id = data.pingone_environment.workforce_test.id
-  policy_type    = "pingid"
+  policy_type    = "PING_ONE_ID"
   name           = "%[3]s"
 
   remember_me = {
@@ -2091,7 +2091,7 @@ func testAccMFADevicePolicyDefaultConfig_RememberMe_DaysHigh(resourceName, name 
 
 resource "pingone_mfa_device_policy_default" "%[2]s" {
   environment_id = data.pingone_environment.workforce_test.id
-  policy_type    = "pingid"
+  policy_type    = "PING_ONE_ID"
   name           = "%[3]s"
 
   remember_me = {
@@ -2120,7 +2120,7 @@ func testAccMFADevicePolicyDefaultConfig_MobilePushLimit_CountHigh(resourceName,
 
 resource "pingone_mfa_device_policy_default" "%[2]s" {
   environment_id = data.pingone_environment.workforce_test.id
-  policy_type    = "pingid"
+  policy_type    = "PING_ONE_ID"
   name           = "%[3]s"
 
   mobile = {
@@ -2155,7 +2155,7 @@ func testAccMFADevicePolicyDefaultConfig_MobileNewRequestDuration_DeviceTimeoutH
 
 resource "pingone_mfa_device_policy_default" "%[2]s" {
   environment_id = data.pingone_environment.workforce_test.id
-  policy_type    = "pingid"
+  policy_type    = "PING_ONE_ID"
   name           = "%[3]s"
 
   mobile = {
@@ -2185,7 +2185,7 @@ func testAccMFADevicePolicyDefaultConfig_MobileNewRequestDuration_TotalTimeoutHi
 
 resource "pingone_mfa_device_policy_default" "%[2]s" {
   environment_id = data.pingone_environment.workforce_test.id
-  policy_type    = "pingid"
+  policy_type    = "PING_ONE_ID"
   name           = "%[3]s"
 
   mobile = {
@@ -2215,7 +2215,7 @@ func testAccMFADevicePolicyDefaultConfig_Authentication(resourceName, name, devi
 
 resource "pingone_mfa_device_policy_default" "%[2]s" {
   environment_id = data.pingone_environment.workforce_test.id
-  policy_type    = "pingid"
+  policy_type    = "PING_ONE_ID"
   name           = "%[3]s"
 
   authentication = {
@@ -2238,7 +2238,7 @@ func testAccMFADevicePolicyDefaultConfig_NewDeviceNotification(resourceName, nam
 
 resource "pingone_mfa_device_policy_default" "%[2]s" {
   environment_id = data.pingone_environment.workforce_test.id
-  policy_type    = "pingid"
+  policy_type    = "PING_ONE_ID"
   name           = "%[3]s"
 
   new_device_notification = "%[4]s"
@@ -2259,7 +2259,7 @@ func testAccMFADevicePolicyDefaultConfig_MobileOtpFailureCount(resourceName, nam
 
 resource "pingone_mfa_device_policy_default" "%[2]s" {
   environment_id = data.pingone_environment.workforce_test.id
-  policy_type    = "pingid"
+  policy_type    = "PING_ONE_ID"
   name           = "%[3]s"
 
   mobile = {
@@ -2295,7 +2295,7 @@ func testAccMFADevicePolicyDefaultConfig_MobileNewRequestDuration_DeviceTimeout(
 
 resource "pingone_mfa_device_policy_default" "%[2]s" {
   environment_id = data.pingone_environment.workforce_test.id
-  policy_type    = "pingid"
+  policy_type    = "PING_ONE_ID"
   name           = "%[3]s"
 
   mobile = {
@@ -2325,7 +2325,7 @@ func testAccMFADevicePolicyDefaultConfig_MobileNewRequestDuration_TotalTimeout(r
 
 resource "pingone_mfa_device_policy_default" "%[2]s" {
   environment_id = data.pingone_environment.workforce_test.id
-  policy_type    = "pingid"
+  policy_type    = "PING_ONE_ID"
   name           = "%[3]s"
 
   mobile = {
@@ -2347,4 +2347,161 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
   email = { enabled = false }
   totp = { enabled = false }
 }`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name, duration)
+}
+
+func TestAccMFADevicePolicyDefault_BOMValidation(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+	region := os.Getenv("PINGONE_REGION_CODE")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             mfa.MFADevicePolicyDefault_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccMFADevicePolicyDefaultConfig_BOMValidation(environmentName, licenseID, region, resourceName, name),
+				ExpectError: regexp.MustCompile("Unsupported Policy Type"),
+			},
+		},
+	})
+}
+
+func testAccMFADevicePolicyDefaultConfig_BOMValidation(environmentName, licenseID, region, resourceName, name string) string {
+	return fmt.Sprintf(`
+resource "pingone_environment" "%[1]s" {
+  name       = "%[1]s"
+  type       = "SANDBOX"
+  region     = "%[3]s"
+  license_id = "%[2]s"
+  services   = [
+    {
+      type = "SSO"
+    }
+  ]
+}
+
+resource "pingone_mfa_device_policy_default" "%[4]s" {
+  environment_id = pingone_environment.%[1]s.id
+  policy_type    = "PING_ONE_MFA"
+  name           = "%[5]s"
+
+  mobile = { enabled = true }
+  sms = { enabled = false }
+  voice = { enabled = false }
+  email = { enabled = false }
+  totp = { enabled = false }
+}`, environmentName, licenseID, region, resourceName, name)
+}
+
+func TestAccMFADevicePolicyDefault_BOMValidation_CrossTypes(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	environmentNamePingID := acctest.ResourceNameGenEnvironment() + "-pingid"
+	environmentNameMFA := acctest.ResourceNameGenEnvironment() + "-mfa"
+
+	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+	region := os.Getenv("PINGONE_REGION_CODE")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             mfa.MFADevicePolicyDefault_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// 1. Environment with PingID (no MFA) -> Try to create PING_ONE_MFA policy
+			{
+				Config:      testAccMFADevicePolicyDefaultConfig_BOMValidation_PingIDEnv(environmentNamePingID, licenseID, region, resourceName, name),
+				ExpectError: regexp.MustCompile("Unsupported Policy Type"),
+			},
+			// 2. Environment with MFA (no PingID) -> Try to create PING_ONE_ID policy
+			{
+				Config:      testAccMFADevicePolicyDefaultConfig_BOMValidation_MFAEnv(environmentNameMFA, licenseID, region, resourceName, name),
+				ExpectError: regexp.MustCompile("Unsupported Policy Type"),
+			},
+		},
+	})
+}
+
+func testAccMFADevicePolicyDefaultConfig_BOMValidation_PingIDEnv(environmentName, licenseID, region, resourceName, name string) string {
+	return fmt.Sprintf(`
+resource "pingone_environment" "%[1]s" {
+  name       = "%[1]s"
+  type       = "SANDBOX"
+  region     = "%[3]s"
+  license_id = "%[2]s"
+  services   = [
+    {
+      type = "SSO"
+    },
+    {
+      type = "PingID"
+    }
+  ]
+}
+
+resource "pingone_mfa_device_policy_default" "%[4]s" {
+  environment_id = pingone_environment.%[1]s.id
+  policy_type    = "PING_ONE_MFA"
+  name           = "%[5]s"
+
+  mobile = { enabled = true }
+  sms = { enabled = false }
+  voice = { enabled = false }
+  email = { enabled = false }
+  totp = { enabled = false }
+}`, environmentName, licenseID, region, resourceName, name)
+}
+
+func testAccMFADevicePolicyDefaultConfig_BOMValidation_MFAEnv(environmentName, licenseID, region, resourceName, name string) string {
+	return fmt.Sprintf(`
+resource "pingone_environment" "%[1]s" {
+  name       = "%[1]s"
+  type       = "SANDBOX"
+  region     = "%[3]s"
+  license_id = "%[2]s"
+  services   = [
+    {
+      type = "SSO"
+    },
+    {
+      type = "MFA"
+    }
+  ]
+}
+
+resource "pingone_mfa_device_policy_default" "%[4]s" {
+  environment_id = pingone_environment.%[1]s.id
+  policy_type    = "PING_ONE_ID"
+  name           = "%[5]s"
+
+  mobile = { enabled = true }
+  desktop = { enabled = false }
+  yubikey = { enabled = false }
+  sms = { enabled = false }
+  voice = { enabled = false }
+  email = { enabled = false }
+  totp = { enabled = false }
+}`, environmentName, licenseID, region, resourceName, name)
 }

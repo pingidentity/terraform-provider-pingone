@@ -47,8 +47,8 @@ import (
 )
 
 const (
-	POLICY_TYPE_PINGONE_MFA = "pingone_mfa"
-	POLICY_TYPE_PINGID      = "pingid"
+	POLICY_TYPE_PINGONE_MFA = "PING_ONE_MFA"
+	POLICY_TYPE_PINGID      = "PING_ONE_ID"
 )
 
 // Types
@@ -216,55 +216,6 @@ var (
 		"otp":                            types.ObjectType{AttrTypes: MFADevicePolicyMobileOtpTFObjectTypes},
 		"prompt_for_nickname_on_pairing": types.BoolType,
 	}
-
-	// Default value for remember_me
-	rememberMeDefault = types.ObjectValueMust(
-		MFADevicePolicyRememberMeTFObjectTypes,
-		map[string]attr.Value{
-			"web": types.ObjectValueMust(
-				MFADevicePolicyRememberMeWebTFObjectTypes,
-				map[string]attr.Value{
-					"enabled": types.BoolValue(false),
-					"life_time": types.ObjectValueMust(
-						MFADevicePolicyTimePeriodTFObjectTypes,
-						map[string]attr.Value{
-							"duration":  types.Int32Value(30),
-							"time_unit": types.StringValue(string(mfa.ENUMTIMEUNITREMEMBERMEWEBLIFETIME_MINUTES)),
-						},
-					),
-				},
-			),
-		},
-	)
-
-	// Default values for oath_token
-	oathTokenDefault = types.ObjectValueMust(
-		MFADevicePolicyPingIDDeviceTFObjectTypes,
-		map[string]attr.Value{
-			"enabled": types.BoolValue(false),
-			"otp": types.ObjectValueMust(
-				MFADevicePolicyPingIDDeviceOtpTFObjectTypes,
-				map[string]attr.Value{
-					"failure": types.ObjectValueMust(
-						MFADevicePolicyFailureTFObjectTypes,
-						map[string]attr.Value{
-							"count": types.Int32Value(3),
-							"cool_down": types.ObjectValueMust(
-								MFADevicePolicyTimePeriodTFObjectTypes,
-								map[string]attr.Value{
-									"duration":  types.Int32Value(2),
-									"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
-								},
-							),
-						},
-					),
-				},
-			),
-			"pairing_disabled":               types.BoolValue(false),
-			"pairing_key_lifetime":           types.ObjectNull(MFADevicePolicyTimePeriodTFObjectTypes),
-			"prompt_for_nickname_on_pairing": types.BoolValue(false),
-		},
-	)
 )
 
 // Framework interfaces
@@ -302,6 +253,86 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 
 	const totpOtpFailureCountDefault = 3
 	const totpOtpFailureCoolDownDurationDefault = 2
+
+	const rememberMeWebLifeTimeDurationDefault = 30
+	const rememberMeWebLifeTimeDurationMinMinutes = 1
+	const rememberMeWebLifeTimeDurationMaxMinutes = 129600
+	const rememberMeWebLifeTimeDurationMinHours = 1
+	const rememberMeWebLifeTimeDurationMaxHours = 2160
+	const rememberMeWebLifeTimeDurationMinDays = 1
+	const rememberMeWebLifeTimeDurationMaxDays = 90
+
+	const mobileApplicationsNewRequestDurationConfigurationDeviceTimeoutDefault = 25
+	const mobileApplicationsNewRequestDurationConfigurationDeviceTimeoutMin = 15
+	const mobileApplicationsNewRequestDurationConfigurationDeviceTimeoutMax = 75
+
+	const mobileApplicationsNewRequestDurationConfigurationTotalTimeoutDefault = 40
+	const mobileApplicationsNewRequestDurationConfigurationTotalTimeoutMin = 30
+	const mobileApplicationsNewRequestDurationConfigurationTotalTimeoutMax = 90
+
+	const pingidDeviceOtpFailureCountDefault = 3
+	const pingidDeviceOtpFailureCountMin = 1
+	const pingidDeviceOtpFailureCountMax = 7
+
+	const pingidDeviceOtpFailureCoolDownDurationDefault = 2
+	const pingidDeviceOtpFailureCoolDownDurationMinSeconds = 1
+	const pingidDeviceOtpFailureCoolDownDurationMaxSeconds = 1800
+	const pingidDeviceOtpFailureCoolDownDurationMinMinutes = 1
+	const pingidDeviceOtpFailureCoolDownDurationMaxMinutes = 30
+
+	const pingidDevicePairingKeyLifetimeDurationMinMinutes = 1
+	const pingidDevicePairingKeyLifetimeDurationMaxMinutes = 2880
+	const pingidDevicePairingKeyLifetimeDurationMinHours = 1
+	const pingidDevicePairingKeyLifetimeDurationMaxHours = 48
+
+	// Default value for remember_me
+	rememberMeDefault := types.ObjectValueMust(
+		MFADevicePolicyRememberMeTFObjectTypes,
+		map[string]attr.Value{
+			"web": types.ObjectValueMust(
+				MFADevicePolicyRememberMeWebTFObjectTypes,
+				map[string]attr.Value{
+					"enabled": types.BoolValue(false),
+					"life_time": types.ObjectValueMust(
+						MFADevicePolicyTimePeriodTFObjectTypes,
+						map[string]attr.Value{
+							"duration":  types.Int32Value(rememberMeWebLifeTimeDurationDefault),
+							"time_unit": types.StringValue(string(mfa.ENUMTIMEUNITREMEMBERMEWEBLIFETIME_MINUTES)),
+						},
+					),
+				},
+			),
+		},
+	)
+
+	// Default values for oath_token
+	oathTokenDefault := types.ObjectValueMust(
+		MFADevicePolicyPingIDDeviceTFObjectTypes,
+		map[string]attr.Value{
+			"enabled": types.BoolValue(false),
+			"otp": types.ObjectValueMust(
+				MFADevicePolicyPingIDDeviceOtpTFObjectTypes,
+				map[string]attr.Value{
+					"failure": types.ObjectValueMust(
+						MFADevicePolicyFailureTFObjectTypes,
+						map[string]attr.Value{
+							"count": types.Int32Value(pingidDeviceOtpFailureCountDefault),
+							"cool_down": types.ObjectValueMust(
+								MFADevicePolicyTimePeriodTFObjectTypes,
+								map[string]attr.Value{
+									"duration":  types.Int32Value(pingidDeviceOtpFailureCoolDownDurationDefault),
+									"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
+								},
+							),
+						},
+					),
+				},
+			),
+			"pairing_disabled":               types.BoolValue(false),
+			"pairing_key_lifetime":           types.ObjectNull(MFADevicePolicyTimePeriodTFObjectTypes),
+			"prompt_for_nickname_on_pairing": types.BoolValue(false),
+		},
+	)
 
 	// schema descriptions and validation settings
 	deviceSelectionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -391,12 +422,12 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	)
 
 	mobileApplicationsNewRequestDurationConfigurationDeviceTimeoutDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A single object that specifies the maximum time a notification can remain pending before it is displayed to the user. This timeout starts when the authentication request is initiated and ends when the notification is shown on the device. Value must be between `15` and `75` seconds.",
-	).DefaultValue(25)
+		fmt.Sprintf("A single object that specifies the maximum time a notification can remain pending before it is displayed to the user. This timeout starts when the authentication request is initiated and ends when the notification is shown on the device. Value must be between `%d` and `%d` seconds.", mobileApplicationsNewRequestDurationConfigurationDeviceTimeoutMin, mobileApplicationsNewRequestDurationConfigurationDeviceTimeoutMax),
+	).DefaultValue(mobileApplicationsNewRequestDurationConfigurationDeviceTimeoutDefault)
 
 	mobileApplicationsNewRequestDurationConfigurationTotalTimeoutDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A single object that specifies the total time an authentication request notification has to be handled by the user before timing out. This includes both the time until the notification is displayed to the user and the time the user takes to respond. The `total_timeout.duration` must exceed `device_timeout.duration` by at least 15 seconds.  Value must be between `30` and `90` seconds.",
-	).DefaultValue(40)
+		fmt.Sprintf("A single object that specifies the total time an authentication request notification has to be handled by the user before timing out. This includes both the time until the notification is displayed to the user and the time the user takes to respond. The `total_timeout.duration` must exceed `device_timeout.duration` by at least 15 seconds.  Value must be between `%d` and `%d` seconds.", mobileApplicationsNewRequestDurationConfigurationTotalTimeoutMin, mobileApplicationsNewRequestDurationConfigurationTotalTimeoutMax),
+	).DefaultValue(mobileApplicationsNewRequestDurationConfigurationTotalTimeoutDefault)
 
 	mobileApplicationsNewRequestDurationConfigurationTimeoutDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An integer that specifies the timeout duration in seconds.",
@@ -474,7 +505,7 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 			),
 
 			"policy_type": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the type of MFA device policy. Set to `PINGONE_MFA` for standard PingOne MFA environments, or `PINGID` for environments with PingID integration. This field is immutable and will trigger a replace plan if changed.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the type of MFA device policy. Set to `PING_ONE_MFA` for standard PingOne MFA environments, or `PING_ONE_ID` for environments with PingID integration. This field is immutable and will trigger a replace plan if changed.").Description,
 				Required:    true,
 
 				PlanModifiers: []planmodifier.String{
@@ -602,26 +633,26 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 										Validators: []validator.Int32{
 											int32validator.Any(
 												int32validator.All(
-													int32validator.Between(1, 129600),
+													int32validator.Between(rememberMeWebLifeTimeDurationMinMinutes, rememberMeWebLifeTimeDurationMaxMinutes),
 													int32validatorinternal.RegexMatchesPathValue(
 														regexp.MustCompile(`MINUTES`),
-														"If `time_unit` is `MINUTES`, the allowed duration range is 1 - 129600 (1 minute to 90 days).",
+														fmt.Sprintf("If `time_unit` is `MINUTES`, the allowed duration range is %d - %d (1 minute to 90 days).", rememberMeWebLifeTimeDurationMinMinutes, rememberMeWebLifeTimeDurationMaxMinutes),
 														path.MatchRelative().AtParent().AtName("time_unit"),
 													),
 												),
 												int32validator.All(
-													int32validator.Between(1, 2160),
+													int32validator.Between(rememberMeWebLifeTimeDurationMinHours, rememberMeWebLifeTimeDurationMaxHours),
 													int32validatorinternal.RegexMatchesPathValue(
 														regexp.MustCompile(`HOURS`),
-														"If `time_unit` is `HOURS`, the allowed duration range is 1 - 2160 (1 hour to 90 days).",
+														fmt.Sprintf("If `time_unit` is `HOURS`, the allowed duration range is %d - %d (1 hour to 90 days).", rememberMeWebLifeTimeDurationMinHours, rememberMeWebLifeTimeDurationMaxHours),
 														path.MatchRelative().AtParent().AtName("time_unit"),
 													),
 												),
 												int32validator.All(
-													int32validator.Between(1, 90),
+													int32validator.Between(rememberMeWebLifeTimeDurationMinDays, rememberMeWebLifeTimeDurationMaxDays),
 													int32validatorinternal.RegexMatchesPathValue(
 														regexp.MustCompile(`DAYS`),
-														"If `time_unit` is `DAYS`, the allowed duration range is 1 - 90.",
+														fmt.Sprintf("If `time_unit` is `DAYS`, the allowed duration range is %d - %d.", rememberMeWebLifeTimeDurationMinDays, rememberMeWebLifeTimeDurationMaxDays),
 														path.MatchRelative().AtParent().AtName("time_unit"),
 													),
 												),
@@ -981,10 +1012,10 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 													Optional:            true,
 													Computed:            true,
 
-													Default: int32default.StaticInt32(25),
+													Default: int32default.StaticInt32(mobileApplicationsNewRequestDurationConfigurationDeviceTimeoutDefault),
 
 													Validators: []validator.Int32{
-														int32validator.Between(15, 75),
+														int32validator.Between(mobileApplicationsNewRequestDurationConfigurationDeviceTimeoutMin, mobileApplicationsNewRequestDurationConfigurationDeviceTimeoutMax),
 													},
 												}, "time_unit": schema.StringAttribute{
 													Description:         durationTimeUnitSecondsDescription.Description,
@@ -1013,10 +1044,10 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 													Optional:            true,
 													Computed:            true,
 
-													Default: int32default.StaticInt32(40),
+													Default: int32default.StaticInt32(mobileApplicationsNewRequestDurationConfigurationTotalTimeoutDefault),
 
 													Validators: []validator.Int32{
-														int32validator.Between(30, 90),
+														int32validator.Between(mobileApplicationsNewRequestDurationConfigurationTotalTimeoutMin, mobileApplicationsNewRequestDurationConfigurationTotalTimeoutMax),
 													},
 												}, "time_unit": schema.StringAttribute{
 													Description:         durationTimeUnitSecondsDescription.Description,
@@ -1345,11 +1376,11 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 								"failure": types.ObjectValueMust(
 									MFADevicePolicyFailureTFObjectTypes,
 									map[string]attr.Value{
-										"count": types.Int32Value(3),
+										"count": types.Int32Value(pingidDeviceOtpFailureCountDefault),
 										"cool_down": types.ObjectValueMust(
 											MFADevicePolicyTimePeriodTFObjectTypes,
 											map[string]attr.Value{
-												"duration":  types.Int32Value(2),
+												"duration":  types.Int32Value(pingidDeviceOtpFailureCoolDownDurationDefault),
 												"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
 											},
 										),
@@ -1364,11 +1395,11 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 
 								Attributes: map[string]schema.Attribute{
 									"count": schema.Int32Attribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. Must be between 1 and 7.").Description,
+										Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. Must be between %d and %d.", pingidDeviceOtpFailureCountMin, pingidDeviceOtpFailureCountMax)).Description,
 										Optional:    true,
 
 										Validators: []validator.Int32{
-											int32validator.Between(1, 7),
+											int32validator.Between(pingidDeviceOtpFailureCountMin, pingidDeviceOtpFailureCountMax),
 										},
 									},
 
@@ -1378,24 +1409,24 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 
 										Attributes: map[string]schema.Attribute{
 											"duration": schema.Int32Attribute{
-												Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. Must be between 1 SECONDS and 30 MINUTES.").Description,
+												Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. Must be between %d SECONDS and %d MINUTES.", pingidDeviceOtpFailureCoolDownDurationMinSeconds, pingidDeviceOtpFailureCoolDownDurationMaxMinutes)).Description,
 												Required:    true,
 
 												Validators: []validator.Int32{
 													int32validator.Any(
 														int32validator.All(
-															int32validator.Between(1, 1800),
+															int32validator.Between(pingidDeviceOtpFailureCoolDownDurationMinSeconds, pingidDeviceOtpFailureCoolDownDurationMaxSeconds),
 															int32validatorinternal.RegexMatchesPathValue(
 																regexp.MustCompile(`SECONDS`),
-																"If `time_unit` is `SECONDS`, the allowed duration range is 1 - 1800.",
+																fmt.Sprintf("If `time_unit` is `SECONDS`, the allowed duration range is %d - %d.", pingidDeviceOtpFailureCoolDownDurationMinSeconds, pingidDeviceOtpFailureCoolDownDurationMaxSeconds),
 																path.MatchRelative().AtParent().AtName("time_unit"),
 															),
 														),
 														int32validator.All(
-															int32validator.Between(1, 30),
+															int32validator.Between(pingidDeviceOtpFailureCoolDownDurationMinMinutes, pingidDeviceOtpFailureCoolDownDurationMaxMinutes),
 															int32validatorinternal.RegexMatchesPathValue(
 																regexp.MustCompile(`MINUTES`),
-																"If `time_unit` is `MINUTES`, the allowed duration range is 1 - 30.",
+																fmt.Sprintf("If `time_unit` is `MINUTES`, the allowed duration range is %d - %d.", pingidDeviceOtpFailureCoolDownDurationMinMinutes, pingidDeviceOtpFailureCoolDownDurationMaxMinutes),
 																path.MatchRelative().AtParent().AtName("time_unit"),
 															),
 														),
@@ -1433,24 +1464,24 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 
 						Attributes: map[string]schema.Attribute{
 							"duration": schema.Int32Attribute{
-								Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the amount of time an issued pairing key can be used until it expires. Must be between 1 MINUTES and 48 HOURS.").Description,
+								Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("An integer that defines the amount of time an issued pairing key can be used until it expires. Must be between %d MINUTES and %d HOURS.", pingidDevicePairingKeyLifetimeDurationMinMinutes, pingidDevicePairingKeyLifetimeDurationMaxHours)).Description,
 								Required:    true,
 
 								Validators: []validator.Int32{
 									int32validator.Any(
 										int32validator.All(
-											int32validator.Between(1, 2880),
+											int32validator.Between(pingidDevicePairingKeyLifetimeDurationMinMinutes, pingidDevicePairingKeyLifetimeDurationMaxMinutes),
 											int32validatorinternal.RegexMatchesPathValue(
 												regexp.MustCompile(`MINUTES`),
-												"If `time_unit` is `MINUTES`, the allowed duration range is 1 - 2880.",
+												fmt.Sprintf("If `time_unit` is `MINUTES`, the allowed duration range is %d - %d.", pingidDevicePairingKeyLifetimeDurationMinMinutes, pingidDevicePairingKeyLifetimeDurationMaxMinutes),
 												path.MatchRelative().AtParent().AtName("time_unit"),
 											),
 										),
 										int32validator.All(
-											int32validator.Between(1, 48),
+											int32validator.Between(pingidDevicePairingKeyLifetimeDurationMinHours, pingidDevicePairingKeyLifetimeDurationMaxHours),
 											int32validatorinternal.RegexMatchesPathValue(
 												regexp.MustCompile(`HOURS`),
-												"If `time_unit` is `HOURS`, the allowed duration range is 1 - 48.",
+												fmt.Sprintf("If `time_unit` is `HOURS`, the allowed duration range is %d - %d.", pingidDevicePairingKeyLifetimeDurationMinHours, pingidDevicePairingKeyLifetimeDurationMaxHours),
 												path.MatchRelative().AtParent().AtName("time_unit"),
 											),
 										),
@@ -1509,11 +1540,11 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 								"failure": types.ObjectValueMust(
 									MFADevicePolicyFailureTFObjectTypes,
 									map[string]attr.Value{
-										"count": types.Int32Value(3),
+										"count": types.Int32Value(pingidDeviceOtpFailureCountDefault),
 										"cool_down": types.ObjectValueMust(
 											MFADevicePolicyTimePeriodTFObjectTypes,
 											map[string]attr.Value{
-												"duration":  types.Int32Value(2),
+												"duration":  types.Int32Value(pingidDeviceOtpFailureCoolDownDurationDefault),
 												"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
 											},
 										),
@@ -1528,11 +1559,11 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 
 								Attributes: map[string]schema.Attribute{
 									"count": schema.Int32Attribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. Must be between 1 and 7.").Description,
+										Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. Must be between %d and %d.", pingidDeviceOtpFailureCountMin, pingidDeviceOtpFailureCountMax)).Description,
 										Optional:    true,
 
 										Validators: []validator.Int32{
-											int32validator.Between(1, 7),
+											int32validator.Between(pingidDeviceOtpFailureCountMin, pingidDeviceOtpFailureCountMax),
 										},
 									},
 
@@ -1542,24 +1573,24 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 
 										Attributes: map[string]schema.Attribute{
 											"duration": schema.Int32Attribute{
-												Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. Must be between 1 SECONDS and 30 MINUTES.").Description,
+												Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. Must be between %d SECONDS and %d MINUTES.", pingidDeviceOtpFailureCoolDownDurationMinSeconds, pingidDeviceOtpFailureCoolDownDurationMaxMinutes)).Description,
 												Required:    true,
 
 												Validators: []validator.Int32{
 													int32validator.Any(
 														int32validator.All(
-															int32validator.Between(1, 1800),
+															int32validator.Between(pingidDeviceOtpFailureCoolDownDurationMinSeconds, pingidDeviceOtpFailureCoolDownDurationMaxSeconds),
 															int32validatorinternal.RegexMatchesPathValue(
 																regexp.MustCompile(`SECONDS`),
-																"If `time_unit` is `SECONDS`, the allowed duration range is 1 - 1800.",
+																fmt.Sprintf("If `time_unit` is `SECONDS`, the allowed duration range is %d - %d.", pingidDeviceOtpFailureCoolDownDurationMinSeconds, pingidDeviceOtpFailureCoolDownDurationMaxSeconds),
 																path.MatchRelative().AtParent().AtName("time_unit"),
 															),
 														),
 														int32validator.All(
-															int32validator.Between(1, 30),
+															int32validator.Between(pingidDeviceOtpFailureCoolDownDurationMinMinutes, pingidDeviceOtpFailureCoolDownDurationMaxMinutes),
 															int32validatorinternal.RegexMatchesPathValue(
 																regexp.MustCompile(`MINUTES`),
-																"If `time_unit` is `MINUTES`, the allowed duration range is 1 - 30.",
+																fmt.Sprintf("If `time_unit` is `MINUTES`, the allowed duration range is %d - %d.", pingidDeviceOtpFailureCoolDownDurationMinMinutes, pingidDeviceOtpFailureCoolDownDurationMaxMinutes),
 																path.MatchRelative().AtParent().AtName("time_unit"),
 															),
 														),
@@ -1648,11 +1679,11 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 								"failure": types.ObjectValueMust(
 									MFADevicePolicyFailureTFObjectTypes,
 									map[string]attr.Value{
-										"count": types.Int32Value(3),
+										"count": types.Int32Value(pingidDeviceOtpFailureCountDefault),
 										"cool_down": types.ObjectValueMust(
 											MFADevicePolicyTimePeriodTFObjectTypes,
 											map[string]attr.Value{
-												"duration":  types.Int32Value(2),
+												"duration":  types.Int32Value(pingidDeviceOtpFailureCoolDownDurationDefault),
 												"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
 											},
 										),
@@ -1668,11 +1699,11 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 
 								Attributes: map[string]schema.Attribute{
 									"count": schema.Int32Attribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. Must be between 1 and 7.").Description,
+										Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. Must be between %d and %d.", pingidDeviceOtpFailureCountMin, pingidDeviceOtpFailureCountMax)).Description,
 										Optional:    true,
 
 										Validators: []validator.Int32{
-											int32validator.Between(1, 7),
+											int32validator.Between(pingidDeviceOtpFailureCountMin, pingidDeviceOtpFailureCountMax),
 										},
 									},
 
@@ -1682,24 +1713,24 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 
 										Attributes: map[string]schema.Attribute{
 											"duration": schema.Int32Attribute{
-												Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. Must be between 1 SECONDS and 30 MINUTES.").Description,
+												Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. Must be between %d SECONDS and %d MINUTES.", pingidDeviceOtpFailureCoolDownDurationMinSeconds, pingidDeviceOtpFailureCoolDownDurationMaxMinutes)).Description,
 												Required:    true,
 
 												Validators: []validator.Int32{
 													int32validator.Any(
 														int32validator.All(
-															int32validator.Between(1, 1800),
+															int32validator.Between(pingidDeviceOtpFailureCoolDownDurationMinSeconds, pingidDeviceOtpFailureCoolDownDurationMaxSeconds),
 															int32validatorinternal.RegexMatchesPathValue(
 																regexp.MustCompile(`SECONDS`),
-																"If `time_unit` is `SECONDS`, the allowed duration range is 1 - 1800.",
+																fmt.Sprintf("If `time_unit` is `SECONDS`, the allowed duration range is %d - %d.", pingidDeviceOtpFailureCoolDownDurationMinSeconds, pingidDeviceOtpFailureCoolDownDurationMaxSeconds),
 																path.MatchRelative().AtParent().AtName("time_unit"),
 															),
 														),
 														int32validator.All(
-															int32validator.Between(1, 30),
+															int32validator.Between(pingidDeviceOtpFailureCoolDownDurationMinMinutes, pingidDeviceOtpFailureCoolDownDurationMaxMinutes),
 															int32validatorinternal.RegexMatchesPathValue(
 																regexp.MustCompile(`MINUTES`),
-																"If `time_unit` is `MINUTES`, the allowed duration range is 1 - 30.",
+																fmt.Sprintf("If `time_unit` is `MINUTES`, the allowed duration range is %d - %d.", pingidDeviceOtpFailureCoolDownDurationMinMinutes, pingidDeviceOtpFailureCoolDownDurationMaxMinutes),
 																path.MatchRelative().AtParent().AtName("time_unit"),
 															),
 														),
@@ -2048,6 +2079,55 @@ func (r *MFADevicePolicyDefaultResource) ImportState(ctx context.Context, req re
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), response.GetId())...)
 }
 
+func (r *MFADevicePolicyDefaultResource) checkBOMForPolicyType(ctx context.Context, environmentID string, policyType string) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	// Map policy type to product type
+	var requiredProduct *management.EnumProductType
+	switch policyType {
+	case POLICY_TYPE_PINGONE_MFA:
+		v := management.ENUMPRODUCTTYPE_ONE_MFA
+		requiredProduct = &v
+	case POLICY_TYPE_PINGID:
+		v := management.EnumProductType("PING_ONE_ID")
+		requiredProduct = &v
+	default:
+		// We don't have a clear mapping for other policy types (e.g. PingID) in the BOM product types yet
+		// So we skip validation for those for now
+		return diags
+	}
+
+	// Fetch BOM
+	bom, _, err := r.Client.ManagementAPIClient.BillOfMaterialsBOMApi.ReadOneBillOfMaterials(ctx, environmentID).Execute()
+	if err != nil {
+		diags.AddError(
+			"Error reading Bill of Materials",
+			fmt.Sprintf("Could not read Bill of Materials for environment %s to validate policy type support: %s", environmentID, err.Error()),
+		)
+		return diags
+	}
+
+	// Check if product exists
+	found := false
+	if bom != nil {
+		for _, product := range bom.GetProducts() {
+			if product.Type == *requiredProduct {
+				found = true
+				break
+			}
+		}
+	}
+
+	if !found {
+		diags.AddError(
+			"Unsupported Policy Type",
+			fmt.Sprintf("The environment %s does not support the policy type '%s'. The required product '%s' is not enabled in the Bill of Materials.", environmentID, policyType, string(*requiredProduct)),
+		)
+	}
+
+	return diags
+}
+
 func (r *MFADevicePolicyDefaultResource) updateMFADevicePolicyDefault(ctx context.Context, plan MFADevicePolicyDefaultResourceModel, isCreate bool) (MFADevicePolicyDefaultResourceModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	var state MFADevicePolicyDefaultResourceModel
@@ -2057,6 +2137,14 @@ func (r *MFADevicePolicyDefaultResource) updateMFADevicePolicyDefault(ctx contex
 			"Client not initialized",
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
 		return state, diags
+	}
+
+	// Validate policy type against BOM
+	if !plan.PolicyType.IsUnknown() && !plan.PolicyType.IsNull() {
+		diags.Append(r.checkBOMForPolicyType(ctx, plan.EnvironmentId.ValueString(), plan.PolicyType.ValueString())...)
+		if diags.HasError() {
+			return state, diags
+		}
 	}
 
 	// Build the model for the API
@@ -2812,7 +2900,7 @@ func expandMobileForDefault(ctx context.Context, mobilePlan MFADevicePolicyDefau
 				"type_is_unknown": appPlan.Type.IsUnknown(),
 			})
 			// Only send type for PingID policies - the API will reject it for PingOne MFA policies
-			if policyType == "pingid" && !appPlan.Type.IsNull() && !appPlan.Type.IsUnknown() {
+			if policyType == POLICY_TYPE_PINGID && !appPlan.Type.IsNull() && !appPlan.Type.IsUnknown() {
 				app.SetType(mfa.EnumPingIDApplicationType(appPlan.Type.ValueString()))
 			}
 
