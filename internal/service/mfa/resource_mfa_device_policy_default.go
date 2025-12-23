@@ -23,9 +23,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -244,8 +242,25 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	const mobileApplicationsPushLimitCountMax = 50
 
 	const mobileApplicationsPushLimitLockDurationDurationDefault = 30
+	const mobileApplicationsPushLimitLockDurationDurationMinMinutes = 1
+	const mobileApplicationsPushLimitLockDurationDurationMaxMinutes = 120
+	const mobileApplicationsPushLimitLockDurationDurationMinSeconds = 60
+	const mobileApplicationsPushLimitLockDurationDurationMaxSeconds = 7200
+
 	const mobileApplicationsPushLimitTimePeriodDurationDefault = 10
+	const mobileApplicationsPushLimitTimePeriodDurationMinMinutes = 1
+	const mobileApplicationsPushLimitTimePeriodDurationMaxMinutes = 120
+	const mobileApplicationsPushLimitTimePeriodDurationMinSeconds = 60
+	const mobileApplicationsPushLimitTimePeriodDurationMaxSeconds = 7200
+
+	const mobileApplicationsPushTimeoutDurationMin = 1
+	const mobileApplicationsPushTimeoutDurationMax = 120
+
 	const mobileApplicationsOtpFailureCoolDownDurationDefault = 2
+	const mobileOtpFailureCoolDownDurationMinMinutes = 2
+	const mobileOtpFailureCoolDownDurationMaxMinutes = 30
+	const mobileOtpFailureCoolDownDurationMinSeconds = 120
+	const mobileOtpFailureCoolDownDurationMaxSeconds = 1800
 
 	const mobileOtpFailureCountDefault = 3
 	const mobileOtpFailureCountMin = 1
@@ -493,6 +508,270 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 		"A boolean that, when set to `true`, prompts users to provide nicknames for devices during pairing.",
 	)
 
+	policyTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the type of MFA device policy.",
+	).AllowedValues(POLICY_TYPE_PINGONE_MFA, POLICY_TYPE_PINGID)
+
+	environmentIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The ID of the environment to manage the default MFA device policy in.",
+	)
+
+	nameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the name to apply to the default MFA device policy.",
+	)
+
+	authenticationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that allows configuration of authentication settings in the device policy.",
+	)
+
+	mobileEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether the mobile device method is enabled or disabled in the policy.",
+	)
+
+	mobileApplicationsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A list of objects that specifies settings for configured Mobile Applications.",
+	)
+
+	mobileApplicationsIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the ID of the application. This must be a valid PingOne resource ID.",
+	)
+
+	mobileApplicationsAutoEnrollmentDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies auto enrollment settings for the application in the policy.",
+	)
+
+	mobileApplicationsBiometricsEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether biometric authentication methods (such as fingerprint or facial recognition) are enabled for MFA. Only applicable for PingID policies.",
+	)
+
+	mobileApplicationsDeviceAuthorizationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies device authorization settings for the application in the policy.",
+	)
+
+	mobileApplicationsDeviceAuthorizationEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Specifies the enabled or disabled state of automatic MFA for native devices paired with the user, for the specified application.",
+	)
+
+	mobileApplicationsOtpDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies OTP settings for the application in the policy.",
+	)
+
+	mobileApplicationsOtpEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether OTP authentication is enabled or disabled for the application in the policy.",
+	)
+
+	mobileApplicationsPairingKeyLifetimeDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that defines the amount of time an issued pairing key can be used until it expires. Minimum is %d minute and maximum is %d hours. If this parameter is not provided, the duration is set to 10 minutes.", pingidDevicePairingKeyLifetimeDurationMinMinutes, pingidDevicePairingKeyLifetimeDurationMaxHours),
+	)
+
+	mobileApplicationsPushDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies push settings for the application in the policy.",
+	)
+
+	mobileApplicationsPushEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether push notification is enabled or disabled for the application in the policy.",
+	)
+
+	mobileApplicationsPushNumberMatchingDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that configures number matching for push notifications. ",
+	)
+
+	mobileApplicationsPushNumberMatchingEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Set to `true` if you want to require the authenticating user to select a number that was displayed to them on the accessing device.",
+	)
+
+	mobileApplicationsPushLimitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies push limit settings for the application in the policy.",
+	)
+
+	mobileApplicationsPushLimitCountDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that specifies the number of consecutive push notifications that can be ignored or rejected by a user within a defined period before push notifications are blocked for the application. The minimum value is `1` and the maximum value is `50`. If this parameter is not provided, the default value is `5`.",
+	)
+
+	mobileApplicationsPushLimitLockDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies push limit lock duration settings for the application in the policy.",
+	)
+
+	mobileApplicationsPushLimitTimePeriodDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies push limit time period settings for the application in the policy.",
+	)
+
+	mobileApplicationsPushTimeoutDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies push timeout settings for the application in the policy.",
+	)
+
+	mobileOtpDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies OTP settings for mobile applications in the policy.",
+	)
+
+	mobileOtpFailureDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies OTP failure settings for mobile applications in the policy.",
+	)
+
+	mobileOtpFailureCoolDownDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies OTP failure cool down settings for mobile applications in the policy.",
+	)
+
+	totpDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that allows configuration of TOTP device authentication policy settings.",
+	)
+
+	totpEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether the TOTP method is enabled or disabled in the policy.",
+	)
+
+	totpOtpDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that allows configuration of TOTP OTP settings.",
+	)
+
+	totpOtpFailureDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that allows configuration of TOTP OTP failure settings.",
+	)
+
+	totpOtpFailureCoolDownDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that allows configuration of TOTP OTP failure cool down settings.",
+	)
+
+	totpOtpFailureCoolDownDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures.",
+	)
+
+	totpOtpFailureCountDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked.",
+	)
+
+	fido2Description := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that allows configuration of FIDO2 device authentication policy settings.",
+	)
+
+	fido2EnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether the FIDO2 method is enabled or disabled in the policy.",
+	)
+
+	fido2PolicyIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the resource UUID that represents the FIDO2 policy in PingOne. This property can be null / left undefined. When null, the environment's default FIDO2 Policy is used.  Must be a valid PingOne resource ID.",
+	)
+
+	desktopDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that allows configuration of PingID desktop device authentication policy settings. Only applicable when `policy_type` is `PINGID`.",
+	)
+
+	desktopEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether the desktop device method is enabled or disabled in the policy.",
+	)
+
+	desktopOtpDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies OTP failure settings for desktop devices.",
+	)
+
+	desktopOtpFailureDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that allows configuration of OTP failure settings.",
+	)
+
+	desktopOtpFailureCountDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. Must be between %d and %d.", pingidDeviceOtpFailureCountMin, pingidDeviceOtpFailureCountMax),
+	)
+
+	desktopOtpFailureCoolDownDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies OTP failure cool down settings.",
+	)
+
+	desktopOtpFailureCoolDownDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. Must be between %d SECONDS and %d MINUTES.", pingidDeviceOtpFailureCoolDownDurationMinSeconds, pingidDeviceOtpFailureCoolDownDurationMaxMinutes),
+	)
+
+	desktopPairingDisabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that, when set to `true`, prevents users from pairing new desktop devices.",
+	)
+
+	desktopPairingKeyLifetimeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies pairing key lifetime settings for desktop devices.",
+	)
+
+	desktopPairingKeyLifetimeDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that defines the amount of time an issued pairing key can be used until it expires. Must be between %d MINUTES and %d HOURS.", pingidDevicePairingKeyLifetimeDurationMinMinutes, pingidDevicePairingKeyLifetimeDurationMaxHours),
+	)
+
+	yubikeyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that allows configuration of PingID Yubikey device authentication policy settings. Only applicable when `policy_type` is `PINGID`.",
+	)
+
+	yubikeyEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether the Yubikey device method is enabled or disabled in the policy.",
+	)
+
+	yubikeyOtpDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies OTP failure settings for Yubikey devices.",
+	)
+
+	yubikeyOtpFailureDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that allows configuration of OTP failure settings.",
+	)
+
+	yubikeyOtpFailureCountDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. Must be between %d and %d.", pingidDeviceOtpFailureCountMin, pingidDeviceOtpFailureCountMax),
+	)
+
+	yubikeyOtpFailureCoolDownDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies OTP failure cool down settings.",
+	)
+
+	yubikeyOtpFailureCoolDownDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. Must be between %d SECONDS and %d MINUTES.", pingidDeviceOtpFailureCoolDownDurationMinSeconds, pingidDeviceOtpFailureCoolDownDurationMaxMinutes),
+	)
+
+	yubikeyPairingDisabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that, when set to `true`, prevents users from pairing new Yubikey devices.",
+	)
+
+	yubikeyPairingKeyLifetimeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies pairing key lifetime settings for Yubikey devices.",
+	)
+
+	yubikeyPairingKeyLifetimeDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that defines the amount of time an issued pairing key can be used until it expires. Must be between %d MINUTES and %d HOURS.", pingidDevicePairingKeyLifetimeDurationMinMinutes, pingidDevicePairingKeyLifetimeDurationMaxHours),
+	)
+
+	oathTokenDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that allows configuration of OATH token device authentication policy settings.",
+	)
+
+	oathTokenEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether the OATH token device method is enabled or disabled in the policy.",
+	)
+
+	oathTokenOtpDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies OTP failure settings for OATH token devices.",
+	)
+
+	oathTokenOtpFailureDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that allows configuration of OTP failure settings.",
+	)
+
+	oathTokenOtpFailureCountDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. Must be between %d and %d.", pingidDeviceOtpFailureCountMin, pingidDeviceOtpFailureCountMax),
+	)
+
+	oathTokenOtpFailureCoolDownDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies OTP failure cool down settings.",
+	)
+
+	oathTokenOtpFailureCoolDownDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. Must be between %d SECONDS and %d MINUTES.", pingidDeviceOtpFailureCoolDownDurationMinSeconds, pingidDeviceOtpFailureCoolDownDurationMaxMinutes),
+	)
+
+	oathTokenPairingDisabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that, when set to `true`, prevents users from pairing new OATH token devices.",
+	)
+
+	oathTokenPairingKeyLifetimeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies pairing key lifetime settings for OATH token devices.",
+	)
+
+	oathTokenPairingKeyLifetimeDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that defines the amount of time an issued pairing key can be used until it expires. Must be between %d MINUTES and %d HOURS.", pingidDevicePairingKeyLifetimeDurationMinMinutes, pingidDevicePairingKeyLifetimeDurationMaxHours),
+	)
+
 	resp.Schema = schema.Schema{
 		Description: "Resource to overwrite the default MFA device policy. Valid for both PingOne MFA and PingID integrated environments.",
 
@@ -500,16 +779,13 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 			"id": framework.Attr_ID(),
 
 			"environment_id": framework.Attr_LinkID(
-				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to manage the default MFA device policy in."),
+				environmentIdDescription,
 			),
 
 			"policy_type": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the type of MFA device policy. Set to `PING_ONE_MFA` for standard PingOne MFA environments, or `PING_ONE_ID` for environments with PingID integration. This field is immutable and will trigger a replace plan if changed.").Description,
-				Required:    true,
-
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
+				Description:         policyTypeDescription.Description,
+				MarkdownDescription: policyTypeDescription.MarkdownDescription,
+				Required:            true,
 
 				Validators: []validator.String{
 					stringvalidator.OneOf(POLICY_TYPE_PINGONE_MFA, POLICY_TYPE_PINGID),
@@ -517,14 +793,16 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 			},
 
 			"name": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the name to apply to the default MFA device policy.").Description,
-				Required:    true,
+				Description:         nameDescription.Description,
+				MarkdownDescription: nameDescription.MarkdownDescription,
+				Required:            true,
 			},
 
 			"authentication": schema.SingleNestedAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that allows configuration of authentication settings in the device policy.").Description,
-				Optional:    true,
-				Computed:    true,
+				Description:         authenticationDescription.Description,
+				MarkdownDescription: authenticationDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
 
 				Default: objectdefault.StaticValue(types.ObjectValueMust(
 					MFADevicePolicyAuthenticationTFObjectTypes,
@@ -688,8 +966,9 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 
 				Attributes: map[string]schema.Attribute{
 					"enabled": schema.BoolAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the mobile device method is enabled or disabled in the policy.").Description,
-						Required:    true,
+						Description:         mobileEnabledDescription.Description,
+						MarkdownDescription: mobileEnabledDescription.MarkdownDescription,
+						Required:            true,
 						Validators: []validator.Bool{
 							boolvalidator.MustBeTrueIfPathSetToValue(
 								types.StringValue(POLICY_TYPE_PINGID),
@@ -698,22 +977,25 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 						},
 					},
 					"applications": schema.ListNestedAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("A list of objects that specifies settings for configured Mobile Applications.").Description,
-						Optional:    true,
+						Description:         mobileApplicationsDescription.Description,
+						MarkdownDescription: mobileApplicationsDescription.MarkdownDescription,
+						Optional:            true,
 
 						NestedObject: schema.NestedAttributeObject{
 							Attributes: map[string]schema.Attribute{
 								"id": schema.StringAttribute{
-									Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of the application. This must be a valid PingOne resource ID.").Description,
-									Required:    true,
+									Description:         mobileApplicationsIdDescription.Description,
+									MarkdownDescription: mobileApplicationsIdDescription.MarkdownDescription,
+									Required:            true,
 
 									Validators: []validator.String{
 										verify.P1ResourceIDValidator(),
 									},
 								},
 								"auto_enrollment": schema.SingleNestedAttribute{
-									Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies auto enrollment settings for the application in the policy.").Description,
-									Optional:    true,
+									Description:         mobileApplicationsAutoEnrollmentDescription.Description,
+									MarkdownDescription: mobileApplicationsAutoEnrollmentDescription.MarkdownDescription,
+									Optional:            true,
 
 									Validators: []validator.Object{
 										objectvalidator.IsRequiredIfMatchesPathValue(
@@ -734,9 +1016,10 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 									},
 								},
 								"biometrics_enabled": schema.BoolAttribute{
-									Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether biometric authentication methods (such as fingerprint or facial recognition) are enabled for MFA. Only applicable for PingID policies.").Description,
-									Optional:    true,
-									Computed:    true,
+									Description:         mobileApplicationsBiometricsEnabledDescription.Description,
+									MarkdownDescription: mobileApplicationsBiometricsEnabledDescription.MarkdownDescription,
+									Optional:            true,
+									Computed:            true,
 
 									Validators: []validator.Bool{
 										boolvalidator.ConflictsIfMatchesPathValue(
@@ -746,8 +1029,9 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 									},
 								},
 								"device_authorization": schema.SingleNestedAttribute{
-									Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies device authorization settings for the application in the policy.").Description,
-									Optional:    true,
+									Description:         mobileApplicationsDeviceAuthorizationDescription.Description,
+									MarkdownDescription: mobileApplicationsDeviceAuthorizationDescription.MarkdownDescription,
+									Optional:            true,
 
 									Validators: []validator.Object{
 										objectvalidator.IsRequiredIfMatchesPathValue(
@@ -761,8 +1045,9 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 
 									Attributes: map[string]schema.Attribute{
 										"enabled": schema.BoolAttribute{
-											Description: framework.SchemaAttributeDescriptionFromMarkdown("Specifies the enabled or disabled state of automatic MFA for native devices paired with the user, for the specified application.").Description,
-											Required:    true,
+											Description:         mobileApplicationsDeviceAuthorizationEnabledDescription.Description,
+											MarkdownDescription: mobileApplicationsDeviceAuthorizationEnabledDescription.MarkdownDescription,
+											Required:            true,
 										},
 
 										"extra_verification": schema.StringAttribute{
@@ -791,13 +1076,15 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 									},
 								},
 								"otp": schema.SingleNestedAttribute{
-									Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies OTP settings for the application in the policy.").Description,
-									Required:    true,
+									Description:         mobileApplicationsOtpDescription.Description,
+									MarkdownDescription: mobileApplicationsOtpDescription.MarkdownDescription,
+									Required:            true,
 
 									Attributes: map[string]schema.Attribute{
 										"enabled": schema.BoolAttribute{
-											Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether OTP authentication is enabled or disabled for the application in the policy.").Description,
-											Required:    true,
+											Description:         mobileApplicationsOtpEnabledDescription.Description,
+											MarkdownDescription: mobileApplicationsOtpEnabledDescription.MarkdownDescription,
+											Required:            true,
 										},
 									},
 								},
@@ -816,8 +1103,30 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 
 									Attributes: map[string]schema.Attribute{
 										"duration": schema.Int32Attribute{
-											Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the amount of time an issued pairing key can be used until it expires. Minimum is 1 minute and maximum is 48 hours. If this parameter is not provided, the duration is set to 10 minutes.").Description,
-											Required:    true,
+											Description:         mobileApplicationsPairingKeyLifetimeDurationDescription.Description,
+											MarkdownDescription: mobileApplicationsPairingKeyLifetimeDurationDescription.MarkdownDescription,
+											Required:            true,
+
+											Validators: []validator.Int32{
+												int32validator.Any(
+													int32validator.All(
+														int32validator.Between(pingidDevicePairingKeyLifetimeDurationMinMinutes, pingidDevicePairingKeyLifetimeDurationMaxMinutes),
+														int32validatorinternal.RegexMatchesPathValue(
+															regexp.MustCompile(`MINUTES`),
+															fmt.Sprintf("If `time_unit` is `MINUTES`, the allowed duration range is %d - %d.", pingidDevicePairingKeyLifetimeDurationMinMinutes, pingidDevicePairingKeyLifetimeDurationMaxMinutes),
+															path.MatchRelative().AtParent().AtName("time_unit"),
+														),
+													),
+													int32validator.All(
+														int32validator.Between(pingidDevicePairingKeyLifetimeDurationMinHours, pingidDevicePairingKeyLifetimeDurationMaxHours),
+														int32validatorinternal.RegexMatchesPathValue(
+															regexp.MustCompile(`HOURS`),
+															fmt.Sprintf("If `time_unit` is `HOURS`, the allowed duration range is %d - %d.", pingidDevicePairingKeyLifetimeDurationMinHours, pingidDevicePairingKeyLifetimeDurationMaxHours),
+															path.MatchRelative().AtParent().AtName("time_unit"),
+														),
+													),
+												),
+											},
 										},
 
 										"time_unit": schema.StringAttribute{
@@ -833,19 +1142,22 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 								},
 
 								"push": schema.SingleNestedAttribute{
-									Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies push settings for the application in the policy.").Description,
-									Optional:    true,
+									Description:         mobileApplicationsPushDescription.Description,
+									MarkdownDescription: mobileApplicationsPushDescription.MarkdownDescription,
+									Optional:            true,
 
 									Attributes: map[string]schema.Attribute{
 										"enabled": schema.BoolAttribute{
-											Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether push notification is enabled or disabled for the application in the policy.").Description,
-											Required:    true,
+											Description:         mobileApplicationsPushEnabledDescription.Description,
+											MarkdownDescription: mobileApplicationsPushEnabledDescription.MarkdownDescription,
+											Required:            true,
 										},
 
 										"number_matching": schema.SingleNestedAttribute{
-											Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that configures number matching for push notifications. ").Description,
-											Optional:    true,
-											Computed:    true,
+											Description:         mobileApplicationsPushNumberMatchingDescription.Description,
+											MarkdownDescription: mobileApplicationsPushNumberMatchingDescription.MarkdownDescription,
+											Optional:            true,
+											Computed:            true,
 
 											Default: objectdefault.StaticValue(types.ObjectValueMust(
 												MFADevicePolicyDefaultMobileApplicationPushNumberMatchingTFObjectTypes,
@@ -856,17 +1168,19 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 
 											Attributes: map[string]schema.Attribute{
 												"enabled": schema.BoolAttribute{
-													Description: framework.SchemaAttributeDescriptionFromMarkdown("Set to `true` if you want to require the authenticating user to select a number that was displayed to them on the accessing device.").Description,
-													Required:    true,
+													Description:         mobileApplicationsPushNumberMatchingEnabledDescription.Description,
+													MarkdownDescription: mobileApplicationsPushNumberMatchingEnabledDescription.MarkdownDescription,
+													Required:            true,
 												},
 											},
 										},
 									},
 								},
 								"push_limit": schema.SingleNestedAttribute{
-									Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies push limit settings for the application in the policy.").Description,
-									Optional:    true,
-									Computed:    true,
+									Description:         mobileApplicationsPushLimitDescription.Description,
+									MarkdownDescription: mobileApplicationsPushLimitDescription.MarkdownDescription,
+									Optional:            true,
+									Computed:            true,
 
 									Default: objectdefault.StaticValue(types.ObjectValueMust(
 										MFADevicePolicyMobileApplicationPushLimitTFObjectTypes,
@@ -891,9 +1205,10 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 
 									Attributes: map[string]schema.Attribute{
 										"count": schema.Int32Attribute{
-											Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the number of consecutive push notifications that can be ignored or rejected by a user within a defined period before push notifications are blocked for the application. The minimum value is `1` and the maximum value is `50`. If this parameter is not provided, the default value is `5`.").Description,
-											Optional:    true,
-											Computed:    true,
+											Description:         mobileApplicationsPushLimitCountDescription.Description,
+											MarkdownDescription: mobileApplicationsPushLimitCountDescription.MarkdownDescription,
+											Optional:            true,
+											Computed:            true,
 
 											Default: int32default.StaticInt32(mobileApplicationsPushLimitCountDefault),
 
@@ -903,14 +1218,36 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 										},
 
 										"lock_duration": schema.SingleNestedAttribute{
-											Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies push limit lock duration settings for the application in the policy.").Description,
-											Optional:    true,
+											Description:         mobileApplicationsPushLimitLockDurationDescription.Description,
+											MarkdownDescription: mobileApplicationsPushLimitLockDurationDescription.MarkdownDescription,
+											Optional:            true,
 
 											Attributes: map[string]schema.Attribute{
 												"duration": schema.Int32Attribute{
 													Description:         mobileApplicationsPushLimitLockDurationDurationDescription.Description,
 													MarkdownDescription: mobileApplicationsPushLimitLockDurationDurationDescription.MarkdownDescription,
 													Required:            true,
+
+													Validators: []validator.Int32{
+														int32validator.Any(
+															int32validator.All(
+																int32validator.Between(mobileApplicationsPushLimitLockDurationDurationMinSeconds, mobileApplicationsPushLimitLockDurationDurationMaxSeconds),
+																int32validatorinternal.RegexMatchesPathValue(
+																	regexp.MustCompile(`SECONDS`),
+																	fmt.Sprintf("If `time_unit` is `SECONDS`, the allowed duration range is %d - %d.", mobileApplicationsPushLimitLockDurationDurationMinSeconds, mobileApplicationsPushLimitLockDurationDurationMaxSeconds),
+																	path.MatchRelative().AtParent().AtName("time_unit"),
+																),
+															),
+															int32validator.All(
+																int32validator.Between(mobileApplicationsPushLimitLockDurationDurationMinMinutes, mobileApplicationsPushLimitLockDurationDurationMaxMinutes),
+																int32validatorinternal.RegexMatchesPathValue(
+																	regexp.MustCompile(`MINUTES`),
+																	fmt.Sprintf("If `time_unit` is `MINUTES`, the allowed duration range is %d - %d.", mobileApplicationsPushLimitLockDurationDurationMinMinutes, mobileApplicationsPushLimitLockDurationDurationMaxMinutes),
+																	path.MatchRelative().AtParent().AtName("time_unit"),
+																),
+															),
+														),
+													},
 												},
 
 												"time_unit": schema.StringAttribute{
@@ -926,14 +1263,36 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 										},
 
 										"time_period": schema.SingleNestedAttribute{
-											Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies push limit time period settings for the application in the policy.").Description,
-											Optional:    true,
+											Description:         mobileApplicationsPushLimitTimePeriodDescription.Description,
+											MarkdownDescription: mobileApplicationsPushLimitTimePeriodDescription.MarkdownDescription,
+											Optional:            true,
 
 											Attributes: map[string]schema.Attribute{
 												"duration": schema.Int32Attribute{
 													Description:         mobileApplicationsPushLimitTimePeriodDurationDescription.Description,
 													MarkdownDescription: mobileApplicationsPushLimitTimePeriodDurationDescription.MarkdownDescription,
 													Required:            true,
+
+													Validators: []validator.Int32{
+														int32validator.Any(
+															int32validator.All(
+																int32validator.Between(mobileApplicationsPushLimitTimePeriodDurationMinSeconds, mobileApplicationsPushLimitTimePeriodDurationMaxSeconds),
+																int32validatorinternal.RegexMatchesPathValue(
+																	regexp.MustCompile(`SECONDS`),
+																	fmt.Sprintf("If `time_unit` is `SECONDS`, the allowed duration range is %d - %d.", mobileApplicationsPushLimitTimePeriodDurationMinSeconds, mobileApplicationsPushLimitTimePeriodDurationMaxSeconds),
+																	path.MatchRelative().AtParent().AtName("time_unit"),
+																),
+															),
+															int32validator.All(
+																int32validator.Between(mobileApplicationsPushLimitTimePeriodDurationMinMinutes, mobileApplicationsPushLimitTimePeriodDurationMaxMinutes),
+																int32validatorinternal.RegexMatchesPathValue(
+																	regexp.MustCompile(`MINUTES`),
+																	fmt.Sprintf("If `time_unit` is `MINUTES`, the allowed duration range is %d - %d.", mobileApplicationsPushLimitTimePeriodDurationMinMinutes, mobileApplicationsPushLimitTimePeriodDurationMaxMinutes),
+																	path.MatchRelative().AtParent().AtName("time_unit"),
+																),
+															),
+														),
+													},
 												},
 
 												"time_unit": schema.StringAttribute{
@@ -951,8 +1310,9 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 								},
 
 								"push_timeout": schema.SingleNestedAttribute{
-									Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies push timeout settings for the application in the policy.").Description,
-									Optional:    true,
+									Description:         mobileApplicationsPushTimeoutDescription.Description,
+									MarkdownDescription: mobileApplicationsPushTimeoutDescription.MarkdownDescription,
+									Optional:            true,
 
 									Validators: []validator.Object{
 										objectvalidator.ConflictsIfMatchesPathValue(
@@ -966,6 +1326,10 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 											Description:         mobileApplicationsPushTimeoutDurationDescription.Description,
 											MarkdownDescription: mobileApplicationsPushTimeoutDurationDescription.MarkdownDescription,
 											Required:            true,
+
+											Validators: []validator.Int32{
+												int32validator.Between(mobileApplicationsPushTimeoutDurationMin, mobileApplicationsPushTimeoutDurationMax),
+											},
 										},
 
 										"time_unit": schema.StringAttribute{
@@ -1130,9 +1494,10 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 						},
 					},
 					"otp": schema.SingleNestedAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies OTP settings for mobile applications in the policy.").Description,
-						Optional:    true,
-						Computed:    true,
+						Description:         mobileOtpDescription.Description,
+						MarkdownDescription: mobileOtpDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
 
 						Default: objectdefault.StaticValue(types.ObjectValueMust(
 							MFADevicePolicyMobileOtpTFObjectTypes,
@@ -1155,8 +1520,9 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 
 						Attributes: map[string]schema.Attribute{
 							"failure": schema.SingleNestedAttribute{
-								Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies OTP failure settings for mobile applications in the policy.").Description,
-								Required:    true,
+								Description:         mobileOtpFailureDescription.Description,
+								MarkdownDescription: mobileOtpFailureDescription.MarkdownDescription,
+								Required:            true,
 
 								Attributes: map[string]schema.Attribute{
 									"count": schema.Int32Attribute{
@@ -1173,14 +1539,36 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 									},
 
 									"cool_down": schema.SingleNestedAttribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies OTP failure cool down settings for mobile applications in the policy.").Description,
-										Required:    true,
+										Description:         mobileOtpFailureCoolDownDescription.Description,
+										MarkdownDescription: mobileOtpFailureCoolDownDescription.MarkdownDescription,
+										Required:            true,
 
 										Attributes: map[string]schema.Attribute{
 											"duration": schema.Int32Attribute{
 												Description:         mobileOtpFailureCoolDownDurationDescription.Description,
 												MarkdownDescription: mobileOtpFailureCoolDownDurationDescription.MarkdownDescription,
 												Required:            true,
+
+												Validators: []validator.Int32{
+													int32validator.Any(
+														int32validator.All(
+															int32validator.Between(mobileOtpFailureCoolDownDurationMinSeconds, mobileOtpFailureCoolDownDurationMaxSeconds),
+															int32validatorinternal.RegexMatchesPathValue(
+																regexp.MustCompile(`SECONDS`),
+																fmt.Sprintf("If `time_unit` is `SECONDS`, the allowed duration range is %d - %d.", mobileOtpFailureCoolDownDurationMinSeconds, mobileOtpFailureCoolDownDurationMaxSeconds),
+																path.MatchRelative().AtParent().AtName("time_unit"),
+															),
+														),
+														int32validator.All(
+															int32validator.Between(mobileOtpFailureCoolDownDurationMinMinutes, mobileOtpFailureCoolDownDurationMaxMinutes),
+															int32validatorinternal.RegexMatchesPathValue(
+																regexp.MustCompile(`MINUTES`),
+																fmt.Sprintf("If `time_unit` is `MINUTES`, the allowed duration range is %d - %d.", mobileOtpFailureCoolDownDurationMinMinutes, mobileOtpFailureCoolDownDurationMaxMinutes),
+																path.MatchRelative().AtParent().AtName("time_unit"),
+															),
+														),
+													),
+												},
 											},
 
 											"time_unit": schema.StringAttribute{
@@ -1208,13 +1596,15 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 			},
 
 			"totp": schema.SingleNestedAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("").Description,
-				Required:    true,
+				Description:         totpDescription.Description,
+				MarkdownDescription: totpDescription.MarkdownDescription,
+				Required:            true,
 
 				Attributes: map[string]schema.Attribute{
 					"enabled": schema.BoolAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the TOTP method is enabled or disabled in the policy.").Description,
-						Required:    true,
+						Description:         totpEnabledDescription.Description,
+						MarkdownDescription: totpEnabledDescription.MarkdownDescription,
+						Required:            true,
 					},
 
 					"pairing_disabled": schema.BoolAttribute{
@@ -1227,9 +1617,10 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 					},
 
 					"otp": schema.SingleNestedAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that allows configuration of TOTP OTP settings.").Description,
-						Optional:    true,
-						Computed:    true,
+						Description:         totpOtpDescription.Description,
+						MarkdownDescription: totpOtpDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
 
 						Default: objectdefault.StaticValue(types.ObjectValueMust(
 							MFADevicePolicyTotpOtpTFObjectTypes,
@@ -1252,18 +1643,42 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 
 						Attributes: map[string]schema.Attribute{
 							"failure": schema.SingleNestedAttribute{
-								Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that allows configuration of TOTP OTP failure settings.").Description,
-								Optional:    true,
+								Description:         totpOtpFailureDescription.Description,
+								MarkdownDescription: totpOtpFailureDescription.MarkdownDescription,
+								Optional:            true,
 
 								Attributes: map[string]schema.Attribute{
 									"cool_down": schema.SingleNestedAttribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that allows configuration of TOTP OTP failure cool down settings.").Description,
-										Optional:    true,
+										Description:         totpOtpFailureCoolDownDescription.Description,
+										MarkdownDescription: totpOtpFailureCoolDownDescription.MarkdownDescription,
+										Optional:            true,
 
 										Attributes: map[string]schema.Attribute{
 											"duration": schema.Int32Attribute{
-												Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures.").Description,
-												Required:    true,
+												Description:         totpOtpFailureCoolDownDurationDescription.Description,
+												MarkdownDescription: totpOtpFailureCoolDownDurationDescription.MarkdownDescription,
+												Required:            true,
+
+												Validators: []validator.Int32{
+													int32validator.Any(
+														int32validator.All(
+															int32validator.Between(pingidDeviceOtpFailureCoolDownDurationMinSeconds, pingidDeviceOtpFailureCoolDownDurationMaxSeconds),
+															int32validatorinternal.RegexMatchesPathValue(
+																regexp.MustCompile(`SECONDS`),
+																fmt.Sprintf("If `time_unit` is `SECONDS`, the allowed duration range is %d - %d.", pingidDeviceOtpFailureCoolDownDurationMinSeconds, pingidDeviceOtpFailureCoolDownDurationMaxSeconds),
+																path.MatchRelative().AtParent().AtName("time_unit"),
+															),
+														),
+														int32validator.All(
+															int32validator.Between(pingidDeviceOtpFailureCoolDownDurationMinMinutes, pingidDeviceOtpFailureCoolDownDurationMaxMinutes),
+															int32validatorinternal.RegexMatchesPathValue(
+																regexp.MustCompile(`MINUTES`),
+																fmt.Sprintf("If `time_unit` is `MINUTES`, the allowed duration range is %d - %d.", pingidDeviceOtpFailureCoolDownDurationMinMinutes, pingidDeviceOtpFailureCoolDownDurationMaxMinutes),
+																path.MatchRelative().AtParent().AtName("time_unit"),
+															),
+														),
+													),
+												},
 											},
 
 											"time_unit": schema.StringAttribute{
@@ -1279,8 +1694,13 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 									},
 
 									"count": schema.Int32Attribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked.").Description,
-										Required:    true,
+										Description:         totpOtpFailureCountDescription.Description,
+										MarkdownDescription: totpOtpFailureCountDescription.MarkdownDescription,
+										Required:            true,
+
+										Validators: []validator.Int32{
+											int32validator.Between(pingidDeviceOtpFailureCountMin, pingidDeviceOtpFailureCountMax),
+										},
 									},
 								},
 							},
@@ -1304,9 +1724,10 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 			},
 
 			"fido2": schema.SingleNestedAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that allows configuration of FIDO2 device authentication policy settings.").Description,
-				Optional:    true,
-				Computed:    true,
+				Description:         fido2Description.Description,
+				MarkdownDescription: fido2Description.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
 				Default: objectdefault.StaticValue(types.ObjectValueMust(MFADevicePolicyFido2TFObjectTypes,
 					map[string]attr.Value{
 						"enabled":                        types.BoolValue(false),
@@ -1317,8 +1738,9 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 				),
 				Attributes: map[string]schema.Attribute{
 					"enabled": schema.BoolAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the FIDO2 method is enabled or disabled in the policy.").Description,
-						Required:    true,
+						Description:         fido2EnabledDescription.Description,
+						MarkdownDescription: fido2EnabledDescription.MarkdownDescription,
+						Required:            true,
 					},
 
 					"pairing_disabled": schema.BoolAttribute{
@@ -1331,9 +1753,10 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 					},
 
 					"fido2_policy_id": schema.StringAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the resource UUID that represents the FIDO2 policy in PingOne. This property can be null / left undefined. When null, the environment's default FIDO2 Policy is used.  Must be a valid PingOne resource ID.").Description,
-						Optional:    true,
-						CustomType:  pingonetypes.ResourceIDType{},
+						Description:         fido2PolicyIdDescription.Description,
+						MarkdownDescription: fido2PolicyIdDescription.MarkdownDescription,
+						Optional:            true,
+						CustomType:          pingonetypes.ResourceIDType{},
 					},
 
 					"prompt_for_nickname_on_pairing": schema.BoolAttribute{
@@ -1345,8 +1768,9 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 			},
 
 			"desktop": schema.SingleNestedAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that allows configuration of PingID desktop device authentication policy settings. Only applicable when `policy_type` is `PINGID`.").Description,
-				Optional:    true,
+				Description:         desktopDescription.Description,
+				MarkdownDescription: desktopDescription.MarkdownDescription,
+				Optional:            true,
 
 				Validators: []validator.Object{
 					objectvalidator.IsRequiredIfMatchesPathValue(
@@ -1360,14 +1784,16 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 				},
 				Attributes: map[string]schema.Attribute{
 					"enabled": schema.BoolAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the desktop device method is enabled or disabled in the policy.").Description,
-						Required:    true,
+						Description:         desktopEnabledDescription.Description,
+						MarkdownDescription: desktopEnabledDescription.MarkdownDescription,
+						Required:            true,
 					},
 
 					"otp": schema.SingleNestedAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies OTP failure settings for desktop devices.").Description,
-						Optional:    true,
-						Computed:    true,
+						Description:         desktopOtpDescription.Description,
+						MarkdownDescription: desktopOtpDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
 
 						Default: objectdefault.StaticValue(types.ObjectValueMust(
 							MFADevicePolicyPingIDDeviceOtpTFObjectTypes,
@@ -1389,13 +1815,15 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 						)),
 						Attributes: map[string]schema.Attribute{
 							"failure": schema.SingleNestedAttribute{
-								Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that allows configuration of OTP failure settings.").Description,
-								Optional:    true,
+								Description:         desktopOtpFailureDescription.Description,
+								MarkdownDescription: desktopOtpFailureDescription.MarkdownDescription,
+								Optional:            true,
 
 								Attributes: map[string]schema.Attribute{
 									"count": schema.Int32Attribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. Must be between %d and %d.", pingidDeviceOtpFailureCountMin, pingidDeviceOtpFailureCountMax)).Description,
-										Optional:    true,
+										Description:         desktopOtpFailureCountDescription.Description,
+										MarkdownDescription: desktopOtpFailureCountDescription.MarkdownDescription,
+										Optional:            true,
 
 										Validators: []validator.Int32{
 											int32validator.Between(pingidDeviceOtpFailureCountMin, pingidDeviceOtpFailureCountMax),
@@ -1403,13 +1831,15 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 									},
 
 									"cool_down": schema.SingleNestedAttribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies OTP failure cool down settings.").Description,
-										Optional:    true,
+										Description:         desktopOtpFailureCoolDownDescription.Description,
+										MarkdownDescription: desktopOtpFailureCoolDownDescription.MarkdownDescription,
+										Optional:            true,
 
 										Attributes: map[string]schema.Attribute{
 											"duration": schema.Int32Attribute{
-												Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. Must be between %d SECONDS and %d MINUTES.", pingidDeviceOtpFailureCoolDownDurationMinSeconds, pingidDeviceOtpFailureCoolDownDurationMaxMinutes)).Description,
-												Required:    true,
+												Description:         desktopOtpFailureCoolDownDurationDescription.Description,
+												MarkdownDescription: desktopOtpFailureCoolDownDurationDescription.MarkdownDescription,
+												Required:            true,
 
 												Validators: []validator.Int32{
 													int32validator.Any(
@@ -1450,21 +1880,24 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 					},
 
 					"pairing_disabled": schema.BoolAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that, when set to `true`, prevents users from pairing new desktop devices.").Description,
-						Optional:    true,
-						Computed:    true,
+						Description:         desktopPairingDisabledDescription.Description,
+						MarkdownDescription: desktopPairingDisabledDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
 
 						Default: booldefault.StaticBool(false),
 					},
 
 					"pairing_key_lifetime": schema.SingleNestedAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies pairing key lifetime settings for desktop devices.").Description,
-						Optional:    true,
+						Description:         desktopPairingKeyLifetimeDescription.Description,
+						MarkdownDescription: desktopPairingKeyLifetimeDescription.MarkdownDescription,
+						Optional:            true,
 
 						Attributes: map[string]schema.Attribute{
 							"duration": schema.Int32Attribute{
-								Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("An integer that defines the amount of time an issued pairing key can be used until it expires. Must be between %d MINUTES and %d HOURS.", pingidDevicePairingKeyLifetimeDurationMinMinutes, pingidDevicePairingKeyLifetimeDurationMaxHours)).Description,
-								Required:    true,
+								Description:         desktopPairingKeyLifetimeDurationDescription.Description,
+								MarkdownDescription: desktopPairingKeyLifetimeDurationDescription.MarkdownDescription,
+								Required:            true,
 
 								Validators: []validator.Int32{
 									int32validator.Any(
@@ -1509,8 +1942,9 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 			},
 
 			"yubikey": schema.SingleNestedAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that allows configuration of PingID Yubikey device authentication policy settings. Only applicable when `policy_type` is `PINGID`.").Description,
-				Optional:    true,
+				Description:         yubikeyDescription.Description,
+				MarkdownDescription: yubikeyDescription.MarkdownDescription,
+				Optional:            true,
 
 				Validators: []validator.Object{
 					objectvalidator.IsRequiredIfMatchesPathValue(
@@ -1524,14 +1958,16 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 				},
 				Attributes: map[string]schema.Attribute{
 					"enabled": schema.BoolAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the Yubikey device method is enabled or disabled in the policy.").Description,
-						Required:    true,
+						Description:         yubikeyEnabledDescription.Description,
+						MarkdownDescription: yubikeyEnabledDescription.MarkdownDescription,
+						Required:            true,
 					},
 
 					"otp": schema.SingleNestedAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies OTP failure settings for Yubikey devices.").Description,
-						Optional:    true,
-						Computed:    true,
+						Description:         yubikeyOtpDescription.Description,
+						MarkdownDescription: yubikeyOtpDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
 
 						Default: objectdefault.StaticValue(types.ObjectValueMust(
 							MFADevicePolicyPingIDDeviceOtpTFObjectTypes,
@@ -1553,13 +1989,15 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 						)),
 						Attributes: map[string]schema.Attribute{
 							"failure": schema.SingleNestedAttribute{
-								Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that allows configuration of OTP failure settings.").Description,
-								Optional:    true,
+								Description:         yubikeyOtpFailureDescription.Description,
+								MarkdownDescription: yubikeyOtpFailureDescription.MarkdownDescription,
+								Optional:            true,
 
 								Attributes: map[string]schema.Attribute{
 									"count": schema.Int32Attribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. Must be between %d and %d.", pingidDeviceOtpFailureCountMin, pingidDeviceOtpFailureCountMax)).Description,
-										Optional:    true,
+										Description:         yubikeyOtpFailureCountDescription.Description,
+										MarkdownDescription: yubikeyOtpFailureCountDescription.MarkdownDescription,
+										Optional:            true,
 
 										Validators: []validator.Int32{
 											int32validator.Between(pingidDeviceOtpFailureCountMin, pingidDeviceOtpFailureCountMax),
@@ -1567,13 +2005,15 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 									},
 
 									"cool_down": schema.SingleNestedAttribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies OTP failure cool down settings.").Description,
-										Optional:    true,
+										Description:         yubikeyOtpFailureCoolDownDescription.Description,
+										MarkdownDescription: yubikeyOtpFailureCoolDownDescription.MarkdownDescription,
+										Optional:            true,
 
 										Attributes: map[string]schema.Attribute{
 											"duration": schema.Int32Attribute{
-												Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. Must be between %d SECONDS and %d MINUTES.", pingidDeviceOtpFailureCoolDownDurationMinSeconds, pingidDeviceOtpFailureCoolDownDurationMaxMinutes)).Description,
-												Required:    true,
+												Description:         yubikeyOtpFailureCoolDownDurationDescription.Description,
+												MarkdownDescription: yubikeyOtpFailureCoolDownDurationDescription.MarkdownDescription,
+												Required:            true,
 
 												Validators: []validator.Int32{
 													int32validator.Any(
@@ -1614,21 +2054,45 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 					},
 
 					"pairing_disabled": schema.BoolAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that, when set to `true`, prevents users from pairing new Yubikey devices.").Description,
-						Optional:    true,
-						Computed:    true,
+						Description:         yubikeyPairingDisabledDescription.Description,
+						MarkdownDescription: yubikeyPairingDisabledDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
 
 						Default: booldefault.StaticBool(false),
 					},
 
 					"pairing_key_lifetime": schema.SingleNestedAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies pairing key lifetime settings for Yubikey devices.").Description,
-						Optional:    true,
+						Description:         yubikeyPairingKeyLifetimeDescription.Description,
+						MarkdownDescription: yubikeyPairingKeyLifetimeDescription.MarkdownDescription,
+						Optional:            true,
 
 						Attributes: map[string]schema.Attribute{
 							"duration": schema.Int32Attribute{
-								Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the amount of time an issued pairing key can be used until it expires.").Description,
-								Required:    true,
+								Description:         yubikeyPairingKeyLifetimeDurationDescription.Description,
+								MarkdownDescription: yubikeyPairingKeyLifetimeDurationDescription.MarkdownDescription,
+								Required:            true,
+
+								Validators: []validator.Int32{
+									int32validator.Any(
+										int32validator.All(
+											int32validator.Between(pingidDevicePairingKeyLifetimeDurationMinMinutes, pingidDevicePairingKeyLifetimeDurationMaxMinutes),
+											int32validatorinternal.RegexMatchesPathValue(
+												regexp.MustCompile(`MINUTES`),
+												fmt.Sprintf("If `time_unit` is `MINUTES`, the allowed duration range is %d - %d.", pingidDevicePairingKeyLifetimeDurationMinMinutes, pingidDevicePairingKeyLifetimeDurationMaxMinutes),
+												path.MatchRelative().AtParent().AtName("time_unit"),
+											),
+										),
+										int32validator.All(
+											int32validator.Between(pingidDevicePairingKeyLifetimeDurationMinHours, pingidDevicePairingKeyLifetimeDurationMaxHours),
+											int32validatorinternal.RegexMatchesPathValue(
+												regexp.MustCompile(`HOURS`),
+												fmt.Sprintf("If `time_unit` is `HOURS`, the allowed duration range is %d - %d.", pingidDevicePairingKeyLifetimeDurationMinHours, pingidDevicePairingKeyLifetimeDurationMaxHours),
+												path.MatchRelative().AtParent().AtName("time_unit"),
+											),
+										),
+									),
+								},
 							},
 
 							"time_unit": schema.StringAttribute{
@@ -1652,25 +2116,28 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 			},
 
 			"oath_token": schema.SingleNestedAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that allows configuration of OATH token device authentication policy settings.").Description,
-				Optional:    true,
-				Computed:    true,
+				Description:         oathTokenDescription.Description,
+				MarkdownDescription: oathTokenDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
 
 				Default: objectdefault.StaticValue(oathTokenDefault),
 
 				Attributes: map[string]schema.Attribute{
 					"enabled": schema.BoolAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the OATH token device method is enabled or disabled in the policy.").Description,
-						Optional:    true,
-						Computed:    true,
+						Description:         oathTokenEnabledDescription.Description,
+						MarkdownDescription: oathTokenEnabledDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
 
 						Default: booldefault.StaticBool(false),
 					},
 
 					"otp": schema.SingleNestedAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies OTP failure settings for OATH token devices.").Description,
-						Optional:    true,
-						Computed:    true,
+						Description:         oathTokenOtpDescription.Description,
+						MarkdownDescription: oathTokenOtpDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
 
 						Default: objectdefault.StaticValue(types.ObjectValueMust(
 							MFADevicePolicyPingIDDeviceOtpTFObjectTypes,
@@ -1693,13 +2160,15 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 
 						Attributes: map[string]schema.Attribute{
 							"failure": schema.SingleNestedAttribute{
-								Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that allows configuration of OTP failure settings.").Description,
-								Optional:    true,
+								Description:         oathTokenOtpFailureDescription.Description,
+								MarkdownDescription: oathTokenOtpFailureDescription.MarkdownDescription,
+								Optional:            true,
 
 								Attributes: map[string]schema.Attribute{
 									"count": schema.Int32Attribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. Must be between %d and %d.", pingidDeviceOtpFailureCountMin, pingidDeviceOtpFailureCountMax)).Description,
-										Optional:    true,
+										Description:         oathTokenOtpFailureCountDescription.Description,
+										MarkdownDescription: oathTokenOtpFailureCountDescription.MarkdownDescription,
+										Optional:            true,
 
 										Validators: []validator.Int32{
 											int32validator.Between(pingidDeviceOtpFailureCountMin, pingidDeviceOtpFailureCountMax),
@@ -1707,13 +2176,15 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 									},
 
 									"cool_down": schema.SingleNestedAttribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies OTP failure cool down settings.").Description,
-										Optional:    true,
+										Description:         oathTokenOtpFailureCoolDownDescription.Description,
+										MarkdownDescription: oathTokenOtpFailureCoolDownDescription.MarkdownDescription,
+										Optional:            true,
 
 										Attributes: map[string]schema.Attribute{
 											"duration": schema.Int32Attribute{
-												Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. Must be between %d SECONDS and %d MINUTES.", pingidDeviceOtpFailureCoolDownDurationMinSeconds, pingidDeviceOtpFailureCoolDownDurationMaxMinutes)).Description,
-												Required:    true,
+												Description:         oathTokenOtpFailureCoolDownDurationDescription.Description,
+												MarkdownDescription: oathTokenOtpFailureCoolDownDurationDescription.MarkdownDescription,
+												Required:            true,
 
 												Validators: []validator.Int32{
 													int32validator.Any(
@@ -1754,21 +2225,45 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 					},
 
 					"pairing_disabled": schema.BoolAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that, when set to `true`, prevents users from pairing new OATH token devices.").Description,
-						Optional:    true,
-						Computed:    true,
+						Description:         oathTokenPairingDisabledDescription.Description,
+						MarkdownDescription: oathTokenPairingDisabledDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
 
 						Default: booldefault.StaticBool(false),
 					},
 
 					"pairing_key_lifetime": schema.SingleNestedAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies pairing key lifetime settings for OATH token devices.").Description,
-						Optional:    true,
+						Description:         oathTokenPairingKeyLifetimeDescription.Description,
+						MarkdownDescription: oathTokenPairingKeyLifetimeDescription.MarkdownDescription,
+						Optional:            true,
 
 						Attributes: map[string]schema.Attribute{
 							"duration": schema.Int32Attribute{
-								Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the amount of time an issued pairing key can be used until it expires.").Description,
-								Required:    true,
+								Description:         oathTokenPairingKeyLifetimeDurationDescription.Description,
+								MarkdownDescription: oathTokenPairingKeyLifetimeDurationDescription.MarkdownDescription,
+								Required:            true,
+
+								Validators: []validator.Int32{
+									int32validator.Any(
+										int32validator.All(
+											int32validator.Between(pingidDevicePairingKeyLifetimeDurationMinMinutes, pingidDevicePairingKeyLifetimeDurationMaxMinutes),
+											int32validatorinternal.RegexMatchesPathValue(
+												regexp.MustCompile(`MINUTES`),
+												fmt.Sprintf("If `time_unit` is `MINUTES`, the allowed duration range is %d - %d.", pingidDevicePairingKeyLifetimeDurationMinMinutes, pingidDevicePairingKeyLifetimeDurationMaxMinutes),
+												path.MatchRelative().AtParent().AtName("time_unit"),
+											),
+										),
+										int32validator.All(
+											int32validator.Between(pingidDevicePairingKeyLifetimeDurationMinHours, pingidDevicePairingKeyLifetimeDurationMaxHours),
+											int32validatorinternal.RegexMatchesPathValue(
+												regexp.MustCompile(`HOURS`),
+												fmt.Sprintf("If `time_unit` is `HOURS`, the allowed duration range is %d - %d.", pingidDevicePairingKeyLifetimeDurationMinHours, pingidDevicePairingKeyLifetimeDurationMaxHours),
+												path.MatchRelative().AtParent().AtName("time_unit"),
+											),
+										),
+									),
+								},
 							},
 
 							"time_unit": schema.StringAttribute{

@@ -1491,6 +1491,96 @@ func TestAccMFADevicePolicyDefault_Validation(t *testing.T) {
 				},
 			})
 		},
+		"Common_Field_Validation": func(t *testing.T) {
+			t.Parallel()
+
+			resourceName := acctest.ResourceNameGen()
+			environmentName := acctest.ResourceNameGenEnvironment()
+			name := resourceName
+
+			resource.Test(t, resource.TestCase{
+				PreCheck: func() {
+					acctest.PreCheckClient(t)
+					acctest.PreCheckNewEnvironment(t)
+					acctest.PreCheckRegionSupportsWorkforce(t)
+				},
+				ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+				CheckDestroy:             mfa.MFADevicePolicyDefault_CheckDestroy,
+				ErrorCheck:               acctest.ErrorCheck(t),
+				Steps: []resource.TestStep{
+					// Email - OTP failure count too high
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_EmailOtpFailureCount(resourceName, name, 8),
+						ExpectError: regexp.MustCompile(`Attribute email.otp.failure.count value must be between 1 and 7`),
+					},
+					// Email - OTP failure cool down duration too high
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_EmailOtpFailureCoolDownDuration(resourceName, name, 31),
+						ExpectError: regexp.MustCompile(`Attribute email.otp.failure.cool_down.duration value must be between 0 and[\s\n]+30`),
+					},
+					// Email - OTP lifetime duration too high
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_EmailOtpLifetimeDuration(resourceName, name, 121),
+						ExpectError: regexp.MustCompile(`Attribute email.otp.lifetime.duration value must be between 1 and 120`),
+					},
+					// SMS - OTP failure count too high
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_SmsOtpFailureCount(resourceName, name, 8),
+						ExpectError: regexp.MustCompile(`Attribute sms.otp.failure.count value must be between 1 and 7`),
+					},
+					// SMS - OTP failure cool down duration too high
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_SmsOtpFailureCoolDownDuration(resourceName, name, 31),
+						ExpectError: regexp.MustCompile(`Attribute sms.otp.failure.cool_down.duration value must be between 0 and[\s\n]+30`),
+					},
+					// SMS - OTP lifetime duration too high
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_SmsOtpLifetimeDuration(resourceName, name, 121),
+						ExpectError: regexp.MustCompile(`Attribute sms.otp.lifetime.duration value must be between 1 and 120`),
+					},
+					// Voice - OTP failure count too high
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_VoiceOtpFailureCount(resourceName, name, 8),
+						ExpectError: regexp.MustCompile(`Attribute voice.otp.failure.count value must be between 1 and 7`),
+					},
+					// Voice - OTP failure cool down duration too high
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_VoiceOtpFailureCoolDownDuration(resourceName, name, 31),
+						ExpectError: regexp.MustCompile(`Attribute voice.otp.failure.cool_down.duration value must be between 0 and[\s\n]+30`),
+					},
+					// Voice - OTP lifetime duration too high
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_VoiceOtpLifetimeDuration(resourceName, name, 121),
+						ExpectError: regexp.MustCompile(`Attribute voice.otp.lifetime.duration value must be between 1 and 120`),
+					},
+					// Mobile - Push limit lock duration too high
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_MobilePushLimitLockDuration(resourceName, name, 121),
+						ExpectError: regexp.MustCompile(`Attribute mobile.applications\[0\].push_limit.lock_duration.duration value must[\s\n]+be between[\s\n]+1 and[\s\n]+120`),
+					},
+					// Mobile - Push limit time period too high
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_MobilePushLimitTimePeriod(resourceName, name, 121),
+						ExpectError: regexp.MustCompile(`Attribute mobile.applications\[0\].push_limit.time_period.duration value must[\s\n]+be between[\s\n]+1 and[\s\n]+120`),
+					},
+					// Mobile - Push timeout duration too high
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_MobilePushTimeoutDuration(environmentName, licenseID, resourceName, name, 121),
+						ExpectError: regexp.MustCompile(`Attribute mobile.applications\[0\].push_timeout.duration value must[\s\n]+be between[\s\n]+1 and[\s\n]+120`),
+					},
+					// Mobile - OTP failure cool down duration too high
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_MobileOtpFailureCoolDownDuration(resourceName, name, 31),
+						ExpectError: regexp.MustCompile(`Attribute mobile.otp.failure.cool_down.duration value must be between 2 and[\s\n]+30`),
+					},
+					// TOTP - OTP failure cool down duration too high
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_TotpOtpFailureCoolDownDuration(resourceName, name, 31),
+						ExpectError: regexp.MustCompile(`Attribute totp.otp.failure.cool_down.duration value must be between 1 and[\s\n]+30`),
+					},
+				},
+			})
+		},
 		"PingID_Field_Validation": func(t *testing.T) {
 			t.Parallel()
 
@@ -2504,4 +2594,439 @@ resource "pingone_mfa_device_policy_default" "%[4]s" {
   email   = { enabled = false }
   totp    = { enabled = false }
 }`, environmentName, licenseID, region, resourceName, name)
+}
+
+func testAccMFADevicePolicyDefaultConfig_EmailOtpFailureCount(resourceName, name string, count int) string {
+	return fmt.Sprintf(`
+%[1]s
+
+resource "pingone_mfa_device_policy_default" "%[2]s" {
+  environment_id = data.pingone_environment.workforce_test.id
+  policy_type    = "PING_ONE_ID"
+  name           = "%[3]s"
+
+  email = {
+    enabled = true
+    otp = {
+      failure = {
+        count = %[4]d
+        cool_down = {
+          duration  = 5
+          time_unit = "MINUTES"
+        }
+      }
+    }
+  }
+  mobile  = { enabled = true }
+  desktop = { enabled = false }
+  yubikey = { enabled = false }
+  sms     = { enabled = false }
+  voice   = { enabled = false }
+  totp    = { enabled = false }
+}`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name, count)
+}
+
+func testAccMFADevicePolicyDefaultConfig_EmailOtpFailureCoolDownDuration(resourceName, name string, duration int) string {
+	return fmt.Sprintf(`
+%[1]s
+
+resource "pingone_mfa_device_policy_default" "%[2]s" {
+  environment_id = data.pingone_environment.workforce_test.id
+  policy_type    = "PING_ONE_ID"
+  name           = "%[3]s"
+
+  email = {
+    enabled = true
+    otp = {
+      failure = {
+        count = 1
+        cool_down = {
+          duration  = %[4]d
+          time_unit = "MINUTES"
+        }
+      }
+    }
+  }
+  mobile  = { enabled = true }
+  desktop = { enabled = false }
+  yubikey = { enabled = false }
+  sms     = { enabled = false }
+  voice   = { enabled = false }
+  totp    = { enabled = false }
+}`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name, duration)
+}
+
+func testAccMFADevicePolicyDefaultConfig_EmailOtpLifetimeDuration(resourceName, name string, duration int) string {
+	return fmt.Sprintf(`
+%[1]s
+
+resource "pingone_mfa_device_policy_default" "%[2]s" {
+  environment_id = data.pingone_environment.workforce_test.id
+  policy_type    = "PING_ONE_ID"
+  name           = "%[3]s"
+
+  email = {
+    enabled = true
+    otp = {
+      lifetime = {
+        duration  = %[4]d
+        time_unit = "MINUTES"
+      }
+    }
+  }
+  mobile  = { enabled = true }
+  desktop = { enabled = false }
+  yubikey = { enabled = false }
+  sms     = { enabled = false }
+  voice   = { enabled = false }
+  totp    = { enabled = false }
+}`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name, duration)
+}
+
+func testAccMFADevicePolicyDefaultConfig_SmsOtpFailureCount(resourceName, name string, count int) string {
+	return fmt.Sprintf(`
+%[1]s
+
+resource "pingone_mfa_device_policy_default" "%[2]s" {
+  environment_id = data.pingone_environment.workforce_test.id
+  policy_type    = "PING_ONE_ID"
+  name           = "%[3]s"
+
+  sms = {
+    enabled = true
+    otp = {
+      failure = {
+        count = %[4]d
+        cool_down = {
+          duration  = 5
+          time_unit = "MINUTES"
+        }
+      }
+    }
+  }
+  mobile  = { enabled = true }
+  desktop = { enabled = false }
+  yubikey = { enabled = false }
+  email   = { enabled = false }
+  voice   = { enabled = false }
+  totp    = { enabled = false }
+}`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name, count)
+}
+
+func testAccMFADevicePolicyDefaultConfig_SmsOtpFailureCoolDownDuration(resourceName, name string, duration int) string {
+	return fmt.Sprintf(`
+%[1]s
+
+resource "pingone_mfa_device_policy_default" "%[2]s" {
+  environment_id = data.pingone_environment.workforce_test.id
+  policy_type    = "PING_ONE_ID"
+  name           = "%[3]s"
+
+  sms = {
+    enabled = true
+    otp = {
+      failure = {
+        count = 1
+        cool_down = {
+          duration  = %[4]d
+          time_unit = "MINUTES"
+        }
+      }
+    }
+  }
+  mobile  = { enabled = true }
+  desktop = { enabled = false }
+  yubikey = { enabled = false }
+  email   = { enabled = false }
+  voice   = { enabled = false }
+  totp    = { enabled = false }
+}`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name, duration)
+}
+
+func testAccMFADevicePolicyDefaultConfig_SmsOtpLifetimeDuration(resourceName, name string, duration int) string {
+	return fmt.Sprintf(`
+%[1]s
+
+resource "pingone_mfa_device_policy_default" "%[2]s" {
+  environment_id = data.pingone_environment.workforce_test.id
+  policy_type    = "PING_ONE_ID"
+  name           = "%[3]s"
+
+  sms = {
+    enabled = true
+    otp = {
+      lifetime = {
+        duration  = %[4]d
+        time_unit = "MINUTES"
+      }
+    }
+  }
+  mobile  = { enabled = true }
+  desktop = { enabled = false }
+  yubikey = { enabled = false }
+  email   = { enabled = false }
+  voice   = { enabled = false }
+  totp    = { enabled = false }
+}`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name, duration)
+}
+
+func testAccMFADevicePolicyDefaultConfig_VoiceOtpFailureCount(resourceName, name string, count int) string {
+	return fmt.Sprintf(`
+%[1]s
+
+resource "pingone_mfa_device_policy_default" "%[2]s" {
+  environment_id = data.pingone_environment.workforce_test.id
+  policy_type    = "PING_ONE_ID"
+  name           = "%[3]s"
+
+  voice = {
+    enabled = true
+    otp = {
+      failure = {
+        count = %[4]d
+        cool_down = {
+          duration  = 5
+          time_unit = "MINUTES"
+        }
+      }
+    }
+  }
+  mobile  = { enabled = true }
+  desktop = { enabled = false }
+  yubikey = { enabled = false }
+  email   = { enabled = false }
+  sms     = { enabled = false }
+  totp    = { enabled = false }
+}`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name, count)
+}
+
+func testAccMFADevicePolicyDefaultConfig_VoiceOtpFailureCoolDownDuration(resourceName, name string, duration int) string {
+	return fmt.Sprintf(`
+%[1]s
+
+resource "pingone_mfa_device_policy_default" "%[2]s" {
+  environment_id = data.pingone_environment.workforce_test.id
+  policy_type    = "PING_ONE_ID"
+  name           = "%[3]s"
+
+  voice = {
+    enabled = true
+    otp = {
+      failure = {
+        count = 1
+        cool_down = {
+          duration  = %[4]d
+          time_unit = "MINUTES"
+        }
+      }
+    }
+  }
+  mobile  = { enabled = true }
+  desktop = { enabled = false }
+  yubikey = { enabled = false }
+  email   = { enabled = false }
+  sms     = { enabled = false }
+  totp    = { enabled = false }
+}`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name, duration)
+}
+
+func testAccMFADevicePolicyDefaultConfig_VoiceOtpLifetimeDuration(resourceName, name string, duration int) string {
+	return fmt.Sprintf(`
+%[1]s
+
+resource "pingone_mfa_device_policy_default" "%[2]s" {
+  environment_id = data.pingone_environment.workforce_test.id
+  policy_type    = "PING_ONE_ID"
+  name           = "%[3]s"
+
+  voice = {
+    enabled = true
+    otp = {
+      lifetime = {
+        duration  = %[4]d
+        time_unit = "MINUTES"
+      }
+    }
+  }
+  mobile  = { enabled = true }
+  desktop = { enabled = false }
+  yubikey = { enabled = false }
+  email   = { enabled = false }
+  sms     = { enabled = false }
+  totp    = { enabled = false }
+}`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name, duration)
+}
+
+func testAccMFADevicePolicyDefaultConfig_MobilePushLimitLockDuration(resourceName, name string, duration int) string {
+	return fmt.Sprintf(`
+%[1]s
+
+resource "pingone_mfa_device_policy_default" "%[2]s" {
+  environment_id = data.pingone_environment.workforce_test.id
+  policy_type    = "PING_ONE_ID"
+  name           = "%[3]s"
+
+  mobile = {
+    enabled = true
+    applications = [{
+      id   = "11111111-1111-1111-1111-111111111111"
+      type = "pingIdAppConfig"
+      otp  = { enabled = true }
+      push_limit = {
+        lock_duration = {
+          duration  = %[4]d
+          time_unit = "MINUTES"
+        }
+      }
+      new_request_duration_configuration = {
+        device_timeout = { duration = 25 }
+        total_timeout  = { duration = 40 }
+      }
+      ip_pairing_configuration = { any_ip_address = true }
+    }]
+  }
+  desktop = { enabled = false }
+  yubikey = { enabled = false }
+  sms     = { enabled = false }
+  voice   = { enabled = false }
+  email   = { enabled = false }
+  totp    = { enabled = false }
+}`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name, duration)
+}
+
+func testAccMFADevicePolicyDefaultConfig_MobilePushLimitTimePeriod(resourceName, name string, duration int) string {
+	return fmt.Sprintf(`
+%[1]s
+
+resource "pingone_mfa_device_policy_default" "%[2]s" {
+  environment_id = data.pingone_environment.workforce_test.id
+  policy_type    = "PING_ONE_ID"
+  name           = "%[3]s"
+
+  mobile = {
+    enabled = true
+    applications = [{
+      id   = "11111111-1111-1111-1111-111111111111"
+      type = "pingIdAppConfig"
+      otp  = { enabled = true }
+      push_limit = {
+        time_period = {
+          duration  = %[4]d
+          time_unit = "MINUTES"
+        }
+      }
+      new_request_duration_configuration = {
+        device_timeout = { duration = 25 }
+        total_timeout  = { duration = 40 }
+      }
+      ip_pairing_configuration = { any_ip_address = true }
+    }]
+  }
+  desktop = { enabled = false }
+  yubikey = { enabled = false }
+  sms     = { enabled = false }
+  voice   = { enabled = false }
+  email   = { enabled = false }
+  totp    = { enabled = false }
+}`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name, duration)
+}
+
+func testAccMFADevicePolicyDefaultConfig_MobilePushTimeoutDuration(environmentName, licenseID, resourceName, name string, duration int) string {
+	return fmt.Sprintf(`
+%[1]s
+
+resource "pingone_mfa_device_policy_default" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  policy_type    = "PING_ONE_MFA"
+  name           = "%[4]s"
+
+  mobile = {
+    enabled = true
+    applications = [{
+      id  = "11111111-1111-1111-1111-111111111111"
+      otp = { enabled = true }
+      push_timeout = {
+        duration  = %[5]d
+        time_unit = "SECONDS"
+      }
+      auto_enrollment      = { enabled = true }
+      device_authorization = { enabled = true }
+      integrity_detection  = "permissive"
+    }]
+  }
+  sms   = { enabled = false }
+  voice = { enabled = false }
+  email = { enabled = false }
+  totp  = { enabled = false }
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, duration)
+}
+
+func testAccMFADevicePolicyDefaultConfig_MobileOtpFailureCoolDownDuration(resourceName, name string, duration int) string {
+	return fmt.Sprintf(`
+%[1]s
+
+resource "pingone_mfa_device_policy_default" "%[2]s" {
+  environment_id = data.pingone_environment.workforce_test.id
+  policy_type    = "PING_ONE_ID"
+  name           = "%[3]s"
+
+  mobile = {
+    enabled = true
+    applications = [{
+      id   = "11111111-1111-1111-1111-111111111111"
+      type = "pingIdAppConfig"
+      otp  = { enabled = true }
+      new_request_duration_configuration = {
+        device_timeout = { duration = 25 }
+        total_timeout  = { duration = 40 }
+      }
+      ip_pairing_configuration = { any_ip_address = true }
+    }]
+    otp = {
+      failure = {
+        count = 1
+        cool_down = {
+          duration  = %[4]d
+          time_unit = "MINUTES"
+        }
+      }
+    }
+  }
+  desktop = { enabled = false }
+  yubikey = { enabled = false }
+  sms     = { enabled = false }
+  voice   = { enabled = false }
+  email   = { enabled = false }
+  totp    = { enabled = false }
+}`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name, duration)
+}
+
+func testAccMFADevicePolicyDefaultConfig_TotpOtpFailureCoolDownDuration(resourceName, name string, duration int) string {
+	return fmt.Sprintf(`
+%[1]s
+
+resource "pingone_mfa_device_policy_default" "%[2]s" {
+  environment_id = data.pingone_environment.workforce_test.id
+  policy_type    = "PING_ONE_ID"
+  name           = "%[3]s"
+
+  totp = {
+    enabled = true
+    otp = {
+      failure = {
+        count = 1
+        cool_down = {
+          duration  = %[4]d
+          time_unit = "MINUTES"
+        }
+      }
+    }
+  }
+  mobile  = { enabled = true }
+  desktop = { enabled = false }
+  yubikey = { enabled = false }
+  sms     = { enabled = false }
+  voice   = { enabled = false }
+  email   = { enabled = false }
+}`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name, duration)
 }
