@@ -708,8 +708,6 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 									Optional:    true,
 									Computed:    true,
 
-									Default: booldefault.StaticBool(false),
-
 									Validators: []validator.Bool{
 										boolvalidator.ConflictsIfMatchesPathValue(
 											types.StringValue(POLICY_TYPE_PINGONE_MFA),
@@ -1040,9 +1038,18 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 								"type": schema.StringAttribute{
 									Description:         mobileApplicationsTypeDescription.Description,
 									MarkdownDescription: mobileApplicationsTypeDescription.MarkdownDescription,
-									Computed:            true,
+									Optional:            true,
 
-									Default: stringdefault.StaticString(string(mfa.ENUMPINGIDAPPLICATIONTYPE_PING_ID_APP_CONFIG)),
+									Validators: []validator.String{
+										stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+											types.StringValue(POLICY_TYPE_PINGID),
+											path.MatchRoot("policy_type"),
+										),
+										stringvalidatorinternal.ConflictsIfMatchesPathValue(
+											types.StringValue(POLICY_TYPE_PINGONE_MFA),
+											path.MatchRoot("policy_type"),
+										),
+									},
 								},
 
 								"ip_pairing_configuration": schema.SingleNestedAttribute{
