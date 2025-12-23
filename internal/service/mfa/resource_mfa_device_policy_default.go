@@ -494,8 +494,7 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	)
 
 	resp.Schema = schema.Schema{
-		// This description is used by the documentation generator and the language server.
-		Description: "Resource to overwrite the default MFA device policy, or create it if it doesn't already exist.",
+		Description: "Resource to overwrite the default MFA device policy. Valid for both PingOne MFA and PingID integrated environments.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
