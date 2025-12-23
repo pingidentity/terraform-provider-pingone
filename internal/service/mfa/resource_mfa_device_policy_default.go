@@ -2303,9 +2303,184 @@ func (r *MFADevicePolicyDefaultResource) ModifyPlan(ctx context.Context, req res
 }
 
 func (r *MFADevicePolicyDefaultResource) devicePolicyOfflineDeviceSchemaAttribute(descriptionMethod string) schema.SingleNestedAttribute {
-	// Reuse the implementation from MFADevicePolicyResource
-	mfaDevicePolicyResource := &MFADevicePolicyResource{}
-	return mfaDevicePolicyResource.devicePolicyOfflineDeviceSchemaAttribute(descriptionMethod)
+
+	const otpFailureCountDefault = 3
+	const otpFailureCoolDownDurationDefault = 0
+	const otpLifetimeDurationDefault = 30
+	const otpOtpLengthDefault = 6
+
+	const otpFailureCountMin = 1
+	const otpFailureCountMax = 7
+	const otpFailureCoolDownDurationMin = 0
+	const otpFailureCoolDownDurationMax = 30
+	const otpLifetimeDurationMin = 1
+	const otpLifetimeDurationMax = 120
+	const otpOtpLengthMin = 6
+	const otpOtpLengthMax = 10
+
+	pairingDisabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A boolean that, when set to `true`, prevents users from pairing new devices with the %s method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.", descriptionMethod),
+	).DefaultValue(false)
+
+	otpCoolDownDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the type of time unit for `duration`.",
+	).AllowedValuesEnum(mfa.AllowedEnumTimeUnitEnumValues)
+
+	otpOtpLengthDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that specifies the length of the OTP that is shown to users.  Minimum length is `%d` digits and maximum is `%d` digits.", otpOtpLengthMin, otpOtpLengthMax),
+	).DefaultValue(otpOtpLengthDefault)
+
+	promptForNicknameOnPairingDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that, when set to `true`, prompts users to provide nicknames for devices during pairing.",
+	)
+
+	return schema.SingleNestedAttribute{
+		Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("A single object that allows configuration of %s device authentication policy settings.", descriptionMethod)).Description,
+		Required:    true,
+
+		Attributes: map[string]schema.Attribute{
+			"enabled": schema.BoolAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("A boolean that specifies whether the %s method is enabled or disabled in the policy.", descriptionMethod)).Description,
+				Required:    true,
+			},
+
+			"pairing_disabled": schema.BoolAttribute{
+				Description:         pairingDisabledDescription.Description,
+				MarkdownDescription: pairingDisabledDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+
+				Default: booldefault.StaticBool(false),
+			},
+
+			"otp": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("A single object that allows configuration of %s settings.", descriptionMethod)).Description,
+				Optional:    true,
+				Computed:    true,
+
+				Default: objectdefault.StaticValue(types.ObjectValueMust(
+					MFADevicePolicyOfflineDeviceOtpTFObjectTypes,
+					map[string]attr.Value{
+						"failure": types.ObjectValueMust(
+							MFADevicePolicyFailureTFObjectTypes,
+							map[string]attr.Value{
+								"count": types.Int32Value(otpFailureCountDefault),
+								"cool_down": types.ObjectValueMust(
+									MFADevicePolicyTimePeriodTFObjectTypes,
+									map[string]attr.Value{
+										"duration":  types.Int32Value(otpFailureCoolDownDurationDefault),
+										"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
+									},
+								),
+							},
+						),
+						"lifetime": types.ObjectValueMust(
+							MFADevicePolicyTimePeriodTFObjectTypes,
+							map[string]attr.Value{
+								"duration":  types.Int32Value(otpLifetimeDurationDefault),
+								"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
+							},
+						),
+						"otp_length": types.Int32Value(otpOtpLengthDefault),
+					},
+				)),
+
+				Attributes: map[string]schema.Attribute{
+					"failure": schema.SingleNestedAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("A single object that allows configuration of %s failure settings.", descriptionMethod)).Description,
+						Optional:    true,
+
+						Attributes: map[string]schema.Attribute{
+							"cool_down": schema.SingleNestedAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("A single object that allows configuration of %s failure cool down settings.", descriptionMethod)).Description,
+								Required:    true,
+
+								Attributes: map[string]schema.Attribute{
+									"duration": schema.Int32Attribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. The minimum value is `%d` and the maximum value is `%d`.", otpFailureCoolDownDurationMin, otpFailureCoolDownDurationMax)).Description,
+										Required:    true,
+										Validators: []validator.Int32{
+											int32validator.Between(otpFailureCoolDownDurationMin, otpFailureCoolDownDurationMax),
+										},
+									},
+
+									"time_unit": schema.StringAttribute{
+										Description:         otpCoolDownDescription.Description,
+										MarkdownDescription: otpCoolDownDescription.MarkdownDescription,
+										Required:            true,
+
+										Validators: []validator.String{
+											stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumTimeUnitEnumValues)...),
+										},
+									},
+								},
+							},
+
+							"count": schema.Int32Attribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. The minimum value is `%d` and the maximum value is `%d`.", otpFailureCountMin, otpFailureCountMax)).Description,
+								Required:    true,
+								Validators: []validator.Int32{
+									int32validator.Between(otpFailureCountMin, otpFailureCountMax),
+								},
+							},
+						},
+					},
+
+					"lifetime": schema.SingleNestedAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("A single object that allows configuration of %s lifetime settings.", descriptionMethod)).Description,
+						Optional:    true,
+						Computed:    true,
+
+						Default: objectdefault.StaticValue(types.ObjectValueMust(
+							MFADevicePolicyTimePeriodTFObjectTypes,
+							map[string]attr.Value{
+								"duration":  types.Int32Value(otpLifetimeDurationDefault),
+								"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
+							},
+						)),
+
+						Attributes: map[string]schema.Attribute{
+							"duration": schema.Int32Attribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("An integer that defines the duration (number of time units) that the passcode is valid before it expires. The minimum value is `%d` and the maximum value is `%d`.", otpLifetimeDurationMin, otpLifetimeDurationMax)).Description,
+								Required:    true,
+								Validators: []validator.Int32{
+									int32validator.Between(otpLifetimeDurationMin, otpLifetimeDurationMax),
+								},
+							},
+
+							"time_unit": schema.StringAttribute{
+								Description:         otpCoolDownDescription.Description,
+								MarkdownDescription: otpCoolDownDescription.MarkdownDescription,
+								Required:            true,
+
+								Validators: []validator.String{
+									stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumTimeUnitEnumValues)...),
+								},
+							},
+						},
+					},
+					"otp_length": schema.Int32Attribute{
+						Description:         otpOtpLengthDescription.Description,
+						MarkdownDescription: otpOtpLengthDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: int32default.StaticInt32(otpOtpLengthDefault),
+
+						Validators: []validator.Int32{
+							int32validator.Between(otpOtpLengthMin, otpOtpLengthMax),
+						},
+					},
+				},
+			},
+
+			"prompt_for_nickname_on_pairing": schema.BoolAttribute{
+				Description:         promptForNicknameOnPairingDescription.Description,
+				MarkdownDescription: promptForNicknameOnPairingDescription.MarkdownDescription,
+				Optional:            true,
+			},
+		},
+	}
 }
 
 func (r *MFADevicePolicyDefaultResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
