@@ -898,17 +898,8 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttribute(descriptionMethod string) schema.SingleNestedAttribute {
 
 	const otpFailureCountDefault = 3
-	const otpFailureCountMin = 1
-	const otpFailureCountMax = 7
-
 	const otpFailureCoolDownDurationDefault = 0
-	const otpFailureCoolDownDurationMin = 0
-	const otpFailureCoolDownDurationMax = 30
-
 	const otpLifetimeDurationDefault = 30
-	const otpLifetimeDurationMin = 1
-	const otpLifetimeDurationMax = 120
-
 	const otpOtpLengthDefault = 6
 
 	const otpOtpLengthMin = 6
@@ -993,12 +984,8 @@ func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttribute(descr
 
 								Attributes: map[string]schema.Attribute{
 									"duration": schema.Int32Attribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. The minimum value is `%d` and the maximum value is `%d`.", otpFailureCoolDownDurationMin, otpFailureCoolDownDurationMax)).Description,
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures.").Description,
 										Required:    true,
-
-										Validators: []validator.Int32{
-											int32validator.Between(otpFailureCoolDownDurationMin, otpFailureCoolDownDurationMax),
-										},
 									},
 
 									"time_unit": schema.StringAttribute{
@@ -1014,12 +1001,8 @@ func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttribute(descr
 							},
 
 							"count": schema.Int32Attribute{
-								Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. The minimum value is `%d` and the maximum value is `%d`.", otpFailureCountMin, otpFailureCountMax)).Description,
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked.").Description,
 								Required:    true,
-
-								Validators: []validator.Int32{
-									int32validator.Between(otpFailureCountMin, otpFailureCountMax),
-								},
 							},
 						},
 					},
@@ -1039,12 +1022,8 @@ func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttribute(descr
 
 						Attributes: map[string]schema.Attribute{
 							"duration": schema.Int32Attribute{
-								Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("An integer that defines the duration (number of time units) that the passcode is valid before it expires. The minimum value is `%d` and the maximum value is `%d`.", otpLifetimeDurationMin, otpLifetimeDurationMax)).Description,
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the duration (number of time units) that the passcode is valid before it expires.").Description,
 								Required:    true,
-
-								Validators: []validator.Int32{
-									int32validator.Between(otpLifetimeDurationMin, otpLifetimeDurationMax),
-								},
 							},
 
 							"time_unit": schema.StringAttribute{
