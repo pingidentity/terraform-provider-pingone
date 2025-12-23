@@ -1584,17 +1584,17 @@ resource "pingone_mfa_device_policy_default" "%[3]s" {
   mobile = {
     enabled = true
     applications = [{
-      id = "11111111-1111-1111-1111-111111111111"
-      otp = { enabled = true }
-      auto_enrollment = { enabled = true }
+      id                   = "11111111-1111-1111-1111-111111111111"
+      otp                  = { enabled = true }
+      auto_enrollment      = { enabled = true }
       device_authorization = { enabled = true }
-      integrity_detection = "%[5]s"
+      integrity_detection  = "%[5]s"
     }]
   }
-  sms = { enabled = false }
+  sms   = { enabled = false }
   voice = { enabled = false }
   email = { enabled = false }
-  totp = { enabled = false }
+  totp  = { enabled = false }
 }`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, integrityDetection)
 }
 
@@ -1607,12 +1607,12 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
   policy_type    = "PING_ONE_ID"
   name           = "%[3]s"
 
-  mobile = { enabled = true }
+  mobile  = { enabled = true }
   yubikey = { enabled = false }
-  sms = { enabled = false }
-  voice = { enabled = false }
-  email = { enabled = false }
-  totp = { enabled = false }
+  sms     = { enabled = false }
+  voice   = { enabled = false }
+  email   = { enabled = false }
+  totp    = { enabled = false }
 }`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name)
 }
 
@@ -1625,12 +1625,12 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
   policy_type    = "PING_ONE_ID"
   name           = "%[3]s"
 
-  mobile = { enabled = true }
+  mobile  = { enabled = true }
   desktop = { enabled = false }
-  sms = { enabled = false }
-  voice = { enabled = false }
-  email = { enabled = false }
-  totp = { enabled = false }
+  sms     = { enabled = false }
+  voice   = { enabled = false }
+  email   = { enabled = false }
+  totp    = { enabled = false }
 }`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name)
 }
 
@@ -1646,22 +1646,22 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
   mobile = {
     enabled = true
     applications = [{
-      id = "11111111-1111-1111-1111-111111111111"
-      otp = { enabled = true }
+      id              = "11111111-1111-1111-1111-111111111111"
+      otp             = { enabled = true }
       auto_enrollment = { enabled = true }
       new_request_duration_configuration = {
         device_timeout = { duration = 25 }
-        total_timeout = { duration = 40 }
+        total_timeout  = { duration = 40 }
       }
       ip_pairing_configuration = { any_ip_address = true }
     }]
   }
   desktop = { enabled = false }
   yubikey = { enabled = false }
-  sms = { enabled = false }
-  voice = { enabled = false }
-  email = { enabled = false }
-  totp = { enabled = false }
+  sms     = { enabled = false }
+  voice   = { enabled = false }
+  email   = { enabled = false }
+  totp    = { enabled = false }
 }`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name)
 }
 
@@ -1677,22 +1677,22 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
   mobile = {
     enabled = true
     applications = [{
-      id = "11111111-1111-1111-1111-111111111111"
-      otp = { enabled = true }
+      id                   = "11111111-1111-1111-1111-111111111111"
+      otp                  = { enabled = true }
       device_authorization = { enabled = true }
       new_request_duration_configuration = {
         device_timeout = { duration = 25 }
-        total_timeout = { duration = 40 }
+        total_timeout  = { duration = 40 }
       }
       ip_pairing_configuration = { any_ip_address = true }
     }]
   }
   desktop = { enabled = false }
   yubikey = { enabled = false }
-  sms = { enabled = false }
-  voice = { enabled = false }
-  email = { enabled = false }
-  totp = { enabled = false }
+  sms     = { enabled = false }
+  voice   = { enabled = false }
+  email   = { enabled = false }
+  totp    = { enabled = false }
 }`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name)
 }
 
@@ -1708,17 +1708,17 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
   mobile = {
     enabled = true
     applications = [{
-      id = "11111111-1111-1111-1111-111111111111"
-      otp = { enabled = true }
+      id                       = "11111111-1111-1111-1111-111111111111"
+      otp                      = { enabled = true }
       ip_pairing_configuration = { any_ip_address = true }
     }]
   }
   desktop = { enabled = false }
   yubikey = { enabled = false }
-  sms = { enabled = false }
-  voice = { enabled = false }
-  email = { enabled = false }
-  totp = { enabled = false }
+  sms     = { enabled = false }
+  voice   = { enabled = false }
+  email   = { enabled = false }
+  totp    = { enabled = false }
 }`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name)
 }
 
@@ -1734,20 +1734,20 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
   mobile = {
     enabled = true
     applications = [{
-      id = "11111111-1111-1111-1111-111111111111"
+      id  = "11111111-1111-1111-1111-111111111111"
       otp = { enabled = true }
       new_request_duration_configuration = {
         device_timeout = { duration = 25 }
-        total_timeout = { duration = 40 }
+        total_timeout  = { duration = 40 }
       }
     }]
   }
   desktop = { enabled = false }
   yubikey = { enabled = false }
-  sms = { enabled = false }
-  voice = { enabled = false }
-  email = { enabled = false }
-  totp = { enabled = false }
+  sms     = { enabled = false }
+  voice   = { enabled = false }
+  email   = { enabled = false }
+  totp    = { enabled = false }
 }`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name)
 }
 
@@ -1763,16 +1763,16 @@ resource "pingone_mfa_device_policy_default" "%[3]s" {
   mobile = {
     enabled = true
     applications = [{
-      id = "11111111-1111-1111-1111-111111111111"
-      otp = { enabled = true }
+      id                   = "11111111-1111-1111-1111-111111111111"
+      otp                  = { enabled = true }
       device_authorization = { enabled = true }
-      integrity_detection = "permissive"
+      integrity_detection  = "permissive"
     }]
   }
-  sms = { enabled = false }
+  sms   = { enabled = false }
   voice = { enabled = false }
   email = { enabled = false }
-  totp = { enabled = false }
+  totp  = { enabled = false }
 }`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
@@ -1788,16 +1788,16 @@ resource "pingone_mfa_device_policy_default" "%[3]s" {
   mobile = {
     enabled = true
     applications = [{
-      id = "11111111-1111-1111-1111-111111111111"
-      otp = { enabled = true }
-      auto_enrollment = { enabled = true }
+      id                  = "11111111-1111-1111-1111-111111111111"
+      otp                 = { enabled = true }
+      auto_enrollment     = { enabled = true }
       integrity_detection = "permissive"
     }]
   }
-  sms = { enabled = false }
+  sms   = { enabled = false }
   voice = { enabled = false }
   email = { enabled = false }
-  totp = { enabled = false }
+  totp  = { enabled = false }
 }`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
@@ -1813,16 +1813,16 @@ resource "pingone_mfa_device_policy_default" "%[3]s" {
   mobile = {
     enabled = true
     applications = [{
-      id = "11111111-1111-1111-1111-111111111111"
-      otp = { enabled = true }
-      auto_enrollment = { enabled = true }
+      id                   = "11111111-1111-1111-1111-111111111111"
+      otp                  = { enabled = true }
+      auto_enrollment      = { enabled = true }
       device_authorization = { enabled = true }
     }]
   }
-  sms = { enabled = false }
+  sms   = { enabled = false }
   voice = { enabled = false }
   email = { enabled = false }
-  totp = { enabled = false }
+  totp  = { enabled = false }
 }`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
@@ -1838,18 +1838,18 @@ resource "pingone_mfa_device_policy_default" "%[3]s" {
   mobile = {
     enabled = true
     applications = [{
-      id = "11111111-1111-1111-1111-111111111111"
-      otp = { enabled = true }
-      auto_enrollment = { enabled = true }
+      id                   = "11111111-1111-1111-1111-111111111111"
+      otp                  = { enabled = true }
+      auto_enrollment      = { enabled = true }
       device_authorization = { enabled = true }
-      integrity_detection = "permissive"
-      biometrics_enabled = true
+      integrity_detection  = "permissive"
+      biometrics_enabled   = true
     }]
   }
-  sms = { enabled = false }
+  sms   = { enabled = false }
   voice = { enabled = false }
   email = { enabled = false }
-  totp = { enabled = false }
+  totp  = { enabled = false }
 }`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
@@ -1865,21 +1865,21 @@ resource "pingone_mfa_device_policy_default" "%[3]s" {
   mobile = {
     enabled = true
     applications = [{
-      id = "11111111-1111-1111-1111-111111111111"
-      otp = { enabled = true }
-      auto_enrollment = { enabled = true }
+      id                   = "11111111-1111-1111-1111-111111111111"
+      otp                  = { enabled = true }
+      auto_enrollment      = { enabled = true }
       device_authorization = { enabled = true }
-      integrity_detection = "permissive"
+      integrity_detection  = "permissive"
       new_request_duration_configuration = {
         device_timeout = { duration = 25 }
-        total_timeout = { duration = 40 }
+        total_timeout  = { duration = 40 }
       }
     }]
   }
-  sms = { enabled = false }
+  sms   = { enabled = false }
   voice = { enabled = false }
   email = { enabled = false }
-  totp = { enabled = false }
+  totp  = { enabled = false }
 }`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
@@ -1895,18 +1895,18 @@ resource "pingone_mfa_device_policy_default" "%[3]s" {
   mobile = {
     enabled = true
     applications = [{
-      id = "11111111-1111-1111-1111-111111111111"
-      otp = { enabled = true }
-      auto_enrollment = { enabled = true }
-      device_authorization = { enabled = true }
-      integrity_detection = "permissive"
+      id                       = "11111111-1111-1111-1111-111111111111"
+      otp                      = { enabled = true }
+      auto_enrollment          = { enabled = true }
+      device_authorization     = { enabled = true }
+      integrity_detection      = "permissive"
       ip_pairing_configuration = { any_ip_address = true }
     }]
   }
-  sms = { enabled = false }
+  sms   = { enabled = false }
   voice = { enabled = false }
   email = { enabled = false }
-  totp = { enabled = false }
+  totp  = { enabled = false }
 }`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
@@ -1922,24 +1922,24 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
   mobile = {
     enabled = true
     applications = [{
-      id = "11111111-1111-1111-1111-111111111111"
+      id  = "11111111-1111-1111-1111-111111111111"
       otp = { enabled = true }
       new_request_duration_configuration = {
         device_timeout = { duration = 25 }
-        total_timeout = { duration = 40 }
+        total_timeout  = { duration = 40 }
       }
       ip_pairing_configuration = {
-        any_ip_address = false
+        any_ip_address          = false
         only_these_ip_addresses = ["192.168.1.1"]
       }
     }]
   }
   desktop = { enabled = false }
   yubikey = { enabled = false }
-  sms = { enabled = false }
-  voice = { enabled = false }
-  email = { enabled = false }
-  totp = { enabled = false }
+  sms     = { enabled = false }
+  voice   = { enabled = false }
+  email   = { enabled = false }
+  totp    = { enabled = false }
 }`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name)
 }
 
@@ -1955,11 +1955,11 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
   mobile = {
     enabled = true
     applications = [{
-      id = "11111111-1111-1111-1111-111111111111"
+      id  = "11111111-1111-1111-1111-111111111111"
       otp = { enabled = true }
       new_request_duration_configuration = {
         device_timeout = { duration = 25 }
-        total_timeout = { duration = 40 }
+        total_timeout  = { duration = 40 }
       }
       ip_pairing_configuration = {
         any_ip_address = false
@@ -1968,10 +1968,10 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
   }
   desktop = { enabled = false }
   yubikey = { enabled = false }
-  sms = { enabled = false }
-  voice = { enabled = false }
-  email = { enabled = false }
-  totp = { enabled = false }
+  sms     = { enabled = false }
+  voice   = { enabled = false }
+  email   = { enabled = false }
+  totp    = { enabled = false }
 }`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name)
 }
 
@@ -1989,16 +1989,16 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
     enabled = true
     otp = {
       failure = {
-        count = 8
+        count     = 8
         cool_down = { duration = 2, time_unit = "MINUTES" }
       }
     }
   }
   yubikey = { enabled = false }
-  sms = { enabled = false }
-  voice = { enabled = false }
-  email = { enabled = false }
-  totp = { enabled = false }
+  sms     = { enabled = false }
+  voice   = { enabled = false }
+  email   = { enabled = false }
+  totp    = { enabled = false }
 }`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name)
 }
 
@@ -2015,15 +2015,15 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
   desktop = {
     enabled = true
     pairing_key_lifetime = {
-      duration = 50
+      duration  = 50
       time_unit = "HOURS"
     }
   }
   yubikey = { enabled = false }
-  sms = { enabled = false }
-  voice = { enabled = false }
-  email = { enabled = false }
-  totp = { enabled = false }
+  sms     = { enabled = false }
+  voice   = { enabled = false }
+  email   = { enabled = false }
+  totp    = { enabled = false }
 }`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name)
 }
 
@@ -2040,19 +2040,19 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
     web = {
       enabled = true
       life_time = {
-        duration = 129601
+        duration  = 129601
         time_unit = "MINUTES"
       }
     }
   }
 
-  mobile = { enabled = true }
+  mobile  = { enabled = true }
   desktop = { enabled = false }
   yubikey = { enabled = false }
-  sms = { enabled = false }
-  voice = { enabled = false }
-  email = { enabled = false }
-  totp = { enabled = false }
+  sms     = { enabled = false }
+  voice   = { enabled = false }
+  email   = { enabled = false }
+  totp    = { enabled = false }
 }`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name)
 }
 
@@ -2069,19 +2069,19 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
     web = {
       enabled = true
       life_time = {
-        duration = 2161
+        duration  = 2161
         time_unit = "HOURS"
       }
     }
   }
 
-  mobile = { enabled = true }
+  mobile  = { enabled = true }
   desktop = { enabled = false }
   yubikey = { enabled = false }
-  sms = { enabled = false }
-  voice = { enabled = false }
-  email = { enabled = false }
-  totp = { enabled = false }
+  sms     = { enabled = false }
+  voice   = { enabled = false }
+  email   = { enabled = false }
+  totp    = { enabled = false }
 }`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name)
 }
 
@@ -2098,19 +2098,19 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
     web = {
       enabled = true
       life_time = {
-        duration = 91
+        duration  = 91
         time_unit = "DAYS"
       }
     }
   }
 
-  mobile = { enabled = true }
+  mobile  = { enabled = true }
   desktop = { enabled = false }
   yubikey = { enabled = false }
-  sms = { enabled = false }
-  voice = { enabled = false }
-  email = { enabled = false }
-  totp = { enabled = false }
+  sms     = { enabled = false }
+  voice   = { enabled = false }
+  email   = { enabled = false }
+  totp    = { enabled = false }
 }`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name)
 }
 
@@ -2126,26 +2126,26 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
   mobile = {
     enabled = true
     applications = [{
-      id = "11111111-1111-1111-1111-111111111111"
+      id  = "11111111-1111-1111-1111-111111111111"
       otp = { enabled = true }
       push_limit = {
-        count = 51
+        count         = 51
         lock_duration = { duration = 30, time_unit = "MINUTES" }
-        time_period = { duration = 10, time_unit = "MINUTES" }
+        time_period   = { duration = 10, time_unit = "MINUTES" }
       }
       new_request_duration_configuration = {
         device_timeout = { duration = 25 }
-        total_timeout = { duration = 40 }
+        total_timeout  = { duration = 40 }
       }
       ip_pairing_configuration = { any_ip_address = true }
     }]
   }
   desktop = { enabled = false }
   yubikey = { enabled = false }
-  sms = { enabled = false }
-  voice = { enabled = false }
-  email = { enabled = false }
-  totp = { enabled = false }
+  sms     = { enabled = false }
+  voice   = { enabled = false }
+  email   = { enabled = false }
+  totp    = { enabled = false }
 }`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name)
 }
 
@@ -2161,21 +2161,21 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
   mobile = {
     enabled = true
     applications = [{
-      id = "11111111-1111-1111-1111-111111111111"
+      id  = "11111111-1111-1111-1111-111111111111"
       otp = { enabled = true }
       new_request_duration_configuration = {
         device_timeout = { duration = 76 }
-        total_timeout = { duration = 40 }
+        total_timeout  = { duration = 40 }
       }
       ip_pairing_configuration = { any_ip_address = true }
     }]
   }
   desktop = { enabled = false }
   yubikey = { enabled = false }
-  sms = { enabled = false }
-  voice = { enabled = false }
-  email = { enabled = false }
-  totp = { enabled = false }
+  sms     = { enabled = false }
+  voice   = { enabled = false }
+  email   = { enabled = false }
+  totp    = { enabled = false }
 }`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name)
 }
 
@@ -2191,21 +2191,21 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
   mobile = {
     enabled = true
     applications = [{
-      id = "11111111-1111-1111-1111-111111111111"
+      id  = "11111111-1111-1111-1111-111111111111"
       otp = { enabled = true }
       new_request_duration_configuration = {
         device_timeout = { duration = 25 }
-        total_timeout = { duration = 91 }
+        total_timeout  = { duration = 91 }
       }
       ip_pairing_configuration = { any_ip_address = true }
     }]
   }
   desktop = { enabled = false }
   yubikey = { enabled = false }
-  sms = { enabled = false }
-  voice = { enabled = false }
-  email = { enabled = false }
-  totp = { enabled = false }
+  sms     = { enabled = false }
+  voice   = { enabled = false }
+  email   = { enabled = false }
+  totp    = { enabled = false }
 }`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name)
 }
 
@@ -2222,13 +2222,13 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
     device_selection = "%[4]s"
   }
 
-  mobile = { enabled = true }
+  mobile  = { enabled = true }
   desktop = { enabled = false }
   yubikey = { enabled = false }
-  sms = { enabled = false }
-  voice = { enabled = false }
-  email = { enabled = false }
-  totp = { enabled = false }
+  sms     = { enabled = false }
+  voice   = { enabled = false }
+  email   = { enabled = false }
+  totp    = { enabled = false }
 }`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name, deviceSelection)
 }
 
@@ -2243,13 +2243,13 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
 
   new_device_notification = "%[4]s"
 
-  mobile = { enabled = true }
+  mobile  = { enabled = true }
   desktop = { enabled = false }
   yubikey = { enabled = false }
-  sms = { enabled = false }
-  voice = { enabled = false }
-  email = { enabled = false }
-  totp = { enabled = false }
+  sms     = { enabled = false }
+  voice   = { enabled = false }
+  email   = { enabled = false }
+  totp    = { enabled = false }
 }`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name, notification)
 }
 
@@ -2266,26 +2266,26 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
     enabled = true
     otp = {
       failure = {
-        count = %[4]d
+        count     = %[4]d
         cool_down = { duration = 2, time_unit = "MINUTES" }
       }
     }
     applications = [{
-      id = "11111111-1111-1111-1111-111111111111"
+      id  = "11111111-1111-1111-1111-111111111111"
       otp = { enabled = true }
       new_request_duration_configuration = {
         device_timeout = { duration = 25 }
-        total_timeout = { duration = 40 }
+        total_timeout  = { duration = 40 }
       }
       ip_pairing_configuration = { any_ip_address = true }
     }]
   }
   desktop = { enabled = false }
   yubikey = { enabled = false }
-  sms = { enabled = false }
-  voice = { enabled = false }
-  email = { enabled = false }
-  totp = { enabled = false }
+  sms     = { enabled = false }
+  voice   = { enabled = false }
+  email   = { enabled = false }
+  totp    = { enabled = false }
 }`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name, count)
 }
 
@@ -2301,21 +2301,21 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
   mobile = {
     enabled = true
     applications = [{
-      id = "11111111-1111-1111-1111-111111111111"
+      id  = "11111111-1111-1111-1111-111111111111"
       otp = { enabled = true }
       new_request_duration_configuration = {
-        device_timeout = { duration = %[4]d }
-        total_timeout = { duration = 40 }
+        device_timeout = { duration = "%[4]d" }
+        total_timeout  = { duration = 40 }
       }
       ip_pairing_configuration = { any_ip_address = true }
     }]
   }
   desktop = { enabled = false }
   yubikey = { enabled = false }
-  sms = { enabled = false }
-  voice = { enabled = false }
-  email = { enabled = false }
-  totp = { enabled = false }
+  sms     = { enabled = false }
+  voice   = { enabled = false }
+  email   = { enabled = false }
+  totp    = { enabled = false }
 }`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name, duration)
 }
 
@@ -2331,21 +2331,21 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
   mobile = {
     enabled = true
     applications = [{
-      id = "11111111-1111-1111-1111-111111111111"
+      id  = "11111111-1111-1111-1111-111111111111"
       otp = { enabled = true }
       new_request_duration_configuration = {
         device_timeout = { duration = 25 }
-        total_timeout = { duration = %[4]d }
+        total_timeout  = { duration = "%[4]d" }
       }
       ip_pairing_configuration = { any_ip_address = true }
     }]
   }
   desktop = { enabled = false }
   yubikey = { enabled = false }
-  sms = { enabled = false }
-  voice = { enabled = false }
-  email = { enabled = false }
-  totp = { enabled = false }
+  sms     = { enabled = false }
+  voice   = { enabled = false }
+  email   = { enabled = false }
+  totp    = { enabled = false }
 }`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name, duration)
 }
 
@@ -2387,7 +2387,7 @@ resource "pingone_environment" "%[1]s" {
   type       = "SANDBOX"
   region     = "%[3]s"
   license_id = "%[2]s"
-  services   = [
+  services = [
     {
       type = "SSO"
     }
@@ -2400,10 +2400,10 @@ resource "pingone_mfa_device_policy_default" "%[4]s" {
   name           = "%[5]s"
 
   mobile = { enabled = true }
-  sms = { enabled = false }
-  voice = { enabled = false }
-  email = { enabled = false }
-  totp = { enabled = false }
+  sms    = { enabled = false }
+  voice  = { enabled = false }
+  email  = { enabled = false }
+  totp   = { enabled = false }
 }`, environmentName, licenseID, region, resourceName, name)
 }
 
@@ -2451,7 +2451,7 @@ resource "pingone_environment" "%[1]s" {
   type       = "SANDBOX"
   region     = "%[3]s"
   license_id = "%[2]s"
-  services   = [
+  services = [
     {
       type = "SSO"
     },
@@ -2467,10 +2467,10 @@ resource "pingone_mfa_device_policy_default" "%[4]s" {
   name           = "%[5]s"
 
   mobile = { enabled = true }
-  sms = { enabled = false }
-  voice = { enabled = false }
-  email = { enabled = false }
-  totp = { enabled = false }
+  sms    = { enabled = false }
+  voice  = { enabled = false }
+  email  = { enabled = false }
+  totp   = { enabled = false }
 }`, environmentName, licenseID, region, resourceName, name)
 }
 
@@ -2481,7 +2481,7 @@ resource "pingone_environment" "%[1]s" {
   type       = "SANDBOX"
   region     = "%[3]s"
   license_id = "%[2]s"
-  services   = [
+  services = [
     {
       type = "SSO"
     },
@@ -2496,12 +2496,12 @@ resource "pingone_mfa_device_policy_default" "%[4]s" {
   policy_type    = "PING_ONE_ID"
   name           = "%[5]s"
 
-  mobile = { enabled = true }
+  mobile  = { enabled = true }
   desktop = { enabled = false }
   yubikey = { enabled = false }
-  sms = { enabled = false }
-  voice = { enabled = false }
-  email = { enabled = false }
-  totp = { enabled = false }
+  sms     = { enabled = false }
+  voice   = { enabled = false }
+  email   = { enabled = false }
+  totp    = { enabled = false }
 }`, environmentName, licenseID, region, resourceName, name)
 }

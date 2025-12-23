@@ -2008,7 +2008,7 @@ func (r *MFADevicePolicyDefaultResource) Delete(ctx context.Context, req resourc
 		data.NotificationsPolicy = types.ObjectNull(data.NotificationsPolicy.AttributeTypes(ctx))
 
 		// Build the model for the API
-		mFADevicePolicy, d := data.expand(ctx, r.Client.ManagementAPIClient)
+		mFADevicePolicy, d := data.expand(ctx)
 		resp.Diagnostics.Append(d...)
 		if resp.Diagnostics.HasError() {
 			return
@@ -2148,7 +2148,7 @@ func (r *MFADevicePolicyDefaultResource) updateMFADevicePolicyDefault(ctx contex
 	}
 
 	// Build the model for the API
-	mFADevicePolicy, d := plan.expand(ctx, r.Client.ManagementAPIClient)
+	mFADevicePolicy, d := plan.expand(ctx)
 	diags.Append(d...)
 	if diags.HasError() {
 		return state, diags
@@ -2213,7 +2213,7 @@ func (r *MFADevicePolicyDefaultResource) updateMFADevicePolicyDefault(ctx contex
 	}
 
 	// Extract ID from the union type based on policy_type
-	policyID, err := extractPolicyIDFromUnion(readResponse, plan.PolicyType.ValueString())
+	policyID, err := extractPolicyIDFromUnion(readResponse)
 	if err != nil {
 		diags.AddError(
 			"Invalid policy response",
@@ -2255,7 +2255,7 @@ func (r *MFADevicePolicyDefaultResource) updateMFADevicePolicyDefault(ctx contex
 
 // extractPolicyIDFromUnion extracts the policy ID from a DeviceAuthenticationPolicy
 // Note: With the flattened SDK model, there are no union fields, so we just return the ID directly
-func extractPolicyIDFromUnion(response *mfa.DeviceAuthenticationPolicy, policyType string) (string, error) {
+func extractPolicyIDFromUnion(response *mfa.DeviceAuthenticationPolicy) (string, error) {
 	// With flattened SDK, all policies use the same struct
 	// We can determine policy type by checking for PingID-specific fields (Desktop, Yubikey, OathToken)
 	// but for ID extraction we just return the ID directly
@@ -2382,7 +2382,7 @@ func FetchDefaultMFADevicePolicyWithTimeout(ctx context.Context, apiClient *mfa.
 	return returnVar, diags
 }
 
-func (p *MFADevicePolicyDefaultResourceModel) expand(ctx context.Context, apiClient *management.APIClient) (mfa.DeviceAuthenticationPolicy, diag.Diagnostics) {
+func (p *MFADevicePolicyDefaultResourceModel) expand(ctx context.Context) (mfa.DeviceAuthenticationPolicy, diag.Diagnostics) {
 	var diags, d diag.Diagnostics
 
 	// Get policy type to handle divergences
@@ -2442,7 +2442,7 @@ func (p *MFADevicePolicyDefaultResourceModel) expand(ctx context.Context, apiCli
 	if diags.HasError() {
 		return mfa.DeviceAuthenticationPolicy{}, diags
 	}
-	mobile, d := expandMobileForDefault(ctx, mobilePlan, apiClient, p.EnvironmentId.ValueString(), policyType)
+	mobile, d := expandMobileForDefault(ctx, mobilePlan, policyType)
 	diags.Append(d...)
 	if diags.HasError() {
 		return mfa.DeviceAuthenticationPolicy{}, diags
@@ -2806,7 +2806,7 @@ func (p *MFADevicePolicyPingIDDeviceOtpResourceModel) expand(ctx context.Context
 	return otp, diags
 }
 
-func expandMobileForDefault(ctx context.Context, mobilePlan MFADevicePolicyDefaultMobileResourceModel, apiClient *management.APIClient, environmentID string, policyType string) (*mfa.DeviceAuthenticationPolicyCommonMobile, diag.Diagnostics) {
+func expandMobileForDefault(ctx context.Context, mobilePlan MFADevicePolicyDefaultMobileResourceModel, policyType string) (*mfa.DeviceAuthenticationPolicyCommonMobile, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	// Handle OTP (required)
