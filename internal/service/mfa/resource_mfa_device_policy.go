@@ -1010,15 +1010,6 @@ func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttribute(descr
 					"lifetime": schema.SingleNestedAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("A single object that allows configuration of %s lifetime settings.", descriptionMethod)).Description,
 						Optional:    true,
-						Computed:    true,
-
-						Default: objectdefault.StaticValue(types.ObjectValueMust(
-							MFADevicePolicyTimePeriodTFObjectTypes,
-							map[string]attr.Value{
-								"duration":  types.Int32Value(otpLifetimeDurationDefault),
-								"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
-							},
-						)),
 
 						Attributes: map[string]schema.Attribute{
 							"duration": schema.Int32Attribute{
@@ -1606,7 +1597,7 @@ func (p *MFADevicePolicyMobileResourceModel) expand(ctx context.Context, apiClie
 		return nil, diags
 	}
 
-	failure, d := otpFailurePlan.expandMobile(ctx)
+	failure, d := otpFailurePlan.expand(ctx)
 	diags.Append(d...)
 	if diags.HasError() {
 		return nil, diags

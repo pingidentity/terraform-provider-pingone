@@ -3542,7 +3542,7 @@ func expandMobileForDefault(ctx context.Context, mobilePlan MFADevicePolicyDefau
 		return nil, diags
 	}
 
-	failure, d := otpFailurePlan.expandMobile(ctx)
+	failure, d := otpFailurePlan.expand(ctx)
 	diags.Append(d...)
 	if diags.HasError() {
 		return nil, diags
