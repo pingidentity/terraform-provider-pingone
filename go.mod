@@ -25,11 +25,11 @@ require (
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.38.1
 	github.com/hashicorp/terraform-plugin-testing v1.13.3
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/patrickcping/pingone-go-sdk-v2 v0.14.3
+	github.com/patrickcping/pingone-go-sdk-v2 v0.14.5
 	github.com/patrickcping/pingone-go-sdk-v2/authorize v0.8.2
 	github.com/patrickcping/pingone-go-sdk-v2/credentials v0.12.0
 	github.com/patrickcping/pingone-go-sdk-v2/management v0.63.0
-	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.23.2
+	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.24.1
 	github.com/patrickcping/pingone-go-sdk-v2/risk v0.21.0
 	github.com/patrickcping/pingone-go-sdk-v2/verify v0.10.0
 	github.com/pingidentity/pingone-go-client v0.3.1
@@ -390,7 +390,7 @@ require (
 	golang.org/x/crypto v0.45.0 // indirect
 	golang.org/x/mod v0.29.0 // indirect
 	golang.org/x/net v0.47.0 // indirect
-	golang.org/x/oauth2 v0.32.0 // indirect
+	golang.org/x/oauth2 v0.34.0 // indirect
 	golang.org/x/sys v0.38.0 // indirect
 	golang.org/x/text v0.31.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
