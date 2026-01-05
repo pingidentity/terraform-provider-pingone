@@ -316,6 +316,562 @@ func TestAccMFADevicePolicyDefault_BadParameters(t *testing.T) {
 	})
 }
 
+func TestAccMFADevicePolicyDefault_PingID_Full(t *testing.T) {
+	// t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy_default.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckRegionSupportsWorkforce(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             mfa.MFADevicePolicyDefault_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMFADevicePolicyDefaultConfig_PingID_Full(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "policy_type", "PING_ONE_ID"),
+					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+					resource.TestCheckResourceAttr(resourceFullName, "authentication.device_selection", "PROMPT_TO_SELECT"),
+					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
+					resource.TestCheckResourceAttr(resourceFullName, "ignore_user_lock", "true"),
+					resource.TestMatchResourceAttr(resourceFullName, "updated_at", verify.RFC3339Regexp),
+					resource.TestCheckResourceAttr(resourceFullName, "remember_me.web.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "sms.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "voice.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "email.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "mobile.applications.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "mobile.applications.0.biometrics_enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "mobile.applications.0.type", "pingIdAppConfig"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.otp.failure.count", "5"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.otp.failure.count", "3"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccMFADevicePolicyDefault_PingID_Minimal(t *testing.T) {
+	// t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy_default.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckRegionSupportsWorkforce(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             mfa.MFADevicePolicyDefault_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMFADevicePolicyDefaultConfig_PingID_Minimal(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "policy_type", "PING_ONE_ID"),
+					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "sms.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "voice.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "email.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.enabled", "false"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccMFADevicePolicyDefault_PingID_Change(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy_default.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoBeta(t)
+			acctest.PreCheckRegionSupportsWorkforce(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             mfa.MFADevicePolicyDefault_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMFADevicePolicyDefaultConfig_PingID_Minimal_WithNotificationPolicy(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "policy_type", "PING_ONE_ID"),
+					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "sms.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "voice.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "email.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.enabled", "false"),
+				),
+			},
+			{
+				Config: testAccMFADevicePolicyDefaultConfig_PingID_Full(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "policy_type", "PING_ONE_ID"),
+					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "mobile.applications.0.type", "pingIdAppConfig"),
+					resource.TestCheckResourceAttr(resourceFullName, "sms.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "voice.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "email.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.enabled", "true"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccMFADevicePolicyDefault_Validation(t *testing.T) {
+	t.Parallel()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	testCases := map[string]func(t *testing.T){
+		"General_Validation": func(t *testing.T) {
+			t.Parallel()
+
+			resourceName := acctest.ResourceNameGen()
+			environmentName := acctest.ResourceNameGenEnvironment()
+			name := resourceName
+
+			resource.Test(t, resource.TestCase{
+				PreCheck: func() {
+					acctest.PreCheckClient(t)
+					acctest.PreCheckNewEnvironment(t)
+				},
+				ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+				CheckDestroy:             mfa.MFADevicePolicyDefault_CheckDestroy,
+				ErrorCheck:               acctest.ErrorCheck(t),
+				Steps: []resource.TestStep{
+					// Notifications Policy - Invalid ID format
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_InvalidNotificationsPolicyID(environmentName, licenseID, resourceName, name),
+						ExpectError: regexp.MustCompile(`The PingOne resource ID is malformed`),
+					},
+					// Authentication - Invalid device_selection
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_Authentication(resourceName, name, "INVALID_VALUE"),
+						ExpectError: regexp.MustCompile(`Attribute authentication.device_selection value must be one of:`),
+					},
+					// New Device Notification - Invalid value
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_NewDeviceNotification(resourceName, name, "INVALID_VALUE"),
+						ExpectError: regexp.MustCompile(`Attribute new_device_notification value must be one of:`),
+					},
+					// Remember Me - Duration out of range for MINUTES
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_RememberMe_MinutesHigh(resourceName, name),
+						ExpectError: regexp.MustCompile(`Attribute remember_me.web.life_time.duration value must be between 1 and[\s\n]+129600`),
+					},
+					// Remember Me - Duration out of range for HOURS
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_RememberMe_HoursHigh(resourceName, name),
+						ExpectError: regexp.MustCompile(`Attribute remember_me.web.life_time.duration value must be between 1 and[\s\n]+2160`),
+					},
+					// Remember Me - Duration out of range for DAYS
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_RememberMe_DaysHigh(resourceName, name),
+						ExpectError: regexp.MustCompile(`Attribute remember_me.web.life_time.duration value must be between 1 and[\s\n]+90`),
+					},
+				},
+			})
+		},
+		"PingOneMFA_Mobile_Validation": func(t *testing.T) {
+			t.Parallel()
+
+			resourceName := acctest.ResourceNameGen()
+			environmentName := acctest.ResourceNameGenEnvironment()
+			name := resourceName
+
+			resource.Test(t, resource.TestCase{
+				PreCheck: func() {
+					acctest.PreCheckClient(t)
+					acctest.PreCheckNewEnvironment(t)
+				},
+				ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+				CheckDestroy:             mfa.MFADevicePolicyDefault_CheckDestroy,
+				ErrorCheck:               acctest.ErrorCheck(t),
+				Steps: []resource.TestStep{
+					// Missing auto_enrollment
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_PingOneMFA_MobileApp_MissingAutoEnrollment(environmentName, licenseID, resourceName, name),
+						ExpectError: regexp.MustCompile(`The argument mobile.applications\[0\].auto_enrollment is required because\s+policy_type is configured as:\s+"PING_ONE_MFA"`),
+					},
+					// Missing device_authorization
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_PingOneMFA_MobileApp_MissingDeviceAuthorization(environmentName, licenseID, resourceName, name),
+						ExpectError: regexp.MustCompile(`The argument mobile.applications\[0\].device_authorization is required because\s+policy_type is configured as:\s+"PING_ONE_MFA"`),
+					},
+					// Missing integrity_detection
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_PingOneMFA_MobileApp_MissingIntegrityDetection(environmentName, licenseID, resourceName, name),
+						ExpectError: regexp.MustCompile(`The argument mobile.applications\[0\].integrity_detection is required because\s+policy_type is configured as:\s+"PING_ONE_MFA"`),
+					},
+					// Invalid integrity_detection
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_MobileIntegrityDetection(environmentName, licenseID, resourceName, name, "INVALID_VALUE"),
+						ExpectError: regexp.MustCompile(`Attribute mobile.applications\[0\].integrity_detection value must be one of:`),
+					},
+					// Biometrics enabled conflict
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_PingOneMFA_MobileApp_BiometricsEnabled(environmentName, licenseID, resourceName, name),
+						ExpectError: regexp.MustCompile(`The argument cannot be defined if the value "PING_ONE_MFA" is present`),
+					},
+					// New request duration configuration conflict
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_PingOneMFA_MobileApp_NewRequestDuration(environmentName, licenseID, resourceName, name),
+						ExpectError: regexp.MustCompile(`The argument cannot be defined if the value "PING_ONE_MFA" is present`),
+					},
+					// IP pairing configuration conflict
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_PingOneMFA_MobileApp_IPPairing(environmentName, licenseID, resourceName, name),
+						ExpectError: regexp.MustCompile(`The argument cannot be defined if the value "PING_ONE_MFA" is present`),
+					},
+				},
+			})
+		},
+		"PingID_Structure_Validation": func(t *testing.T) {
+			t.Parallel()
+
+			resourceName := acctest.ResourceNameGen()
+			name := resourceName
+
+			resource.Test(t, resource.TestCase{
+				PreCheck: func() {
+					acctest.PreCheckClient(t)
+					acctest.PreCheckNewEnvironment(t)
+					acctest.PreCheckRegionSupportsWorkforce(t)
+				},
+				ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+				CheckDestroy:             mfa.MFADevicePolicyDefault_CheckDestroy,
+				ErrorCheck:               acctest.ErrorCheck(t),
+				Steps: []resource.TestStep{
+					// Desktop should conflict with PingOneMFA policy type
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_PingID_DesktopWithPingOneMFA(resourceName, name),
+						ExpectError: regexp.MustCompile(`Invalid argument combination`),
+					},
+					// Yubikey should conflict with PingOneMFA policy type
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_PingID_YubikeyWithPingOneMFA(resourceName, name),
+						ExpectError: regexp.MustCompile(`Invalid argument combination`),
+					},
+					// Missing desktop block
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_PingID_MissingDesktop(resourceName, name),
+						ExpectError: regexp.MustCompile(`The argument desktop is required because\s+policy_type is configured as:\s+"PING_ONE_ID"`),
+					},
+					// Missing yubikey block
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_PingID_MissingYubikey(resourceName, name),
+						ExpectError: regexp.MustCompile(`The argument yubikey is required because\s+policy_type is configured as:\s+"PING_ONE_ID"`),
+					},
+					// Mobile must be enabled for PingID policies
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_PingID_MobileDisabled(resourceName, name),
+						ExpectError: regexp.MustCompile(`Attribute mobile.enabled must be true when attribute policy_type value is`),
+					},
+					// Auto enrollment conflict
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_PingID_MobileApp_AutoEnrollment(resourceName, name),
+						ExpectError: regexp.MustCompile(`The argument cannot be defined if the value "PING_ONE_ID" is present`),
+					},
+					// Device authorization conflict
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_PingID_MobileApp_DeviceAuthorization(resourceName, name),
+						ExpectError: regexp.MustCompile(`The argument cannot be defined if the value "PING_ONE_ID" is present`),
+					},
+					// Missing new_request_duration_configuration
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_PingID_MobileApp_MissingNewRequestDuration(resourceName, name),
+						ExpectError: regexp.MustCompile(`The argument mobile.applications\[0\].new_request_duration_configuration is\s+required because\s+policy_type is configured as:\s+"PING_ONE_ID"`),
+					},
+					// Missing ip_pairing_configuration
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_PingID_MobileApp_MissingIPPairing(resourceName, name),
+						ExpectError: regexp.MustCompile(`The argument mobile.applications\[0\].ip_pairing_configuration is\s+required\s+because\s+policy_type is configured as:\s+"PING_ONE_ID"`),
+					},
+				},
+			})
+		},
+		"Common_Field_Validation": func(t *testing.T) {
+			t.Parallel()
+
+			resourceName := acctest.ResourceNameGen()
+			environmentName := acctest.ResourceNameGenEnvironment()
+			name := resourceName
+
+			resource.Test(t, resource.TestCase{
+				PreCheck: func() {
+					acctest.PreCheckClient(t)
+					acctest.PreCheckNewEnvironment(t)
+					acctest.PreCheckRegionSupportsWorkforce(t)
+				},
+				ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+				CheckDestroy:             mfa.MFADevicePolicyDefault_CheckDestroy,
+				ErrorCheck:               acctest.ErrorCheck(t),
+				Steps: []resource.TestStep{
+					// Email - OTP failure count too high
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_EmailOtpFailureCount(resourceName, name, 8),
+						ExpectError: regexp.MustCompile(`Attribute email.otp.failure.count value must be between 1 and 7`),
+					},
+					// Email - OTP failure cool down duration too high
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_EmailOtpFailureCoolDownDuration(resourceName, name, 31),
+						ExpectError: regexp.MustCompile(`Attribute email.otp.failure.cool_down.duration value must be between 0 and[\s\n]+30`),
+					},
+					// Email - OTP lifetime duration too high
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_EmailOtpLifetimeDuration(resourceName, name, 121),
+						ExpectError: regexp.MustCompile(`Attribute email.otp.lifetime.duration value must be between 1 and 120`),
+					},
+					// SMS - OTP failure count too high
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_SmsOtpFailureCount(resourceName, name, 8),
+						ExpectError: regexp.MustCompile(`Attribute sms.otp.failure.count value must be between 1 and 7`),
+					},
+					// SMS - OTP failure cool down duration too high
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_SmsOtpFailureCoolDownDuration(resourceName, name, 31),
+						ExpectError: regexp.MustCompile(`Attribute sms.otp.failure.cool_down.duration value must be between 0 and[\s\n]+30`),
+					},
+					// SMS - OTP lifetime duration too high
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_SmsOtpLifetimeDuration(resourceName, name, 121),
+						ExpectError: regexp.MustCompile(`Attribute sms.otp.lifetime.duration value must be between 1 and 120`),
+					},
+					// Voice - OTP failure count too high
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_VoiceOtpFailureCount(resourceName, name, 8),
+						ExpectError: regexp.MustCompile(`Attribute voice.otp.failure.count value must be between 1 and 7`),
+					},
+					// Voice - OTP failure cool down duration too high
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_VoiceOtpFailureCoolDownDuration(resourceName, name, 31),
+						ExpectError: regexp.MustCompile(`Attribute voice.otp.failure.cool_down.duration value must be between 0 and[\s\n]+30`),
+					},
+					// Voice - OTP lifetime duration too high
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_VoiceOtpLifetimeDuration(resourceName, name, 121),
+						ExpectError: regexp.MustCompile(`Attribute voice.otp.lifetime.duration value must be between 1 and 120`),
+					},
+					// Mobile - Push limit lock duration too high
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_MobilePushLimitLockDuration(resourceName, name, 121),
+						ExpectError: regexp.MustCompile(`Attribute mobile.applications\[0\].push_limit.lock_duration.duration value must[\s\n]+be between[\s\n]+1 and[\s\n]+120`),
+					},
+					// Mobile - Push limit time period too high
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_MobilePushLimitTimePeriod(resourceName, name, 121),
+						ExpectError: regexp.MustCompile(`Attribute mobile.applications\[0\].push_limit.time_period.duration value must[\s\n]+be between[\s\n]+1 and[\s\n]+120`),
+					},
+					// Mobile - Push timeout duration too high
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_MobilePushTimeoutDuration(environmentName, licenseID, resourceName, name, 121),
+						ExpectError: regexp.MustCompile(`Attribute mobile.applications\[0\].push_timeout.duration value must[\s\n]+be between[\s\n]+1 and[\s\n]+120`),
+					},
+					// Mobile - OTP failure cool down duration too high
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_MobileOtpFailureCoolDownDuration(resourceName, name, 31),
+						ExpectError: regexp.MustCompile(`Attribute mobile.otp.failure.cool_down.duration value must be between 2 and[\s\n]+30`),
+					},
+					// TOTP - OTP failure cool down duration too high
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_TotpOtpFailureCoolDownDuration(resourceName, name, 31),
+						ExpectError: regexp.MustCompile(`Attribute totp.otp.failure.cool_down.duration value must be between 1 and[\s\n]+30`),
+					},
+				},
+			})
+		},
+		"PingID_Field_Validation": func(t *testing.T) {
+			t.Parallel()
+
+			resourceName := acctest.ResourceNameGen()
+			name := resourceName
+
+			resource.Test(t, resource.TestCase{
+				PreCheck: func() {
+					acctest.PreCheckClient(t)
+					acctest.PreCheckNewEnvironment(t)
+					acctest.PreCheckRegionSupportsWorkforce(t)
+				},
+				ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+				CheckDestroy:             mfa.MFADevicePolicyDefault_CheckDestroy,
+				ErrorCheck:               acctest.ErrorCheck(t),
+				Steps: []resource.TestStep{
+					// IP Pairing - Invalid CIDR
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_PingID_IPPairing_InvalidCIDR(resourceName, name),
+						ExpectError: regexp.MustCompile(`Expected value to be in CIDR notation`),
+					},
+					// IP Pairing - Missing only_these_ip_addresses when any_ip_address is false
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_PingID_IPPairing_MissingIPs(resourceName, name),
+						ExpectError: regexp.MustCompile(`The argument\s+mobile.applications\[0\].ip_pairing_configuration.only_these_ip_addresses is\s+required because\s+mobile.applications\[0\].ip_pairing_configuration.any_ip_address is configured\s+as: false`),
+					},
+					// Desktop - OTP failure count too high
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_PingID_Desktop_OTPCountHigh(resourceName, name),
+						ExpectError: regexp.MustCompile(`Attribute desktop.otp.failure.count value must be between 1 and 7`),
+					},
+					// Desktop - Pairing key lifetime too long (HOURS)
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_PingID_Desktop_PairingKeyLifetimeHigh(resourceName, name),
+						ExpectError: regexp.MustCompile(`Attribute desktop.pairing_key_lifetime.duration value must be between 1 and\s+48`),
+					},
+					// Mobile - Push limit count out of range
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_MobilePushLimit_CountHigh(resourceName, name),
+						ExpectError: regexp.MustCompile(`Attribute mobile.applications\[0\].push_limit.count value must be between 1 and[\s\n]+50`),
+					},
+					// Mobile - Device timeout duration out of range
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_MobileNewRequestDuration_DeviceTimeoutHigh(resourceName, name),
+						ExpectError: regexp.MustCompile(`Attribute[\s\n]+mobile.applications\[0\].new_request_duration_configuration.device_timeout.duration[\s\n]+value must be between 15 and 75`),
+					},
+					// Mobile - Total timeout duration out of range
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_MobileNewRequestDuration_TotalTimeoutHigh(resourceName, name),
+						ExpectError: regexp.MustCompile(`Attribute[\s\n]+mobile.applications\[0\].new_request_duration_configuration.total_timeout.duration[\s\n]+value must be between 30 and 90`),
+					},
+					// Mobile - Device timeout duration too low
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_MobileNewRequestDuration_DeviceTimeout(resourceName, name, 14),
+						ExpectError: regexp.MustCompile(`Attribute[\s\n]+mobile.applications\[0\].new_request_duration_configuration.device_timeout.duration[\s\n]+value must be between 15 and 75`),
+					},
+					// Mobile - Total timeout duration too low
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_MobileNewRequestDuration_TotalTimeout(resourceName, name, 29),
+						ExpectError: regexp.MustCompile(`Attribute[\s\n]+mobile.applications\[0\].new_request_duration_configuration.total_timeout.duration[\s\n]+value must be between 30 and 90`),
+					},
+					// Mobile - OTP failure count out of range (0)
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_MobileOtpFailureCount(resourceName, name, 0),
+						ExpectError: regexp.MustCompile(`Attribute mobile.otp.failure.count value must be between 1 and 7`),
+					},
+					// Mobile - OTP failure count out of range (8)
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_MobileOtpFailureCount(resourceName, name, 8),
+						ExpectError: regexp.MustCompile(`Attribute mobile.otp.failure.count value must be between 1 and 7`),
+					},
+				},
+			})
+		},
+	}
+
+	for name, testFunc := range testCases {
+		t.Run(name, testFunc)
+	}
+}
+
+func TestAccMFADevicePolicyDefault_BOMValidation(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+	region := os.Getenv("PINGONE_REGION_CODE")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             mfa.MFADevicePolicyDefault_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccMFADevicePolicyDefaultConfig_BOMValidation(environmentName, licenseID, region, resourceName, name),
+				ExpectError: regexp.MustCompile("Unsupported Policy Type"),
+			},
+		},
+	})
+}
+
+func TestAccMFADevicePolicyDefault_BOMValidation_CrossTypes(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	environmentNamePingID := acctest.ResourceNameGenEnvironment() + "-pingid"
+	environmentNameMFA := acctest.ResourceNameGenEnvironment() + "-mfa"
+
+	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+	region := os.Getenv("PINGONE_REGION_CODE")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             mfa.MFADevicePolicyDefault_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// 1. Environment with PingID (no MFA) -> Try to create PING_ONE_MFA policy
+			{
+				Config:      testAccMFADevicePolicyDefaultConfig_BOMValidation_PingIDEnv(environmentNamePingID, licenseID, region, resourceName, name),
+				ExpectError: regexp.MustCompile("Unsupported Policy Type"),
+			},
+			// 2. Environment with MFA (no PingID) -> Try to create PING_ONE_ID policy
+			{
+				Config:      testAccMFADevicePolicyDefaultConfig_BOMValidation_MFAEnv(environmentNameMFA, licenseID, region, resourceName, name),
+				ExpectError: regexp.MustCompile("Unsupported Policy Type"),
+			},
+		},
+	})
+}
+
 func testAccMFADevicePolicyDefaultConfig_Full(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
@@ -551,96 +1107,6 @@ resource "pingone_mfa_device_policy_default" "%[3]s" {
     enabled = false
   }
 }`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
-}
-
-func TestAccMFADevicePolicyDefault_PingID_Full(t *testing.T) {
-	// t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy_default.%s", resourceName)
-
-	name := resourceName
-
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acctest.PreCheckNoTestAccFlaky(t)
-			acctest.PreCheckClient(t)
-			acctest.PreCheckRegionSupportsWorkforce(t)
-			acctest.PreCheckNoBeta(t)
-		},
-		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.MFADevicePolicyDefault_CheckDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			{
-				Config: testAccMFADevicePolicyDefaultConfig_PingID_Full(resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "policy_type", "PING_ONE_ID"),
-					resource.TestCheckResourceAttr(resourceFullName, "name", name),
-					resource.TestCheckResourceAttr(resourceFullName, "authentication.device_selection", "PROMPT_TO_SELECT"),
-					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
-					resource.TestCheckResourceAttr(resourceFullName, "ignore_user_lock", "true"),
-					resource.TestMatchResourceAttr(resourceFullName, "updated_at", verify.RFC3339Regexp),
-					resource.TestCheckResourceAttr(resourceFullName, "remember_me.web.enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "sms.enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "voice.enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "email.enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "mobile.applications.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "mobile.applications.0.biometrics_enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "mobile.applications.0.type", "pingIdAppConfig"),
-					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "desktop.enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "desktop.otp.failure.count", "5"),
-					resource.TestCheckResourceAttr(resourceFullName, "yubikey.enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "oath_token.enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "oath_token.otp.failure.count", "3"),
-				),
-			},
-		},
-	})
-}
-
-func TestAccMFADevicePolicyDefault_PingID_Minimal(t *testing.T) {
-	// t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy_default.%s", resourceName)
-
-	name := resourceName
-
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acctest.PreCheckNoTestAccFlaky(t)
-			acctest.PreCheckClient(t)
-			acctest.PreCheckRegionSupportsWorkforce(t)
-			acctest.PreCheckNoBeta(t)
-		},
-		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.MFADevicePolicyDefault_CheckDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			{
-				Config: testAccMFADevicePolicyDefaultConfig_PingID_Minimal(resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(resourceFullName, "policy_type", "PING_ONE_ID"),
-					resource.TestCheckResourceAttr(resourceFullName, "name", name),
-					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "sms.enabled", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "voice.enabled", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "email.enabled", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "desktop.enabled", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "yubikey.enabled", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "oath_token.enabled", "false"),
-				),
-			},
-		},
-	})
 }
 
 func testAccMFADevicePolicyDefaultConfig_PingID_Minimal(resourceName, name string) string {
@@ -1123,405 +1589,6 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
   }
 }
 `, acctest.WorkforceV2SandboxEnvironment(), resourceName, name)
-}
-
-func TestAccMFADevicePolicyDefault_PingID_Change(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy_default.%s", resourceName)
-
-	name := resourceName
-
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acctest.PreCheckNoTestAccFlaky(t)
-			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoBeta(t)
-			acctest.PreCheckRegionSupportsWorkforce(t)
-		},
-		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.MFADevicePolicyDefault_CheckDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			{
-				Config: testAccMFADevicePolicyDefaultConfig_PingID_Minimal_WithNotificationPolicy(resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "policy_type", "PING_ONE_ID"),
-					resource.TestCheckResourceAttr(resourceFullName, "name", name),
-					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "sms.enabled", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "voice.enabled", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "email.enabled", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "desktop.enabled", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "yubikey.enabled", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "oath_token.enabled", "false"),
-				),
-			},
-			{
-				Config: testAccMFADevicePolicyDefaultConfig_PingID_Full(resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "policy_type", "PING_ONE_ID"),
-					resource.TestCheckResourceAttr(resourceFullName, "name", name),
-					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "mobile.applications.0.type", "pingIdAppConfig"),
-					resource.TestCheckResourceAttr(resourceFullName, "sms.enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "voice.enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "email.enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "desktop.enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "yubikey.enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "oath_token.enabled", "true"),
-				),
-			},
-		},
-	})
-}
-
-func TestAccMFADevicePolicyDefault_Validation(t *testing.T) {
-	t.Parallel()
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-
-	testCases := map[string]func(t *testing.T){
-		"General_Validation": func(t *testing.T) {
-			t.Parallel()
-
-			resourceName := acctest.ResourceNameGen()
-			environmentName := acctest.ResourceNameGenEnvironment()
-			name := resourceName
-
-			resource.Test(t, resource.TestCase{
-				PreCheck: func() {
-					acctest.PreCheckClient(t)
-					acctest.PreCheckNewEnvironment(t)
-				},
-				ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-				CheckDestroy:             mfa.MFADevicePolicyDefault_CheckDestroy,
-				ErrorCheck:               acctest.ErrorCheck(t),
-				Steps: []resource.TestStep{
-					// Notifications Policy - Invalid ID format
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_InvalidNotificationsPolicyID(environmentName, licenseID, resourceName, name),
-						ExpectError: regexp.MustCompile(`The PingOne resource ID is malformed`),
-					},
-					// Authentication - Invalid device_selection
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_Authentication(resourceName, name, "INVALID_VALUE"),
-						ExpectError: regexp.MustCompile(`Attribute authentication.device_selection value must be one of:`),
-					},
-					// New Device Notification - Invalid value
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_NewDeviceNotification(resourceName, name, "INVALID_VALUE"),
-						ExpectError: regexp.MustCompile(`Attribute new_device_notification value must be one of:`),
-					},
-					// Remember Me - Duration out of range for MINUTES
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_RememberMe_MinutesHigh(resourceName, name),
-						ExpectError: regexp.MustCompile(`Attribute remember_me.web.life_time.duration value must be between 1 and[\s\n]+129600`),
-					},
-					// Remember Me - Duration out of range for HOURS
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_RememberMe_HoursHigh(resourceName, name),
-						ExpectError: regexp.MustCompile(`Attribute remember_me.web.life_time.duration value must be between 1 and[\s\n]+2160`),
-					},
-					// Remember Me - Duration out of range for DAYS
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_RememberMe_DaysHigh(resourceName, name),
-						ExpectError: regexp.MustCompile(`Attribute remember_me.web.life_time.duration value must be between 1 and[\s\n]+90`),
-					},
-				},
-			})
-		},
-		"PingOneMFA_Mobile_Validation": func(t *testing.T) {
-			t.Parallel()
-
-			resourceName := acctest.ResourceNameGen()
-			environmentName := acctest.ResourceNameGenEnvironment()
-			name := resourceName
-
-			resource.Test(t, resource.TestCase{
-				PreCheck: func() {
-					acctest.PreCheckClient(t)
-					acctest.PreCheckNewEnvironment(t)
-				},
-				ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-				CheckDestroy:             mfa.MFADevicePolicyDefault_CheckDestroy,
-				ErrorCheck:               acctest.ErrorCheck(t),
-				Steps: []resource.TestStep{
-					// Missing auto_enrollment
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_PingOneMFA_MobileApp_MissingAutoEnrollment(environmentName, licenseID, resourceName, name),
-						ExpectError: regexp.MustCompile(`The argument mobile.applications\[0\].auto_enrollment is required because\s+policy_type is configured as:\s+"PING_ONE_MFA"`),
-					},
-					// Missing device_authorization
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_PingOneMFA_MobileApp_MissingDeviceAuthorization(environmentName, licenseID, resourceName, name),
-						ExpectError: regexp.MustCompile(`The argument mobile.applications\[0\].device_authorization is required because\s+policy_type is configured as:\s+"PING_ONE_MFA"`),
-					},
-					// Missing integrity_detection
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_PingOneMFA_MobileApp_MissingIntegrityDetection(environmentName, licenseID, resourceName, name),
-						ExpectError: regexp.MustCompile(`The argument mobile.applications\[0\].integrity_detection is required because\s+policy_type is configured as:\s+"PING_ONE_MFA"`),
-					},
-					// Invalid integrity_detection
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_MobileIntegrityDetection(environmentName, licenseID, resourceName, name, "INVALID_VALUE"),
-						ExpectError: regexp.MustCompile(`Attribute mobile.applications\[0\].integrity_detection value must be one of:`),
-					},
-					// Biometrics enabled conflict
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_PingOneMFA_MobileApp_BiometricsEnabled(environmentName, licenseID, resourceName, name),
-						ExpectError: regexp.MustCompile(`The argument cannot be defined if the value "PING_ONE_MFA" is present`),
-					},
-					// New request duration configuration conflict
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_PingOneMFA_MobileApp_NewRequestDuration(environmentName, licenseID, resourceName, name),
-						ExpectError: regexp.MustCompile(`The argument cannot be defined if the value "PING_ONE_MFA" is present`),
-					},
-					// IP pairing configuration conflict
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_PingOneMFA_MobileApp_IPPairing(environmentName, licenseID, resourceName, name),
-						ExpectError: regexp.MustCompile(`The argument cannot be defined if the value "PING_ONE_MFA" is present`),
-					},
-				},
-			})
-		},
-		"PingID_Structure_Validation": func(t *testing.T) {
-			t.Parallel()
-
-			resourceName := acctest.ResourceNameGen()
-			name := resourceName
-
-			resource.Test(t, resource.TestCase{
-				PreCheck: func() {
-					acctest.PreCheckClient(t)
-					acctest.PreCheckNewEnvironment(t)
-					acctest.PreCheckRegionSupportsWorkforce(t)
-				},
-				ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-				CheckDestroy:             mfa.MFADevicePolicyDefault_CheckDestroy,
-				ErrorCheck:               acctest.ErrorCheck(t),
-				Steps: []resource.TestStep{
-					// Desktop should conflict with PingOneMFA policy type
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_PingID_DesktopWithPingOneMFA(resourceName, name),
-						ExpectError: regexp.MustCompile(`Invalid argument combination`),
-					},
-					// Yubikey should conflict with PingOneMFA policy type
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_PingID_YubikeyWithPingOneMFA(resourceName, name),
-						ExpectError: regexp.MustCompile(`Invalid argument combination`),
-					},
-					// Missing desktop block
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_PingID_MissingDesktop(resourceName, name),
-						ExpectError: regexp.MustCompile(`The argument desktop is required because\s+policy_type is configured as:\s+"PING_ONE_ID"`),
-					},
-					// Missing yubikey block
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_PingID_MissingYubikey(resourceName, name),
-						ExpectError: regexp.MustCompile(`The argument yubikey is required because\s+policy_type is configured as:\s+"PING_ONE_ID"`),
-					},
-					// Mobile must be enabled for PingID policies
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_PingID_MobileDisabled(resourceName, name),
-						ExpectError: regexp.MustCompile(`Attribute mobile.enabled must be true when attribute policy_type value is`),
-					},
-					// Auto enrollment conflict
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_PingID_MobileApp_AutoEnrollment(resourceName, name),
-						ExpectError: regexp.MustCompile(`The argument cannot be defined if the value "PING_ONE_ID" is present`),
-					},
-					// Device authorization conflict
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_PingID_MobileApp_DeviceAuthorization(resourceName, name),
-						ExpectError: regexp.MustCompile(`The argument cannot be defined if the value "PING_ONE_ID" is present`),
-					},
-					// Missing new_request_duration_configuration
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_PingID_MobileApp_MissingNewRequestDuration(resourceName, name),
-						ExpectError: regexp.MustCompile(`The argument mobile.applications\[0\].new_request_duration_configuration is\s+required because\s+policy_type is configured as:\s+"PING_ONE_ID"`),
-					},
-					// Missing ip_pairing_configuration
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_PingID_MobileApp_MissingIPPairing(resourceName, name),
-						ExpectError: regexp.MustCompile(`The argument mobile.applications\[0\].ip_pairing_configuration is\s+required\s+because\s+policy_type is configured as:\s+"PING_ONE_ID"`),
-					},
-				},
-			})
-		},
-		"Common_Field_Validation": func(t *testing.T) {
-			t.Parallel()
-
-			resourceName := acctest.ResourceNameGen()
-			environmentName := acctest.ResourceNameGenEnvironment()
-			name := resourceName
-
-			resource.Test(t, resource.TestCase{
-				PreCheck: func() {
-					acctest.PreCheckClient(t)
-					acctest.PreCheckNewEnvironment(t)
-					acctest.PreCheckRegionSupportsWorkforce(t)
-				},
-				ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-				CheckDestroy:             mfa.MFADevicePolicyDefault_CheckDestroy,
-				ErrorCheck:               acctest.ErrorCheck(t),
-				Steps: []resource.TestStep{
-					// Email - OTP failure count too high
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_EmailOtpFailureCount(resourceName, name, 8),
-						ExpectError: regexp.MustCompile(`Attribute email.otp.failure.count value must be between 1 and 7`),
-					},
-					// Email - OTP failure cool down duration too high
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_EmailOtpFailureCoolDownDuration(resourceName, name, 31),
-						ExpectError: regexp.MustCompile(`Attribute email.otp.failure.cool_down.duration value must be between 0 and[\s\n]+30`),
-					},
-					// Email - OTP lifetime duration too high
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_EmailOtpLifetimeDuration(resourceName, name, 121),
-						ExpectError: regexp.MustCompile(`Attribute email.otp.lifetime.duration value must be between 1 and 120`),
-					},
-					// SMS - OTP failure count too high
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_SmsOtpFailureCount(resourceName, name, 8),
-						ExpectError: regexp.MustCompile(`Attribute sms.otp.failure.count value must be between 1 and 7`),
-					},
-					// SMS - OTP failure cool down duration too high
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_SmsOtpFailureCoolDownDuration(resourceName, name, 31),
-						ExpectError: regexp.MustCompile(`Attribute sms.otp.failure.cool_down.duration value must be between 0 and[\s\n]+30`),
-					},
-					// SMS - OTP lifetime duration too high
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_SmsOtpLifetimeDuration(resourceName, name, 121),
-						ExpectError: regexp.MustCompile(`Attribute sms.otp.lifetime.duration value must be between 1 and 120`),
-					},
-					// Voice - OTP failure count too high
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_VoiceOtpFailureCount(resourceName, name, 8),
-						ExpectError: regexp.MustCompile(`Attribute voice.otp.failure.count value must be between 1 and 7`),
-					},
-					// Voice - OTP failure cool down duration too high
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_VoiceOtpFailureCoolDownDuration(resourceName, name, 31),
-						ExpectError: regexp.MustCompile(`Attribute voice.otp.failure.cool_down.duration value must be between 0 and[\s\n]+30`),
-					},
-					// Voice - OTP lifetime duration too high
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_VoiceOtpLifetimeDuration(resourceName, name, 121),
-						ExpectError: regexp.MustCompile(`Attribute voice.otp.lifetime.duration value must be between 1 and 120`),
-					},
-					// Mobile - Push limit lock duration too high
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_MobilePushLimitLockDuration(resourceName, name, 121),
-						ExpectError: regexp.MustCompile(`Attribute mobile.applications\[0\].push_limit.lock_duration.duration value must[\s\n]+be between[\s\n]+1 and[\s\n]+120`),
-					},
-					// Mobile - Push limit time period too high
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_MobilePushLimitTimePeriod(resourceName, name, 121),
-						ExpectError: regexp.MustCompile(`Attribute mobile.applications\[0\].push_limit.time_period.duration value must[\s\n]+be between[\s\n]+1 and[\s\n]+120`),
-					},
-					// Mobile - Push timeout duration too high
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_MobilePushTimeoutDuration(environmentName, licenseID, resourceName, name, 121),
-						ExpectError: regexp.MustCompile(`Attribute mobile.applications\[0\].push_timeout.duration value must[\s\n]+be between[\s\n]+1 and[\s\n]+120`),
-					},
-					// Mobile - OTP failure cool down duration too high
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_MobileOtpFailureCoolDownDuration(resourceName, name, 31),
-						ExpectError: regexp.MustCompile(`Attribute mobile.otp.failure.cool_down.duration value must be between 2 and[\s\n]+30`),
-					},
-					// TOTP - OTP failure cool down duration too high
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_TotpOtpFailureCoolDownDuration(resourceName, name, 31),
-						ExpectError: regexp.MustCompile(`Attribute totp.otp.failure.cool_down.duration value must be between 1 and[\s\n]+30`),
-					},
-				},
-			})
-		},
-		"PingID_Field_Validation": func(t *testing.T) {
-			t.Parallel()
-
-			resourceName := acctest.ResourceNameGen()
-			name := resourceName
-
-			resource.Test(t, resource.TestCase{
-				PreCheck: func() {
-					acctest.PreCheckClient(t)
-					acctest.PreCheckNewEnvironment(t)
-					acctest.PreCheckRegionSupportsWorkforce(t)
-				},
-				ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-				CheckDestroy:             mfa.MFADevicePolicyDefault_CheckDestroy,
-				ErrorCheck:               acctest.ErrorCheck(t),
-				Steps: []resource.TestStep{
-					// IP Pairing - Invalid CIDR
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_PingID_IPPairing_InvalidCIDR(resourceName, name),
-						ExpectError: regexp.MustCompile(`Expected value to be in CIDR notation`),
-					},
-					// IP Pairing - Missing only_these_ip_addresses when any_ip_address is false
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_PingID_IPPairing_MissingIPs(resourceName, name),
-						ExpectError: regexp.MustCompile(`The argument\s+mobile.applications\[0\].ip_pairing_configuration.only_these_ip_addresses is\s+required because\s+mobile.applications\[0\].ip_pairing_configuration.any_ip_address is configured\s+as: false`),
-					},
-					// Desktop - OTP failure count too high
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_PingID_Desktop_OTPCountHigh(resourceName, name),
-						ExpectError: regexp.MustCompile(`Attribute desktop.otp.failure.count value must be between 1 and 7`),
-					},
-					// Desktop - Pairing key lifetime too long (HOURS)
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_PingID_Desktop_PairingKeyLifetimeHigh(resourceName, name),
-						ExpectError: regexp.MustCompile(`Attribute desktop.pairing_key_lifetime.duration value must be between 1 and\s+48`),
-					},
-					// Mobile - Push limit count out of range
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_MobilePushLimit_CountHigh(resourceName, name),
-						ExpectError: regexp.MustCompile(`Attribute mobile.applications\[0\].push_limit.count value must be between 1 and[\s\n]+50`),
-					},
-					// Mobile - Device timeout duration out of range
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_MobileNewRequestDuration_DeviceTimeoutHigh(resourceName, name),
-						ExpectError: regexp.MustCompile(`Attribute[\s\n]+mobile.applications\[0\].new_request_duration_configuration.device_timeout.duration[\s\n]+value must be between 15 and 75`),
-					},
-					// Mobile - Total timeout duration out of range
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_MobileNewRequestDuration_TotalTimeoutHigh(resourceName, name),
-						ExpectError: regexp.MustCompile(`Attribute[\s\n]+mobile.applications\[0\].new_request_duration_configuration.total_timeout.duration[\s\n]+value must be between 30 and 90`),
-					},
-					// Mobile - Device timeout duration too low
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_MobileNewRequestDuration_DeviceTimeout(resourceName, name, 14),
-						ExpectError: regexp.MustCompile(`Attribute[\s\n]+mobile.applications\[0\].new_request_duration_configuration.device_timeout.duration[\s\n]+value must be between 15 and 75`),
-					},
-					// Mobile - Total timeout duration too low
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_MobileNewRequestDuration_TotalTimeout(resourceName, name, 29),
-						ExpectError: regexp.MustCompile(`Attribute[\s\n]+mobile.applications\[0\].new_request_duration_configuration.total_timeout.duration[\s\n]+value must be between 30 and 90`),
-					},
-					// Mobile - OTP failure count out of range (0)
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_MobileOtpFailureCount(resourceName, name, 0),
-						ExpectError: regexp.MustCompile(`Attribute mobile.otp.failure.count value must be between 1 and 7`),
-					},
-					// Mobile - OTP failure count out of range (8)
-					{
-						Config:      testAccMFADevicePolicyDefaultConfig_MobileOtpFailureCount(resourceName, name, 8),
-						ExpectError: regexp.MustCompile(`Attribute mobile.otp.failure.count value must be between 1 and 7`),
-					},
-				},
-			})
-		},
-	}
-
-	for name, testFunc := range testCases {
-		t.Run(name, testFunc)
-	}
 }
 
 func testAccMFADevicePolicyDefaultConfig_MobileIntegrityDetection(environmentName, licenseID, resourceName, name, integrityDetection string) string {
@@ -2301,37 +2368,6 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
 }`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name, duration)
 }
 
-func TestAccMFADevicePolicyDefault_BOMValidation(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-
-	environmentName := acctest.ResourceNameGenEnvironment()
-
-	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-	region := os.Getenv("PINGONE_REGION_CODE")
-
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acctest.PreCheckNoTestAccFlaky(t)
-			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoBeta(t)
-		},
-		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.MFADevicePolicyDefault_CheckDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			{
-				Config:      testAccMFADevicePolicyDefaultConfig_BOMValidation(environmentName, licenseID, region, resourceName, name),
-				ExpectError: regexp.MustCompile("Unsupported Policy Type"),
-			},
-		},
-	})
-}
-
 func testAccMFADevicePolicyDefaultConfig_BOMValidation(environmentName, licenseID, region, resourceName, name string) string {
 	return fmt.Sprintf(`
 resource "pingone_environment" "%[1]s" {
@@ -2357,43 +2393,6 @@ resource "pingone_mfa_device_policy_default" "%[4]s" {
   email  = { enabled = false }
   totp   = { enabled = false }
 }`, environmentName, licenseID, region, resourceName, name)
-}
-
-func TestAccMFADevicePolicyDefault_BOMValidation_CrossTypes(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-	environmentNamePingID := acctest.ResourceNameGenEnvironment() + "-pingid"
-	environmentNameMFA := acctest.ResourceNameGenEnvironment() + "-mfa"
-
-	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-	region := os.Getenv("PINGONE_REGION_CODE")
-
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acctest.PreCheckNoTestAccFlaky(t)
-			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoBeta(t)
-		},
-		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             mfa.MFADevicePolicyDefault_CheckDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			// 1. Environment with PingID (no MFA) -> Try to create PING_ONE_MFA policy
-			{
-				Config:      testAccMFADevicePolicyDefaultConfig_BOMValidation_PingIDEnv(environmentNamePingID, licenseID, region, resourceName, name),
-				ExpectError: regexp.MustCompile("Unsupported Policy Type"),
-			},
-			// 2. Environment with MFA (no PingID) -> Try to create PING_ONE_ID policy
-			{
-				Config:      testAccMFADevicePolicyDefaultConfig_BOMValidation_MFAEnv(environmentNameMFA, licenseID, region, resourceName, name),
-				ExpectError: regexp.MustCompile("Unsupported Policy Type"),
-			},
-		},
-	})
 }
 
 func testAccMFADevicePolicyDefaultConfig_BOMValidation_PingIDEnv(environmentName, licenseID, region, resourceName, name string) string {
