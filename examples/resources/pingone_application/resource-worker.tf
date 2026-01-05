@@ -7,9 +7,6 @@ resource "pingone_application" "my_awesome_worker_app" {
     type                       = "WORKER"
     grant_types                = ["CLIENT_CREDENTIALS"]
     token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
-
-    include_x5t                                   = true
-    request_scopes_for_multiple_resources_enabled = true
   }
 }
 
