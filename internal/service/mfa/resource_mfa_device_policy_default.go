@@ -257,6 +257,7 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	const mobileApplicationsPushTimeoutDurationMax = 120
 
 	const mobileApplicationsOtpFailureCoolDownDurationDefault = 2
+	const mobileOtpFailureCoolDownDurationDefault = 2
 	const mobileOtpFailureCoolDownDurationMinMinutes = 2
 	const mobileOtpFailureCoolDownDurationMaxMinutes = 30
 	const mobileOtpFailureCoolDownDurationMinSeconds = 120
@@ -363,7 +364,7 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	).DefaultValue(false)
 
 	updatedAtDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The date and time the MFA device policy was last updated.",
+		"A string that specifies the time the resource was last updated.",
 	)
 
 	notificationsPolicyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -371,45 +372,39 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	)
 
 	notificationsPolicyIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The ID of the notification policy to use. Must be a valid PingOne resource ID.",
+		"A string that specifies the ID of the notification policy to use.",
 	)
 
 	mobileDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A single object that allows configuration of mobile push/OTP device authentication policy settings.  This factor requires embedding the PingOne MFA SDK into a customer facing mobile application, and configuring as a Native application using the `pingone_application` resource.",
+		"A single object that allows configuration of mobile push/OTP device authentication policy settings. This factor requires embedding the PingOne MFA SDK into a customer facing mobile application, and configuring as a Native application using the `pingone_application` resource.",
 	)
 
 	mobileApplicationsAutoEnrollmentEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A boolean that, when set to `true` if you want the application to allow Auto Enrollment. Auto Enrollment means that the user can authenticate for the first time from an unpaired device, and the successful authentication will result in the pairing of the device for MFA.",
+		"A boolean that, when set to `true`, allows Auto Enrollment for the application.",
 	)
 
 	mobileApplicationsDeviceAuthorizationExtraVerificationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Specifies the level of further verification when device authorization is enabled. The PingOne platform performs an extra verification check by sending a \"silent\" push notification to the customer native application, and receives a confirmation in return.  By default, the PingOne platform does not perform the extra verification check.",
-	).AllowedValuesComplex(map[string]string{
-		string(mfa.ENUMMFADEVICEPOLICYMOBILEEXTRAVERIFICATION_PERMISSIVE):  "the PingOne platform performs the extra verification check. Upon timeout or failure to get a response from the native app, the MFA step is treated as successfully completed",
-		string(mfa.ENUMMFADEVICEPOLICYMOBILEEXTRAVERIFICATION_RESTRICTIVE): "the PingOne platform performs the extra verification check. Upon timeout or failure to get a response from the native app, the MFA step is treated as failed",
-	})
+		"A string that specifies the level of further verification when device authorization is enabled.",
+	).AllowedValuesEnum(mfa.AllowedEnumMFADevicePolicyMobileExtraVerificationEnumValues)
 
 	mobileApplicationsIntegrityDetectionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Controls how authentication or registration attempts should proceed if a device integrity check does not receive a response.",
-	).AllowedValuesComplex(map[string]string{
-		string(mfa.ENUMMFADEVICEPOLICYMOBILEINTEGRITYDETECTION_PERMISSIVE):  "if you want to allow the process to continue if a device integrity check does not receive a response",
-		string(mfa.ENUMMFADEVICEPOLICYMOBILEINTEGRITYDETECTION_RESTRICTIVE): "if you want to block the user if a device integrity check does not receive a response",
-	})
+		"A string that controls how authentication or registration attempts should proceed if a device integrity check does not receive a response.",
+	).AllowedValuesEnum(mfa.AllowedEnumMFADevicePolicyMobileIntegrityDetectionEnumValues)
 
 	mobileApplicationsPairingDisabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that, when set to `true`, prevents users from pairing new devices with the relevant application. You can use this option if you want to phase out an existing mobile application but want to allow users to continue using the application for authentication for existing devices.",
 	)
 
 	mobileApplicationsPushLimitLockDurationDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"An integer that defines the length of time that push notifications should be blocked for the application if the defined limit has been reached. The minimum value is `1` minute and the maximum value is `120` minutes. If this parameter is not provided, the default value is `30` minutes.",
+		"An integer that defines the length of time that push notifications should be blocked for the application if the defined limit has been reached. The minimum value is `1` minute and the maximum value is `120` minutes. Defaults to `30` minutes.",
 	)
 
 	mobileApplicationsPushLimitTimePeriodDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"An integer that defines the length of time that push notifications should be blocked for the application if the defined limit has been reached. The minimum value is `1` minute and the maximum value is `120` minutes. If this parameter is not provided, the default value is `30` minutes.",
+		"An integer that defines the length of time that push notifications should be blocked for the application if the defined limit has been reached. The minimum value is `1` minute and the maximum value is `120` minutes. Defaults to `30` minutes.",
 	)
 
 	mobileApplicationsPushTimeoutDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"An integer that defines the length of time that push notifications should be blocked for the application if the defined limit has been reached. The minimum value is `1` minute and the maximum value is `120` minutes. If this parameter is not provided, the default value is `30` minutes.",
+		"An integer that defines the length of time that push notifications should be blocked for the application if the defined limit has been reached. The minimum value is `40` seconds and the maximum value is `150` seconds. Defaults to `40` seconds.",
 	)
 
 	mobileOtpFailureCountDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -417,19 +412,19 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	)
 
 	mobileOtpFailureCoolDownDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. The minimum value is `2`, maximum is `30`, and the default is `2`. Note that when using the \"onetime authentication\" feature, the user is not blocked after the maximum number of failures even if you specified a block duration.",
-	)
+		"An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. The minimum value is `2`, maximum is `30`.",
+	).DefaultValue(mobileOtpFailureCoolDownDurationDefault)
 
 	mobileIpPairingConfigurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A single object that allows you to restrict device pairing to specific IP addresses. Only applicable for PingID policies.",
 	)
 
 	mobileIpPairingConfigurationAnyIpAddressDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A boolean that, when set to `false`, restricts device pairing to specific IP addresses defined in `only_these_ip_addresses`. When set to `true` (default), users can pair devices from any IP address.",
-	)
+		"A boolean that, when set to `false`, restricts device pairing to specific IP addresses defined in `only_these_ip_addresses`.",
+	).DefaultValue(true)
 
 	mobileIpPairingConfigurationOnlyTheseIpAddressesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A list of IP addresses or address ranges from which users can pair their devices. This parameter is required when `any_ip_address` is set to `false`. Each item in the array must be in CIDR notation, for example, ``192.168.1.1/32`` or `10.0.0.0/8`.",
+		"A list of IP addresses or address ranges from which users can pair their devices. This parameter is required when `any_ip_address` is set to `false`. Each item in the array must be in CIDR notation, for example, `192.168.1.1/32` or `10.0.0.0/8`.",
 	)
 
 	mobileApplicationsNewRequestDurationConfigurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -437,11 +432,11 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	)
 
 	mobileApplicationsNewRequestDurationConfigurationDeviceTimeoutDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("A single object that specifies the maximum time a notification can remain pending before it is displayed to the user. This timeout starts when the authentication request is initiated and ends when the notification is shown on the device. Value must be between `%d` and `%d` seconds.", mobileApplicationsNewRequestDurationConfigurationDeviceTimeoutMin, mobileApplicationsNewRequestDurationConfigurationDeviceTimeoutMax),
+		fmt.Sprintf("A single object that specifies the maximum time a notification can remain pending before it is displayed to the user. Value must be between `%d` and `%d` seconds.", mobileApplicationsNewRequestDurationConfigurationDeviceTimeoutMin, mobileApplicationsNewRequestDurationConfigurationDeviceTimeoutMax),
 	).DefaultValue(mobileApplicationsNewRequestDurationConfigurationDeviceTimeoutDefault)
 
 	mobileApplicationsNewRequestDurationConfigurationTotalTimeoutDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("A single object that specifies the total time an authentication request notification has to be handled by the user before timing out. This includes both the time until the notification is displayed to the user and the time the user takes to respond. The `total_timeout.duration` must exceed `device_timeout.duration` by at least 15 seconds.  Value must be between `%d` and `%d` seconds.", mobileApplicationsNewRequestDurationConfigurationTotalTimeoutMin, mobileApplicationsNewRequestDurationConfigurationTotalTimeoutMax),
+		fmt.Sprintf("A single object that specifies the total time an authentication request notification has to be handled by the user before timing out. The `total_timeout.duration` must exceed `device_timeout.duration` by at least 15 seconds.  Value must be between `%d` and `%d` seconds.", mobileApplicationsNewRequestDurationConfigurationTotalTimeoutMin, mobileApplicationsNewRequestDurationConfigurationTotalTimeoutMax),
 	).DefaultValue(mobileApplicationsNewRequestDurationConfigurationTotalTimeoutDefault)
 
 	mobileApplicationsNewRequestDurationConfigurationTimeoutDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -449,8 +444,8 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	).AllowedValuesEnum(mfa.ENUMTIMEUNIT_SECONDS)
 
 	mobileApplicationsTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies the application type. For PingID policies, this value is automatically set to `pingIdAppConfig` by the backend. Only applicable when `policy_type` is `PINGID`.",
-	).DefaultValue(mfa.ENUMPINGIDAPPLICATIONTYPE_PING_ID_APP_CONFIG)
+		"A string that specifies the application type. Only applicable when `policy_type` is `PINGID`. Must be set to `pingIdAppConfig`.",
+	)
 
 	rememberMeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A single object that specifies 'remember me' settings so that users do not have to authenticate when accessing applications from a device they have used already.",
@@ -465,7 +460,7 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	)
 
 	rememberMeWebLifeTimeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A single object that defines the period during which users will not have to authenticate if they are accessing applications from a device they have used before. The 'remember me' period can be anywhere from 1 minute to 90 days.",
+		"A single object that defines the period during which users will not have to authenticate if they are accessing applications from a device they have used before. The 'remember me' period can be anywhere from `1` minute to `90` days.",
 	)
 
 	rememberMeWebLifeTimeDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -489,8 +484,8 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	)
 
 	durationTimeUnitSecondsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("A string that specifies the type of time unit for `duration`. Currently, the only permitted value is `%s`.", mfa.ENUMTIMEUNIT_SECONDS),
-	).DefaultValue(string(mfa.ENUMTIMEUNIT_SECONDS))
+		"A string that specifies the type of time unit for `duration`.",
+	).DefaultValue(string(mfa.ENUMTIMEUNIT_SECONDS)).AllowedValuesEnum(mfa.ENUMTIMEUNIT_SECONDS)
 
 	totpPairingDisabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that, when set to `true`, prevents users from pairing new devices with the TOTP method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.",
@@ -533,7 +528,7 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	)
 
 	mobileApplicationsIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies the ID of the application. This must be a valid PingOne resource ID.",
+		"A string that specifies the ID of the application.",
 	)
 
 	mobileApplicationsAutoEnrollmentDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -549,7 +544,7 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	)
 
 	mobileApplicationsDeviceAuthorizationEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Specifies the enabled or disabled state of automatic MFA for native devices paired with the user, for the specified application.",
+		"A boolean that specifies the enabled or disabled state of automatic MFA for native devices paired with the user, for the specified application.",
 	)
 
 	mobileApplicationsOtpDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -561,7 +556,7 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	)
 
 	mobileApplicationsPairingKeyLifetimeDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("An integer that defines the amount of time an issued pairing key can be used until it expires. Minimum is %d minute and maximum is %d hours. If this parameter is not provided, the duration is set to 10 minutes.", pingidDevicePairingKeyLifetimeDurationMinMinutes, pingidDevicePairingKeyLifetimeDurationMaxHours),
+		fmt.Sprintf("An integer that defines the amount of time an issued pairing key can be used until it expires. Minimum is `%d` minute and maximum is `%d` hours. If this parameter is not provided, the duration is set to `10` minutes.", pingidDevicePairingKeyLifetimeDurationMinMinutes, pingidDevicePairingKeyLifetimeDurationMaxHours),
 	)
 
 	mobileApplicationsPushDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -573,11 +568,11 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	)
 
 	mobileApplicationsPushNumberMatchingDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A single object that configures number matching for push notifications. ",
+		"A single object that configures number matching for push notifications.",
 	)
 
 	mobileApplicationsPushNumberMatchingEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Set to `true` if you want to require the authenticating user to select a number that was displayed to them on the accessing device.",
+		"A boolean that, when set to `true`, requires the authenticating user to select a number that was displayed to them on the accessing device.",
 	)
 
 	mobileApplicationsPushLimitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -585,8 +580,8 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	)
 
 	mobileApplicationsPushLimitCountDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"An integer that specifies the number of consecutive push notifications that can be ignored or rejected by a user within a defined period before push notifications are blocked for the application. The minimum value is `1` and the maximum value is `50`. If this parameter is not provided, the default value is `5`.",
-	)
+		"An integer that specifies the number of consecutive push notifications that can be ignored or rejected by a user within a defined period before push notifications are blocked for the application. The minimum value is `1` and the maximum value is `50`.",
+	).DefaultValue(mobileApplicationsPushLimitCountDefault)
 
 	mobileApplicationsPushLimitLockDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A single object that specifies push limit lock duration settings for the application in the policy.",
@@ -649,7 +644,7 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	)
 
 	fido2PolicyIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies the resource UUID that represents the FIDO2 policy in PingOne. This property can be null / left undefined. When null, the environment's default FIDO2 Policy is used.  Must be a valid PingOne resource ID.",
+		"A string that specifies the resource UUID that represents the FIDO2 policy in PingOne. When null, the environment's default FIDO2 Policy is used.",
 	)
 
 	desktopDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -677,7 +672,7 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	)
 
 	desktopOtpFailureCoolDownDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. Must be between %d SECONDS and %d MINUTES.", pingidDeviceOtpFailureCoolDownDurationMinSeconds, pingidDeviceOtpFailureCoolDownDurationMaxMinutes),
+		fmt.Sprintf("An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. Must be between `%d` seconds and `%d` minutes.", pingidDeviceOtpFailureCoolDownDurationMinSeconds, pingidDeviceOtpFailureCoolDownDurationMaxMinutes),
 	)
 
 	desktopPairingDisabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -689,7 +684,7 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	)
 
 	desktopPairingKeyLifetimeDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("An integer that defines the amount of time an issued pairing key can be used until it expires. Must be between %d MINUTES and %d HOURS.", pingidDevicePairingKeyLifetimeDurationMinMinutes, pingidDevicePairingKeyLifetimeDurationMaxHours),
+		fmt.Sprintf("An integer that defines the amount of time an issued pairing key can be used until it expires. Must be between %d minutes and %d hours.", pingidDevicePairingKeyLifetimeDurationMinMinutes, pingidDevicePairingKeyLifetimeDurationMaxHours),
 	)
 
 	yubikeyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -717,7 +712,7 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	)
 
 	yubikeyOtpFailureCoolDownDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. Must be between %d SECONDS and %d MINUTES.", pingidDeviceOtpFailureCoolDownDurationMinSeconds, pingidDeviceOtpFailureCoolDownDurationMaxMinutes),
+		fmt.Sprintf("An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. Must be between `%d` seconds and `%d` minutes.", pingidDeviceOtpFailureCoolDownDurationMinSeconds, pingidDeviceOtpFailureCoolDownDurationMaxMinutes),
 	)
 
 	yubikeyPairingDisabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -729,7 +724,7 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	)
 
 	yubikeyPairingKeyLifetimeDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("An integer that defines the amount of time an issued pairing key can be used until it expires. Must be between %d MINUTES and %d HOURS.", pingidDevicePairingKeyLifetimeDurationMinMinutes, pingidDevicePairingKeyLifetimeDurationMaxHours),
+		fmt.Sprintf("An integer that defines the amount of time an issued pairing key can be used until it expires. Must be between %d minutes and %d hours.", pingidDevicePairingKeyLifetimeDurationMinMinutes, pingidDevicePairingKeyLifetimeDurationMaxHours),
 	)
 
 	oathTokenDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -749,7 +744,7 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	)
 
 	oathTokenOtpFailureCountDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. Must be between %d and %d.", pingidDeviceOtpFailureCountMin, pingidDeviceOtpFailureCountMax),
+		fmt.Sprintf("An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. Must be between `%d` and `%d`.", pingidDeviceOtpFailureCountMin, pingidDeviceOtpFailureCountMax),
 	)
 
 	oathTokenOtpFailureCoolDownDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -757,7 +752,7 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	)
 
 	oathTokenOtpFailureCoolDownDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. Must be between %d SECONDS and %d MINUTES.", pingidDeviceOtpFailureCoolDownDurationMinSeconds, pingidDeviceOtpFailureCoolDownDurationMaxMinutes),
+		fmt.Sprintf("An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. Must be between `%d` seconds and `%d` minutes.", pingidDeviceOtpFailureCoolDownDurationMinSeconds, pingidDeviceOtpFailureCoolDownDurationMaxMinutes),
 	)
 
 	oathTokenPairingDisabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -769,11 +764,16 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	)
 
 	oathTokenPairingKeyLifetimeDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("An integer that defines the amount of time an issued pairing key can be used until it expires. Must be between %d MINUTES and %d HOURS.", pingidDevicePairingKeyLifetimeDurationMinMinutes, pingidDevicePairingKeyLifetimeDurationMaxHours),
+		fmt.Sprintf("An integer that defines the amount of time an issued pairing key can be used until it expires. Must be between `%d` minutes and `%d` hours.", pingidDevicePairingKeyLifetimeDurationMinMinutes, pingidDevicePairingKeyLifetimeDurationMaxHours),
+	)
+
+	resourceDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Resource to overwrite the default MFA device policy. Valid for both PingOne MFA and PingID integrated environments.",
 	)
 
 	resp.Schema = schema.Schema{
-		Description: "Resource to overwrite the default MFA device policy. Valid for both PingOne MFA and PingID integrated environments.",
+		Description:         resourceDescription.Description,
+		MarkdownDescription: resourceDescription.MarkdownDescription,
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
@@ -2318,13 +2318,49 @@ func (r *MFADevicePolicyDefaultResource) devicePolicyOfflineDeviceSchemaAttribut
 	const otpOtpLengthMin = 6
 	const otpOtpLengthMax = 10
 
+	devicePolicyOfflineDeviceDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A single object that allows configuration of %s device authentication policy settings.", descriptionMethod),
+	)
+
+	devicePolicyOfflineDeviceEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A boolean that specifies whether the %s method is enabled or disabled in the policy.", descriptionMethod),
+	)
+
 	pairingDisabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("A boolean that, when set to `true`, prevents users from pairing new devices with the %s method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.", descriptionMethod),
 	).DefaultValue(false)
 
+	devicePolicyOfflineDeviceOtpDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A single object that allows configuration of %s settings.", descriptionMethod),
+	)
+
+	devicePolicyOfflineDeviceOtpFailureDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A single object that allows configuration of %s failure settings.", descriptionMethod),
+	)
+
+	devicePolicyOfflineDeviceOtpFailureCoolDownDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A single object that allows configuration of %s failure cool down settings.", descriptionMethod),
+	)
+
+	devicePolicyOfflineDeviceOtpFailureCoolDownDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures.",
+	)
+
 	otpCoolDownDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the type of time unit for `duration`.",
 	).AllowedValuesEnum(mfa.AllowedEnumTimeUnitEnumValues)
+
+	devicePolicyOfflineDeviceOtpFailureCountDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. The minimum value is `%d` and the maximum value is `%d`.", otpFailureCountMin, otpFailureCountMax),
+	)
+
+	devicePolicyOfflineDeviceOtpLifetimeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A single object that allows configuration of %s lifetime settings.", descriptionMethod),
+	)
+
+	devicePolicyOfflineDeviceOtpLifetimeDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that defines the duration (number of time units) that the passcode is valid before it expires. The minimum value is `%d` and the maximum value is `%d`.", otpLifetimeDurationMin, otpLifetimeDurationMax),
+	)
 
 	otpOtpLengthDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("An integer that specifies the length of the OTP that is shown to users.  Minimum length is `%d` digits and maximum is `%d` digits.", otpOtpLengthMin, otpOtpLengthMax),
@@ -2335,13 +2371,15 @@ func (r *MFADevicePolicyDefaultResource) devicePolicyOfflineDeviceSchemaAttribut
 	)
 
 	return schema.SingleNestedAttribute{
-		Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("A single object that allows configuration of %s device authentication policy settings.", descriptionMethod)).Description,
-		Required:    true,
+		Description:         devicePolicyOfflineDeviceDescription.Description,
+		MarkdownDescription: devicePolicyOfflineDeviceDescription.MarkdownDescription,
+		Required:            true,
 
 		Attributes: map[string]schema.Attribute{
 			"enabled": schema.BoolAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("A boolean that specifies whether the %s method is enabled or disabled in the policy.", descriptionMethod)).Description,
-				Required:    true,
+				Description:         devicePolicyOfflineDeviceEnabledDescription.Description,
+				MarkdownDescription: devicePolicyOfflineDeviceEnabledDescription.MarkdownDescription,
+				Required:            true,
 			},
 
 			"pairing_disabled": schema.BoolAttribute{
@@ -2354,9 +2392,10 @@ func (r *MFADevicePolicyDefaultResource) devicePolicyOfflineDeviceSchemaAttribut
 			},
 
 			"otp": schema.SingleNestedAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("A single object that allows configuration of %s settings.", descriptionMethod)).Description,
-				Optional:    true,
-				Computed:    true,
+				Description:         devicePolicyOfflineDeviceOtpDescription.Description,
+				MarkdownDescription: devicePolicyOfflineDeviceOtpDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
 
 				Default: objectdefault.StaticValue(types.ObjectValueMust(
 					MFADevicePolicyOfflineDeviceOtpTFObjectTypes,
@@ -2387,18 +2426,21 @@ func (r *MFADevicePolicyDefaultResource) devicePolicyOfflineDeviceSchemaAttribut
 
 				Attributes: map[string]schema.Attribute{
 					"failure": schema.SingleNestedAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("A single object that allows configuration of %s failure settings.", descriptionMethod)).Description,
-						Optional:    true,
+						Description:         devicePolicyOfflineDeviceOtpFailureDescription.Description,
+						MarkdownDescription: devicePolicyOfflineDeviceOtpFailureDescription.MarkdownDescription,
+						Optional:            true,
 
 						Attributes: map[string]schema.Attribute{
 							"cool_down": schema.SingleNestedAttribute{
-								Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("A single object that allows configuration of %s failure cool down settings.", descriptionMethod)).Description,
-								Required:    true,
+								Description:         devicePolicyOfflineDeviceOtpFailureCoolDownDescription.Description,
+								MarkdownDescription: devicePolicyOfflineDeviceOtpFailureCoolDownDescription.MarkdownDescription,
+								Required:            true,
 
 								Attributes: map[string]schema.Attribute{
 									"duration": schema.Int32Attribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. The minimum value is `%d` and the maximum value is `%d`.", otpFailureCoolDownDurationMin, otpFailureCoolDownDurationMax)).Description,
-										Required:    true,
+										Description:         devicePolicyOfflineDeviceOtpFailureCoolDownDurationDescription.Description,
+										MarkdownDescription: devicePolicyOfflineDeviceOtpFailureCoolDownDurationDescription.MarkdownDescription,
+										Required:            true,
 										Validators: []validator.Int32{
 											int32validator.Between(otpFailureCoolDownDurationMin, otpFailureCoolDownDurationMax),
 										},
@@ -2417,8 +2459,9 @@ func (r *MFADevicePolicyDefaultResource) devicePolicyOfflineDeviceSchemaAttribut
 							},
 
 							"count": schema.Int32Attribute{
-								Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. The minimum value is `%d` and the maximum value is `%d`.", otpFailureCountMin, otpFailureCountMax)).Description,
-								Required:    true,
+								Description:         devicePolicyOfflineDeviceOtpFailureCountDescription.Description,
+								MarkdownDescription: devicePolicyOfflineDeviceOtpFailureCountDescription.MarkdownDescription,
+								Required:            true,
 								Validators: []validator.Int32{
 									int32validator.Between(otpFailureCountMin, otpFailureCountMax),
 								},
@@ -2427,9 +2470,10 @@ func (r *MFADevicePolicyDefaultResource) devicePolicyOfflineDeviceSchemaAttribut
 					},
 
 					"lifetime": schema.SingleNestedAttribute{
-						Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("A single object that allows configuration of %s lifetime settings.", descriptionMethod)).Description,
-						Optional:    true,
-						Computed:    true,
+						Description:         devicePolicyOfflineDeviceOtpLifetimeDescription.Description,
+						MarkdownDescription: devicePolicyOfflineDeviceOtpLifetimeDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
 
 						Default: objectdefault.StaticValue(types.ObjectValueMust(
 							MFADevicePolicyTimePeriodTFObjectTypes,
@@ -2441,8 +2485,9 @@ func (r *MFADevicePolicyDefaultResource) devicePolicyOfflineDeviceSchemaAttribut
 
 						Attributes: map[string]schema.Attribute{
 							"duration": schema.Int32Attribute{
-								Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("An integer that defines the duration (number of time units) that the passcode is valid before it expires. The minimum value is `%d` and the maximum value is `%d`.", otpLifetimeDurationMin, otpLifetimeDurationMax)).Description,
-								Required:    true,
+								Description:         devicePolicyOfflineDeviceOtpLifetimeDurationDescription.Description,
+								MarkdownDescription: devicePolicyOfflineDeviceOtpLifetimeDurationDescription.MarkdownDescription,
+								Required:            true,
 								Validators: []validator.Int32{
 									int32validator.Between(otpLifetimeDurationMin, otpLifetimeDurationMax),
 								},
@@ -3430,9 +3475,9 @@ func (p *MFADevicePolicyOathTokenResourceModel) expand(ctx context.Context) (*mf
 		}
 
 		data.SetPairingKeyLifetime(
-			mfa.DeviceAuthenticationPolicyPingIDDevicePairingKeyLifetime{
+			mfa.DeviceAuthenticationPolicyOathTokenPairingKeyLifetime{
 				Duration: pairingKeyLifetimePlan.Duration.ValueInt32(),
-				TimeUnit: mfa.EnumTimeUnitPairingKeyLifetime(pairingKeyLifetimePlan.TimeUnit.ValueString()),
+				TimeUnit: mfa.EnumTimeUnit(pairingKeyLifetimePlan.TimeUnit.ValueString()),
 			},
 		)
 	}
@@ -3727,7 +3772,7 @@ func expandMobileForDefault(ctx context.Context, mobilePlan MFADevicePolicyDefau
 			}
 
 			if !appPlan.IpPairingConfiguration.IsNull() && !appPlan.IpPairingConfiguration.IsUnknown() {
-				ipConfig := mfa.NewDeviceAuthenticationPolicyCommonMobileIpPairingConfiguration()
+				ipConfig := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerIpPairingConfiguration()
 
 				ipConfigAttrs := appPlan.IpPairingConfiguration.Attributes()
 
