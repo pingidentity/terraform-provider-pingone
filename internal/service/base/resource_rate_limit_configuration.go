@@ -282,7 +282,7 @@ func (r *RateLimitConfigurationResource) Delete(ctx context.Context, req resourc
 		},
 		"DeleteRateLimitConfiguration",
 		legacysdk.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultCreateReadRetryable,
+		nil,
 		nil,
 	)...)
 	if resp.Diagnostics.HasError() {
