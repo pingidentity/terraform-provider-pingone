@@ -833,10 +833,9 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 			},
 
 			"voice": schema.SingleNestedAttribute{
-				Description: "Defines the requirements for transactions invoked by the policy.",
-				Computed:    true,
-
-				Attributes: map[string]schema.Attribute{
+				Description:        "**[Deprecation notice: This field is deprecated and will be removed in a future release. Please use alternative verification methods.]** Defines the requirements for transactions invoked by the policy.",
+				DeprecationMessage: "Deprecation notice: This field is deprecated and will be removed in a future release. Please use alternative verification methods.",
+				Computed:           true, Attributes: map[string]schema.Attribute{
 					"verify": schema.StringAttribute{
 						Description:         voiceVerifyDescription.Description,
 						MarkdownDescription: voiceVerifyDescription.MarkdownDescription,

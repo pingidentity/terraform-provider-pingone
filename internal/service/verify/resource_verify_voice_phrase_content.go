@@ -76,6 +76,8 @@ func (r *VoicePhraseContentResource) Schema(ctx context.Context, req resource.Sc
 		// This description is used by the documentation generator and the language server.
 		Description: "Resource to configure the phrases to speak during voice verification enrollment or validation.",
 
+		DeprecationMessage: "Deprecation notice: This resource is deprecated and will be removed in a future release. Please use alternative verification methods.",
+
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 

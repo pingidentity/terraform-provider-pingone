@@ -67,6 +67,7 @@ func DataSources() []func() datasource.DataSource {
 		NewPopulationsDataSource,
 		NewResourceDataSource,
 		NewResourceScopeDataSource,
+		NewResourceScopesDataSource,
 		NewResourceSecretDataSource,
 		NewSchemaDataSource,
 		NewUserDataSource,
