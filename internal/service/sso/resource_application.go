@@ -2600,8 +2600,6 @@ func (p *applicationResourceModelV1) expandApplicationOIDC(ctx context.Context) 
 		)
 		data.SetGrantTypes(grantTypes)
 
-		data.SetGrantTypes(grantTypes)
-
 		applicationCommon, d := p.expandApplicationCommon(ctx)
 		diags.Append(d...)
 		if diags.HasError() {
