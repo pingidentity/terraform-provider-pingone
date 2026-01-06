@@ -71,11 +71,11 @@ func (r *RateLimitConfigurationResource) Schema(ctx context.Context, req resourc
 	)
 
 	createdAtDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies the time the resource was created.",
+		"A string that specifies the time the resource was created in RFC3339 format.",
 	)
 
 	updatedAtDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies the time the resource was last updated.",
+		"A string that specifies the time the resource was last updated in RFC3339 format.",
 	)
 
 	resp.Schema = schema.Schema{

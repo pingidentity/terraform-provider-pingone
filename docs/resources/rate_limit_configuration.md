@@ -38,9 +38,9 @@ resource "pingone_rate_limit_configuration" "my_rate_limit_configuration" {
 
 ### Read-Only
 
-- `created_at` (String) A string that specifies the time the resource was created.
+- `created_at` (String) A string that specifies the time the resource was created in RFC3339 format.
 - `id` (String) The ID of this resource.
-- `updated_at` (String) A string that specifies the time the resource was last updated.
+- `updated_at` (String) A string that specifies the time the resource was last updated in RFC3339 format.
 
 ## Import
 
