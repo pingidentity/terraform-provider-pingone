@@ -301,7 +301,7 @@ resource "pingone_davinci_application" "%[2]s" {
 
 resource "pingone_davinci_application_key" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  application_id = pingone_davinci_application.%[2]s.id
+  davinci_application_id = pingone_davinci_application.%[2]s.id
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
 }
@@ -318,7 +318,7 @@ resource "pingone_davinci_application" "%[2]s" {
 
 resource "pingone_davinci_application_key" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  application_id = pingone_davinci_application.%[2]s.id
+  davinci_application_id = pingone_davinci_application.%[2]s.id
   rotation_trigger_values = {
     "trigger" = "initial"
   }
@@ -337,7 +337,7 @@ resource "pingone_davinci_application" "%[2]s" {
 
 resource "pingone_davinci_application_key" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  application_id = pingone_davinci_application.%[2]s.id
+  davinci_application_id = pingone_davinci_application.%[2]s.id
   rotation_trigger_values = {
     "trigger"    = "updated"
     "newtrigger" = "new"
@@ -358,7 +358,7 @@ resource "pingone_davinci_application" "%[2]s" {
 
 resource "pingone_davinci_application_key" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  application_id = pingone_davinci_application.%[2]s.id
+  davinci_application_id = pingone_davinci_application.%[2]s.id
   rotation_trigger_values = {
     "trigger" = "updated"
   }
@@ -377,7 +377,7 @@ resource "pingone_davinci_application" "%[3]s" {
 
 resource "pingone_davinci_application_key" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  application_id = pingone_davinci_application.%[3]s.id
+  davinci_application_id = pingone_davinci_application.%[3]s.id
   rotation_trigger_values = {
     "trigger" = "initial"
   }
