@@ -193,7 +193,7 @@ func (r *davinciFlowDeployResource) Create(ctx context.Context, req resource.Cre
 		},
 		"DeployFlow",
 		framework.DefaultCustomError,
-		framework.InsufficientPrivilegeRetryable,
+		framework.DefaultRetryable,
 		&responseData,
 	)...)
 
@@ -249,7 +249,7 @@ func (r *davinciFlowDeployResource) Read(ctx context.Context, req resource.ReadR
 		},
 		"GetFlowById",
 		framework.CustomErrorResourceNotFoundWarning,
-		framework.InsufficientPrivilegeRetryable,
+		framework.DefaultRetryable,
 		&responseData,
 	)...)
 

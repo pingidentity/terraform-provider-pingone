@@ -575,7 +575,7 @@ func (r *davinciVariableResource) Create(ctx context.Context, req resource.Creat
 		},
 		"CreateVariable",
 		framework.DefaultCustomError,
-		framework.InsufficientPrivilegeRetryable,
+		framework.DefaultRetryable,
 		&responseData,
 	)...)
 
@@ -640,7 +640,7 @@ func (r *davinciVariableResource) Read(ctx context.Context, req resource.ReadReq
 		},
 		"GetVariableById",
 		framework.CustomErrorResourceNotFoundWarning,
-		framework.InsufficientPrivilegeRetryable,
+		framework.DefaultRetryable,
 		&responseData,
 	)...)
 
@@ -717,7 +717,7 @@ func (r *davinciVariableResource) Update(ctx context.Context, req resource.Updat
 		},
 		"ReplaceVariableById",
 		framework.DefaultCustomError,
-		framework.InsufficientPrivilegeRetryable,
+		framework.DefaultRetryable,
 		&responseData,
 	)...)
 
@@ -781,7 +781,7 @@ func (r *davinciVariableResource) Delete(ctx context.Context, req resource.Delet
 		},
 		"DeleteVariableById",
 		framework.CustomErrorResourceNotFoundWarning,
-		framework.InsufficientPrivilegeRetryable,
+		framework.DefaultRetryable,
 		nil,
 	)...)
 }
