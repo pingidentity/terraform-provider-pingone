@@ -73,6 +73,36 @@ func TestAccRateLimitConfiguration_RemovalDrift(t *testing.T) {
 	})
 }
 
+func TestAccRateLimitConfiguration_NewEnv(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_rate_limit_configuration.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             base.RateLimitConfiguration_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccRateLimitConfigurationConfig_IPv4_NewEnv(environmentName, licenseID, resourceName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+				),
+			},
+		},
+	})
+}
+
 func TestAccRateLimitConfiguration_Full(t *testing.T) {
 	t.Parallel()
 
