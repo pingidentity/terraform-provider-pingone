@@ -244,6 +244,10 @@ func (r *RateLimitConfigurationResource) Read(ctx context.Context, req resource.
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(data.toState(response)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
