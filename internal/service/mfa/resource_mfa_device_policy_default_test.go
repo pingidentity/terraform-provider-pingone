@@ -317,8 +317,6 @@ func TestAccMFADevicePolicyDefault_BadParameters(t *testing.T) {
 }
 
 func TestAccMFADevicePolicyDefault_PingID_Full(t *testing.T) {
-	// t.Parallel()
-
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy_default.%s", resourceName)
 
@@ -384,8 +382,6 @@ func TestAccMFADevicePolicyDefault_PingID_Full(t *testing.T) {
 }
 
 func TestAccMFADevicePolicyDefault_PingID_Minimal(t *testing.T) {
-	// t.Parallel()
-
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy_default.%s", resourceName)
 
@@ -424,8 +420,6 @@ func TestAccMFADevicePolicyDefault_PingID_Minimal(t *testing.T) {
 }
 
 func TestAccMFADevicePolicyDefault_PingID_Change(t *testing.T) {
-	t.Parallel()
-
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy_default.%s", resourceName)
 
@@ -472,6 +466,45 @@ func TestAccMFADevicePolicyDefault_PingID_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "yubikey.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oath_token.enabled", "true"),
 				),
+			},
+		},
+	})
+}
+
+func TestAccMFADevicePolicyDefault_PingID_SetOrdering(t *testing.T) {
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy_default.%s", resourceName)
+
+	name := resourceName
+
+	ips1 := []string{"192.168.0.1/32", "192.168.0.2/32", "192.168.0.3/32"}
+	ips2 := []string{"192.168.0.3/32", "192.168.0.2/32", "192.168.0.1/32"}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckRegionSupportsWorkforce(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             mfa.MFADevicePolicyDefault_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMFADevicePolicyDefaultConfig_WithIPs(resourceName, name, ips1),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, fmt.Sprintf("data.pingone_application.%s", resourceName), "mobile.applications.%s.ip_pairing_configuration.only_these_ip_addresses.#", "3"),
+				),
+			},
+			{
+				Config: testAccMFADevicePolicyDefaultConfig_WithIPs(resourceName, name, ips2),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, fmt.Sprintf("data.pingone_application.%s", resourceName), "mobile.applications.%s.ip_pairing_configuration.only_these_ip_addresses.#", "3"),
+				),
+				ExpectNonEmptyPlan: false, // Verify that reordering set items does not cause a drift or update
 			},
 		},
 	})
@@ -2926,4 +2959,64 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
   voice   = { enabled = false }
   email   = { enabled = false }
 }`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name, duration)
+}
+
+func testAccMFADevicePolicyDefaultConfig_WithIPs(resourceName, name string, ips []string) string {
+	ipList := ""
+	for _, ip := range ips {
+		ipList += fmt.Sprintf(`"%s", `, ip)
+	}
+
+	return fmt.Sprintf(`
+		%[1]s
+
+data "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.workforce_test.id
+  name           = "PingID Mobile"
+}
+
+resource "pingone_mfa_device_policy_default" "%[2]s" {
+  environment_id = data.pingone_environment.workforce_test.id
+  policy_type    = "PING_ONE_ID"
+
+  name = "%[3]s"
+
+  authentication = {
+    device_selection = "DEFAULT_TO_FIRST"
+  }
+
+  mobile = {
+    enabled = true
+    applications = {
+      (data.pingone_application.%[2]s.id) = {
+        type = "pingIdAppConfig"
+        push = { enabled = true }
+        otp  = { enabled = true }
+        new_request_duration_configuration = {
+          device_timeout = {
+            duration  = 30
+            time_unit = "SECONDS"
+          }
+          total_timeout = {
+            duration  = 60
+            time_unit = "SECONDS"
+          }
+        }
+        ip_pairing_configuration = {
+            any_ip_address = false
+            only_these_ip_addresses = [%[4]s]
+        }
+      }
+    }
+  }
+
+  desktop = { enabled = false }
+  yubikey = { enabled = false }
+  oath_token = { enabled = false }
+  sms     = { enabled = false }
+  voice   = { enabled = false }
+  email   = { enabled = false }
+  totp    = { enabled = false }
+}
+`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name, ipList)
 }
