@@ -418,7 +418,7 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	).DefaultValue(mobileOtpFailureCoolDownDurationDefault)
 
 	mobileIpPairingConfigurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A single object that allows you to restrict device pairing to specific IP addresses. Only applicable for PingID policies.",
+		fmt.Sprintf("A single object that allows you to restrict device pairing to specific IP addresses. Only applicable for %s policies.", POLICY_TYPE_PINGID),
 	)
 
 	mobileIpPairingConfigurationAnyIpAddressDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -430,7 +430,7 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	)
 
 	mobileApplicationsNewRequestDurationConfigurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A single object that configures timeout settings for authentication request notifications. Only applicable for PingID policies.",
+		fmt.Sprintf("A single object that configures timeout settings for authentication request notifications. Only applicable for %s policies.", POLICY_TYPE_PINGID),
 	)
 
 	mobileApplicationsNewRequestDurationConfigurationDeviceTimeoutDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -446,7 +446,7 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	).AllowedValuesEnum(mfa.ENUMTIMEUNIT_SECONDS)
 
 	mobileApplicationsTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies the application type. Only applicable when `policy_type` is `PINGID`. Must be set to `pingIdAppConfig`.",
+		fmt.Sprintf("A string that specifies the application type. Only applicable when `policy_type` is `%s`. Must be set to `pingIdAppConfig`.", POLICY_TYPE_PINGID),
 	)
 
 	rememberMeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -482,7 +482,7 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	).AllowedValuesEnum(mfa.AllowedEnumTimeUnitPairingKeyLifetimeEnumValues)
 
 	mobileApplicationsPairingKeyLifetimeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A single object that specifies pairing key lifetime settings for the application in the policy. Defaults to 10 minutes for PingOne MFA policies and 48 hours for PingID policies.",
+		fmt.Sprintf("A single object that specifies pairing key lifetime settings for the application in the policy. Defaults to 10 minutes for PingOne MFA policies and 48 hours for %s policies.", POLICY_TYPE_PINGID),
 	)
 
 	durationTimeUnitSecondsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -534,7 +534,7 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	)
 
 	mobileApplicationsBiometricsEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A boolean that specifies whether biometric authentication methods (such as fingerprint or facial recognition) are enabled for MFA. Only applicable for PingID policies.",
+		fmt.Sprintf("A boolean that specifies whether biometric authentication methods (such as fingerprint or facial recognition) are enabled for MFA. Only applicable for %s policies.", POLICY_TYPE_PINGID),
 	)
 
 	mobileApplicationsDeviceAuthorizationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -646,7 +646,7 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	)
 
 	desktopDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A single object that allows configuration of PingID desktop device authentication policy settings. Only applicable when `policy_type` is `PINGID`.",
+		fmt.Sprintf("A single object that allows configuration of PingID desktop device authentication policy settings. Only applicable when `policy_type` is `%s`.", POLICY_TYPE_PINGID),
 	)
 
 	desktopEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -686,7 +686,7 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	)
 
 	yubikeyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A single object that allows configuration of PingID Yubikey device authentication policy settings. Only applicable when `policy_type` is `PINGID`.",
+		fmt.Sprintf("A single object that allows configuration of PingID Yubikey device authentication policy settings. Only applicable when `policy_type` is `%s`.", POLICY_TYPE_PINGID),
 	)
 
 	yubikeyEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -766,7 +766,7 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	)
 
 	resourceDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Resource to overwrite the default MFA device policy. Valid for both PingOne MFA and PingID integrated environments.",
+		fmt.Sprintf("Resource to overwrite the default MFA device policy. Valid for both PingOne MFA and %s integrated environments.", POLICY_TYPE_PINGID),
 	)
 
 	resp.Schema = schema.Schema{

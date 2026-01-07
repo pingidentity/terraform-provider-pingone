@@ -2,12 +2,12 @@
 page_title: "pingone_mfa_device_policy_default Resource - terraform-provider-pingone"
 subcategory: "MFA"
 description: |-
-  Resource to overwrite the default MFA device policy. Valid for both PingOne MFA and PingID integrated environments.
+  Resource to overwrite the default MFA device policy. Valid for both PingOne MFA and PING_ONE_ID integrated environments.
 ---
 
 # pingone_mfa_device_policy_default (Resource)
 
-Resource to overwrite the default MFA device policy. Valid for both PingOne MFA and PingID integrated environments.
+Resource to overwrite the default MFA device policy. Valid for both PingOne MFA and PING_ONE_ID integrated environments.
 
 ## Example Usage - PingOne MFA Policy
 
@@ -346,14 +346,14 @@ resource "pingone_environment" "my_environment" {
 ### Optional
 
 - `authentication` (Attributes) A single object that allows configuration of authentication settings in the device policy. (see [below for nested schema](#nestedatt--authentication))
-- `desktop` (Attributes) A single object that allows configuration of PingID desktop device authentication policy settings. Only applicable when `policy_type` is `PINGID`. (see [below for nested schema](#nestedatt--desktop))
+- `desktop` (Attributes) A single object that allows configuration of PingID desktop device authentication policy settings. Only applicable when `policy_type` is `PING_ONE_ID`. (see [below for nested schema](#nestedatt--desktop))
 - `fido2` (Attributes) A single object that allows configuration of FIDO2 device authentication policy settings. (see [below for nested schema](#nestedatt--fido2))
 - `ignore_user_lock` (Boolean) A boolean that, when set to `true`, allows PingOne to skip the account lock check during MFA authentication.  Defaults to `false`.
 - `new_device_notification` (String) A string that defines whether a user should be notified if a new authentication method has been added to their account.  Options are `EMAIL_THEN_SMS`, `NONE`, `SMS_THEN_EMAIL`.  Defaults to `NONE`.
 - `notifications_policy` (Attributes) A single object that specifies the notification policy to use for this MFA device policy. If not specified, the default notification policy for the environment will be used.  **Note:** When destroying this resource, the `notifications_policy` will be unset (set to null) to release any dependencies, allowing the referenced notification policy to be deleted if needed. (see [below for nested schema](#nestedatt--notifications_policy))
 - `oath_token` (Attributes) A single object that allows configuration of OATH token device authentication policy settings. (see [below for nested schema](#nestedatt--oath_token))
 - `remember_me` (Attributes) A single object that specifies 'remember me' settings so that users do not have to authenticate when accessing applications from a device they have used already. (see [below for nested schema](#nestedatt--remember_me))
-- `yubikey` (Attributes) A single object that allows configuration of PingID Yubikey device authentication policy settings. Only applicable when `policy_type` is `PINGID`. (see [below for nested schema](#nestedatt--yubikey))
+- `yubikey` (Attributes) A single object that allows configuration of PingID Yubikey device authentication policy settings. Only applicable when `policy_type` is `PING_ONE_ID`. (see [below for nested schema](#nestedatt--yubikey))
 
 ### Read-Only
 
@@ -434,17 +434,17 @@ Required:
 Optional:
 
 - `auto_enrollment` (Attributes) A single object that specifies auto enrollment settings for the application in the policy. (see [below for nested schema](#nestedatt--mobile--applications--auto_enrollment))
-- `biometrics_enabled` (Boolean) A boolean that specifies whether biometric authentication methods (such as fingerprint or facial recognition) are enabled for MFA. Only applicable for PingID policies.
+- `biometrics_enabled` (Boolean) A boolean that specifies whether biometric authentication methods (such as fingerprint or facial recognition) are enabled for MFA. Only applicable for PING_ONE_ID policies.
 - `device_authorization` (Attributes) A single object that specifies device authorization settings for the application in the policy. (see [below for nested schema](#nestedatt--mobile--applications--device_authorization))
 - `integrity_detection` (String) A string that controls how authentication or registration attempts should proceed if a device integrity check does not receive a response.  Options are `permissive`, `restrictive`.
-- `ip_pairing_configuration` (Attributes) A single object that allows you to restrict device pairing to specific IP addresses. Only applicable for PingID policies. (see [below for nested schema](#nestedatt--mobile--applications--ip_pairing_configuration))
-- `new_request_duration_configuration` (Attributes) A single object that configures timeout settings for authentication request notifications. Only applicable for PingID policies. (see [below for nested schema](#nestedatt--mobile--applications--new_request_duration_configuration))
+- `ip_pairing_configuration` (Attributes) A single object that allows you to restrict device pairing to specific IP addresses. Only applicable for PING_ONE_ID policies. (see [below for nested schema](#nestedatt--mobile--applications--ip_pairing_configuration))
+- `new_request_duration_configuration` (Attributes) A single object that configures timeout settings for authentication request notifications. Only applicable for PING_ONE_ID policies. (see [below for nested schema](#nestedatt--mobile--applications--new_request_duration_configuration))
 - `pairing_disabled` (Boolean) A boolean that, when set to `true`, prevents users from pairing new devices with the relevant application. You can use this option if you want to phase out an existing mobile application but want to allow users to continue using the application for authentication for existing devices.
-- `pairing_key_lifetime` (Attributes) A single object that specifies pairing key lifetime settings for the application in the policy. Defaults to 10 minutes for PingOne MFA policies and 48 hours for PingID policies. (see [below for nested schema](#nestedatt--mobile--applications--pairing_key_lifetime))
+- `pairing_key_lifetime` (Attributes) A single object that specifies pairing key lifetime settings for the application in the policy. Defaults to 10 minutes for PingOne MFA policies and 48 hours for PING_ONE_ID policies. (see [below for nested schema](#nestedatt--mobile--applications--pairing_key_lifetime))
 - `push` (Attributes) A single object that specifies push settings for the application in the policy. (see [below for nested schema](#nestedatt--mobile--applications--push))
 - `push_limit` (Attributes) A single object that specifies push limit settings for the application in the policy. (see [below for nested schema](#nestedatt--mobile--applications--push_limit))
 - `push_timeout` (Attributes) A single object that specifies push timeout settings for the application in the policy. (see [below for nested schema](#nestedatt--mobile--applications--push_timeout))
-- `type` (String) A string that specifies the application type. Only applicable when `policy_type` is `PINGID`. Must be set to `pingIdAppConfig`.
+- `type` (String) A string that specifies the application type. Only applicable when `policy_type` is `PING_ONE_ID`. Must be set to `pingIdAppConfig`.
 
 <a id="nestedatt--mobile--applications--otp"></a>
 ### Nested Schema for `mobile.applications.otp`
