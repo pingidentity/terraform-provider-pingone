@@ -3129,12 +3129,9 @@ func (p *MFADevicePolicyDefaultResourceModel) expand(ctx context.Context) (mfa.D
 		*email,
 		*mobile,
 		*totp,
-		false, // default
+		true,
 		false, // forSignOnPolicy
 	)
-
-	// Always set default to true for the default policy
-	data.SetDefault(true)
 
 	// FIDO2 - available for both policy types
 	if !p.Fido2.IsNull() && !p.Fido2.IsUnknown() {
