@@ -83,12 +83,12 @@ type MinMaxChecks struct {
 }
 
 func PreCheckClient(t *testing.T) {
-	if v := os.Getenv("PINGONE_CLIENT_ID"); v == "" {
-		t.Fatal("PINGONE_CLIENT_ID is missing and must be set")
+	if v := os.Getenv("PINGONE_CLIENT_CREDENTIALS_CLIENT_ID"); v == "" {
+		t.Fatal("PINGONE_CLIENT_CREDENTIALS_CLIENT_ID is missing and must be set")
 	}
 
-	if v := os.Getenv("PINGONE_CLIENT_SECRET"); v == "" {
-		t.Fatal("PINGONE_CLIENT_SECRET is missing and must be set")
+	if v := os.Getenv("PINGONE_CLIENT_CREDENTIALS_CLIENT_SECRET"); v == "" {
+		t.Fatal("PINGONE_CLIENT_CREDENTIALS_CLIENT_SECRET is missing and must be set")
 	}
 
 	if v := os.Getenv("PINGONE_ENVIRONMENT_ID"); v == "" {
