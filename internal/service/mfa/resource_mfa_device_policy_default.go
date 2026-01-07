@@ -13,7 +13,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int32validator"
-	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -36,7 +36,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	int32validatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/int32validator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
-	listvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/listvalidator"
+	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/objectvalidator"
 	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -190,7 +190,7 @@ var (
 
 	MFADevicePolicyMobileIpPairingConfigurationTFObjectTypes = map[string]attr.Type{
 		"any_ip_address":          types.BoolType,
-		"only_these_ip_addresses": types.ListType{ElemType: types.StringType},
+		"only_these_ip_addresses": types.SetType{ElemType: types.StringType},
 	}
 
 	MFADevicePolicyRememberMeWebTFObjectTypes = map[string]attr.Type{
@@ -1457,17 +1457,17 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 											Default: booldefault.StaticBool(true),
 										},
 
-										"only_these_ip_addresses": schema.ListAttribute{
+										"only_these_ip_addresses": schema.SetAttribute{
 											Description:         mobileIpPairingConfigurationOnlyTheseIpAddressesDescription.Description,
 											MarkdownDescription: mobileIpPairingConfigurationOnlyTheseIpAddressesDescription.MarkdownDescription,
 											ElementType:         types.StringType,
 											Optional:            true,
 
-											Validators: []validator.List{
-												listvalidator.ValueStringsAre(
+											Validators: []validator.Set{
+												setvalidator.ValueStringsAre(
 													stringvalidator.RegexMatches(regexp.MustCompile(`^(?:\d{1,3}\.){3}\d{1,3}/\d{1,2}$`), "Expected value to be in CIDR notation (e.g., 192.168.0.1/24 or 10.0.0.5/32)"),
 												),
-												listvalidatorinternal.IsRequiredIfMatchesPathBoolValue(
+												setvalidatorinternal.IsRequiredIfMatchesPathBoolValue(
 													types.BoolValue(false),
 													path.MatchRelative().AtParent().AtName("any_ip_address"),
 												),
@@ -3768,7 +3768,7 @@ func expandMobileForDefault(ctx context.Context, mobilePlan MFADevicePolicyDefau
 				}
 
 				if ipListAttr, exists := ipConfigAttrs["only_these_ip_addresses"]; exists {
-					if ipListVal, ok := ipListAttr.(types.List); ok && !ipListVal.IsNull() && !ipListVal.IsUnknown() {
+					if ipListVal, ok := ipListAttr.(types.Set); ok && !ipListVal.IsNull() && !ipListVal.IsUnknown() {
 						var ipAddresses []string
 						diags.Append(ipListVal.ElementsAs(ctx, &ipAddresses, false)...)
 						if !diags.HasError() && len(ipAddresses) > 0 {
@@ -4107,21 +4107,21 @@ func toStateMfaDevicePolicyMobileApplicationsForDefault(apiObject []mfa.DeviceAu
 			// Handle ip_pairing_configuration from API response (PingID only)
 			ipPairingConfiguration = types.ObjectNull(MFADevicePolicyMobileIpPairingConfigurationTFObjectTypes)
 			if ipPairingConfigAPI, ipOk := application.GetIpPairingConfigurationOk(); ipOk && ipPairingConfigAPI != nil {
-				var ipAddressesList types.List
+				var ipAddressesSet types.Set
 				if ipAddresses, addrOk := ipPairingConfigAPI.GetOnlyTheseIpAddressesOk(); addrOk && ipAddresses != nil && len(ipAddresses) > 0 {
 					ipElements := make([]attr.Value, len(ipAddresses))
 					for i, ip := range ipAddresses {
 						ipElements[i] = types.StringValue(ip)
 					}
-					ipAddressesList, d = types.ListValue(types.StringType, ipElements)
+					ipAddressesSet, d = types.SetValue(types.StringType, ipElements)
 					diags.Append(d...)
 				} else {
-					ipAddressesList = types.ListNull(types.StringType)
+					ipAddressesSet = types.SetNull(types.StringType)
 				}
 
 				ipPairingConfigMap := map[string]attr.Value{
 					"any_ip_address":          framework.BoolOkToTF(ipPairingConfigAPI.GetAnyIPAdressOk()),
-					"only_these_ip_addresses": ipAddressesList,
+					"only_these_ip_addresses": ipAddressesSet,
 				}
 				ipPairingConfiguration, d = types.ObjectValue(MFADevicePolicyMobileIpPairingConfigurationTFObjectTypes, ipPairingConfigMap)
 				diags.Append(d...)

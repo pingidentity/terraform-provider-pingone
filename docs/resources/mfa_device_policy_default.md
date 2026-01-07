@@ -480,7 +480,7 @@ Optional:
 Optional:
 
 - `any_ip_address` (Boolean) A boolean that, when set to `false`, restricts device pairing to specific IP addresses defined in `only_these_ip_addresses`.  Defaults to `true`.
-- `only_these_ip_addresses` (List of String) A list of IP addresses or address ranges from which users can pair their devices. This parameter is required when `any_ip_address` is set to `false`. Each item in the array must be in CIDR notation, for example, `192.168.1.1/32` or `10.0.0.0/8`.
+- `only_these_ip_addresses` (Set of String) A list of IP addresses or address ranges from which users can pair their devices. This parameter is required when `any_ip_address` is set to `false`. Each item in the array must be in CIDR notation, for example, `192.168.1.1/32` or `10.0.0.0/8`.
 
 
 <a id="nestedatt--mobile--applications--new_request_duration_configuration"></a>
