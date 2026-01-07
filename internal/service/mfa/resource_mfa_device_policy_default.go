@@ -3130,7 +3130,7 @@ func (p *MFADevicePolicyDefaultResourceModel) expand(ctx context.Context) (mfa.D
 		*mobile,
 		*totp,
 		true,
-		false, // forSignOnPolicy
+		false, // forSignOnPolicy (deprecated)
 	)
 
 	// FIDO2 - available for both policy types
