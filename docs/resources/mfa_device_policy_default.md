@@ -957,4 +957,10 @@ Required:
 - `duration` (Number) An integer that defines the amount of time an issued pairing key can be used until it expires. Must be between 1 minutes and 48 hours.
 - `time_unit` (String) A string that specifies the type of time unit for `duration`.  Options are `HOURS`, `MINUTES`.
 
+## Import
 
+Import is supported using the following syntax, where attributes in `<>` brackets are replaced with the relevant ID.  For example, `<environment_id>` should be replaced with the ID of the environment to import from.
+
+```shell
+terraform import pingone_mfa_device_policy_default.example <environment_id>
+```
