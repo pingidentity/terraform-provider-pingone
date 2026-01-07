@@ -14,6 +14,10 @@ resource "pingone_application" "my_awesome_native_app" {
       "org.bxretail.app://callback"
     ]
 
+    include_x5t                                   = true
+    op_session_check_enabled                      = true
+    request_scopes_for_multiple_resources_enabled = true
+
     mobile_app = {
       bundle_id           = var.apple_bundle_id
       package_name        = var.android_package_name
