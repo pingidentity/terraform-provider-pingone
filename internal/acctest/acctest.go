@@ -343,7 +343,8 @@ func TestClient(ctx context.Context) (*pingone.APIClient, error) {
 	}
 	config := clientconfig.NewConfiguration().
 		WithGrantType(oauth2.GrantTypeClientCredentials).
-		WithTopLevelDomain(regionTopLevelDomain)
+		WithTopLevelDomain(regionTopLevelDomain).
+		WithStorageType(clientconfig.StorageTypeNone)
 
 	pingOneConfig := pingone.NewConfiguration(config)
 	pingOneConfig.UserAgent = framework.UserAgent("", GetProviderTestingVersion())

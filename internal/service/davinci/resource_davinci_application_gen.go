@@ -253,8 +253,9 @@ func (model *davinciApplicationResourceModel) buildClientStructPut() (*pingone.D
 	var respDiags diag.Diagnostics
 	// api_key
 	if !model.ApiKey.IsNull() && !model.ApiKey.IsUnknown() {
+		result.ApiKey = &pingone.DaVinciApplicationReplaceRequestApiKey{}
 		if !model.ApiKey.Attributes()["enabled"].IsNull() && !model.ApiKey.Attributes()["enabled"].IsUnknown() {
-			result.ApiKeyEnabled = model.ApiKey.Attributes()["enabled"].(types.Bool).ValueBoolPointer()
+			result.ApiKey.Enabled = model.ApiKey.Attributes()["enabled"].(types.Bool).ValueBoolPointer()
 		}
 	}
 	// name
