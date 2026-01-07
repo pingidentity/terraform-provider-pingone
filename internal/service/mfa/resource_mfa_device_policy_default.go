@@ -2882,29 +2882,15 @@ func (r *MFADevicePolicyDefaultResource) updateMFADevicePolicyDefault(ctx contex
 
 	// The API ensures a default policy always exists, so if we can't find it, something is wrong
 	if readResponse == nil {
-		if isCreate {
-			diags.AddError(
-				"Default MFA Device Policy Not Found",
-				"Cannot find the default MFA device policy for the environment.",
-			)
-		} else {
-			diags.AddError(
-				"Default MFA Device Policy Not Found",
-				"The default MFA device policy could not be found to update.",
-			)
-		}
+		diags.AddError(
+			"Default MFA Device Policy Not Found",
+			"The default MFA device policy could not be found for the environment.",
+		)
 		return state, diags
 	}
 
 	// Extract ID from the union type based on policy_type
-	policyID, err := extractPolicyIDFromUnion(readResponse)
-	if err != nil {
-		diags.AddError(
-			"Invalid policy response",
-			err.Error(),
-		)
-		return state, diags
-	}
+	policyID := readResponse.GetId()
 
 	// Update the default policy
 	var response *mfa.DeviceAuthenticationPolicy
@@ -2935,18 +2921,6 @@ func (r *MFADevicePolicyDefaultResource) updateMFADevicePolicyDefault(ctx contex
 	state.PolicyType = plan.PolicyType
 
 	return state, diags
-}
-
-// extractPolicyIDFromUnion extracts the policy ID from a DeviceAuthenticationPolicy
-// Note: With the flattened SDK model, there are no union fields, so we just return the ID directly
-func extractPolicyIDFromUnion(response *mfa.DeviceAuthenticationPolicy) (string, error) {
-	// With flattened SDK, all policies use the same struct
-	// We can determine policy type by checking for PingID-specific fields (Desktop, Yubikey, OathToken)
-	// but for ID extraction we just return the ID directly
-	if response == nil {
-		return "", fmt.Errorf("response is nil")
-	}
-	return response.GetId(), nil
 }
 
 // determinePolicyType determines the policy type from an API response
