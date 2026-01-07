@@ -36,8 +36,8 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	int32validatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/int32validator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
-	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/objectvalidator"
+	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
 	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
@@ -2754,28 +2754,8 @@ func (r *MFADevicePolicyDefaultResource) ImportState(ctx context.Context, req re
 		return
 	}
 
-	// Fetch the default policy to get its ID
-	response, d := FetchDefaultMFADevicePolicy(ctx, r.Client.MFAAPIClient, r.Client.ManagementAPIClient, attributes["environment_id"], false)
-	resp.Diagnostics.Append(d...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	if response == nil {
-		resp.Diagnostics.AddError(
-			"Default MFA device policy not found",
-			"Unable to find the default MFA device policy for the environment.",
-		)
-		return
-	}
-
-	// Determine policy type from API response
-	policyType := determinePolicyType(response)
-
 	// Set the required attributes in state for Read to work
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes["environment_id"])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("policy_type"), policyType)...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), response.GetId())...)
 }
 
 func (r *MFADevicePolicyDefaultResource) checkBOMForPolicyType(ctx context.Context, environmentID string, policyType string) diag.Diagnostics {
@@ -3803,6 +3783,8 @@ func (p *MFADevicePolicyDefaultResourceModel) toState(apiObject *mfa.DeviceAuthe
 	// Use provided policy type instead of detecting it
 	// This ensures we respect the user's configuration and don't cause inconsistencies
 	isPingID := (policyType == POLICY_TYPE_PINGID)
+
+	p.PolicyType = types.StringValue(policyType)
 
 	// Common fields for both policy types
 	p.Id = framework.PingOneResourceIDToTF(apiObject.GetId())
