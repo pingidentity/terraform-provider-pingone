@@ -2612,6 +2612,11 @@ func (r *MFADevicePolicyDefaultResource) Read(ctx context.Context, req resource.
 
 			if isDefault {
 				defaultPolicy = response
+			} else {
+				resp.Diagnostics.AddWarning(
+					"Managed MFA Device Policy is no longer the default",
+					fmt.Sprintf("The MFA Device Policy with ID '%s' is no longer the default policy for environment '%s'. The provider will now manage the new default policy. The previous policy may remain in the environment but is no longer managed by this resource.", response.GetId(), data.EnvironmentId.ValueString()),
+				)
 			}
 		}
 	}
