@@ -74,7 +74,7 @@ type MFADevicePolicyDefaultResourceModel struct {
 	UpdatedAt             timetypes.RFC3339            `tfsdk:"updated_at"`
 }
 
-type MFADevicePolicyPingIDDeviceResourceModel struct {
+type MFADevicePolicyCommonDeviceResourceModel struct {
 	Enabled                    types.Bool   `tfsdk:"enabled"`
 	Otp                        types.Object `tfsdk:"otp"`
 	PairingDisabled            types.Bool   `tfsdk:"pairing_disabled"`
@@ -82,9 +82,9 @@ type MFADevicePolicyPingIDDeviceResourceModel struct {
 	PromptForNicknameOnPairing types.Bool   `tfsdk:"prompt_for_nickname_on_pairing"`
 }
 
-type MFADevicePolicyDesktopResourceModel MFADevicePolicyPingIDDeviceResourceModel
-type MFADevicePolicyYubikeyResourceModel MFADevicePolicyPingIDDeviceResourceModel
-type MFADevicePolicyOathTokenResourceModel MFADevicePolicyPingIDDeviceResourceModel
+type MFADevicePolicyDesktopResourceModel MFADevicePolicyCommonDeviceResourceModel
+type MFADevicePolicyYubikeyResourceModel MFADevicePolicyCommonDeviceResourceModel
+type MFADevicePolicyOathTokenResourceModel MFADevicePolicyCommonDeviceResourceModel
 
 type MFADevicePolicyDefaultMobileResourceModel struct {
 	Applications               types.Map    `tfsdk:"applications"`
@@ -138,15 +138,19 @@ type MFADevicePolicyMobileApplicationNewRequestDurationConfigurationTimeoutResou
 	TimeUnit types.String `tfsdk:"time_unit"`
 }
 
-// TF Object type definitions for PingID devices
+// Common Device OTP model (for otp field within desktop/yubikey/oathToken)
+type MFADevicePolicyCommonDeviceOtpResourceModel struct {
+	Failure types.Object `tfsdk:"failure"`
+}
+
 var (
-	MFADevicePolicyPingIDDeviceOtpTFObjectTypes = map[string]attr.Type{
+	MFADevicePolicyCommonDeviceOtpTFObjectTypes = map[string]attr.Type{
 		"failure": types.ObjectType{AttrTypes: MFADevicePolicyFailureTFObjectTypes},
 	}
 
-	MFADevicePolicyPingIDDeviceTFObjectTypes = map[string]attr.Type{
+	MFADevicePolicyCommonDeviceTFObjectTypes = map[string]attr.Type{
 		"enabled":                        types.BoolType,
-		"otp":                            types.ObjectType{AttrTypes: MFADevicePolicyPingIDDeviceOtpTFObjectTypes},
+		"otp":                            types.ObjectType{AttrTypes: MFADevicePolicyCommonDeviceOtpTFObjectTypes},
 		"pairing_disabled":               types.BoolType,
 		"pairing_key_lifetime":           types.ObjectType{AttrTypes: MFADevicePolicyTimePeriodTFObjectTypes},
 		"prompt_for_nickname_on_pairing": types.BoolType,
@@ -321,11 +325,11 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 
 	// Default values for oath_token
 	oathTokenDefault := types.ObjectValueMust(
-		MFADevicePolicyPingIDDeviceTFObjectTypes,
+		MFADevicePolicyCommonDeviceTFObjectTypes,
 		map[string]attr.Value{
 			"enabled": types.BoolValue(false),
 			"otp": types.ObjectValueMust(
-				MFADevicePolicyPingIDDeviceOtpTFObjectTypes,
+				MFADevicePolicyCommonDeviceOtpTFObjectTypes,
 				map[string]attr.Value{
 					"failure": types.ObjectValueMust(
 						MFADevicePolicyFailureTFObjectTypes,
@@ -1781,7 +1785,7 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 						Computed:            true,
 
 						Default: objectdefault.StaticValue(types.ObjectValueMust(
-							MFADevicePolicyPingIDDeviceOtpTFObjectTypes,
+							MFADevicePolicyCommonDeviceOtpTFObjectTypes,
 							map[string]attr.Value{
 								"failure": types.ObjectValueMust(
 									MFADevicePolicyFailureTFObjectTypes,
@@ -1955,7 +1959,7 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 						Computed:            true,
 
 						Default: objectdefault.StaticValue(types.ObjectValueMust(
-							MFADevicePolicyPingIDDeviceOtpTFObjectTypes,
+							MFADevicePolicyCommonDeviceOtpTFObjectTypes,
 							map[string]attr.Value{
 								"failure": types.ObjectValueMust(
 									MFADevicePolicyFailureTFObjectTypes,
@@ -2125,7 +2129,7 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 						Computed:            true,
 
 						Default: objectdefault.StaticValue(types.ObjectValueMust(
-							MFADevicePolicyPingIDDeviceOtpTFObjectTypes,
+							MFADevicePolicyCommonDeviceOtpTFObjectTypes,
 							map[string]attr.Value{
 								"failure": types.ObjectValueMust(
 									MFADevicePolicyFailureTFObjectTypes,
@@ -3317,7 +3321,7 @@ func (p *MFADevicePolicyDesktopResourceModel) expand(ctx context.Context) (*mfa.
 	var diags, d diag.Diagnostics
 
 	// OTP
-	var otpPlan MFADevicePolicyPingIDDeviceOtpResourceModel
+	var otpPlan MFADevicePolicyCommonDeviceOtpResourceModel
 	diags.Append(p.Otp.As(ctx, &otpPlan, basetypes.ObjectAsOptions{
 		UnhandledNullAsEmpty:    false,
 		UnhandledUnknownAsEmpty: false,
@@ -3379,7 +3383,7 @@ func (p *MFADevicePolicyOathTokenResourceModel) expand(ctx context.Context) (*mf
 	var diags, d diag.Diagnostics
 
 	// OTP
-	var otpPlan MFADevicePolicyPingIDDeviceOtpResourceModel
+	var otpPlan MFADevicePolicyCommonDeviceOtpResourceModel
 	diags.Append(p.Otp.As(ctx, &otpPlan, basetypes.ObjectAsOptions{
 		UnhandledNullAsEmpty:    false,
 		UnhandledUnknownAsEmpty: false,
@@ -3431,12 +3435,7 @@ func (p *MFADevicePolicyOathTokenResourceModel) expand(ctx context.Context) (*mf
 	return data, diags
 }
 
-// PingID Device OTP model (for otp field within desktop/yubikey/oathToken)
-type MFADevicePolicyPingIDDeviceOtpResourceModel struct {
-	Failure types.Object `tfsdk:"failure"`
-}
-
-func (p *MFADevicePolicyPingIDDeviceOtpResourceModel) expand(ctx context.Context) (*mfa.DeviceAuthenticationPolicyPingIDDeviceOtp, diag.Diagnostics) {
+func (p *MFADevicePolicyCommonDeviceOtpResourceModel) expand(ctx context.Context) (*mfa.DeviceAuthenticationPolicyPingIDDeviceOtp, diag.Diagnostics) {
 	var diags, d diag.Diagnostics
 
 	var failurePlan MFADevicePolicyFailureResourceModel
@@ -3815,8 +3814,8 @@ func (p *MFADevicePolicyDefaultResourceModel) toState(apiObject *mfa.DeviceAuthe
 		diags.Append(d...)
 	} else {
 		// Set PingID-specific fields to null for PingOneMFA policies
-		p.Desktop = types.ObjectNull(MFADevicePolicyPingIDDeviceTFObjectTypes)
-		p.Yubikey = types.ObjectNull(MFADevicePolicyPingIDDeviceTFObjectTypes)
+		p.Desktop = types.ObjectNull(MFADevicePolicyCommonDeviceTFObjectTypes)
+		p.Yubikey = types.ObjectNull(MFADevicePolicyCommonDeviceTFObjectTypes)
 	}
 
 	return diags
@@ -3824,7 +3823,7 @@ func (p *MFADevicePolicyDefaultResourceModel) toState(apiObject *mfa.DeviceAuthe
 
 func toStateMfaDevicePolicyPingIDDevice(apiObject *mfa.DeviceAuthenticationPolicyPingIDDevice, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	tfObjType := types.ObjectType{AttrTypes: MFADevicePolicyPingIDDeviceTFObjectTypes}
+	tfObjType := types.ObjectType{AttrTypes: MFADevicePolicyCommonDeviceTFObjectTypes}
 
 	if !ok || apiObject == nil {
 		return types.ObjectNull(tfObjType.AttrTypes), diags
@@ -3846,7 +3845,7 @@ func toStateMfaDevicePolicyPingIDDevice(apiObject *mfa.DeviceAuthenticationPolic
 		pairingKeyLifetime = types.ObjectNull(MFADevicePolicyTimePeriodTFObjectTypes)
 	}
 
-	objValue, d := types.ObjectValue(MFADevicePolicyPingIDDeviceTFObjectTypes, map[string]attr.Value{
+	objValue, d := types.ObjectValue(MFADevicePolicyCommonDeviceTFObjectTypes, map[string]attr.Value{
 		"enabled":                        framework.BoolOkToTF(apiObject.GetEnabledOk()),
 		"otp":                            otp,
 		"pairing_disabled":               framework.BoolOkToTF(apiObject.GetPairingDisabledOk()),
@@ -3860,7 +3859,7 @@ func toStateMfaDevicePolicyPingIDDevice(apiObject *mfa.DeviceAuthenticationPolic
 
 func toStateMfaDevicePolicyPingIDDeviceOtp(apiObject *mfa.DeviceAuthenticationPolicyPingIDDeviceOtp, ok bool) (types.Object, diag.Diagnostics) {
 	var diags, d diag.Diagnostics
-	tfObjType := types.ObjectType{AttrTypes: MFADevicePolicyPingIDDeviceOtpTFObjectTypes}
+	tfObjType := types.ObjectType{AttrTypes: MFADevicePolicyCommonDeviceOtpTFObjectTypes}
 
 	if !ok || apiObject == nil {
 		return types.ObjectNull(tfObjType.AttrTypes), diags
@@ -3887,7 +3886,7 @@ func toStateMfaDevicePolicyPingIDDeviceOtp(apiObject *mfa.DeviceAuthenticationPo
 		failure = types.ObjectNull(MFADevicePolicyFailureTFObjectTypes)
 	}
 
-	objValue, d := types.ObjectValue(MFADevicePolicyPingIDDeviceOtpTFObjectTypes, map[string]attr.Value{
+	objValue, d := types.ObjectValue(MFADevicePolicyCommonDeviceOtpTFObjectTypes, map[string]attr.Value{
 		"failure": failure,
 	})
 	diags.Append(d...)
@@ -3897,7 +3896,7 @@ func toStateMfaDevicePolicyPingIDDeviceOtp(apiObject *mfa.DeviceAuthenticationPo
 
 func toStateMfaDevicePolicyOathToken(apiObject *mfa.DeviceAuthenticationPolicyOathToken, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	tfObjType := types.ObjectType{AttrTypes: MFADevicePolicyPingIDDeviceTFObjectTypes}
+	tfObjType := types.ObjectType{AttrTypes: MFADevicePolicyCommonDeviceTFObjectTypes}
 
 	if !ok || apiObject == nil {
 		return types.ObjectNull(tfObjType.AttrTypes), diags
@@ -3920,7 +3919,7 @@ func toStateMfaDevicePolicyOathToken(apiObject *mfa.DeviceAuthenticationPolicyOa
 		pairingKeyLifetime = types.ObjectNull(MFADevicePolicyTimePeriodTFObjectTypes)
 	}
 
-	objValue, d := types.ObjectValue(MFADevicePolicyPingIDDeviceTFObjectTypes, map[string]attr.Value{
+	objValue, d := types.ObjectValue(MFADevicePolicyCommonDeviceTFObjectTypes, map[string]attr.Value{
 		"enabled":                        framework.BoolOkToTF(apiObject.GetEnabledOk()),
 		"otp":                            otp,
 		"pairing_disabled":               framework.BoolOkToTF(apiObject.GetPairingDisabledOk()),
