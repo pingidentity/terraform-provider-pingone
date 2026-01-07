@@ -114,9 +114,8 @@ resource "pingone_mfa_device_policy_default" "my_awesome_mfa_device_policy_defau
       }
     }
 
-    applications = [
-      {
-        id = pingone_application.my_native_app.id
+    applications = {
+      (pingone_application.my_native_app.id) = {
         auto_enrollment = {
           enabled = true
         }
@@ -155,7 +154,7 @@ resource "pingone_mfa_device_policy_default" "my_awesome_mfa_device_policy_defau
           time_unit = "SECONDS"
         }
       }
-    ]
+    }
   }
 
   totp = {
@@ -234,9 +233,8 @@ resource "pingone_mfa_device_policy_default" "my_awesome_mfa_device_policy_defau
       }
     }
 
-    applications = [
-      {
-        id                 = pingone_application.my_native_app.id
+    applications = {
+      (data.pingone_application.my_native_app.id) = {
         type               = "pingIdAppConfig"
         biometrics_enabled = true
         ip_pairing_configuration = {
@@ -260,7 +258,7 @@ resource "pingone_mfa_device_policy_default" "my_awesome_mfa_device_policy_defau
         }
         pairing_disabled = false
       }
-    ]
+    }
   }
 
   totp = {
@@ -322,7 +320,7 @@ resource "pingone_mfa_device_policy_default" "my_awesome_mfa_device_policy_defau
   }
 }
 
-resource "pingone_application" "my_native_app" {
+data "pingone_application" "my_native_app" {
   # ...
 }
 
@@ -422,7 +420,7 @@ Required:
 
 Optional:
 
-- `applications` (Attributes List) A list of objects that specifies settings for configured Mobile Applications. (see [below for nested schema](#nestedatt--mobile--applications))
+- `applications` (Attributes Map) A map of objects that specifies settings for configured Mobile Applications. The ID of the application should be configured as the map key. (see [below for nested schema](#nestedatt--mobile--applications))
 - `otp` (Attributes) A single object that specifies OTP settings for mobile applications in the policy. (see [below for nested schema](#nestedatt--mobile--otp))
 - `prompt_for_nickname_on_pairing` (Boolean) A boolean that, when set to `true`, prompts users to provide nicknames for devices during pairing.
 
@@ -431,7 +429,6 @@ Optional:
 
 Required:
 
-- `id` (String) A string that specifies the ID of the application.
 - `otp` (Attributes) A single object that specifies OTP settings for the application in the policy. (see [below for nested schema](#nestedatt--mobile--applications--otp))
 
 Optional:

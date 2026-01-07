@@ -34,9 +34,8 @@ resource "pingone_mfa_device_policy_default" "my_awesome_mfa_device_policy_defau
       }
     }
 
-    applications = [
-      {
-        id                 = pingone_application.my_native_app.id
+    applications = {
+      (data.pingone_application.my_native_app.id) = {
         type               = "pingIdAppConfig"
         biometrics_enabled = true
         ip_pairing_configuration = {
@@ -60,7 +59,7 @@ resource "pingone_mfa_device_policy_default" "my_awesome_mfa_device_policy_defau
         }
         pairing_disabled = false
       }
-    ]
+    }
   }
 
   totp = {
@@ -122,7 +121,7 @@ resource "pingone_mfa_device_policy_default" "my_awesome_mfa_device_policy_defau
   }
 }
 
-resource "pingone_application" "my_native_app" {
+data "pingone_application" "my_native_app" {
   # ...
 }
 

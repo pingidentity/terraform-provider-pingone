@@ -124,15 +124,15 @@ func TestAccMFADevicePolicyDefault_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "email.pairing_disabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "mobile.applications.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "mobile.applications.0.auto_enrollment.enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "mobile.applications.0.device_authorization.enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "mobile.applications.0.device_authorization.extra_verification", "permissive"),
-					resource.TestCheckResourceAttr(resourceFullName, "mobile.applications.0.integrity_detection", "permissive"),
-					resource.TestCheckResourceAttr(resourceFullName, "mobile.applications.0.push.enabled", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "mobile.applications.0.push_limit.count", "5"),
-					resource.TestCheckResourceAttr(resourceFullName, "mobile.applications.0.pairing_key_lifetime.duration", "10"),
-					resource.TestCheckResourceAttr(resourceFullName, "mobile.applications.0.push_timeout.duration", "45"),
+					resource.TestCheckResourceAttr(resourceFullName, "mobile.applications.%", "1"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, fmt.Sprintf("pingone_application.%s", resourceName), "mobile.applications.%s.auto_enrollment.enabled", "true"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, fmt.Sprintf("pingone_application.%s", resourceName), "mobile.applications.%s.device_authorization.enabled", "true"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, fmt.Sprintf("pingone_application.%s", resourceName), "mobile.applications.%s.device_authorization.extra_verification", "permissive"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, fmt.Sprintf("pingone_application.%s", resourceName), "mobile.applications.%s.integrity_detection", "permissive"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, fmt.Sprintf("pingone_application.%s", resourceName), "mobile.applications.%s.push.enabled", "false"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, fmt.Sprintf("pingone_application.%s", resourceName), "mobile.applications.%s.push_limit.count", "5"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, fmt.Sprintf("pingone_application.%s", resourceName), "mobile.applications.%s.pairing_key_lifetime.duration", "10"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, fmt.Sprintf("pingone_application.%s", resourceName), "mobile.applications.%s.push_timeout.duration", "45"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.pairing_disabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.prompt_for_nickname_on_pairing", "false"),
@@ -351,9 +351,26 @@ func TestAccMFADevicePolicyDefault_PingID_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "voice.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "email.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "mobile.applications.#", "1"),
-					resource.TestCheckResourceAttr(resourceFullName, "mobile.applications.0.biometrics_enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "mobile.applications.0.type", "pingIdAppConfig"),
+					resource.TestCheckResourceAttr(resourceFullName, "mobile.applications.%", "1"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, fmt.Sprintf("data.pingone_application.%s", resourceName), "mobile.applications.%s.type", "pingIdAppConfig"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, fmt.Sprintf("data.pingone_application.%s", resourceName), "mobile.applications.%s.biometrics_enabled", "true"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, fmt.Sprintf("data.pingone_application.%s", resourceName), "mobile.applications.%s.integrity_detection", "permissive"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, fmt.Sprintf("data.pingone_application.%s", resourceName), "mobile.applications.%s.otp.enabled", "true"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, fmt.Sprintf("data.pingone_application.%s", resourceName), "mobile.applications.%s.pairing_disabled", "false"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, fmt.Sprintf("data.pingone_application.%s", resourceName), "mobile.applications.%s.pairing_key_lifetime.duration", "15"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, fmt.Sprintf("data.pingone_application.%s", resourceName), "mobile.applications.%s.pairing_key_lifetime.time_unit", "MINUTES"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, fmt.Sprintf("data.pingone_application.%s", resourceName), "mobile.applications.%s.push.enabled", "true"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, fmt.Sprintf("data.pingone_application.%s", resourceName), "mobile.applications.%s.push.number_matching.enabled", "true"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, fmt.Sprintf("data.pingone_application.%s", resourceName), "mobile.applications.%s.push_limit.count", "10"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, fmt.Sprintf("data.pingone_application.%s", resourceName), "mobile.applications.%s.push_limit.lock_duration.duration", "45"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, fmt.Sprintf("data.pingone_application.%s", resourceName), "mobile.applications.%s.push_limit.lock_duration.time_unit", "MINUTES"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, fmt.Sprintf("data.pingone_application.%s", resourceName), "mobile.applications.%s.push_limit.time_period.duration", "15"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, fmt.Sprintf("data.pingone_application.%s", resourceName), "mobile.applications.%s.push_limit.time_period.time_unit", "MINUTES"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, fmt.Sprintf("data.pingone_application.%s", resourceName), "mobile.applications.%s.new_request_duration_configuration.device_timeout.duration", "30"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, fmt.Sprintf("data.pingone_application.%s", resourceName), "mobile.applications.%s.new_request_duration_configuration.device_timeout.time_unit", "SECONDS"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, fmt.Sprintf("data.pingone_application.%s", resourceName), "mobile.applications.%s.new_request_duration_configuration.total_timeout.duration", "60"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, fmt.Sprintf("data.pingone_application.%s", resourceName), "mobile.applications.%s.new_request_duration_configuration.total_timeout.time_unit", "SECONDS"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, fmt.Sprintf("data.pingone_application.%s", resourceName), "mobile.applications.%s.ip_pairing_configuration.any_ip_address", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "desktop.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "desktop.otp.failure.count", "5"),
@@ -446,7 +463,7 @@ func TestAccMFADevicePolicyDefault_PingID_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "policy_type", "PING_ONE_ID"),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "mobile.applications.0.type", "pingIdAppConfig"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, fmt.Sprintf("data.pingone_application.%s", resourceName), "mobile.applications.%s.type", "pingIdAppConfig"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "email.enabled", "true"),
@@ -534,22 +551,22 @@ func TestAccMFADevicePolicyDefault_Validation(t *testing.T) {
 					// Missing auto_enrollment
 					{
 						Config:      testAccMFADevicePolicyDefaultConfig_PingOneMFA_MobileApp_MissingAutoEnrollment(environmentName, licenseID, resourceName, name),
-						ExpectError: regexp.MustCompile(`The argument mobile.applications\[0\].auto_enrollment is required because\s+policy_type is configured as:\s+"PING_ONE_MFA"`),
+						ExpectError: regexp.MustCompile(`The argument\s+mobile.applications\[.+\].auto_enrollment\s+is required because\s+policy_type is configured as:\s+"PING_ONE_MFA"`),
 					},
 					// Missing device_authorization
 					{
 						Config:      testAccMFADevicePolicyDefaultConfig_PingOneMFA_MobileApp_MissingDeviceAuthorization(environmentName, licenseID, resourceName, name),
-						ExpectError: regexp.MustCompile(`The argument mobile.applications\[0\].device_authorization is required because\s+policy_type is configured as:\s+"PING_ONE_MFA"`),
+						ExpectError: regexp.MustCompile(`The argument\s+mobile.applications\[.+\].device_authorization\s+is required because\s+policy_type is configured as:\s+"PING_ONE_MFA"`),
 					},
 					// Missing integrity_detection
 					{
 						Config:      testAccMFADevicePolicyDefaultConfig_PingOneMFA_MobileApp_MissingIntegrityDetection(environmentName, licenseID, resourceName, name),
-						ExpectError: regexp.MustCompile(`The argument mobile.applications\[0\].integrity_detection is required because\s+policy_type is configured as:\s+"PING_ONE_MFA"`),
+						ExpectError: regexp.MustCompile(`The argument\s+mobile.applications\[.+\].integrity_detection\s+is required because\s+policy_type is configured as:\s+"PING_ONE_MFA"`),
 					},
 					// Invalid integrity_detection
 					{
 						Config:      testAccMFADevicePolicyDefaultConfig_MobileIntegrityDetection(environmentName, licenseID, resourceName, name, "INVALID_VALUE"),
-						ExpectError: regexp.MustCompile(`Attribute mobile.applications\[0\].integrity_detection value must be one of:`),
+						ExpectError: regexp.MustCompile(`Attribute\s+mobile.applications\[.+\].integrity_detection\s+value must be one of:`),
 					},
 					// Biometrics enabled conflict
 					{
@@ -598,12 +615,12 @@ func TestAccMFADevicePolicyDefault_Validation(t *testing.T) {
 					// Missing desktop block
 					{
 						Config:      testAccMFADevicePolicyDefaultConfig_PingID_MissingDesktop(resourceName, name),
-						ExpectError: regexp.MustCompile(`The argument desktop is required because\s+policy_type is configured as:\s+"PING_ONE_ID"`),
+						ExpectError: regexp.MustCompile(`The argument\s+desktop\s+is required because\s+policy_type is configured as:\s+"PING_ONE_ID"`),
 					},
 					// Missing yubikey block
 					{
 						Config:      testAccMFADevicePolicyDefaultConfig_PingID_MissingYubikey(resourceName, name),
-						ExpectError: regexp.MustCompile(`The argument yubikey is required because\s+policy_type is configured as:\s+"PING_ONE_ID"`),
+						ExpectError: regexp.MustCompile(`The argument\s+yubikey\s+is required because\s+policy_type is configured as:\s+"PING_ONE_ID"`),
 					},
 					// Mobile must be enabled for PingID policies
 					{
@@ -623,12 +640,12 @@ func TestAccMFADevicePolicyDefault_Validation(t *testing.T) {
 					// Missing new_request_duration_configuration
 					{
 						Config:      testAccMFADevicePolicyDefaultConfig_PingID_MobileApp_MissingNewRequestDuration(resourceName, name),
-						ExpectError: regexp.MustCompile(`The argument mobile.applications\[0\].new_request_duration_configuration is\s+required because\s+policy_type is configured as:\s+"PING_ONE_ID"`),
+						ExpectError: regexp.MustCompile(`The argument\s+mobile.applications\[.+\].new_request_duration_configuration\s+is\s+required because\s+policy_type is configured as:\s+"PING_ONE_ID"`),
 					},
 					// Missing ip_pairing_configuration
 					{
 						Config:      testAccMFADevicePolicyDefaultConfig_PingID_MobileApp_MissingIPPairing(resourceName, name),
-						ExpectError: regexp.MustCompile(`The argument mobile.applications\[0\].ip_pairing_configuration is\s+required\s+because\s+policy_type is configured as:\s+"PING_ONE_ID"`),
+						ExpectError: regexp.MustCompile(`The argument\s+mobile.applications\[.+\].ip_pairing_configuration\s+is\s+required\s+because\s+policy_type is configured as:\s+"PING_ONE_ID"`),
 					},
 				},
 			})
@@ -698,17 +715,17 @@ func TestAccMFADevicePolicyDefault_Validation(t *testing.T) {
 					// Mobile - Push limit lock duration too high
 					{
 						Config:      testAccMFADevicePolicyDefaultConfig_MobilePushLimitLockDuration(resourceName, name, 121),
-						ExpectError: regexp.MustCompile(`Attribute mobile.applications\[0\].push_limit.lock_duration.duration value must[\s\n]+be between[\s\n]+1 and[\s\n]+120`),
+						ExpectError: regexp.MustCompile(`Attribute\s+mobile.applications\[.+\].push_limit.lock_duration.duration\s+value must[\s\n]+be between[\s\n]+1 and[\s\n]+120`),
 					},
 					// Mobile - Push limit time period too high
 					{
 						Config:      testAccMFADevicePolicyDefaultConfig_MobilePushLimitTimePeriod(resourceName, name, 121),
-						ExpectError: regexp.MustCompile(`Attribute mobile.applications\[0\].push_limit.time_period.duration value must[\s\n]+be between[\s\n]+1 and[\s\n]+120`),
+						ExpectError: regexp.MustCompile(`Attribute\s+mobile.applications\[.+\].push_limit.time_period.duration\s+value must[\s\n]+be between[\s\n]+1 and[\s\n]+120`),
 					},
 					// Mobile - Push timeout duration too high
 					{
 						Config:      testAccMFADevicePolicyDefaultConfig_MobilePushTimeoutDuration(environmentName, licenseID, resourceName, name, 121),
-						ExpectError: regexp.MustCompile(`Attribute mobile.applications\[0\].push_timeout.duration value must[\s\n]+be between[\s\n]+1 and[\s\n]+120`),
+						ExpectError: regexp.MustCompile(`Attribute\s+mobile.applications\[.+\].push_timeout.duration\s+value must[\s\n]+be between[\s\n]+1 and[\s\n]+120`),
 					},
 					// Mobile - OTP failure cool down duration too high
 					{
@@ -747,7 +764,7 @@ func TestAccMFADevicePolicyDefault_Validation(t *testing.T) {
 					// IP Pairing - Missing only_these_ip_addresses when any_ip_address is false
 					{
 						Config:      testAccMFADevicePolicyDefaultConfig_PingID_IPPairing_MissingIPs(resourceName, name),
-						ExpectError: regexp.MustCompile(`The argument\s+mobile.applications\[0\].ip_pairing_configuration.only_these_ip_addresses is\s+required because\s+mobile.applications\[0\].ip_pairing_configuration.any_ip_address is configured\s+as: false`),
+						ExpectError: regexp.MustCompile(`The argument\s+mobile.applications\[.+\].ip_pairing_configuration.only_these_ip_addresses\s+is\s+required\s+because\s+mobile.applications\[.+\].ip_pairing_configuration.any_ip_address\s+is\s+configured\s+as: false`),
 					},
 					// Desktop - OTP failure count too high
 					{
@@ -762,27 +779,27 @@ func TestAccMFADevicePolicyDefault_Validation(t *testing.T) {
 					// Mobile - Push limit count out of range
 					{
 						Config:      testAccMFADevicePolicyDefaultConfig_MobilePushLimit_CountHigh(resourceName, name),
-						ExpectError: regexp.MustCompile(`Attribute mobile.applications\[0\].push_limit.count value must be between 1 and[\s\n]+50`),
+						ExpectError: regexp.MustCompile(`Attribute\s+mobile.applications\[.+\].push_limit.count\s+value must be between 1 and[\s\n]+50`),
 					},
 					// Mobile - Device timeout duration out of range
 					{
 						Config:      testAccMFADevicePolicyDefaultConfig_MobileNewRequestDuration_DeviceTimeoutHigh(resourceName, name),
-						ExpectError: regexp.MustCompile(`Attribute[\s\n]+mobile.applications\[0\].new_request_duration_configuration.device_timeout.duration[\s\n]+value must be between 15 and 75`),
+						ExpectError: regexp.MustCompile(`Attribute[\s\n]+mobile.applications\[.+\].new_request_duration_configuration.device_timeout.duration[\s\n]+value must be between 15 and 75`),
 					},
 					// Mobile - Total timeout duration out of range
 					{
 						Config:      testAccMFADevicePolicyDefaultConfig_MobileNewRequestDuration_TotalTimeoutHigh(resourceName, name),
-						ExpectError: regexp.MustCompile(`Attribute[\s\n]+mobile.applications\[0\].new_request_duration_configuration.total_timeout.duration[\s\n]+value must be between 30 and 90`),
+						ExpectError: regexp.MustCompile(`Attribute[\s\n]+mobile.applications\[.+\].new_request_duration_configuration.total_timeout.duration[\s\n]+value must be between 30 and 90`),
 					},
 					// Mobile - Device timeout duration too low
 					{
 						Config:      testAccMFADevicePolicyDefaultConfig_MobileNewRequestDuration_DeviceTimeout(resourceName, name, 14),
-						ExpectError: regexp.MustCompile(`Attribute[\s\n]+mobile.applications\[0\].new_request_duration_configuration.device_timeout.duration[\s\n]+value must be between 15 and 75`),
+						ExpectError: regexp.MustCompile(`Attribute[\s\n]+mobile.applications\[.+\].new_request_duration_configuration.device_timeout.duration[\s\n]+value must be between 15 and 75`),
 					},
 					// Mobile - Total timeout duration too low
 					{
 						Config:      testAccMFADevicePolicyDefaultConfig_MobileNewRequestDuration_TotalTimeout(resourceName, name, 29),
-						ExpectError: regexp.MustCompile(`Attribute[\s\n]+mobile.applications\[0\].new_request_duration_configuration.total_timeout.duration[\s\n]+value must be between 30 and 90`),
+						ExpectError: regexp.MustCompile(`Attribute[\s\n]+mobile.applications\[.+\].new_request_duration_configuration.total_timeout.duration[\s\n]+value must be between 30 and 90`),
 					},
 					// Mobile - OTP failure count out of range (0)
 					{
@@ -990,10 +1007,8 @@ resource "pingone_mfa_device_policy_default" "%[3]s" {
       }
     }
 
-    applications = [
-      {
-        id = pingone_application.%[3]s.id
-
+    applications = {
+      (pingone_application.%[3]s.id) = {
         auto_enrollment = {
           enabled = true
         }
@@ -1037,7 +1052,7 @@ resource "pingone_mfa_device_policy_default" "%[3]s" {
           time_unit = "SECONDS"
         }
       }
-    ]
+    }
   }
 
   totp = {
@@ -1459,10 +1474,8 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
     enabled                        = true
     prompt_for_nickname_on_pairing = false
 
-    applications = [
-      {
-        id = data.pingone_application.%[2]s.id
-
+    applications = {
+      (data.pingone_application.%[2]s.id) = {
         type = "pingIdAppConfig"
 
         biometrics_enabled = true
@@ -1514,7 +1527,7 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
           any_ip_address = true
         }
       }
-    ]
+    }
 
     otp = {
       failure = {
@@ -1602,13 +1615,14 @@ resource "pingone_mfa_device_policy_default" "%[3]s" {
 
   mobile = {
     enabled = true
-    applications = [{
-      id                   = "11111111-1111-1111-1111-111111111111"
-      otp                  = { enabled = true }
-      auto_enrollment      = { enabled = true }
-      device_authorization = { enabled = true }
-      integrity_detection  = "%[5]s"
-    }]
+    applications = {
+      "11111111-1111-1111-1111-111111111111" = {
+        otp                  = { enabled = true }
+        auto_enrollment      = { enabled = true }
+        device_authorization = { enabled = true }
+        integrity_detection  = "%[5]s"
+      }
+    }
   }
   sms   = { enabled = false }
   voice = { enabled = false }
@@ -1664,16 +1678,17 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
 
   mobile = {
     enabled = true
-    applications = [{
-      id              = "11111111-1111-1111-1111-111111111111"
-      otp             = { enabled = true }
-      auto_enrollment = { enabled = true }
-      new_request_duration_configuration = {
-        device_timeout = { duration = 25 }
-        total_timeout  = { duration = 40 }
+    applications = {
+      "11111111-1111-1111-1111-111111111111" = {
+        otp             = { enabled = true }
+        auto_enrollment = { enabled = true }
+        new_request_duration_configuration = {
+          device_timeout = { duration = 25 }
+          total_timeout  = { duration = 40 }
+        }
+        ip_pairing_configuration = { any_ip_address = true }
       }
-      ip_pairing_configuration = { any_ip_address = true }
-    }]
+    }
   }
   desktop = { enabled = false }
   yubikey = { enabled = false }
@@ -1695,16 +1710,17 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
 
   mobile = {
     enabled = true
-    applications = [{
-      id                   = "11111111-1111-1111-1111-111111111111"
-      otp                  = { enabled = true }
-      device_authorization = { enabled = true }
-      new_request_duration_configuration = {
-        device_timeout = { duration = 25 }
-        total_timeout  = { duration = 40 }
+    applications = {
+      "11111111-1111-1111-1111-111111111111" = {
+        otp                  = { enabled = true }
+        device_authorization = { enabled = true }
+        new_request_duration_configuration = {
+          device_timeout = { duration = 25 }
+          total_timeout  = { duration = 40 }
+        }
+        ip_pairing_configuration = { any_ip_address = true }
       }
-      ip_pairing_configuration = { any_ip_address = true }
-    }]
+    }
   }
   desktop = { enabled = false }
   yubikey = { enabled = false }
@@ -1726,11 +1742,12 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
 
   mobile = {
     enabled = true
-    applications = [{
-      id                       = "11111111-1111-1111-1111-111111111111"
-      otp                      = { enabled = true }
-      ip_pairing_configuration = { any_ip_address = true }
-    }]
+    applications = {
+      "11111111-1111-1111-1111-111111111111" = {
+        otp                      = { enabled = true }
+        ip_pairing_configuration = { any_ip_address = true }
+      }
+    }
   }
   desktop = { enabled = false }
   yubikey = { enabled = false }
@@ -1752,14 +1769,15 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
 
   mobile = {
     enabled = true
-    applications = [{
-      id  = "11111111-1111-1111-1111-111111111111"
-      otp = { enabled = true }
-      new_request_duration_configuration = {
-        device_timeout = { duration = 25 }
-        total_timeout  = { duration = 40 }
+    applications = {
+      "11111111-1111-1111-1111-111111111111" = {
+        otp = { enabled = true }
+        new_request_duration_configuration = {
+          device_timeout = { duration = 25 }
+          total_timeout  = { duration = 40 }
+        }
       }
-    }]
+    }
   }
   desktop = { enabled = false }
   yubikey = { enabled = false }
@@ -1781,12 +1799,13 @@ resource "pingone_mfa_device_policy_default" "%[3]s" {
 
   mobile = {
     enabled = true
-    applications = [{
-      id                   = "11111111-1111-1111-1111-111111111111"
-      otp                  = { enabled = true }
-      device_authorization = { enabled = true }
-      integrity_detection  = "permissive"
-    }]
+    applications = {
+      "11111111-1111-1111-1111-111111111111" = {
+        otp                  = { enabled = true }
+        device_authorization = { enabled = true }
+        integrity_detection  = "permissive"
+      }
+    }
   }
   sms   = { enabled = false }
   voice = { enabled = false }
@@ -1806,12 +1825,13 @@ resource "pingone_mfa_device_policy_default" "%[3]s" {
 
   mobile = {
     enabled = true
-    applications = [{
-      id                  = "11111111-1111-1111-1111-111111111111"
-      otp                 = { enabled = true }
-      auto_enrollment     = { enabled = true }
-      integrity_detection = "permissive"
-    }]
+    applications = {
+      "11111111-1111-1111-1111-111111111111" = {
+        otp                 = { enabled = true }
+        auto_enrollment     = { enabled = true }
+        integrity_detection = "permissive"
+      }
+    }
   }
   sms   = { enabled = false }
   voice = { enabled = false }
@@ -1831,12 +1851,13 @@ resource "pingone_mfa_device_policy_default" "%[3]s" {
 
   mobile = {
     enabled = true
-    applications = [{
-      id                   = "11111111-1111-1111-1111-111111111111"
-      otp                  = { enabled = true }
-      auto_enrollment      = { enabled = true }
-      device_authorization = { enabled = true }
-    }]
+    applications = {
+      "11111111-1111-1111-1111-111111111111" = {
+        otp                  = { enabled = true }
+        auto_enrollment      = { enabled = true }
+        device_authorization = { enabled = true }
+      }
+    }
   }
   sms   = { enabled = false }
   voice = { enabled = false }
@@ -1856,14 +1877,15 @@ resource "pingone_mfa_device_policy_default" "%[3]s" {
 
   mobile = {
     enabled = true
-    applications = [{
-      id                   = "11111111-1111-1111-1111-111111111111"
-      otp                  = { enabled = true }
-      auto_enrollment      = { enabled = true }
-      device_authorization = { enabled = true }
-      integrity_detection  = "permissive"
-      biometrics_enabled   = true
-    }]
+    applications = {
+      "11111111-1111-1111-1111-111111111111" = {
+        otp                  = { enabled = true }
+        auto_enrollment      = { enabled = true }
+        device_authorization = { enabled = true }
+        integrity_detection  = "permissive"
+        biometrics_enabled   = true
+      }
+    }
   }
   sms   = { enabled = false }
   voice = { enabled = false }
@@ -1883,17 +1905,18 @@ resource "pingone_mfa_device_policy_default" "%[3]s" {
 
   mobile = {
     enabled = true
-    applications = [{
-      id                   = "11111111-1111-1111-1111-111111111111"
-      otp                  = { enabled = true }
-      auto_enrollment      = { enabled = true }
-      device_authorization = { enabled = true }
-      integrity_detection  = "permissive"
-      new_request_duration_configuration = {
-        device_timeout = { duration = 25 }
-        total_timeout  = { duration = 40 }
+    applications = {
+      "11111111-1111-1111-1111-111111111111" = {
+        otp                  = { enabled = true }
+        auto_enrollment      = { enabled = true }
+        device_authorization = { enabled = true }
+        integrity_detection  = "permissive"
+        new_request_duration_configuration = {
+          device_timeout = { duration = 25 }
+          total_timeout  = { duration = 40 }
+        }
       }
-    }]
+    }
   }
   sms   = { enabled = false }
   voice = { enabled = false }
@@ -1913,14 +1936,15 @@ resource "pingone_mfa_device_policy_default" "%[3]s" {
 
   mobile = {
     enabled = true
-    applications = [{
-      id                       = "11111111-1111-1111-1111-111111111111"
-      otp                      = { enabled = true }
-      auto_enrollment          = { enabled = true }
-      device_authorization     = { enabled = true }
-      integrity_detection      = "permissive"
-      ip_pairing_configuration = { any_ip_address = true }
-    }]
+    applications = {
+      "11111111-1111-1111-1111-111111111111" = {
+        otp                      = { enabled = true }
+        auto_enrollment          = { enabled = true }
+        device_authorization     = { enabled = true }
+        integrity_detection      = "permissive"
+        ip_pairing_configuration = { any_ip_address = true }
+      }
+    }
   }
   sms   = { enabled = false }
   voice = { enabled = false }
@@ -1940,18 +1964,19 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
 
   mobile = {
     enabled = true
-    applications = [{
-      id  = "11111111-1111-1111-1111-111111111111"
-      otp = { enabled = true }
-      new_request_duration_configuration = {
-        device_timeout = { duration = 25 }
-        total_timeout  = { duration = 40 }
+    applications = {
+      "11111111-1111-1111-1111-111111111111" = {
+        otp = { enabled = true }
+        new_request_duration_configuration = {
+          device_timeout = { duration = 25 }
+          total_timeout  = { duration = 40 }
+        }
+        ip_pairing_configuration = {
+          any_ip_address          = false
+          only_these_ip_addresses = ["192.168.1.1"]
+        }
       }
-      ip_pairing_configuration = {
-        any_ip_address          = false
-        only_these_ip_addresses = ["192.168.1.1"]
-      }
-    }]
+    }
   }
   desktop = { enabled = false }
   yubikey = { enabled = false }
@@ -1973,17 +1998,18 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
 
   mobile = {
     enabled = true
-    applications = [{
-      id  = "11111111-1111-1111-1111-111111111111"
-      otp = { enabled = true }
-      new_request_duration_configuration = {
-        device_timeout = { duration = 25 }
-        total_timeout  = { duration = 40 }
+    applications = {
+      "11111111-1111-1111-1111-111111111111" = {
+        otp = { enabled = true }
+        new_request_duration_configuration = {
+          device_timeout = { duration = 25 }
+          total_timeout  = { duration = 40 }
+        }
+        ip_pairing_configuration = {
+          any_ip_address = false
+        }
       }
-      ip_pairing_configuration = {
-        any_ip_address = false
-      }
-    }]
+    }
   }
   desktop = { enabled = false }
   yubikey = { enabled = false }
@@ -2144,20 +2170,21 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
 
   mobile = {
     enabled = true
-    applications = [{
-      id  = "11111111-1111-1111-1111-111111111111"
-      otp = { enabled = true }
-      push_limit = {
-        count         = 51
-        lock_duration = { duration = 30, time_unit = "MINUTES" }
-        time_period   = { duration = 10, time_unit = "MINUTES" }
+    applications = {
+      "11111111-1111-1111-1111-111111111111" = {
+        otp = { enabled = true }
+        push_limit = {
+          count         = 51
+          lock_duration = { duration = 30, time_unit = "MINUTES" }
+          time_period   = { duration = 10, time_unit = "MINUTES" }
+        }
+        new_request_duration_configuration = {
+          device_timeout = { duration = 25 }
+          total_timeout  = { duration = 40 }
+        }
+        ip_pairing_configuration = { any_ip_address = true }
       }
-      new_request_duration_configuration = {
-        device_timeout = { duration = 25 }
-        total_timeout  = { duration = 40 }
-      }
-      ip_pairing_configuration = { any_ip_address = true }
-    }]
+    }
   }
   desktop = { enabled = false }
   yubikey = { enabled = false }
@@ -2179,15 +2206,16 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
 
   mobile = {
     enabled = true
-    applications = [{
-      id  = "11111111-1111-1111-1111-111111111111"
-      otp = { enabled = true }
-      new_request_duration_configuration = {
-        device_timeout = { duration = 76 }
-        total_timeout  = { duration = 40 }
+    applications = {
+      "11111111-1111-1111-1111-111111111111" = {
+        otp = { enabled = true }
+        new_request_duration_configuration = {
+          device_timeout = { duration = 76 }
+          total_timeout  = { duration = 40 }
+        }
+        ip_pairing_configuration = { any_ip_address = true }
       }
-      ip_pairing_configuration = { any_ip_address = true }
-    }]
+    }
   }
   desktop = { enabled = false }
   yubikey = { enabled = false }
@@ -2209,15 +2237,16 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
 
   mobile = {
     enabled = true
-    applications = [{
-      id  = "11111111-1111-1111-1111-111111111111"
-      otp = { enabled = true }
-      new_request_duration_configuration = {
-        device_timeout = { duration = 25 }
-        total_timeout  = { duration = 91 }
+    applications = {
+      "11111111-1111-1111-1111-111111111111" = {
+        otp = { enabled = true }
+        new_request_duration_configuration = {
+          device_timeout = { duration = 25 }
+          total_timeout  = { duration = 91 }
+        }
+        ip_pairing_configuration = { any_ip_address = true }
       }
-      ip_pairing_configuration = { any_ip_address = true }
-    }]
+    }
   }
   desktop = { enabled = false }
   yubikey = { enabled = false }
@@ -2289,15 +2318,16 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
         cool_down = { duration = 2, time_unit = "MINUTES" }
       }
     }
-    applications = [{
-      id  = "11111111-1111-1111-1111-111111111111"
-      otp = { enabled = true }
-      new_request_duration_configuration = {
-        device_timeout = { duration = 25 }
-        total_timeout  = { duration = 40 }
+    applications = {
+      "11111111-1111-1111-1111-111111111111" = {
+        otp = { enabled = true }
+        new_request_duration_configuration = {
+          device_timeout = { duration = 25 }
+          total_timeout  = { duration = 40 }
+        }
+        ip_pairing_configuration = { any_ip_address = true }
       }
-      ip_pairing_configuration = { any_ip_address = true }
-    }]
+    }
   }
   desktop = { enabled = false }
   yubikey = { enabled = false }
@@ -2319,15 +2349,16 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
 
   mobile = {
     enabled = true
-    applications = [{
-      id  = "11111111-1111-1111-1111-111111111111"
-      otp = { enabled = true }
-      new_request_duration_configuration = {
-        device_timeout = { duration = "%[4]d" }
-        total_timeout  = { duration = 40 }
+    applications = {
+      "11111111-1111-1111-1111-111111111111" = {
+        otp = { enabled = true }
+        new_request_duration_configuration = {
+          device_timeout = { duration = "%[4]d" }
+          total_timeout  = { duration = 40 }
+        }
+        ip_pairing_configuration = { any_ip_address = true }
       }
-      ip_pairing_configuration = { any_ip_address = true }
-    }]
+    }
   }
   desktop = { enabled = false }
   yubikey = { enabled = false }
@@ -2349,15 +2380,16 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
 
   mobile = {
     enabled = true
-    applications = [{
-      id  = "11111111-1111-1111-1111-111111111111"
-      otp = { enabled = true }
-      new_request_duration_configuration = {
-        device_timeout = { duration = 25 }
-        total_timeout  = { duration = "%[4]d" }
+    applications = {
+      "11111111-1111-1111-1111-111111111111" = {
+        otp = { enabled = true }
+        new_request_duration_configuration = {
+          device_timeout = { duration = 25 }
+          total_timeout  = { duration = "%[4]d" }
+        }
+        ip_pairing_configuration = { any_ip_address = true }
       }
-      ip_pairing_configuration = { any_ip_address = true }
-    }]
+    }
   }
   desktop = { enabled = false }
   yubikey = { enabled = false }
@@ -2729,22 +2761,23 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
 
   mobile = {
     enabled = true
-    applications = [{
-      id   = "11111111-1111-1111-1111-111111111111"
-      type = "pingIdAppConfig"
-      otp  = { enabled = true }
-      push_limit = {
-        lock_duration = {
-          duration  = %[4]d
-          time_unit = "MINUTES"
+    applications = {
+      "11111111-1111-1111-1111-111111111111" = {
+        type = "pingIdAppConfig"
+        otp  = { enabled = true }
+        push_limit = {
+          lock_duration = {
+            duration  = %[4]d
+            time_unit = "MINUTES"
+          }
         }
+        new_request_duration_configuration = {
+          device_timeout = { duration = 25 }
+          total_timeout  = { duration = 40 }
+        }
+        ip_pairing_configuration = { any_ip_address = true }
       }
-      new_request_duration_configuration = {
-        device_timeout = { duration = 25 }
-        total_timeout  = { duration = 40 }
-      }
-      ip_pairing_configuration = { any_ip_address = true }
-    }]
+    }
   }
   desktop = { enabled = false }
   yubikey = { enabled = false }
@@ -2766,22 +2799,23 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
 
   mobile = {
     enabled = true
-    applications = [{
-      id   = "11111111-1111-1111-1111-111111111111"
-      type = "pingIdAppConfig"
-      otp  = { enabled = true }
-      push_limit = {
-        time_period = {
-          duration  = %[4]d
-          time_unit = "MINUTES"
+    applications = {
+      "11111111-1111-1111-1111-111111111111" = {
+        type = "pingIdAppConfig"
+        otp  = { enabled = true }
+        push_limit = {
+          time_period = {
+            duration  = %[4]d
+            time_unit = "MINUTES"
+          }
         }
+        new_request_duration_configuration = {
+          device_timeout = { duration = 25 }
+          total_timeout  = { duration = 40 }
+        }
+        ip_pairing_configuration = { any_ip_address = true }
       }
-      new_request_duration_configuration = {
-        device_timeout = { duration = 25 }
-        total_timeout  = { duration = 40 }
-      }
-      ip_pairing_configuration = { any_ip_address = true }
-    }]
+    }
   }
   desktop = { enabled = false }
   yubikey = { enabled = false }
@@ -2803,17 +2837,18 @@ resource "pingone_mfa_device_policy_default" "%[3]s" {
 
   mobile = {
     enabled = true
-    applications = [{
-      id  = "11111111-1111-1111-1111-111111111111"
-      otp = { enabled = true }
-      push_timeout = {
-        duration  = %[5]d
-        time_unit = "SECONDS"
+    applications = {
+      "11111111-1111-1111-1111-111111111111" = {
+        otp = { enabled = true }
+        push_timeout = {
+          duration  = %[5]d
+          time_unit = "SECONDS"
+        }
+        auto_enrollment      = { enabled = true }
+        device_authorization = { enabled = true }
+        integrity_detection  = "permissive"
       }
-      auto_enrollment      = { enabled = true }
-      device_authorization = { enabled = true }
-      integrity_detection  = "permissive"
-    }]
+    }
   }
   sms   = { enabled = false }
   voice = { enabled = false }
@@ -2833,16 +2868,17 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
 
   mobile = {
     enabled = true
-    applications = [{
-      id   = "11111111-1111-1111-1111-111111111111"
-      type = "pingIdAppConfig"
-      otp  = { enabled = true }
-      new_request_duration_configuration = {
-        device_timeout = { duration = 25 }
-        total_timeout  = { duration = 40 }
+    applications = {
+      "11111111-1111-1111-1111-111111111111" = {
+        type = "pingIdAppConfig"
+        otp  = { enabled = true }
+        new_request_duration_configuration = {
+          device_timeout = { duration = 25 }
+          total_timeout  = { duration = 40 }
+        }
+        ip_pairing_configuration = { any_ip_address = true }
       }
-      ip_pairing_configuration = { any_ip_address = true }
-    }]
+    }
     otp = {
       failure = {
         count = 1

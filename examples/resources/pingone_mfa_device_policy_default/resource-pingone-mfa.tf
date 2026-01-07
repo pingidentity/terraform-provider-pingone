@@ -98,9 +98,8 @@ resource "pingone_mfa_device_policy_default" "my_awesome_mfa_device_policy_defau
       }
     }
 
-    applications = [
-      {
-        id = pingone_application.my_native_app.id
+    applications = {
+      (pingone_application.my_native_app.id) = {
         auto_enrollment = {
           enabled = true
         }
@@ -139,7 +138,7 @@ resource "pingone_mfa_device_policy_default" "my_awesome_mfa_device_policy_defau
           time_unit = "SECONDS"
         }
       }
-    ]
+    }
   }
 
   totp = {
