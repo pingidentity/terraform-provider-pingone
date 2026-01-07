@@ -11,8 +11,10 @@ import (
 
 func BetaResources() []func() resource.Resource {
 	return []func() resource.Resource{
-		NewDavinciApplicationResource,
 		NewDavinciApplicationFlowPolicyResource,
+		NewDavinciApplicationKeyResource,
+		NewDavinciApplicationResource,
+		NewDavinciApplicationSecretResource,
 		NewDavinciConnectorInstanceResource,
 		NewDavinciVariableResource,
 	}
