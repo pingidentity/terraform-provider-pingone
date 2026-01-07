@@ -267,7 +267,7 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 		WithGrantType(oauth2.GrantTypeClientCredentials).
 		WithClientID(data.ClientID.ValueString()).
 		WithClientSecret(data.ClientSecret.ValueString()).
-		WithAuthEnvironmentID(data.EnvironmentID.ValueString()).
+		WithEnvironmentID(data.EnvironmentID.ValueString()).
 		WithAccessToken(data.APIAccessToken.ValueString())
 
 	var regionCode string
