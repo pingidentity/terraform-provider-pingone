@@ -496,8 +496,8 @@ Required:
 
 Optional:
 
-- `duration` (Number) An integer that specifies the timeout duration in seconds.  Options are ``.
-- `time_unit` (String) A string that specifies the type of time unit for `duration`.  Defaults to `SECONDS`.  Options are ``.
+- `duration` (Number) An integer that specifies the timeout duration in seconds.
+- `time_unit` (String) A string that specifies the type of time unit for `duration`.  Defaults to `SECONDS`.  Options are `SECONDS`.
 
 
 <a id="nestedatt--mobile--applications--new_request_duration_configuration--total_timeout"></a>
@@ -505,8 +505,8 @@ Optional:
 
 Optional:
 
-- `duration` (Number) An integer that specifies the timeout duration in seconds.  Options are ``.
-- `time_unit` (String) A string that specifies the type of time unit for `duration`.  Defaults to `SECONDS`.  Options are ``.
+- `duration` (Number) An integer that specifies the timeout duration in seconds.
+- `time_unit` (String) A string that specifies the type of time unit for `duration`.  Defaults to `SECONDS`.  Options are `SECONDS`.
 
 
 
@@ -576,7 +576,7 @@ Required:
 
 Optional:
 
-- `time_unit` (String) A string that specifies the type of time unit for `duration`.  Defaults to `SECONDS`.  Options are ``.
+- `time_unit` (String) A string that specifies the type of time unit for `duration`.  Defaults to `SECONDS`.  Options are `SECONDS`.
 
 
 
