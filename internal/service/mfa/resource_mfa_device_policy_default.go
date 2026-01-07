@@ -4053,8 +4053,6 @@ func toStateMfaDevicePolicyMobileApplicationsForDefault(apiObject []mfa.DeviceAu
 		var ipPairingConfiguration types.Object
 
 		if isPingID {
-			// For PingID policies, the API may not return biometrics_enabled, type, or new_request_duration_configuration
-			// Preserve these values from the prior state if API didn't return them
 			biometricsEnabled = framework.BoolOkToTF(application.GetBiometricsEnabledOk())
 			typeAttr = framework.EnumOkToTF(application.GetTypeOk())
 
