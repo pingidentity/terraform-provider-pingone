@@ -458,9 +458,9 @@ resource "pingone_davinci_connector_instance" "%[2]s" {
       "value" : [
         {
           "name" : "example",
-          "url" : "https://example.com",
+          "url" : "https://pingidentity.com",
           "token" : "mytoken",
-          "value" : "https://example.com"
+          "value" : "https://pingidentity.com"
         }
       ]
     }
@@ -492,9 +492,9 @@ resource "pingone_davinci_connector_instance" "%[2]s" {
       "value" : [
         {
           "name" : "example",
-          "url" : "https://example.com",
+          "url" : "https://pingidentity.com",
           "token" : "mytoken",
-          "value" : "https://example.com"
+          "value" : "https://pingidentity.com"
         }
       ]
     }

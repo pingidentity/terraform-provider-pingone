@@ -73,7 +73,7 @@ func (r *davinciApplicationKeyResource) Configure(ctx context.Context, req resou
 
 type davinciApplicationKeyResourceModel struct {
 	ApiKey                types.Object `tfsdk:"api_key"`
-	ApplicationId         types.String `tfsdk:"application_id"`
+	DavinciApplicationId  types.String `tfsdk:"davinci_application_id"`
 	EnvironmentId         types.String `tfsdk:"environment_id"`
 	Id                    types.String `tfsdk:"id"`
 	RotationTriggerValues types.Map    `tfsdk:"rotation_trigger_values"`
@@ -104,7 +104,7 @@ func (r *davinciApplicationKeyResource) Schema(ctx context.Context, req resource
 					objectplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"application_id": schema.StringAttribute{
+			"davinci_application_id": schema.StringAttribute{
 				Required:    true,
 				Description: "This field is immutable and will trigger a replace plan if changed.",
 				PlanModifiers: []planmodifier.String{
@@ -185,8 +185,8 @@ func (state *davinciApplicationKeyResourceModel) readClientResponse(response *pi
 	})
 	respDiags.Append(diags...)
 	state.ApiKey = apiKeyValue
-	// application_id
-	state.ApplicationId = types.StringValue(response.Id)
+	// davinci_application_id
+	state.DavinciApplicationId = types.StringValue(response.Id)
 	// id
 	state.Id = types.StringValue(response.Id)
 	return respDiags
@@ -224,12 +224,12 @@ func (r *davinciApplicationKeyResource) Create(ctx context.Context, req resource
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciApplicationsApi.RotateKeyByDavinciApplicationId(ctx, environmentIdUuid, data.ApplicationId.ValueString()).RequestBody(map[string]interface{}{}).Execute()
+			fO, fR, fErr := r.Client.DaVinciApplicationsApi.RotateKeyByDavinciApplicationId(ctx, environmentIdUuid, data.DavinciApplicationId.ValueString()).RequestBody(map[string]interface{}{}).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"RotateDavinciApplicationApiKey",
 		framework.DefaultCustomError,
-		framework.InsufficientPrivilegeRetryable,
+		framework.DefaultRetryable,
 		&responseData,
 	)...)
 
@@ -285,7 +285,7 @@ func (r *davinciApplicationKeyResource) Read(ctx context.Context, req resource.R
 		},
 		"GetDavinciApplicationById",
 		framework.CustomErrorResourceNotFoundWarning,
-		framework.InsufficientPrivilegeRetryable,
+		framework.DefaultRetryable,
 		&responseData,
 	)...)
 
@@ -327,7 +327,7 @@ func (r *davinciApplicationKeyResource) ImportState(ctx context.Context, req res
 			Regexp: verify.P1ResourceIDRegexp,
 		},
 		{
-			Label:     "application_id",
+			Label:     "davinci_application_id",
 			PrimaryID: true,
 			Regexp:    verify.P1DVResourceIDRegexp,
 		},

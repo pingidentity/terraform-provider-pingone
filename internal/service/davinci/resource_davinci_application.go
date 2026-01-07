@@ -61,7 +61,9 @@ func (model *davinciApplicationResourceModel) buildClientStructPutAfterCreate(cr
 	result := &pingone.DaVinciApplicationReplaceRequest{}
 	var respDiags diag.Diagnostics
 	// First copy over values from the create response
-	result.ApiKeyEnabled = &createResponse.ApiKey.Enabled
+	result.ApiKey = &pingone.DaVinciApplicationReplaceRequestApiKey{
+		Enabled: &createResponse.ApiKey.Enabled,
+	}
 	var grantTypes []pingone.DaVinciApplicationReplaceRequestOAuthGrantType
 	for _, grantType := range createResponse.Oauth.GrantTypes {
 		grantTypes = append(grantTypes, pingone.DaVinciApplicationReplaceRequestOAuthGrantType(grantType))
@@ -84,7 +86,7 @@ func (model *davinciApplicationResourceModel) buildClientStructPutAfterCreate(cr
 	result.Name = model.Name.ValueString()
 	if !model.ApiKey.IsNull() && !model.ApiKey.IsUnknown() {
 		if !model.ApiKey.Attributes()["enabled"].IsNull() && !model.ApiKey.Attributes()["enabled"].IsUnknown() {
-			result.ApiKeyEnabled = model.ApiKey.Attributes()["enabled"].(types.Bool).ValueBoolPointer()
+			result.ApiKey.Enabled = model.ApiKey.Attributes()["enabled"].(types.Bool).ValueBoolPointer()
 		}
 	}
 	if !model.Oauth.IsNull() && !model.Oauth.IsUnknown() {
@@ -193,7 +195,7 @@ func (r *davinciApplicationResource) Create(ctx context.Context, req resource.Cr
 		},
 		"CreateDavinciApplication",
 		framework.DefaultCustomError,
-		framework.InsufficientPrivilegeRetryable,
+		framework.DefaultRetryable,
 		&createResponseData,
 	)...)
 
@@ -219,7 +221,7 @@ func (r *davinciApplicationResource) Create(ctx context.Context, req resource.Cr
 		},
 		"ReplaceDavinciApplicationById-Create",
 		framework.DefaultCustomError,
-		framework.InsufficientPrivilegeRetryable,
+		framework.DefaultRetryable,
 		&responseData,
 	)...)
 

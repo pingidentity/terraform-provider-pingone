@@ -74,18 +74,18 @@ resource "pingone_davinci_application" "%[2]s-full" {
       "implicit",
     ]
     logout_uris = [
-      "https://example.com/logout",
+      "https://pingidentity.com/logout",
     ]
     redirect_uris = [
-      "https://example.com/callback",
-      "https://example.com/redirect",
+      "https://pingidentity.com/callback",
+      "https://pingidentity.com/redirect",
     ]
     scopes = [
       "profile",
       "flow_analytics",
       "openid",
     ]
-    sp_jwks_url = "https://example.com/jwks"
+    sp_jwks_url = "https://pingidentity.com/jwks"
   }
 }
 
@@ -118,7 +118,7 @@ func davinciApplicationsDataSource_CheckComputedValuesComplete(resourceName stri
 			"oauth.logout_uris.#":                 "1",
 			"oauth.redirect_uris.#":               "2",
 			"oauth.scopes.#":                      "3",
-			"oauth.sp_jwks_url":                   "https://example.com/jwks",
+			"oauth.sp_jwks_url":                   "https://pingidentity.com/jwks",
 		}),
 	)
 
