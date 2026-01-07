@@ -313,7 +313,7 @@ func (model *davinciVariableResourceModel) buildClientStructPost() (*pingone.DaV
 					fmt.Sprintf("The value provided for json_object could not be parsed as json: %s", err.Error()),
 				)
 			}
-			valueValue.MapmapOfStringAny = &jsonValueMap
+			valueValue.Object = &jsonValueMap
 		}
 		if !valueAttrs["string"].IsNull() && !valueAttrs["string"].IsUnknown() {
 			valueValue.String = valueAttrs["string"].(types.String).ValueStringPointer()
@@ -393,7 +393,7 @@ func (model *davinciVariableResourceModel) buildClientStructPut() (*pingone.DaVi
 					fmt.Sprintf("The value provided for json_object could not be parsed as json: %s", err.Error()),
 				)
 			}
-			valueValue.MapmapOfStringAny = &jsonValueMap
+			valueValue.Object = &jsonValueMap
 		}
 		if !valueAttrs["string"].IsNull() && !valueAttrs["string"].IsUnknown() {
 			valueValue.String = valueAttrs["string"].(types.String).ValueStringPointer()
@@ -470,8 +470,8 @@ func (state *davinciVariableResourceModel) readClientResponse(response *pingone.
 		valueValue = types.ObjectNull(valueAttrTypes)
 	} else {
 		jsonObjectValue := jsontypes.NewNormalizedNull()
-		if response.Value.MapmapOfStringAny != nil {
-			jsonObjectBytes, err := json.Marshal(response.Value.MapmapOfStringAny)
+		if response.Value.Object != nil {
+			jsonObjectBytes, err := json.Marshal(response.Value.Object)
 			if err != nil {
 				respDiags.AddAttributeError(
 					path.Root("value").AtName("json_object"),

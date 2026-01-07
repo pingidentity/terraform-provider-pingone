@@ -8,7 +8,6 @@ package davinci_test
 import (
 	"context"
 	"fmt"
-	"os"
 	"regexp"
 	"testing"
 
@@ -148,34 +147,6 @@ func testAccDavinciApplicationFlowPolicy_MinimalMaximal(t *testing.T, withBootst
 				ImportStateVerifyIdentifierAttribute: "id",
 				ImportState:                          true,
 				ImportStateVerify:                    true,
-			},
-		},
-	})
-}
-
-func TestAccDavinciApplicationFlowPolicy_NewEnv(t *testing.T) {
-	t.Skip("Skipping test as the pingone_davinci_flow resource will be needed for this")
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-
-	environmentName := acctest.ResourceNameGenEnvironment()
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckBeta(t)
-		},
-		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             davinciApplicationFlowPolicy_CheckDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			{
-				Config: davinciApplicationFlowPolicy_NewEnvHCL(environmentName, licenseID, resourceName),
-				Check:  davinciApplicationFlowPolicy_CheckComputedValuesMinimal(resourceName),
 			},
 		},
 	})

@@ -1433,7 +1433,7 @@ func (p *MFADevicePolicyResourceModel) expand(ctx context.Context, apiClient *ma
 		}
 
 		data.SetAuthentication(
-			*mfa.NewDeviceAuthenticationPolicyAuthentication(
+			*mfa.NewDeviceAuthenticationPolicyCommonAuthentication(
 				mfa.EnumMFADevicePolicySelection(authenticationPlan.DeviceSelection.ValueString()),
 			),
 		)
@@ -1572,7 +1572,7 @@ func (p *MFADevicePolicyOfflineDeviceOtpResourceModel) expand(ctx context.Contex
 	return data, diags
 }
 
-func (p *MFADevicePolicyMobileResourceModel) expand(ctx context.Context, apiClient *management.APIClient, environmentId string) (*mfa.DeviceAuthenticationPolicyMobile, diag.Diagnostics) {
+func (p *MFADevicePolicyMobileResourceModel) expand(ctx context.Context, apiClient *management.APIClient, environmentId string) (*mfa.DeviceAuthenticationPolicyCommonMobile, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	// Otp
@@ -1601,12 +1601,12 @@ func (p *MFADevicePolicyMobileResourceModel) expand(ctx context.Context, apiClie
 		return nil, diags
 	}
 
-	otp := mfa.NewDeviceAuthenticationPolicyMobileOtp(
+	otp := mfa.NewDeviceAuthenticationPolicyCommonMobileOtp(
 		*failure,
 	)
 
 	// Main object
-	data := mfa.NewDeviceAuthenticationPolicyMobile(
+	data := mfa.NewDeviceAuthenticationPolicyCommonMobile(
 		p.Enabled.ValueBool(),
 		*otp,
 	)
@@ -1619,7 +1619,7 @@ func (p *MFADevicePolicyMobileResourceModel) expand(ctx context.Context, apiClie
 			return nil, diags
 		}
 
-		applications := make([]mfa.DeviceAuthenticationPolicyMobileApplicationsInner, 0)
+		applications := make([]mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInner, 0)
 
 		for applicationId, applicationPlan := range applicationsPlan {
 			application, d := applicationPlan.expand(ctx, apiClient, environmentId, applicationId)
@@ -1667,7 +1667,7 @@ func (p *MFADevicePolicyFailureResourceModel) expand(ctx context.Context) (*mfa.
 	return data, diags
 }
 
-func (p *MFADevicePolicyMobileApplicationResourceModel) expand(ctx context.Context, apiClient *management.APIClient, environmentId, applicationId string) (*mfa.DeviceAuthenticationPolicyMobileApplicationsInner, diag.Diagnostics) {
+func (p *MFADevicePolicyMobileApplicationResourceModel) expand(ctx context.Context, apiClient *management.APIClient, environmentId, applicationId string) (*mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInner, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	application, d := checkApplicationForMobileApp(ctx, apiClient, environmentId, applicationId)
@@ -1676,7 +1676,7 @@ func (p *MFADevicePolicyMobileApplicationResourceModel) expand(ctx context.Conte
 		return nil, diags
 	}
 
-	data := mfa.NewDeviceAuthenticationPolicyMobileApplicationsInner(
+	data := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInner(
 		applicationId,
 	)
 
@@ -1692,7 +1692,7 @@ func (p *MFADevicePolicyMobileApplicationResourceModel) expand(ctx context.Conte
 		}
 
 		data.SetAutoEnrollment(
-			*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerAutoEnrollment(
+			*mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerAutoEnrollment(
 				plan.Enabled.ValueBool(),
 			),
 		)
@@ -1709,7 +1709,7 @@ func (p *MFADevicePolicyMobileApplicationResourceModel) expand(ctx context.Conte
 			return nil, diags
 		}
 
-		deviceAuthorization := *mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerDeviceAuthorization(
+		deviceAuthorization := *mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerDeviceAuthorization(
 			plan.Enabled.ValueBool(),
 		)
 
@@ -1754,7 +1754,7 @@ func (p *MFADevicePolicyMobileApplicationResourceModel) expand(ctx context.Conte
 			return nil, diags
 		}
 
-		data.SetOtp(*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerOtp(
+		data.SetOtp(*mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerOtp(
 			plan.Enabled.ValueBool(),
 		))
 	}
@@ -1776,7 +1776,7 @@ func (p *MFADevicePolicyMobileApplicationResourceModel) expand(ctx context.Conte
 		}
 
 		data.SetPairingKeyLifetime(
-			*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPairingKeyLifetime(
+			*mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerPairingKeyLifetime(
 				plan.Duration.ValueInt32(),
 				mfa.EnumTimeUnitPairingKeyLifetime(plan.TimeUnit.ValueString()),
 			),
@@ -1795,7 +1795,7 @@ func (p *MFADevicePolicyMobileApplicationResourceModel) expand(ctx context.Conte
 		}
 
 		data.SetPush(
-			*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPush(
+			*mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerPush(
 				plan.Enabled.ValueBool(),
 			),
 		)
@@ -1833,7 +1833,7 @@ func (p *MFADevicePolicyMobileApplicationResourceModel) expand(ctx context.Conte
 		}
 
 		data.SetPushTimeout(
-			*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPushTimeout(
+			*mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerPushTimeout(
 				plan.Duration.ValueInt32(),
 				mfa.EnumTimeUnitPushTimeout(plan.TimeUnit.ValueString()),
 			),
@@ -1843,10 +1843,10 @@ func (p *MFADevicePolicyMobileApplicationResourceModel) expand(ctx context.Conte
 	return data, diags
 }
 
-func (p *MFADevicePolicyPushLimitResourceModel) expand(ctx context.Context) (*mfa.DeviceAuthenticationPolicyMobileApplicationsInnerPushLimit, diag.Diagnostics) {
+func (p *MFADevicePolicyPushLimitResourceModel) expand(ctx context.Context) (*mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInnerPushLimit, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	data := mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPushLimit()
+	data := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerPushLimit()
 
 	if !p.Count.IsNull() && !p.Count.IsUnknown() {
 		data.SetCount(p.Count.ValueInt32())
@@ -1863,7 +1863,7 @@ func (p *MFADevicePolicyPushLimitResourceModel) expand(ctx context.Context) (*mf
 		}
 
 		data.SetLockDuration(
-			*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPushLimitLockDuration(
+			*mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerPushLimitLockDuration(
 				plan.Duration.ValueInt32(),
 				mfa.EnumTimeUnit(plan.TimeUnit.ValueString()),
 			),
@@ -1881,7 +1881,7 @@ func (p *MFADevicePolicyPushLimitResourceModel) expand(ctx context.Context) (*mf
 		}
 
 		data.SetTimePeriod(
-			*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPushLimitTimePeriod(
+			*mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerPushLimitTimePeriod(
 				plan.Duration.ValueInt32(),
 				mfa.EnumTimeUnit(plan.TimeUnit.ValueString()),
 			),
@@ -1891,7 +1891,7 @@ func (p *MFADevicePolicyPushLimitResourceModel) expand(ctx context.Context) (*mf
 	return data, diags
 }
 
-func (p *MFADevicePolicyTotpResourceModel) expand(ctx context.Context) (*mfa.DeviceAuthenticationPolicyTotp, diag.Diagnostics) {
+func (p *MFADevicePolicyTotpResourceModel) expand(ctx context.Context) (*mfa.DeviceAuthenticationPolicyCommonTotp, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	// Otp
@@ -1920,11 +1920,11 @@ func (p *MFADevicePolicyTotpResourceModel) expand(ctx context.Context) (*mfa.Dev
 		return nil, diags
 	}
 
-	otp := mfa.NewDeviceAuthenticationPolicyTotpOtp(
+	otp := mfa.NewDeviceAuthenticationPolicyPingIDDeviceOtp(
 		*failure,
 	)
 
-	data := mfa.NewDeviceAuthenticationPolicyTotp(
+	data := mfa.NewDeviceAuthenticationPolicyCommonTotp(
 		p.Enabled.ValueBool(),
 		*otp,
 	)
@@ -1953,9 +1953,9 @@ func (p *MFADevicePolicyTotpResourceModel) expand(ctx context.Context) (*mfa.Dev
 	return data, diags
 }
 
-func (p *MFADevicePolicyFido2ResourceModel) expand() *mfa.DeviceAuthenticationPolicyFido2 {
+func (p *MFADevicePolicyFido2ResourceModel) expand() *mfa.DeviceAuthenticationPolicyCommonFido2 {
 
-	data := mfa.NewDeviceAuthenticationPolicyFido2(
+	data := mfa.NewDeviceAuthenticationPolicyCommonFido2(
 		p.Enabled.ValueBool(),
 	)
 
@@ -2033,7 +2033,7 @@ func (p *MFADevicePolicyResourceModel) toStateCreate(apiObject *mfa.DeviceAuthen
 	return p.toState(apiObject.DeviceAuthenticationPolicy)
 }
 
-func toStateMfaDevicePolicyAuthentication(apiObject *mfa.DeviceAuthenticationPolicyAuthentication, ok bool) (types.Object, diag.Diagnostics) {
+func toStateMfaDevicePolicyAuthentication(apiObject *mfa.DeviceAuthenticationPolicyCommonAuthentication, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -2179,7 +2179,7 @@ func toStateMfaDevicePolicyEmail(apiObject *mfa.DeviceAuthenticationPolicyOfflin
 	return toStateMfaDevicePolicyOfflineDevice(apiObject, ok)
 }
 
-func toStateMfaDevicePolicyMobile(apiObject *mfa.DeviceAuthenticationPolicyMobile, ok bool) (types.Object, diag.Diagnostics) {
+func toStateMfaDevicePolicyMobile(apiObject *mfa.DeviceAuthenticationPolicyCommonMobile, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -2211,7 +2211,7 @@ func toStateMfaDevicePolicyMobile(apiObject *mfa.DeviceAuthenticationPolicyMobil
 	return objValue, diags
 }
 
-func toStateMfaDevicePolicyMobileApplications(apiObject []mfa.DeviceAuthenticationPolicyMobileApplicationsInner, ok bool) (types.Map, diag.Diagnostics) {
+func toStateMfaDevicePolicyMobileApplications(apiObject []mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInner, ok bool) (types.Map, diag.Diagnostics) {
 	var diags, d diag.Diagnostics
 
 	tfObjType := types.ObjectType{AttrTypes: MFADevicePolicyMobileApplicationTFObjectTypes}
@@ -2289,7 +2289,7 @@ func toStateMfaDevicePolicyMobileApplications(apiObject []mfa.DeviceAuthenticati
 	return returnVar, diags
 }
 
-func toStateMfaDevicePolicyMobileApplicationsAutoEnrolment(apiObject *mfa.DeviceAuthenticationPolicyMobileApplicationsInnerAutoEnrollment, ok bool) (types.Object, diag.Diagnostics) {
+func toStateMfaDevicePolicyMobileApplicationsAutoEnrolment(apiObject *mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInnerAutoEnrollment, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -2306,7 +2306,7 @@ func toStateMfaDevicePolicyMobileApplicationsAutoEnrolment(apiObject *mfa.Device
 	return objValue, diags
 }
 
-func toStateMfaDevicePolicyMobileApplicationsDeviceAuthorization(apiObject *mfa.DeviceAuthenticationPolicyMobileApplicationsInnerDeviceAuthorization, ok bool) (types.Object, diag.Diagnostics) {
+func toStateMfaDevicePolicyMobileApplicationsDeviceAuthorization(apiObject *mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInnerDeviceAuthorization, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -2324,7 +2324,7 @@ func toStateMfaDevicePolicyMobileApplicationsDeviceAuthorization(apiObject *mfa.
 	return objValue, diags
 }
 
-func toStateMfaDevicePolicyMobileApplicationsOtp(apiObject *mfa.DeviceAuthenticationPolicyMobileApplicationsInnerOtp, ok bool) (types.Object, diag.Diagnostics) {
+func toStateMfaDevicePolicyMobileApplicationsOtp(apiObject *mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInnerOtp, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -2341,7 +2341,7 @@ func toStateMfaDevicePolicyMobileApplicationsOtp(apiObject *mfa.DeviceAuthentica
 	return objValue, diags
 }
 
-func toStateMfaDevicePolicyMobileApplicationsPush(apiObject *mfa.DeviceAuthenticationPolicyMobileApplicationsInnerPush, ok bool) (types.Object, diag.Diagnostics) {
+func toStateMfaDevicePolicyMobileApplicationsPush(apiObject *mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInnerPush, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -2358,7 +2358,7 @@ func toStateMfaDevicePolicyMobileApplicationsPush(apiObject *mfa.DeviceAuthentic
 	return objValue, diags
 }
 
-func toStateMfaDevicePolicyMobileApplicationsPushLimit(apiObject *mfa.DeviceAuthenticationPolicyMobileApplicationsInnerPushLimit, ok bool) (types.Object, diag.Diagnostics) {
+func toStateMfaDevicePolicyMobileApplicationsPushLimit(apiObject *mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInnerPushLimit, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -2389,7 +2389,7 @@ func toStateMfaDevicePolicyMobileApplicationsPushLimit(apiObject *mfa.DeviceAuth
 	return objValue, diags
 }
 
-func toStateMfaDevicePolicyMobileApplicationsPushLimitLockDuration(apiObject *mfa.DeviceAuthenticationPolicyMobileApplicationsInnerPushLimitLockDuration, ok bool) (types.Object, diag.Diagnostics) {
+func toStateMfaDevicePolicyMobileApplicationsPushLimitLockDuration(apiObject *mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInnerPushLimitLockDuration, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -2407,7 +2407,7 @@ func toStateMfaDevicePolicyMobileApplicationsPushLimitLockDuration(apiObject *mf
 	return objValue, diags
 }
 
-func toStateMfaDevicePolicyMobileApplicationsPushLimitTimePeriod(apiObject *mfa.DeviceAuthenticationPolicyMobileApplicationsInnerPushLimitTimePeriod, ok bool) (types.Object, diag.Diagnostics) {
+func toStateMfaDevicePolicyMobileApplicationsPushLimitTimePeriod(apiObject *mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInnerPushLimitTimePeriod, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -2425,7 +2425,7 @@ func toStateMfaDevicePolicyMobileApplicationsPushLimitTimePeriod(apiObject *mfa.
 	return objValue, diags
 }
 
-func toStateMfaDevicePolicyMobileApplicationsPairingKeyLifetime(apiObject *mfa.DeviceAuthenticationPolicyMobileApplicationsInnerPairingKeyLifetime, ok bool) (types.Object, diag.Diagnostics) {
+func toStateMfaDevicePolicyMobileApplicationsPairingKeyLifetime(apiObject *mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInnerPairingKeyLifetime, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -2443,7 +2443,7 @@ func toStateMfaDevicePolicyMobileApplicationsPairingKeyLifetime(apiObject *mfa.D
 	return objValue, diags
 }
 
-func toStateMfaDevicePolicyMobileApplicationsPushTimeout(apiObject *mfa.DeviceAuthenticationPolicyMobileApplicationsInnerPushTimeout, ok bool) (types.Object, diag.Diagnostics) {
+func toStateMfaDevicePolicyMobileApplicationsPushTimeout(apiObject *mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInnerPushTimeout, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -2461,7 +2461,7 @@ func toStateMfaDevicePolicyMobileApplicationsPushTimeout(apiObject *mfa.DeviceAu
 	return objValue, diags
 }
 
-func toStateMfaDevicePolicyMobileOtp(apiObject *mfa.DeviceAuthenticationPolicyMobileOtp, ok bool) (types.Object, diag.Diagnostics) {
+func toStateMfaDevicePolicyMobileOtp(apiObject *mfa.DeviceAuthenticationPolicyCommonMobileOtp, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -2526,7 +2526,7 @@ func toStateMfaDevicePolicyMobileOtpFailureCooldown(apiObject *mfa.DeviceAuthent
 	return objValue, diags
 }
 
-func toStateMfaDevicePolicyTotp(apiObject *mfa.DeviceAuthenticationPolicyTotp, ok bool) (types.Object, diag.Diagnostics) {
+func toStateMfaDevicePolicyTotp(apiObject *mfa.DeviceAuthenticationPolicyCommonTotp, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -2553,7 +2553,7 @@ func toStateMfaDevicePolicyTotp(apiObject *mfa.DeviceAuthenticationPolicyTotp, o
 	return objValue, diags
 }
 
-func toStateMfaDevicePolicyTotpOtp(apiObject *mfa.DeviceAuthenticationPolicyTotpOtp, ok bool) (types.Object, diag.Diagnostics) {
+func toStateMfaDevicePolicyTotpOtp(apiObject *mfa.DeviceAuthenticationPolicyPingIDDeviceOtp, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -2618,7 +2618,7 @@ func toStateMfaDevicePolicyTotpOtpFailureCooldown(apiObject *mfa.DeviceAuthentic
 	return objValue, diags
 }
 
-func toStateMfaDevicePolicyFido2(apiObject *mfa.DeviceAuthenticationPolicyFido2, ok bool) (types.Object, diag.Diagnostics) {
+func toStateMfaDevicePolicyFido2(apiObject *mfa.DeviceAuthenticationPolicyCommonFido2, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {

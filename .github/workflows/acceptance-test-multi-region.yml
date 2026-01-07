@@ -17,7 +17,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Set up Go
         uses: actions/setup-go@v6
@@ -45,8 +45,12 @@ jobs:
 
     env:
       PINGONE_TESTING_PROVIDER_VERSION: test
+      # Variable names used by legacy client
       PINGONE_CLIENT_ID: ${{ vars[format('PINGONE_PROD_{0}_CLIENT_ID_CLIENT_SECRET_BASIC', matrix.region)] }}
       PINGONE_CLIENT_SECRET: ${{ secrets[format('PINGONE_PROD_{0}_CLIENT_SECRET_CLIENT_SECRET_BASIC', matrix.region)] }}
+      # Variable names used by pingone-go-client
+      PINGONE_CLIENT_CREDENTIALS_CLIENT_ID: ${{ vars[format('PINGONE_PROD_{0}_CLIENT_ID_CLIENT_SECRET_BASIC', matrix.region)] }}
+      PINGONE_CLIENT_CREDENTIALS_CLIENT_SECRET: ${{ secrets[format('PINGONE_PROD_{0}_CLIENT_SECRET_CLIENT_SECRET_BASIC', matrix.region)] }}
       PINGONE_ENVIRONMENT_ID: ${{ vars[format('PINGONE_PROD_{0}_ENVIRONMENT_ID', matrix.region)] }}
       PINGONE_REGION_CODE: ${{ matrix.region }}
       PINGONE_LICENSE_ID: ${{ vars[format('PINGONE_PROD_{0}_LICENSE_ID', matrix.region)] }}
@@ -56,7 +60,7 @@ jobs:
 
     steps:
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Set up Go
         uses: actions/setup-go@v6
@@ -90,8 +94,12 @@ jobs:
 
     env:
       PINGONE_TESTING_PROVIDER_VERSION: test
+      # Variable names used by legacy client
       PINGONE_CLIENT_ID: ${{ vars[format('PINGONE_PROD_{0}_CLIENT_ID_CLIENT_SECRET_BASIC', matrix.region)] }}
       PINGONE_CLIENT_SECRET: ${{ secrets[format('PINGONE_PROD_{0}_CLIENT_SECRET_CLIENT_SECRET_BASIC', matrix.region)] }}
+      # Variable names used by pingone-go-client
+      PINGONE_CLIENT_CREDENTIALS_CLIENT_ID: ${{ vars[format('PINGONE_PROD_{0}_CLIENT_ID_CLIENT_SECRET_BASIC', matrix.region)] }}
+      PINGONE_CLIENT_CREDENTIALS_CLIENT_SECRET: ${{ secrets[format('PINGONE_PROD_{0}_CLIENT_SECRET_CLIENT_SECRET_BASIC', matrix.region)] }}
       PINGONE_ENVIRONMENT_ID: ${{ vars[format('PINGONE_PROD_{0}_ENVIRONMENT_ID', matrix.region)] }}
       PINGONE_REGION_CODE: ${{ matrix.region }}
       PINGONE_LICENSE_ID: ${{ vars[format('PINGONE_PROD_{0}_LICENSE_ID', matrix.region)] }}
@@ -123,7 +131,7 @@ jobs:
 
     steps:
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Set up Go
         uses: actions/setup-go@v6
@@ -165,8 +173,12 @@ jobs:
     env:
       TESTACC_FLAKY: true
       PINGONE_TESTING_PROVIDER_VERSION: test
+      # Variable names used by legacy client
       PINGONE_CLIENT_ID: ${{ vars[format('PINGONE_PROD_{0}_CLIENT_ID_CLIENT_SECRET_BASIC', matrix.region)] }}
       PINGONE_CLIENT_SECRET: ${{ secrets[format('PINGONE_PROD_{0}_CLIENT_SECRET_CLIENT_SECRET_BASIC', matrix.region)] }}
+      # Variable names used by pingone-go-client
+      PINGONE_CLIENT_CREDENTIALS_CLIENT_ID: ${{ vars[format('PINGONE_PROD_{0}_CLIENT_ID_CLIENT_SECRET_BASIC', matrix.region)] }}
+      PINGONE_CLIENT_CREDENTIALS_CLIENT_SECRET: ${{ secrets[format('PINGONE_PROD_{0}_CLIENT_SECRET_CLIENT_SECRET_BASIC', matrix.region)] }}
       PINGONE_ENVIRONMENT_ID: ${{ vars[format('PINGONE_PROD_{0}_ENVIRONMENT_ID', matrix.region)] }}
       PINGONE_REGION_CODE: ${{ matrix.region }}
       PINGONE_LICENSE_ID: ${{ vars[format('PINGONE_PROD_{0}_LICENSE_ID', matrix.region)] }}
@@ -194,7 +206,7 @@ jobs:
 
     steps:
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Set up Go
         uses: actions/setup-go@v6
@@ -238,8 +250,12 @@ jobs:
 
     env:
       PINGONE_TESTING_PROVIDER_VERSION: test
+      # Variable names used by legacy client
       PINGONE_CLIENT_ID: ${{ vars[format('PINGONE_PROD_{0}_CLIENT_ID_CLIENT_SECRET_BASIC', matrix.region)] }}
       PINGONE_CLIENT_SECRET: ${{ secrets[format('PINGONE_PROD_{0}_CLIENT_SECRET_CLIENT_SECRET_BASIC', matrix.region)] }}
+      # Variable names used by pingone-go-client
+      PINGONE_CLIENT_CREDENTIALS_CLIENT_ID: ${{ vars[format('PINGONE_PROD_{0}_CLIENT_ID_CLIENT_SECRET_BASIC', matrix.region)] }}
+      PINGONE_CLIENT_CREDENTIALS_CLIENT_SECRET: ${{ secrets[format('PINGONE_PROD_{0}_CLIENT_SECRET_CLIENT_SECRET_BASIC', matrix.region)] }}
       PINGONE_ENVIRONMENT_ID: ${{ vars[format('PINGONE_PROD_{0}_ENVIRONMENT_ID', matrix.region)] }}
       PINGONE_REGION_CODE: ${{ matrix.region }}
       PINGONE_LICENSE_ID: ${{ vars[format('PINGONE_PROD_{0}_LICENSE_ID', matrix.region)] }}
@@ -249,7 +265,7 @@ jobs:
 
     steps:
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Set up Go
         uses: actions/setup-go@v6

@@ -501,17 +501,8 @@ func resourceMFAPolicyRead(ctx context.Context, d *schema.ResourceData, meta int
 		d.Set("fido2", nil)
 	}
 
-	if v, ok := respObject.GetSecurityKeyOk(); ok {
-		d.Set("security_key", flattenMFAPolicyFIDODevice(v))
-	} else {
-		d.Set("security_key", nil)
-	}
-
-	if v, ok := respObject.GetPlatformOk(); ok {
-		d.Set("platform", flattenMFAPolicyFIDODevice(v))
-	} else {
-		d.Set("platform", nil)
-	}
+	d.Set("security_key", nil)
+	d.Set("platform", nil)
 
 	return diags
 }
@@ -658,16 +649,8 @@ func expandMFAPolicy(ctx context.Context, apiClient *management.APIClient, d *sc
 		item.SetFido2(*expandMFAPolicyFIDO2Device(v.([]interface{})[0]))
 	}
 
-	if v, ok := d.GetOk("security_key"); ok {
-		item.SetSecurityKey(*expandMFAPolicyFIDODevice(v.([]interface{})[0]))
-	}
-
-	if v, ok := d.GetOk("platform"); ok {
-		item.SetPlatform(*expandMFAPolicyFIDODevice(v.([]interface{})[0]))
-	}
-
 	if v, ok := d.GetOk("device_selection"); ok {
-		item.SetAuthentication(*mfa.NewDeviceAuthenticationPolicyAuthentication(mfa.EnumMFADevicePolicySelection(v.(string))))
+		item.SetAuthentication(*mfa.NewDeviceAuthenticationPolicyCommonAuthentication(mfa.EnumMFADevicePolicySelection(v.(string))))
 	}
 
 	if v, ok := d.GetOk("new_device_notification"); ok {
@@ -698,14 +681,14 @@ func expandMFAPolicyOfflineDevice(v interface{}) *mfa.DeviceAuthenticationPolicy
 	return item
 }
 
-func expandMFAPolicyMobileDevice(v interface{}, ctx context.Context, apiClient *management.APIClient, environmentID string) (*mfa.DeviceAuthenticationPolicyMobile, diag.Diagnostics) {
+func expandMFAPolicyMobileDevice(v interface{}, ctx context.Context, apiClient *management.APIClient, environmentID string) (*mfa.DeviceAuthenticationPolicyCommonMobile, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	obj := v.(map[string]interface{})
 
-	item := mfa.NewDeviceAuthenticationPolicyMobile(
+	item := mfa.NewDeviceAuthenticationPolicyCommonMobile(
 		obj["enabled"].(bool),
-		*mfa.NewDeviceAuthenticationPolicyMobileOtp(
+		*mfa.NewDeviceAuthenticationPolicyCommonMobileOtp(
 			*mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailure(
 				int32(obj["otp_failure_count"].(int)),
 				*mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailureCoolDown(int32(obj["otp_failure_cooldown_duration"].(int)), mfa.EnumTimeUnit(obj["otp_failure_cooldown_timeunit"].(string))),
@@ -715,13 +698,13 @@ func expandMFAPolicyMobileDevice(v interface{}, ctx context.Context, apiClient *
 
 	if c, ok := obj["application"].(*schema.Set); ok && c != nil && len(c.List()) > 0 && c.List()[0] != nil {
 
-		items := make([]mfa.DeviceAuthenticationPolicyMobileApplicationsInner, 0)
+		items := make([]mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInner, 0)
 
 		for _, cn := range c.List() {
 
 			c2 := cn.(map[string]interface{})
 
-			item := *mfa.NewDeviceAuthenticationPolicyMobileApplicationsInner(c2["id"].(string))
+			item := *mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInner(c2["id"].(string))
 
 			application, diags := checkApplicationForMobileAppSDKv2(ctx, apiClient, environmentID, c2["id"].(string))
 			if diags.HasError() {
@@ -733,20 +716,20 @@ func expandMFAPolicyMobileDevice(v interface{}, ctx context.Context, apiClient *
 			}
 
 			if c3, ok := c2["push_enabled"].(bool); ok {
-				item.SetPush(*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPush(c3))
+				item.SetPush(*mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerPush(c3))
 			}
 
 			if c3, ok := c2["push_timeout_duration"].(int); ok {
-				item.SetPushTimeout(*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPushTimeout(int32(c3), mfa.ENUMTIMEUNITPUSHTIMEOUT_SECONDS))
+				item.SetPushTimeout(*mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerPushTimeout(int32(c3), mfa.ENUMTIMEUNITPUSHTIMEOUT_SECONDS))
 			}
 
 			pairingKeyLifetimeDuration, pairingKeyLifetimeDurationOk := c2["pairing_key_lifetime_duration"].(int)
 			pairingKeyLifetimeTimeunit, pairingKeyLifetimeTimeunitOk := c2["pairing_key_lifetime_timeunit"].(string)
 			if pairingKeyLifetimeDurationOk && pairingKeyLifetimeTimeunitOk {
-				item.SetPairingKeyLifetime(*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPairingKeyLifetime(int32(pairingKeyLifetimeDuration), mfa.EnumTimeUnitPairingKeyLifetime(pairingKeyLifetimeTimeunit)))
+				item.SetPairingKeyLifetime(*mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerPairingKeyLifetime(int32(pairingKeyLifetimeDuration), mfa.EnumTimeUnitPairingKeyLifetime(pairingKeyLifetimeTimeunit)))
 			}
 
-			pushLimit := mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPushLimit()
+			pushLimit := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerPushLimit()
 
 			if c3, ok := c2["push_limit_count"].(int); ok {
 				pushLimit.SetCount(int32(c3))
@@ -755,22 +738,22 @@ func expandMFAPolicyMobileDevice(v interface{}, ctx context.Context, apiClient *
 			lockDuration, lockDurationOk := c2["push_limit_lock_duration"].(int)
 			lockDurationTimeunit, lockDurationTimeunitOk := c2["push_limit_lock_duration_timeunit"].(string)
 			if lockDurationOk && lockDurationTimeunitOk {
-				pushLimit.SetLockDuration(*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPushLimitLockDuration(int32(lockDuration), mfa.EnumTimeUnit(lockDurationTimeunit)))
+				pushLimit.SetLockDuration(*mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerPushLimitLockDuration(int32(lockDuration), mfa.EnumTimeUnit(lockDurationTimeunit)))
 			}
 
 			timePeriodDuration, timePeriodOk := c2["push_limit_time_period_duration"].(int)
 			timePeriodTimeunit, timePeriodTimeunitOk := c2["push_limit_time_period_timeunit"].(string)
 			if timePeriodOk && timePeriodTimeunitOk {
-				pushLimit.SetTimePeriod(*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPushLimitTimePeriod(int32(timePeriodDuration), mfa.EnumTimeUnit(timePeriodTimeunit)))
+				pushLimit.SetTimePeriod(*mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerPushLimitTimePeriod(int32(timePeriodDuration), mfa.EnumTimeUnit(timePeriodTimeunit)))
 			}
 
 			item.SetPushLimit(*pushLimit)
 
 			if c3, ok := c2["otp_enabled"].(bool); ok {
-				item.SetOtp(*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerOtp(c3))
+				item.SetOtp(*mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerOtp(c3))
 			}
 
-			deviceAuthz := *mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerDeviceAuthorization(c2["device_authorization_enabled"].(bool))
+			deviceAuthz := *mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerDeviceAuthorization(c2["device_authorization_enabled"].(bool))
 
 			if c3, ok := c2["device_authorization_extra_verification"].(string); ok && c3 != "" {
 				deviceAuthz.SetExtraVerification(mfa.EnumMFADevicePolicyMobileExtraVerification(c3))
@@ -779,7 +762,7 @@ func expandMFAPolicyMobileDevice(v interface{}, ctx context.Context, apiClient *
 			item.SetDeviceAuthorization(deviceAuthz)
 
 			if c3, ok := c2["auto_enrollment_enabled"].(bool); ok {
-				item.SetAutoEnrollment(*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerAutoEnrollment(c3))
+				item.SetAutoEnrollment(*mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerAutoEnrollment(c3))
 			}
 
 			c3, ok := c2["integrity_detection"].(string)
@@ -898,13 +881,13 @@ func checkApplicationForMobileAppSDKv2(ctx context.Context, apiClient *managemen
 	return oidcObject, diags
 }
 
-func expandMFAPolicyTOTPDevice(v interface{}) *mfa.DeviceAuthenticationPolicyTotp {
+func expandMFAPolicyTOTPDevice(v interface{}) *mfa.DeviceAuthenticationPolicyCommonTotp {
 
 	obj := v.(map[string]interface{})
 
-	item := mfa.NewDeviceAuthenticationPolicyTotp(
+	item := mfa.NewDeviceAuthenticationPolicyCommonTotp(
 		obj["enabled"].(bool),
-		*mfa.NewDeviceAuthenticationPolicyTotpOtp(
+		*mfa.NewDeviceAuthenticationPolicyPingIDDeviceOtp(
 			*mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailure(
 				int32(obj["otp_failure_count"].(int)),
 				*mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailureCoolDown(int32(obj["otp_failure_cooldown_duration"].(int)), mfa.EnumTimeUnit(obj["otp_failure_cooldown_timeunit"].(string))),
@@ -919,28 +902,11 @@ func expandMFAPolicyTOTPDevice(v interface{}) *mfa.DeviceAuthenticationPolicyTot
 	return item
 }
 
-func expandMFAPolicyFIDODevice(v interface{}) *mfa.DeviceAuthenticationPolicyFIDODevice {
+func expandMFAPolicyFIDO2Device(v interface{}) *mfa.DeviceAuthenticationPolicyCommonFido2 {
 
 	obj := v.(map[string]interface{})
 
-	item := mfa.NewDeviceAuthenticationPolicyFIDODevice(obj["enabled"].(bool))
-
-	if v, ok := obj["fido_policy_id"].(string); ok {
-		item.SetFidoPolicyId(v)
-	}
-
-	if v, ok := obj["pairing_disabled"]; ok {
-		item.SetPairingDisabled(v.(bool))
-	}
-
-	return item
-}
-
-func expandMFAPolicyFIDO2Device(v interface{}) *mfa.DeviceAuthenticationPolicyFido2 {
-
-	obj := v.(map[string]interface{})
-
-	item := mfa.NewDeviceAuthenticationPolicyFido2(obj["enabled"].(bool))
+	item := mfa.NewDeviceAuthenticationPolicyCommonFido2(obj["enabled"].(bool))
 
 	if v, ok := obj["fido2_policy_id"].(string); ok {
 		item.SetFido2PolicyId(v)
@@ -999,7 +965,7 @@ func flattenMFAPolicyOfflineDevice(c *mfa.DeviceAuthenticationPolicyOfflineDevic
 	return append(make([]map[string]interface{}, 0), item)
 }
 
-func flattenMFAPolicyMobile(c *mfa.DeviceAuthenticationPolicyMobile) []map[string]interface{} {
+func flattenMFAPolicyMobile(c *mfa.DeviceAuthenticationPolicyCommonMobile) []map[string]interface{} {
 
 	item := map[string]interface{}{
 		"enabled": c.GetEnabled(),
@@ -1033,7 +999,7 @@ func flattenMFAPolicyMobile(c *mfa.DeviceAuthenticationPolicyMobile) []map[strin
 	return append(make([]map[string]interface{}, 0), item)
 }
 
-func expandMFAPolicyMobileApplication(c []mfa.DeviceAuthenticationPolicyMobileApplicationsInner) []map[string]interface{} {
+func expandMFAPolicyMobileApplication(c []mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInner) []map[string]interface{} {
 
 	items := make([]map[string]interface{}, 0)
 
@@ -1124,7 +1090,7 @@ func expandMFAPolicyMobileApplication(c []mfa.DeviceAuthenticationPolicyMobileAp
 
 }
 
-func flattenMFAPolicyTotp(c *mfa.DeviceAuthenticationPolicyTotp) []map[string]interface{} {
+func flattenMFAPolicyTotp(c *mfa.DeviceAuthenticationPolicyCommonTotp) []map[string]interface{} {
 
 	item := map[string]interface{}{
 		"enabled": c.GetEnabled(),
@@ -1159,24 +1125,7 @@ func flattenMFAPolicyTotp(c *mfa.DeviceAuthenticationPolicyTotp) []map[string]in
 	return append(make([]map[string]interface{}, 0), item)
 }
 
-func flattenMFAPolicyFIDODevice(c *mfa.DeviceAuthenticationPolicyFIDODevice) []map[string]interface{} {
-
-	item := map[string]interface{}{
-		"enabled": c.GetEnabled(),
-	}
-
-	if v, ok := c.GetPairingDisabledOk(); ok {
-		item["pairing_disabled"] = *v
-	}
-
-	if v, ok := c.GetFidoPolicyIdOk(); ok {
-		item["fido_policy_id"] = v
-	}
-
-	return append(make([]map[string]interface{}, 0), item)
-}
-
-func flattenMFAPolicyFIDO2Device(c *mfa.DeviceAuthenticationPolicyFido2) []map[string]interface{} {
+func flattenMFAPolicyFIDO2Device(c *mfa.DeviceAuthenticationPolicyCommonFido2) []map[string]interface{} {
 
 	item := map[string]interface{}{
 		"enabled": c.GetEnabled(),
