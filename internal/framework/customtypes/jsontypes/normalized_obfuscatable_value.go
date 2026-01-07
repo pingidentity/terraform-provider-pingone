@@ -98,6 +98,7 @@ func semanticCompareJsonIgnoreObfuscated(json1, json2 string) bool {
 }
 
 func isAllAsterisks(s string) bool {
+	// Empty string is not considered to be all asterisks
 	if len(s) == 0 {
 		return false
 	}

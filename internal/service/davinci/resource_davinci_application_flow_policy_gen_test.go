@@ -8,7 +8,6 @@ package davinci_test
 import (
 	"context"
 	"fmt"
-	"os"
 	"regexp"
 	"testing"
 
@@ -142,40 +141,12 @@ func testAccDavinciApplicationFlowPolicy_MinimalMaximal(t *testing.T, withBootst
 							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
 						}
 
-						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["da_vinci_application_id"], rs.Primary.Attributes["id"]), nil
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["davinci_application_id"], rs.Primary.Attributes["id"]), nil
 					}
 				}(),
 				ImportStateVerifyIdentifierAttribute: "id",
 				ImportState:                          true,
 				ImportStateVerify:                    true,
-			},
-		},
-	})
-}
-
-func TestAccDavinciApplicationFlowPolicy_NewEnv(t *testing.T) {
-	t.Skip("Skipping test as the pingone_davinci_flow resource will be needed for this")
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-
-	environmentName := acctest.ResourceNameGenEnvironment()
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckBeta(t)
-		},
-		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             davinciApplicationFlowPolicy_CheckDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			{
-				Config: davinciApplicationFlowPolicy_NewEnvHCL(environmentName, licenseID, resourceName),
-				Check:  davinciApplicationFlowPolicy_CheckComputedValuesMinimal(resourceName),
 			},
 		},
 	})
@@ -233,8 +204,8 @@ resource "pingone_davinci_application" "%[2]s" {
 }
 
 resource "pingone_davinci_application_flow_policy" "%[2]s" {
-  environment_id          = data.pingone_environment.general_test.id
-  da_vinci_application_id = pingone_davinci_application.%[2]s.id
+  environment_id         = data.pingone_environment.general_test.id
+  davinci_application_id = pingone_davinci_application.%[2]s.id
   flow_distributions = [
     {
       #TODO use flow resource to create this, rather than using a hardcoded id
@@ -257,8 +228,8 @@ resource "pingone_davinci_application" "%[2]s" {
 }
 
 resource "pingone_davinci_application_flow_policy" "%[2]s" {
-  environment_id          = data.pingone_environment.general_test.id
-  da_vinci_application_id = pingone_davinci_application.%[2]s.id
+  environment_id         = data.pingone_environment.general_test.id
+  davinci_application_id = pingone_davinci_application.%[2]s.id
   flow_distributions = [
     {
       id = "ea3bf86e79daf74f0262a317190e02dd"
@@ -306,7 +277,7 @@ func davinciApplicationFlowPolicy_CompleteReorderedHCL(resourceName string) stri
 
 resource "pingone_davinci_application_flow_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  //   da_vinci_application_id = //TODO
+  //   davinci_application_id = //TODO
   //   id = //TODO
   //   // TODO set values for complete fields, with ordering changes
   //   flow_distributions = [
@@ -353,8 +324,8 @@ resource "pingone_davinci_application" "%[3]s" {
 }
 
 resource "pingone_davinci_application_flow_policy" "%[3]s" {
-  environment_id          = pingone_environment.%[2]s.id
-  da_vinci_application_id = pingone_davinci_application.%[3]s.id
+  environment_id         = pingone_environment.%[2]s.id
+  davinci_application_id = pingone_davinci_application.%[3]s.id
   flow_distributions = [
     {
       #TODO use flow resource to create this, rather than using a hardcoded id
@@ -407,7 +378,7 @@ func davinciApplicationFlowPolicy_GetIDs(resourceName string, environmentId, daV
 			*environmentId = rs.Primary.Attributes["environment_id"]
 		}
 		if daVinciApplicationId != nil {
-			*daVinciApplicationId = rs.Primary.Attributes["da_vinci_application_id"]
+			*daVinciApplicationId = rs.Primary.Attributes["davinci_application_id"]
 		}
 		if id != nil {
 			*id = rs.Primary.Attributes["id"]
@@ -452,7 +423,7 @@ func davinciApplicationFlowPolicy_CheckDestroy(s *terraform.State) error {
 			continue
 		}
 
-		_, r, err := p1Client.DaVinciApplicationsApi.GetFlowPolicyByIdUsingDavinciApplicationId(ctx, uuid.MustParse(rs.Primary.Attributes["environment_id"]), rs.Primary.Attributes["da_vinci_application_id"], rs.Primary.Attributes["id"]).Execute()
+		_, r, err := p1Client.DaVinciApplicationsApi.GetFlowPolicyByIdUsingDavinciApplicationId(ctx, uuid.MustParse(rs.Primary.Attributes["environment_id"]), rs.Primary.Attributes["davinci_application_id"], rs.Primary.Attributes["id"]).Execute()
 
 		shouldContinue, err = acctest.CheckForResourceDestroy(r, err)
 		if err != nil {

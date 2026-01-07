@@ -15,6 +15,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/pingidentity/pingone-go-client/config"
 	"github.com/pingidentity/pingone-go-client/pingone"
 )
 
@@ -44,17 +45,17 @@ var (
 		return nil
 	}
 
-	regionMappingTopLevelDomainMap = map[string]string{
-		"na": "com",
-		"eu": "eu",
-		"ap": "asia",
-		"au": "com.au",
-		"ca": "ca",
-		"sg": "sg",
+	regionMappingTopLevelDomainMap = map[string]config.TopLevelDomain{
+		"na": config.TopLevelDomainNA,
+		"eu": config.TopLevelDomainEU,
+		"ap": config.TopLevelDomainAPAC,
+		"au": config.TopLevelDomainAU,
+		"ca": config.TopLevelDomainCA,
+		"sg": config.TopLevelDomainSG,
 	}
 )
 
-func RegionTopLevelDomainFromCode(regionCode string) (string, bool) {
+func RegionTopLevelDomainFromCode(regionCode string) (config.TopLevelDomain, bool) {
 	domain, ok := regionMappingTopLevelDomainMap[strings.ToLower(regionCode)]
 	return domain, ok
 }
