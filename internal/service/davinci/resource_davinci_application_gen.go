@@ -214,8 +214,9 @@ func (model *davinciApplicationResourceModel) buildClientStructPut() (*pingone.D
 	var respDiags diag.Diagnostics
 	// api_key
 	if !model.ApiKey.IsNull() && !model.ApiKey.IsUnknown() {
+		result.ApiKey = &pingone.DaVinciApplicationReplaceRequestApiKey{}
 		if !model.ApiKey.Attributes()["enabled"].IsNull() && !model.ApiKey.Attributes()["enabled"].IsUnknown() {
-			result.ApiKeyEnabled = model.ApiKey.Attributes()["enabled"].(types.Bool).ValueBoolPointer()
+			result.ApiKey.Enabled = model.ApiKey.Attributes()["enabled"].(types.Bool).ValueBoolPointer()
 		}
 	}
 	// name
@@ -224,7 +225,9 @@ func (model *davinciApplicationResourceModel) buildClientStructPut() (*pingone.D
 	if !model.Oauth.IsNull() && !model.Oauth.IsUnknown() {
 		oauthValue := &pingone.DaVinciApplicationReplaceRequestOAuth{}
 		oauthAttrs := model.Oauth.Attributes()
-		oauthValue.EnforceSignedRequestOpenid = oauthAttrs["enforce_signed_request_openid"].(types.Bool).ValueBoolPointer()
+		if !oauthAttrs["enforce_signed_request_openid"].IsNull() && !oauthAttrs["enforce_signed_request_openid"].IsUnknown() {
+			oauthValue.EnforceSignedRequestOpenid = oauthAttrs["enforce_signed_request_openid"].(types.Bool).ValueBoolPointer()
+		}
 		if !oauthAttrs["grant_types"].IsNull() && !oauthAttrs["grant_types"].IsUnknown() {
 			oauthValue.GrantTypes = []pingone.DaVinciApplicationReplaceRequestOAuthGrantType{}
 			for _, grantTypesElement := range oauthAttrs["grant_types"].(types.Set).Elements() {

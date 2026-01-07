@@ -1,0 +1,1 @@
+terraform import pingone_rate_limit_configuration.example <environment_id>/<rate_limit_configuration_id>

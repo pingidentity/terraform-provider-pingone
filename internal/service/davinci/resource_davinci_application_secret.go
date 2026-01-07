@@ -72,7 +72,7 @@ func (r *davinciApplicationSecretResource) Configure(ctx context.Context, req re
 
 type davinciApplicationSecretResourceModel struct {
 	Oauth                 types.Object `tfsdk:"oauth"`
-	ApplicationId         types.String `tfsdk:"application_id"`
+	DavinciApplicationId  types.String `tfsdk:"davinci_application_id"`
 	EnvironmentId         types.String `tfsdk:"environment_id"`
 	Id                    types.String `tfsdk:"id"`
 	RotationTriggerValues types.Map    `tfsdk:"rotation_trigger_values"`
@@ -82,7 +82,7 @@ func (r *davinciApplicationSecretResource) Schema(ctx context.Context, req resou
 	resp.Schema = schema.Schema{
 		Description: "Resource to rotate the OAuth client secret for a DaVinci application.",
 		Attributes: map[string]schema.Attribute{
-			"application_id": schema.StringAttribute{
+			"davinci_application_id": schema.StringAttribute{
 				Required:    true,
 				Description: "This field is immutable and will trigger a replace plan if changed.",
 				PlanModifiers: []planmodifier.String{
@@ -167,8 +167,8 @@ func (r *davinciApplicationSecretResource) ModifyPlan(ctx context.Context, req r
 
 func (state *davinciApplicationSecretResourceModel) readClientResponse(response *pingone.DaVinciApplicationResponse) diag.Diagnostics {
 	var respDiags, diags diag.Diagnostics
-	// application_id
-	state.ApplicationId = types.StringValue(response.Id)
+	// davinci_application_id
+	state.DavinciApplicationId = types.StringValue(response.Id)
 	// id
 	state.Id = types.StringValue(response.Id)
 	// oauth
@@ -215,7 +215,7 @@ func (r *davinciApplicationSecretResource) Create(ctx context.Context, req resou
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciApplicationsApi.RotateSecretByDavinciApplicationId(ctx, environmentIdUuid, data.ApplicationId.ValueString()).RequestBody(map[string]interface{}{}).Execute()
+			fO, fR, fErr := r.Client.DaVinciApplicationsApi.RotateSecretByDavinciApplicationId(ctx, environmentIdUuid, data.DavinciApplicationId.ValueString()).RequestBody(map[string]interface{}{}).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"RotateDavinciApplicationSecret",
@@ -318,7 +318,7 @@ func (r *davinciApplicationSecretResource) ImportState(ctx context.Context, req 
 			Regexp: verify.P1ResourceIDRegexp,
 		},
 		{
-			Label:     "application_id",
+			Label:     "davinci_application_id",
 			PrimaryID: true,
 			Regexp:    verify.P1DVResourceIDRegexp,
 		},
