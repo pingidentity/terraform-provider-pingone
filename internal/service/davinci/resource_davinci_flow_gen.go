@@ -784,8 +784,16 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 					if !edgesAttrs["position"].IsNull() && !edgesAttrs["position"].IsUnknown() {
 						edgesPositionValue := &pingone.DaVinciFlowGraphDataRequestElementsEdgePosition{}
 						edgesPositionAttrs := edgesAttrs["position"].(types.Object).Attributes()
-						edgesPositionValue.X = edgesPositionAttrs["x"].(types.Float32).ValueFloat32()
-						edgesPositionValue.Y = edgesPositionAttrs["y"].(types.Float32).ValueFloat32()
+						if !edgesPositionAttrs["x"].IsNull() && !edgesPositionAttrs["x"].IsUnknown() {
+							edgesPositionValue.X = pingonetypes.BigFloatUnquoted{
+								Float: edgesPositionAttrs["x"].(types.Number).ValueBigFloat(),
+							}
+						}
+						if !edgesPositionAttrs["y"].IsNull() && !edgesPositionAttrs["y"].IsUnknown() {
+							edgesPositionValue.Y = pingonetypes.BigFloatUnquoted{
+								Float: edgesPositionAttrs["y"].(types.Number).ValueBigFloat(),
+							}
+						}
 						edgesValue.Position = edgesPositionValue
 					}
 					edgesValue.Removed = edgesAttrs["removed"].(types.Bool).ValueBoolPointer()
@@ -830,8 +838,16 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 					if !nodesAttrs["position"].IsNull() && !nodesAttrs["position"].IsUnknown() {
 						nodesPositionValue := &pingone.DaVinciFlowGraphDataRequestElementsNodePosition{}
 						nodesPositionAttrs := nodesAttrs["position"].(types.Object).Attributes()
-						nodesPositionValue.X = nodesPositionAttrs["x"].(types.Float32).ValueFloat32()
-						nodesPositionValue.Y = nodesPositionAttrs["y"].(types.Float32).ValueFloat32()
+						if !nodesPositionAttrs["x"].IsNull() && !nodesPositionAttrs["x"].IsUnknown() {
+							nodesPositionValue.X = pingonetypes.BigFloatUnquoted{
+								Float: nodesPositionAttrs["x"].(types.Number).ValueBigFloat(),
+							}
+						}
+						if !nodesPositionAttrs["y"].IsNull() && !nodesPositionAttrs["y"].IsUnknown() {
+							nodesPositionValue.Y = pingonetypes.BigFloatUnquoted{
+								Float: nodesPositionAttrs["y"].(types.Number).ValueBigFloat(),
+							}
+						}
 						nodesValue.Position = nodesPositionValue
 					}
 					nodesValue.Removed = nodesAttrs["removed"].(types.Bool).ValueBoolPointer()
@@ -855,8 +871,16 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 		if !graphDataAttrs["pan"].IsNull() && !graphDataAttrs["pan"].IsUnknown() {
 			graphDataPanValue := &pingone.DaVinciFlowGraphDataRequestPan{}
 			graphDataPanAttrs := graphDataAttrs["pan"].(types.Object).Attributes()
-			graphDataPanValue.X = graphDataPanAttrs["x"].(types.Float32).ValueFloat32()
-			graphDataPanValue.Y = graphDataPanAttrs["y"].(types.Float32).ValueFloat32()
+			if !graphDataPanAttrs["x"].IsNull() && !graphDataPanAttrs["x"].IsUnknown() {
+				graphDataPanValue.X = pingonetypes.BigFloatUnquoted{
+					Float: graphDataPanAttrs["x"].(types.Number).ValueBigFloat(),
+				}
+			}
+			if !graphDataPanAttrs["y"].IsNull() && !graphDataPanAttrs["y"].IsUnknown() {
+				graphDataPanValue.Y = pingonetypes.BigFloatUnquoted{
+					Float: graphDataPanAttrs["y"].(types.Number).ValueBigFloat(),
+				}
+			}
 			graphDataValue.Pan = graphDataPanValue
 		}
 		graphDataValue.PanningEnabled = graphDataAttrs["panning_enabled"].(types.Bool).ValueBoolPointer()
@@ -1104,8 +1128,16 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 					if !edgesAttrs["position"].IsNull() && !edgesAttrs["position"].IsUnknown() {
 						edgesPositionValue := &pingone.DaVinciFlowGraphDataRequestElementsEdgePosition{}
 						edgesPositionAttrs := edgesAttrs["position"].(types.Object).Attributes()
-						edgesPositionValue.X = edgesPositionAttrs["x"].(types.Float32).ValueFloat32()
-						edgesPositionValue.Y = edgesPositionAttrs["y"].(types.Float32).ValueFloat32()
+						if !edgesPositionAttrs["x"].IsNull() && !edgesPositionAttrs["x"].IsUnknown() {
+							edgesPositionValue.X = pingonetypes.BigFloatUnquoted{
+								Float: edgesPositionAttrs["x"].(types.Number).ValueBigFloat(),
+							}
+						}
+						if !edgesPositionAttrs["y"].IsNull() && !edgesPositionAttrs["y"].IsUnknown() {
+							edgesPositionValue.Y = pingonetypes.BigFloatUnquoted{
+								Float: edgesPositionAttrs["y"].(types.Number).ValueBigFloat(),
+							}
+						}
 						edgesValue.Position = edgesPositionValue
 					}
 					edgesValue.Removed = edgesAttrs["removed"].(types.Bool).ValueBoolPointer()
@@ -1150,8 +1182,16 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 					if !nodesAttrs["position"].IsNull() && !nodesAttrs["position"].IsUnknown() {
 						nodesPositionValue := &pingone.DaVinciFlowGraphDataRequestElementsNodePosition{}
 						nodesPositionAttrs := nodesAttrs["position"].(types.Object).Attributes()
-						nodesPositionValue.X = nodesPositionAttrs["x"].(types.Float32).ValueFloat32()
-						nodesPositionValue.Y = nodesPositionAttrs["y"].(types.Float32).ValueFloat32()
+						if !nodesPositionAttrs["x"].IsNull() && !nodesPositionAttrs["x"].IsUnknown() {
+							nodesPositionValue.X = pingonetypes.BigFloatUnquoted{
+								Float: nodesPositionAttrs["x"].(types.Number).ValueBigFloat(),
+							}
+						}
+						if !nodesPositionAttrs["y"].IsNull() && !nodesPositionAttrs["y"].IsUnknown() {
+							nodesPositionValue.Y = pingonetypes.BigFloatUnquoted{
+								Float: nodesPositionAttrs["y"].(types.Number).ValueBigFloat(),
+							}
+						}
 						nodesValue.Position = nodesPositionValue
 					}
 					nodesValue.Removed = nodesAttrs["removed"].(types.Bool).ValueBoolPointer()
@@ -1175,8 +1215,16 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 		if !graphDataAttrs["pan"].IsNull() && !graphDataAttrs["pan"].IsUnknown() {
 			graphDataPanValue := &pingone.DaVinciFlowGraphDataRequestPan{}
 			graphDataPanAttrs := graphDataAttrs["pan"].(types.Object).Attributes()
-			graphDataPanValue.X = graphDataPanAttrs["x"].(types.Float32).ValueFloat32()
-			graphDataPanValue.Y = graphDataPanAttrs["y"].(types.Float32).ValueFloat32()
+			if !graphDataPanAttrs["x"].IsNull() && !graphDataPanAttrs["x"].IsUnknown() {
+				graphDataPanValue.X = pingonetypes.BigFloatUnquoted{
+					Float: graphDataPanAttrs["x"].(types.Number).ValueBigFloat(),
+				}
+			}
+			if !graphDataPanAttrs["y"].IsNull() && !graphDataPanAttrs["y"].IsUnknown() {
+				graphDataPanValue.Y = pingonetypes.BigFloatUnquoted{
+					Float: graphDataPanAttrs["y"].(types.Number).ValueBigFloat(),
+				}
+			}
 			graphDataValue.Pan = graphDataPanValue
 		}
 		graphDataValue.PanningEnabled = graphDataAttrs["panning_enabled"].(types.Bool).ValueBoolPointer()
@@ -1508,8 +1556,8 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			})
 			respDiags.Append(diags...)
 			graphDataElementsEdgesPositionValue, diags := types.ObjectValue(graphDataElementsEdgesPositionAttrTypes, map[string]attr.Value{
-				"x": types.Float32Value(graphDataElementsEdgesResponseValue.Position.X),
-				"y": types.Float32Value(graphDataElementsEdgesResponseValue.Position.Y),
+				"x": types.NumberValue(graphDataElementsEdgesResponseValue.Position.X.Float),
+				"y": types.NumberValue(graphDataElementsEdgesResponseValue.Position.Y.Float),
 			})
 			respDiags.Append(diags...)
 			graphDataElementsEdgesValue, diags := types.ObjectValue(graphDataElementsEdgesAttrTypes, map[string]attr.Value{
@@ -1560,8 +1608,8 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			})
 			respDiags.Append(diags...)
 			graphDataElementsNodesPositionValue, diags := types.ObjectValue(graphDataElementsNodesPositionAttrTypes, map[string]attr.Value{
-				"x": types.Float32Value(graphDataElementsNodesResponseValue.Position.X),
-				"y": types.Float32Value(graphDataElementsNodesResponseValue.Position.Y),
+				"x": types.NumberValue(graphDataElementsNodesResponseValue.Position.X.Float),
+				"y": types.NumberValue(graphDataElementsNodesResponseValue.Position.Y.Float),
 			})
 			respDiags.Append(diags...)
 			graphDataElementsNodesValue, diags := types.ObjectValue(graphDataElementsNodesAttrTypes, map[string]attr.Value{
@@ -1599,8 +1647,8 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			minZoomValue = types.NumberValue(response.GraphData.MinZoom.Float)
 		}
 		graphDataPanValue, diags := types.ObjectValue(graphDataPanAttrTypes, map[string]attr.Value{
-			"x": types.Float32Value(response.GraphData.Pan.X),
-			"y": types.Float32Value(response.GraphData.Pan.Y),
+			"x": types.NumberValue(response.GraphData.Pan.X.Float),
+			"y": types.NumberValue(response.GraphData.Pan.Y.Float),
 		})
 		respDiags.Append(diags...)
 		graphDataRendererValue := jsontypes.NewNormalizedNull()
