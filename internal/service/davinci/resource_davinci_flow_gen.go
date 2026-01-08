@@ -871,7 +871,7 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 					if nodesKey != expectedKey {
 						respDiags.AddError(
 							"Error Validating Node Key",
-							fmt.Sprintf("The node key '%s' does not match the expected value '%s'. Please ensure the node keys are set as the node's 'id_unique' if present, otherwise the node's 'id'.", nodesKey, expectedKey),
+							fmt.Sprintf("The node key '%s' does not match the expected value '%s'. Please ensure the node keys are set as the node's 'id_unique' value if present, otherwise the node's 'id' value.", nodesKey, expectedKey),
 						)
 					}
 					graphDataElementsValue.Nodes = append(graphDataElementsValue.Nodes, nodesValue)
