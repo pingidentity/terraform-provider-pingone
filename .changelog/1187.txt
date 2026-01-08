@@ -3,5 +3,5 @@ pingone_mfa_device_policy_default
 ```
 
 ```release-note:note
-resource/pingone_mfa_policy: The previously deprecated `pingone_mfa_policy` resource has been removed. Please use `pingone_mfa_device_policy` instead.
+`resource/pingone_mfa_policy`: The previously deprecated `pingone_mfa_policy` resource has been removed. Please use `pingone_mfa_device_policy` instead.
 ```
