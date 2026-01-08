@@ -335,7 +335,7 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 		}
 
 		// Try to load stored token
-		storedToken, err := pingcli.LoadStoredToken(profileConfig, configProfile)
+		storedToken, err := pingcli.LoadStoredToken(ctx, profileConfig, configProfile)
 		if err != nil || storedToken == nil || !storedToken.Valid() {
 			resp.Diagnostics.AddError(
 				"No Valid Stored Token",

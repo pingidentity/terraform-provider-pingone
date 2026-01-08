@@ -384,7 +384,7 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 		}
 
 		// Try to load a stored token first
-		storedToken, err := pingcli.LoadStoredToken(profileConfig, activeProfile)
+		storedToken, err := pingcli.LoadStoredToken(ctx, profileConfig, activeProfile)
 		if err == nil && storedToken != nil && storedToken.Valid() {
 			tflog.Info(ctx, "[v6] Found valid stored token from PingCLI credentials", map[string]any{
 				"profile":        activeProfile,

@@ -174,7 +174,7 @@ func configure(version string) func(context.Context, *schema.ResourceData) (inte
 		// Check if PingCLI config is being used
 		configPath := strings.TrimSpace(d.Get("config_path").(string))
 		if configPath == "" {
-			configPath = strings.TrimSpace(os.Getenv("PINGCLI_CONFIG"))
+			configPath = getEnvOrDefault("PINGCLI_CONFIG", "")
 		}
 		// Expand tilde in config_path like ~/.pingcli/config.yaml
 		if configPath != "" && strings.HasPrefix(configPath, "~") {
@@ -185,7 +185,7 @@ func configure(version string) func(context.Context, *schema.ResourceData) (inte
 
 		configProfile := strings.TrimSpace(d.Get("config_profile").(string))
 		if configProfile == "" {
-			configProfile = strings.TrimSpace(os.Getenv("PINGCLI_PROFILE"))
+			configProfile = getEnvOrDefault("PINGCLI_PROFILE", "")
 		}
 
 		usingPingCLIConfig := configPath != ""
@@ -209,7 +209,7 @@ func configure(version string) func(context.Context, *schema.ResourceData) (inte
 				}
 			}
 
-			storedToken, err := pingcli.LoadStoredToken(profileConfig, configProfile)
+			storedToken, err := pingcli.LoadStoredToken(ctx, profileConfig, configProfile)
 			if err != nil || storedToken == nil || !storedToken.Valid() {
 				// First fallback: explicit API access token supplied in provider config
 				if v, ok := d.Get("api_access_token").(string); ok && strings.TrimSpace(v) != "" {
@@ -353,4 +353,11 @@ func configure(version string) func(context.Context, *schema.ResourceData) (inte
 
 		return client, diags
 	}
+}
+
+func getEnvOrDefault(key, defaultValue string) string {
+	if value, exists := os.LookupEnv(key); exists {
+		return strings.TrimSpace(value)
+	}
+	return defaultValue
 }
