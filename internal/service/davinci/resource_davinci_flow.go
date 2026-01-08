@@ -140,12 +140,12 @@ func (r *davinciFlowResource) ModifyPlan(ctx context.Context, req resource.Modif
 	}
 }
 
-func (m *davinciFlowResourceModel) getGraphDataElementsNodes() *types.Set {
+func (m *davinciFlowResourceModel) getGraphDataElementsNodes() *types.Map {
 	if !m.GraphData.IsNull() && !m.GraphData.IsUnknown() {
 		graphDataAttrs := m.GraphData.Attributes()
 		if !graphDataAttrs["elements"].IsNull() && !graphDataAttrs["elements"].IsUnknown() {
 			graphDataElementsAttrs := graphDataAttrs["elements"].(types.Object).Attributes()
-			nodesSet, ok := graphDataElementsAttrs["nodes"].(types.Set)
+			nodesSet, ok := graphDataElementsAttrs["nodes"].(types.Map)
 			if ok {
 				return &nodesSet
 			}
@@ -160,6 +160,11 @@ func (r *davinciFlowResource) isUpdateRequiredAfterCreate(plan, createResponse d
 
 	// Check that the create returned all the nodes, but the content did not match the plan
 	return len(planNodes.Elements()) == len(createResponseNodes.Elements()) && !planNodes.Equal(createResponseNodes)
+}
+
+// Get a unique key for an edge based on its ID, source, and target
+func (r *davinciFlowResourceModel) edgeKey(id, source, target string) string {
+	return fmt.Sprintf("%s|%s|%s", id, source, target)
 }
 
 func (r *davinciFlowResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {

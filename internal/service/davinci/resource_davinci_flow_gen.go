@@ -22,9 +22,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/mapdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -203,7 +203,7 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 					},
 					"elements": schema.SingleNestedAttribute{
 						Attributes: map[string]schema.Attribute{
-							"edges": schema.SetNestedAttribute{
+							"edges": schema.MapNestedAttribute{
 								NestedObject: schema.NestedAttributeObject{
 									Attributes: map[string]schema.Attribute{
 										"classes": schema.StringAttribute{
@@ -268,9 +268,9 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 								},
 								Optional: true,
 								Computed: true,
-								Default:  setdefault.StaticValue(types.SetValueMust(graphDataElementsEdgesElementType, nil)),
+								Default:  mapdefault.StaticValue(types.MapValueMust(graphDataElementsEdgesElementType, nil)),
 							},
-							"nodes": schema.SetNestedAttribute{
+							"nodes": schema.MapNestedAttribute{
 								NestedObject: schema.NestedAttributeObject{
 									Attributes: map[string]schema.Attribute{
 										"classes": schema.StringAttribute{
@@ -767,7 +767,7 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 			graphDataElementsAttrs := graphDataAttrs["elements"].(types.Object).Attributes()
 			if !graphDataElementsAttrs["edges"].IsNull() && !graphDataElementsAttrs["edges"].IsUnknown() {
 				graphDataElementsValue.Edges = []pingone.DaVinciFlowGraphDataRequestElementsEdge{}
-				for _, edgesElement := range graphDataElementsAttrs["edges"].(types.Set).Elements() {
+				for edgesKey, edgesElement := range graphDataElementsAttrs["edges"].(types.Map).Elements() {
 					edgesValue := pingone.DaVinciFlowGraphDataRequestElementsEdge{}
 					edgesAttrs := edgesElement.(types.Object).Attributes()
 					edgesValue.Classes = edgesAttrs["classes"].(types.String).ValueStringPointer()
@@ -799,12 +799,20 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 					edgesValue.Removed = edgesAttrs["removed"].(types.Bool).ValueBoolPointer()
 					edgesValue.Selectable = edgesAttrs["selectable"].(types.Bool).ValueBoolPointer()
 					edgesValue.Selected = edgesAttrs["selected"].(types.Bool).ValueBoolPointer()
+					// Validate key has correct format
+					expectedKey := model.edgeKey(edgesDataValue.Id, edgesDataValue.Source, edgesDataValue.Target)
+					if edgesKey != expectedKey {
+						respDiags.AddError(
+							"Error Validating Edge Key",
+							fmt.Sprintf("The edge key '%s' does not match the expected value '%s'. Please ensure the edge keys are formatted as 'id|source|target'.", edgesKey, expectedKey),
+						)
+					}
 					graphDataElementsValue.Edges = append(graphDataElementsValue.Edges, edgesValue)
 				}
 			}
 			if !graphDataElementsAttrs["nodes"].IsNull() && !graphDataElementsAttrs["nodes"].IsUnknown() {
 				graphDataElementsValue.Nodes = []pingone.DaVinciFlowGraphDataRequestElementsNode{}
-				for _, nodesElement := range graphDataElementsAttrs["nodes"].(types.Set).Elements() {
+				for nodesKey, nodesElement := range graphDataElementsAttrs["nodes"].(types.Map).Elements() {
 					nodesValue := pingone.DaVinciFlowGraphDataRequestElementsNode{}
 					nodesAttrs := nodesElement.(types.Object).Attributes()
 					nodesValue.Classes = nodesAttrs["classes"].(types.String).ValueStringPointer()
@@ -853,6 +861,19 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 					nodesValue.Removed = nodesAttrs["removed"].(types.Bool).ValueBoolPointer()
 					nodesValue.Selectable = nodesAttrs["selectable"].(types.Bool).ValueBoolPointer()
 					nodesValue.Selected = nodesAttrs["selected"].(types.Bool).ValueBoolPointer()
+					// Validate key has correct format
+					var expectedKey string
+					if nodesDataValue.IdUnique != nil {
+						expectedKey = *nodesDataValue.IdUnique
+					} else {
+						expectedKey = nodesDataValue.Id
+					}
+					if nodesKey != expectedKey {
+						respDiags.AddError(
+							"Error Validating Node Key",
+							fmt.Sprintf("The node key '%s' does not match the expected value '%s'. Please ensure the node keys are set as the node's 'id_unique' if present, otherwise the node's 'id'.", nodesKey, expectedKey),
+						)
+					}
 					graphDataElementsValue.Nodes = append(graphDataElementsValue.Nodes, nodesValue)
 				}
 			}
@@ -1155,7 +1176,7 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 			graphDataElementsAttrs := graphDataAttrs["elements"].(types.Object).Attributes()
 			if !graphDataElementsAttrs["edges"].IsNull() && !graphDataElementsAttrs["edges"].IsUnknown() {
 				graphDataElementsValue.Edges = []pingone.DaVinciFlowGraphDataRequestElementsEdge{}
-				for _, edgesElement := range graphDataElementsAttrs["edges"].(types.Set).Elements() {
+				for _, edgesElement := range graphDataElementsAttrs["edges"].(types.Map).Elements() {
 					edgesValue := pingone.DaVinciFlowGraphDataRequestElementsEdge{}
 					edgesAttrs := edgesElement.(types.Object).Attributes()
 					edgesValue.Classes = edgesAttrs["classes"].(types.String).ValueStringPointer()
@@ -1192,7 +1213,7 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 			}
 			if !graphDataElementsAttrs["nodes"].IsNull() && !graphDataElementsAttrs["nodes"].IsUnknown() {
 				graphDataElementsValue.Nodes = []pingone.DaVinciFlowGraphDataRequestElementsNode{}
-				for _, nodesElement := range graphDataElementsAttrs["nodes"].(types.Set).Elements() {
+				for _, nodesElement := range graphDataElementsAttrs["nodes"].(types.Map).Elements() {
 					nodesValue := pingone.DaVinciFlowGraphDataRequestElementsNode{}
 					nodesAttrs := nodesElement.(types.Object).Attributes()
 					nodesValue.Classes = nodesAttrs["classes"].(types.String).ValueStringPointer()
@@ -1596,8 +1617,8 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 	}
 	graphDataElementsNodesElementType := types.ObjectType{AttrTypes: graphDataElementsNodesAttrTypes}
 	graphDataElementsAttrTypes := map[string]attr.Type{
-		"edges": types.SetType{ElemType: graphDataElementsEdgesElementType},
-		"nodes": types.SetType{ElemType: graphDataElementsNodesElementType},
+		"edges": types.MapType{ElemType: graphDataElementsEdgesElementType},
+		"nodes": types.MapType{ElemType: graphDataElementsNodesElementType},
 	}
 	graphDataPanAttrTypes := map[string]attr.Type{
 		"x": types.NumberType,
@@ -1635,7 +1656,7 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 				graphDataDataValue = jsontypes.NewNormalizedValue(string(graphDataDataBytes))
 			}
 		}
-		var graphDataElementsEdgesValues []attr.Value
+		graphDataElementsEdgesValues := make(map[string]attr.Value)
 		for _, graphDataElementsEdgesResponseValue := range response.GraphData.Elements.Edges {
 			graphDataElementsEdgesDataValue, diags := types.ObjectValue(graphDataElementsEdgesDataAttrTypes, map[string]attr.Value{
 				"id":     types.StringValue(graphDataElementsEdgesResponseValue.Data.Id),
@@ -1661,11 +1682,13 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 				"selected":   types.BoolValue(graphDataElementsEdgesResponseValue.Selected),
 			})
 			respDiags.Append(diags...)
-			graphDataElementsEdgesValues = append(graphDataElementsEdgesValues, graphDataElementsEdgesValue)
+			// Use the unique key for the edge
+			graphDataElementsEdgesValueKey := state.edgeKey(graphDataElementsEdgesResponseValue.Data.Id, graphDataElementsEdgesResponseValue.Data.Source, graphDataElementsEdgesResponseValue.Data.Target)
+			graphDataElementsEdgesValues[graphDataElementsEdgesValueKey] = graphDataElementsEdgesValue
 		}
-		graphDataElementsEdgesValue, diags := types.SetValue(graphDataElementsEdgesElementType, graphDataElementsEdgesValues)
+		graphDataElementsEdgesValue, diags := types.MapValue(graphDataElementsEdgesElementType, graphDataElementsEdgesValues)
 		respDiags.Append(diags...)
-		var graphDataElementsNodesValues []attr.Value
+		graphDataElementsNodesValues := make(map[string]attr.Value)
 		for _, graphDataElementsNodesResponseValue := range response.GraphData.Elements.Nodes {
 			var graphDataElementsNodesDataPropertiesValue jsontypes.Normalized
 			if graphDataElementsNodesResponseValue.Data.Properties == nil {
@@ -1713,9 +1736,16 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 				"selected":   types.BoolValue(graphDataElementsNodesResponseValue.Selected),
 			})
 			respDiags.Append(diags...)
-			graphDataElementsNodesValues = append(graphDataElementsNodesValues, graphDataElementsNodesValue)
+			// Use the unique key for the node
+			var graphDataElementsNodesValueKey string
+			if graphDataElementsNodesResponseValue.Data.IdUnique != nil {
+				graphDataElementsNodesValueKey = *graphDataElementsNodesResponseValue.Data.IdUnique
+			} else {
+				graphDataElementsNodesValueKey = graphDataElementsNodesResponseValue.Data.Id
+			}
+			graphDataElementsNodesValues[graphDataElementsNodesValueKey] = graphDataElementsNodesValue
 		}
-		graphDataElementsNodesValue, diags := types.SetValue(graphDataElementsNodesElementType, graphDataElementsNodesValues)
+		graphDataElementsNodesValue, diags := types.MapValue(graphDataElementsNodesElementType, graphDataElementsNodesValues)
 		respDiags.Append(diags...)
 		graphDataElementsValue, diags := types.ObjectValue(graphDataElementsAttrTypes, map[string]attr.Value{
 			"edges": graphDataElementsEdgesValue,
