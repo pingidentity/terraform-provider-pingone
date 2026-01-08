@@ -100,8 +100,8 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 		"target": types.StringType,
 	}
 	graphDataElementsEdgesPositionAttrTypes := map[string]attr.Type{
-		"x": types.Float32Type,
-		"y": types.Float32Type,
+		"x": types.NumberType,
+		"y": types.NumberType,
 	}
 	graphDataElementsEdgesAttrTypes := map[string]attr.Type{
 		"classes":    types.StringType,
@@ -246,10 +246,10 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 										},
 										"position": schema.SingleNestedAttribute{
 											Attributes: map[string]schema.Attribute{
-												"x": schema.Float32Attribute{
+												"x": schema.NumberAttribute{
 													Required: true,
 												},
-												"y": schema.Float32Attribute{
+												"y": schema.NumberAttribute{
 													Required: true,
 												},
 											},
@@ -344,10 +344,10 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 										},
 										"position": schema.SingleNestedAttribute{
 											Attributes: map[string]schema.Attribute{
-												"x": schema.Float32Attribute{
+												"x": schema.NumberAttribute{
 													Required: true,
 												},
-												"y": schema.Float32Attribute{
+												"y": schema.NumberAttribute{
 													Required: true,
 												},
 											},
@@ -377,10 +377,10 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 					},
 					"pan": schema.SingleNestedAttribute{
 						Attributes: map[string]schema.Attribute{
-							"x": schema.Float32Attribute{
+							"x": schema.NumberAttribute{
 								Required: true,
 							},
-							"y": schema.Float32Attribute{
+							"y": schema.NumberAttribute{
 								Required: true,
 							},
 						},
@@ -1549,8 +1549,8 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 		"target": types.StringType,
 	}
 	graphDataElementsEdgesPositionAttrTypes := map[string]attr.Type{
-		"x": types.Float32Type,
-		"y": types.Float32Type,
+		"x": types.NumberType,
+		"y": types.NumberType,
 	}
 	graphDataElementsEdgesAttrTypes := map[string]attr.Type{
 		"classes":    types.StringType,
@@ -1579,8 +1579,8 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 		"type":            types.StringType,
 	}
 	graphDataElementsNodesPositionAttrTypes := map[string]attr.Type{
-		"x": types.Float32Type,
-		"y": types.Float32Type,
+		"x": types.NumberType,
+		"y": types.NumberType,
 	}
 	graphDataElementsNodesAttrTypes := map[string]attr.Type{
 		"classes":    types.StringType,
@@ -1600,8 +1600,8 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 		"nodes": types.SetType{ElemType: graphDataElementsNodesElementType},
 	}
 	graphDataPanAttrTypes := map[string]attr.Type{
-		"x": types.Float32Type,
-		"y": types.Float32Type,
+		"x": types.NumberType,
+		"y": types.NumberType,
 	}
 	graphDataAttrTypes := map[string]attr.Type{
 		"box_selection_enabled": types.BoolType,
