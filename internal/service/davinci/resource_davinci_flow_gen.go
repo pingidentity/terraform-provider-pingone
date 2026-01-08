@@ -987,11 +987,19 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 			}
 		}
 		settingsValue.CustomErrorScreenBrandLogoUrl = settingsAttrs["custom_error_screen_brand_logo_url"].(types.String).ValueStringPointer()
-		settingsValue.CustomErrorShowFooter = settingsAttrs["custom_error_show_footer"].(types.Bool).ValueBoolPointer()
+		if !settingsAttrs["custom_error_show_footer"].IsNull() && !settingsAttrs["custom_error_show_footer"].IsUnknown() {
+			settingsValue.CustomErrorShowFooter = &pingone.DaVinciFlowSettingsRequestCustomErrorShowFooter{
+				Bool: settingsAttrs["custom_error_show_footer"].(types.Bool).ValueBoolPointer(),
+			}
+		}
 		settingsValue.CustomFaviconLink = settingsAttrs["custom_favicon_link"].(types.String).ValueStringPointer()
 		settingsValue.CustomLogoURLSelection = settingsAttrs["custom_logo_urlselection"].(types.Int32).ValueInt32Pointer()
 		settingsValue.CustomTitle = settingsAttrs["custom_title"].(types.String).ValueStringPointer()
-		settingsValue.DefaultErrorScreenBrandLogo = settingsAttrs["default_error_screen_brand_logo"].(types.Bool).ValueBoolPointer()
+		if !settingsAttrs["default_error_screen_brand_logo"].IsNull() && !settingsAttrs["default_error_screen_brand_logo"].IsUnknown() {
+			settingsValue.DefaultErrorScreenBrandLogo = &pingone.DaVinciFlowSettingsRequestDefaultErrorScreenBrandLogo{
+				Bool: settingsAttrs["default_error_screen_brand_logo"].(types.Bool).ValueBoolPointer(),
+			}
+		}
 		settingsValue.FlowHttpTimeoutInSeconds = settingsAttrs["flow_http_timeout_in_seconds"].(types.Int32).ValueInt32Pointer()
 		settingsValue.FlowTimeoutInSeconds = settingsAttrs["flow_timeout_in_seconds"].(types.Int32).ValueInt32Pointer()
 		if !settingsAttrs["intermediate_loading_screen_css"].IsNull() && !settingsAttrs["intermediate_loading_screen_css"].IsUnknown() {
@@ -1011,7 +1019,11 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 				jsLinksValue := pingone.DaVinciFlowSettingsRequestJsLink{}
 				jsLinksAttrs := jsLinksElement.(types.Object).Attributes()
 				jsLinksValue.Crossorigin = jsLinksAttrs["crossorigin"].(types.String).ValueString()
-				jsLinksValue.Defer = jsLinksAttrs["defer"].(types.Bool).ValueBool()
+				if !jsLinksAttrs["defer"].IsNull() && !jsLinksAttrs["defer"].IsUnknown() {
+					jsLinksValue.Defer = pingone.DaVinciFlowSettingsRequestJsLinkDefer{
+						Bool: jsLinksAttrs["defer"].(types.Bool).ValueBoolPointer(),
+					}
+				}
 				jsLinksValue.Integrity = jsLinksAttrs["integrity"].(types.String).ValueString()
 				jsLinksValue.Label = jsLinksAttrs["label"].(types.String).ValueString()
 				jsLinksValue.Referrerpolicy = jsLinksAttrs["referrerpolicy"].(types.String).ValueString()
@@ -1021,20 +1033,52 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 			}
 		}
 		settingsValue.LogLevel = settingsAttrs["log_level"].(types.Int32).ValueInt32Pointer()
-		settingsValue.RequireAuthenticationToInitiate = settingsAttrs["require_authentication_to_initiate"].(types.Bool).ValueBoolPointer()
-		settingsValue.ScrubSensitiveInfo = settingsAttrs["scrub_sensitive_info"].(types.Bool).ValueBoolPointer()
+		if !settingsAttrs["require_authentication_to_initiate"].IsNull() && !settingsAttrs["require_authentication_to_initiate"].IsUnknown() {
+			settingsValue.RequireAuthenticationToInitiate = &pingone.DaVinciFlowSettingsRequestRequireAuthenticationToInitiate{
+				Bool: settingsAttrs["require_authentication_to_initiate"].(types.Bool).ValueBoolPointer(),
+			}
+		}
+		if !settingsAttrs["scrub_sensitive_info"].IsNull() && !settingsAttrs["scrub_sensitive_info"].IsUnknown() {
+			settingsValue.ScrubSensitiveInfo = &pingone.DaVinciFlowSettingsRequestScrubSensitiveInfo{
+				Bool: settingsAttrs["scrub_sensitive_info"].(types.Bool).ValueBoolPointer(),
+			}
+		}
 		if !settingsAttrs["sensitive_info_fields"].IsNull() && !settingsAttrs["sensitive_info_fields"].IsUnknown() {
 			settingsValue.SensitiveInfoFields = []string{}
 			for _, sensitiveInfoFieldsElement := range settingsAttrs["sensitive_info_fields"].(types.Set).Elements() {
 				settingsValue.SensitiveInfoFields = append(settingsValue.SensitiveInfoFields, sensitiveInfoFieldsElement.(types.String).ValueString())
 			}
 		}
-		settingsValue.UseCSP = settingsAttrs["use_csp"].(types.Bool).ValueBoolPointer()
-		settingsValue.UseCustomCSS = settingsAttrs["use_custom_css"].(types.Bool).ValueBoolPointer()
-		settingsValue.UseCustomFlowPlayer = settingsAttrs["use_custom_flow_player"].(types.Bool).ValueBoolPointer()
-		settingsValue.UseCustomScript = settingsAttrs["use_custom_script"].(types.Bool).ValueBoolPointer()
-		settingsValue.UseIntermediateLoadingScreen = settingsAttrs["use_intermediate_loading_screen"].(types.Bool).ValueBoolPointer()
-		settingsValue.ValidateOnSave = settingsAttrs["validate_on_save"].(types.Bool).ValueBoolPointer()
+		if !settingsAttrs["use_csp"].IsNull() && !settingsAttrs["use_csp"].IsUnknown() {
+			settingsValue.UseCSP = &pingone.DaVinciFlowSettingsRequestUseCSP{
+				Bool: settingsAttrs["use_csp"].(types.Bool).ValueBoolPointer(),
+			}
+		}
+		if !settingsAttrs["use_custom_css"].IsNull() && !settingsAttrs["use_custom_css"].IsUnknown() {
+			settingsValue.UseCustomCSS = &pingone.DaVinciFlowSettingsRequestUseCustomCSS{
+				Bool: settingsAttrs["use_custom_css"].(types.Bool).ValueBoolPointer(),
+			}
+		}
+		if !settingsAttrs["use_custom_flow_player"].IsNull() && !settingsAttrs["use_custom_flow_player"].IsUnknown() {
+			settingsValue.UseCustomFlowPlayer = &pingone.DaVinciFlowSettingsRequestUseCustomFlowPlayer{
+				Bool: settingsAttrs["use_custom_flow_player"].(types.Bool).ValueBoolPointer(),
+			}
+		}
+		if !settingsAttrs["use_custom_script"].IsNull() && !settingsAttrs["use_custom_script"].IsUnknown() {
+			settingsValue.UseCustomScript = &pingone.DaVinciFlowSettingsRequestUseCustomScript{
+				Bool: settingsAttrs["use_custom_script"].(types.Bool).ValueBoolPointer(),
+			}
+		}
+		if !settingsAttrs["use_intermediate_loading_screen"].IsNull() && !settingsAttrs["use_intermediate_loading_screen"].IsUnknown() {
+			settingsValue.UseIntermediateLoadingScreen = &pingone.DaVinciFlowSettingsRequestUseIntermediateLoadingScreen{
+				Bool: settingsAttrs["use_intermediate_loading_screen"].(types.Bool).ValueBoolPointer(),
+			}
+		}
+		if !settingsAttrs["validate_on_save"].IsNull() && !settingsAttrs["validate_on_save"].IsUnknown() {
+			settingsValue.ValidateOnSave = &pingone.DaVinciFlowSettingsRequestValidateOnSave{
+				Bool: settingsAttrs["validate_on_save"].(types.Bool).ValueBoolPointer(),
+			}
+		}
 		result.Settings = settingsValue
 	}
 
@@ -1331,11 +1375,19 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 			}
 		}
 		settingsValue.CustomErrorScreenBrandLogoUrl = settingsAttrs["custom_error_screen_brand_logo_url"].(types.String).ValueStringPointer()
-		settingsValue.CustomErrorShowFooter = settingsAttrs["custom_error_show_footer"].(types.Bool).ValueBoolPointer()
+		if !settingsAttrs["custom_error_show_footer"].IsNull() && !settingsAttrs["custom_error_show_footer"].IsUnknown() {
+			settingsValue.CustomErrorShowFooter = &pingone.DaVinciFlowSettingsRequestCustomErrorShowFooter{
+				Bool: settingsAttrs["custom_error_show_footer"].(types.Bool).ValueBoolPointer(),
+			}
+		}
 		settingsValue.CustomFaviconLink = settingsAttrs["custom_favicon_link"].(types.String).ValueStringPointer()
 		settingsValue.CustomLogoURLSelection = settingsAttrs["custom_logo_urlselection"].(types.Int32).ValueInt32Pointer()
 		settingsValue.CustomTitle = settingsAttrs["custom_title"].(types.String).ValueStringPointer()
-		settingsValue.DefaultErrorScreenBrandLogo = settingsAttrs["default_error_screen_brand_logo"].(types.Bool).ValueBoolPointer()
+		if !settingsAttrs["default_error_screen_brand_logo"].IsNull() && !settingsAttrs["default_error_screen_brand_logo"].IsUnknown() {
+			settingsValue.DefaultErrorScreenBrandLogo = &pingone.DaVinciFlowSettingsRequestDefaultErrorScreenBrandLogo{
+				Bool: settingsAttrs["default_error_screen_brand_logo"].(types.Bool).ValueBoolPointer(),
+			}
+		}
 		settingsValue.FlowHttpTimeoutInSeconds = settingsAttrs["flow_http_timeout_in_seconds"].(types.Int32).ValueInt32Pointer()
 		settingsValue.FlowTimeoutInSeconds = settingsAttrs["flow_timeout_in_seconds"].(types.Int32).ValueInt32Pointer()
 		if !settingsAttrs["intermediate_loading_screen_css"].IsNull() && !settingsAttrs["intermediate_loading_screen_css"].IsUnknown() {
@@ -1355,7 +1407,11 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 				jsLinksValue := pingone.DaVinciFlowSettingsRequestJsLink{}
 				jsLinksAttrs := jsLinksElement.(types.Object).Attributes()
 				jsLinksValue.Crossorigin = jsLinksAttrs["crossorigin"].(types.String).ValueString()
-				jsLinksValue.Defer = jsLinksAttrs["defer"].(types.Bool).ValueBool()
+				if !jsLinksAttrs["defer"].IsNull() && !jsLinksAttrs["defer"].IsUnknown() {
+					jsLinksValue.Defer = pingone.DaVinciFlowSettingsRequestJsLinkDefer{
+						Bool: jsLinksAttrs["defer"].(types.Bool).ValueBoolPointer(),
+					}
+				}
 				jsLinksValue.Integrity = jsLinksAttrs["integrity"].(types.String).ValueString()
 				jsLinksValue.Label = jsLinksAttrs["label"].(types.String).ValueString()
 				jsLinksValue.Referrerpolicy = jsLinksAttrs["referrerpolicy"].(types.String).ValueString()
@@ -1365,20 +1421,52 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 			}
 		}
 		settingsValue.LogLevel = settingsAttrs["log_level"].(types.Int32).ValueInt32Pointer()
-		settingsValue.RequireAuthenticationToInitiate = settingsAttrs["require_authentication_to_initiate"].(types.Bool).ValueBoolPointer()
-		settingsValue.ScrubSensitiveInfo = settingsAttrs["scrub_sensitive_info"].(types.Bool).ValueBoolPointer()
+		if !settingsAttrs["require_authentication_to_initiate"].IsNull() && !settingsAttrs["require_authentication_to_initiate"].IsUnknown() {
+			settingsValue.RequireAuthenticationToInitiate = &pingone.DaVinciFlowSettingsRequestRequireAuthenticationToInitiate{
+				Bool: settingsAttrs["require_authentication_to_initiate"].(types.Bool).ValueBoolPointer(),
+			}
+		}
+		if !settingsAttrs["scrub_sensitive_info"].IsNull() && !settingsAttrs["scrub_sensitive_info"].IsUnknown() {
+			settingsValue.ScrubSensitiveInfo = &pingone.DaVinciFlowSettingsRequestScrubSensitiveInfo{
+				Bool: settingsAttrs["scrub_sensitive_info"].(types.Bool).ValueBoolPointer(),
+			}
+		}
 		if !settingsAttrs["sensitive_info_fields"].IsNull() && !settingsAttrs["sensitive_info_fields"].IsUnknown() {
 			settingsValue.SensitiveInfoFields = []string{}
 			for _, sensitiveInfoFieldsElement := range settingsAttrs["sensitive_info_fields"].(types.Set).Elements() {
 				settingsValue.SensitiveInfoFields = append(settingsValue.SensitiveInfoFields, sensitiveInfoFieldsElement.(types.String).ValueString())
 			}
 		}
-		settingsValue.UseCSP = settingsAttrs["use_csp"].(types.Bool).ValueBoolPointer()
-		settingsValue.UseCustomCSS = settingsAttrs["use_custom_css"].(types.Bool).ValueBoolPointer()
-		settingsValue.UseCustomFlowPlayer = settingsAttrs["use_custom_flow_player"].(types.Bool).ValueBoolPointer()
-		settingsValue.UseCustomScript = settingsAttrs["use_custom_script"].(types.Bool).ValueBoolPointer()
-		settingsValue.UseIntermediateLoadingScreen = settingsAttrs["use_intermediate_loading_screen"].(types.Bool).ValueBoolPointer()
-		settingsValue.ValidateOnSave = settingsAttrs["validate_on_save"].(types.Bool).ValueBoolPointer()
+		if !settingsAttrs["use_csp"].IsNull() && !settingsAttrs["use_csp"].IsUnknown() {
+			settingsValue.UseCSP = &pingone.DaVinciFlowSettingsRequestUseCSP{
+				Bool: settingsAttrs["use_csp"].(types.Bool).ValueBoolPointer(),
+			}
+		}
+		if !settingsAttrs["use_custom_css"].IsNull() && !settingsAttrs["use_custom_css"].IsUnknown() {
+			settingsValue.UseCustomCSS = &pingone.DaVinciFlowSettingsRequestUseCustomCSS{
+				Bool: settingsAttrs["use_custom_css"].(types.Bool).ValueBoolPointer(),
+			}
+		}
+		if !settingsAttrs["use_custom_flow_player"].IsNull() && !settingsAttrs["use_custom_flow_player"].IsUnknown() {
+			settingsValue.UseCustomFlowPlayer = &pingone.DaVinciFlowSettingsRequestUseCustomFlowPlayer{
+				Bool: settingsAttrs["use_custom_flow_player"].(types.Bool).ValueBoolPointer(),
+			}
+		}
+		if !settingsAttrs["use_custom_script"].IsNull() && !settingsAttrs["use_custom_script"].IsUnknown() {
+			settingsValue.UseCustomScript = &pingone.DaVinciFlowSettingsRequestUseCustomScript{
+				Bool: settingsAttrs["use_custom_script"].(types.Bool).ValueBoolPointer(),
+			}
+		}
+		if !settingsAttrs["use_intermediate_loading_screen"].IsNull() && !settingsAttrs["use_intermediate_loading_screen"].IsUnknown() {
+			settingsValue.UseIntermediateLoadingScreen = &pingone.DaVinciFlowSettingsRequestUseIntermediateLoadingScreen{
+				Bool: settingsAttrs["use_intermediate_loading_screen"].(types.Bool).ValueBoolPointer(),
+			}
+		}
+		if !settingsAttrs["validate_on_save"].IsNull() && !settingsAttrs["validate_on_save"].IsUnknown() {
+			settingsValue.ValidateOnSave = &pingone.DaVinciFlowSettingsRequestValidateOnSave{
+				Bool: settingsAttrs["validate_on_save"].(types.Bool).ValueBoolPointer(),
+			}
+		}
 		result.Settings = settingsValue
 	}
 
@@ -1806,6 +1894,18 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			settingsCssLinksValue, diags = types.SetValueFrom(context.Background(), types.StringType, response.Settings.CssLinks)
 			respDiags.Append(diags...)
 		}
+		var settingsCustomErrorShowFooterValue types.Bool
+		if response.Settings.CustomErrorShowFooter == nil {
+			settingsCustomErrorShowFooterValue = types.BoolNull()
+		} else {
+			settingsCustomErrorShowFooterValue = types.BoolPointerValue(response.Settings.CustomErrorShowFooter.Bool)
+		}
+		var settingsDefaultErrorScreenBrandLogoValue types.Bool
+		if response.Settings.DefaultErrorScreenBrandLogo == nil {
+			settingsDefaultErrorScreenBrandLogoValue = types.BoolNull()
+		} else {
+			settingsDefaultErrorScreenBrandLogoValue = types.BoolPointerValue(response.Settings.DefaultErrorScreenBrandLogo.Bool)
+		}
 		var flowTimeoutInSecondsValue types.Int32
 		if response.Settings.FlowTimeoutInSeconds == nil {
 			flowTimeoutInSecondsValue = types.Int32Null()
@@ -1859,7 +1959,7 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			for _, settingsJsLinksResponseValue := range response.Settings.JsLinks {
 				settingsJsLinksValue, diags := types.ObjectValue(settingsJsLinksAttrTypes, map[string]attr.Value{
 					"crossorigin":    types.StringValue(settingsJsLinksResponseValue.Crossorigin),
-					"defer":          types.BoolValue(settingsJsLinksResponseValue.Defer),
+					"defer":          types.BoolPointerValue(settingsJsLinksResponseValue.Defer.Bool),
 					"integrity":      types.StringValue(settingsJsLinksResponseValue.Integrity),
 					"label":          types.StringValue(settingsJsLinksResponseValue.Label),
 					"referrerpolicy": types.StringValue(settingsJsLinksResponseValue.Referrerpolicy),
@@ -1872,6 +1972,18 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			settingsJsLinksValue, diags = types.SetValue(settingsJsLinksElementType, settingsJsLinksValues)
 			respDiags.Append(diags...)
 		}
+		var settingsRequireAuthenticationToInitiateValue types.Bool
+		if response.Settings.RequireAuthenticationToInitiate == nil {
+			settingsRequireAuthenticationToInitiateValue = types.BoolNull()
+		} else {
+			settingsRequireAuthenticationToInitiateValue = types.BoolPointerValue(response.Settings.RequireAuthenticationToInitiate.Bool)
+		}
+		var settingsScrubSensitiveInfoValue types.Bool
+		if response.Settings.ScrubSensitiveInfo == nil {
+			settingsScrubSensitiveInfoValue = types.BoolNull()
+		} else {
+			settingsScrubSensitiveInfoValue = types.BoolPointerValue(response.Settings.ScrubSensitiveInfo.Bool)
+		}
 		var settingsSensitiveInfoFieldsValue types.Set
 		if response.Settings.SensitiveInfoFields == nil {
 			settingsSensitiveInfoFieldsValue = types.SetNull(types.StringType)
@@ -1879,16 +1991,52 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			settingsSensitiveInfoFieldsValue, diags = types.SetValueFrom(context.Background(), types.StringType, response.Settings.SensitiveInfoFields)
 			respDiags.Append(diags...)
 		}
+		var settingsUseCSPValue types.Bool
+		if response.Settings.UseCSP == nil {
+			settingsUseCSPValue = types.BoolNull()
+		} else {
+			settingsUseCSPValue = types.BoolPointerValue(response.Settings.UseCSP.Bool)
+		}
+		var settingsUseCustomCSSValue types.Bool
+		if response.Settings.UseCustomCSS == nil {
+			settingsUseCustomCSSValue = types.BoolNull()
+		} else {
+			settingsUseCustomCSSValue = types.BoolPointerValue(response.Settings.UseCustomCSS.Bool)
+		}
+		var settingsUseCustomFlowPlayerValue types.Bool
+		if response.Settings.UseCustomFlowPlayer == nil {
+			settingsUseCustomFlowPlayerValue = types.BoolNull()
+		} else {
+			settingsUseCustomFlowPlayerValue = types.BoolPointerValue(response.Settings.UseCustomFlowPlayer.Bool)
+		}
+		var settingsUseCustomScriptValue types.Bool
+		if response.Settings.UseCustomScript == nil {
+			settingsUseCustomScriptValue = types.BoolNull()
+		} else {
+			settingsUseCustomScriptValue = types.BoolPointerValue(response.Settings.UseCustomScript.Bool)
+		}
+		var settingsUseIntermediateLoadingScreenValue types.Bool
+		if response.Settings.UseIntermediateLoadingScreen == nil {
+			settingsUseIntermediateLoadingScreenValue = types.BoolNull()
+		} else {
+			settingsUseIntermediateLoadingScreenValue = types.BoolPointerValue(response.Settings.UseIntermediateLoadingScreen.Bool)
+		}
+		var settingsValidateOnSaveValue types.Bool
+		if response.Settings.ValidateOnSave == nil {
+			settingsValidateOnSaveValue = types.BoolNull()
+		} else {
+			settingsValidateOnSaveValue = types.BoolPointerValue(response.Settings.ValidateOnSave.Bool)
+		}
 		settingsValue, diags = types.ObjectValue(settingsAttrTypes, map[string]attr.Value{
 			"csp":                                types.StringPointerValue(response.Settings.Csp),
 			"css":                                types.StringPointerValue(response.Settings.Css),
 			"css_links":                          settingsCssLinksValue,
 			"custom_error_screen_brand_logo_url": types.StringPointerValue(response.Settings.CustomErrorScreenBrandLogoUrl),
-			"custom_error_show_footer":           types.BoolPointerValue(response.Settings.CustomErrorShowFooter),
+			"custom_error_show_footer":           settingsCustomErrorShowFooterValue,
 			"custom_favicon_link":                types.StringPointerValue(response.Settings.CustomFaviconLink),
 			"custom_logo_urlselection":           types.Int32PointerValue(response.Settings.CustomLogoURLSelection),
 			"custom_title":                       types.StringPointerValue(response.Settings.CustomTitle),
-			"default_error_screen_brand_logo":    types.BoolPointerValue(response.Settings.DefaultErrorScreenBrandLogo),
+			"default_error_screen_brand_logo":    settingsDefaultErrorScreenBrandLogoValue,
 			"flow_http_timeout_in_seconds":       types.Int32PointerValue(response.Settings.FlowHttpTimeoutInSeconds),
 			"flow_timeout_in_seconds":            flowTimeoutInSecondsValue,
 			"intermediate_loading_screen_css":    intermediateLoadingScreenCSSValue,
@@ -1896,15 +2044,15 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			"js_custom_flow_player":              types.StringPointerValue(response.Settings.JsCustomFlowPlayer),
 			"js_links":                           settingsJsLinksValue,
 			"log_level":                          types.Int32PointerValue(response.Settings.LogLevel),
-			"require_authentication_to_initiate": types.BoolPointerValue(response.Settings.RequireAuthenticationToInitiate),
-			"scrub_sensitive_info":               types.BoolPointerValue(response.Settings.ScrubSensitiveInfo),
+			"require_authentication_to_initiate": settingsRequireAuthenticationToInitiateValue,
+			"scrub_sensitive_info":               settingsScrubSensitiveInfoValue,
 			"sensitive_info_fields":              settingsSensitiveInfoFieldsValue,
-			"use_csp":                            types.BoolPointerValue(response.Settings.UseCSP),
-			"use_custom_css":                     types.BoolPointerValue(response.Settings.UseCustomCSS),
-			"use_custom_flow_player":             types.BoolPointerValue(response.Settings.UseCustomFlowPlayer),
-			"use_custom_script":                  types.BoolPointerValue(response.Settings.UseCustomScript),
-			"use_intermediate_loading_screen":    types.BoolPointerValue(response.Settings.UseIntermediateLoadingScreen),
-			"validate_on_save":                   types.BoolPointerValue(response.Settings.ValidateOnSave),
+			"use_csp":                            settingsUseCSPValue,
+			"use_custom_css":                     settingsUseCustomCSSValue,
+			"use_custom_flow_player":             settingsUseCustomFlowPlayerValue,
+			"use_custom_script":                  settingsUseCustomScriptValue,
+			"use_intermediate_loading_screen":    settingsUseIntermediateLoadingScreenValue,
+			"validate_on_save":                   settingsValidateOnSaveValue,
 		})
 		respDiags.Append(diags...)
 	}
