@@ -440,7 +440,7 @@ Optional:
 - `ip_pairing_configuration` (Attributes) A single object that allows you to restrict device pairing to specific IP addresses. Only applicable for PING_ONE_ID policies. (see [below for nested schema](#nestedatt--mobile--applications--ip_pairing_configuration))
 - `new_request_duration_configuration` (Attributes) A single object that configures timeout settings for authentication request notifications. Only applicable for PING_ONE_ID policies. (see [below for nested schema](#nestedatt--mobile--applications--new_request_duration_configuration))
 - `pairing_disabled` (Boolean) A boolean that, when set to `true`, prevents users from pairing new devices with the relevant application. You can use this option if you want to phase out an existing mobile application but want to allow users to continue using the application for authentication for existing devices.
-- `pairing_key_lifetime` (Attributes) A single object that specifies pairing key lifetime settings for the application in the policy. Defaults to 10 minutes for PingOne MFA policies and 48 hours for PING_ONE_ID policies. (see [below for nested schema](#nestedatt--mobile--applications--pairing_key_lifetime))
+- `pairing_key_lifetime` (Attributes) A single object that specifies pairing key lifetime settings for the application in the policy. (see [below for nested schema](#nestedatt--mobile--applications--pairing_key_lifetime))
 - `push` (Attributes) A single object that specifies push settings for the application in the policy. (see [below for nested schema](#nestedatt--mobile--applications--push))
 - `push_limit` (Attributes) A single object that specifies push limit settings for the application in the policy. (see [below for nested schema](#nestedatt--mobile--applications--push_limit))
 - `push_timeout` (Attributes) A single object that specifies push timeout settings for the application in the policy. (see [below for nested schema](#nestedatt--mobile--applications--push_timeout))
@@ -515,7 +515,7 @@ Optional:
 
 Required:
 
-- `duration` (Number) An integer that defines the amount of time an issued pairing key can be used until it expires. Minimum is `1` minute and maximum is `48` hours. If this parameter is not provided, the duration is set to `10` minutes.
+- `duration` (Number) An integer that defines the amount of time an issued pairing key can be used until it expires. Minimum is `1` minute and maximum is `48` hours.
 - `time_unit` (String) A string that specifies the type of time unit for `duration`.  Options are `HOURS`, `MINUTES`.
 
 
@@ -562,7 +562,7 @@ Required:
 
 Required:
 
-- `duration` (Number) An integer that defines the length of time that push notifications should be blocked for the application if the defined limit has been reached. The minimum value is `1` minute and the maximum value is `120` minutes. Defaults to `30` minutes.
+- `duration` (Number) An integer that defines the time period window where the push notification limit applies. If the limit is reached within this period, push notifications are blocked. The minimum value is `1` minute and the maximum value is `120` minutes. Defaults to `10` minutes.
 - `time_unit` (String) A string that specifies the type of time unit for `duration`.  Options are `MINUTES`, `SECONDS`.
 
 
@@ -572,7 +572,7 @@ Required:
 
 Required:
 
-- `duration` (Number) An integer that defines the length of time that push notifications should be blocked for the application if the defined limit has been reached. The minimum value is `40` seconds and the maximum value is `150` seconds. Defaults to `40` seconds.
+- `duration` (Number) An integer that defines the length of time that push notifications should be blocked for the application if the defined limit has been reached. The minimum value is `1` seconds and the maximum value is `120` seconds.
 
 Optional:
 

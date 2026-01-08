@@ -398,15 +398,15 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	)
 
 	mobileApplicationsPushLimitLockDurationDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"An integer that defines the length of time that push notifications should be blocked for the application if the defined limit has been reached. The minimum value is `1` minute and the maximum value is `120` minutes. Defaults to `30` minutes.",
+		fmt.Sprintf("An integer that defines the length of time that push notifications should be blocked for the application if the defined limit has been reached. The minimum value is `%d` minute and the maximum value is `%d` minutes. Defaults to `%d` minutes.", mobileApplicationsPushLimitLockDurationDurationMinMinutes, mobileApplicationsPushLimitLockDurationDurationMaxMinutes, mobileApplicationsPushLimitLockDurationDurationDefault),
 	)
 
 	mobileApplicationsPushLimitTimePeriodDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"An integer that defines the length of time that push notifications should be blocked for the application if the defined limit has been reached. The minimum value is `1` minute and the maximum value is `120` minutes. Defaults to `30` minutes.",
+		fmt.Sprintf("An integer that defines the time period window where the push notification limit applies. If the limit is reached within this period, push notifications are blocked. The minimum value is `%d` minute and the maximum value is `%d` minutes. Defaults to `%d` minutes.", mobileApplicationsPushLimitTimePeriodDurationMinMinutes, mobileApplicationsPushLimitTimePeriodDurationMaxMinutes, mobileApplicationsPushLimitTimePeriodDurationDefault),
 	)
 
 	mobileApplicationsPushTimeoutDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"An integer that defines the length of time that push notifications should be blocked for the application if the defined limit has been reached. The minimum value is `40` seconds and the maximum value is `150` seconds. Defaults to `40` seconds.",
+		fmt.Sprintf("An integer that defines the length of time that push notifications should be blocked for the application if the defined limit has been reached. The minimum value is `%d` seconds and the maximum value is `%d` seconds.", mobileApplicationsPushTimeoutDurationMin, mobileApplicationsPushTimeoutDurationMax),
 	)
 
 	mobileOtpFailureCountDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -414,7 +414,7 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	)
 
 	mobileOtpFailureCoolDownDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. The minimum value is `2`, maximum is `30`.",
+		fmt.Sprintf("An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. The minimum value is `%d`, maximum is `%d`.", mobileOtpFailureCoolDownDurationMinMinutes, mobileOtpFailureCoolDownDurationMaxMinutes),
 	).DefaultValue(mobileOtpFailureCoolDownDurationDefault)
 
 	mobileIpPairingConfigurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -462,7 +462,7 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	)
 
 	rememberMeWebLifeTimeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A single object that defines the period during which users will not have to authenticate if they are accessing applications from a device they have used before. The 'remember me' period can be anywhere from `1` minute to `90` days.",
+		fmt.Sprintf("A single object that defines the period during which users will not have to authenticate if they are accessing applications from a device they have used before. The 'remember me' period can be anywhere from `%d` minute to `%d` days.", rememberMeWebLifeTimeDurationMinMinutes, rememberMeWebLifeTimeDurationMaxDays),
 	)
 
 	rememberMeWebLifeTimeDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -482,7 +482,7 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	).AllowedValuesEnum(mfa.AllowedEnumTimeUnitPairingKeyLifetimeEnumValues)
 
 	mobileApplicationsPairingKeyLifetimeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("A single object that specifies pairing key lifetime settings for the application in the policy. Defaults to 10 minutes for PingOne MFA policies and 48 hours for %s policies.", POLICY_TYPE_PINGID),
+		"A single object that specifies pairing key lifetime settings for the application in the policy.",
 	)
 
 	durationTimeUnitSecondsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -554,7 +554,7 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	)
 
 	mobileApplicationsPairingKeyLifetimeDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("An integer that defines the amount of time an issued pairing key can be used until it expires. Minimum is `%d` minute and maximum is `%d` hours. If this parameter is not provided, the duration is set to `10` minutes.", pingidDevicePairingKeyLifetimeDurationMinMinutes, pingidDevicePairingKeyLifetimeDurationMaxHours),
+		fmt.Sprintf("An integer that defines the amount of time an issued pairing key can be used until it expires. Minimum is `%d` minute and maximum is `%d` hours.", pingidDevicePairingKeyLifetimeDurationMinMinutes, pingidDevicePairingKeyLifetimeDurationMaxHours),
 	)
 
 	mobileApplicationsPushDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -578,7 +578,7 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	)
 
 	mobileApplicationsPushLimitCountDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"An integer that specifies the number of consecutive push notifications that can be ignored or rejected by a user within a defined period before push notifications are blocked for the application. The minimum value is `1` and the maximum value is `50`.",
+		fmt.Sprintf("An integer that specifies the number of consecutive push notifications that can be ignored or rejected by a user within a defined period before push notifications are blocked for the application. The minimum value is `%d` and the maximum value is `%d`.", mobileApplicationsPushLimitCountMin, mobileApplicationsPushLimitCountMax),
 	).DefaultValue(mobileApplicationsPushLimitCountDefault)
 
 	mobileApplicationsPushLimitLockDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
