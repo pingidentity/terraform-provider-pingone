@@ -1720,7 +1720,7 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 				Default: objectdefault.StaticValue(types.ObjectValueMust(MFADevicePolicyFido2TFObjectTypes,
 					map[string]attr.Value{
 						"enabled":                        types.BoolValue(false),
-						"fido2_policy_id":                framework.PingOneResourceIDToTF(""),
+						"fido2_policy_id":                pingonetypes.NewResourceIDNull(),
 						"pairing_disabled":               types.BoolValue(false),
 						"prompt_for_nickname_on_pairing": types.BoolNull(),
 					}),
@@ -2639,7 +2639,7 @@ func (r *MFADevicePolicyDefaultResource) Read(ctx context.Context, req resource.
 		return
 	}
 
-	// Determine policy type - either from state (set by ImportState) or from API
+	// Determine policy type - either from state or from API
 	policyType := data.PolicyType.ValueString()
 	if policyType == "" {
 		policyType = determinePolicyType(defaultPolicy)
