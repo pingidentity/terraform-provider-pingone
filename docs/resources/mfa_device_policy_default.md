@@ -9,6 +9,10 @@ description: |-
 
 Resource to overwrite the default MFA device policy. Valid for both PingOne MFA and PING_ONE_ID integrated environments.
 
+~> Only one `pingone_mfa_device_policy_default` resource should be configured for an environment.  If multiple `pingone_mfa_device_policy_default` resource definitions exist in HCL code, these are likely to conflict with each other on apply.
+
+~> When destroying the resource, the default MFA device policy will be reset to it's original configuration, and then removed from Terraform's state.  The MFA device policy itself will not be removed from the PingOne service.
+
 ## Example Usage - PingOne MFA Policy
 
 The following example configures the default MFA device policy for a PingOne MFA environment, enabling mobile, TOTP, and FIDO2 authentication methods.
