@@ -1196,7 +1196,7 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
       (data.pingone_application.%[2]s.id) = {
         type = "pingIdAppConfig"
         otp = {
-    enabled = true
+          enabled = true
         }
         new_request_duration_configuration = {
           device_timeout = {
@@ -1271,7 +1271,7 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
       (data.pingone_application.%[2]s.id) = {
         type = "pingIdAppConfig"
         otp = {
-    enabled = true
+          enabled = true
         }
         new_request_duration_configuration = {
           device_timeout = {
@@ -3085,7 +3085,7 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
         }
         ip_pairing_configuration = {
           any_ip_address          = false
-            only_these_ip_addresses = [%[4]s]
+          only_these_ip_addresses = [%[4]s]
         }
       }
     }
