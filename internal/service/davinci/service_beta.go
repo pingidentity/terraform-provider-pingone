@@ -11,11 +11,22 @@ import (
 
 func BetaResources() []func() resource.Resource {
 	return []func() resource.Resource{
-		NewDavinciVariableResource,
+		NewDavinciApplicationFlowPolicyResource,
+		NewDavinciApplicationKeyResource,
+		NewDavinciApplicationResource,
+		NewDavinciApplicationSecretResource,
 		NewDavinciConnectorInstanceResource,
+		NewDavinciVariableResource,
 	}
 }
 
 func BetaDataSources() []func() datasource.DataSource {
-	return []func() datasource.DataSource{}
+	return []func() datasource.DataSource{
+		NewDavinciApplicationDataSource,
+		NewDavinciApplicationsDataSource,
+		NewDavinciConnectorDataSource,
+		NewDavinciConnectorsDataSource,
+		NewDavinciConnectorInstanceDataSource,
+		NewDavinciConnectorInstancesDataSource,
+	}
 }

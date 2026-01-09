@@ -30,10 +30,10 @@ require (
 	github.com/patrickcping/pingone-go-sdk-v2/authorize v0.8.2
 	github.com/patrickcping/pingone-go-sdk-v2/credentials v0.12.0
 	github.com/patrickcping/pingone-go-sdk-v2/management v0.63.0
-	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.23.2
+	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.24.1
 	github.com/patrickcping/pingone-go-sdk-v2/risk v0.21.0
 	github.com/patrickcping/pingone-go-sdk-v2/verify v0.10.0
-	github.com/pingidentity/pingone-go-client v0.3.1
+	github.com/pingidentity/pingone-go-client v0.5.0
 	github.com/stretchr/testify v1.11.1
 )
 
@@ -398,12 +398,12 @@ require (
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/zclconf/go-cty v1.17.0 // indirect
-	golang.org/x/crypto v0.43.0 // indirect
+	golang.org/x/crypto v0.44.0 // indirect
 	golang.org/x/mod v0.29.0 // indirect
-	golang.org/x/net v0.46.0 // indirect
+	golang.org/x/net v0.47.0 // indirect
 	golang.org/x/oauth2 v0.33.0
 	golang.org/x/sys v0.38.0 // indirect
-	golang.org/x/text v0.30.0 // indirect
+	golang.org/x/text v0.31.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250728155136-f173205681a0 // indirect
 	google.golang.org/grpc v1.75.1 // indirect
