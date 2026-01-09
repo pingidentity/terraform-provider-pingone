@@ -1490,8 +1490,8 @@ github.com/patrickcping/pingone-go-sdk-v2/credentials v0.12.0 h1:NH1rJ4RuciyKEjV
 github.com/patrickcping/pingone-go-sdk-v2/credentials v0.12.0/go.mod h1:oUdH/pGBp9JI/k0ptDgdprs/peruIwLurEHinuHDK90=
 github.com/patrickcping/pingone-go-sdk-v2/management v0.63.0 h1:znJCTHLEFS8uNmMpwTEI1I1pLB+RG66MiIDmjb2tBmw=
 github.com/patrickcping/pingone-go-sdk-v2/management v0.63.0/go.mod h1:AuR8b02ntdqjAzgEYFFEeaOLig+LcsdQXmnpbG/1S2A=
-github.com/patrickcping/pingone-go-sdk-v2/mfa v0.23.2 h1:V2iW5DT7JUZd7HBRcF8cOMjRCJ+UG9MCckWVZYVSA/0=
-github.com/patrickcping/pingone-go-sdk-v2/mfa v0.23.2/go.mod h1:2c47ma7Nu7X+hQTuBcB70FosnlUxjhsWPmlm/ErEJ80=
+github.com/patrickcping/pingone-go-sdk-v2/mfa v0.24.1 h1:V5mHrY66qZXVYZc3sdUHXiI3VZosfbm+lhtB2bKoIHE=
+github.com/patrickcping/pingone-go-sdk-v2/mfa v0.24.1/go.mod h1:2c47ma7Nu7X+hQTuBcB70FosnlUxjhsWPmlm/ErEJ80=
 github.com/patrickcping/pingone-go-sdk-v2/risk v0.21.0 h1:oW3EPdempOpVQXlCfKBqhQKusbeIZZMO3exImxXOFp4=
 github.com/patrickcping/pingone-go-sdk-v2/risk v0.21.0/go.mod h1:KWnR7E21iWFjVtks/v7ck2Rcwc2/JjkORGM/eX/hdb8=
 github.com/patrickcping/pingone-go-sdk-v2/verify v0.10.0 h1:8QylfS8b6dltv8caQzVUYcdZvMNNxToudaYUV6HKASg=
@@ -1504,8 +1504,6 @@ github.com/phpdave11/gofpdf v1.4.2/go.mod h1:zpO6xFn9yxo3YLyMvW8HcKWVdbNqgIfOOp2
 github.com/phpdave11/gofpdi v1.0.12/go.mod h1:vBmVV0Do6hSBHC8uKUQ71JGW+ZGQq74llk/7bXwjDoI=
 github.com/phpdave11/gofpdi v1.0.13/go.mod h1:vBmVV0Do6hSBHC8uKUQ71JGW+ZGQq74llk/7bXwjDoI=
 github.com/pierrec/lz4/v4 v4.1.15/go.mod h1:gZWDp/Ze/IJXGXf23ltt2EXimqmTUXEy0GFuRQyBid4=
-github.com/pingidentity/pingone-go-client v0.5.0 h1:IL97e/WWdmlIZqgGPKmRtmekfb9mRkDUoGm1IDWyfLM=
-github.com/pingidentity/pingone-go-client v0.5.0/go.mod h1:fxqU5qa5xUHsg6Trb5AWaCpDYEd7NC9Ea4mRpTxzHNI=
 github.com/pjbgf/sha1cd v0.3.2 h1:a9wb0bp1oC2TGwStyn0Umc/IGKQnEgF0vVaZ8QF8eo4=
 github.com/pjbgf/sha1cd v0.3.2/go.mod h1:zQWigSxVmsHEZow5qaLtPYxpcKMMQpa09ixqBxuCS6A=
 github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c h1:+mdjkGKdHQG3305AYmdv1U2eRNDiU2ErMBj1gwrq8eQ=
