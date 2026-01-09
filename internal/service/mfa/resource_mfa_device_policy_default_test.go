@@ -681,6 +681,11 @@ func TestAccMFADevicePolicyDefault_Validation(t *testing.T) {
 						Config:      testAccMFADevicePolicyDefaultConfig_PingID_MobileApp_MissingIPPairing(resourceName, name),
 						ExpectError: regexp.MustCompile(`The argument\s+mobile.applications\[.+\].ip_pairing_configuration\s+is\s+required\s+because\s+policy_type is configured as:\s+"PING_ONE_ID"`),
 					},
+					// Missing applications
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_PingID_MissingApplications(resourceName, name),
+						ExpectError: regexp.MustCompile(`The argument\s+mobile.applications\s+is\s+required`),
+					},
 				},
 			})
 		},
@@ -1162,6 +1167,11 @@ func testAccMFADevicePolicyDefaultConfig_PingID_Minimal(resourceName, name strin
 	return fmt.Sprintf(`
 %[1]s
 
+data "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.workforce_test.id
+  name           = "PingID Mobile"
+}
+
 resource "pingone_mfa_device_policy_default" "%[2]s" {
   environment_id = data.pingone_environment.workforce_test.id
   policy_type    = "PING_ONE_ID"
@@ -1182,6 +1192,27 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
 
   mobile = {
     enabled = true
+    applications = {
+      (data.pingone_application.%[2]s.id) = {
+        type = "pingIdAppConfig"
+        otp = {
+    enabled = true
+        }
+        new_request_duration_configuration = {
+          device_timeout = {
+            duration  = 30
+            time_unit = "SECONDS"
+          }
+          total_timeout = {
+            duration  = 70
+            time_unit = "SECONDS"
+          }
+        }
+        ip_pairing_configuration = {
+          any_ip_address = true
+        }
+      }
+    }
   }
 
   totp = {
@@ -1211,6 +1242,11 @@ resource "pingone_notification_policy" "%[2]s" {
   name           = "%[3]s"
 }
 
+data "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.workforce_test.id
+  name           = "PingID Mobile"
+}
+
 resource "pingone_mfa_device_policy_default" "%[2]s" {
   environment_id = data.pingone_environment.workforce_test.id
   policy_type    = "PING_ONE_ID"
@@ -1231,6 +1267,27 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
 
   mobile = {
     enabled = true
+    applications = {
+      (data.pingone_application.%[2]s.id) = {
+        type = "pingIdAppConfig"
+        otp = {
+    enabled = true
+        }
+        new_request_duration_configuration = {
+          device_timeout = {
+            duration  = 30
+            time_unit = "SECONDS"
+          }
+          total_timeout = {
+            duration  = 70
+            time_unit = "SECONDS"
+          }
+        }
+        ip_pairing_configuration = {
+          any_ip_address = true
+        }
+      }
+    }
   }
 
   totp = {
@@ -2513,7 +2570,30 @@ resource "pingone_mfa_device_policy_default" "%[4]s" {
   policy_type    = "PING_ONE_ID"
   name           = "%[5]s"
 
-  mobile  = { enabled = true }
+  mobile = {
+    enabled = true
+    applications = {
+      12345 = {
+        type = "pingIdAppConfig"
+        otp = {
+          enabled = true
+        }
+        new_request_duration_configuration = {
+          device_timeout = {
+            duration  = 30
+            time_unit = "SECONDS"
+          }
+          total_timeout = {
+            duration  = 70
+            time_unit = "SECONDS"
+          }
+        }
+        ip_pairing_configuration = {
+          any_ip_address = true
+        }
+      }
+    }
+  }
   desktop = { enabled = false }
   yubikey = { enabled = false }
   sms     = { enabled = false }
@@ -3004,20 +3084,42 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
           }
         }
         ip_pairing_configuration = {
-            any_ip_address = false
+          any_ip_address          = false
             only_these_ip_addresses = [%[4]s]
         }
       }
     }
   }
 
-  desktop = { enabled = false }
-  yubikey = { enabled = false }
+  desktop    = { enabled = false }
+  yubikey    = { enabled = false }
   oath_token = { enabled = false }
-  sms     = { enabled = false }
-  voice   = { enabled = false }
-  email   = { enabled = false }
-  totp    = { enabled = false }
+  sms        = { enabled = false }
+  voice      = { enabled = false }
+  email      = { enabled = false }
+  totp       = { enabled = false }
 }
 `, acctest.WorkforceV2SandboxEnvironment(), resourceName, name, ipList)
+}
+
+func testAccMFADevicePolicyDefaultConfig_PingID_MissingApplications(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+resource "pingone_mfa_device_policy_default" "%[2]s" {
+  environment_id = data.pingone_environment.workforce_test.id
+  policy_type    = "PING_ONE_ID"
+  name           = "%[3]s"
+
+  mobile = {
+    enabled = true
+  }
+  desktop    = { enabled = false }
+  yubikey    = { enabled = false }
+  oath_token = { enabled = false }
+  sms        = { enabled = false }
+  voice      = { enabled = false }
+  email      = { enabled = false }
+  totp       = { enabled = false }
+}`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name)
 }

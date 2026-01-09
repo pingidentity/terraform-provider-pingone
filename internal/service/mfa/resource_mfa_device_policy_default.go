@@ -36,6 +36,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	int32validatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/int32validator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
+	mapvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/mapvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/objectvalidator"
 	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
 	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
@@ -526,7 +527,7 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	)
 
 	mobileApplicationsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A map of objects that specifies settings for configured Mobile Applications. The ID of the application should be configured as the map key.",
+		fmt.Sprintf("A map of objects that specifies settings for configured Mobile Applications. The ID of the application should be configured as the map key. Required when `policy_type` is set to `%s`.", POLICY_TYPE_PINGID),
 	)
 
 	mobileApplicationsAutoEnrollmentDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -978,6 +979,13 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 						Description:         mobileApplicationsDescription.Description,
 						MarkdownDescription: mobileApplicationsDescription.MarkdownDescription,
 						Optional:            true,
+
+						Validators: []validator.Map{
+							mapvalidatorinternal.IsRequiredIfMatchesPathValue(
+								types.StringValue(POLICY_TYPE_PINGID),
+								path.MatchRoot("policy_type"),
+							),
+						},
 
 						NestedObject: schema.NestedAttributeObject{
 							Attributes: map[string]schema.Attribute{
@@ -2698,50 +2706,49 @@ func (r *MFADevicePolicyDefaultResource) Delete(ctx context.Context, req resourc
 		return
 	}
 
-	// If notifications_policy is set, we must unset it to allow the referenced policy to be deleted
-	if !data.NotificationsPolicy.IsNull() && !data.NotificationsPolicy.IsUnknown() {
-		// Fetch the default policy to get its ID
-		response, d := FetchDefaultMFADevicePolicy(ctx, r.Client.MFAAPIClient, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), true)
-		resp.Diagnostics.Append(d...)
-		if resp.Diagnostics.HasError() {
-			return
+	// Fetch the default policy to get its ID
+	response, d := FetchDefaultMFADevicePolicy(ctx, r.Client.MFAAPIClient, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), true)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if response == nil {
+		// Default MFA device policy not found, nothing to do
+		return
+	}
+
+	// Fetch existing mobile app ID if present (required for PingID policies)
+	var mobileAppID string
+	if mobile, ok := response.GetMobileOk(); ok {
+		if apps, ok := mobile.GetApplicationsOk(); ok && len(apps) > 0 {
+			// For PingID there is only one app, and we must preserve its ID
+			if apps[0].GetType() == "pingIdAppConfig" {
+				mobileAppID = apps[0].GetId()
+			}
 		}
+	}
 
-		if response == nil {
-			// Default MFA device policy not found, nothing to do
-			return
-		}
+	// Build the default model for the API
+	mFADevicePolicy := data.buildDefaultPolicyStruct(mobileAppID)
 
-		// Create a copy of data with NotificationsPolicy set to null
-		data.NotificationsPolicy = types.ObjectNull(data.NotificationsPolicy.AttributeTypes(ctx))
+	policyID := response.GetId()
 
-		// Build the model for the API
-		mFADevicePolicy, d := data.expand(ctx)
-		resp.Diagnostics.Append(d...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-
-		// Extract ID from the union type based on policy_type
-		// We can use the ID from the fetched response directly
-		policyID := response.GetId()
-
-		// Run the API call
-		var updateResponse *mfa.DeviceAuthenticationPolicy
-		resp.Diagnostics.Append(legacysdk.ParseResponse(
-			ctx,
-			func() (any, *http.Response, error) {
-				fO, fR, fErr := r.Client.MFAAPIClient.DeviceAuthenticationPolicyApi.UpdateDeviceAuthenticationPolicy(ctx, data.EnvironmentId.ValueString(), policyID).DeviceAuthenticationPolicy(mFADevicePolicy).Execute()
-				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
-			},
-			"UpdateDeviceAuthenticationPolicy-Default-Delete",
-			legacysdk.CustomErrorResourceNotFoundWarning,
-			nil,
-			&updateResponse,
-		)...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
+	// Run the API call
+	var updateResponse *mfa.DeviceAuthenticationPolicy
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
+		ctx,
+		func() (any, *http.Response, error) {
+			fO, fR, fErr := r.Client.MFAAPIClient.DeviceAuthenticationPolicyApi.UpdateDeviceAuthenticationPolicy(ctx, data.EnvironmentId.ValueString(), policyID).DeviceAuthenticationPolicy(*mFADevicePolicy).Execute()
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+		},
+		"UpdateDeviceAuthenticationPolicy-Default-Delete",
+		legacysdk.CustomErrorResourceNotFoundWarning,
+		nil,
+		&updateResponse,
+	)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 }
 
@@ -3042,6 +3049,207 @@ func FetchDefaultMFADevicePolicyWithTimeout(ctx context.Context, apiClient *mfa.
 	returnVar := policy.(*mfa.DeviceAuthenticationPolicy)
 
 	return returnVar, diags
+}
+
+func (p *MFADevicePolicyDefaultResourceModel) buildDefaultPolicyStruct(mobileAppID string) *mfa.DeviceAuthenticationPolicy {
+	const (
+		defaultOTPPeriodDuration       = 30
+		defaultOTPFailureCount         = 3
+		defaultOTPFailureCooldown      = 2
+		defaultOTPLength               = 6
+		defaultPushTimeout             = 100
+		defaultPairingKeyLifetime      = 48
+		defaultPushLimitCount          = 5
+		defaultPushLimitPeriod         = 10
+		defaultPushLimitLockDuration   = 30
+		defaultNewRequestDeviceTimeout = 25
+		defaultNewRequestTotalTimeout  = 40
+		defaultRememberMeDuration      = 30
+	)
+
+	minutes := mfa.EnumTimeUnit("MINUTES")
+
+	isPingID := !p.PolicyType.IsNull() && !p.PolicyType.IsUnknown() && p.PolicyType.ValueString() == POLICY_TYPE_PINGID
+
+	// Offline OTP Defaults (SMS, Voice, Email)
+	offlineOtpLifetime := mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpLifeTime(defaultOTPPeriodDuration, minutes)
+	offlineOtpFailureCooldown := mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailureCoolDown(defaultOTPFailureCooldown, minutes)
+	offlineOtpFailure := mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailure(defaultOTPFailureCount, *offlineOtpFailureCooldown)
+	offlineOtp := mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtp(*offlineOtpLifetime, *offlineOtpFailure)
+	offlineOtp.SetOtpLength(defaultOTPLength)
+
+	sms := mfa.NewDeviceAuthenticationPolicyOfflineDevice(false, *offlineOtp)
+	sms.SetPairingDisabled(false)
+	sms.SetPromptForNicknameOnPairing(false)
+
+	voice := mfa.NewDeviceAuthenticationPolicyOfflineDevice(false, *offlineOtp)
+	voice.SetPairingDisabled(false)
+	voice.SetPromptForNicknameOnPairing(false)
+
+	email := mfa.NewDeviceAuthenticationPolicyOfflineDevice(true, *offlineOtp)
+	if isPingID {
+		email.SetEnabled(false)
+	}
+
+	email.SetPairingDisabled(false)
+	email.SetPromptForNicknameOnPairing(false)
+
+	// Mobile
+	mobileOtpFailureCooldown := mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailureCoolDown(defaultOTPFailureCooldown, minutes)
+	mobileOtpFailure := mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailure(defaultOTPFailureCount, *mobileOtpFailureCooldown)
+	mobileOtp := mfa.NewDeviceAuthenticationPolicyCommonMobileOtp(*mobileOtpFailure)
+
+	mobile := mfa.NewDeviceAuthenticationPolicyCommonMobile(true, *mobileOtp)
+	mobile.SetPromptForNicknameOnPairing(false)
+
+	if isPingID {
+		appID := mobileAppID
+
+		defaultApp := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInner(appID)
+		defaultApp.SetType(mfa.EnumPingIDApplicationType("pingIdAppConfig"))
+
+		// Push
+		push := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerPush(true)
+		numberMatching := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerPushNumberMatching(false)
+		push.SetNumberMatching(*numberMatching)
+		defaultApp.SetPush(*push)
+
+		// OTP
+		otp := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerOtp(false)
+		defaultApp.SetOtp(*otp)
+
+		// Auto Enrollment
+		autoEnrol := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerAutoEnrollment(false)
+		defaultApp.SetAutoEnrollment(*autoEnrol)
+
+		// Device Authorization
+		devAuth := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerDeviceAuthorization(false)
+		defaultApp.SetDeviceAuthorization(*devAuth)
+
+		// Push Timeout
+		pushTimeout := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerPushTimeout(defaultPushTimeout, mfa.EnumTimeUnitPushTimeout("SECONDS"))
+		defaultApp.SetPushTimeout(*pushTimeout)
+
+		// Pairing Key Lifetime
+		pairingKeyLifetime := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerPairingKeyLifetime(defaultPairingKeyLifetime, mfa.EnumTimeUnitPairingKeyLifetime("HOURS"))
+		defaultApp.SetPairingKeyLifetime(*pairingKeyLifetime)
+
+		// Push Limit
+		pushLimit := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerPushLimit()
+		pushLimit.SetCount(defaultPushLimitCount)
+		pushLimitTimePeriod := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerPushLimitTimePeriod(defaultPushLimitPeriod, mfa.EnumTimeUnit("MINUTES"))
+		pushLimit.SetTimePeriod(*pushLimitTimePeriod)
+		pushLimitLockDuration := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerPushLimitLockDuration(defaultPushLimitLockDuration, mfa.EnumTimeUnit("MINUTES"))
+		pushLimit.SetLockDuration(*pushLimitLockDuration)
+		defaultApp.SetPushLimit(*pushLimit)
+
+		// Pairing Disabled
+		defaultApp.SetPairingDisabled(false)
+
+		// New Request Duration Configuration
+		devTimeout := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerNewRequestDurationConfigurationDeviceTimeout(defaultNewRequestDeviceTimeout, mfa.EnumTimeUnitSeconds("SECONDS"))
+		totTimeout := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerNewRequestDurationConfigurationTotalTimeout(defaultNewRequestTotalTimeout, mfa.EnumTimeUnitSeconds("SECONDS"))
+		newReqConfig := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerNewRequestDurationConfiguration(*devTimeout, *totTimeout)
+		defaultApp.SetNewRequestDurationConfiguration(*newReqConfig)
+
+		// IP Pairing Configuration
+		ipPairing := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerIpPairingConfiguration()
+		ipPairing.SetAnyIPAdress(true)
+		defaultApp.SetIpPairingConfiguration(*ipPairing)
+
+		// Biometrics
+		defaultApp.SetBiometricsEnabled(false)
+
+		mobile.SetApplications([]mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInner{*defaultApp})
+	}
+
+	// TOTP
+	totpOtpFailureCooldown := mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailureCoolDown(defaultOTPFailureCooldown, minutes)
+	totpOtpFailure := mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailure(defaultOTPFailureCount, *totpOtpFailureCooldown)
+	totpOtp := mfa.NewDeviceAuthenticationPolicyPingIDDeviceOtp(*totpOtpFailure)
+
+	totpEnabled := true
+	if isPingID {
+		totpEnabled = false
+	}
+	totp := mfa.NewDeviceAuthenticationPolicyCommonTotp(totpEnabled, *totpOtp)
+	totp.SetPairingDisabled(false)
+	totp.SetPromptForNicknameOnPairing(false)
+
+	data := mfa.NewDeviceAuthenticationPolicy(
+		p.Name.ValueString(),
+		*sms,
+		*voice,
+		*email,
+		*mobile,
+		*totp,
+		true,
+		false,
+	)
+
+	data.SetAuthentication(*mfa.NewDeviceAuthenticationPolicyCommonAuthentication(mfa.EnumMFADevicePolicySelection("DEFAULT_TO_FIRST")))
+
+	fido2Enabled := true
+	if isPingID {
+		fido2Enabled = false
+		data.SetNewDeviceNotification(mfa.EnumMFADevicePolicyNewDeviceNotification("NONE"))
+	} else {
+		data.SetNewDeviceNotification(mfa.EnumMFADevicePolicyNewDeviceNotification("EMAIL_THEN_SMS"))
+	}
+
+	fido2 := mfa.NewDeviceAuthenticationPolicyCommonFido2(fido2Enabled)
+	fido2.SetPairingDisabled(false)
+	fido2.SetPromptForNicknameOnPairing(false)
+	data.SetFido2(*fido2)
+
+	oathOtpFailureCooldown := mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailureCoolDown(defaultOTPFailureCooldown, minutes)
+	oathOtpFailure := mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailure(defaultOTPFailureCount, *oathOtpFailureCooldown)
+	oathOtp := mfa.NewDeviceAuthenticationPolicyPingIDDeviceOtp(*oathOtpFailure)
+
+	oathEnabled := true
+	if isPingID {
+		oathEnabled = false
+	}
+
+	oathToken := mfa.NewDeviceAuthenticationPolicyOathToken(oathEnabled, *oathOtp)
+	oathToken.SetPairingDisabled(false)
+	oathToken.SetPromptForNicknameOnPairing(false)
+	data.SetOathToken(*oathToken)
+
+	lifetime := mfa.DeviceAuthenticationPolicyCommonRememberMeWebLifeTime{}
+	lifetime.SetDuration(defaultRememberMeDuration)
+	lifetime.SetTimeUnit(mfa.EnumTimeUnitRememberMeWebLifeTime("MINUTES"))
+
+	rememberMeWeb := mfa.NewDeviceAuthenticationPolicyCommonRememberMeWeb(false, lifetime)
+	rememberMe := mfa.NewDeviceAuthenticationPolicyCommonRememberMe(*rememberMeWeb)
+	data.SetRememberMe(*rememberMe)
+
+	if isPingID {
+		// Desktop
+		desktopOtpFailureCooldown := mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailureCoolDown(defaultOTPFailureCooldown, minutes)
+		desktopOtpFailure := mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailure(defaultOTPFailureCount, *desktopOtpFailureCooldown)
+		desktopOtp := mfa.NewDeviceAuthenticationPolicyPingIDDeviceOtp(*desktopOtpFailure)
+
+		desktop := mfa.NewDeviceAuthenticationPolicyPingIDDevice(false, *desktopOtp)
+		desktop.SetPairingDisabled(false)
+
+		desktopPairingKeyLifetime := mfa.NewDeviceAuthenticationPolicyPingIDDevicePairingKeyLifetime(defaultPairingKeyLifetime, mfa.EnumTimeUnitPairingKeyLifetime("HOURS"))
+		desktop.SetPairingKeyLifetime(*desktopPairingKeyLifetime)
+
+		data.SetDesktop(*desktop)
+
+		// Yubikey
+		yubikeyOtpFailureCooldown := mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailureCoolDown(defaultOTPFailureCooldown, minutes)
+		yubikeyOtpFailure := mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailure(defaultOTPFailureCount, *yubikeyOtpFailureCooldown)
+		yubikeyOtp := mfa.NewDeviceAuthenticationPolicyPingIDDeviceOtp(*yubikeyOtpFailure)
+
+		yubikey := mfa.NewDeviceAuthenticationPolicyPingIDDevice(false, *yubikeyOtp)
+		yubikey.SetPairingDisabled(false)
+
+		data.SetYubikey(*yubikey)
+	}
+
+	return data
 }
 
 func (p *MFADevicePolicyDefaultResourceModel) expand(ctx context.Context) (mfa.DeviceAuthenticationPolicy, diag.Diagnostics) {
@@ -4180,7 +4388,7 @@ func toStateMfaDevicePolicyMobileApplicationsPushForDefault(apiObject *mfa.Devic
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
-		return types.ObjectNull(MFADevicePolicyMobileApplicationPushTFObjectTypes), nil
+		return types.ObjectNull(MFADevicePolicyDefaultMobileApplicationPushTFObjectTypes), nil
 	}
 
 	// Handle number_matching

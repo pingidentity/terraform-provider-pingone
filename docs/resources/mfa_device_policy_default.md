@@ -424,7 +424,7 @@ Required:
 
 Optional:
 
-- `applications` (Attributes Map) A map of objects that specifies settings for configured Mobile Applications. The ID of the application should be configured as the map key. (see [below for nested schema](#nestedatt--mobile--applications))
+- `applications` (Attributes Map) A map of objects that specifies settings for configured Mobile Applications. The ID of the application should be configured as the map key. Required when `policy_type` is set to `PING_ONE_ID`. (see [below for nested schema](#nestedatt--mobile--applications))
 - `otp` (Attributes) A single object that specifies OTP settings for mobile applications in the policy. (see [below for nested schema](#nestedatt--mobile--otp))
 - `prompt_for_nickname_on_pairing` (Boolean) A boolean that, when set to `true`, prompts users to provide nicknames for devices during pairing.
 
