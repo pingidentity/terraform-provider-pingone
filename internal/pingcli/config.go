@@ -5,6 +5,7 @@ package pingcli
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -18,6 +19,14 @@ import (
 	"github.com/pingidentity/pingone-go-client/config"
 	svcOAuth2 "github.com/pingidentity/pingone-go-client/oauth2"
 	"golang.org/x/oauth2"
+)
+
+var (
+	logPrefix = "[pingcli]"
+
+	ErrProfileConfigNil    = errors.New("profile config cannot be nil")
+	ErrInsufficientProfile = errors.New("insufficient profile configuration to derive token key")
+	ErrNoValidTokenFound   = errors.New("PingCLI configuration requires a valid stored token. Please run 'pingcli login' first")
 )
 
 // Config represents the structure for reading PingCLI configuration
@@ -271,58 +280,62 @@ type tokenFileData struct {
 	Expiry       time.Time `json:"expiry,omitempty"`
 }
 
-// LoadStoredToken attempts to load a stored token from PingCLI's file storage
-// It scans the credentials directory for any valid token files matching the profile name
-// This allows using tokens from any auth flow (authorization_code, device_code, client_credentials)
+// LoadStoredToken attempts to load a stored token from PingCLI's file storage or keychain.
+// It uses deterministic token key generation (matching the SDK and CLI) to find the exact token.
+// This allows using tokens from any auth flow (authorization_code, device_code, client_credentials).
 func LoadStoredToken(ctx context.Context, profileConfig *ProfileConfig, profileName string) (*oauth2.Token, error) {
 	if profileConfig == nil {
-		return nil, fmt.Errorf("profile config cannot be nil")
+		return nil, ErrProfileConfigNil
 	}
 
-	// 1) Try Keychain directly via SDK oauth2 keychain storage using the same token key derivation
-	tflog.Debug(ctx, "[pingcli] Attempting to load token from keychain", map[string]any{
-		"grantType":     profileConfig.GrantType,
-		"environmentID": profileConfig.EnvironmentID,
-		"region":        profileConfig.RegionCode,
-		"profile":       profileName,
+	if profileName == "" {
+		profileName = "default"
+	}
+
+	// Prepare inputs for token key generation
+	envID := strings.TrimSpace(profileConfig.EnvironmentID)
+	clientID := strings.TrimSpace(profileConfig.ClientID)
+	grant := strings.TrimSpace(profileConfig.GrantType)
+
+	if envID == "" || clientID == "" || grant == "" {
+		// If we can't derive the key, we can't load the token (strict mode)
+		return nil, fmt.Errorf("%w: for profile '%s'", ErrInsufficientProfile, profileName)
+	}
+
+	// Suffix for pingcli compatibility: _pingone_<grant>_<profile>
+	// Note: pingcli uses a double underscore separator which is formed by the SDK appending this suffix
+	suffix := fmt.Sprintf("_pingone_%s_%s", grant, profileName)
+
+	// Derive the exact token key using the SDK helper
+	tokenKey := svcOAuth2.GenerateKeychainAccountNameWithSuffix(envID, clientID, grant, suffix)
+
+	tflog.Debug(ctx, fmt.Sprintf("%s Derived token key", logPrefix), map[string]any{
+		"tokenKey": tokenKey,
+		"profile":  profileName,
 	})
 
-	if profileConfig.GrantType != "" {
-		// Build the optional suffix used by pingcli
-		if profileName == "" {
-			profileName = "default"
-		}
-		suffix := fmt.Sprintf("_pingone_%s_%s", strings.TrimSpace(profileConfig.GrantType), profileName)
-
-		// Derive the exact keychain account name using the SDK helper
-		envID := strings.TrimSpace(profileConfig.EnvironmentID)
-		clientID := strings.TrimSpace(profileConfig.ClientID)
-		grant := strings.TrimSpace(profileConfig.GrantType)
-		if envID != "" && clientID != "" && grant != "" {
-			account := svcOAuth2.GenerateKeychainAccountNameWithSuffix(envID, clientID, grant, suffix)
-			ks, kerr := svcOAuth2.NewKeychainStorage("pingcli", account)
-			if kerr == nil {
-				if token, loadErr := ks.LoadToken(); loadErr == nil && token != nil && token.AccessToken != "" {
-					tflog.Debug(ctx, "[pingcli] Keychain token loaded directly", map[string]any{
-						"account":    account,
-						"expires":    token.Expiry.Format(time.RFC3339),
-						"hasRefresh": token.RefreshToken != "",
-					})
-					return token, nil
-				}
-			} else {
-				tflog.Debug(ctx, "[pingcli] Keychain storage init failed", map[string]any{
-					"account": account,
-					"error":   kerr,
+	// 1) Try Keychain directly via SDK oauth2 keychain storage
+	ks, kerr := svcOAuth2.NewKeychainStorage("pingcli", tokenKey)
+	if kerr == nil {
+		if token, loadErr := ks.LoadToken(); loadErr == nil && token != nil && token.AccessToken != "" {
+			if token.Valid() {
+				tflog.Debug(ctx, fmt.Sprintf("%s Keychain token loaded directly", logPrefix), map[string]any{
+					"account":    tokenKey,
+					"expires":    token.Expiry.Format(time.RFC3339),
+					"hasRefresh": token.RefreshToken != "",
 				})
+				return token, nil
 			}
-		} else {
-			tflog.Debug(ctx, "[pingcli] Insufficient inputs for keychain account", map[string]any{
-				"environmentID": envID,
-				"clientID":      clientID,
-				"grant":         grant,
+			tflog.Debug(ctx, fmt.Sprintf("%s Keychain token found but expired/invalid", logPrefix), map[string]any{
+				"account": tokenKey,
+				"expires": token.Expiry.Format(time.RFC3339),
 			})
 		}
+	} else {
+		tflog.Debug(ctx, fmt.Sprintf("%s Keychain storage init failed or not found", logPrefix), map[string]any{
+			"account": tokenKey,
+			"error":   kerr,
+		})
 	}
 
 	// 2) File-based fallback to maintain compatibility when fileStorage is enabled
@@ -333,69 +346,51 @@ func LoadStoredToken(ctx context.Context, profileConfig *ProfileConfig, profileN
 	}
 
 	credentialsDir := filepath.Join(homeDir, ".pingcli", "credentials")
-	tflog.Debug(ctx, "[pingcli] Checking file storage for tokens", map[string]any{
-		"directory": credentialsDir,
+	filename := fmt.Sprintf("%s.json", tokenKey)
+	filePath := filepath.Join(credentialsDir, filename)
+	cleanPath := filepath.Clean(filePath)
+
+	tflog.Debug(ctx, fmt.Sprintf("%s Checking specific file storage", logPrefix), map[string]any{
+		"path": cleanPath,
 	})
 
-	if profileName == "" {
-		profileName = "default"
-	}
-
-	// Scan directory for any token files matching this profile and provider
-	// Token filename format: token-<hash>_<provider>_<grantType>_<profile>.json
-	pattern := fmt.Sprintf("token-*_pingone_*_%s.json", profileName)
-	glob := filepath.Join(credentialsDir, pattern)
-	matches, err := filepath.Glob(glob)
+	data, err := os.ReadFile(cleanPath) // #nosec G304 -- File path is constructed from trusted config and hash
 	if err != nil {
-		return nil, fmt.Errorf("failed to scan credentials directory: %w", err)
-	}
-	tflog.Debug(ctx, "[pingcli] Scanned credentials directory", map[string]any{
-		"globPattern": glob,
-		"matchCount":  len(matches),
-	})
-
-	// Try each matching file
-	for _, filePath := range matches {
-		data, err := os.ReadFile(filePath)
-		if err != nil {
-			tflog.Debug(ctx, "[pingcli] Failed to read token file", map[string]any{
-				"path":  filePath,
-				"error": err,
-			})
-			continue // Try next file
-		}
-
-		var tokenData tokenFileData
-		if err := json.Unmarshal(data, &tokenData); err != nil {
-			tflog.Debug(ctx, "[pingcli] Failed to unmarshal token file", map[string]any{
-				"path":  filePath,
-				"error": err,
-			})
-			continue // Try next file
-		}
-
-		token := &oauth2.Token{
-			AccessToken:  tokenData.AccessToken,
-			TokenType:    tokenData.TokenType,
-			RefreshToken: tokenData.RefreshToken,
-			Expiry:       tokenData.Expiry,
-		}
-
-		// Check if token is still valid
-		if token.Valid() {
-			tflog.Debug(ctx, "[pingcli] Valid file token found", map[string]any{
-				"type":       token.TokenType,
-				"expires":    token.Expiry.Format(time.RFC3339),
-				"hasRefresh": token.RefreshToken != "",
-			})
-			return token, nil
-		}
-		duration := time.Until(token.Expiry)
-		tflog.Debug(ctx, "[pingcli] Token invalid or expired", map[string]any{
-			"expires":   token.Expiry.Format(time.RFC3339),
-			"expiresIn": duration.String(),
+		tflog.Debug(ctx, fmt.Sprintf("%s Token file not found or unreadable", logPrefix), map[string]any{
+			"path":  cleanPath,
+			"error": err,
 		})
+	} else {
+		var tokenData tokenFileData
+		if err := json.Unmarshal(data, &tokenData); err == nil {
+			token := &oauth2.Token{
+				AccessToken:  tokenData.AccessToken,
+				TokenType:    tokenData.TokenType,
+				RefreshToken: tokenData.RefreshToken,
+				Expiry:       tokenData.Expiry,
+			}
+
+			// Check if token is still valid
+			if token.Valid() {
+				tflog.Debug(ctx, fmt.Sprintf("%s Valid file token found", logPrefix), map[string]any{
+					"type":       token.TokenType,
+					"expires":    token.Expiry.Format(time.RFC3339),
+					"hasRefresh": token.RefreshToken != "",
+				})
+				return token, nil
+			}
+			duration := time.Until(token.Expiry)
+			tflog.Debug(ctx, fmt.Sprintf("%s File token invalid or expired", logPrefix), map[string]any{
+				"expires":   token.Expiry.Format(time.RFC3339),
+				"expiresIn": duration.String(),
+			})
+		} else {
+			tflog.Debug(ctx, fmt.Sprintf("%s Failed to unmarshal token file", logPrefix), map[string]any{
+				"path":  cleanPath,
+				"error": err,
+			})
+		}
 	}
 
-	return nil, fmt.Errorf("no valid stored token found for profile '%s'; checked Keychain and %s. Ensure storage alignment and run `pingcli login` to obtain a token", profileName, credentialsDir)
+	return nil, fmt.Errorf("%w: checked Keychain and %s", ErrNoValidTokenFound, credentialsDir)
 }
