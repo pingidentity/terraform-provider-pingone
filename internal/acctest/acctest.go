@@ -83,12 +83,12 @@ type MinMaxChecks struct {
 }
 
 func PreCheckClient(t *testing.T) {
-	if v := os.Getenv("PINGONE_CLIENT_CREDENTIALS_CLIENT_ID"); v == "" {
-		t.Fatal("PINGONE_CLIENT_CREDENTIALS_CLIENT_ID is missing and must be set")
+	if v := os.Getenv("PINGONE_CLIENT_ID"); v == "" {
+		t.Fatal("PINGONE_CLIENT_ID is missing and must be set")
 	}
 
-	if v := os.Getenv("PINGONE_CLIENT_CREDENTIALS_CLIENT_SECRET"); v == "" {
-		t.Fatal("PINGONE_CLIENT_CREDENTIALS_CLIENT_SECRET is missing and must be set")
+	if v := os.Getenv("PINGONE_CLIENT_SECRET"); v == "" {
+		t.Fatal("PINGONE_CLIENT_SECRET is missing and must be set")
 	}
 
 	if v := os.Getenv("PINGONE_ENVIRONMENT_ID"); v == "" {
@@ -341,8 +341,11 @@ func TestClient(ctx context.Context) (*pingone.APIClient, error) {
 	if !ok {
 		return nil, fmt.Errorf("invalid PINGONE_REGION_CODE: %s", os.Getenv("PINGONE_REGION_CODE"))
 	}
+	// The env vars for client id and secret changed in client version v0.4.0, so we have to parse them manually here
 	config := clientconfig.NewConfiguration().
 		WithGrantType(oauth2.GrantTypeClientCredentials).
+		WithClientID(strings.TrimSpace(os.Getenv("PINGONE_CLIENT_ID"))).
+		WithClientSecret(strings.TrimSpace(os.Getenv("PINGONE_CLIENT_SECRET"))).
 		WithTopLevelDomain(regionTopLevelDomain).
 		WithStorageType(clientconfig.StorageTypeNone)
 

@@ -265,11 +265,27 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 
 	config := clientconfig.NewConfiguration().
 		WithGrantType(oauth2.GrantTypeClientCredentials).
-		WithClientID(data.ClientID.ValueString()).
-		WithClientSecret(data.ClientSecret.ValueString()).
 		WithEnvironmentID(data.EnvironmentID.ValueString()).
 		WithAccessToken(data.APIAccessToken.ValueString()).
 		WithStorageType(clientconfig.StorageTypeNone)
+
+	var clientId string
+	if !data.ClientID.IsNull() && !data.ClientID.IsUnknown() {
+		clientId = strings.TrimSpace(data.ClientID.ValueString())
+	} else {
+		// The env var used by the client changed in client version v0.4.0, so now we handle this here
+		clientId = strings.TrimSpace(os.Getenv("PINGONE_CLIENT_ID"))
+	}
+	config = config.WithClientID(clientId)
+
+	var clientSecret string
+	if !data.ClientSecret.IsNull() && !data.ClientSecret.IsUnknown() {
+		clientSecret = strings.TrimSpace(data.ClientSecret.ValueString())
+	} else {
+		// The env var used by the client changed in client version v0.4.0, so now we handle this here
+		clientSecret = strings.TrimSpace(os.Getenv("PINGONE_CLIENT_SECRET"))
+	}
+	config = config.WithClientSecret(clientSecret)
 
 	var regionCode string
 	if !data.RegionCode.IsNull() && !data.RegionCode.IsUnknown() {

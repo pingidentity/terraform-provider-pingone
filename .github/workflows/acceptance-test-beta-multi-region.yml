@@ -40,12 +40,8 @@ jobs:
     env:
       TESTACC_BETA: true
       PINGONE_TESTING_PROVIDER_VERSION: test
-      # Variable names used by legacy client
       PINGONE_CLIENT_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_CLIENT_ID_CLIENT_SECRET_BASIC', matrix.region)] }}
       PINGONE_CLIENT_SECRET: ${{ secrets[format('PINGONE_PROD_{0}_FF_CLIENT_SECRET_CLIENT_SECRET_BASIC', matrix.region)] }}
-      # Variable names used by pingone-go-client
-      PINGONE_CLIENT_CREDENTIALS_CLIENT_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_CLIENT_ID_CLIENT_SECRET_BASIC', matrix.region)] }}
-      PINGONE_CLIENT_CREDENTIALS_CLIENT_SECRET: ${{ secrets[format('PINGONE_PROD_{0}_FF_CLIENT_SECRET_CLIENT_SECRET_BASIC', matrix.region)] }}
       PINGONE_ENVIRONMENT_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_ENVIRONMENT_ID', matrix.region)] }}
       PINGONE_REGION_CODE: ${{ matrix.region }}
       PINGONE_LICENSE_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_LICENSE_ID', matrix.region)] }}
@@ -90,12 +86,8 @@ jobs:
     env:
       TESTACC_BETA: true
       PINGONE_TESTING_PROVIDER_VERSION: test
-      # Variable names used by legacy client
       PINGONE_CLIENT_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_CLIENT_ID_CLIENT_SECRET_BASIC', matrix.region)] }}
       PINGONE_CLIENT_SECRET: ${{ secrets[format('PINGONE_PROD_{0}_FF_CLIENT_SECRET_CLIENT_SECRET_BASIC', matrix.region)] }}
-      # Variable names used by pingone-go-client
-      PINGONE_CLIENT_CREDENTIALS_CLIENT_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_CLIENT_ID_CLIENT_SECRET_BASIC', matrix.region)] }}
-      PINGONE_CLIENT_CREDENTIALS_CLIENT_SECRET: ${{ secrets[format('PINGONE_PROD_{0}_FF_CLIENT_SECRET_CLIENT_SECRET_BASIC', matrix.region)] }}
       PINGONE_ENVIRONMENT_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_ENVIRONMENT_ID', matrix.region)] }}
       PINGONE_REGION_CODE: ${{ matrix.region }}
       PINGONE_LICENSE_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_LICENSE_ID', matrix.region)] }}
@@ -149,12 +141,8 @@ jobs:
     env:
       TESTACC_BETA: true
       PINGONE_TESTING_PROVIDER_VERSION: test
-      # Variable names used by legacy client
       PINGONE_CLIENT_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_CLIENT_ID_CLIENT_SECRET_BASIC', matrix.region)] }}
       PINGONE_CLIENT_SECRET: ${{ secrets[format('PINGONE_PROD_{0}_FF_CLIENT_SECRET_CLIENT_SECRET_BASIC', matrix.region)] }}
-      # Variable names used by pingone-go-client
-      PINGONE_CLIENT_CREDENTIALS_CLIENT_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_CLIENT_ID_CLIENT_SECRET_BASIC', matrix.region)] }}
-      PINGONE_CLIENT_CREDENTIALS_CLIENT_SECRET: ${{ secrets[format('PINGONE_PROD_{0}_FF_CLIENT_SECRET_CLIENT_SECRET_BASIC', matrix.region)] }}
       PINGONE_ENVIRONMENT_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_ENVIRONMENT_ID', matrix.region)] }}
       PINGONE_REGION_CODE: ${{ matrix.region }}
       PINGONE_LICENSE_ID: ${{ vars[format('PINGONE_PROD_{0}_FF_LICENSE_ID', matrix.region)] }}
