@@ -23,6 +23,7 @@ import (
 	pingone "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/pingcli"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/authorize"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/base"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/credentials"
@@ -55,6 +56,8 @@ type pingOneProviderModel struct {
 	ServiceEndpoints types.List   `tfsdk:"service_endpoints"`
 	GlobalOptions    types.List   `tfsdk:"global_options"`
 	HTTPProxy        types.String `tfsdk:"http_proxy"`
+	ConfigPath       types.String `tfsdk:"config_path"`
+	ConfigProfile    types.String `tfsdk:"config_profile"`
 }
 
 type pingOneProviderGlobalOptionsModel struct {
@@ -125,6 +128,14 @@ func (p *pingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest
 		"Full URL for the http/https proxy service, for example `http://127.0.0.1:8090`.  Default value can be set with the `HTTP_PROXY` or `HTTPS_PROXY` environment variables.",
 	)
 
+	configPathDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Path to a PingCLI configuration file containing authentication credentials. When set, the provider will read authentication settings from the specified profile in this file. Default value can be set with the `PINGCLI_CONFIG` environment variable. Cannot be used together with `client_id`, `client_secret`, `environment_id`, or `api_access_token`. If set, `config_profile` can optionally specify which profile to use (defaults to the active profile in the config file).",
+	)
+
+	configProfileDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Name of the profile to use from the PingCLI configuration file. If not specified, uses the active profile defined in the config file. Default value can be set with the `PINGCLI_PROFILE` environment variable. Requires `config_path` to be set.",
+	)
+
 	appendUserAgentDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A custom string value to append to the end of the `User-Agent` header when making API requests to the PingOne service. Default value can be set with the `PINGONE_TF_APPEND_USER_AGENT` environment variable.",
 	)
@@ -152,6 +163,18 @@ func (p *pingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest
 			"api_access_token": schema.StringAttribute{
 				Description:         apiAccessTokenDescription.Description,
 				MarkdownDescription: apiAccessTokenDescription.MarkdownDescription,
+				Optional:            true,
+			},
+
+			"config_path": schema.StringAttribute{
+				Description:         configPathDescription.Description,
+				MarkdownDescription: configPathDescription.MarkdownDescription,
+				Optional:            true,
+			},
+
+			"config_profile": schema.StringAttribute{
+				Description:         configProfileDescription.Description,
+				MarkdownDescription: configProfileDescription.MarkdownDescription,
 				Optional:            true,
 			},
 
@@ -251,33 +274,107 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 		return
 	}
 
-	// Set the defaults
-	tflog.Info(ctx, "[v6] [legacy sdk] Provider setting defaults..")
-
-	if v := strings.TrimSpace(os.Getenv("PINGONE_REGION")); v != "" {
-		resp.Diagnostics.AddWarning(
-			"Deprecated PINGONE_REGION environment variable",
-			"The PINGONE_REGION environment variable is now deprecated and should be replaced with the PINGONE_REGION_CODE environment variable.\n\nOptions for the PINGONE_REGION_CODE environment variable are `AP` (`.asia` tenants), `AU` (`.com.au` tenants), `CA` (`.ca` tenants), `EU` (`.eu` tenants) and `NA` (`.com` tenants).",
-		)
+	// Check if PingCLI config is being used
+	var configPath string
+	if !data.ConfigPath.IsNull() && !data.ConfigPath.IsUnknown() {
+		configPath = strings.TrimSpace(data.ConfigPath.ValueString())
+	} else {
+		configPath = strings.TrimSpace(os.Getenv("PINGCLI_CONFIG"))
 	}
 
+	// If PingCLI config is being used, load it and initialize the client
+	usingPingCLIConfig := configPath != ""
+
+	// Initialize globalOptions that will be used regardless of auth method
 	globalOptions := &client.GlobalOptions{
 		Population: &client.PopulationOptions{
 			ContainsUsersForceDelete: false,
 		},
 	}
 
-	config := &pingone.Config{
-		ClientID:      data.ClientID.ValueString(),
-		ClientSecret:  data.ClientSecret.ValueString(),
-		EnvironmentID: data.EnvironmentID.ValueString(),
-		AccessToken:   data.APIAccessToken.ValueString(),
-		GlobalOptions: globalOptions,
-	}
+	var config *pingone.Config
 
-	if !data.RegionCode.IsNull() && !data.RegionCode.IsUnknown() {
-		regionCode := management.EnumRegionCode(data.RegionCode.ValueString())
-		config.RegionCode = &regionCode
+	if usingPingCLIConfig {
+		tflog.Info(ctx, "[v6] [legacy sdk] Using PingCLI configuration")
+
+		var configProfile string
+		if !data.ConfigProfile.IsNull() && !data.ConfigProfile.IsUnknown() {
+			configProfile = strings.TrimSpace(data.ConfigProfile.ValueString())
+		} else {
+			configProfile = strings.TrimSpace(os.Getenv("PINGCLI_PROFILE"))
+		}
+
+		// Load PingCLI configuration - this will determine the active profile if configProfile is empty
+		profileConfig, err := pingcli.LoadProfileConfig(configPath, configProfile)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Failed to Load PingCLI Configuration",
+				fmt.Sprintf("Error reading PingCLI configuration file: %s", err.Error()),
+			)
+			return
+		}
+
+		// If no profile was specified, get the active profile name for token loading
+		if configProfile == "" {
+			pingCliConfig, err := pingcli.NewConfig(configPath)
+			if err != nil {
+				resp.Diagnostics.AddError(
+					"Failed to Load PingCLI Configuration",
+					fmt.Sprintf("Error reading PingCLI configuration file: %s", err.Error()),
+				)
+				return
+			}
+			configProfile, err = pingCliConfig.GetActiveProfile()
+			if err != nil {
+				resp.Diagnostics.AddError(
+					"Failed to Get Active Profile",
+					fmt.Sprintf("Error getting active profile from PingCLI configuration: %s", err.Error()),
+				)
+				return
+			}
+		}
+
+		// Try to load stored token
+		storedToken, err := pingcli.LoadStoredToken(ctx, profileConfig, configProfile)
+		if err != nil || storedToken == nil || !storedToken.Valid() {
+			resp.Diagnostics.AddError(
+				"No Valid Stored Token",
+				fmt.Sprintf("PingCLI configuration requires a valid stored token. Please run 'pingcli login' first. Error: %v", err),
+			)
+			return
+		}
+
+		tflog.Info(ctx, "[v6] [legacy sdk] Using stored token from PingCLI credentials")
+
+		config = &pingone.Config{
+			AccessToken:   storedToken.AccessToken,
+			GlobalOptions: globalOptions,
+		}
+
+		tflog.Debug(ctx, "[v6] [legacy sdk] Config initialized", map[string]any{
+			"has_access_token":  config.AccessToken != "",
+			"has_client_id":     config.ClientID != "",
+			"has_client_secret": config.ClientSecret != "",
+		})
+
+		if profileConfig.RegionCode != "" {
+			rc := management.EnumRegionCode(profileConfig.RegionCode)
+			config.RegionCode = &rc
+		}
+	} else {
+		// Use explicit credentials from provider configuration or environment variables
+		config = &pingone.Config{
+			ClientID:      data.ClientID.ValueString(),
+			ClientSecret:  data.ClientSecret.ValueString(),
+			EnvironmentID: data.EnvironmentID.ValueString(),
+			AccessToken:   data.APIAccessToken.ValueString(),
+			GlobalOptions: globalOptions,
+		}
+
+		if !data.RegionCode.IsNull() && !data.RegionCode.IsUnknown() {
+			rc := management.EnumRegionCode(data.RegionCode.ValueString())
+			config.RegionCode = &rc
+		}
 	}
 
 	if !data.HTTPProxy.IsNull() {

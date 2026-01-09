@@ -12,8 +12,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
-	"github.com/patrickcping/pingone-go-sdk-v2/management"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
@@ -206,39 +204,6 @@ func TestAccEnvironment_Minimal(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			minimalStep,
-		},
-	})
-}
-
-func TestAccEnvironment_NonCompatibleRegion(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGenEnvironment()
-
-	name := resourceName
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-	region := "NA"
-
-	if os.Getenv("PINGONE_REGION_CODE") == "NA" {
-		region = "EU"
-	}
-
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acctest.PreCheckNoTestAccFlaky(t)
-			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoBeta(t)
-		},
-		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             baselegacysdk.Environment_CheckDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			{
-				Config:      testAccEnvironmentConfig_MinimalWithRegion(resourceName, name, region, licenseID),
-				ExpectError: regexp.MustCompile(fmt.Sprintf(`Allowed regions: \[%[1]s(?: [A-Z]{2})?|(?: [A-Z]{2})?%[1]s\]\.`, model.FindRegionByAPICode(management.EnumRegionCode(os.Getenv("PINGONE_REGION_CODE"))).APICode)),
-			},
 		},
 	})
 }

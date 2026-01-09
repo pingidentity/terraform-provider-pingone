@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
@@ -23,6 +24,7 @@ import (
 	"github.com/pingidentity/pingone-go-client/pingone"
 	"github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/pingcli"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/davinci"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 )
@@ -46,6 +48,8 @@ type pingOneProviderModel struct {
 	ClientSecret     types.String `tfsdk:"client_secret"`
 	EnvironmentID    types.String `tfsdk:"environment_id"`
 	APIAccessToken   types.String `tfsdk:"api_access_token"`
+	ConfigPath       types.String `tfsdk:"config_path"`
+	ConfigProfile    types.String `tfsdk:"config_profile"`
 	AppendUserAgent  types.String `tfsdk:"append_user_agent"`
 	RegionCode       types.String `tfsdk:"region_code"`
 	ServiceEndpoints types.List   `tfsdk:"service_endpoints"`
@@ -87,6 +91,14 @@ func (p *pingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest
 
 	apiAccessTokenDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The access token used for provider resource management against the PingOne management API.  Default value can be set with the `PINGONE_API_ACCESS_TOKEN` environment variable.  Must provide only one of `api_access_token` (when obtaining the worker token outside of the provider) and `client_id` (when the provider should fetch the worker token during operations).",
+	)
+
+	configPathDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Path to a PingCLI configuration file containing authentication credentials. When set, the provider will read authentication settings from the specified profile in this file. Default value can be set with the `PINGCLI_CONFIG` environment variable. Cannot be used together with `client_id`, `client_secret`, `environment_id`, or `api_access_token`. If set, `config_profile` can optionally specify which profile to use (defaults to the active profile in the config file).",
+	)
+
+	configProfileDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Name of the profile to use from the PingCLI configuration file. If not specified, uses the active profile defined in the config file. Default value can be set with the `PINGCLI_PROFILE` environment variable. Requires `config_path` to be set.",
 	)
 
 	regionCodeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -148,6 +160,18 @@ func (p *pingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest
 			"api_access_token": schema.StringAttribute{
 				Description:         apiAccessTokenDescription.Description,
 				MarkdownDescription: apiAccessTokenDescription.MarkdownDescription,
+				Optional:            true,
+			},
+
+			"config_path": schema.StringAttribute{
+				Description:         configPathDescription.Description,
+				MarkdownDescription: configPathDescription.MarkdownDescription,
+				Optional:            true,
+			},
+
+			"config_profile": schema.StringAttribute{
+				Description:         configProfileDescription.Description,
+				MarkdownDescription: configProfileDescription.MarkdownDescription,
 				Optional:            true,
 			},
 
@@ -241,6 +265,8 @@ func (p *pingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest
 func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
 	tflog.Debug(ctx, "[v6] Provider configure start")
 	var data pingOneProviderModel
+	// Initialize a client configuration pointer used throughout setup
+	var config *clientconfig.Configuration
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
@@ -257,27 +283,294 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 		)
 	}
 
+	// Determine configuration source: PingCLI config file or explicit credentials
+	var configPath, configProfile string
+	if !data.ConfigPath.IsNull() && !data.ConfigPath.IsUnknown() {
+		configPath = strings.TrimSpace(data.ConfigPath.ValueString())
+	} else {
+		configPath = strings.TrimSpace(os.Getenv("PINGCLI_CONFIG"))
+	}
+
+	// Expand tilde to user home for config_path like ~/.pingcli/config.yaml
+	if configPath != "" && strings.HasPrefix(configPath, "~") {
+		home, herr := os.UserHomeDir()
+		if herr == nil && home != "" {
+			configPath = filepath.Join(home, strings.TrimPrefix(configPath, "~"))
+		}
+	}
+
+	if !data.ConfigProfile.IsNull() && !data.ConfigProfile.IsUnknown() {
+		configProfile = strings.TrimSpace(data.ConfigProfile.ValueString())
+	} else {
+		configProfile = strings.TrimSpace(os.Getenv("PINGCLI_PROFILE"))
+	}
+
+	// Validate mutual exclusivity
+	usingPingCLIConfig := configPath != ""
+	usingExplicitCreds := !data.ClientID.IsNull() || !data.ClientSecret.IsNull() || !data.EnvironmentID.IsNull() || !data.APIAccessToken.IsNull()
+
+	if usingPingCLIConfig && usingExplicitCreds {
+		resp.Diagnostics.AddError(
+			"Conflicting Configuration",
+			"Cannot use both PingCLI configuration file (config_path) and explicit credentials (client_id, client_secret, environment_id, api_access_token). Please use only one authentication method.",
+		)
+		return
+	}
+
+	// Validate config_profile requires config_path
+	if configProfile != "" && configPath == "" {
+		resp.Diagnostics.AddError(
+			"Invalid Configuration",
+			"config_profile is set but config_path is not defined. config_profile requires config_path to be set.",
+		)
+		return
+	}
+
 	globalOptions := &client.GlobalOptions{
 		Population: &client.PopulationOptions{
 			ContainsUsersForceDelete: false,
 		},
 	}
 
-	config := clientconfig.NewConfiguration().
-		WithGrantType(oauth2.GrantTypeClientCredentials).
-		WithClientID(data.ClientID.ValueString()).
-		WithClientSecret(data.ClientSecret.ValueString()).
-		WithEnvironmentID(data.EnvironmentID.ValueString()).
-		WithAccessToken(data.APIAccessToken.ValueString()).
-		WithStorageType(clientconfig.StorageTypeNone)
+	var clientID, clientSecret, environmentID, regionCode string
+	var grantType oauth2.GrantType
+	var redirectURIPath, redirectURIPort string
+	var scopes []string
+	var pingCliConfig *pingcli.Config
+	var activeProfile string
+	// When a stored token is found (PingCLI opt-in), enforce bearer-only mode
+	useBearerOnly := false
 
-	var regionCode string
-	if !data.RegionCode.IsNull() && !data.RegionCode.IsUnknown() {
-		regionCode = strings.TrimSpace(data.RegionCode.ValueString())
+	// Load configuration from PingCLI config file if provided
+	if usingPingCLIConfig {
+		tflog.Info(ctx, "[v6] Loading configuration from PingCLI config file", map[string]any{
+			"config_path":    configPath,
+			"config_profile": configProfile,
+		})
+
+		// Load the config object so we can check storage settings later
+		var err error
+		pingCliConfig, err = pingcli.NewConfig(configPath)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Failed to Load PingCLI Configuration",
+				fmt.Sprintf("Error reading PingCLI configuration file: %s", err.Error()),
+			)
+			return
+		}
+
+		// Determine which profile to use
+		if configProfile != "" {
+			activeProfile = configProfile
+		} else {
+			activeProfile, err = pingCliConfig.GetActiveProfile()
+			if err != nil {
+				resp.Diagnostics.AddError(
+					"Failed to Get Active Profile",
+					fmt.Sprintf("Error getting active profile from PingCLI configuration: %s", err.Error()),
+				)
+				return
+			}
+		}
+
+		// Get profile configuration
+		profileConfig, err := pingCliConfig.GetProfileConfig(activeProfile)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Failed to Load Profile Configuration",
+				fmt.Sprintf("Error loading profile '%s' from PingCLI configuration: %s", activeProfile, err.Error()),
+			)
+			return
+		}
+
+		// Try to load a stored token first
+		storedToken, err := pingcli.LoadStoredToken(ctx, profileConfig, activeProfile)
+		if err == nil && storedToken != nil && storedToken.Valid() {
+			tflog.Info(ctx, "[v6] Found valid stored token from PingCLI credentials", map[string]any{
+				"profile":        activeProfile,
+				"token_valid":    true,
+				"token_expiry":   storedToken.Expiry,
+				"has_access":     storedToken.AccessToken != "",
+				"has_refresh":    storedToken.RefreshToken != "",
+				"region_code":    profileConfig.RegionCode,
+				"environment_id": profileConfig.EnvironmentID,
+			})
+			// Set bearer-only mode values and skip OAuth configuration paths
+			useBearerOnly = true
+			// Assign environment/region for domain resolution when needed
+			environmentID = strings.TrimSpace(profileConfig.EnvironmentID)
+			regionCode = strings.TrimSpace(profileConfig.RegionCode)
+			// Build configuration immediately with static access token
+			cfg := clientconfig.NewConfiguration().WithAccessToken(storedToken.AccessToken)
+			if environmentID != "" {
+				cfg = cfg.WithEnvironmentID(environmentID)
+			}
+			// Apply region-derived top-level domain to satisfy client endpoint requirements
+			if regionCode != "" {
+				if tld, ok := framework.RegionTopLevelDomainFromCode(strings.ToLower(regionCode)); ok {
+					cfg = cfg.WithTopLevelDomain(clientconfig.TopLevelDomain(tld))
+				}
+			}
+			// Continue below using cfg instead of OAuth setup
+			config = cfg
+		} else {
+			// No valid stored token, will need to authenticate
+			if err != nil {
+				tflog.Warn(ctx, "[v6] Could not load stored token, will use auth flow", map[string]any{
+					"profile": activeProfile,
+					"error":   err.Error(),
+				})
+			} else if storedToken == nil {
+				tflog.Warn(ctx, "[v6] No stored token found, will use auth flow", map[string]any{
+					"profile": activeProfile,
+				})
+			} else if !storedToken.Valid() {
+				tflog.Warn(ctx, "[v6] Stored token is expired, will use auth flow", map[string]any{
+					"profile":      activeProfile,
+					"token_expiry": storedToken.Expiry,
+				})
+			}
+		}
+
+		// Always extract profile configuration for OAuth setup
+		// The SDK will check keychain for cached tokens and handle automatic refresh
+		clientID = profileConfig.ClientID
+		clientSecret = profileConfig.ClientSecret
+		environmentID = profileConfig.EnvironmentID
+		regionCode = profileConfig.RegionCode
+		scopes = profileConfig.Scopes
+		redirectURIPath = profileConfig.RedirectURIPath
+		redirectURIPort = profileConfig.RedirectURIPort
+
+		// Map PingCLI auth type to SDK grant type
+		switch profileConfig.GrantType {
+		case "client_credentials":
+			grantType = oauth2.GrantTypeClientCredentials
+		case "authorization_code":
+			grantType = oauth2.GrantTypeAuthorizationCode
+		case "device_code":
+			grantType = oauth2.GrantTypeDeviceCode
+		case "worker":
+			// Legacy 'worker' type maps to client credentials flow
+			grantType = oauth2.GrantTypeClientCredentials
+		default:
+			resp.Diagnostics.AddError(
+				"Unsupported Grant Type",
+				fmt.Sprintf("PingCLI profile uses unsupported grant type '%s'. Supported types are: client_credentials, authorization_code, device_code", profileConfig.GrantType),
+			)
+			return
+		}
+
+		tflog.Debug(ctx, "[v6] Loaded PingCLI configuration", map[string]any{
+			"auth_type":      profileConfig.GrantType,
+			"grant_type":     grantType,
+			"region_code":    profileConfig.RegionCode,
+			"environment_id": profileConfig.EnvironmentID,
+		})
 	} else {
+		// Use explicit credentials from provider configuration or environment variables
+		// Check if using explicit API access token (static token without OAuth flow)
+		if !data.APIAccessToken.IsNull() && !data.APIAccessToken.IsUnknown() && data.APIAccessToken.ValueString() != "" {
+			// Static token mode - OAuth configuration not needed
+			environmentID = data.EnvironmentID.ValueString()
+			useBearerOnly = true
+		} else {
+			// Use OAuth flow with client credentials
+			clientID = data.ClientID.ValueString()
+			clientSecret = data.ClientSecret.ValueString()
+			environmentID = data.EnvironmentID.ValueString()
+			grantType = oauth2.GrantTypeClientCredentials
+		}
+	}
+
+	// Initialize configuration; may already be set for bearer-only above
+	if config == nil {
+		config = clientconfig.NewConfiguration()
+	}
+
+	// Check if we have a static access token (explicit API token without OAuth)
+	if useBearerOnly {
+		// Static token mode - no OAuth flow
+		// If APIAccessToken provided directly, ensure it's set
+		if !usingPingCLIConfig && !data.APIAccessToken.IsNull() && !data.APIAccessToken.IsUnknown() && data.APIAccessToken.ValueString() != "" {
+			config = config.WithAccessToken(data.APIAccessToken.ValueString())
+		}
+		if environmentID != "" {
+			config = config.WithEnvironmentID(environmentID)
+		}
+	} else if grantType != "" {
+		// Configure OAuth flow based on grant type
+		config = config.
+			WithGrantType(grantType).
+			WithEnvironmentID(environmentID)
+
+		// Set storage name for keychain-based token caching
+		// Use "pingcli" when loading from PingCLI config, "terraform-provider-pingone" otherwise
+		storageName := "terraform-provider-pingone"
+		if usingPingCLIConfig && activeProfile != "" {
+			storageName = "pingcli"
+		}
+		config = config.WithStorageName(storageName)
+
+		// Use secure local storage (OS keychain) for token caching
+		config = config.WithStorageType(clientconfig.StorageTypeSecureLocal)
+
+		// Validate required fields for client credentials early to avoid opaque errors
+		if grantType == oauth2.GrantTypeClientCredentials {
+			if strings.TrimSpace(clientID) == "" || strings.TrimSpace(environmentID) == "" {
+				missing := make([]string, 0, 2)
+				if strings.TrimSpace(clientID) == "" {
+					missing = append(missing, "client_id")
+				}
+				if strings.TrimSpace(environmentID) == "" {
+					missing = append(missing, "environment_id")
+				}
+				resp.Diagnostics.AddError(
+					"Missing required credentials",
+					fmt.Sprintf("Grant type client_credentials requires %s. Review your PingCLI profile (including worker/authentication blocks) or provider inputs.", strings.Join(missing, " and ")),
+				)
+				return
+			}
+		}
+
+		switch grantType {
+		case oauth2.GrantTypeClientCredentials:
+			config = config.
+				WithClientID(clientID).
+				WithClientSecret(clientSecret)
+			if len(scopes) > 0 {
+				config = config.WithClientCredentialsScopes(scopes)
+			}
+		case oauth2.GrantTypeAuthorizationCode:
+			config = config.WithAuthorizationCodeClientID(clientID).WithEnvironmentID(environmentID)
+			if len(scopes) > 0 {
+				config = config.WithAuthorizationCodeScopes(scopes)
+			}
+			if redirectURIPath != "" || redirectURIPort != "" {
+				config = config.WithAuthorizationCodeRedirectURI(clientconfig.AuthorizationCodeRedirectURI{
+					Path: redirectURIPath,
+					Port: redirectURIPort,
+				})
+			}
+		case oauth2.GrantTypeDeviceCode:
+			config = config.WithDeviceCodeClientID(clientID).WithEnvironmentID(environmentID)
+			if len(scopes) > 0 {
+				config = config.WithDeviceCodeScopes(scopes)
+			}
+		}
+	} else {
+		// No access token and no grant type - invalid configuration
+		config = config.WithEnvironmentID(environmentID)
+	}
+
+	// Region code handling
+	if regionCode == "" && !data.RegionCode.IsNull() && !data.RegionCode.IsUnknown() {
+		regionCode = strings.TrimSpace(data.RegionCode.ValueString())
+	} else if regionCode == "" {
 		// Region codes are not handled automatically by the client
 		regionCode = strings.TrimSpace(os.Getenv("PINGONE_REGION_CODE"))
 	}
+	// Region code handling provides minimal endpoint configuration for the client
 	if regionCode != "" {
 		regionTopLevelDomain, ok := framework.RegionTopLevelDomainFromCode(strings.ToLower(regionCode))
 		if !ok {
@@ -287,7 +580,7 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 			)
 			return
 		}
-		config = config.WithTopLevelDomain(regionTopLevelDomain)
+		config = config.WithTopLevelDomain(clientconfig.TopLevelDomain(regionTopLevelDomain))
 	}
 
 	if !data.GlobalOptions.IsNull() {

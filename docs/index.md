@@ -26,6 +26,55 @@ For code examples showing how to configure the PingOne service using Terraform, 
 
 ## Provider Authentication
 
+### Authenticate using PingCLI profile (stored token)
+
+You can use a saved token from [PingCLI](https://github.com/pingidentity/pingcli) instead of managing client credentials directly in Terraform. This is convenient for interactive users and CI environments that already run `pingcli login`.
+
+1) Use PingCLI to log in with your preferred grant type and profile (e.g., `authorization_code`, `device_code`, or `client_credentials`). Ensure the profile’s `authentication.type` in the PingCLI config matches the grant you used.
+
+```shell
+pingcli login --type authorization_code --profile dev
+# or
+pingcli login --type device_code --profile dev
+# or
+pingcli login --type client_credentials --profile dev
+```
+
+2) In Terraform, point the provider to your PingCLI config file and profile:
+
+```terraform
+terraform {
+  required_providers {
+    pingone = {
+      source  = "pingidentity/pingone"
+      version = ">= 1.13, < 1.14"
+    }
+  }
+}
+
+provider "pingone" {
+  # Path to your PingCLI config file and profile name
+  config_path    = "~/.pingcli/config.yaml"
+  config_profile = "dev"
+}
+```
+
+Alternatively, you can set environment variables:
+
+```shell
+export PINGCLI_CONFIG="~/.pingcli/config.yaml"
+export PINGCLI_PROFILE="dev"
+terraform plan
+```
+
+Notes:
+- The provider will first try to use a valid stored token from PingCLI (Keychain or `~/.pingcli/credentials`).
+- If no stored token is found and `api_access_token` is set on the provider, it uses that token.
+- If the PingCLI profile contains `client_credentials` (client ID/secret) and environment ID, the provider can use them to obtain a token.
+- Otherwise, the provider returns an error prompting you to run `pingcli login`.
+
+For full details and examples of the PingCLI config structure, see the guide: [Using PingCLI with the Provider](./guides/pingcli-authentication.md).
+
 ### Authenticate using static OAuth 2.0 Client Credentials (PingOne Worker Application)
 
 ```terraform
@@ -147,6 +196,8 @@ provider "pingone" {
 - `region_code` (String) The PingOne region to use, which selects the appropriate service endpoints.  Options are `AP` (for Asia-Pacific `.asia` tenants), `AU` (for Asia-Pacific `.com.au` tenants), `CA` (for Canada `.ca` tenants), `EU` (for Europe `.eu` tenants), `NA` (for North America `.com` tenants) and `SG` (for Singapore `.sg` tenants).  Default value can be set with the `PINGONE_REGION_CODE` environment variable.
 - `service_endpoints` (Block List) A single block containing configuration items to override the service API endpoints of PingOne. (see [below for nested schema](#nestedblock--service_endpoints))
 - `append_user_agent` (String) A custom string value to append to the end of the `User-Agent` header when making API requests to the PingOne service. Default value can be set with the `PINGONE_TF_APPEND_USER_AGENT` environment variable.
+- `config_path` (String) Path to a PingCLI configuration file containing authentication credentials. Default value can be set with the `PINGCLI_CONFIG` environment variable. Cannot be used together with `client_id`, `client_secret`, `environment_id`, or `api_access_token`. If set, `config_profile` can optionally specify which profile to use (defaults to the active profile in the config file).
+- `config_profile` (String) Name of the profile to use from the PingCLI configuration file. If not specified, uses the active profile defined in the config file. Default value can be set with the `PINGCLI_PROFILE` environment variable. Requires `config_path` to be set.
 
 <a id="nestedblock--global_options"></a>
 ### Nested Schema for `global_options`
