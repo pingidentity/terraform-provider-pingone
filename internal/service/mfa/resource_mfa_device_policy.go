@@ -1431,7 +1431,7 @@ func (p *MFADevicePolicyResourceModel) expand(ctx context.Context, apiClient *ma
 			return nil, diags
 		}
 
-		data.SetAuthentication(
+		policy.SetAuthentication(
 			*mfa.NewDeviceAuthenticationPolicyCommonAuthentication(
 				mfa.EnumMFADevicePolicySelection(authenticationPlan.DeviceSelection.ValueString()),
 			),
