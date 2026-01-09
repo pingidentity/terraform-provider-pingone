@@ -87,7 +87,7 @@ func (v boolMustBeValueIfPathSetToValue) ValidateBool(ctx context.Context, req v
 	if matchedValue {
 		resp.Diagnostics.Append(validatordiag.InvalidAttributeCombinationDiagnostic(
 			req.Path,
-			v.Description(ctx),
+			fmt.Sprintf("Attribute %s must be %t when attribute %v value is %s", req.Path, v.BoolValue.ValueBool(), v.PathExpression, v.PathAttributeValue.ValueString()),
 		))
 	}
 }
