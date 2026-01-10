@@ -210,7 +210,7 @@ func (r *davinciFlowResource) Create(ctx context.Context, req resource.CreateReq
 		},
 		"CreateFlow",
 		framework.DefaultCustomError,
-		framework.InsufficientPrivilegeRetryable,
+		framework.DefaultRetryable,
 		&createResponseData,
 	)...)
 
@@ -241,7 +241,7 @@ func (r *davinciFlowResource) Create(ctx context.Context, req resource.CreateReq
 			},
 			"ReplaceFlowById-Create",
 			framework.DefaultCustomError,
-			framework.InsufficientPrivilegeRetryable,
+			framework.DefaultRetryable,
 			&updateResponseData,
 		)...)
 

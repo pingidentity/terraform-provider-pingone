@@ -29,27 +29,29 @@ func (r *davinciVariableResource) ValidateConfig(ctx context.Context, req resour
 			valueAttrs := data.Value.Attributes()
 			switch data.DataType.ValueString() {
 			case "boolean":
-				if valueAttrs["bool"].IsNull() {
+				// Variables created via the UI will use string values for booleans, floats, and objects.
+				// Because of this we allow strings in these 3 cases to support importing variables created via the UI or via the old API.
+				if valueAttrs["bool"].IsNull() && valueAttrs["string"].IsNull() {
 					resp.Diagnostics.AddAttributeError(
 						path.Root("value"),
 						"Invalid Value for Data Type",
-						"The `value.bool` attribute must be set when `data_type` is set to `boolean`",
+						"The `value.bool` or `value.string` attribute must be set when `data_type` is set to `boolean`",
 					)
 				}
 			case "number":
-				if valueAttrs["float32"].IsNull() {
+				if valueAttrs["float32"].IsNull() && valueAttrs["string"].IsNull() {
 					resp.Diagnostics.AddAttributeError(
 						path.Root("value"),
 						"Invalid Value for Data Type",
-						"The `value.float32` attribute must be set when `data_type` is set to `number`",
+						"The `value.float32` or `value.string` attribute must be set when `data_type` is set to `number`",
 					)
 				}
 			case "object":
-				if valueAttrs["json_object"].IsNull() {
+				if valueAttrs["json_object"].IsNull() && valueAttrs["string"].IsNull() {
 					resp.Diagnostics.AddAttributeError(
 						path.Root("value"),
 						"Invalid Value for Data Type",
-						"The `value.json_object` attribute must be set when `data_type` is set to `object`",
+						"The `value.json_object` or `value.string` attribute must be set when `data_type` is set to `object`",
 					)
 				}
 			case "secret":
