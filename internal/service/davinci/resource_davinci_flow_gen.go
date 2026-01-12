@@ -25,6 +25,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/mapdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -208,6 +209,8 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 									Attributes: map[string]schema.Attribute{
 										"classes": schema.StringAttribute{
 											Optional: true,
+											Computed: true,
+											Default:  stringdefault.StaticString(""),
 										},
 										"data": schema.SingleNestedAttribute{
 											Attributes: map[string]schema.Attribute{
@@ -275,6 +278,8 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 									Attributes: map[string]schema.Attribute{
 										"classes": schema.StringAttribute{
 											Optional: true,
+											Computed: true,
+											Default:  stringdefault.StaticString(""),
 										},
 										"data": schema.SingleNestedAttribute{
 											Attributes: map[string]schema.Attribute{
