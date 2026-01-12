@@ -2294,7 +2294,7 @@ func (r *MFADevicePolicyDefaultResource) ModifyPlan(ctx context.Context, req res
 	if req.Plan.Raw.IsNull() {
 		resp.Diagnostics.AddWarning(
 			"State change warning",
-			"A destroy plan has been detected for the \"pingone_mfa_device_policy_default\" resource.  The default MFA device policy will be removed from Terraform's state.  The policy itself will not be removed from the PingOne service and will retain its current configuration.",
+			"A destroy plan has been detected for the \"pingone_mfa_device_policy_default\" resource.  The default MFA device policy will be removed from Terraform's state.  The policy itself will not be removed from the PingOne service but will be reset to its default configuration.",
 		)
 	}
 }
@@ -2690,6 +2690,7 @@ func (r *MFADevicePolicyDefaultResource) Update(ctx context.Context, req resourc
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
+// Delete resets the default MFA device policy to its default configuration.
 func (r *MFADevicePolicyDefaultResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data MFADevicePolicyDefaultResourceModel
 
@@ -2718,11 +2719,10 @@ func (r *MFADevicePolicyDefaultResource) Delete(ctx context.Context, req resourc
 		return
 	}
 
-	// Fetch existing mobile app ID if present (required for PingID policies)
+	// Preserve mobile app ID if policy type is PingID
 	var mobileAppID string
 	if mobile, ok := response.GetMobileOk(); ok {
 		if apps, ok := mobile.GetApplicationsOk(); ok && len(apps) > 0 {
-			// For PingID there is only one app, and we must preserve its ID
 			if apps[0].GetType() == "pingIdAppConfig" {
 				mobileAppID = apps[0].GetId()
 			}
