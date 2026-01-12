@@ -561,7 +561,6 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 										},
 									},
 								},
-
 								"push_limit": schema.SingleNestedAttribute{
 									Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies push limit settings for the application in the policy.").Description,
 									Optional:    true,
@@ -1029,7 +1028,6 @@ func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttribute(descr
 							},
 						},
 					},
-
 					"otp_length": schema.Int32Attribute{
 						Description:         otpOtpLengthDescription.Description,
 						MarkdownDescription: otpOtpLengthDescription.MarkdownDescription,
@@ -1108,6 +1106,7 @@ func (r *MFADevicePolicyResource) Create(ctx context.Context, req resource.Creat
 
 	// Run the API call
 	var response *mfa.DeviceAuthenticationPolicyPostResponse
+
 	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
@@ -1394,15 +1393,15 @@ func (p *MFADevicePolicyResourceModel) expand(ctx context.Context, apiClient *ma
 	}
 
 	// Main object
-	data := mfa.NewDeviceAuthenticationPolicy(
+	policy := mfa.NewDeviceAuthenticationPolicy(
 		p.Name.ValueString(),
 		*sms,
 		*voice,
 		*email,
 		*mobile,
 		*totp,
-		false,
-		false,
+		false, // default
+		false, // forSignOnPolicy
 	)
 
 	// FIDO2
@@ -1418,7 +1417,7 @@ func (p *MFADevicePolicyResourceModel) expand(ctx context.Context, apiClient *ma
 
 		fido2 := fido2Plan.expand()
 
-		data.SetFido2(*fido2)
+		policy.SetFido2(*fido2)
 	}
 
 	// Authentication
@@ -1432,7 +1431,7 @@ func (p *MFADevicePolicyResourceModel) expand(ctx context.Context, apiClient *ma
 			return nil, diags
 		}
 
-		data.SetAuthentication(
+		policy.SetAuthentication(
 			*mfa.NewDeviceAuthenticationPolicyCommonAuthentication(
 				mfa.EnumMFADevicePolicySelection(authenticationPlan.DeviceSelection.ValueString()),
 			),
@@ -1441,28 +1440,31 @@ func (p *MFADevicePolicyResourceModel) expand(ctx context.Context, apiClient *ma
 
 	// New Device Notification
 	if !p.NewDeviceNotification.IsNull() && !p.NewDeviceNotification.IsUnknown() {
-		data.SetNewDeviceNotification(
+		policy.SetNewDeviceNotification(
 			mfa.EnumMFADevicePolicyNewDeviceNotification(p.NewDeviceNotification.ValueString()),
 		)
 	}
 
 	if !p.Default.IsNull() && !p.Default.IsUnknown() {
-		data.SetDefault(p.Default.ValueBool())
+		policy.SetDefault(p.Default.ValueBool())
 	} else {
-		data.SetDefault(false)
+		policy.SetDefault(false)
 	}
 
-	return data, diags
+	return policy, diags
 }
 
 func (p *MFADevicePolicyResourceModel) expandCreate(ctx context.Context, apiClient *management.APIClient) (*mfa.DeviceAuthenticationPolicyPost, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	data, diags := p.expand(ctx, apiClient)
+	if diags.HasError() {
+		return nil, diags
+	}
 
-	return &mfa.DeviceAuthenticationPolicyPost{
-		DeviceAuthenticationPolicy: data,
-	}, diags
+	result := mfa.DeviceAuthenticationPolicyAsDeviceAuthenticationPolicyPost(data)
+
+	return &result, diags
 }
 
 func (p *MFADevicePolicySmsResourceModel) expand(ctx context.Context) (*mfa.DeviceAuthenticationPolicyOfflineDevice, diag.Diagnostics) {
@@ -1698,7 +1700,7 @@ func (p *MFADevicePolicyMobileApplicationResourceModel) expand(ctx context.Conte
 		)
 	}
 
-	// Device authorisation
+	// Device authorization
 	if !p.DeviceAuthorization.IsNull() && !p.DeviceAuthorization.IsUnknown() {
 		var plan MFADevicePolicyMobileApplicationDeviceAuthorizationResourceModel
 		diags.Append(p.DeviceAuthorization.As(ctx, &plan, basetypes.ObjectAsOptions{
@@ -2026,6 +2028,14 @@ func (p *MFADevicePolicyResourceModel) toStateCreate(apiObject *mfa.DeviceAuthen
 		diags.AddError(
 			"Data object missing",
 			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
+		)
+		return diags
+	}
+
+	if apiObject.DeviceAuthenticationPolicy == nil {
+		diags.AddError(
+			"Unexpected response type",
+			"Expected a DeviceAuthenticationPolicy in the response but received a different type. Please report this to the provider maintainers.",
 		)
 		return diags
 	}
