@@ -257,8 +257,9 @@ func (r *davinciFlowDeployResource) Read(ctx context.Context, req resource.ReadR
 		return
 	}
 
-	// Remove from state if the flow is not found
-	if responseData == nil {
+	// Remove from state if the flow is not found, or if it has no published version,
+	// which would indicate that it has never been deployed
+	if responseData == nil || responseData.PublishedVersion == nil {
 		resp.State.RemoveResource(ctx)
 		return
 	}
