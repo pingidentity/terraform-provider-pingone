@@ -21,6 +21,7 @@ type Retryable func(context.Context, *http.Response, *pingone.GeneralError) bool
 var (
 	DefaultRetryable = func(ctx context.Context, r *http.Response, p1error *pingone.GeneralError) bool { return false }
 
+	// Similar but not identical to DefaultCreateReadRetryable in sdk/retry.go
 	InsufficientPrivilegeRetryable = func(ctx context.Context, r *http.Response, p1error *pingone.GeneralError) bool {
 		if p1error != nil {
 			// Permissions may not have propagated by this point
