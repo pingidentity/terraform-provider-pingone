@@ -4,6 +4,7 @@ package mfa_test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"regexp"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	sdkmfa "github.com/patrickcping/pingone-go-sdk-v2/mfa"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 	baselegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base/legacysdk"
@@ -923,6 +925,137 @@ func TestAccMFADevicePolicyDefault_BOMValidation_CrossTypes(t *testing.T) {
 			{
 				Config:      testAccMFADevicePolicyDefaultConfig_BOMValidation_MFAEnv(environmentNameMFA, licenseID, region, resourceName, name),
 				ExpectError: regexp.MustCompile("Unsupported Policy Type"),
+			},
+		},
+	})
+}
+
+func TestAccMFADevicePolicyDefault_DriftCorrection(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy_default.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	var environmentID string
+	var policyID string
+	var driftPolicyID string
+	var p1Client *client.Client
+	var ctx = context.Background()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoBeta(t)
+			p1Client = acctestlegacysdk.PreCheckTestClient(ctx, t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             mfa.MFADevicePolicyDefault_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				// Manage default resource with minimal config
+				Config: testAccMFADevicePolicyDefaultConfig_Minimal(environmentName, licenseID, resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+					resource.TestCheckResourceAttr(resourceFullName, "sms.enabled", "false"),
+					// Capture environment ID
+					func(s *terraform.State) error {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+						environmentID = rs.Primary.Attributes["environment_id"]
+						policyID = rs.Primary.ID
+						return nil
+					},
+				),
+			},
+			{
+				// Manually drift the default policy by creating a new policy via SDK and setting it as default
+				PreConfig: func() {
+					// 1. Fetch current default policy to clone
+					currentDefault, _, err := p1Client.API.MFAAPIClient.DeviceAuthenticationPolicyApi.ReadOneDeviceAuthenticationPolicy(ctx, environmentID, policyID).Execute()
+					if err != nil {
+						t.Fatalf("Failed to read policy: %s", err)
+					}
+
+					if currentDefault == nil {
+						t.Fatal("Could not find current default policy to clone")
+					}
+
+					// 2. Convert to Post Model via JSON
+					b, err := json.Marshal(currentDefault)
+					if err != nil {
+						t.Fatalf("Failed to marshal current policy: %s", err)
+					}
+
+					var policyMap map[string]interface{}
+					err = json.Unmarshal(b, &policyMap)
+					if err != nil {
+						t.Fatalf("Failed to unmarshal to map: %s", err)
+					}
+
+					// Modify
+					policyMap["name"] = "Drift Policy"
+					delete(policyMap, "id")
+					delete(policyMap, "default")
+					delete(policyMap, "createdAt")
+					delete(policyMap, "updatedAt")
+					delete(policyMap, "_links")
+
+					// Re-marshal
+					b, err = json.Marshal(policyMap)
+					if err != nil {
+						t.Fatalf("Failed to marshal modified map: %s", err)
+					}
+
+					var newPolicy sdkmfa.DeviceAuthenticationPolicyPost
+					err = json.Unmarshal(b, &newPolicy)
+					if err != nil {
+						t.Fatalf("Failed to unmarshal to post policy: %s", err)
+					}
+
+					// 3. Create
+					createdPolicyResponse, _, err := p1Client.API.MFAAPIClient.DeviceAuthenticationPolicyApi.CreateDeviceAuthenticationPolicies(ctx, environmentID).DeviceAuthenticationPolicyPost(newPolicy).Execute()
+					if err != nil {
+						t.Fatalf("Failed to create drift policy: %s", err)
+					}
+
+					if createdPolicyResponse == nil || createdPolicyResponse.DeviceAuthenticationPolicy == nil {
+						t.Fatal("Created policy response is nil")
+					}
+
+					createdPolicy := createdPolicyResponse.DeviceAuthenticationPolicy
+					driftPolicyID = createdPolicy.GetId()
+
+					// 4. Set as Default
+					createdPolicy.SetDefault(true)
+
+					_, _, err = p1Client.API.MFAAPIClient.DeviceAuthenticationPolicyApi.UpdateDeviceAuthenticationPolicy(ctx, environmentID, createdPolicy.GetId()).DeviceAuthenticationPolicy(*createdPolicy).Execute()
+					if err != nil {
+						t.Fatalf("Failed to set drift policy as default: %s", err)
+					}
+				},
+				// Apply full config to trigger drift correction
+				Config: testAccMFADevicePolicyDefaultConfig_Full(environmentName, licenseID, resourceName, name+"_corrected"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					// ID updated to match new default policy
+					resource.TestCheckResourceAttrPtr(resourceFullName, "id", &driftPolicyID),
+					// Attributes updated to match new Terraform config
+					resource.TestCheckResourceAttr(resourceFullName, "name", name+"_corrected"),
+					resource.TestCheckResourceAttr(resourceFullName, "sms.enabled", "true"),
+				),
 			},
 		},
 	})
