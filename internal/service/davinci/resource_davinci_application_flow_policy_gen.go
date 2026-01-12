@@ -19,7 +19,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -82,24 +82,6 @@ type davinciApplicationFlowPolicyResourceModel struct {
 }
 
 func (r *davinciApplicationFlowPolicyResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
-	triggerConfigurationMfaAttrTypes := map[string]attr.Type{
-		"enabled":     types.BoolType,
-		"time":        types.Float32Type,
-		"time_format": types.StringType,
-	}
-	triggerConfigurationPwdAttrTypes := map[string]attr.Type{
-		"enabled":     types.BoolType,
-		"time":        types.Float32Type,
-		"time_format": types.StringType,
-	}
-	triggerConfigurationAttrTypes := map[string]attr.Type{
-		"mfa": types.ObjectType{AttrTypes: triggerConfigurationMfaAttrTypes},
-		"pwd": types.ObjectType{AttrTypes: triggerConfigurationPwdAttrTypes},
-	}
-	triggerAttrTypes := map[string]attr.Type{
-		"configuration": types.ObjectType{AttrTypes: triggerConfigurationAttrTypes},
-		"type":          types.StringType,
-	}
 	resp.Schema = schema.Schema{
 		Description: "Resource to create and manage a DaVinci application flow policy.",
 		Attributes: map[string]schema.Attribute{
@@ -242,21 +224,10 @@ func (r *davinciApplicationFlowPolicyResource) Schema(ctx context.Context, req r
 				},
 				Optional: true,
 				Computed: true,
-				Default: objectdefault.StaticValue(types.ObjectValueMust(triggerAttrTypes, map[string]attr.Value{
-					"configuration": types.ObjectValueMust(triggerConfigurationAttrTypes, map[string]attr.Value{
-						"mfa": types.ObjectValueMust(triggerConfigurationMfaAttrTypes, map[string]attr.Value{
-							"enabled":     types.BoolValue(false),
-							"time":        types.Float32Value(0),
-							"time_format": types.StringValue("min"),
-						}),
-						"pwd": types.ObjectValueMust(triggerConfigurationPwdAttrTypes, map[string]attr.Value{
-							"enabled":     types.BoolValue(false),
-							"time":        types.Float32Value(0),
-							"time_format": types.StringValue("min"),
-						}),
-					}),
-					"type": types.StringValue("AUTHENTICATION"),
-				})),
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.UseStateForUnknown(),
+				},
+				// No default because it will differ for PingOne vs non-PingOne flows
 			},
 		},
 	}
