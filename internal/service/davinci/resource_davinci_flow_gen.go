@@ -303,7 +303,11 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 													},
 												},
 												"id_unique": schema.StringAttribute{
+													Optional: true,
 													Computed: true,
+													PlanModifiers: []planmodifier.String{
+														stringplanmodifier.UseStateForUnknown(),
+													},
 												},
 												"label": schema.StringAttribute{
 													Optional: true,
@@ -772,7 +776,7 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 			graphDataElementsAttrs := graphDataAttrs["elements"].(types.Object).Attributes()
 			if !graphDataElementsAttrs["edges"].IsNull() && !graphDataElementsAttrs["edges"].IsUnknown() {
 				graphDataElementsValue.Edges = []pingone.DaVinciFlowGraphDataRequestElementsEdge{}
-				for edgesKey, edgesElement := range graphDataElementsAttrs["edges"].(types.Map).Elements() {
+				for _, edgesElement := range graphDataElementsAttrs["edges"].(types.Map).Elements() {
 					edgesValue := pingone.DaVinciFlowGraphDataRequestElementsEdge{}
 					edgesAttrs := edgesElement.(types.Object).Attributes()
 					edgesValue.Classes = edgesAttrs["classes"].(types.String).ValueStringPointer()
@@ -804,20 +808,12 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 					edgesValue.Removed = edgesAttrs["removed"].(types.Bool).ValueBoolPointer()
 					edgesValue.Selectable = edgesAttrs["selectable"].(types.Bool).ValueBoolPointer()
 					edgesValue.Selected = edgesAttrs["selected"].(types.Bool).ValueBoolPointer()
-					// Validate key has correct format
-					expectedKey := model.edgeKey(edgesDataValue.Id, edgesDataValue.Source, edgesDataValue.Target)
-					if edgesKey != expectedKey {
-						respDiags.AddError(
-							"Error Validating Edge Key",
-							fmt.Sprintf("The edge key '%s' does not match the expected value '%s'. Please ensure the edge keys are formatted as 'id|source|target'.", edgesKey, expectedKey),
-						)
-					}
 					graphDataElementsValue.Edges = append(graphDataElementsValue.Edges, edgesValue)
 				}
 			}
 			if !graphDataElementsAttrs["nodes"].IsNull() && !graphDataElementsAttrs["nodes"].IsUnknown() {
 				graphDataElementsValue.Nodes = []pingone.DaVinciFlowGraphDataRequestElementsNode{}
-				for nodesKey, nodesElement := range graphDataElementsAttrs["nodes"].(types.Map).Elements() {
+				for _, nodesElement := range graphDataElementsAttrs["nodes"].(types.Map).Elements() {
 					nodesValue := pingone.DaVinciFlowGraphDataRequestElementsNode{}
 					nodesAttrs := nodesElement.(types.Object).Attributes()
 					nodesValue.Classes = nodesAttrs["classes"].(types.String).ValueStringPointer()
@@ -827,6 +823,7 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 					nodesDataValue.ConnectionId = nodesDataAttrs["connection_id"].(types.String).ValueStringPointer()
 					nodesDataValue.ConnectorId = nodesDataAttrs["connector_id"].(types.String).ValueStringPointer()
 					nodesDataValue.Id = nodesDataAttrs["id"].(types.String).ValueString()
+					nodesDataValue.IdUnique = nodesDataAttrs["id_unique"].(types.String).ValueStringPointer()
 					nodesDataValue.Label = nodesDataAttrs["label"].(types.String).ValueStringPointer()
 					nodesDataValue.Name = nodesDataAttrs["name"].(types.String).ValueStringPointer()
 					nodesDataValue.NodeType = nodesDataAttrs["node_type"].(types.String).ValueString()
@@ -866,19 +863,6 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 					nodesValue.Removed = nodesAttrs["removed"].(types.Bool).ValueBoolPointer()
 					nodesValue.Selectable = nodesAttrs["selectable"].(types.Bool).ValueBoolPointer()
 					nodesValue.Selected = nodesAttrs["selected"].(types.Bool).ValueBoolPointer()
-					// Validate key has correct format
-					var expectedKey string
-					if nodesDataValue.IdUnique != nil {
-						expectedKey = *nodesDataValue.IdUnique
-					} else {
-						expectedKey = nodesDataValue.Id
-					}
-					if nodesKey != expectedKey {
-						respDiags.AddError(
-							"Error Validating Node Key",
-							fmt.Sprintf("The node key '%s' does not match the expected value '%s'. Please ensure the node keys are set as the node's 'id_unique' value if present, otherwise the node's 'id' value.", nodesKey, expectedKey),
-						)
-					}
 					graphDataElementsValue.Nodes = append(graphDataElementsValue.Nodes, nodesValue)
 				}
 			}
@@ -1228,6 +1212,7 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 					nodesDataValue.ConnectionId = nodesDataAttrs["connection_id"].(types.String).ValueStringPointer()
 					nodesDataValue.ConnectorId = nodesDataAttrs["connector_id"].(types.String).ValueStringPointer()
 					nodesDataValue.Id = nodesDataAttrs["id"].(types.String).ValueString()
+					nodesDataValue.IdUnique = nodesDataAttrs["id_unique"].(types.String).ValueStringPointer()
 					nodesDataValue.Label = nodesDataAttrs["label"].(types.String).ValueStringPointer()
 					nodesDataValue.Name = nodesDataAttrs["name"].(types.String).ValueStringPointer()
 					nodesDataValue.NodeType = nodesDataAttrs["node_type"].(types.String).ValueString()
@@ -1688,7 +1673,7 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			})
 			respDiags.Append(diags...)
 			// Use the unique key for the edge
-			graphDataElementsEdgesValueKey := state.edgeKey(graphDataElementsEdgesResponseValue.Data.Id, graphDataElementsEdgesResponseValue.Data.Source, graphDataElementsEdgesResponseValue.Data.Target)
+			graphDataElementsEdgesValueKey := davinciFlowEdgeKey(graphDataElementsEdgesResponseValue.Data.Id, graphDataElementsEdgesResponseValue.Data.Source, graphDataElementsEdgesResponseValue.Data.Target)
 			graphDataElementsEdgesValues[graphDataElementsEdgesValueKey] = graphDataElementsEdgesValue
 		}
 		graphDataElementsEdgesValue, diags := types.MapValue(graphDataElementsEdgesElementType, graphDataElementsEdgesValues)
@@ -1743,7 +1728,7 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			respDiags.Append(diags...)
 			// Use the unique key for the node
 			var graphDataElementsNodesValueKey string
-			if graphDataElementsNodesResponseValue.Data.IdUnique != nil {
+			if graphDataElementsNodesResponseValue.Data.IdUnique != nil && *graphDataElementsNodesResponseValue.Data.IdUnique != "" {
 				graphDataElementsNodesValueKey = *graphDataElementsNodesResponseValue.Data.IdUnique
 			} else {
 				graphDataElementsNodesValueKey = graphDataElementsNodesResponseValue.Data.Id

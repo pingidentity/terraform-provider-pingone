@@ -12,6 +12,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -149,28 +150,7 @@ func (r *davinciFlowResource) ModifyPlan(ctx context.Context, req resource.Modif
 			if !graphDataElementsAttrs["nodes"].IsNull() && !graphDataElementsAttrs["nodes"].IsUnknown() {
 				nodesMap := graphDataElementsAttrs["nodes"].(types.Map)
 				for key, val := range nodesMap.Elements() {
-					nodeAttrs := val.(types.Object).Attributes()
-					if !nodeAttrs["data"].IsNull() && !nodeAttrs["data"].IsUnknown() {
-						nodeDataAttrs := nodeAttrs["data"].(types.Object).Attributes()
-						idAttr := nodeDataAttrs["id"]
-						idUniqueAttr := nodeDataAttrs["id_unique"]
-						var nodeId string
-						if !idUniqueAttr.IsNull() && !idUniqueAttr.IsUnknown() {
-							nodeId = idUniqueAttr.(types.String).ValueString()
-						} else if !idAttr.IsNull() && !idAttr.IsUnknown() {
-							nodeId = idAttr.(types.String).ValueString()
-						} else {
-							// Unable to validate, skip
-							continue
-						}
-						if key != nodeId {
-							resp.Diagnostics.AddAttributeError(
-								path.Root("graph_data").AtName("elements").AtName("nodes").AtMapKey(key),
-								"Node key mismatch",
-								fmt.Sprintf("The map key for this node ('%s') does not match the expected value ('%s'). The key should be set to the node's 'id_unique' attribute if set, or the 'id' attribute otherwise.", key, nodeId),
-							)
-						}
-					}
+					r.validateNodeKey(val.(types.Object).Attributes()["data"], key, resp.Diagnostics)
 				}
 			}
 
@@ -178,27 +158,7 @@ func (r *davinciFlowResource) ModifyPlan(ctx context.Context, req resource.Modif
 			if !graphDataElementsAttrs["edges"].IsNull() && !graphDataElementsAttrs["edges"].IsUnknown() {
 				edgesSet := graphDataElementsAttrs["edges"].(types.Map)
 				for key, val := range edgesSet.Elements() {
-					edgeAttrs := val.(types.Object).Attributes()
-					if !edgeAttrs["data"].IsNull() && !edgeAttrs["data"].IsUnknown() {
-						edgeDataAttrs := edgeAttrs["data"].(types.Object).Attributes()
-						edgeId := edgeDataAttrs["id"]
-						edgeSource := edgeDataAttrs["source"]
-						edgeTarget := edgeDataAttrs["target"]
-						if !edgeId.IsNull() && !edgeId.IsUnknown() &&
-							!edgeSource.IsNull() && !edgeSource.IsUnknown() &&
-							!edgeTarget.IsNull() && !edgeTarget.IsUnknown() {
-							expectedKey := plan.edgeKey(edgeId.(types.String).ValueString(),
-								edgeSource.(types.String).ValueString(),
-								edgeTarget.(types.String).ValueString())
-							if key != expectedKey {
-								resp.Diagnostics.AddAttributeError(
-									path.Root("graph_data").AtName("elements").AtName("edges").AtMapKey(key),
-									"Edge key mismatch",
-									fmt.Sprintf("The map key for this edge ('%s') does not match the expected key ('%s') based on the edge data values. The key should have the format '<id>|<source>|<target>'.", key, expectedKey),
-								)
-							}
-						}
-					}
+					r.validateEdgeKey(val.(types.Object).Attributes()["data"], key, resp.Diagnostics)
 				}
 			}
 		}
@@ -228,8 +188,55 @@ func (r *davinciFlowResource) isUpdateRequiredAfterCreate(plan, createResponse d
 }
 
 // Get a unique key for an edge based on its ID, source, and target
-func (r *davinciFlowResourceModel) edgeKey(id, source, target string) string {
+func davinciFlowEdgeKey(id, source, target string) string {
 	return fmt.Sprintf("%s|%s|%s", id, source, target)
+}
+
+func (r *davinciFlowResource) validateNodeKey(nodeDataAttr attr.Value, actualKey string, diags diag.Diagnostics) {
+	if !nodeDataAttr.IsNull() && !nodeDataAttr.IsUnknown() {
+		nodeDataAttrs := nodeDataAttr.(types.Object).Attributes()
+		idAttr := nodeDataAttrs["id"]
+		idUniqueAttr := nodeDataAttrs["id_unique"]
+		var nodeId string
+		if !idUniqueAttr.IsNull() && !idUniqueAttr.IsUnknown() && idUniqueAttr.(types.String).ValueString() != "" {
+			nodeId = idUniqueAttr.(types.String).ValueString()
+		} else if !idAttr.IsNull() && !idAttr.IsUnknown() && idAttr.(types.String).ValueString() != "" {
+			nodeId = idAttr.(types.String).ValueString()
+		} else {
+			// Unable to validate
+			return
+		}
+		if actualKey != nodeId {
+			diags.AddAttributeError(
+				path.Root("graph_data").AtName("elements").AtName("nodes").AtMapKey(actualKey),
+				"Node key mismatch",
+				fmt.Sprintf("The map key for this node ('%s') does not match the expected value ('%s'). The key should be set to the node's 'id_unique' attribute if set, or the 'id' attribute otherwise.", actualKey, nodeId),
+			)
+		}
+	}
+}
+
+func (r *davinciFlowResource) validateEdgeKey(edgeDataAttr attr.Value, actualKey string, diags diag.Diagnostics) {
+	if !edgeDataAttr.IsNull() && !edgeDataAttr.IsUnknown() {
+		edgeDataAttrs := edgeDataAttr.(types.Object).Attributes()
+		edgeId := edgeDataAttrs["id"]
+		edgeSource := edgeDataAttrs["source"]
+		edgeTarget := edgeDataAttrs["target"]
+		if !edgeId.IsNull() && !edgeId.IsUnknown() &&
+			!edgeSource.IsNull() && !edgeSource.IsUnknown() &&
+			!edgeTarget.IsNull() && !edgeTarget.IsUnknown() {
+			expectedKey := davinciFlowEdgeKey(edgeId.(types.String).ValueString(),
+				edgeSource.(types.String).ValueString(),
+				edgeTarget.(types.String).ValueString())
+			if actualKey != expectedKey {
+				diags.AddAttributeError(
+					path.Root("graph_data").AtName("elements").AtName("edges").AtMapKey(actualKey),
+					"Edge key mismatch",
+					fmt.Sprintf("The map key for this edge ('%s') does not match the expected key ('%s') based on the edge data values. The key should have the format '<id>|<source>|<target>'.", actualKey, expectedKey),
+				)
+			}
+		}
+	}
 }
 
 func (r *davinciFlowResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
