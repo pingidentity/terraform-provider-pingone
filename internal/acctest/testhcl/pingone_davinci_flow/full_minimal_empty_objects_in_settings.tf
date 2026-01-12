@@ -29,8 +29,8 @@ resource "pingone_davinci_flow" "%[2]s" {
   color = "#FFC8C1"
   graph_data = {
     elements = {
-      nodes = [
-        {
+      nodes = {
+        "2pzouq7el7" = {
           data = {
             id = "2pzouq7el7"
             node_type = "CONNECTION"
@@ -62,7 +62,7 @@ resource "pingone_davinci_flow" "%[2]s" {
           pannable = false
           classes = ""
         }
-      ]
+      }
     }
     
     zooming_enabled = true

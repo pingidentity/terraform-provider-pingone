@@ -207,44 +207,46 @@ resource "pingone_davinci_flow" "%[2]s" {
 
   graph_data = {
     elements = {
-      edges = []
-      nodes = [{
-        data = {
-          id              = "8bnj41592a"
-          node_type       = "CONNECTION"
-          connector_id    = "pingOneSSOConnector"
-          label           = "PingOne"
-          status          = "configured"
-          capability_name = "userLookup"
-          type            = "action"
-          properties = jsonencode({
-            "additionalUserProperties" : {
-              "value" : []
-            },
-            "username" : {
-              "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
-            },
-            "population" : {
-              "value" : "c9f3fb3f-11e9-4eb0-b4ba-9fb7789a8418"
-            },
-            "userIdentifierForFindUser" : {
-              "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
-            }
-          })
+      edges = {}
+      nodes = {
+        "8bnj41592a" = {
+          data = {
+            id              = "8bnj41592a"
+            node_type       = "CONNECTION"
+            connector_id    = "pingOneSSOConnector"
+            label           = "PingOne"
+            status          = "configured"
+            capability_name = "userLookup"
+            type            = "action"
+            properties = jsonencode({
+              "additionalUserProperties" : {
+                "value" : []
+              },
+              "username" : {
+                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+              },
+              "population" : {
+                "value" : "c9f3fb3f-11e9-4eb0-b4ba-9fb7789a8418"
+              },
+              "userIdentifierForFindUser" : {
+                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+              }
+            })
+          }
+          position = {
+            x = 420
+            y = 360
+          }
+          group      = "nodes"
+          removed    = false
+          selected   = false
+          selectable = true
+          locked     = false
+          grabbable  = true
+          pannable   = false
+          classes    = ""
         }
-        position = {
-          x = 420
-          y = 360
-        }
-        group      = "nodes"
-        removed    = false
-        selected   = false
-        selectable = true
-        locked     = false
-        grabbable  = true
-        pannable   = false
-        classes    = ""
-      }]
+      }
     }
 
     data = "{}"
@@ -295,7 +297,7 @@ resource "pingone_davinci_application" "%[2]s" {
 }
 
 resource "pingone_davinci_application_flow_policy" "%[2]s" {
-  environment_id          = data.pingone_environment.general_test.id
+  environment_id         = data.pingone_environment.general_test.id
   davinci_application_id = pingone_davinci_application.%[2]s.id
   flow_distributions = [
     {
@@ -329,44 +331,46 @@ resource "pingone_davinci_flow" "%[2]s-first" {
 
   graph_data = {
     elements = {
-      edges = []
-      nodes = [{
-        data = {
-          id              = "nodefirstflow"
-          node_type       = "CONNECTION"
-          connector_id    = "pingOneSSOConnector"
-          label           = "PingOne"
-          status          = "configured"
-          capability_name = "userLookup"
-          type            = "action"
-          properties = jsonencode({
-            "additionalUserProperties" : {
-              "value" : []
-            },
-            "username" : {
-              "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
-            },
-            "population" : {
-              "value" : "c9f3fb3f-11e9-4eb0-b4ba-9fb7789a8418"
-            },
-            "userIdentifierForFindUser" : {
-              "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
-            }
-          })
+      edges = {}
+      nodes = {
+        "nodefirstflow" = {
+          data = {
+            id              = "nodefirstflow"
+            node_type       = "CONNECTION"
+            connector_id    = "pingOneSSOConnector"
+            label           = "PingOne"
+            status          = "configured"
+            capability_name = "userLookup"
+            type            = "action"
+            properties = jsonencode({
+              "additionalUserProperties" : {
+                "value" : []
+              },
+              "username" : {
+                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+              },
+              "population" : {
+                "value" : "c9f3fb3f-11e9-4eb0-b4ba-9fb7789a8418"
+              },
+              "userIdentifierForFindUser" : {
+                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+              }
+            })
+          }
+          position = {
+            x = 420
+            y = 360
+          }
+          group      = "nodes"
+          removed    = false
+          selected   = false
+          selectable = true
+          locked     = false
+          grabbable  = true
+          pannable   = false
+          classes    = ""
         }
-        position = {
-          x = 420
-          y = 360
-        }
-        group      = "nodes"
-        removed    = false
-        selected   = false
-        selectable = true
-        locked     = false
-        grabbable  = true
-        pannable   = false
-        classes    = ""
-      }]
+      }
     }
 
     data = "{}"
@@ -419,45 +423,46 @@ resource "pingone_davinci_flow" "%[2]s-second" {
 
   graph_data = {
     elements = {
-      edges = []
-      nodes = [{
-        data = {
-          id              = "nodesecondflow1"
-          node_type       = "CONNECTION"
-          connector_id    = "pingOneSSOConnector"
-          label           = "PingOne"
-          status          = "configured"
-          capability_name = "userLookup"
-          type            = "action"
-          properties = jsonencode({
-            "additionalUserProperties" : {
-              "value" : []
-            },
-            "username" : {
-              "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
-            },
-            "population" : {
-              "value" : "c9f3fb3f-11e9-4eb0-b4ba-9fb7789a8418"
-            },
-            "userIdentifierForFindUser" : {
-              "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
-            }
-          })
-        }
-        position = {
-          x = 420
-          y = 360
-        }
-        group      = "nodes"
-        removed    = false
-        selected   = false
-        selectable = true
-        locked     = false
-        grabbable  = true
-        pannable   = false
-        classes    = ""
+      edges = {}
+      nodes = {
+        "nodesecondflow1" = {
+          data = {
+            id              = "nodesecondflow1"
+            node_type       = "CONNECTION"
+            connector_id    = "pingOneSSOConnector"
+            label           = "PingOne"
+            status          = "configured"
+            capability_name = "userLookup"
+            type            = "action"
+            properties = jsonencode({
+              "additionalUserProperties" : {
+                "value" : []
+              },
+              "username" : {
+                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+              },
+              "population" : {
+                "value" : "c9f3fb3f-11e9-4eb0-b4ba-9fb7789a8418"
+              },
+              "userIdentifierForFindUser" : {
+                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+              }
+            })
+          }
+          position = {
+            x = 420
+            y = 360
+          }
+          group      = "nodes"
+          removed    = false
+          selected   = false
+          selectable = true
+          locked     = false
+          grabbable  = true
+          pannable   = false
+          classes    = ""
         },
-        {
+        "nodesecondflow2" = {
           data = {
             id              = "nodesecondflow2"
             node_type       = "CONNECTION"
@@ -493,7 +498,8 @@ resource "pingone_davinci_flow" "%[2]s-second" {
           grabbable  = true
           pannable   = false
           classes    = ""
-      }]
+        }
+      }
     }
 
     data = "{}"
@@ -539,7 +545,7 @@ resource "pingone_davinci_flow" "%[2]s-second" {
 }
 
 resource "pingone_davinci_application_flow_policy" "%[2]s" {
-  environment_id          = data.pingone_environment.general_test.id
+  environment_id         = data.pingone_environment.general_test.id
   davinci_application_id = pingone_davinci_application.%[2]s.id
   flow_distributions = [
     {
@@ -618,44 +624,46 @@ resource "pingone_davinci_flow" "%[2]s-first" {
 
   graph_data = {
     elements = {
-      edges = []
-      nodes = [{
-        data = {
-          id              = "nodefirstflow"
-          node_type       = "CONNECTION"
-          connector_id    = "pingOneSSOConnector"
-          label           = "PingOne"
-          status          = "configured"
-          capability_name = "userLookup"
-          type            = "action"
-          properties = jsonencode({
-            "additionalUserProperties" : {
-              "value" : []
-            },
-            "username" : {
-              "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
-            },
-            "population" : {
-              "value" : "c9f3fb3f-11e9-4eb0-b4ba-9fb7789a8418"
-            },
-            "userIdentifierForFindUser" : {
-              "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
-            }
-          })
+      edges = {}
+      nodes = {
+        "nodefirstflow" = {
+          data = {
+            id              = "nodefirstflow"
+            node_type       = "CONNECTION"
+            connector_id    = "pingOneSSOConnector"
+            label           = "PingOne"
+            status          = "configured"
+            capability_name = "userLookup"
+            type            = "action"
+            properties = jsonencode({
+              "additionalUserProperties" : {
+                "value" : []
+              },
+              "username" : {
+                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+              },
+              "population" : {
+                "value" : "c9f3fb3f-11e9-4eb0-b4ba-9fb7789a8418"
+              },
+              "userIdentifierForFindUser" : {
+                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+              }
+            })
+          }
+          position = {
+            x = 420
+            y = 360
+          }
+          group      = "nodes"
+          removed    = false
+          selected   = false
+          selectable = true
+          locked     = false
+          grabbable  = true
+          pannable   = false
+          classes    = ""
         }
-        position = {
-          x = 420
-          y = 360
-        }
-        group      = "nodes"
-        removed    = false
-        selected   = false
-        selectable = true
-        locked     = false
-        grabbable  = true
-        pannable   = false
-        classes    = ""
-      }]
+      }
     }
 
     data = "{}"
@@ -708,45 +716,46 @@ resource "pingone_davinci_flow" "%[2]s-second" {
 
   graph_data = {
     elements = {
-      edges = []
-      nodes = [{
-        data = {
-          id              = "nodesecondflow1"
-          node_type       = "CONNECTION"
-          connector_id    = "pingOneSSOConnector"
-          label           = "PingOne"
-          status          = "configured"
-          capability_name = "userLookup"
-          type            = "action"
-          properties = jsonencode({
-            "additionalUserProperties" : {
-              "value" : []
-            },
-            "username" : {
-              "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
-            },
-            "population" : {
-              "value" : "c9f3fb3f-11e9-4eb0-b4ba-9fb7789a8418"
-            },
-            "userIdentifierForFindUser" : {
-              "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
-            }
-          })
-        }
-        position = {
-          x = 420
-          y = 360
-        }
-        group      = "nodes"
-        removed    = false
-        selected   = false
-        selectable = true
-        locked     = false
-        grabbable  = true
-        pannable   = false
-        classes    = ""
+      edges = {}
+      nodes = {
+        "nodesecondflow1" = {
+          data = {
+            id              = "nodesecondflow1"
+            node_type       = "CONNECTION"
+            connector_id    = "pingOneSSOConnector"
+            label           = "PingOne"
+            status          = "configured"
+            capability_name = "userLookup"
+            type            = "action"
+            properties = jsonencode({
+              "additionalUserProperties" : {
+                "value" : []
+              },
+              "username" : {
+                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+              },
+              "population" : {
+                "value" : "c9f3fb3f-11e9-4eb0-b4ba-9fb7789a8418"
+              },
+              "userIdentifierForFindUser" : {
+                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+              }
+            })
+          }
+          position = {
+            x = 420
+            y = 360
+          }
+          group      = "nodes"
+          removed    = false
+          selected   = false
+          selectable = true
+          locked     = false
+          grabbable  = true
+          pannable   = false
+          classes    = ""
         },
-        {
+        "nodesecondflow2" = {
           data = {
             id              = "nodesecondflow2"
             node_type       = "CONNECTION"
@@ -782,7 +791,8 @@ resource "pingone_davinci_flow" "%[2]s-second" {
           grabbable  = true
           pannable   = false
           classes    = ""
-      }]
+        }
+      }
     }
 
     data = "{}"
@@ -828,7 +838,7 @@ resource "pingone_davinci_flow" "%[2]s-second" {
 }
 
 resource "pingone_davinci_application_flow_policy" "%[2]s" {
-  environment_id          = data.pingone_environment.general_test.id
+  environment_id         = data.pingone_environment.general_test.id
   davinci_application_id = pingone_davinci_application.%[2]s.id
   flow_distributions = [
     {
@@ -906,44 +916,46 @@ resource "pingone_davinci_flow" "%[2]s" {
 
   graph_data = {
     elements = {
-      edges = []
-      nodes = [{
-        data = {
-          id              = "8bnj41592a"
-          node_type       = "CONNECTION"
-          connector_id    = "pingOneSSOConnector"
-          label           = "PingOne"
-          status          = "configured"
-          capability_name = "userLookup"
-          type            = "action"
-          properties = jsonencode({
-            "additionalUserProperties" : {
-              "value" : []
-            },
-            "username" : {
-              "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
-            },
-            "population" : {
-              "value" : "c9f3fb3f-11e9-4eb0-b4ba-9fb7789a8418"
-            },
-            "userIdentifierForFindUser" : {
-              "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
-            }
-          })
+      edges = {}
+      nodes = {
+        "8bnj41592a" = {
+          data = {
+            id              = "8bnj41592a"
+            node_type       = "CONNECTION"
+            connector_id    = "pingOneSSOConnector"
+            label           = "PingOne"
+            status          = "configured"
+            capability_name = "userLookup"
+            type            = "action"
+            properties = jsonencode({
+              "additionalUserProperties" : {
+                "value" : []
+              },
+              "username" : {
+                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+              },
+              "population" : {
+                "value" : "c9f3fb3f-11e9-4eb0-b4ba-9fb7789a8418"
+              },
+              "userIdentifierForFindUser" : {
+                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+              }
+            })
+          }
+          position = {
+            x = 420
+            y = 360
+          }
+          group      = "nodes"
+          removed    = false
+          selected   = false
+          selectable = true
+          locked     = false
+          grabbable  = true
+          pannable   = false
+          classes    = ""
         }
-        position = {
-          x = 420
-          y = 360
-        }
-        group      = "nodes"
-        removed    = false
-        selected   = false
-        selectable = true
-        locked     = false
-        grabbable  = true
-        pannable   = false
-        classes    = ""
-      }]
+      }
     }
 
     data = "{}"
@@ -989,7 +1001,7 @@ resource "pingone_davinci_flow" "%[2]s" {
 }
 
 resource "pingone_davinci_application_flow_policy" "%[3]s" {
-  environment_id          = pingone_environment.%[2]s.id
+  environment_id         = pingone_environment.%[2]s.id
   davinci_application_id = pingone_davinci_application.%[3]s.id
   flow_distributions = [
     {
@@ -1011,12 +1023,6 @@ func davinciApplicationFlowPolicy_CheckComputedValuesMinimal(resourceName string
 		resource.TestCheckNoResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "flow_distributions.0.success_nodes"),
 		resource.TestCheckNoResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "flow_distributions.0.weight"),
 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.type", "AUTHENTICATION"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.configuration.mfa.enabled", "false"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.configuration.mfa.time", "0"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.configuration.mfa.time_format", "min"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.configuration.pwd.enabled", "false"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.configuration.pwd.time", "0"),
-		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_application_flow_policy.%s", resourceName), "trigger.configuration.pwd.time_format", "min"),
 	)
 }
 

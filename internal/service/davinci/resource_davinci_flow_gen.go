@@ -22,9 +22,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/mapdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -100,8 +101,8 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 		"target": types.StringType,
 	}
 	graphDataElementsEdgesPositionAttrTypes := map[string]attr.Type{
-		"x": types.Float32Type,
-		"y": types.Float32Type,
+		"x": types.NumberType,
+		"y": types.NumberType,
 	}
 	graphDataElementsEdgesAttrTypes := map[string]attr.Type{
 		"classes":    types.StringType,
@@ -203,11 +204,13 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 					},
 					"elements": schema.SingleNestedAttribute{
 						Attributes: map[string]schema.Attribute{
-							"edges": schema.SetNestedAttribute{
+							"edges": schema.MapNestedAttribute{
 								NestedObject: schema.NestedAttributeObject{
 									Attributes: map[string]schema.Attribute{
 										"classes": schema.StringAttribute{
 											Optional: true,
+											Computed: true,
+											Default:  stringdefault.StaticString(""),
 										},
 										"data": schema.SingleNestedAttribute{
 											Attributes: map[string]schema.Attribute{
@@ -246,10 +249,10 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 										},
 										"position": schema.SingleNestedAttribute{
 											Attributes: map[string]schema.Attribute{
-												"x": schema.Float32Attribute{
+												"x": schema.NumberAttribute{
 													Required: true,
 												},
-												"y": schema.Float32Attribute{
+												"y": schema.NumberAttribute{
 													Required: true,
 												},
 											},
@@ -268,13 +271,15 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 								},
 								Optional: true,
 								Computed: true,
-								Default:  setdefault.StaticValue(types.SetValueMust(graphDataElementsEdgesElementType, nil)),
+								Default:  mapdefault.StaticValue(types.MapValueMust(graphDataElementsEdgesElementType, nil)),
 							},
-							"nodes": schema.SetNestedAttribute{
+							"nodes": schema.MapNestedAttribute{
 								NestedObject: schema.NestedAttributeObject{
 									Attributes: map[string]schema.Attribute{
 										"classes": schema.StringAttribute{
 											Optional: true,
+											Computed: true,
+											Default:  stringdefault.StaticString(""),
 										},
 										"data": schema.SingleNestedAttribute{
 											Attributes: map[string]schema.Attribute{
@@ -298,7 +303,11 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 													},
 												},
 												"id_unique": schema.StringAttribute{
+													Optional: true,
 													Computed: true,
+													PlanModifiers: []planmodifier.String{
+														stringplanmodifier.UseStateForUnknown(),
+													},
 												},
 												"label": schema.StringAttribute{
 													Optional: true,
@@ -344,10 +353,10 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 										},
 										"position": schema.SingleNestedAttribute{
 											Attributes: map[string]schema.Attribute{
-												"x": schema.Float32Attribute{
+												"x": schema.NumberAttribute{
 													Required: true,
 												},
-												"y": schema.Float32Attribute{
+												"y": schema.NumberAttribute{
 													Required: true,
 												},
 											},
@@ -377,10 +386,10 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 					},
 					"pan": schema.SingleNestedAttribute{
 						Attributes: map[string]schema.Attribute{
-							"x": schema.Float32Attribute{
+							"x": schema.NumberAttribute{
 								Required: true,
 							},
-							"y": schema.Float32Attribute{
+							"y": schema.NumberAttribute{
 								Required: true,
 							},
 						},
@@ -755,7 +764,7 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 			graphDataElementsAttrs := graphDataAttrs["elements"].(types.Object).Attributes()
 			if !graphDataElementsAttrs["edges"].IsNull() && !graphDataElementsAttrs["edges"].IsUnknown() {
 				graphDataElementsValue.Edges = []pingone.DaVinciFlowGraphDataRequestElementsEdge{}
-				for _, edgesElement := range graphDataElementsAttrs["edges"].(types.Set).Elements() {
+				for _, edgesElement := range graphDataElementsAttrs["edges"].(types.Map).Elements() {
 					edgesValue := pingone.DaVinciFlowGraphDataRequestElementsEdge{}
 					edgesAttrs := edgesElement.(types.Object).Attributes()
 					edgesValue.Classes = edgesAttrs["classes"].(types.String).ValueStringPointer()
@@ -772,8 +781,16 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 					if !edgesAttrs["position"].IsNull() && !edgesAttrs["position"].IsUnknown() {
 						edgesPositionValue := &pingone.DaVinciFlowGraphDataRequestElementsEdgePosition{}
 						edgesPositionAttrs := edgesAttrs["position"].(types.Object).Attributes()
-						edgesPositionValue.X = edgesPositionAttrs["x"].(types.Float32).ValueFloat32()
-						edgesPositionValue.Y = edgesPositionAttrs["y"].(types.Float32).ValueFloat32()
+						if !edgesPositionAttrs["x"].IsNull() && !edgesPositionAttrs["x"].IsUnknown() {
+							edgesPositionValue.X = pingonetypes.BigFloatUnquoted{
+								Float: edgesPositionAttrs["x"].(types.Number).ValueBigFloat(),
+							}
+						}
+						if !edgesPositionAttrs["y"].IsNull() && !edgesPositionAttrs["y"].IsUnknown() {
+							edgesPositionValue.Y = pingonetypes.BigFloatUnquoted{
+								Float: edgesPositionAttrs["y"].(types.Number).ValueBigFloat(),
+							}
+						}
 						edgesValue.Position = edgesPositionValue
 					}
 					edgesValue.Removed = edgesAttrs["removed"].(types.Bool).ValueBoolPointer()
@@ -784,7 +801,7 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 			}
 			if !graphDataElementsAttrs["nodes"].IsNull() && !graphDataElementsAttrs["nodes"].IsUnknown() {
 				graphDataElementsValue.Nodes = []pingone.DaVinciFlowGraphDataRequestElementsNode{}
-				for _, nodesElement := range graphDataElementsAttrs["nodes"].(types.Set).Elements() {
+				for _, nodesElement := range graphDataElementsAttrs["nodes"].(types.Map).Elements() {
 					nodesValue := pingone.DaVinciFlowGraphDataRequestElementsNode{}
 					nodesAttrs := nodesElement.(types.Object).Attributes()
 					nodesValue.Classes = nodesAttrs["classes"].(types.String).ValueStringPointer()
@@ -794,6 +811,7 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 					nodesDataValue.ConnectionId = nodesDataAttrs["connection_id"].(types.String).ValueStringPointer()
 					nodesDataValue.ConnectorId = nodesDataAttrs["connector_id"].(types.String).ValueStringPointer()
 					nodesDataValue.Id = nodesDataAttrs["id"].(types.String).ValueString()
+					nodesDataValue.IdUnique = nodesDataAttrs["id_unique"].(types.String).ValueStringPointer()
 					nodesDataValue.Label = nodesDataAttrs["label"].(types.String).ValueStringPointer()
 					nodesDataValue.Name = nodesDataAttrs["name"].(types.String).ValueStringPointer()
 					nodesDataValue.NodeType = nodesDataAttrs["node_type"].(types.String).ValueString()
@@ -818,8 +836,16 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 					if !nodesAttrs["position"].IsNull() && !nodesAttrs["position"].IsUnknown() {
 						nodesPositionValue := &pingone.DaVinciFlowGraphDataRequestElementsNodePosition{}
 						nodesPositionAttrs := nodesAttrs["position"].(types.Object).Attributes()
-						nodesPositionValue.X = nodesPositionAttrs["x"].(types.Float32).ValueFloat32()
-						nodesPositionValue.Y = nodesPositionAttrs["y"].(types.Float32).ValueFloat32()
+						if !nodesPositionAttrs["x"].IsNull() && !nodesPositionAttrs["x"].IsUnknown() {
+							nodesPositionValue.X = pingonetypes.BigFloatUnquoted{
+								Float: nodesPositionAttrs["x"].(types.Number).ValueBigFloat(),
+							}
+						}
+						if !nodesPositionAttrs["y"].IsNull() && !nodesPositionAttrs["y"].IsUnknown() {
+							nodesPositionValue.Y = pingonetypes.BigFloatUnquoted{
+								Float: nodesPositionAttrs["y"].(types.Number).ValueBigFloat(),
+							}
+						}
 						nodesValue.Position = nodesPositionValue
 					}
 					nodesValue.Removed = nodesAttrs["removed"].(types.Bool).ValueBoolPointer()
@@ -843,8 +869,16 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 		if !graphDataAttrs["pan"].IsNull() && !graphDataAttrs["pan"].IsUnknown() {
 			graphDataPanValue := &pingone.DaVinciFlowGraphDataRequestPan{}
 			graphDataPanAttrs := graphDataAttrs["pan"].(types.Object).Attributes()
-			graphDataPanValue.X = graphDataPanAttrs["x"].(types.Float32).ValueFloat32()
-			graphDataPanValue.Y = graphDataPanAttrs["y"].(types.Float32).ValueFloat32()
+			if !graphDataPanAttrs["x"].IsNull() && !graphDataPanAttrs["x"].IsUnknown() {
+				graphDataPanValue.X = pingonetypes.BigFloatUnquoted{
+					Float: graphDataPanAttrs["x"].(types.Number).ValueBigFloat(),
+				}
+			}
+			if !graphDataPanAttrs["y"].IsNull() && !graphDataPanAttrs["y"].IsUnknown() {
+				graphDataPanValue.Y = pingonetypes.BigFloatUnquoted{
+					Float: graphDataPanAttrs["y"].(types.Number).ValueBigFloat(),
+				}
+			}
 			graphDataValue.Pan = graphDataPanValue
 		}
 		graphDataValue.PanningEnabled = graphDataAttrs["panning_enabled"].(types.Bool).ValueBoolPointer()
@@ -951,11 +985,19 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 			}
 		}
 		settingsValue.CustomErrorScreenBrandLogoUrl = settingsAttrs["custom_error_screen_brand_logo_url"].(types.String).ValueStringPointer()
-		settingsValue.CustomErrorShowFooter = settingsAttrs["custom_error_show_footer"].(types.Bool).ValueBoolPointer()
+		if !settingsAttrs["custom_error_show_footer"].IsNull() && !settingsAttrs["custom_error_show_footer"].IsUnknown() {
+			settingsValue.CustomErrorShowFooter = &pingone.DaVinciFlowSettingsRequestCustomErrorShowFooter{
+				Bool: settingsAttrs["custom_error_show_footer"].(types.Bool).ValueBoolPointer(),
+			}
+		}
 		settingsValue.CustomFaviconLink = settingsAttrs["custom_favicon_link"].(types.String).ValueStringPointer()
 		settingsValue.CustomLogoURLSelection = settingsAttrs["custom_logo_urlselection"].(types.Int32).ValueInt32Pointer()
 		settingsValue.CustomTitle = settingsAttrs["custom_title"].(types.String).ValueStringPointer()
-		settingsValue.DefaultErrorScreenBrandLogo = settingsAttrs["default_error_screen_brand_logo"].(types.Bool).ValueBoolPointer()
+		if !settingsAttrs["default_error_screen_brand_logo"].IsNull() && !settingsAttrs["default_error_screen_brand_logo"].IsUnknown() {
+			settingsValue.DefaultErrorScreenBrandLogo = &pingone.DaVinciFlowSettingsRequestDefaultErrorScreenBrandLogo{
+				Bool: settingsAttrs["default_error_screen_brand_logo"].(types.Bool).ValueBoolPointer(),
+			}
+		}
 		settingsValue.FlowHttpTimeoutInSeconds = settingsAttrs["flow_http_timeout_in_seconds"].(types.Int32).ValueInt32Pointer()
 		settingsValue.FlowTimeoutInSeconds = settingsAttrs["flow_timeout_in_seconds"].(types.Int32).ValueInt32Pointer()
 		if !settingsAttrs["intermediate_loading_screen_css"].IsNull() && !settingsAttrs["intermediate_loading_screen_css"].IsUnknown() {
@@ -975,7 +1017,11 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 				jsLinksValue := pingone.DaVinciFlowSettingsRequestJsLink{}
 				jsLinksAttrs := jsLinksElement.(types.Object).Attributes()
 				jsLinksValue.Crossorigin = jsLinksAttrs["crossorigin"].(types.String).ValueString()
-				jsLinksValue.Defer = jsLinksAttrs["defer"].(types.Bool).ValueBool()
+				if !jsLinksAttrs["defer"].IsNull() && !jsLinksAttrs["defer"].IsUnknown() {
+					jsLinksValue.Defer = pingone.DaVinciFlowSettingsRequestJsLinkDefer{
+						Bool: jsLinksAttrs["defer"].(types.Bool).ValueBoolPointer(),
+					}
+				}
 				jsLinksValue.Integrity = jsLinksAttrs["integrity"].(types.String).ValueString()
 				jsLinksValue.Label = jsLinksAttrs["label"].(types.String).ValueString()
 				jsLinksValue.Referrerpolicy = jsLinksAttrs["referrerpolicy"].(types.String).ValueString()
@@ -985,20 +1031,52 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 			}
 		}
 		settingsValue.LogLevel = settingsAttrs["log_level"].(types.Int32).ValueInt32Pointer()
-		settingsValue.RequireAuthenticationToInitiate = settingsAttrs["require_authentication_to_initiate"].(types.Bool).ValueBoolPointer()
-		settingsValue.ScrubSensitiveInfo = settingsAttrs["scrub_sensitive_info"].(types.Bool).ValueBoolPointer()
+		if !settingsAttrs["require_authentication_to_initiate"].IsNull() && !settingsAttrs["require_authentication_to_initiate"].IsUnknown() {
+			settingsValue.RequireAuthenticationToInitiate = &pingone.DaVinciFlowSettingsRequestRequireAuthenticationToInitiate{
+				Bool: settingsAttrs["require_authentication_to_initiate"].(types.Bool).ValueBoolPointer(),
+			}
+		}
+		if !settingsAttrs["scrub_sensitive_info"].IsNull() && !settingsAttrs["scrub_sensitive_info"].IsUnknown() {
+			settingsValue.ScrubSensitiveInfo = &pingone.DaVinciFlowSettingsRequestScrubSensitiveInfo{
+				Bool: settingsAttrs["scrub_sensitive_info"].(types.Bool).ValueBoolPointer(),
+			}
+		}
 		if !settingsAttrs["sensitive_info_fields"].IsNull() && !settingsAttrs["sensitive_info_fields"].IsUnknown() {
 			settingsValue.SensitiveInfoFields = []string{}
 			for _, sensitiveInfoFieldsElement := range settingsAttrs["sensitive_info_fields"].(types.Set).Elements() {
 				settingsValue.SensitiveInfoFields = append(settingsValue.SensitiveInfoFields, sensitiveInfoFieldsElement.(types.String).ValueString())
 			}
 		}
-		settingsValue.UseCSP = settingsAttrs["use_csp"].(types.Bool).ValueBoolPointer()
-		settingsValue.UseCustomCSS = settingsAttrs["use_custom_css"].(types.Bool).ValueBoolPointer()
-		settingsValue.UseCustomFlowPlayer = settingsAttrs["use_custom_flow_player"].(types.Bool).ValueBoolPointer()
-		settingsValue.UseCustomScript = settingsAttrs["use_custom_script"].(types.Bool).ValueBoolPointer()
-		settingsValue.UseIntermediateLoadingScreen = settingsAttrs["use_intermediate_loading_screen"].(types.Bool).ValueBoolPointer()
-		settingsValue.ValidateOnSave = settingsAttrs["validate_on_save"].(types.Bool).ValueBoolPointer()
+		if !settingsAttrs["use_csp"].IsNull() && !settingsAttrs["use_csp"].IsUnknown() {
+			settingsValue.UseCSP = &pingone.DaVinciFlowSettingsRequestUseCSP{
+				Bool: settingsAttrs["use_csp"].(types.Bool).ValueBoolPointer(),
+			}
+		}
+		if !settingsAttrs["use_custom_css"].IsNull() && !settingsAttrs["use_custom_css"].IsUnknown() {
+			settingsValue.UseCustomCSS = &pingone.DaVinciFlowSettingsRequestUseCustomCSS{
+				Bool: settingsAttrs["use_custom_css"].(types.Bool).ValueBoolPointer(),
+			}
+		}
+		if !settingsAttrs["use_custom_flow_player"].IsNull() && !settingsAttrs["use_custom_flow_player"].IsUnknown() {
+			settingsValue.UseCustomFlowPlayer = &pingone.DaVinciFlowSettingsRequestUseCustomFlowPlayer{
+				Bool: settingsAttrs["use_custom_flow_player"].(types.Bool).ValueBoolPointer(),
+			}
+		}
+		if !settingsAttrs["use_custom_script"].IsNull() && !settingsAttrs["use_custom_script"].IsUnknown() {
+			settingsValue.UseCustomScript = &pingone.DaVinciFlowSettingsRequestUseCustomScript{
+				Bool: settingsAttrs["use_custom_script"].(types.Bool).ValueBoolPointer(),
+			}
+		}
+		if !settingsAttrs["use_intermediate_loading_screen"].IsNull() && !settingsAttrs["use_intermediate_loading_screen"].IsUnknown() {
+			settingsValue.UseIntermediateLoadingScreen = &pingone.DaVinciFlowSettingsRequestUseIntermediateLoadingScreen{
+				Bool: settingsAttrs["use_intermediate_loading_screen"].(types.Bool).ValueBoolPointer(),
+			}
+		}
+		if !settingsAttrs["validate_on_save"].IsNull() && !settingsAttrs["validate_on_save"].IsUnknown() {
+			settingsValue.ValidateOnSave = &pingone.DaVinciFlowSettingsRequestValidateOnSave{
+				Bool: settingsAttrs["validate_on_save"].(types.Bool).ValueBoolPointer(),
+			}
+		}
 		result.Settings = settingsValue
 	}
 
@@ -1075,7 +1153,7 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 			graphDataElementsAttrs := graphDataAttrs["elements"].(types.Object).Attributes()
 			if !graphDataElementsAttrs["edges"].IsNull() && !graphDataElementsAttrs["edges"].IsUnknown() {
 				graphDataElementsValue.Edges = []pingone.DaVinciFlowGraphDataRequestElementsEdge{}
-				for _, edgesElement := range graphDataElementsAttrs["edges"].(types.Set).Elements() {
+				for _, edgesElement := range graphDataElementsAttrs["edges"].(types.Map).Elements() {
 					edgesValue := pingone.DaVinciFlowGraphDataRequestElementsEdge{}
 					edgesAttrs := edgesElement.(types.Object).Attributes()
 					edgesValue.Classes = edgesAttrs["classes"].(types.String).ValueStringPointer()
@@ -1092,8 +1170,16 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 					if !edgesAttrs["position"].IsNull() && !edgesAttrs["position"].IsUnknown() {
 						edgesPositionValue := &pingone.DaVinciFlowGraphDataRequestElementsEdgePosition{}
 						edgesPositionAttrs := edgesAttrs["position"].(types.Object).Attributes()
-						edgesPositionValue.X = edgesPositionAttrs["x"].(types.Float32).ValueFloat32()
-						edgesPositionValue.Y = edgesPositionAttrs["y"].(types.Float32).ValueFloat32()
+						if !edgesPositionAttrs["x"].IsNull() && !edgesPositionAttrs["x"].IsUnknown() {
+							edgesPositionValue.X = pingonetypes.BigFloatUnquoted{
+								Float: edgesPositionAttrs["x"].(types.Number).ValueBigFloat(),
+							}
+						}
+						if !edgesPositionAttrs["y"].IsNull() && !edgesPositionAttrs["y"].IsUnknown() {
+							edgesPositionValue.Y = pingonetypes.BigFloatUnquoted{
+								Float: edgesPositionAttrs["y"].(types.Number).ValueBigFloat(),
+							}
+						}
 						edgesValue.Position = edgesPositionValue
 					}
 					edgesValue.Removed = edgesAttrs["removed"].(types.Bool).ValueBoolPointer()
@@ -1104,7 +1190,7 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 			}
 			if !graphDataElementsAttrs["nodes"].IsNull() && !graphDataElementsAttrs["nodes"].IsUnknown() {
 				graphDataElementsValue.Nodes = []pingone.DaVinciFlowGraphDataRequestElementsNode{}
-				for _, nodesElement := range graphDataElementsAttrs["nodes"].(types.Set).Elements() {
+				for _, nodesElement := range graphDataElementsAttrs["nodes"].(types.Map).Elements() {
 					nodesValue := pingone.DaVinciFlowGraphDataRequestElementsNode{}
 					nodesAttrs := nodesElement.(types.Object).Attributes()
 					nodesValue.Classes = nodesAttrs["classes"].(types.String).ValueStringPointer()
@@ -1114,6 +1200,7 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 					nodesDataValue.ConnectionId = nodesDataAttrs["connection_id"].(types.String).ValueStringPointer()
 					nodesDataValue.ConnectorId = nodesDataAttrs["connector_id"].(types.String).ValueStringPointer()
 					nodesDataValue.Id = nodesDataAttrs["id"].(types.String).ValueString()
+					nodesDataValue.IdUnique = nodesDataAttrs["id_unique"].(types.String).ValueStringPointer()
 					nodesDataValue.Label = nodesDataAttrs["label"].(types.String).ValueStringPointer()
 					nodesDataValue.Name = nodesDataAttrs["name"].(types.String).ValueStringPointer()
 					nodesDataValue.NodeType = nodesDataAttrs["node_type"].(types.String).ValueString()
@@ -1138,8 +1225,16 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 					if !nodesAttrs["position"].IsNull() && !nodesAttrs["position"].IsUnknown() {
 						nodesPositionValue := &pingone.DaVinciFlowGraphDataRequestElementsNodePosition{}
 						nodesPositionAttrs := nodesAttrs["position"].(types.Object).Attributes()
-						nodesPositionValue.X = nodesPositionAttrs["x"].(types.Float32).ValueFloat32()
-						nodesPositionValue.Y = nodesPositionAttrs["y"].(types.Float32).ValueFloat32()
+						if !nodesPositionAttrs["x"].IsNull() && !nodesPositionAttrs["x"].IsUnknown() {
+							nodesPositionValue.X = pingonetypes.BigFloatUnquoted{
+								Float: nodesPositionAttrs["x"].(types.Number).ValueBigFloat(),
+							}
+						}
+						if !nodesPositionAttrs["y"].IsNull() && !nodesPositionAttrs["y"].IsUnknown() {
+							nodesPositionValue.Y = pingonetypes.BigFloatUnquoted{
+								Float: nodesPositionAttrs["y"].(types.Number).ValueBigFloat(),
+							}
+						}
 						nodesValue.Position = nodesPositionValue
 					}
 					nodesValue.Removed = nodesAttrs["removed"].(types.Bool).ValueBoolPointer()
@@ -1163,8 +1258,16 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 		if !graphDataAttrs["pan"].IsNull() && !graphDataAttrs["pan"].IsUnknown() {
 			graphDataPanValue := &pingone.DaVinciFlowGraphDataRequestPan{}
 			graphDataPanAttrs := graphDataAttrs["pan"].(types.Object).Attributes()
-			graphDataPanValue.X = graphDataPanAttrs["x"].(types.Float32).ValueFloat32()
-			graphDataPanValue.Y = graphDataPanAttrs["y"].(types.Float32).ValueFloat32()
+			if !graphDataPanAttrs["x"].IsNull() && !graphDataPanAttrs["x"].IsUnknown() {
+				graphDataPanValue.X = pingonetypes.BigFloatUnquoted{
+					Float: graphDataPanAttrs["x"].(types.Number).ValueBigFloat(),
+				}
+			}
+			if !graphDataPanAttrs["y"].IsNull() && !graphDataPanAttrs["y"].IsUnknown() {
+				graphDataPanValue.Y = pingonetypes.BigFloatUnquoted{
+					Float: graphDataPanAttrs["y"].(types.Number).ValueBigFloat(),
+				}
+			}
 			graphDataValue.Pan = graphDataPanValue
 		}
 		graphDataValue.PanningEnabled = graphDataAttrs["panning_enabled"].(types.Bool).ValueBoolPointer()
@@ -1271,11 +1374,19 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 			}
 		}
 		settingsValue.CustomErrorScreenBrandLogoUrl = settingsAttrs["custom_error_screen_brand_logo_url"].(types.String).ValueStringPointer()
-		settingsValue.CustomErrorShowFooter = settingsAttrs["custom_error_show_footer"].(types.Bool).ValueBoolPointer()
+		if !settingsAttrs["custom_error_show_footer"].IsNull() && !settingsAttrs["custom_error_show_footer"].IsUnknown() {
+			settingsValue.CustomErrorShowFooter = &pingone.DaVinciFlowSettingsRequestCustomErrorShowFooter{
+				Bool: settingsAttrs["custom_error_show_footer"].(types.Bool).ValueBoolPointer(),
+			}
+		}
 		settingsValue.CustomFaviconLink = settingsAttrs["custom_favicon_link"].(types.String).ValueStringPointer()
 		settingsValue.CustomLogoURLSelection = settingsAttrs["custom_logo_urlselection"].(types.Int32).ValueInt32Pointer()
 		settingsValue.CustomTitle = settingsAttrs["custom_title"].(types.String).ValueStringPointer()
-		settingsValue.DefaultErrorScreenBrandLogo = settingsAttrs["default_error_screen_brand_logo"].(types.Bool).ValueBoolPointer()
+		if !settingsAttrs["default_error_screen_brand_logo"].IsNull() && !settingsAttrs["default_error_screen_brand_logo"].IsUnknown() {
+			settingsValue.DefaultErrorScreenBrandLogo = &pingone.DaVinciFlowSettingsRequestDefaultErrorScreenBrandLogo{
+				Bool: settingsAttrs["default_error_screen_brand_logo"].(types.Bool).ValueBoolPointer(),
+			}
+		}
 		settingsValue.FlowHttpTimeoutInSeconds = settingsAttrs["flow_http_timeout_in_seconds"].(types.Int32).ValueInt32Pointer()
 		settingsValue.FlowTimeoutInSeconds = settingsAttrs["flow_timeout_in_seconds"].(types.Int32).ValueInt32Pointer()
 		if !settingsAttrs["intermediate_loading_screen_css"].IsNull() && !settingsAttrs["intermediate_loading_screen_css"].IsUnknown() {
@@ -1295,7 +1406,11 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 				jsLinksValue := pingone.DaVinciFlowSettingsRequestJsLink{}
 				jsLinksAttrs := jsLinksElement.(types.Object).Attributes()
 				jsLinksValue.Crossorigin = jsLinksAttrs["crossorigin"].(types.String).ValueString()
-				jsLinksValue.Defer = jsLinksAttrs["defer"].(types.Bool).ValueBool()
+				if !jsLinksAttrs["defer"].IsNull() && !jsLinksAttrs["defer"].IsUnknown() {
+					jsLinksValue.Defer = pingone.DaVinciFlowSettingsRequestJsLinkDefer{
+						Bool: jsLinksAttrs["defer"].(types.Bool).ValueBoolPointer(),
+					}
+				}
 				jsLinksValue.Integrity = jsLinksAttrs["integrity"].(types.String).ValueString()
 				jsLinksValue.Label = jsLinksAttrs["label"].(types.String).ValueString()
 				jsLinksValue.Referrerpolicy = jsLinksAttrs["referrerpolicy"].(types.String).ValueString()
@@ -1305,20 +1420,52 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 			}
 		}
 		settingsValue.LogLevel = settingsAttrs["log_level"].(types.Int32).ValueInt32Pointer()
-		settingsValue.RequireAuthenticationToInitiate = settingsAttrs["require_authentication_to_initiate"].(types.Bool).ValueBoolPointer()
-		settingsValue.ScrubSensitiveInfo = settingsAttrs["scrub_sensitive_info"].(types.Bool).ValueBoolPointer()
+		if !settingsAttrs["require_authentication_to_initiate"].IsNull() && !settingsAttrs["require_authentication_to_initiate"].IsUnknown() {
+			settingsValue.RequireAuthenticationToInitiate = &pingone.DaVinciFlowSettingsRequestRequireAuthenticationToInitiate{
+				Bool: settingsAttrs["require_authentication_to_initiate"].(types.Bool).ValueBoolPointer(),
+			}
+		}
+		if !settingsAttrs["scrub_sensitive_info"].IsNull() && !settingsAttrs["scrub_sensitive_info"].IsUnknown() {
+			settingsValue.ScrubSensitiveInfo = &pingone.DaVinciFlowSettingsRequestScrubSensitiveInfo{
+				Bool: settingsAttrs["scrub_sensitive_info"].(types.Bool).ValueBoolPointer(),
+			}
+		}
 		if !settingsAttrs["sensitive_info_fields"].IsNull() && !settingsAttrs["sensitive_info_fields"].IsUnknown() {
 			settingsValue.SensitiveInfoFields = []string{}
 			for _, sensitiveInfoFieldsElement := range settingsAttrs["sensitive_info_fields"].(types.Set).Elements() {
 				settingsValue.SensitiveInfoFields = append(settingsValue.SensitiveInfoFields, sensitiveInfoFieldsElement.(types.String).ValueString())
 			}
 		}
-		settingsValue.UseCSP = settingsAttrs["use_csp"].(types.Bool).ValueBoolPointer()
-		settingsValue.UseCustomCSS = settingsAttrs["use_custom_css"].(types.Bool).ValueBoolPointer()
-		settingsValue.UseCustomFlowPlayer = settingsAttrs["use_custom_flow_player"].(types.Bool).ValueBoolPointer()
-		settingsValue.UseCustomScript = settingsAttrs["use_custom_script"].(types.Bool).ValueBoolPointer()
-		settingsValue.UseIntermediateLoadingScreen = settingsAttrs["use_intermediate_loading_screen"].(types.Bool).ValueBoolPointer()
-		settingsValue.ValidateOnSave = settingsAttrs["validate_on_save"].(types.Bool).ValueBoolPointer()
+		if !settingsAttrs["use_csp"].IsNull() && !settingsAttrs["use_csp"].IsUnknown() {
+			settingsValue.UseCSP = &pingone.DaVinciFlowSettingsRequestUseCSP{
+				Bool: settingsAttrs["use_csp"].(types.Bool).ValueBoolPointer(),
+			}
+		}
+		if !settingsAttrs["use_custom_css"].IsNull() && !settingsAttrs["use_custom_css"].IsUnknown() {
+			settingsValue.UseCustomCSS = &pingone.DaVinciFlowSettingsRequestUseCustomCSS{
+				Bool: settingsAttrs["use_custom_css"].(types.Bool).ValueBoolPointer(),
+			}
+		}
+		if !settingsAttrs["use_custom_flow_player"].IsNull() && !settingsAttrs["use_custom_flow_player"].IsUnknown() {
+			settingsValue.UseCustomFlowPlayer = &pingone.DaVinciFlowSettingsRequestUseCustomFlowPlayer{
+				Bool: settingsAttrs["use_custom_flow_player"].(types.Bool).ValueBoolPointer(),
+			}
+		}
+		if !settingsAttrs["use_custom_script"].IsNull() && !settingsAttrs["use_custom_script"].IsUnknown() {
+			settingsValue.UseCustomScript = &pingone.DaVinciFlowSettingsRequestUseCustomScript{
+				Bool: settingsAttrs["use_custom_script"].(types.Bool).ValueBoolPointer(),
+			}
+		}
+		if !settingsAttrs["use_intermediate_loading_screen"].IsNull() && !settingsAttrs["use_intermediate_loading_screen"].IsUnknown() {
+			settingsValue.UseIntermediateLoadingScreen = &pingone.DaVinciFlowSettingsRequestUseIntermediateLoadingScreen{
+				Bool: settingsAttrs["use_intermediate_loading_screen"].(types.Bool).ValueBoolPointer(),
+			}
+		}
+		if !settingsAttrs["validate_on_save"].IsNull() && !settingsAttrs["validate_on_save"].IsUnknown() {
+			settingsValue.ValidateOnSave = &pingone.DaVinciFlowSettingsRequestValidateOnSave{
+				Bool: settingsAttrs["validate_on_save"].(types.Bool).ValueBoolPointer(),
+			}
+		}
 		result.Settings = settingsValue
 	}
 
@@ -1401,8 +1548,8 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 		"target": types.StringType,
 	}
 	graphDataElementsEdgesPositionAttrTypes := map[string]attr.Type{
-		"x": types.Float32Type,
-		"y": types.Float32Type,
+		"x": types.NumberType,
+		"y": types.NumberType,
 	}
 	graphDataElementsEdgesAttrTypes := map[string]attr.Type{
 		"classes":    types.StringType,
@@ -1431,8 +1578,8 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 		"type":            types.StringType,
 	}
 	graphDataElementsNodesPositionAttrTypes := map[string]attr.Type{
-		"x": types.Float32Type,
-		"y": types.Float32Type,
+		"x": types.NumberType,
+		"y": types.NumberType,
 	}
 	graphDataElementsNodesAttrTypes := map[string]attr.Type{
 		"classes":    types.StringType,
@@ -1448,12 +1595,12 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 	}
 	graphDataElementsNodesElementType := types.ObjectType{AttrTypes: graphDataElementsNodesAttrTypes}
 	graphDataElementsAttrTypes := map[string]attr.Type{
-		"edges": types.SetType{ElemType: graphDataElementsEdgesElementType},
-		"nodes": types.SetType{ElemType: graphDataElementsNodesElementType},
+		"edges": types.MapType{ElemType: graphDataElementsEdgesElementType},
+		"nodes": types.MapType{ElemType: graphDataElementsNodesElementType},
 	}
 	graphDataPanAttrTypes := map[string]attr.Type{
-		"x": types.Float32Type,
-		"y": types.Float32Type,
+		"x": types.NumberType,
+		"y": types.NumberType,
 	}
 	graphDataAttrTypes := map[string]attr.Type{
 		"box_selection_enabled": types.BoolType,
@@ -1487,7 +1634,7 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 				graphDataDataValue = jsontypes.NewNormalizedValue(string(graphDataDataBytes))
 			}
 		}
-		var graphDataElementsEdgesValues []attr.Value
+		graphDataElementsEdgesValues := make(map[string]attr.Value)
 		for _, graphDataElementsEdgesResponseValue := range response.GraphData.Elements.Edges {
 			graphDataElementsEdgesDataValue, diags := types.ObjectValue(graphDataElementsEdgesDataAttrTypes, map[string]attr.Value{
 				"id":     types.StringValue(graphDataElementsEdgesResponseValue.Data.Id),
@@ -1496,8 +1643,8 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			})
 			respDiags.Append(diags...)
 			graphDataElementsEdgesPositionValue, diags := types.ObjectValue(graphDataElementsEdgesPositionAttrTypes, map[string]attr.Value{
-				"x": types.Float32Value(graphDataElementsEdgesResponseValue.Position.X),
-				"y": types.Float32Value(graphDataElementsEdgesResponseValue.Position.Y),
+				"x": types.NumberValue(graphDataElementsEdgesResponseValue.Position.X.Float),
+				"y": types.NumberValue(graphDataElementsEdgesResponseValue.Position.Y.Float),
 			})
 			respDiags.Append(diags...)
 			graphDataElementsEdgesValue, diags := types.ObjectValue(graphDataElementsEdgesAttrTypes, map[string]attr.Value{
@@ -1513,11 +1660,13 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 				"selected":   types.BoolValue(graphDataElementsEdgesResponseValue.Selected),
 			})
 			respDiags.Append(diags...)
-			graphDataElementsEdgesValues = append(graphDataElementsEdgesValues, graphDataElementsEdgesValue)
+			// Use the unique key for the edge
+			graphDataElementsEdgesValueKey := davinciFlowEdgeKey(graphDataElementsEdgesResponseValue.Data.Id, graphDataElementsEdgesResponseValue.Data.Source, graphDataElementsEdgesResponseValue.Data.Target)
+			graphDataElementsEdgesValues[graphDataElementsEdgesValueKey] = graphDataElementsEdgesValue
 		}
-		graphDataElementsEdgesValue, diags := types.SetValue(graphDataElementsEdgesElementType, graphDataElementsEdgesValues)
+		graphDataElementsEdgesValue, diags := types.MapValue(graphDataElementsEdgesElementType, graphDataElementsEdgesValues)
 		respDiags.Append(diags...)
-		var graphDataElementsNodesValues []attr.Value
+		graphDataElementsNodesValues := make(map[string]attr.Value)
 		for _, graphDataElementsNodesResponseValue := range response.GraphData.Elements.Nodes {
 			var graphDataElementsNodesDataPropertiesValue jsontypes.Normalized
 			if graphDataElementsNodesResponseValue.Data.Properties == nil {
@@ -1548,8 +1697,8 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			})
 			respDiags.Append(diags...)
 			graphDataElementsNodesPositionValue, diags := types.ObjectValue(graphDataElementsNodesPositionAttrTypes, map[string]attr.Value{
-				"x": types.Float32Value(graphDataElementsNodesResponseValue.Position.X),
-				"y": types.Float32Value(graphDataElementsNodesResponseValue.Position.Y),
+				"x": types.NumberValue(graphDataElementsNodesResponseValue.Position.X.Float),
+				"y": types.NumberValue(graphDataElementsNodesResponseValue.Position.Y.Float),
 			})
 			respDiags.Append(diags...)
 			graphDataElementsNodesValue, diags := types.ObjectValue(graphDataElementsNodesAttrTypes, map[string]attr.Value{
@@ -1565,9 +1714,16 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 				"selected":   types.BoolValue(graphDataElementsNodesResponseValue.Selected),
 			})
 			respDiags.Append(diags...)
-			graphDataElementsNodesValues = append(graphDataElementsNodesValues, graphDataElementsNodesValue)
+			// Use the unique key for the node
+			var graphDataElementsNodesValueKey string
+			if graphDataElementsNodesResponseValue.Data.IdUnique != nil && *graphDataElementsNodesResponseValue.Data.IdUnique != "" {
+				graphDataElementsNodesValueKey = *graphDataElementsNodesResponseValue.Data.IdUnique
+			} else {
+				graphDataElementsNodesValueKey = graphDataElementsNodesResponseValue.Data.Id
+			}
+			graphDataElementsNodesValues[graphDataElementsNodesValueKey] = graphDataElementsNodesValue
 		}
-		graphDataElementsNodesValue, diags := types.SetValue(graphDataElementsNodesElementType, graphDataElementsNodesValues)
+		graphDataElementsNodesValue, diags := types.MapValue(graphDataElementsNodesElementType, graphDataElementsNodesValues)
 		respDiags.Append(diags...)
 		graphDataElementsValue, diags := types.ObjectValue(graphDataElementsAttrTypes, map[string]attr.Value{
 			"edges": graphDataElementsEdgesValue,
@@ -1587,8 +1743,8 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			minZoomValue = types.NumberValue(response.GraphData.MinZoom.Float)
 		}
 		graphDataPanValue, diags := types.ObjectValue(graphDataPanAttrTypes, map[string]attr.Value{
-			"x": types.Float32Value(response.GraphData.Pan.X),
-			"y": types.Float32Value(response.GraphData.Pan.Y),
+			"x": types.NumberValue(response.GraphData.Pan.X.Float),
+			"y": types.NumberValue(response.GraphData.Pan.Y.Float),
 		})
 		respDiags.Append(diags...)
 		graphDataRendererValue := jsontypes.NewNormalizedNull()
@@ -1746,6 +1902,18 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			settingsCssLinksValue, diags = types.SetValueFrom(context.Background(), types.StringType, response.Settings.CssLinks)
 			respDiags.Append(diags...)
 		}
+		var settingsCustomErrorShowFooterValue types.Bool
+		if response.Settings.CustomErrorShowFooter == nil {
+			settingsCustomErrorShowFooterValue = types.BoolNull()
+		} else {
+			settingsCustomErrorShowFooterValue = types.BoolPointerValue(response.Settings.CustomErrorShowFooter.Bool)
+		}
+		var settingsDefaultErrorScreenBrandLogoValue types.Bool
+		if response.Settings.DefaultErrorScreenBrandLogo == nil {
+			settingsDefaultErrorScreenBrandLogoValue = types.BoolNull()
+		} else {
+			settingsDefaultErrorScreenBrandLogoValue = types.BoolPointerValue(response.Settings.DefaultErrorScreenBrandLogo.Bool)
+		}
 		var flowTimeoutInSecondsValue types.Int32
 		if response.Settings.FlowTimeoutInSeconds == nil {
 			flowTimeoutInSecondsValue = types.Int32Null()
@@ -1799,7 +1967,7 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			for _, settingsJsLinksResponseValue := range response.Settings.JsLinks {
 				settingsJsLinksValue, diags := types.ObjectValue(settingsJsLinksAttrTypes, map[string]attr.Value{
 					"crossorigin":    types.StringValue(settingsJsLinksResponseValue.Crossorigin),
-					"defer":          types.BoolValue(settingsJsLinksResponseValue.Defer),
+					"defer":          types.BoolPointerValue(settingsJsLinksResponseValue.Defer.Bool),
 					"integrity":      types.StringValue(settingsJsLinksResponseValue.Integrity),
 					"label":          types.StringValue(settingsJsLinksResponseValue.Label),
 					"referrerpolicy": types.StringValue(settingsJsLinksResponseValue.Referrerpolicy),
@@ -1812,6 +1980,18 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			settingsJsLinksValue, diags = types.SetValue(settingsJsLinksElementType, settingsJsLinksValues)
 			respDiags.Append(diags...)
 		}
+		var settingsRequireAuthenticationToInitiateValue types.Bool
+		if response.Settings.RequireAuthenticationToInitiate == nil {
+			settingsRequireAuthenticationToInitiateValue = types.BoolNull()
+		} else {
+			settingsRequireAuthenticationToInitiateValue = types.BoolPointerValue(response.Settings.RequireAuthenticationToInitiate.Bool)
+		}
+		var settingsScrubSensitiveInfoValue types.Bool
+		if response.Settings.ScrubSensitiveInfo == nil {
+			settingsScrubSensitiveInfoValue = types.BoolNull()
+		} else {
+			settingsScrubSensitiveInfoValue = types.BoolPointerValue(response.Settings.ScrubSensitiveInfo.Bool)
+		}
 		var settingsSensitiveInfoFieldsValue types.Set
 		if response.Settings.SensitiveInfoFields == nil {
 			settingsSensitiveInfoFieldsValue = types.SetNull(types.StringType)
@@ -1819,16 +1999,52 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			settingsSensitiveInfoFieldsValue, diags = types.SetValueFrom(context.Background(), types.StringType, response.Settings.SensitiveInfoFields)
 			respDiags.Append(diags...)
 		}
+		var settingsUseCSPValue types.Bool
+		if response.Settings.UseCSP == nil {
+			settingsUseCSPValue = types.BoolNull()
+		} else {
+			settingsUseCSPValue = types.BoolPointerValue(response.Settings.UseCSP.Bool)
+		}
+		var settingsUseCustomCSSValue types.Bool
+		if response.Settings.UseCustomCSS == nil {
+			settingsUseCustomCSSValue = types.BoolNull()
+		} else {
+			settingsUseCustomCSSValue = types.BoolPointerValue(response.Settings.UseCustomCSS.Bool)
+		}
+		var settingsUseCustomFlowPlayerValue types.Bool
+		if response.Settings.UseCustomFlowPlayer == nil {
+			settingsUseCustomFlowPlayerValue = types.BoolNull()
+		} else {
+			settingsUseCustomFlowPlayerValue = types.BoolPointerValue(response.Settings.UseCustomFlowPlayer.Bool)
+		}
+		var settingsUseCustomScriptValue types.Bool
+		if response.Settings.UseCustomScript == nil {
+			settingsUseCustomScriptValue = types.BoolNull()
+		} else {
+			settingsUseCustomScriptValue = types.BoolPointerValue(response.Settings.UseCustomScript.Bool)
+		}
+		var settingsUseIntermediateLoadingScreenValue types.Bool
+		if response.Settings.UseIntermediateLoadingScreen == nil {
+			settingsUseIntermediateLoadingScreenValue = types.BoolNull()
+		} else {
+			settingsUseIntermediateLoadingScreenValue = types.BoolPointerValue(response.Settings.UseIntermediateLoadingScreen.Bool)
+		}
+		var settingsValidateOnSaveValue types.Bool
+		if response.Settings.ValidateOnSave == nil {
+			settingsValidateOnSaveValue = types.BoolNull()
+		} else {
+			settingsValidateOnSaveValue = types.BoolPointerValue(response.Settings.ValidateOnSave.Bool)
+		}
 		settingsValue, diags = types.ObjectValue(settingsAttrTypes, map[string]attr.Value{
 			"csp":                                types.StringPointerValue(response.Settings.Csp),
 			"css":                                types.StringPointerValue(response.Settings.Css),
 			"css_links":                          settingsCssLinksValue,
 			"custom_error_screen_brand_logo_url": types.StringPointerValue(response.Settings.CustomErrorScreenBrandLogoUrl),
-			"custom_error_show_footer":           types.BoolPointerValue(response.Settings.CustomErrorShowFooter),
+			"custom_error_show_footer":           settingsCustomErrorShowFooterValue,
 			"custom_favicon_link":                types.StringPointerValue(response.Settings.CustomFaviconLink),
 			"custom_logo_urlselection":           types.Int32PointerValue(response.Settings.CustomLogoURLSelection),
 			"custom_title":                       types.StringPointerValue(response.Settings.CustomTitle),
-			"default_error_screen_brand_logo":    types.BoolPointerValue(response.Settings.DefaultErrorScreenBrandLogo),
+			"default_error_screen_brand_logo":    settingsDefaultErrorScreenBrandLogoValue,
 			"flow_http_timeout_in_seconds":       types.Int32PointerValue(response.Settings.FlowHttpTimeoutInSeconds),
 			"flow_timeout_in_seconds":            flowTimeoutInSecondsValue,
 			"intermediate_loading_screen_css":    intermediateLoadingScreenCSSValue,
@@ -1836,15 +2052,15 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			"js_custom_flow_player":              types.StringPointerValue(response.Settings.JsCustomFlowPlayer),
 			"js_links":                           settingsJsLinksValue,
 			"log_level":                          types.Int32PointerValue(response.Settings.LogLevel),
-			"require_authentication_to_initiate": types.BoolPointerValue(response.Settings.RequireAuthenticationToInitiate),
-			"scrub_sensitive_info":               types.BoolPointerValue(response.Settings.ScrubSensitiveInfo),
+			"require_authentication_to_initiate": settingsRequireAuthenticationToInitiateValue,
+			"scrub_sensitive_info":               settingsScrubSensitiveInfoValue,
 			"sensitive_info_fields":              settingsSensitiveInfoFieldsValue,
-			"use_csp":                            types.BoolPointerValue(response.Settings.UseCSP),
-			"use_custom_css":                     types.BoolPointerValue(response.Settings.UseCustomCSS),
-			"use_custom_flow_player":             types.BoolPointerValue(response.Settings.UseCustomFlowPlayer),
-			"use_custom_script":                  types.BoolPointerValue(response.Settings.UseCustomScript),
-			"use_intermediate_loading_screen":    types.BoolPointerValue(response.Settings.UseIntermediateLoadingScreen),
-			"validate_on_save":                   types.BoolPointerValue(response.Settings.ValidateOnSave),
+			"use_csp":                            settingsUseCSPValue,
+			"use_custom_css":                     settingsUseCustomCSSValue,
+			"use_custom_flow_player":             settingsUseCustomFlowPlayerValue,
+			"use_custom_script":                  settingsUseCustomScriptValue,
+			"use_intermediate_loading_screen":    settingsUseIntermediateLoadingScreenValue,
+			"validate_on_save":                   settingsValidateOnSaveValue,
 		})
 		respDiags.Append(diags...)
 	}
