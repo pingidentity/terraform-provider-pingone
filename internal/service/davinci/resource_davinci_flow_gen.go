@@ -1660,8 +1660,8 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 				"selected":   types.BoolValue(graphDataElementsEdgesResponseValue.Selected),
 			})
 			respDiags.Append(diags...)
-			// Use the unique key for the edge
-			graphDataElementsEdgesValueKey := davinciFlowEdgeKey(graphDataElementsEdgesResponseValue.Data.Id, graphDataElementsEdgesResponseValue.Data.Source, graphDataElementsEdgesResponseValue.Data.Target)
+			// Use the id as the key for the edge
+			graphDataElementsEdgesValueKey := graphDataElementsEdgesResponseValue.Data.Id
 			graphDataElementsEdgesValues[graphDataElementsEdgesValueKey] = graphDataElementsEdgesValue
 		}
 		graphDataElementsEdgesValue, diags := types.MapValue(graphDataElementsEdgesElementType, graphDataElementsEdgesValues)
@@ -1714,13 +1714,8 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 				"selected":   types.BoolValue(graphDataElementsNodesResponseValue.Selected),
 			})
 			respDiags.Append(diags...)
-			// Use the unique key for the node
-			var graphDataElementsNodesValueKey string
-			if graphDataElementsNodesResponseValue.Data.IdUnique != nil && *graphDataElementsNodesResponseValue.Data.IdUnique != "" {
-				graphDataElementsNodesValueKey = *graphDataElementsNodesResponseValue.Data.IdUnique
-			} else {
-				graphDataElementsNodesValueKey = graphDataElementsNodesResponseValue.Data.Id
-			}
+			// Use the node id as the key
+			graphDataElementsNodesValueKey := graphDataElementsNodesResponseValue.Data.Id
 			graphDataElementsNodesValues[graphDataElementsNodesValueKey] = graphDataElementsNodesValue
 		}
 		graphDataElementsNodesValue, diags := types.MapValue(graphDataElementsNodesElementType, graphDataElementsNodesValues)
