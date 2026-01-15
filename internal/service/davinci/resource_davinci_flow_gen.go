@@ -578,18 +578,12 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 							Attributes: map[string]schema.Attribute{
 								"crossorigin": schema.StringAttribute{
 									Required: true,
-									Validators: []validator.String{
-										stringvalidator.LengthAtLeast(1),
-									},
 								},
 								"defer": schema.BoolAttribute{
 									Required: true,
 								},
 								"integrity": schema.StringAttribute{
 									Required: true,
-									Validators: []validator.String{
-										stringvalidator.LengthAtLeast(1),
-									},
 								},
 								"label": schema.StringAttribute{
 									Required: true,
@@ -599,15 +593,9 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 								},
 								"referrerpolicy": schema.StringAttribute{
 									Required: true,
-									Validators: []validator.String{
-										stringvalidator.LengthAtLeast(1),
-									},
 								},
 								"type": schema.StringAttribute{
 									Required: true,
-									Validators: []validator.String{
-										stringvalidator.LengthAtLeast(1),
-									},
 								},
 								"value": schema.StringAttribute{
 									Required: true,

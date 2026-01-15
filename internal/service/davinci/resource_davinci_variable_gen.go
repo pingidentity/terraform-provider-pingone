@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
@@ -302,6 +303,12 @@ func (model *davinciVariableResourceModel) buildClientStructPost() (*pingone.DaV
 		valueValue := &pingone.DaVinciVariableCreateRequestValue{}
 		valueAttrs := model.Value.Attributes()
 		valueValue.Bool = valueAttrs["bool"].(types.Bool).ValueBoolPointer()
+		// Workaround TRIAGE-27920 - unable to set false boolean value
+		if valueValue.Bool != nil && !*valueValue.Bool {
+			boolStr := strconv.FormatBool(*valueValue.Bool)
+			valueValue.String = &boolStr
+			valueValue.Bool = nil
+		}
 		valueValue.Float32 = valueAttrs["float32"].(types.Float32).ValueFloat32Pointer()
 		if !valueAttrs["json_object"].IsNull() && !valueAttrs["json_object"].IsUnknown() {
 			var jsonValueMap map[string]interface{}
@@ -382,6 +389,12 @@ func (model *davinciVariableResourceModel) buildClientStructPut() (*pingone.DaVi
 		valueValue := &pingone.DaVinciVariableReplaceRequestValue{}
 		valueAttrs := model.Value.Attributes()
 		valueValue.Bool = valueAttrs["bool"].(types.Bool).ValueBoolPointer()
+		// Workaround TRIAGE-27920 - unable to set false boolean value
+		if valueValue.Bool != nil && !*valueValue.Bool {
+			boolStr := strconv.FormatBool(*valueValue.Bool)
+			valueValue.String = &boolStr
+			valueValue.Bool = nil
+		}
 		valueValue.Float32 = valueAttrs["float32"].(types.Float32).ValueFloat32Pointer()
 		if !valueAttrs["json_object"].IsNull() && !valueAttrs["json_object"].IsUnknown() {
 			var jsonValueMap map[string]interface{}
@@ -464,6 +477,10 @@ func (state *davinciVariableResourceModel) readClientResponse(response *pingone.
 		"secret_string": types.StringType,
 	}
 	var valueValue types.Object
+	var stateValueAttrs map[string]attr.Value
+	if !state.Value.IsNull() && !state.Value.IsUnknown() {
+		stateValueAttrs = state.Value.Attributes()
+	}
 	// If no value was planned for a secret type, create a null object and ignore asterisks returned by the API
 	if response.Value == nil ||
 		(state.Value.IsNull() && response.DataType == "secret") {
@@ -482,17 +499,24 @@ func (state *davinciVariableResourceModel) readClientResponse(response *pingone.
 				jsonObjectValue = jsontypes.NewNormalizedValue(string(jsonObjectBytes))
 			}
 		}
+		// Workaround TRIAGE-27920 - unable to set false boolean value
+		if stateValueAttrs != nil &&
+			!stateValueAttrs["bool"].IsNull() && !stateValueAttrs["bool"].IsUnknown() &&
+			response.Value.String != nil && *response.Value.String == "false" {
+			// The API has returned a string "false" instead of a boolean false
+			boolValue := false
+			response.Value.Bool = &boolValue
+			response.Value.String = nil
+		}
 		// For secret types, the API always returns a series of asterisks for the string value
 		stringValue := types.StringPointerValue(response.Value.String)
 		secretStringValue := types.StringNull()
 		if response.DataType == "secret" {
 			stringValue = types.StringNull()
 			// Use planned secret string instead of asterisk response
-			if !state.Value.IsNull() && !state.Value.IsUnknown() {
-				valueAttrs := state.Value.Attributes()
-				if !valueAttrs["secret_string"].IsNull() && !valueAttrs["secret_string"].IsUnknown() {
-					secretStringValue = types.StringValue(valueAttrs["secret_string"].(types.String).ValueString())
-				}
+			if stateValueAttrs != nil &&
+				!stateValueAttrs["secret_string"].IsNull() && !stateValueAttrs["secret_string"].IsUnknown() {
+				secretStringValue = types.StringValue(stateValueAttrs["secret_string"].(types.String).ValueString())
 			}
 		}
 		valueValue, diags = types.ObjectValue(valueAttrTypes, map[string]attr.Value{
