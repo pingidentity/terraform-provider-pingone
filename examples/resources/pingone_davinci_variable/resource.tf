@@ -13,18 +13,17 @@ resource "pingone_davinci_variable" "my_awesome_region_variable" {
   }
 }
 
-#TODO update for real flow resource
 resource "pingone_davinci_flow" "my_awesome_main_flow" {
   depends_on = [
     pingone_davinci_variable.my_awesome_region_variable,
   ]
 
   environment_id = var.environment_id
+  name           = "My Awesome Main Flow"
 
-  name      = "My Awesome Main Flow"
-  flow_json = file("./path/to/example-mainflow.json")
-
-  # ... subflow_link and connection_link arguments
+  graph_data = {
+    // edges, nodes, etc.
+  }
 }
 
 resource "pingone_davinci_variable" "my_awesome_usercontext_variable" {

@@ -401,7 +401,7 @@ func (r *davinciApplicationResource) Read(ctx context.Context, req resource.Read
 		},
 		"GetDavinciApplicationById",
 		framework.CustomErrorResourceNotFoundWarning,
-		framework.DefaultRetryable,
+		framework.InsufficientPrivilegeRetryable,
 		&responseData,
 	)...)
 
@@ -469,7 +469,7 @@ func (r *davinciApplicationResource) Update(ctx context.Context, req resource.Up
 		},
 		"ReplaceDavinciApplicationById",
 		framework.DefaultCustomError,
-		framework.DefaultRetryable,
+		framework.InsufficientPrivilegeRetryable,
 		&responseData,
 	)...)
 
@@ -524,7 +524,7 @@ func (r *davinciApplicationResource) Delete(ctx context.Context, req resource.De
 		},
 		"DeleteDavinciApplicationById",
 		framework.CustomErrorResourceNotFoundWarning,
-		framework.DefaultRetryable,
+		framework.InsufficientPrivilegeRetryable,
 		nil,
 	)...)
 }
