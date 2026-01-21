@@ -28,12 +28,12 @@ data "pingone_risk_predictor" "example_by_id" {
 
 ### Required
 
-- `environment_id` (String) The ID of the environment to create the risk predictor in.
+- `environment_id` (String) The ID of the environment to retrieve the risk predictor from.
 
 ### Optional
 
-- `name` (String) The name of the risk predictor to retrieve.
-- `risk_predictor_id` (String) The ID of the risk predictor to retrieve.
+- `name` (String) The name of the risk predictor.  Exactly one of the following must be defined: `risk_predictor_id`, `name`.
+- `risk_predictor_id` (String) The ID of the risk predictor to retrieve.  Exactly one of the following must be defined: `risk_predictor_id`, `name`.  Must be a valid PingOne resource ID.
 
 ### Read-Only
 

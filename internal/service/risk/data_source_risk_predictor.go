@@ -71,8 +71,16 @@ func (r *RiskPredictorDataSource) Metadata(ctx context.Context, req datasource.M
 
 // Schema
 func (r *RiskPredictorDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+
+	riskPredictorIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The ID of the risk predictor to retrieve.",
+	).ExactlyOneOf([]string{"risk_predictor_id", "name"}).AppendMarkdownString("Must be a valid PingOne resource ID.")
+
+	nameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The name of the risk predictor.",
+	).ExactlyOneOf([]string{"risk_predictor_id", "name"})
+
 	resp.Schema = schema.Schema{
-		// This description is used by the documentation generator and the language server.
 		Description: "Datasource to retrieve a PingOne Risk Predictor.",
 
 		Attributes: map[string]schema.Attribute{
@@ -82,21 +90,23 @@ func (r *RiskPredictorDataSource) Schema(ctx context.Context, req datasource.Sch
 				CustomType:  pingonetypes.ResourceIDType{},
 			},
 			"environment_id": schema.StringAttribute{
-				Description: "The ID of the environment to create the risk predictor in.",
+				Description: "The ID of the environment to retrieve the risk predictor from.",
 				Required:    true,
 				CustomType:  pingonetypes.ResourceIDType{},
 			},
 			"risk_predictor_id": schema.StringAttribute{
-				Description: "The ID of the risk predictor to retrieve.",
-				Optional:    true,
-				CustomType:  pingonetypes.ResourceIDType{},
+				Description:         riskPredictorIdDescription.Description,
+				MarkdownDescription: riskPredictorIdDescription.MarkdownDescription,
+				Optional:            true,
+				CustomType:          pingonetypes.ResourceIDType{},
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("name")),
 				},
 			},
 			"name": schema.StringAttribute{
-				Description: "The name of the risk predictor to retrieve.",
-				Optional:    true,
+				Description:         nameDescription.Description,
+				MarkdownDescription: nameDescription.MarkdownDescription,
+				Optional:            true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(1),
 				},
