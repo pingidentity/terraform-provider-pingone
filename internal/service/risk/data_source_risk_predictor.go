@@ -23,6 +23,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
 // Types
@@ -584,73 +585,69 @@ func (r *RiskPredictorDataSource) Read(ctx context.Context, req datasource.ReadR
 
 	if !data.RiskPredictorId.IsNull() {
 		// Run the API call
-		var response *http.Response
-		var err error
-		riskPredictor, response, err = r.Client.RiskAPIClient.RiskAdvancedPredictorsApi.ReadOneRiskPredictor(ctx, data.EnvironmentId.ValueString(), data.RiskPredictorId.ValueString()).Execute()
-		if err != nil {
-			if response != nil && response.StatusCode == 404 {
-				resp.Diagnostics.AddError(
-					"Resource Failure",
-					fmt.Sprintf("Risk Predictor with ID %s not found", data.RiskPredictorId.ValueString()),
-				)
-			} else {
-				resp.Diagnostics.AddError(
-					"Resource Failure",
-					fmt.Sprintf("Unable to read Risk Predictor with ID %s: %s", data.RiskPredictorId.ValueString(), err),
-				)
-			}
-			return
-		}
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
+			ctx,
+
+			func() (any, *http.Response, error) {
+				fO, fR, fErr := r.Client.RiskAPIClient.RiskAdvancedPredictorsApi.ReadOneRiskPredictor(ctx, data.EnvironmentId.ValueString(), data.RiskPredictorId.ValueString()).Execute()
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			},
+			"ReadOneRiskPredictor",
+			legacysdk.DefaultCustomError,
+			sdk.DefaultCreateReadRetryable,
+			&riskPredictor,
+		)...)
 
 	} else if !data.Name.IsNull() {
 		// Run the API call
-		pagedIterator := r.Client.RiskAPIClient.RiskAdvancedPredictorsApi.ReadAllRiskPredictors(ctx, data.EnvironmentId.ValueString()).Execute()
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
+			ctx,
 
-		var found bool
-		for pageCursor, err := range pagedIterator {
-			if err != nil {
-				resp.Diagnostics.AddError(
-					"Resource Failure",
-					fmt.Sprintf("Unable to read Risk Predictors: %s", err),
-				)
-				return
-			}
+			func() (any, *http.Response, error) {
+				pagedIterator := r.Client.RiskAPIClient.RiskAdvancedPredictorsApi.ReadAllRiskPredictors(ctx, data.EnvironmentId.ValueString()).Execute()
 
-			if riskPredictors, ok := pageCursor.EntityArray.Embedded.GetRiskPredictorsOk(); ok {
-				for _, rp := range riskPredictors {
-					// Use toState to extract the name and check if it matches
-					tempModel := &riskPredictorDataSourceModel{}
-					tempModel.toState(&rp)
+				var initialHttpResponse *http.Response
 
-					if tempModel.Name.ValueString() == data.Name.ValueString() {
-						// Found it
-						// We need to take a copy because rp is reused in loop? No, it's value.
-						// But check pointer.
-						val := rp
-						riskPredictor = &val
-						found = true
-						break
+				for pageCursor, err := range pagedIterator {
+					if err != nil {
+						return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+					}
+
+					if initialHttpResponse == nil {
+						initialHttpResponse = pageCursor.HTTPResponse
+					}
+
+					if riskPredictors, ok := pageCursor.EntityArray.Embedded.GetRiskPredictorsOk(); ok {
+						for _, rp := range riskPredictors {
+							// Use toState to extract the name and check if it matches
+							tempModel := &riskPredictorDataSourceModel{}
+							tempModel.toState(&rp)
+
+							if tempModel.Name.ValueString() == data.Name.ValueString() {
+								val := rp
+								return &val, pageCursor.HTTPResponse, nil
+							}
+						}
 					}
 				}
-			}
 
-			if found {
-				break
-			}
-		}
+				return nil, initialHttpResponse, fmt.Errorf("Risk Predictor with name %s not found", data.Name.ValueString())
+			},
+			"ReadAllRiskPredictors",
+			legacysdk.DefaultCustomError,
+			sdk.DefaultCreateReadRetryable,
+			&riskPredictor,
+		)...)
 
-		if !found {
-			resp.Diagnostics.AddError(
-				"Resource Failure",
-				fmt.Sprintf("Risk Predictor with name %s not found", data.Name.ValueString()),
-			)
-			return
-		}
 	} else {
 		resp.Diagnostics.AddError(
 			"Missing configuration",
 			"One of 'risk_predictor_id' or 'name' must be configured.",
 		)
+		return
+	}
+
+	if resp.Diagnostics.HasError() {
 		return
 	}
 

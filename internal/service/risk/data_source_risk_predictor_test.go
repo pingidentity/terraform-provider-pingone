@@ -110,7 +110,7 @@ func TestAccRiskPredictorDataSource_NotFound(t *testing.T) {
 			},
 			{
 				Config:      testAccRiskPredictorDataSourceConfig_NotFoundByID(resourceName),
-				ExpectError: regexp.MustCompile("Risk Predictor with ID .* not found"),
+				ExpectError: regexp.MustCompile("Error when calling `ReadOneRiskPredictor`: The request could not be completed. The requested resource was not found."),
 			},
 		},
 	})
