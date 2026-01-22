@@ -95,7 +95,7 @@ func (r *SignOnPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 				Computed:    true,
 
 				PlanModifiers: []planmodifier.Bool{
-					boolplanmodifier.UseStateForUnknown(),
+					boolplanmodifier.UseNonNullStateForUnknown(),
 				},
 			},
 		},

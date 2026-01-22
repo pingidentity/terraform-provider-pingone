@@ -223,7 +223,7 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 				}()),
 
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.UseNonNullStateForUnknown(),
 					stringplanmodifier.RequiresReplace(),
 				},
 
@@ -257,7 +257,7 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 				CustomType: pingonetypes.ResourceIDType{},
 
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.UseNonNullStateForUnknown(),
 				},
 			},
 

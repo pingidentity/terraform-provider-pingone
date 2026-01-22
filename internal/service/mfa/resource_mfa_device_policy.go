@@ -435,7 +435,7 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 				Computed:            true,
 
 				PlanModifiers: []planmodifier.Bool{
-					boolplanmodifier.UseStateForUnknown(),
+					boolplanmodifier.UseNonNullStateForUnknown(),
 				},
 			},
 

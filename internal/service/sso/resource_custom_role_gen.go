@@ -106,7 +106,7 @@ func (r *customRoleResource) Schema(ctx context.Context, req resource.SchemaRequ
 							Computed:    true,
 							Description: "The ID of a role that can be assigned by an actor assigned the current custom role.",
 							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
+								stringplanmodifier.UseNonNullStateForUnknown(),
 							},
 							CustomType: pingonetypes.ResourceIDType{},
 						},

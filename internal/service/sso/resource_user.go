@@ -389,7 +389,7 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 			// 	Computed: true,
 
 			// 	PlanModifiers: []planmodifier.Bool{
-			// 		boolplanmodifier.UseStateForUnknown(),
+			// 		boolplanmodifier. UseNonNullStateForUnknown(),
 			// 	},
 			// },
 
@@ -433,7 +433,7 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 						Computed: true,
 
 						PlanModifiers: []planmodifier.String{
-							stringplanmodifier.UseStateForUnknown(),
+							stringplanmodifier.UseNonNullStateForUnknown(),
 						},
 
 						CustomType: timetypes.RFC3339Type{},
@@ -572,7 +572,7 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 						Computed:            true,
 
 						PlanModifiers: []planmodifier.String{
-							stringplanmodifier.UseStateForUnknown(),
+							stringplanmodifier.UseNonNullStateForUnknown(),
 						},
 					},
 				},

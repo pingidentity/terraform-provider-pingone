@@ -147,7 +147,7 @@ func (r *davinciApplicationFlowPolicyResource) Schema(ctx context.Context, req r
 				Computed:    true,
 				Description: "The ID of this resource.",
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.UseNonNullStateForUnknown(),
 				},
 			},
 			"name": schema.StringAttribute{

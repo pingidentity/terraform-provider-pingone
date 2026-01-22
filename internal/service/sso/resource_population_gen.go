@@ -138,7 +138,7 @@ func (r *populationResource) Schema(ctx context.Context, req resource.SchemaRequ
 				Optional: true,
 				Computed: true,
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.UseNonNullStateForUnknown(),
 				},
 				Description: "The language locale for the population. If absent, the environment default is used.",
 			},
@@ -154,7 +154,7 @@ func (r *populationResource) Schema(ctx context.Context, req resource.SchemaRequ
 				Computed:    true,
 				Description: "The object reference to the theme resource.",
 				PlanModifiers: []planmodifier.Object{
-					objectplanmodifier.UseStateForUnknown(),
+					objectplanmodifier.UseNonNullStateForUnknown(),
 				},
 			},
 		},
