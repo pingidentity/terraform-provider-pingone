@@ -166,7 +166,9 @@ func (r *RiskPredictorsDataSource) Read(ctx context.Context, req datasource.Read
 
 	// Save updated data into Terraform state
 	data.Id = data.EnvironmentId
-	data.Ids, resp.Diagnostics = framework.StringSliceToTF(riskPredictorIDs)
+	var diags diag.Diagnostics
+	data.Ids, diags = framework.StringSliceToTF(riskPredictorIDs)
+	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
