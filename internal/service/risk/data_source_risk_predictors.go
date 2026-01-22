@@ -171,7 +171,7 @@ func (r *RiskPredictorsDataSource) Read(ctx context.Context, req datasource.Read
 		return
 	}
 
-	resp.State.Set(ctx, &data)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func riskPredictorFetchIDsFromCompactNames(ctx context.Context, apiClient *risk.APIClient, managementApiClient *management.APIClient, environmentID string, predictorCompactNames []string) ([]string, diag.Diagnostics) {

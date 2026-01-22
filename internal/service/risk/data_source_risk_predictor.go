@@ -653,7 +653,7 @@ func (r *RiskPredictorDataSource) Read(ctx context.Context, req datasource.ReadR
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(data.toState(riskPredictor)...)
-	resp.State.Set(ctx, &data)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func (p *riskPredictorDataSourceModel) toState(apiObject *risk.RiskPredictor) diag.Diagnostics {
