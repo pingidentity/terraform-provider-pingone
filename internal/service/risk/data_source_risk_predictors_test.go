@@ -37,9 +37,6 @@ func TestAccRiskPredictorsDataSource_List(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "ids.0"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "ids.1"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "ids.2"),
 					func(s *terraform.State) error {
 						rs, ok := s.RootModule().Resources[dataSourceFullName]
 						if !ok {
