@@ -1651,28 +1651,8 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			if graphDataElementsNodesResponseValue.Data.Properties == nil {
 				graphDataElementsNodesDataPropertiesValue = jsontypes.NewNormalizedNull()
 			} else {
-				// Get the planned node properties
-				nodeKey := graphDataElementsNodesResponseValue.Data.Id
-				plannedNodeDataProperties := jsontypes.NewNormalizedNull()
-				if !state.GraphData.IsNull() && !state.GraphData.IsUnknown() {
-					plannedGraphDataAttrs := state.GraphData.Attributes()
-					if !plannedGraphDataAttrs["elements"].IsNull() && !plannedGraphDataAttrs["elements"].IsUnknown() {
-						plannedGraphDataElementsAttrs := plannedGraphDataAttrs["elements"].(types.Object).Attributes()
-						if !plannedGraphDataElementsAttrs["nodes"].IsNull() && !plannedGraphDataElementsAttrs["nodes"].IsUnknown() {
-							plannedGraphDataElementsNodesMap := plannedGraphDataElementsAttrs["nodes"].(types.Map)
-							plannedNodeAttrValue, ok := plannedGraphDataElementsNodesMap.Elements()[nodeKey]
-							if ok {
-								plannedNodeAttrs := plannedNodeAttrValue.(types.Object).Attributes()
-								if !plannedNodeAttrs["data"].IsNull() && !plannedNodeAttrs["data"].IsUnknown() {
-									plannedNodeDataAttrs := plannedNodeAttrs["data"].(types.Object).Attributes()
-									if !plannedNodeDataAttrs["properties"].IsNull() && !plannedNodeDataAttrs["properties"].IsUnknown() {
-										plannedNodeDataProperties = plannedNodeDataAttrs["properties"].(jsontypes.Normalized)
-									}
-								}
-							}
-						}
-					}
-				}
+				// Get the planned data.properties value for this node
+				plannedNodeDataProperties := state.getPlannedNodeDataProperties(graphDataElementsNodesResponseValue.Data.Id)
 				// Normalize the response, ignoring json keys that were not planned
 				graphDataElementsNodesDataPropertiesValue, diags = state.normalizeNodeDataProperties(plannedNodeDataProperties, graphDataElementsNodesResponseValue.Data.Properties)
 				respDiags.Append(diags...)

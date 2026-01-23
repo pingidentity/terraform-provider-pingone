@@ -274,6 +274,30 @@ func (r *davinciFlowResource) Create(ctx context.Context, req resource.CreateReq
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+func (plan *davinciFlowResourceModel) getPlannedNodeDataProperties(nodeId string) jsontypes.Normalized {
+	plannedNodeDataProperties := jsontypes.NewNormalizedNull()
+	if !plan.GraphData.IsNull() && !plan.GraphData.IsUnknown() {
+		plannedGraphDataAttrs := plan.GraphData.Attributes()
+		if !plannedGraphDataAttrs["elements"].IsNull() && !plannedGraphDataAttrs["elements"].IsUnknown() {
+			plannedGraphDataElementsAttrs := plannedGraphDataAttrs["elements"].(types.Object).Attributes()
+			if !plannedGraphDataElementsAttrs["nodes"].IsNull() && !plannedGraphDataElementsAttrs["nodes"].IsUnknown() {
+				plannedGraphDataElementsNodesMap := plannedGraphDataElementsAttrs["nodes"].(types.Map)
+				plannedNodeAttrValue, ok := plannedGraphDataElementsNodesMap.Elements()[nodeId]
+				if ok {
+					plannedNodeAttrs := plannedNodeAttrValue.(types.Object).Attributes()
+					if !plannedNodeAttrs["data"].IsNull() && !plannedNodeAttrs["data"].IsUnknown() {
+						plannedNodeDataAttrs := plannedNodeAttrs["data"].(types.Object).Attributes()
+						if !plannedNodeDataAttrs["properties"].IsNull() && !plannedNodeDataAttrs["properties"].IsUnknown() {
+							plannedNodeDataProperties = plannedNodeDataAttrs["properties"].(jsontypes.Normalized)
+						}
+					}
+				}
+			}
+		}
+	}
+	return plannedNodeDataProperties
+}
+
 // Get a normalized json type from the response, ignoring json keys that were not included in the planned data.properties value
 func (m *davinciFlowResourceModel) normalizeNodeDataProperties(planProperties jsontypes.Normalized, responseProperties map[string]interface{}) (jsontypes.Normalized, diag.Diagnostics) {
 	if planProperties.IsNull() || planProperties.IsUnknown() {
