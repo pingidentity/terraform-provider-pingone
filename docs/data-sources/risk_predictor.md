@@ -32,12 +32,12 @@ data "pingone_risk_predictor" "example_by_id" {
 
 ### Optional
 
-- `name` (String) The name of the risk predictor.  Exactly one of the following must be defined: `risk_predictor_id`, `name`.
-- `risk_predictor_id` (String) The ID of the risk predictor to retrieve.  Exactly one of the following must be defined: `risk_predictor_id`, `name`.  Must be a valid PingOne resource ID.
+- `compact_name` (String) A string that specifies the unique name for the predictor for use in risk evaluation request/response payloads. The value must be alpha-numeric, with no special characters or spaces. This name is used in the API both for policy configuration, and in the Risk Evaluation response (under `details`).  Exactly one of the following must be defined: `risk_predictor_id`, `name`, `compact_name`.
+- `name` (String) The name of the risk predictor.  Exactly one of the following must be defined: `risk_predictor_id`, `name`, `compact_name`.
+- `risk_predictor_id` (String) The ID of the risk predictor to retrieve.  Exactly one of the following must be defined: `risk_predictor_id`, `name`, `compact_name`.  Must be a valid PingOne resource ID.
 
 ### Read-Only
 
-- `compact_name` (String) A string that specifies the unique name for the predictor for use in risk evaluation request/response payloads. The value must be alpha-numeric, with no special characters or spaces. This name is used in the API both for policy configuration, and in the Risk Evaluation response (under `details`). If the value used for `compact_name` relates to a built-in predictor (a predictor that cannot be deleted), then this resource will attempt to overwrite the predictor's configuration.
 - `default` (Attributes) A single nested object that specifies the default configuration values for the risk predictor. (see [below for nested schema](#nestedatt--default))
 - `deletable` (Boolean) A boolean that indicates the PingOne Risk predictor can be deleted or not.
 - `description` (String) A string that specifies the description of the risk predictor. Maximum length is 1024 characters.

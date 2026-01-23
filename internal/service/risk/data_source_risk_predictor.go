@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
@@ -70,13 +71,19 @@ func (r *RiskPredictorDataSource) Metadata(ctx context.Context, req datasource.M
 // Schema
 func (r *RiskPredictorDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 
+	const attrMinLength = 1
+
 	riskPredictorIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The ID of the risk predictor to retrieve.",
-	).ExactlyOneOf([]string{"risk_predictor_id", "name"}).AppendMarkdownString("Must be a valid PingOne resource ID.")
+	).ExactlyOneOf([]string{"risk_predictor_id", "name", "compact_name"}).AppendMarkdownString("Must be a valid PingOne resource ID.")
 
 	nameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The name of the risk predictor.",
-	).ExactlyOneOf([]string{"risk_predictor_id", "name"})
+	).ExactlyOneOf([]string{"risk_predictor_id", "name", "compact_name"})
+
+	compactNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the unique name for the predictor for use in risk evaluation request/response payloads. The value must be alpha-numeric, with no special characters or spaces. This name is used in the API both for policy configuration, and in the Risk Evaluation response (under `details`).",
+	).ExactlyOneOf([]string{"risk_predictor_id", "name", "compact_name"})
 
 	resp.Schema = schema.Schema{
 		Description: "Data source to retrieve a PingOne Risk Predictor.",
@@ -98,7 +105,10 @@ func (r *RiskPredictorDataSource) Schema(ctx context.Context, req datasource.Sch
 				Optional:            true,
 				CustomType:          pingonetypes.ResourceIDType{},
 				Validators: []validator.String{
-					stringvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("name")),
+					stringvalidator.ExactlyOneOf(
+						path.MatchRelative().AtParent().AtName("name"),
+						path.MatchRelative().AtParent().AtName("compact_name"),
+					),
 				},
 			},
 			"name": schema.StringAttribute{
@@ -106,12 +116,18 @@ func (r *RiskPredictorDataSource) Schema(ctx context.Context, req datasource.Sch
 				MarkdownDescription: nameDescription.MarkdownDescription,
 				Optional:            true,
 				Validators: []validator.String{
-					stringvalidator.LengthAtLeast(1),
+					stringvalidator.LengthAtLeast(attrMinLength),
 				},
 			},
 			"compact_name": schema.StringAttribute{
-				Description: "A string that specifies the unique name for the predictor for use in risk evaluation request/response payloads. The value must be alpha-numeric, with no special characters or spaces. This name is used in the API both for policy configuration, and in the Risk Evaluation response (under `details`).",
-				Computed:    true,
+				Description:         compactNameDescription.Description,
+				MarkdownDescription: compactNameDescription.MarkdownDescription,
+				Computed:            true,
+				Optional:            true,
+				Validators: []validator.String{
+					stringvalidator.RegexMatches(regexp.MustCompile(`^[a-zA-Z0-9]+$`), "The value must be alpha-numeric, with no special characters or spaces."),
+					stringvalidator.LengthAtLeast(attrMinLength),
+				},
 			},
 			"description": schema.StringAttribute{
 				Description: "A string that specifies the description of the risk predictor. Maximum length is 1024 characters.",
@@ -601,34 +617,11 @@ func (r *RiskPredictorDataSource) Read(ctx context.Context, req datasource.ReadR
 			ctx,
 
 			func() (any, *http.Response, error) {
-				pagedIterator := r.Client.RiskAPIClient.RiskAdvancedPredictorsApi.ReadAllRiskPredictors(ctx, data.EnvironmentId.ValueString()).Execute()
-
-				var initialHttpResponse *http.Response
-
-				for pageCursor, err := range pagedIterator {
-					if err != nil {
-						return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
-					}
-
-					if initialHttpResponse == nil {
-						initialHttpResponse = pageCursor.HTTPResponse
-					}
-
-					if riskPredictors, ok := pageCursor.EntityArray.Embedded.GetRiskPredictorsOk(); ok {
-						for _, rp := range riskPredictors {
-							// Use toState to extract the name and check if it matches
-							tempModel := &riskPredictorDataSourceModel{}
-							tempModel.toState(ctx, &rp)
-
-							if tempModel.Name.ValueString() == data.Name.ValueString() {
-								val := rp
-								return &val, pageCursor.HTTPResponse, nil
-							}
-						}
-					}
-				}
-
-				return nil, initialHttpResponse, fmt.Errorf("Risk Predictor with name %s not found", data.Name.ValueString())
+				return r.findRiskPredictor(ctx, data.EnvironmentId.ValueString(), func(rp risk.RiskPredictor) bool {
+					tempModel := &riskPredictorDataSourceModel{}
+					tempModel.toState(ctx, &rp)
+					return tempModel.Name.ValueString() == data.Name.ValueString()
+				}, fmt.Sprintf("Risk Predictor with name %s not found", data.Name.ValueString()))
 			},
 			"ReadAllRiskPredictors",
 			legacysdk.DefaultCustomError,
@@ -636,6 +629,23 @@ func (r *RiskPredictorDataSource) Read(ctx context.Context, req datasource.ReadR
 			&riskPredictor,
 		)...)
 
+	} else if !data.CompactName.IsNull() {
+		// Run the API call
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
+			ctx,
+
+			func() (any, *http.Response, error) {
+				return r.findRiskPredictor(ctx, data.EnvironmentId.ValueString(), func(rp risk.RiskPredictor) bool {
+					tempModel := &riskPredictorDataSourceModel{}
+					tempModel.toState(ctx, &rp)
+					return tempModel.CompactName.ValueString() == data.CompactName.ValueString()
+				}, fmt.Sprintf("Risk Predictor with compact_name %s not found", data.CompactName.ValueString()))
+			},
+			"ReadAllRiskPredictors",
+			legacysdk.DefaultCustomError,
+			sdk.DefaultCreateReadRetryable,
+			&riskPredictor,
+		)...)
 	} else {
 		resp.Diagnostics.AddError(
 			"Missing configuration",
@@ -696,4 +706,31 @@ func (p *riskPredictorDataSourceModel) toState(ctx context.Context, apiObject *r
 	p.PredictorVelocity = resourceModel.PredictorVelocity
 
 	return diags
+}
+
+func (r *RiskPredictorDataSource) findRiskPredictor(ctx context.Context, environmentID string, matcher func(risk.RiskPredictor) bool, notFoundMessage string) (*risk.RiskPredictor, *http.Response, error) {
+	pagedIterator := r.Client.RiskAPIClient.RiskAdvancedPredictorsApi.ReadAllRiskPredictors(ctx, environmentID).Execute()
+
+	var initialHttpResponse *http.Response
+
+	for pageCursor, err := range pagedIterator {
+		if err != nil {
+			_, resp, err := legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, environmentID, nil, pageCursor.HTTPResponse, err)
+			return nil, resp, err
+		}
+
+		if initialHttpResponse == nil {
+			initialHttpResponse = pageCursor.HTTPResponse
+		}
+
+		if riskPredictors, ok := pageCursor.EntityArray.Embedded.GetRiskPredictorsOk(); ok {
+			for _, rp := range riskPredictors {
+				if matcher(rp) {
+					return &rp, pageCursor.HTTPResponse, nil
+				}
+			}
+		}
+	}
+
+	return nil, initialHttpResponse, fmt.Errorf("%s", notFoundMessage)
 }
