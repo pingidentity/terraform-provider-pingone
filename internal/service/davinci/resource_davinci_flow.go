@@ -7,10 +7,12 @@ package davinci
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -270,4 +272,91 @@ func (r *davinciFlowResource) Create(ctx context.Context, req resource.CreateReq
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+// Get a normalized json type from the response, ignoring json keys that were not included in the planned data.properties value
+func (m *davinciFlowResourceModel) normalizeNodeDataProperties(planProperties jsontypes.Normalized, responseProperties map[string]interface{}) (jsontypes.Normalized, diag.Diagnostics) {
+	if planProperties.IsNull() || planProperties.IsUnknown() {
+		// We have no known keys, so just accept whatever the API returned
+		return buildJsonNormalizedValueFromMap(responseProperties)
+	}
+
+	var diags diag.Diagnostics
+	var normalizedProperties jsontypes.Normalized
+
+	// Get a map of the known keys from the planned properties
+	plannedPropertiesMap := make(map[string]interface{})
+	err := json.Unmarshal([]byte(planProperties.ValueString()), &plannedPropertiesMap)
+	if err != nil {
+		diags.AddError(
+			"Error Unmarshaling planned graphData.elements.nodes.data.properties",
+			fmt.Sprintf("An error occurred while unmarshaling: %s", err.Error()),
+		)
+		return normalizedProperties, diags
+	}
+
+	// Remove keys from the response that were not in the plan
+	cleanedResponseProperties, removeDiags := removeUnknownKeysFromJsonMap(plannedPropertiesMap, responseProperties)
+	diags.Append(removeDiags...)
+
+	normalizedProperties, normalizeDiags := buildJsonNormalizedValueFromMap(cleanedResponseProperties)
+	diags.Append(normalizeDiags...)
+	return normalizedProperties, diags
+}
+
+func removeUnknownKeysFromJsonMap(expectedJson map[string]interface{}, actualJson map[string]interface{}) (map[string]interface{}, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Make a deep copy of actualJson to avoid mutating the input
+	actualJsonBytes, err := json.Marshal(actualJson)
+	if err != nil {
+		diags.AddError(
+			"Error Marshaling actual JSON map",
+			fmt.Sprintf("An error occurred while marshaling: %s", err.Error()),
+		)
+		return actualJson, diags
+	}
+	var actualJsonCopy map[string]interface{}
+	err = json.Unmarshal(actualJsonBytes, &actualJsonCopy)
+	if err != nil {
+		diags.AddError(
+			"Error Unmarshaling actual JSON map",
+			fmt.Sprintf("An error occurred while unmarshaling: %s", err.Error()),
+		)
+		return actualJson, diags
+	}
+
+	for key := range actualJsonCopy {
+		if _, ok := expectedJson[key]; !ok {
+			diags.AddWarning("API returned properties key not present in plan",
+				fmt.Sprintf("The key '%s' was returned by the API but is not present in the planned properties", key))
+			delete(actualJsonCopy, key)
+		} else {
+			// If the value is a nested object, recurse
+			plannedNested, isPlannedNested := expectedJson[key].(map[string]interface{})
+			responseNested, isResponseNested := actualJsonCopy[key].(map[string]interface{})
+			if isPlannedNested && isResponseNested {
+				nestedJson, nestedDiags := removeUnknownKeysFromJsonMap(plannedNested, responseNested)
+				diags.Append(nestedDiags...)
+				actualJsonCopy[key] = nestedJson
+			}
+		}
+	}
+
+	return actualJsonCopy, diags
+}
+
+func buildJsonNormalizedValueFromMap(jsonMap map[string]interface{}) (jsontypes.Normalized, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	normalizedProperties := jsontypes.NewNormalizedNull()
+	graphDataElementsNodesDataPropertiesBytes, err := json.Marshal(jsonMap)
+	if err != nil {
+		diags.AddError(
+			"Error Marshaling graphData.elements.nodes.data.properties",
+			fmt.Sprintf("An error occurred while marshaling: %s", err.Error()),
+		)
+	} else {
+		normalizedProperties = jsontypes.NewNormalizedValue(string(graphDataElementsNodesDataPropertiesBytes))
+	}
+	return normalizedProperties, diags
 }
