@@ -963,7 +963,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 									Computed:            true,
 
 									PlanModifiers: []planmodifier.String{
-										stringplanmodifier.UseStateForUnknown(),
+										stringplanmodifier.UseNonNullStateForUnknown(),
 									},
 								},
 
@@ -973,7 +973,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 									Computed:            true,
 
 									PlanModifiers: []planmodifier.String{
-										stringplanmodifier.UseStateForUnknown(),
+										stringplanmodifier.UseNonNullStateForUnknown(),
 									},
 								},
 
@@ -983,7 +983,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 									Computed:            true,
 
 									PlanModifiers: []planmodifier.String{
-										stringplanmodifier.UseStateForUnknown(),
+										stringplanmodifier.UseNonNullStateForUnknown(),
 									},
 								},
 
@@ -1035,7 +1035,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 											Computed:            true,
 
 											PlanModifiers: []planmodifier.Bool{
-												boolplanmodifier.UseStateForUnknown(),
+												boolplanmodifier.UseNonNullStateForUnknown(),
 											},
 										},
 

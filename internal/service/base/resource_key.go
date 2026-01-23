@@ -229,7 +229,7 @@ func (r *KeyResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 				CustomType: timetypes.RFC3339Type{},
 
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.UseNonNullStateForUnknown(),
 				},
 			},
 
@@ -241,7 +241,7 @@ func (r *KeyResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.UseNonNullStateForUnknown(),
 				},
 
 				Validators: []validator.String{
@@ -294,7 +294,7 @@ func (r *KeyResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.UseNonNullStateForUnknown(),
 				},
 
 				Validators: []validator.String{
@@ -339,7 +339,7 @@ func (r *KeyResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 				CustomType: timetypes.RFC3339Type{},
 
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.UseNonNullStateForUnknown(),
 				},
 			},
 
@@ -349,7 +349,7 @@ func (r *KeyResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 				Computed:            true,
 
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.UseNonNullStateForUnknown(),
 				},
 			},
 

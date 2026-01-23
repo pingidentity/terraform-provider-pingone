@@ -88,20 +88,20 @@ func (r *davinciApplicationKeyResource) Schema(ctx context.Context, req resource
 					"enabled": schema.BoolAttribute{
 						Computed: true,
 						PlanModifiers: []planmodifier.Bool{
-							boolplanmodifier.UseStateForUnknown(),
+							boolplanmodifier.UseNonNullStateForUnknown(),
 						},
 					},
 					"value": schema.StringAttribute{
 						Computed:  true,
 						Sensitive: true,
 						PlanModifiers: []planmodifier.String{
-							stringplanmodifier.UseStateForUnknown(),
+							stringplanmodifier.UseNonNullStateForUnknown(),
 						},
 					},
 				},
 				Computed: true,
 				PlanModifiers: []planmodifier.Object{
-					objectplanmodifier.UseStateForUnknown(),
+					objectplanmodifier.UseNonNullStateForUnknown(),
 				},
 			},
 			"davinci_application_id": schema.StringAttribute{
@@ -128,7 +128,7 @@ func (r *davinciApplicationKeyResource) Schema(ctx context.Context, req resource
 					stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), "Must be a valid UUID"),
 				},
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.UseNonNullStateForUnknown(),
 				},
 			},
 			"rotation_trigger_values": schema.MapAttribute{

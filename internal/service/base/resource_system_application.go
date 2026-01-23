@@ -148,7 +148,7 @@ func (r *SystemApplicationResource) Schema(ctx context.Context, req resource.Sch
 				Computed:    true,
 
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.UseNonNullStateForUnknown(),
 				},
 			},
 

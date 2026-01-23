@@ -98,7 +98,7 @@ func (r *ApplicationResourceResource) Schema(ctx context.Context, req resource.S
 				CustomType: pingonetypes.ResourceIDType{},
 
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.UseNonNullStateForUnknown(),
 				},
 			},
 

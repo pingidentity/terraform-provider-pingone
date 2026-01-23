@@ -34,7 +34,7 @@ func Attr_IDCustomType(customType basetypes.StringTypable) schema.StringAttribut
 	return schema.StringAttribute{
 		Computed: true,
 		PlanModifiers: []planmodifier.String{
-			stringplanmodifier.UseStateForUnknown(),
+			stringplanmodifier.UseNonNullStateForUnknown(),
 		},
 
 		CustomType: customType,

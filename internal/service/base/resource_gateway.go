@@ -603,7 +603,7 @@ func (r *GatewayResource) Schema(ctx context.Context, req resource.SchemaRequest
 							CustomType: pingonetypes.ResourceIDType{},
 
 							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
+								stringplanmodifier.UseNonNullStateForUnknown(),
 							},
 						},
 

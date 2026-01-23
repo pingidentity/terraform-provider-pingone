@@ -123,7 +123,7 @@ func (r *AgreementLocalizationRevisionResource) Schema(ctx context.Context, req 
 				CustomType:  timetypes.RFC3339Type{},
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.UseNonNullStateForUnknown(),
 				},
 			},
 

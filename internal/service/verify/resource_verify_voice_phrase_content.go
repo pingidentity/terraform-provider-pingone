@@ -122,7 +122,7 @@ func (r *VoicePhraseContentResource) Schema(ctx context.Context, req resource.Sc
 				CustomType: timetypes.RFC3339Type{},
 
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.UseNonNullStateForUnknown(),
 				},
 			},
 
