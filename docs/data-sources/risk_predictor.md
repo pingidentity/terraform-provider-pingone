@@ -2,12 +2,12 @@
 page_title: "pingone_risk_predictor Data Source - terraform-provider-pingone"
 subcategory: "Protect"
 description: |-
-  Datasource to retrieve a PingOne Risk Predictor.
+  Data source to retrieve a PingOne Risk Predictor.
 ---
 
 # pingone_risk_predictor (Data Source)
 
-Datasource to retrieve a PingOne Risk Predictor.
+Data source to retrieve a PingOne Risk Predictor.
 
 ## Example Usage
 

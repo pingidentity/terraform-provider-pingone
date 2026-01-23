@@ -79,7 +79,7 @@ func (r *RiskPredictorDataSource) Schema(ctx context.Context, req datasource.Sch
 	).ExactlyOneOf([]string{"risk_predictor_id", "name"})
 
 	resp.Schema = schema.Schema{
-		Description: "Datasource to retrieve a PingOne Risk Predictor.",
+		Description: "Data source to retrieve a PingOne Risk Predictor.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{

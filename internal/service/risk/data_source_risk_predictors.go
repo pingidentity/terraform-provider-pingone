@@ -47,7 +47,7 @@ func (r *RiskPredictorsDataSource) Metadata(ctx context.Context, req datasource.
 // Schema
 func (r *RiskPredictorsDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Datasource to retrieve the IDs of multiple PingOne Risk Predictors.",
+		Description: "Data source to retrieve the IDs of multiple PingOne Risk Predictors.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
