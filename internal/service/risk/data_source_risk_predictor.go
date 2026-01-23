@@ -110,7 +110,7 @@ func (r *RiskPredictorDataSource) Schema(ctx context.Context, req datasource.Sch
 				},
 			},
 			"compact_name": schema.StringAttribute{
-				Description: "A string that specifies the unique name for the predictor for use in risk evaluation request/response payloads. The value must be alpha-numeric, with no special characters or spaces. This name is used in the API both for policy configuration, and in the Risk Evaluation response (under `details`). If the value used for `compact_name` relates to a built-in predictor (a predictor that cannot be deleted), then this resource will attempt to overwrite the predictor's configuration.",
+				Description: "A string that specifies the unique name for the predictor for use in risk evaluation request/response payloads. The value must be alpha-numeric, with no special characters or spaces. This name is used in the API both for policy configuration, and in the Risk Evaluation response (under `details`).",
 				Computed:    true,
 			},
 			"description": schema.StringAttribute{
