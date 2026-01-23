@@ -116,6 +116,91 @@ func TestAccRiskPredictorDataSource_NotFound(t *testing.T) {
 	})
 }
 
+func TestAccRiskPredictorDataSource_CompactName(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_risk_predictor.%s", resourceName)
+	dataSourceFullName := fmt.Sprintf("data.pingone_risk_predictor.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             risk.RiskPredictor_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccRiskPredictorDataSourceConfig_ByCompactName(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "name", resourceFullName, "name"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "compact_name", resourceFullName, "compact_name"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "description", resourceFullName, "description"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "type", resourceFullName, "type"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "licensed", resourceFullName, "licensed"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "deletable", resourceFullName, "deletable"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "default.result.level", resourceFullName, "default.result.level"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "predictor_anonymous_network.allowed_cidr_list.#", resourceFullName, "predictor_anonymous_network.allowed_cidr_list.#"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccRiskPredictorDataSource_Validation(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             risk.RiskPredictor_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccRiskPredictorDataSourceConfig_AllIdentifiers(resourceName),
+				ExpectError: regexp.MustCompile("Invalid Attribute Combination"),
+			},
+			{
+				Config:      testAccRiskPredictorDataSourceConfig_IDAndName(resourceName),
+				ExpectError: regexp.MustCompile("Invalid Attribute Combination"),
+			},
+			{
+				Config:      testAccRiskPredictorDataSourceConfig_IDAndCompactName(resourceName),
+				ExpectError: regexp.MustCompile("Invalid Attribute Combination"),
+			},
+			{
+				Config:      testAccRiskPredictorDataSourceConfig_NameAndCompactName(resourceName),
+				ExpectError: regexp.MustCompile("Invalid Attribute Combination"),
+			},
+			{
+				Config:      testAccRiskPredictorDataSourceConfig_CompactNameWithSpecialChars(resourceName),
+				ExpectError: regexp.MustCompile(`The value must be alpha-numeric, with no special\s+characters or spaces`),
+			},
+			{
+				Config:      testAccRiskPredictorDataSourceConfig_EmptyName(resourceName),
+				ExpectError: regexp.MustCompile(`Attribute name string length must be at least 1, got: 0`),
+			},
+			{
+				Config:      testAccRiskPredictorDataSourceConfig_EmptyCompactName(resourceName),
+				ExpectError: regexp.MustCompile(`Attribute compact_name string length must be at least 1, got: 0`),
+			},
+		},
+	})
+}
+
 func testAccRiskPredictorDataSourceConfig_ByID(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
@@ -202,6 +287,122 @@ func testAccRiskPredictorDataSourceConfig_NotFoundByID(resourceName string) stri
 data "pingone_risk_predictor" "%[2]s-notfound" {
   environment_id    = data.pingone_environment.general_test.id
   risk_predictor_id = "9c052a8a-14be-44e4-8f07-2662569994ce"
+}
+`, acctest.GenericSandboxEnvironment(), resourceName)
+}
+
+func testAccRiskPredictorDataSourceConfig_ByCompactName(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name         = "%[3]s"
+  compact_name = "%[3]s1"
+  description  = "My risk predictor description goes here."
+
+  default = {
+    result = {
+      level = "MEDIUM"
+    }
+  }
+
+  predictor_anonymous_network = {
+    allowed_cidr_list = [
+      "10.0.0.0/8",
+      "172.16.0.0/12",
+      "192.168.0.0/24"
+    ]
+  }
+
+}
+
+data "pingone_risk_predictor" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  compact_name   = pingone_risk_predictor.%[2]s.compact_name
+}
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRiskPredictorDataSourceConfig_AllIdentifiers(resourceName string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+data "pingone_risk_predictor" "%[2]s-validation" {
+  environment_id    = data.pingone_environment.general_test.id
+  risk_predictor_id = "9c052a8a-14be-44e4-8f07-2662569994ce"
+  name              = "test_validation_name"
+  compact_name      = "test_validation_compact_name"
+}
+`, acctest.GenericSandboxEnvironment(), resourceName)
+}
+
+func testAccRiskPredictorDataSourceConfig_IDAndName(resourceName string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+data "pingone_risk_predictor" "%[2]s-validation" {
+  environment_id    = data.pingone_environment.general_test.id
+  risk_predictor_id = "9c052a8a-14be-44e4-8f07-2662569994ce"
+  name              = "test_validation_name"
+}
+`, acctest.GenericSandboxEnvironment(), resourceName)
+}
+
+func testAccRiskPredictorDataSourceConfig_IDAndCompactName(resourceName string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+data "pingone_risk_predictor" "%[2]s-validation" {
+  environment_id    = data.pingone_environment.general_test.id
+  risk_predictor_id = "9c052a8a-14be-44e4-8f07-2662569994ce"
+  compact_name      = "test_validation_compact_name"
+}
+`, acctest.GenericSandboxEnvironment(), resourceName)
+}
+
+func testAccRiskPredictorDataSourceConfig_NameAndCompactName(resourceName string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+data "pingone_risk_predictor" "%[2]s-validation" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "test_validation_name"
+  compact_name   = "test_validation_compact_name"
+}
+`, acctest.GenericSandboxEnvironment(), resourceName)
+}
+
+func testAccRiskPredictorDataSourceConfig_CompactNameWithSpecialChars(resourceName string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+data "pingone_risk_predictor" "%[2]s-validation" {
+  environment_id = data.pingone_environment.general_test.id
+  compact_name   = "test_validation_compact_name!"
+}
+`, acctest.GenericSandboxEnvironment(), resourceName)
+}
+
+func testAccRiskPredictorDataSourceConfig_EmptyName(resourceName string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+data "pingone_risk_predictor" "%[2]s-validation" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = ""
+}
+`, acctest.GenericSandboxEnvironment(), resourceName)
+}
+
+func testAccRiskPredictorDataSourceConfig_EmptyCompactName(resourceName string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+data "pingone_risk_predictor" "%[2]s-validation" {
+  environment_id = data.pingone_environment.general_test.id
+  compact_name   = ""
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
 }
