@@ -23,7 +23,10 @@ func Resources() []func() resource.Resource {
 }
 
 func DataSources() []func() datasource.DataSource {
-	dataSources := []func() datasource.DataSource{}
+	dataSources := []func() datasource.DataSource{
+		NewRiskPredictorDataSource,
+		NewRiskPredictorsDataSource,
+	}
 	dataSources = append(dataSources, BetaDataSources()...)
 
 	return dataSources
