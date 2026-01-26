@@ -80,7 +80,7 @@ func FetchTaggedEnvironmentsByPrefix(ctx context.Context, apiClient *management.
 
 					for _, environment := range environments {
 						if environment.GetName() == "Administrators" {
-							return nil, nil, fmt.Errorf("Unsafe filter, Administrators environment present: %s", filter)
+							return nil, nil, fmt.Errorf("unsafe filter, Administrators environment present: %s", filter)
 						}
 					}
 
@@ -114,7 +114,7 @@ func FetchTaggedEnvironmentsByPrefix(ctx context.Context, apiClient *management.
 		},
 	)
 	if diags.HasError() {
-		return nil, fmt.Errorf("Error getting environments for sweep")
+		return nil, fmt.Errorf("error getting environments for sweep")
 	}
 
 	respList := resp.([]management.Environment)
@@ -162,7 +162,7 @@ func CreateTestEnvironment(ctx context.Context, apiClient *management.APIClient,
 			// Invalid region
 			if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
 				if target, ok := details[0].GetTargetOk(); ok && *target == "region" {
-					diags := diag.FromErr(fmt.Errorf("Incompatible environment region for the organization tenant.  Expecting regions %v, region provided: %+v", details[0].GetInnerError().AllowedValues, region))
+					diags := diag.FromErr(fmt.Errorf("incompatible environment region for the organization tenant.  Expecting regions %v, region provided: %+v", details[0].GetInnerError().AllowedValues, region))
 
 					return diags
 				}
@@ -173,7 +173,7 @@ func CreateTestEnvironment(ctx context.Context, apiClient *management.APIClient,
 		nil,
 	)
 	if diags.HasError() {
-		return fmt.Errorf("Cannot create environment `%s`", environment.GetName())
+		return fmt.Errorf("cannot create environment `%s`", environment.GetName())
 	}
 
 	environmentID := resp.(*management.Environment).GetId()
@@ -194,7 +194,7 @@ func CreateTestEnvironment(ctx context.Context, apiClient *management.APIClient,
 		sdk.DefaultCreateReadRetryable,
 	)
 	if diags.HasError() {
-		return fmt.Errorf("Cannot create population for environment `%s`", environment.GetName())
+		return fmt.Errorf("cannot create population for environment `%s`", environment.GetName())
 	}
 
 	return nil

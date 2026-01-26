@@ -48,7 +48,7 @@ func sweepFFAppImportApplications(region string) error {
 					pagedIterator := apiClient.ApplicationsApi.ReadAllApplications(ctx, environment.GetId()).Execute()
 					for pageCursor, err := range pagedIterator {
 						if err != nil {
-							return fmt.Errorf("Error getting applications: %s", err)
+							return fmt.Errorf("error getting applications: %s", err)
 						}
 
 						if applications, ok := pageCursor.EntityArray.Embedded.GetApplicationsOk(); ok {

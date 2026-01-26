@@ -461,7 +461,7 @@ func (r *customRoleResource) Update(ctx context.Context, req resource.UpdateRequ
 				&responseData,
 			)...)
 			if resp.Diagnostics.HasError() {
-				return responseData, "err", fmt.Errorf("Error reading custom role")
+				return responseData, "err", fmt.Errorf("error reading custom role")
 			}
 
 			// The expected value of can_assign depends on other resources, so just exit here after one read

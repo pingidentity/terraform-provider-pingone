@@ -61,7 +61,7 @@ func RateLimitConfiguration_GetIDs(resourceName string, environmentID, resourceI
 
 		rs, ok := s.RootModule().Resources[resourceName]
 		if !ok {
-			return fmt.Errorf("Resource Not found: %s", resourceName)
+			return fmt.Errorf("resource not found: %s", resourceName)
 		}
 
 		if resourceID != nil {

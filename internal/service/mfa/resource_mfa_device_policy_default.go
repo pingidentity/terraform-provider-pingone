@@ -3020,7 +3020,7 @@ func FetchDefaultMFADevicePolicyWithTimeout(ctx context.Context, apiClient *mfa.
 				&defaultMFADevicePolicy,
 			)...)
 			if diags.HasError() {
-				return nil, "err", fmt.Errorf("Error reading MFA device policies")
+				return nil, "err", fmt.Errorf("error reading MFA device policies")
 			}
 
 			tflog.Debug(ctx, "Find default MFA device policy attempt", map[string]interface{}{
@@ -3168,10 +3168,7 @@ func (p *MFADevicePolicyDefaultResourceModel) buildDefaultPolicyStruct(mobileApp
 	totpOtpFailure := mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailure(defaultOTPFailureCount, *totpOtpFailureCooldown)
 	totpOtp := mfa.NewDeviceAuthenticationPolicyPingIDDeviceOtp(*totpOtpFailure)
 
-	totpEnabled := true
-	if isPingID {
-		totpEnabled = false
-	}
+	totpEnabled := !isPingID
 	totp := mfa.NewDeviceAuthenticationPolicyCommonTotp(totpEnabled, *totpOtp)
 	totp.SetPairingDisabled(false)
 	totp.SetPromptForNicknameOnPairing(false)
@@ -3206,11 +3203,7 @@ func (p *MFADevicePolicyDefaultResourceModel) buildDefaultPolicyStruct(mobileApp
 	oathOtpFailure := mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailure(defaultOTPFailureCount, *oathOtpFailureCooldown)
 	oathOtp := mfa.NewDeviceAuthenticationPolicyPingIDDeviceOtp(*oathOtpFailure)
 
-	oathEnabled := true
-	if isPingID {
-		oathEnabled = false
-	}
-
+	oathEnabled := !isPingID
 	oathToken := mfa.NewDeviceAuthenticationPolicyOathToken(oathEnabled, *oathOtp)
 	oathToken.SetPairingDisabled(false)
 	oathToken.SetPromptForNicknameOnPairing(false)

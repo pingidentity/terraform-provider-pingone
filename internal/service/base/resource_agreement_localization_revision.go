@@ -287,7 +287,7 @@ func (r *AgreementLocalizationRevisionResource) Create(ctx context.Context, req 
 					&readResponse,
 				)...)
 				if resp.Diagnostics.HasError() {
-					return nil, "err", fmt.Errorf("Error reading agreement revision")
+					return nil, "err", fmt.Errorf("error reading agreement revision")
 				}
 
 				if readResponse.GetEffectiveAt().After(time.Now()) {
