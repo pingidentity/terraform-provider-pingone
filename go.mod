@@ -1,6 +1,6 @@
 module github.com/pingidentity/terraform-provider-pingone
 
-go 1.24.6
+go 1.25.6
 
 tool (
 	github.com/bflad/tfproviderlint/cmd/tfproviderlintx
