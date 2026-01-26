@@ -4,6 +4,7 @@ package risk
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -732,5 +733,5 @@ func (r *RiskPredictorDataSource) findRiskPredictor(ctx context.Context, environ
 		}
 	}
 
-	return nil, initialHttpResponse, fmt.Errorf("%s", notFoundMessage)
+	return nil, initialHttpResponse, errors.New(notFoundMessage)
 }
