@@ -780,8 +780,8 @@ resource "pingone_davinci_flow" "%[2]s" {
   }
 
   settings = {
-    csp                              = "worker-src 'self' blob:; script-src 'self' https://cdn.jsdelivr.net https://code.jquery.com https://devsdk.singularkey.com http://cdnjs.cloudflare.com 'unsafe-inline' 'unsafe-eval';"
-    log_level                        = 2
+    csp       = "worker-src 'self' blob:; script-src 'self' https://cdn.jsdelivr.net https://code.jquery.com https://devsdk.singularkey.com http://cdnjs.cloudflare.com 'unsafe-inline' 'unsafe-eval';"
+    log_level = 2
   }
 
   output_schema = {
