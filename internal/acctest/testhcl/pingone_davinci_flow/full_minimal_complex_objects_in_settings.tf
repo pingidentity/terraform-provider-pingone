@@ -55,7 +55,6 @@ resource "pingone_davinci_flow" "%[2]s" {
       nodes = {
         "2pzouq7el7" = {
           data = {
-            id = "2pzouq7el7"
             node_type = "CONNECTION"
             connection_id = pingone_davinci_connector_instance.%[2]s-errors.id
             connector_id = "errorConnector"
