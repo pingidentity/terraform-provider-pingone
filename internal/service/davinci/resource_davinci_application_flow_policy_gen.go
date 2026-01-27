@@ -225,7 +225,7 @@ func (r *davinciApplicationFlowPolicyResource) Schema(ctx context.Context, req r
 				Optional: true,
 				Computed: true,
 				PlanModifiers: []planmodifier.Object{
-					objectplanmodifier.UseStateForUnknown(),
+					objectplanmodifier.UseNonNullStateForUnknown(),
 				},
 				// No default because it will differ for PingOne vs non-PingOne flows
 			},

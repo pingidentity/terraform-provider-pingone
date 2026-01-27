@@ -283,7 +283,7 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 													Optional: true,
 													Computed: true,
 													PlanModifiers: []planmodifier.String{
-														stringplanmodifier.UseStateForUnknown(),
+														stringplanmodifier.UseNonNullStateForUnknown(),
 													},
 												},
 												"connector_id": schema.StringAttribute{
@@ -293,7 +293,7 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 													Optional: true,
 													Computed: true,
 													PlanModifiers: []planmodifier.String{
-														stringplanmodifier.UseStateForUnknown(),
+														stringplanmodifier.UseNonNullStateForUnknown(),
 													},
 												},
 												"label": schema.StringAttribute{
@@ -303,7 +303,7 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 													Optional: true,
 													Computed: true,
 													PlanModifiers: []planmodifier.String{
-														stringplanmodifier.UseStateForUnknown(),
+														stringplanmodifier.UseNonNullStateForUnknown(),
 													},
 												},
 												"node_type": schema.StringAttribute{
@@ -408,7 +408,7 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 				Computed:    true,
 				Description: "The ID of this resource.",
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.UseNonNullStateForUnknown(),
 				},
 			},
 			"input_schema": schema.ListNestedAttribute{
