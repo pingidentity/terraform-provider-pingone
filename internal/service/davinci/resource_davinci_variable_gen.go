@@ -757,7 +757,7 @@ func (r *davinciVariableResource) Delete(ctx context.Context, req resource.Delet
 		},
 		"DeleteVariableById",
 		framework.CustomErrorResourceNotFoundWarning,
-		framework.InsufficientPrivilegeRetryable,
+		framework.DefaultRetryable,
 		nil,
 	)...)
 }

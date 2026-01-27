@@ -433,7 +433,7 @@ func (r *davinciConnectorInstanceResource) Delete(ctx context.Context, req resou
 		},
 		"DeleteConnectorInstanceById",
 		framework.CustomErrorResourceNotFoundWarning,
-		framework.InsufficientPrivilegeRetryable,
+		framework.DefaultRetryable,
 		nil,
 	)...)
 }
