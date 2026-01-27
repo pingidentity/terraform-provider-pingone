@@ -59,7 +59,7 @@ resource "pingone_davinci_flow" "%[2]s" {
           locked = false
           grabbable = true
           pannable = false
-          classes = ""
+          
         }
       }
     }

@@ -15,8 +15,6 @@ resource "pingone_davinci_flow" "%[2]s" {
   name = "simple"
   settings = {
     csp = "worker-src 'self' blob:; script-src 'self' https://cdn.jsdelivr.net https://code.jquery.com https://devsdk.singularkey.com http://cdnjs.cloudflare.com 'unsafe-inline' 'unsafe-eval';"
-    intermediate_loading_screen_css = ""
-    intermediate_loading_screen_html = ""
     flow_http_timeout_in_seconds = 300
     log_level = 1
     use_custom_css = true
@@ -54,7 +52,7 @@ resource "pingone_davinci_flow" "%[2]s" {
           locked = false
           grabbable = true
           pannable = false
-          classes = ""
+          
         }
       }
     }

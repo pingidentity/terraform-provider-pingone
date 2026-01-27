@@ -475,7 +475,6 @@ resource "pingone_davinci_flow" "%[2]s" {
           locked     = false
           grabbable  = true
           pannable   = false
-          classes    = ""
         }
       }
     }
@@ -665,7 +664,6 @@ resource "pingone_davinci_flow" "%[3]s" {
           locked     = false
           grabbable  = true
           pannable   = false
-          classes    = ""
         }
       }
     }
