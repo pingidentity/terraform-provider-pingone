@@ -522,7 +522,6 @@ resource "pingone_davinci_flow" "%[2]s" {
           locked     = false
           grabbable  = true
           pannable   = false
-          classes    = ""
         }
       }
     }
@@ -754,7 +753,6 @@ resource "pingone_davinci_flow" "%[2]s" {
           locked     = false
           grabbable  = true
           pannable   = false
-          classes    = ""
         }
       }
     }
@@ -783,8 +781,6 @@ resource "pingone_davinci_flow" "%[2]s" {
 
   settings = {
     csp                              = "worker-src 'self' blob:; script-src 'self' https://cdn.jsdelivr.net https://code.jquery.com https://devsdk.singularkey.com http://cdnjs.cloudflare.com 'unsafe-inline' 'unsafe-eval';"
-    intermediate_loading_screen_css  = ""
-    intermediate_loading_screen_html = ""
     log_level                        = 2
   }
 
