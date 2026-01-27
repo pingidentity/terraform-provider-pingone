@@ -176,7 +176,7 @@ func TestAccKeyRotationPolicy_All(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil

@@ -490,17 +490,17 @@ func ParseImportID(id string, components ...ImportComponent) (map[string]string,
 
 	m, err := regexp.MatchString(compiledRegexpString, id)
 	if err != nil {
-		return nil, fmt.Errorf("Cannot verify import ID regex: %s", err)
+		return nil, fmt.Errorf("cannot verify import ID regex: %s", err)
 	}
 
 	if !m {
-		return nil, fmt.Errorf("Invalid import ID specified (\"%s\").  The ID should be in the format \"%s\" and must match regex: %s", id, strings.Join(keys, "/"), compiledRegexpString)
+		return nil, fmt.Errorf("invalid import ID specified (\"%s\").  The ID should be in the format \"%s\" and must match regex: %s", id, strings.Join(keys, "/"), compiledRegexpString)
 	}
 
 	attributeValues := strings.SplitN(id, "/", len(components))
 
 	if len(attributeValues) != len(components) {
-		return nil, fmt.Errorf("Invalid import ID specified (\"%s\").  The ID should be in the format \"%s\".", id, strings.Join(keys, "/"))
+		return nil, fmt.Errorf("invalid import ID specified (\"%s\").  The ID should be in the format \"%s\"", id, strings.Join(keys, "/"))
 	}
 
 	attributes := make(map[string]string)

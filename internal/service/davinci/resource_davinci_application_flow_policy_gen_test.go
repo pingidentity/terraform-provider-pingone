@@ -139,7 +139,7 @@ func testAccDavinciApplicationFlowPolicy_MinimalMaximal(t *testing.T, withBootst
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["davinci_application_id"], rs.Primary.Attributes["id"]), nil
@@ -1038,7 +1038,7 @@ func davinciApplicationFlowPolicy_GetIDs(resourceName string, environmentId, daV
 
 		rs, ok := s.RootModule().Resources[resourceName]
 		if !ok {
-			return fmt.Errorf("Resource Not found: %s", resourceName)
+			return fmt.Errorf("resource not found: %s", resourceName)
 		}
 		if environmentId != nil {
 			*environmentId = rs.Primary.Attributes["environment_id"]

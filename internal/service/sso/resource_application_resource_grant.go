@@ -212,11 +212,7 @@ func (r *ApplicationResourceGrantResource) Create(ctx context.Context, req resou
 		return
 	}
 
-	systemApplication := false
-
-	if application.ApplicationPingOnePortal != nil || application.ApplicationPingOneSelfService != nil {
-		systemApplication = true
-	}
+	systemApplication := application.ApplicationPingOnePortal != nil || application.ApplicationPingOneSelfService != nil
 
 	if application.ApplicationPingOneAdminConsole != nil {
 		resp.Diagnostics.AddError(
@@ -379,11 +375,7 @@ func (r *ApplicationResourceGrantResource) Update(ctx context.Context, req resou
 		return
 	}
 
-	systemApplication := false
-
-	if application.ApplicationPingOnePortal != nil || application.ApplicationPingOneSelfService != nil {
-		systemApplication = true
-	}
+	systemApplication := application.ApplicationPingOnePortal != nil || application.ApplicationPingOneSelfService != nil
 
 	if application.ApplicationPingOneAdminConsole != nil {
 		resp.Diagnostics.AddError(

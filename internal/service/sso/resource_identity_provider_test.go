@@ -246,7 +246,7 @@ func TestAccIdentityProvider_Facebook(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -324,7 +324,7 @@ func TestAccIdentityProvider_Google(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -402,7 +402,7 @@ func TestAccIdentityProvider_LinkedIn(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -480,7 +480,7 @@ func TestAccIdentityProvider_LinkedInOIDC(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -558,7 +558,7 @@ func TestAccIdentityProvider_Yahoo(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -636,7 +636,7 @@ func TestAccIdentityProvider_Amazon(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -714,7 +714,7 @@ func TestAccIdentityProvider_Twitter(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -796,7 +796,7 @@ func TestAccIdentityProvider_Apple(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -876,7 +876,7 @@ func TestAccIdentityProvider_Paypal(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -955,7 +955,7 @@ func TestAccIdentityProvider_Microsoft(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -1033,7 +1033,7 @@ func TestAccIdentityProvider_Github(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -1158,7 +1158,7 @@ func TestAccIdentityProvider_OIDC(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -1276,7 +1276,7 @@ func TestAccIdentityProvider_SAML(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil

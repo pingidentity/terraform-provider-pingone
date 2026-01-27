@@ -180,7 +180,7 @@ func TestAccForm_Full(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -314,7 +314,7 @@ func TestAccForm_Multiple(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -419,7 +419,7 @@ func TestAccForm_FieldCheckbox(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -523,7 +523,7 @@ func TestAccForm_FieldCombobox(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -627,7 +627,7 @@ func TestAccForm_FieldDropdown(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -728,7 +728,7 @@ func TestAccForm_FieldPassword(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -830,7 +830,7 @@ func TestAccForm_FieldPasswordVerify(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -935,7 +935,7 @@ func TestAccForm_FieldRadio(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -1029,7 +1029,7 @@ func TestAccForm_FieldSubmitButton(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -1127,7 +1127,7 @@ func TestAccForm_FieldText(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -1203,7 +1203,7 @@ func TestAccForm_ItemDivider(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -1279,7 +1279,7 @@ func TestAccForm_ItemEmptyField(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -1355,7 +1355,7 @@ func TestAccForm_ItemErrorDisplay(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -1451,7 +1451,7 @@ func TestAccForm_ItemFlowButton(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -1542,7 +1542,7 @@ func TestAccForm_ItemFlowLink(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -1631,7 +1631,7 @@ func TestAccForm_ItemQRCode(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -1717,7 +1717,7 @@ func TestAccForm_ItemRecaptchaV2(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -1799,7 +1799,7 @@ func TestAccForm_ItemSlateTextblob(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -1882,7 +1882,7 @@ func TestAccForm_ItemTextblob(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil

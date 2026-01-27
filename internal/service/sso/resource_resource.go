@@ -141,7 +141,7 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 				Default: stringdefault.StaticString(string(management.ENUMRESOURCETYPE_CUSTOM)),
 
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.UseNonNullStateForUnknown(),
 				},
 			},
 

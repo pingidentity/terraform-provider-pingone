@@ -61,7 +61,7 @@ func (v NormalizedObfuscatableValue) StringSemanticEquals(ctx context.Context, n
 		return false, diags
 	}
 
-	return semanticCompareJsonIgnoreObfuscated(v.StringValue.ValueString(), newValue.StringValue.ValueString()), diags
+	return semanticCompareJsonIgnoreObfuscated(v.ValueString(), newValue.ValueString()), diags
 }
 
 // Semantically compare the json blobs, ignoring fields that are strings of asterisks, which may have been obfuscated

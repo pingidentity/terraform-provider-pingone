@@ -301,7 +301,7 @@ func (r *NotificationPolicyResource) Schema(ctx context.Context, req resource.Sc
 				Computed:            true,
 
 				PlanModifiers: []planmodifier.Bool{
-					boolplanmodifier.UseStateForUnknown(),
+					boolplanmodifier.UseNonNullStateForUnknown(),
 				},
 			},
 

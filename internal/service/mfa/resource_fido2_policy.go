@@ -289,7 +289,7 @@ func (r *FIDO2PolicyResource) Schema(ctx context.Context, req resource.SchemaReq
 				Computed:    true,
 
 				PlanModifiers: []planmodifier.Bool{
-					boolplanmodifier.UseStateForUnknown(),
+					boolplanmodifier.UseNonNullStateForUnknown(),
 				},
 			},
 

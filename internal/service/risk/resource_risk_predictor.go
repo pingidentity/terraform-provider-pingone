@@ -694,7 +694,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 				Computed:            true,
 
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.UseNonNullStateForUnknown(),
 				},
 			},
 
@@ -726,7 +726,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 								Computed:            true,
 
 								PlanModifiers: []planmodifier.String{
-									stringplanmodifier.UseStateForUnknown(),
+									stringplanmodifier.UseNonNullStateForUnknown(),
 								},
 							},
 
@@ -750,7 +750,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 				Computed:    true,
 
 				PlanModifiers: []planmodifier.Bool{
-					boolplanmodifier.UseStateForUnknown(),
+					boolplanmodifier.UseNonNullStateForUnknown(),
 				},
 			},
 
@@ -759,7 +759,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 				Computed:    true,
 
 				PlanModifiers: []planmodifier.Bool{
-					boolplanmodifier.UseStateForUnknown(),
+					boolplanmodifier.UseNonNullStateForUnknown(),
 				},
 			},
 
@@ -901,7 +901,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 						Computed:    true,
 
 						PlanModifiers: []planmodifier.String{
-							stringplanmodifier.UseStateForUnknown(),
+							stringplanmodifier.UseNonNullStateForUnknown(),
 						},
 					},
 
@@ -1200,7 +1200,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 						Computed:    true,
 
 						PlanModifiers: []planmodifier.Int32{
-							int32planmodifier.UseStateForUnknown(),
+							int32planmodifier.UseNonNullStateForUnknown(),
 						},
 					},
 				},
@@ -1289,7 +1289,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 						},
 
 						PlanModifiers: []planmodifier.Set{
-							setplanmodifier.UseStateForUnknown(),
+							setplanmodifier.UseNonNullStateForUnknown(),
 						},
 					},
 
@@ -1298,7 +1298,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 						Computed:    true,
 
 						PlanModifiers: []planmodifier.Object{
-							objectplanmodifier.UseStateForUnknown(),
+							objectplanmodifier.UseNonNullStateForUnknown(),
 						},
 
 						Attributes: map[string]schema.Attribute{
@@ -1308,7 +1308,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 								Computed:            true,
 
 								PlanModifiers: []planmodifier.String{
-									stringplanmodifier.UseStateForUnknown(),
+									stringplanmodifier.UseNonNullStateForUnknown(),
 								},
 							},
 
@@ -1317,7 +1317,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 								Computed:    true,
 
 								PlanModifiers: []planmodifier.Float32{
-									float32planmodifier.UseStateForUnknown(),
+									float32planmodifier.UseNonNullStateForUnknown(),
 								},
 							},
 
@@ -1326,7 +1326,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 								Computed:    true,
 
 								PlanModifiers: []planmodifier.Float32{
-									float32planmodifier.UseStateForUnknown(),
+									float32planmodifier.UseNonNullStateForUnknown(),
 								},
 							},
 						},
@@ -1337,7 +1337,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 						Computed:    true,
 
 						PlanModifiers: []planmodifier.Object{
-							objectplanmodifier.UseStateForUnknown(),
+							objectplanmodifier.UseNonNullStateForUnknown(),
 						},
 
 						Attributes: map[string]schema.Attribute{
@@ -1347,7 +1347,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 								Computed:            true,
 
 								PlanModifiers: []planmodifier.String{
-									stringplanmodifier.UseStateForUnknown(),
+									stringplanmodifier.UseNonNullStateForUnknown(),
 								},
 							},
 
@@ -1356,7 +1356,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 								Computed:    true,
 
 								PlanModifiers: []planmodifier.Float32{
-									float32planmodifier.UseStateForUnknown(),
+									float32planmodifier.UseNonNullStateForUnknown(),
 								},
 							},
 
@@ -1365,7 +1365,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 								Computed:    true,
 
 								PlanModifiers: []planmodifier.Float32{
-									float32planmodifier.UseStateForUnknown(),
+									float32planmodifier.UseNonNullStateForUnknown(),
 								},
 							},
 						},
@@ -1376,7 +1376,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 						Computed:    true,
 
 						PlanModifiers: []planmodifier.Object{
-							objectplanmodifier.UseStateForUnknown(),
+							objectplanmodifier.UseNonNullStateForUnknown(),
 						},
 
 						Attributes: map[string]schema.Attribute{
@@ -1386,7 +1386,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 								Computed:            true,
 
 								PlanModifiers: []planmodifier.String{
-									stringplanmodifier.UseStateForUnknown(),
+									stringplanmodifier.UseNonNullStateForUnknown(),
 								},
 							},
 
@@ -1395,7 +1395,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 								Computed:    true,
 
 								PlanModifiers: []planmodifier.Int32{
-									int32planmodifier.UseStateForUnknown(),
+									int32planmodifier.UseNonNullStateForUnknown(),
 								},
 							},
 
@@ -1404,7 +1404,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 								Computed:    true,
 
 								PlanModifiers: []planmodifier.Int32{
-									int32planmodifier.UseStateForUnknown(),
+									int32planmodifier.UseNonNullStateForUnknown(),
 								},
 							},
 						},
@@ -1415,7 +1415,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 						Computed:    true,
 
 						PlanModifiers: []planmodifier.Object{
-							objectplanmodifier.UseStateForUnknown(),
+							objectplanmodifier.UseNonNullStateForUnknown(),
 						},
 
 						Attributes: map[string]schema.Attribute{
@@ -1425,7 +1425,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 								Computed:            true,
 
 								PlanModifiers: []planmodifier.String{
-									stringplanmodifier.UseStateForUnknown(),
+									stringplanmodifier.UseNonNullStateForUnknown(),
 								},
 							},
 
@@ -1434,7 +1434,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 								Computed:    true,
 
 								PlanModifiers: []planmodifier.Int32{
-									int32planmodifier.UseStateForUnknown(),
+									int32planmodifier.UseNonNullStateForUnknown(),
 								},
 							},
 
@@ -1443,7 +1443,7 @@ func (r *RiskPredictorResource) Schema(ctx context.Context, req resource.SchemaR
 								Computed:    true,
 
 								PlanModifiers: []planmodifier.Int32{
-									int32planmodifier.UseStateForUnknown(),
+									int32planmodifier.UseNonNullStateForUnknown(),
 								},
 							},
 						},

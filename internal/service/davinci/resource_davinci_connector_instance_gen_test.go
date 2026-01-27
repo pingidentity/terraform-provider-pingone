@@ -130,7 +130,7 @@ func testAccDavinciConnectorInstance_MinimalMaximal(t *testing.T, withBootstrapC
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["id"]), nil
@@ -245,7 +245,7 @@ func TestAccDavinciConnectorInstance_Properties(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -268,7 +268,7 @@ func TestAccDavinciConnectorInstance_ComplexProperties(t *testing.T) {
 		return func(s *terraform.State) (string, error) {
 			rs, ok := s.RootModule().Resources[resourceFullName]
 			if !ok {
-				return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+				return "", fmt.Errorf("resource not found: %s", resourceFullName)
 			}
 
 			return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["id"]), nil
@@ -1097,7 +1097,7 @@ func davinciConnectorInstance_GetIDs(resourceName string, environmentId, id *str
 
 		rs, ok := s.RootModule().Resources[resourceName]
 		if !ok {
-			return fmt.Errorf("Resource Not found: %s", resourceName)
+			return fmt.Errorf("resource not found: %s", resourceName)
 		}
 		if environmentId != nil {
 			*environmentId = rs.Primary.Attributes["environment_id"]

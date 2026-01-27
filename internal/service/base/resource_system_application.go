@@ -148,7 +148,7 @@ func (r *SystemApplicationResource) Schema(ctx context.Context, req resource.Sch
 				Computed:    true,
 
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.UseNonNullStateForUnknown(),
 				},
 			},
 
@@ -825,12 +825,12 @@ func FetchApplicationsByTypeWithTimeout(ctx context.Context, apiClient *manageme
 
 								data, err := json.Marshal(applicationItem)
 								if err != nil {
-									return nil, pageCursor.HTTPResponse, fmt.Errorf("Error marshalling application: %s", err)
+									return nil, pageCursor.HTTPResponse, fmt.Errorf("error marshalling application: %s", err)
 								}
 
 								var common management.Application
 								if err := json.Unmarshal(data, &common); err != nil {
-									return nil, pageCursor.HTTPResponse, fmt.Errorf("Error unmarshalling application: %s", err)
+									return nil, pageCursor.HTTPResponse, fmt.Errorf("error unmarshalling application: %s", err)
 								}
 
 								if common.GetType() == applicationType {
@@ -848,7 +848,7 @@ func FetchApplicationsByTypeWithTimeout(ctx context.Context, apiClient *manageme
 				&applicationResponse,
 			)...)
 			if diags.HasError() {
-				return nil, "err", fmt.Errorf("Error reading applications")
+				return nil, "err", fmt.Errorf("error reading applications")
 			}
 
 			tflog.Debug(ctx, "Find applications by type attempt", map[string]interface{}{

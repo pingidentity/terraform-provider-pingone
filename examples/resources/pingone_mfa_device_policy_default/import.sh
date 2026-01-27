@@ -1,0 +1,1 @@
+terraform import pingone_mfa_device_policy_default.example <environment_id>

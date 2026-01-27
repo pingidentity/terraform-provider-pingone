@@ -95,7 +95,7 @@ func (r *davinciApplicationResource) Schema(ctx context.Context, req resource.Sc
 						Computed:  true,
 						Sensitive: true,
 						PlanModifiers: []planmodifier.String{
-							stringplanmodifier.UseStateForUnknown(),
+							stringplanmodifier.UseNonNullStateForUnknown(),
 						},
 					},
 				},
@@ -117,7 +117,7 @@ func (r *davinciApplicationResource) Schema(ctx context.Context, req resource.Sc
 				Computed:    true,
 				Description: "The ID of this resource.",
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.UseNonNullStateForUnknown(),
 				},
 				Validators: []validator.String{
 					stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), "Must be a valid UUID"),
@@ -135,7 +135,7 @@ func (r *davinciApplicationResource) Schema(ctx context.Context, req resource.Sc
 						Computed:  true,
 						Sensitive: true,
 						PlanModifiers: []planmodifier.String{
-							stringplanmodifier.UseStateForUnknown(),
+							stringplanmodifier.UseNonNullStateForUnknown(),
 						},
 					},
 					"enforce_signed_request_openid": schema.BoolAttribute{

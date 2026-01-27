@@ -122,7 +122,7 @@ jobs:
           echo "version=$(go tool golangci-lint version --format short)" >> $GITHUB_OUTPUT
 
       - name: lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v9
         with:
           version: "${{ steps.golangci-lint-version.outputs.version }}"
 

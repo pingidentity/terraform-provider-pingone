@@ -54,7 +54,7 @@ func (v ResourceIDValue) StringSemanticEquals(ctx context.Context, newValuable b
 	}
 
 	// Check whether the flows are equal, ignoring environment metadata and designer UI cues.  Just the flow configuration
-	return cmp.Equal(v.StringValue.ValueString(), newValue.ValueString()), diags
+	return cmp.Equal(v.ValueString(), newValue.ValueString()), diags
 }
 
 func NewResourceIDNull() ResourceIDValue {

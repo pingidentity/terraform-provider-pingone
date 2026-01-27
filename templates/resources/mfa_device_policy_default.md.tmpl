@@ -1,0 +1,36 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.RenderedProviderName}}"
+subcategory: "MFA"
+description: |-
+{{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+~> Only one `pingone_mfa_device_policy_default` resource should be configured for an environment.  If multiple `pingone_mfa_device_policy_default` resource definitions exist in HCL code, these are likely to conflict with each other on apply.
+
+~> When destroying the resource, the default MFA device policy will be reset to it's original configuration, and then removed from Terraform's state.  The MFA device policy itself will not be removed from the PingOne service.
+
+## Example Usage - PingOne MFA Policy
+
+The following example configures the default MFA device policy for a PingOne MFA environment, enabling mobile, TOTP, and FIDO2 authentication methods.
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-pingone-mfa.tf") }}
+
+## Example Usage - PingID Policy
+
+The following example configures the default MFA device policy for a PingID environment, enabling mobile, desktop, and Yubikey authentication methods.
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-pingid.tf") }}
+
+{{ .SchemaMarkdown | trimspace }}
+
+{{ if .HasImport -}}
+## Import
+
+Import is supported using the following syntax, where attributes in `<>` brackets are replaced with the relevant ID.  For example, `<environment_id>` should be replaced with the ID of the environment to import from.
+
+{{ codefile "shell" (printf "%s%s%s" "examples/resources/" .Name "/import.sh") }}
+{{- end }}
