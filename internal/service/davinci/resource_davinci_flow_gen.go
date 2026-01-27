@@ -2233,7 +2233,7 @@ func (r *davinciFlowResource) Update(ctx context.Context, req resource.UpdateReq
 		},
 		"ReplaceFlowById",
 		framework.DefaultCustomError,
-		framework.InsufficientPrivilegeRetryable,
+		framework.DefaultRetryable,
 		&responseData,
 	)...)
 

@@ -698,7 +698,7 @@ func (r *davinciApplicationFlowPolicyResource) Update(ctx context.Context, req r
 		},
 		"ReplaceFlowPolicyByIdUsingDavinciApplicationId",
 		framework.DefaultCustomError,
-		framework.InsufficientPrivilegeRetryable,
+		framework.DefaultRetryable,
 		&responseData,
 	)...)
 

@@ -378,7 +378,7 @@ func (r *davinciConnectorInstanceResource) Update(ctx context.Context, req resou
 		},
 		"ReplaceConnectorInstanceById",
 		framework.DefaultCustomError,
-		framework.InsufficientPrivilegeRetryable,
+		framework.DefaultRetryable,
 		&responseData,
 	)...)
 

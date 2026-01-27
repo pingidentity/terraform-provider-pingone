@@ -693,7 +693,7 @@ func (r *davinciVariableResource) Update(ctx context.Context, req resource.Updat
 		},
 		"ReplaceVariableById",
 		framework.DefaultCustomError,
-		framework.InsufficientPrivilegeRetryable,
+		framework.DefaultRetryable,
 		&responseData,
 	)...)
 

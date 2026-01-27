@@ -469,7 +469,7 @@ func (r *davinciApplicationResource) Update(ctx context.Context, req resource.Up
 		},
 		"ReplaceDavinciApplicationById",
 		framework.DefaultCustomError,
-		framework.InsufficientPrivilegeRetryable,
+		framework.DefaultRetryable,
 		&responseData,
 	)...)
 
