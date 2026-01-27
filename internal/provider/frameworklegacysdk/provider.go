@@ -20,7 +20,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/client"
-	pingone "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/authorize"
@@ -267,7 +266,7 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 		},
 	}
 
-	config := &pingone.Config{
+	config := &client.Config{
 		ClientID:      data.ClientID.ValueString(),
 		ClientSecret:  data.ClientSecret.ValueString(),
 		EnvironmentID: data.EnvironmentID.ValueString(),

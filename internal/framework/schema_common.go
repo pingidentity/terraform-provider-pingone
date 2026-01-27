@@ -107,13 +107,13 @@ func Attr_DataFilter(description SchemaAttributeDescription, acceptableAttribute
 	childNameAttrDescriptionFmt := fmt.Sprintf("The attribute name to filter on.  Must be one of the following values: `%s`.", strings.Join(acceptableAttributes, "`, `"))
 	childNameDescription := SchemaAttributeDescription{
 		MarkdownDescription: childNameAttrDescriptionFmt,
-		Description:         strings.Replace(childNameAttrDescriptionFmt, "`", "\"", -1),
+		Description:         strings.ReplaceAll(childNameAttrDescriptionFmt, "`", "\""),
 	}
 
 	childValueAttrDescriptionFmt := "The possible values (case sensitive) of the attribute defined in the `name` parameter to filter."
 	childValueDescription := SchemaAttributeDescription{
 		MarkdownDescription: childValueAttrDescriptionFmt,
-		Description:         strings.Replace(childValueAttrDescriptionFmt, "`", "\"", -1),
+		Description:         strings.ReplaceAll(childValueAttrDescriptionFmt, "`", "\""),
 	}
 
 	// The parent attribute validators

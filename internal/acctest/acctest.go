@@ -463,7 +463,7 @@ func CheckForResourceDestroyCustomHTTPCode(r *http.Response, err error, customHt
 	if err != nil {
 
 		if r == nil {
-			return false, fmt.Errorf("Response object does not exist and no error detected")
+			return false, fmt.Errorf("response object does not exist and no error detected")
 		}
 
 		if r.StatusCode == customHttpCode {

@@ -55,7 +55,7 @@ func sweepGroups(region string) error {
 		pagedIterator := apiClient.GroupsApi.ReadAllGroups(ctx, environment.GetId()).Execute()
 		for pageCursor, err := range pagedIterator {
 			if err != nil {
-				return fmt.Errorf("Error getting groups: %s", err)
+				return fmt.Errorf("error getting groups: %s", err)
 			}
 
 			if groups, ok := pageCursor.EntityArray.Embedded.GetGroupsOk(); ok {
@@ -100,7 +100,7 @@ func sweepPopulations(region string) error {
 		pagedIterator := apiClient.PopulationsApi.ReadAllPopulations(ctx, environment.GetId()).Execute()
 		for pageCursor, err := range pagedIterator {
 			if err != nil {
-				return fmt.Errorf("Error getting populations: %s", err)
+				return fmt.Errorf("error getting populations: %s", err)
 			}
 
 			if populations, ok := pageCursor.EntityArray.Embedded.GetPopulationsOk(); ok {
@@ -147,7 +147,7 @@ func sweepSOPs(region string) error {
 		pagedIterator := apiClient.SignOnPoliciesApi.ReadAllSignOnPolicies(ctx, environment.GetId()).Execute()
 		for pageCursor, err := range pagedIterator {
 			if err != nil {
-				return fmt.Errorf("Error getting sign on policies: %s", err)
+				return fmt.Errorf("error getting sign on policies: %s", err)
 			}
 
 			if signOnPolicies, ok := pageCursor.EntityArray.Embedded.GetSignOnPoliciesOk(); ok {

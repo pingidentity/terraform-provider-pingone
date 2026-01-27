@@ -61,7 +61,7 @@ func VerifyVoicePhraseContent_GetIDs(resourceName string, environmentID, voicePh
 
 		rs, ok := s.RootModule().Resources[resourceName]
 		if !ok {
-			return fmt.Errorf("Resource Not found: %s", resourceName)
+			return fmt.Errorf("resource not found: %s", resourceName)
 		}
 
 		if resourceID != nil {

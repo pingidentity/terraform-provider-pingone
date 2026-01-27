@@ -1855,8 +1855,8 @@ func riskPolicyCompactNameFromReferenceOk(v *string, ok, useScores bool) basetyp
 	}
 
 	if useScores {
-		return types.StringValue(strings.Replace(strings.Replace(*v, "${details.", "", -1), ".level}", "", -1))
+		return types.StringValue(strings.ReplaceAll(strings.ReplaceAll(*v, "${details.", ""), ".level}", ""))
 	} else {
-		return types.StringValue(strings.Replace(strings.Replace(*v, "${details.aggregatedWeights.", "", -1), "}", "", -1))
+		return types.StringValue(strings.ReplaceAll(strings.ReplaceAll(*v, "${details.aggregatedWeights.", ""), "}", ""))
 	}
 }

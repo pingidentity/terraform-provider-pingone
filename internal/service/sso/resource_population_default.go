@@ -613,7 +613,7 @@ func FetchDefaultPopulationWithTimeout(ctx context.Context, apiClient *managemen
 				&defaultPopulation,
 			)...)
 			if diags.HasError() {
-				return nil, "err", fmt.Errorf("Error reading populations")
+				return nil, "err", fmt.Errorf("error reading populations")
 			}
 
 			tflog.Debug(ctx, "Find default population attempt", map[string]interface{}{

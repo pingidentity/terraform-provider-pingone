@@ -1,28 +1,15 @@
-issues:
-  exclude-rules:
-    # Exclude issues bypassing staticcheck.conf
-    - linters:
-        - staticcheck
-      text: "SA1019:"
-
-    - linters:
-        - unparam
-      text: "always receives"
-
-  max-same-issues: 0
-
+version: "2"
 linters:
-  disable-all: true
+  default: none
   enable:
+    - copyloopvar
     # - deadcode
     - errcheck
-    - copyloopvar
-    - gofmt
-    - mnd
-    - gosimple
+    - govet
     - ineffassign
     - makezero
     - misspell
+    - mnd
     - nakedret
     - nilerr
     - nolintlint
@@ -31,39 +18,63 @@ linters:
     - unconvert
     - unparam
     # - varcheck
-    - govet
-
-linters-settings:
-  errcheck:
-    exclude-functions:
-      - (*github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema.ResourceData).Set
-      - (*github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema.ResourceDiff).SetNewComputed
-      - (*github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema.ResourceDiff).ForceNew
-      - io:Close
-  
-  mnd:
-    checks:
-      - argument
-    ignored-functions:
-      - request.ConstantWaiterDelay
-      - request.WithWaiterMaxAttempts
-      # Terraform Plugin SDK
-      - resource.Retry
-      - schema.DefaultTimeout
-      - validation.*
-      # Go
-      - make
-      - strconv.FormatFloat
-      - strconv.FormatInt
-      - strconv.ParseFloat
-      - strconv.ParseInt
-      - strings.SplitN
-  nolintlint:
-    require-explanation: true
-    require-specific: true
-    allow-no-explanation:
-      - unparam
-      - gomnd
-
-run:
-  timeout: 35m
+  settings:
+    errcheck:
+      exclude-functions:
+        - (*github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema.ResourceData).Set
+        - (*github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema.ResourceDiff).SetNewComputed
+        - (*github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema.ResourceDiff).ForceNew
+        - io:Close
+    mnd:
+      checks:
+        - argument
+      ignored-functions:
+        - request.ConstantWaiterDelay
+        - request.WithWaiterMaxAttempts
+        # Terraform Plugin SDK
+        - resource.Retry
+        - schema.DefaultTimeout
+        - validation.*
+        # Go
+        - make
+        - strconv.FormatFloat
+        - strconv.FormatInt
+        - strconv.ParseFloat
+        - strconv.ParseInt
+        - strings.SplitN
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+      allow-no-explanation:
+        - unparam
+        - gomnd
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      # Exclude issues bypassing staticcheck.conf
+      - linters:
+          - staticcheck
+        text: 'SA1019:'
+      - linters:
+          - unparam
+        text: always receives
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+issues:
+  max-same-issues: 0
+formatters:
+  enable:
+    - gofmt
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

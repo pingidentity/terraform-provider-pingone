@@ -111,7 +111,7 @@ func TestAccLanguageTranslation_Full(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["locale"]), nil
@@ -310,7 +310,7 @@ func languageTranslation_ValidateKeys(resourceName string, expectedKeys []string
 		// Ensure all expected keys are present
 		for _, key := range expectedKeys {
 			if !actualKeys[key] {
-				return fmt.Errorf("Expected key %s not found in translations", key)
+				return fmt.Errorf("expected key %s not found in translations", key)
 			}
 		}
 
@@ -428,11 +428,11 @@ func languageTranslation_ValidateTranslationStillExists(resourceName, locale str
 		}
 
 		if rs.Primary.Attributes["locale"] != locale {
-			return fmt.Errorf("Expected locale %s to still exist, but it does not", locale)
+			return fmt.Errorf("expected locale %s to still exist, but it does not", locale)
 		}
 
 		if rs.Primary.Attributes["translations.0.translated_text"] != "Skapa nytt konto" {
-			return fmt.Errorf("Expected translation to still exist, but it does not")
+			return fmt.Errorf("expected translation to still exist, but it does not")
 		}
 
 		return nil
@@ -524,7 +524,7 @@ func languageTranslation_GetIDs(resourceName string, environmentId, id *string) 
 
 		rs, ok := s.RootModule().Resources[resourceName]
 		if !ok {
-			return fmt.Errorf("Resource Not found: %s", resourceName)
+			return fmt.Errorf("resource not found: %s", resourceName)
 		}
 		if environmentId != nil {
 			*environmentId = rs.Primary.Attributes["environment_id"]

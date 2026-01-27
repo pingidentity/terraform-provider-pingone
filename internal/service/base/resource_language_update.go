@@ -324,11 +324,11 @@ func updateLanguageEnabledDefaultSequence(ctx context.Context, apiClient *manage
 			)
 			diags = append(diags, d...)
 			if diags.HasError() {
-				return nil, "err", fmt.Errorf("Error reading language")
+				return nil, "err", fmt.Errorf("error reading language")
 			}
 
 			if responseCreate == nil {
-				return nil, "err", fmt.Errorf("Language not found")
+				return nil, "err", fmt.Errorf("language not found")
 			}
 
 			// Run the API call
@@ -345,11 +345,11 @@ func updateLanguageEnabledDefaultSequence(ctx context.Context, apiClient *manage
 			)
 			diags = append(diags, d...)
 			if diags.HasError() {
-				return nil, "err", fmt.Errorf("Error reading language")
+				return nil, "err", fmt.Errorf("error reading language")
 			}
 
 			if response == nil {
-				return nil, "err", fmt.Errorf("Language not found")
+				return nil, "err", fmt.Errorf("language not found")
 			}
 
 			if response.(*management.Language).GetEnabled() != enabled {

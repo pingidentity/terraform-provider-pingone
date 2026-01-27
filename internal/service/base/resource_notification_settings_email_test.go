@@ -105,7 +105,7 @@ func TestAccNotificationSettingsEmail_SMTP_Full(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return rs.Primary.ID, nil
@@ -513,7 +513,7 @@ func TestAccNotificationSettingsEmail_CustomProvider_GET(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return rs.Primary.ID, nil
@@ -706,7 +706,7 @@ func TestAccNotificationSettingsEmail_CustomProvider_POST_NoKeyValuesBody(t *tes
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return rs.Primary.ID, nil
@@ -900,7 +900,7 @@ func TestAccNotificationSettingsEmail_CustomProvider_POST_KeyValuesBody(t *testi
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return rs.Primary.ID, nil
@@ -1053,7 +1053,7 @@ func TestAccNotificationSettingsEmail_CustomProvider_POST_RawBody(t *testing.T) 
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return rs.Primary.ID, nil
