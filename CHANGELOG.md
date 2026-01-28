@@ -1,4 +1,33 @@
-## 1.15.0 (Unreleased)
+## 1.15.0 (28 January 2026)
+
+NOTES:
+
+* `resource/pingone_mfa_policy`: The previously deprecated `pingone_mfa_policy` resource has been removed. Please use `pingone_mfa_device_policy` instead. ([#1187](https://github.com/pingidentity/terraform-provider-pingone/issues/1187))
+* bump Go v1.24.6 => v1.25.6 ([#1200](https://github.com/pingidentity/terraform-provider-pingone/issues/1200))
+* bump `github.com/hashicorp/terraform-plugin-framework-timeouts` v0.5.0 => v0.7.0 ([#1198](https://github.com/pingidentity/terraform-provider-pingone/issues/1198))
+* bump `github.com/hashicorp/terraform-plugin-framework-validators` v0.18.0 => v0.19.0 ([#1198](https://github.com/pingidentity/terraform-provider-pingone/issues/1198))
+* bump `github.com/hashicorp/terraform-plugin-framework` v1.15.0 => v1.17.0 ([#1197](https://github.com/pingidentity/terraform-provider-pingone/issues/1197))
+* bump `github.com/hashicorp/terraform-plugin-log` v0.9.0 => v0.10.0 ([#1197](https://github.com/pingidentity/terraform-provider-pingone/issues/1197))
+* bump `github.com/hashicorp/terraform-plugin-testing` v1.13.3 => v1.14.0 ([#1198](https://github.com/pingidentity/terraform-provider-pingone/issues/1198))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.62.0 => v0.63.0 ([#1184](https://github.com/pingidentity/terraform-provider-pingone/issues/1184))
+* bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.23.2 => v0.24.1 ([#1189](https://github.com/pingidentity/terraform-provider-pingone/issues/1189))
+* bump `github.com/patrickcping/pingone-go-sdk-v2` v0.14.3 => v0.14.5 ([#1188](https://github.com/pingidentity/terraform-provider-pingone/issues/1188))
+* bump `github.com/pingidentity/pingone-go-client` v0.2.0 => v0.3.1 ([#1169](https://github.com/pingidentity/terraform-provider-pingone/issues/1169))
+* bump `github.com/pingidentity/pingone-go-client` v0.3.1 => v0.5.0 ([#1138](https://github.com/pingidentity/terraform-provider-pingone/issues/1138))
+* bump `github.com/pingidentity/pingone-go-client` v0.5.0 => v0.6.0 ([#1191](https://github.com/pingidentity/terraform-provider-pingone/issues/1191))
+* bump `golang.org/x/crypto` v0.42.0 => v0.45.0 ([#1168](https://github.com/pingidentity/terraform-provider-pingone/issues/1168))
+
+FEATURES:
+
+* **New Data Source:** `pingone_risk_predictor` ([#1193](https://github.com/pingidentity/terraform-provider-pingone/issues/1193))
+* **New Data Source:** `pingone_risk_predictors` ([#1193](https://github.com/pingidentity/terraform-provider-pingone/issues/1193))
+* **New Resource:** `pingone_mfa_device_policy_default` ([#1187](https://github.com/pingidentity/terraform-provider-pingone/issues/1187))
+* **New Resource:** `pingone_rate_limit_configuration` ([#1176](https://github.com/pingidentity/terraform-provider-pingone/issues/1176))
+
+ENHANCEMENTS:
+
+* `data-source/pingone_application`: Added `include_x5t`, `op_session_check_enabled` and `request_scopes_for_multiple_resources_enabled` attributes to the `oidc_options` block ([#1181](https://github.com/pingidentity/terraform-provider-pingone/issues/1181))
+* `resource/pingone_application`: Added `include_x5t`, `op_session_check_enabled` and `request_scopes_for_multiple_resources_enabled` attributes to the `oidc_options` block ([#1181](https://github.com/pingidentity/terraform-provider-pingone/issues/1181))
 
 ## 1.14.0 (6 November 2025)
 
