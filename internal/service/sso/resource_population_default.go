@@ -130,7 +130,7 @@ func (r *PopulationDefaultResource) Schema(ctx context.Context, req resource.Sch
 				Optional: true,
 				Computed: true,
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.UseNonNullStateForUnknown(),
 				},
 				Description: "The language locale for the population. If absent, the environment default is used.",
 			},
@@ -146,7 +146,7 @@ func (r *PopulationDefaultResource) Schema(ctx context.Context, req resource.Sch
 				Computed:    true,
 				Description: "The object reference to the theme resource.",
 				PlanModifiers: []planmodifier.Object{
-					objectplanmodifier.UseStateForUnknown(),
+					objectplanmodifier.UseNonNullStateForUnknown(),
 				},
 			},
 		},
@@ -613,7 +613,7 @@ func FetchDefaultPopulationWithTimeout(ctx context.Context, apiClient *managemen
 				&defaultPopulation,
 			)...)
 			if diags.HasError() {
-				return nil, "err", fmt.Errorf("Error reading populations")
+				return nil, "err", fmt.Errorf("error reading populations")
 			}
 
 			tflog.Debug(ctx, "Find default population attempt", map[string]interface{}{

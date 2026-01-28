@@ -213,7 +213,7 @@ func (r *ResourceAttributeResource) Schema(ctx context.Context, req resource.Sch
 				MarkdownDescription: typeDescription.MarkdownDescription,
 				Computed:            true,
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.UseNonNullStateForUnknown(),
 				},
 			},
 		},

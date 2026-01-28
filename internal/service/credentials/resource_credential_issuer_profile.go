@@ -96,7 +96,7 @@ func (r *CredentialIssuerProfileResource) Schema(ctx context.Context, req resour
 				CustomType: timetypes.RFC3339Type{},
 
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.UseNonNullStateForUnknown(),
 				},
 			},
 

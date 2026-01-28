@@ -62,7 +62,7 @@ func CredentialIssuanceRule_GetIDs(resourceName string, environmentID, credentia
 
 		rs, ok := s.RootModule().Resources[resourceName]
 		if !ok {
-			return fmt.Errorf("Resource Not found: %s", resourceName)
+			return fmt.Errorf("resource not found: %s", resourceName)
 		}
 
 		if resourceID != nil {
@@ -76,7 +76,7 @@ func CredentialIssuanceRule_GetIDs(resourceName string, environmentID, credentia
 		if applicationID != nil {
 			app, ok := s.RootModule().Resources[strings.Replace(resourceName, "_credential_issuance_rule.", "_application.", 1)]
 			if !ok {
-				return fmt.Errorf("Resource Not found: %s", resourceName)
+				return fmt.Errorf("resource not found: %s", resourceName)
 			}
 			*applicationID = app.Primary.ID
 		}

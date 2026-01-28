@@ -28,7 +28,7 @@ func ResourceScopePingOneAPI_CheckDestroy(s *terraform.State) error {
 
 	re, err := regexp.Compile(`^p1:(read|update):user$`)
 	if err != nil {
-		return fmt.Errorf("Cannot compile regex check for predefined scopes.")
+		return fmt.Errorf("cannot compile regex check for predefined scopes")
 	}
 
 	for _, rs := range s.RootModule().Resources {
@@ -72,7 +72,7 @@ func ResourceScopePingOneAPI_GetIDs(resourceName string, environmentID, openidRe
 
 		rs, ok := s.RootModule().Resources[resourceName]
 		if !ok {
-			return fmt.Errorf("Resource Not found: %s", resourceName)
+			return fmt.Errorf("resource not found: %s", resourceName)
 		}
 
 		if resourceID != nil {

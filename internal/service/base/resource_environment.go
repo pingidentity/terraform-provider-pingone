@@ -223,7 +223,7 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 				}()),
 
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.UseNonNullStateForUnknown(),
 					stringplanmodifier.RequiresReplace(),
 				},
 
@@ -257,7 +257,7 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 				CustomType: pingonetypes.ResourceIDType{},
 
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.UseNonNullStateForUnknown(),
 				},
 			},
 
@@ -1140,7 +1140,7 @@ func environmentCreateCustomErrorHandler(_ *http.Response, p1Error *model.P1Erro
 		if details, ok := p1Error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
 			if target, ok := details[0].GetTargetOk(); ok && *target == "region" {
 				diags.AddError(
-					fmt.Sprintf("Incompatible environment region for the organization tenant.  Allowed regions: %v.", details[0].GetInnerError().AllowedValues),
+					fmt.Sprintf("incompatible environment region for the organization tenant.  Allowed regions: %v.", details[0].GetInnerError().AllowedValues),
 					"Ensure the region parameter is correctly set.  If the region parameter is correctly set in the resource creation, please raise an issue with the provider maintainers.",
 				)
 

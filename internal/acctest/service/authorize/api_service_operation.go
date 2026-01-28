@@ -61,7 +61,7 @@ func APIServiceOperation_GetIDs(resourceName string, environmentID, apiServiceID
 
 		rs, ok := s.RootModule().Resources[resourceName]
 		if !ok {
-			return fmt.Errorf("Resource Not found: %s", resourceName)
+			return fmt.Errorf("resource not found: %s", resourceName)
 		}
 
 		if resourceID != nil {

@@ -58,7 +58,7 @@ func TestAccMFADevicePolicyDefault_RemovalDrift(t *testing.T) {
 					func(s *terraform.State) error {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 						environmentID = rs.Primary.Attributes["environment_id"]
 						return nil
@@ -150,7 +150,7 @@ func TestAccMFADevicePolicyDefault_Full(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return rs.Primary.Attributes["environment_id"], nil
@@ -972,7 +972,7 @@ func TestAccMFADevicePolicyDefault_DriftCorrection(t *testing.T) {
 					func(s *terraform.State) error {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 						environmentID = rs.Primary.Attributes["environment_id"]
 						policyID = rs.Primary.ID

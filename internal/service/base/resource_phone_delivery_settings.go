@@ -339,7 +339,7 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 				Computed:            true,
 
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.UseNonNullStateForUnknown(),
 				},
 			},
 
@@ -948,7 +948,7 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 				CustomType: timetypes.RFC3339Type{},
 
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.UseNonNullStateForUnknown(),
 				},
 			},
 

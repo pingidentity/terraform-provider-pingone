@@ -36,7 +36,7 @@ func ResourceSchemaItems() map[string]schema.Attribute {
 
 			PlanModifiers: []planmodifier.String{
 				stringplanmodifier.RequiresReplace(),
-				stringplanmodifier.UseStateForUnknown(),
+				stringplanmodifier.UseNonNullStateForUnknown(),
 			},
 		},
 		"initial_client_secret": schema.StringAttribute{

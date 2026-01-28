@@ -138,7 +138,7 @@ func TestAccLanguage_Full(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -241,19 +241,19 @@ func TestAccLanguage_BadParameters(t *testing.T) {
 			{
 				ResourceName: resourceFullName,
 				ImportState:  true,
-				ExpectError:  regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/language_id" and must match regex: .*`),
+				ExpectError:  regexp.MustCompile(`invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/language_id" and must match regex: .*`),
 			},
 			{
 				ResourceName:  resourceFullName,
 				ImportStateId: "/",
 				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/language_id" and must match regex: .*`),
+				ExpectError:   regexp.MustCompile(`invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/language_id" and must match regex: .*`),
 			},
 			{
 				ResourceName:  resourceFullName,
 				ImportStateId: "badformat/badformat",
 				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/language_id" and must match regex: .*`),
+				ExpectError:   regexp.MustCompile(`invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/language_id" and must match regex: .*`),
 			},
 		},
 	})
