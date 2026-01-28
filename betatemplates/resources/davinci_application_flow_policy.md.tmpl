@@ -9,6 +9,8 @@ description: |-
 
 {{ .Description | trimspace }}
 
+~> When destroying `pingone_davinci_flow` resources that are referenced in the `flow_distributions` value of a `pingone_davinci_application_flow_policy`, you may need to set `lifecycle.create_before_destroy` to `true` in the application flow policy. This will ensure that the policy is updated first before any flows are destroyed, and will prevent API errors caused by the flows still being referenced in the policy. See the example below.
+
 {{ if .HasExample -}}
 ## Example Usage
 
