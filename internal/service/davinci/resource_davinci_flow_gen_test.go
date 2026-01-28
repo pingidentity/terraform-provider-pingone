@@ -436,7 +436,7 @@ resource "pingone_population" "%[2]s" {
 
   name = "%[2]s"
 }
-  
+
 resource "pingone_user" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
@@ -639,7 +639,7 @@ resource "pingone_population" "%[3]s" {
 
   name = "%[3]s"
 }
-  
+
 resource "pingone_user" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
