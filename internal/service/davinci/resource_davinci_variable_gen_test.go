@@ -482,6 +482,15 @@ resource "pingone_population" "%[2]s" {
 
   name = "%[2]s"
 }
+  
+resource "pingone_user" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  population_id = pingone_population.%[2]s.id
+
+  username = "exampleuser%[2]s"
+  email    = "exampleuser@pingidentity.com"
+}
 
 resource "pingone_davinci_flow" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
@@ -507,13 +516,13 @@ resource "pingone_davinci_flow" "%[2]s" {
                 "value" : []
               },
               "username" : {
-                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"${pingone_user.%[2]s.id}\"\n      }\n    ]\n  }\n]"
               },
               "population" : {
                 "value" : "${pingone_population.%[2]s.id}"
               },
               "userIdentifierForFindUser" : {
-                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"${pingone_user.%[2]s.id}\"\n      }\n    ]\n  }\n]"
               }
             })
           }
@@ -719,6 +728,15 @@ resource "pingone_population" "%[2]s" {
 
   name = "%[2]s"
 }
+  
+resource "pingone_user" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  population_id = pingone_population.%[2]s.id
+
+  username = "exampleuser%[2]s"
+  email    = "exampleuser@pingidentity.com"
+}
 
 resource "pingone_davinci_flow" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
@@ -744,13 +762,13 @@ resource "pingone_davinci_flow" "%[2]s" {
                 "value" : []
               },
               "username" : {
-                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"${pingone_user.%[2]s.id}\"\n      }\n    ]\n  }\n]"
               },
               "population" : {
                 "value" : "${pingone_population.%[2]s.id}"
               },
               "userIdentifierForFindUser" : {
-                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"${pingone_user.%[2]s.id}\"\n      }\n    ]\n  }\n]"
               }
             })
           }
