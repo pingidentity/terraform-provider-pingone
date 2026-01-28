@@ -113,6 +113,19 @@ func (r *davinciFlowResource) ValidateConfig(ctx context.Context, req resource.V
 			)
 		}
 	}
+
+	// Warn if log_level is set to Debug (3)
+	if !data.Settings.IsNull() && !data.Settings.IsUnknown() {
+		settingsAttrs := data.Settings.Attributes()
+		logLevel := settingsAttrs["log_level"].(types.Int32)
+		if !logLevel.IsNull() && !logLevel.IsUnknown() && logLevel.ValueInt32() == 3 {
+			resp.Diagnostics.AddAttributeWarning(
+				path.Root("settings").AtMapKey("log_level"),
+				"DaVinci flow settings.log_level set to Debug",
+				"The flow log level is set to Debug (3). For standard operation, it's recommended to set the log level to Info (2) or None (1) unless active troubleshooting is needed.",
+			)
+		}
+	}
 }
 
 func (r *davinciFlowResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
