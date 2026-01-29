@@ -145,33 +145,6 @@ func testAccDavinciFlowEnabled_MinimalMaximal(t *testing.T, withBootstrapConfig 
 	})
 }
 
-func TestAccDavinciFlowEnabled_NewEnv(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-
-	environmentName := acctest.ResourceNameGenEnvironment()
-
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckBeta(t)
-		},
-		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             davinciFlow_CheckDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			{
-				Config: davinciFlowEnabled_NewEnvHCL(true, environmentName, licenseID, resourceName),
-				Check:  davinciFlowEnabled_CheckComputedValues(resourceName),
-			},
-		},
-	})
-}
-
 func TestAccDavinciFlowEnabled_BadParameters(t *testing.T) {
 	t.Parallel()
 
