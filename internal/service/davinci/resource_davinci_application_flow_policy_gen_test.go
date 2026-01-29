@@ -139,7 +139,7 @@ func testAccDavinciApplicationFlowPolicy_MinimalMaximal(t *testing.T, withBootst
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["davinci_application_id"], rs.Primary.Attributes["id"]), nil
@@ -199,6 +199,21 @@ func davinciApplicationFlowPolicy_MinimalHCL(resourceName string, withBootstrapC
 	return fmt.Sprintf(`
 		%[1]s
 
+resource "pingone_population" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[2]s"
+}
+
+resource "pingone_user" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  population_id = pingone_population.%[2]s.id
+
+  username = "exampleuser%[2]s"
+  email    = "exampleuser@pingidentity.com"
+}
+
 resource "pingone_davinci_flow" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[2]s"
@@ -223,13 +238,13 @@ resource "pingone_davinci_flow" "%[2]s" {
                 "value" : []
               },
               "username" : {
-                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"${pingone_user.%[2]s.id}\"\n      }\n    ]\n  }\n]"
               },
               "population" : {
-                "value" : "c9f3fb3f-11e9-4eb0-b4ba-9fb7789a8418"
+                "value" : "${pingone_population.%[2]s.id}"
               },
               "userIdentifierForFindUser" : {
-                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"${pingone_user.%[2]s.id}\"\n      }\n    ]\n  }\n]"
               }
             })
           }
@@ -244,7 +259,6 @@ resource "pingone_davinci_flow" "%[2]s" {
           locked     = false
           grabbable  = true
           pannable   = false
-          classes    = ""
         }
       }
     }
@@ -272,10 +286,8 @@ resource "pingone_davinci_flow" "%[2]s" {
   }
 
   settings = {
-    csp                              = "worker-src 'self' blob:; script-src 'self' https://cdn.jsdelivr.net https://code.jquery.com https://devsdk.singularkey.com http://cdnjs.cloudflare.com 'unsafe-inline' 'unsafe-eval';"
-    intermediate_loading_screen_css  = ""
-    intermediate_loading_screen_html = ""
-    log_level                        = 2
+    csp       = "worker-src 'self' blob:; script-src 'self' https://cdn.jsdelivr.net https://code.jquery.com https://devsdk.singularkey.com http://cdnjs.cloudflare.com 'unsafe-inline' 'unsafe-eval';"
+    log_level = 2
   }
 
   output_schema = {
@@ -318,6 +330,21 @@ func davinciApplicationFlowPolicy_CompleteHCL(resourceName string, withBootstrap
 	return fmt.Sprintf(`
 		%[1]s
 
+resource "pingone_population" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[2]s"
+}
+
+resource "pingone_user" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  population_id = pingone_population.%[2]s.id
+
+  username = "exampleuser%[2]s"
+  email    = "exampleuser@pingidentity.com"
+}
+
 resource "pingone_davinci_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[2]s"
@@ -347,13 +374,13 @@ resource "pingone_davinci_flow" "%[2]s-first" {
                 "value" : []
               },
               "username" : {
-                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"${pingone_user.%[2]s.id}\"\n      }\n    ]\n  }\n]"
               },
               "population" : {
-                "value" : "c9f3fb3f-11e9-4eb0-b4ba-9fb7789a8418"
+                "value" : "${pingone_population.%[2]s.id}"
               },
               "userIdentifierForFindUser" : {
-                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"${pingone_user.%[2]s.id}\"\n      }\n    ]\n  }\n]"
               }
             })
           }
@@ -368,7 +395,6 @@ resource "pingone_davinci_flow" "%[2]s-first" {
           locked     = false
           grabbable  = true
           pannable   = false
-          classes    = ""
         }
       }
     }
@@ -396,10 +422,8 @@ resource "pingone_davinci_flow" "%[2]s-first" {
   }
 
   settings = {
-    csp                              = "worker-src 'self' blob:; script-src 'self' https://cdn.jsdelivr.net https://code.jquery.com https://devsdk.singularkey.com http://cdnjs.cloudflare.com 'unsafe-inline' 'unsafe-eval';"
-    intermediate_loading_screen_css  = ""
-    intermediate_loading_screen_html = ""
-    log_level                        = 2
+    csp       = "worker-src 'self' blob:; script-src 'self' https://cdn.jsdelivr.net https://code.jquery.com https://devsdk.singularkey.com http://cdnjs.cloudflare.com 'unsafe-inline' 'unsafe-eval';"
+    log_level = 2
   }
 
   output_schema = {
@@ -439,13 +463,13 @@ resource "pingone_davinci_flow" "%[2]s-second" {
                 "value" : []
               },
               "username" : {
-                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"${pingone_user.%[2]s.id}\"\n      }\n    ]\n  }\n]"
               },
               "population" : {
-                "value" : "c9f3fb3f-11e9-4eb0-b4ba-9fb7789a8418"
+                "value" : "${pingone_population.%[2]s.id}"
               },
               "userIdentifierForFindUser" : {
-                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"${pingone_user.%[2]s.id}\"\n      }\n    ]\n  }\n]"
               }
             })
           }
@@ -460,7 +484,6 @@ resource "pingone_davinci_flow" "%[2]s-second" {
           locked     = false
           grabbable  = true
           pannable   = false
-          classes    = ""
         },
         "nodesecondflow2" = {
           data = {
@@ -476,13 +499,13 @@ resource "pingone_davinci_flow" "%[2]s-second" {
                 "value" : []
               },
               "username" : {
-                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"${pingone_user.%[2]s.id}\"\n      }\n    ]\n  }\n]"
               },
               "population" : {
-                "value" : "c9f3fb3f-11e9-4eb0-b4ba-9fb7789a8418"
+                "value" : "${pingone_population.%[2]s.id}"
               },
               "userIdentifierForFindUser" : {
-                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"${pingone_user.%[2]s.id}\"\n      }\n    ]\n  }\n]"
               }
             })
           }
@@ -497,7 +520,6 @@ resource "pingone_davinci_flow" "%[2]s-second" {
           locked     = false
           grabbable  = true
           pannable   = false
-          classes    = ""
         }
       }
     }
@@ -525,10 +547,8 @@ resource "pingone_davinci_flow" "%[2]s-second" {
   }
 
   settings = {
-    csp                              = "worker-src 'self' blob:; script-src 'self' https://cdn.jsdelivr.net https://code.jquery.com https://devsdk.singularkey.com http://cdnjs.cloudflare.com 'unsafe-inline' 'unsafe-eval';"
-    intermediate_loading_screen_css  = ""
-    intermediate_loading_screen_html = ""
-    log_level                        = 2
+    csp       = "worker-src 'self' blob:; script-src 'self' https://cdn.jsdelivr.net https://code.jquery.com https://devsdk.singularkey.com http://cdnjs.cloudflare.com 'unsafe-inline' 'unsafe-eval';"
+    log_level = 2
   }
 
   output_schema = {
@@ -611,6 +631,21 @@ func davinciApplicationFlowPolicy_CompleteReorderedHCL(resourceName string) stri
 	return fmt.Sprintf(`
 		%[1]s
 
+resource "pingone_population" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[2]s"
+}
+
+resource "pingone_user" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  population_id = pingone_population.%[2]s.id
+
+  username = "exampleuser%[2]s"
+  email    = "exampleuser@pingidentity.com"
+}
+
 resource "pingone_davinci_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[2]s"
@@ -640,13 +675,13 @@ resource "pingone_davinci_flow" "%[2]s-first" {
                 "value" : []
               },
               "username" : {
-                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"${pingone_user.%[2]s.id}\"\n      }\n    ]\n  }\n]"
               },
               "population" : {
-                "value" : "c9f3fb3f-11e9-4eb0-b4ba-9fb7789a8418"
+                "value" : "${pingone_population.%[2]s.id}"
               },
               "userIdentifierForFindUser" : {
-                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"${pingone_user.%[2]s.id}\"\n      }\n    ]\n  }\n]"
               }
             })
           }
@@ -661,7 +696,6 @@ resource "pingone_davinci_flow" "%[2]s-first" {
           locked     = false
           grabbable  = true
           pannable   = false
-          classes    = ""
         }
       }
     }
@@ -689,10 +723,8 @@ resource "pingone_davinci_flow" "%[2]s-first" {
   }
 
   settings = {
-    csp                              = "worker-src 'self' blob:; script-src 'self' https://cdn.jsdelivr.net https://code.jquery.com https://devsdk.singularkey.com http://cdnjs.cloudflare.com 'unsafe-inline' 'unsafe-eval';"
-    intermediate_loading_screen_css  = ""
-    intermediate_loading_screen_html = ""
-    log_level                        = 2
+    csp       = "worker-src 'self' blob:; script-src 'self' https://cdn.jsdelivr.net https://code.jquery.com https://devsdk.singularkey.com http://cdnjs.cloudflare.com 'unsafe-inline' 'unsafe-eval';"
+    log_level = 2
   }
 
   output_schema = {
@@ -732,13 +764,13 @@ resource "pingone_davinci_flow" "%[2]s-second" {
                 "value" : []
               },
               "username" : {
-                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"${pingone_user.%[2]s.id}\"\n      }\n    ]\n  }\n]"
               },
               "population" : {
-                "value" : "c9f3fb3f-11e9-4eb0-b4ba-9fb7789a8418"
+                "value" : "${pingone_population.%[2]s.id}"
               },
               "userIdentifierForFindUser" : {
-                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"${pingone_user.%[2]s.id}\"\n      }\n    ]\n  }\n]"
               }
             })
           }
@@ -753,7 +785,6 @@ resource "pingone_davinci_flow" "%[2]s-second" {
           locked     = false
           grabbable  = true
           pannable   = false
-          classes    = ""
         },
         "nodesecondflow2" = {
           data = {
@@ -769,13 +800,13 @@ resource "pingone_davinci_flow" "%[2]s-second" {
                 "value" : []
               },
               "username" : {
-                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"${pingone_user.%[2]s.id}\"\n      }\n    ]\n  }\n]"
               },
               "population" : {
-                "value" : "c9f3fb3f-11e9-4eb0-b4ba-9fb7789a8418"
+                "value" : "${pingone_population.%[2]s.id}"
               },
               "userIdentifierForFindUser" : {
-                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"${pingone_user.%[2]s.id}\"\n      }\n    ]\n  }\n]"
               }
             })
           }
@@ -790,7 +821,6 @@ resource "pingone_davinci_flow" "%[2]s-second" {
           locked     = false
           grabbable  = true
           pannable   = false
-          classes    = ""
         }
       }
     }
@@ -818,10 +848,8 @@ resource "pingone_davinci_flow" "%[2]s-second" {
   }
 
   settings = {
-    csp                              = "worker-src 'self' blob:; script-src 'self' https://cdn.jsdelivr.net https://code.jquery.com https://devsdk.singularkey.com http://cdnjs.cloudflare.com 'unsafe-inline' 'unsafe-eval';"
-    intermediate_loading_screen_css  = ""
-    intermediate_loading_screen_html = ""
-    log_level                        = 2
+    csp       = "worker-src 'self' blob:; script-src 'self' https://cdn.jsdelivr.net https://code.jquery.com https://devsdk.singularkey.com http://cdnjs.cloudflare.com 'unsafe-inline' 'unsafe-eval';"
+    log_level = 2
   }
 
   output_schema = {
@@ -903,14 +931,29 @@ func davinciApplicationFlowPolicy_NewEnvHCL(environmentName, licenseID, resource
 	return fmt.Sprintf(`
 		%[1]s
 
+resource "pingone_population" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  name = "%[3]s"
+}
+
+resource "pingone_user" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  population_id = pingone_population.%[3]s.id
+
+  username = "exampleuser%[3]s"
+  email    = "exampleuser@pingidentity.com"
+}
+
 resource "pingone_davinci_application" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
   name           = "%[3]s"
 }
 
-resource "pingone_davinci_flow" "%[2]s" {
+resource "pingone_davinci_flow" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  name           = "%[2]s"
+  name           = "%[3]s"
   description    = "This is a demo flow"
   color          = "#00FF00"
 
@@ -932,13 +975,13 @@ resource "pingone_davinci_flow" "%[2]s" {
                 "value" : []
               },
               "username" : {
-                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"${pingone_user.%[3]s.id}\"\n      }\n    ]\n  }\n]"
               },
               "population" : {
-                "value" : "c9f3fb3f-11e9-4eb0-b4ba-9fb7789a8418"
+                "value" : "${pingone_population.%[3]s.id}"
               },
               "userIdentifierForFindUser" : {
-                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"5282e30d-6e05-499c-ae68-0069fba776f1\"\n      }\n    ]\n  }\n]"
+                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"${pingone_user.%[3]s.id}\"\n      }\n    ]\n  }\n]"
               }
             })
           }
@@ -953,7 +996,6 @@ resource "pingone_davinci_flow" "%[2]s" {
           locked     = false
           grabbable  = true
           pannable   = false
-          classes    = ""
         }
       }
     }
@@ -981,10 +1023,8 @@ resource "pingone_davinci_flow" "%[2]s" {
   }
 
   settings = {
-    csp                              = "worker-src 'self' blob:; script-src 'self' https://cdn.jsdelivr.net https://code.jquery.com https://devsdk.singularkey.com http://cdnjs.cloudflare.com 'unsafe-inline' 'unsafe-eval';"
-    intermediate_loading_screen_css  = ""
-    intermediate_loading_screen_html = ""
-    log_level                        = 2
+    csp       = "worker-src 'self' blob:; script-src 'self' https://cdn.jsdelivr.net https://code.jquery.com https://devsdk.singularkey.com http://cdnjs.cloudflare.com 'unsafe-inline' 'unsafe-eval';"
+    log_level = 2
   }
 
   output_schema = {
@@ -1005,7 +1045,7 @@ resource "pingone_davinci_application_flow_policy" "%[3]s" {
   davinci_application_id = pingone_davinci_application.%[3]s.id
   flow_distributions = [
     {
-      id      = pingone_davinci_flow.%[2]s.id
+      id      = pingone_davinci_flow.%[3]s.id
       version = 0
     }
   ]
@@ -1038,7 +1078,7 @@ func davinciApplicationFlowPolicy_GetIDs(resourceName string, environmentId, daV
 
 		rs, ok := s.RootModule().Resources[resourceName]
 		if !ok {
-			return fmt.Errorf("Resource Not found: %s", resourceName)
+			return fmt.Errorf("resource not found: %s", resourceName)
 		}
 		if environmentId != nil {
 			*environmentId = rs.Primary.Attributes["environment_id"]

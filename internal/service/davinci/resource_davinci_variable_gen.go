@@ -156,7 +156,7 @@ func (r *davinciVariableResource) Schema(ctx context.Context, req resource.Schem
 					stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), "Must be a valid UUID"),
 				},
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.UseNonNullStateForUnknown(),
 				},
 			},
 			"max": schema.Int32Attribute{
@@ -575,7 +575,7 @@ func (r *davinciVariableResource) Create(ctx context.Context, req resource.Creat
 		},
 		"CreateVariable",
 		framework.DefaultCustomError,
-		framework.InsufficientPrivilegeRetryable,
+		framework.DefaultCreateReadRetryable,
 		&responseData,
 	)...)
 
@@ -640,7 +640,7 @@ func (r *davinciVariableResource) Read(ctx context.Context, req resource.ReadReq
 		},
 		"GetVariableById",
 		framework.CustomErrorResourceNotFoundWarning,
-		framework.InsufficientPrivilegeRetryable,
+		framework.DefaultCreateReadRetryable,
 		&responseData,
 	)...)
 
@@ -717,7 +717,7 @@ func (r *davinciVariableResource) Update(ctx context.Context, req resource.Updat
 		},
 		"ReplaceVariableById",
 		framework.DefaultCustomError,
-		framework.InsufficientPrivilegeRetryable,
+		nil,
 		&responseData,
 	)...)
 
@@ -781,7 +781,7 @@ func (r *davinciVariableResource) Delete(ctx context.Context, req resource.Delet
 		},
 		"DeleteVariableById",
 		framework.CustomErrorResourceNotFoundWarning,
-		framework.InsufficientPrivilegeRetryable,
+		framework.DefaultCreateReadRetryable,
 		nil,
 	)...)
 }

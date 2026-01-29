@@ -106,7 +106,7 @@ func (r *davinciApplicationSecretResource) Schema(ctx context.Context, req resou
 					stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), "Must be a valid UUID"),
 				},
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.UseNonNullStateForUnknown(),
 				},
 			},
 			"oauth": schema.SingleNestedAttribute{
@@ -115,13 +115,13 @@ func (r *davinciApplicationSecretResource) Schema(ctx context.Context, req resou
 						Computed:  true,
 						Sensitive: true,
 						PlanModifiers: []planmodifier.String{
-							stringplanmodifier.UseStateForUnknown(),
+							stringplanmodifier.UseNonNullStateForUnknown(),
 						},
 					},
 				},
 				Computed: true,
 				PlanModifiers: []planmodifier.Object{
-					objectplanmodifier.UseStateForUnknown(),
+					objectplanmodifier.UseNonNullStateForUnknown(),
 				},
 			},
 			"rotation_trigger_values": schema.MapAttribute{
@@ -220,7 +220,7 @@ func (r *davinciApplicationSecretResource) Create(ctx context.Context, req resou
 		},
 		"RotateDavinciApplicationSecret",
 		framework.DefaultCustomError,
-		framework.InsufficientPrivilegeRetryable,
+		framework.DefaultCreateReadRetryable,
 		&responseData,
 	)...)
 
@@ -276,7 +276,7 @@ func (r *davinciApplicationSecretResource) Read(ctx context.Context, req resourc
 		},
 		"GetDavinciApplicationById",
 		framework.CustomErrorResourceNotFoundWarning,
-		framework.InsufficientPrivilegeRetryable,
+		framework.DefaultCreateReadRetryable,
 		&responseData,
 	)...)
 

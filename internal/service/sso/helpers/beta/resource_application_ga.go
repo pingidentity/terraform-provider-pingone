@@ -32,7 +32,7 @@ func ResourceSchemaItems() map[string]schema.Attribute {
 			Computed:    true,
 
 			PlanModifiers: []planmodifier.String{
-				stringplanmodifier.UseStateForUnknown(),
+				stringplanmodifier.UseNonNullStateForUnknown(),
 			},
 		},
 	}

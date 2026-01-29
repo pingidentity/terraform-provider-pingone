@@ -106,7 +106,7 @@ func (r *customRoleResource) Schema(ctx context.Context, req resource.SchemaRequ
 							Computed:    true,
 							Description: "The ID of a role that can be assigned by an actor assigned the current custom role.",
 							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.UseStateForUnknown(),
+								stringplanmodifier.UseNonNullStateForUnknown(),
 							},
 							CustomType: pingonetypes.ResourceIDType{},
 						},
@@ -461,7 +461,7 @@ func (r *customRoleResource) Update(ctx context.Context, req resource.UpdateRequ
 				&responseData,
 			)...)
 			if resp.Diagnostics.HasError() {
-				return responseData, "err", fmt.Errorf("Error reading custom role")
+				return responseData, "err", fmt.Errorf("error reading custom role")
 			}
 
 			// The expected value of can_assign depends on other resources, so just exit here after one read

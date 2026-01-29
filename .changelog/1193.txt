@@ -1,0 +1,7 @@
+```release-note:new-data-source
+pingone_risk_predictor
+```
+
+```release-note:new-data-source
+pingone_risk_predictors
+```

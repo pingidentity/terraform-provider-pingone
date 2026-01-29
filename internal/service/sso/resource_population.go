@@ -48,7 +48,7 @@ func populationWaitForAssignedThemeId(ctx context.Context, client *pingone.Clien
 				&responseData,
 			)...)
 			if diags.HasError() {
-				return nil, "err", errors.New("Error reading population when checking for theme ID")
+				return nil, "err", errors.New("error reading population when checking for theme ID")
 			}
 
 			// Theme id hasn't yet been assigned

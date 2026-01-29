@@ -25,7 +25,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/mapdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -96,7 +95,6 @@ type davinciFlowResourceModel struct {
 
 func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	graphDataElementsEdgesDataAttrTypes := map[string]attr.Type{
-		"id":     types.StringType,
 		"source": types.StringType,
 		"target": types.StringType,
 	}
@@ -209,17 +207,9 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 									Attributes: map[string]schema.Attribute{
 										"classes": schema.StringAttribute{
 											Optional: true,
-											Computed: true,
-											Default:  stringdefault.StaticString(""),
 										},
 										"data": schema.SingleNestedAttribute{
 											Attributes: map[string]schema.Attribute{
-												"id": schema.StringAttribute{
-													Required: true,
-													Validators: []validator.String{
-														stringvalidator.LengthAtLeast(1),
-													},
-												},
 												"source": schema.StringAttribute{
 													Required: true,
 													Validators: []validator.String{
@@ -278,8 +268,6 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 									Attributes: map[string]schema.Attribute{
 										"classes": schema.StringAttribute{
 											Optional: true,
-											Computed: true,
-											Default:  stringdefault.StaticString(""),
 										},
 										"data": schema.SingleNestedAttribute{
 											Attributes: map[string]schema.Attribute{
@@ -290,23 +278,17 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 													Optional: true,
 													Computed: true,
 													PlanModifiers: []planmodifier.String{
-														stringplanmodifier.UseStateForUnknown(),
+														stringplanmodifier.UseNonNullStateForUnknown(),
 													},
 												},
 												"connector_id": schema.StringAttribute{
 													Optional: true,
 												},
-												"id": schema.StringAttribute{
-													Required: true,
-													Validators: []validator.String{
-														stringvalidator.LengthAtLeast(1),
-													},
-												},
 												"id_unique": schema.StringAttribute{
 													Optional: true,
 													Computed: true,
 													PlanModifiers: []planmodifier.String{
-														stringplanmodifier.UseStateForUnknown(),
+														stringplanmodifier.UseNonNullStateForUnknown(),
 													},
 												},
 												"label": schema.StringAttribute{
@@ -316,7 +298,7 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 													Optional: true,
 													Computed: true,
 													PlanModifiers: []planmodifier.String{
-														stringplanmodifier.UseStateForUnknown(),
+														stringplanmodifier.UseNonNullStateForUnknown(),
 													},
 												},
 												"node_type": schema.StringAttribute{
@@ -421,7 +403,7 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 				Computed:    true,
 				Description: "The ID of this resource.",
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.UseNonNullStateForUnknown(),
 				},
 			},
 			"input_schema": schema.ListNestedAttribute{
@@ -764,13 +746,13 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 			graphDataElementsAttrs := graphDataAttrs["elements"].(types.Object).Attributes()
 			if !graphDataElementsAttrs["edges"].IsNull() && !graphDataElementsAttrs["edges"].IsUnknown() {
 				graphDataElementsValue.Edges = []pingone.DaVinciFlowGraphDataRequestElementsEdge{}
-				for _, edgesElement := range graphDataElementsAttrs["edges"].(types.Map).Elements() {
+				for edgesElementId, edgesElement := range graphDataElementsAttrs["edges"].(types.Map).Elements() {
 					edgesValue := pingone.DaVinciFlowGraphDataRequestElementsEdge{}
 					edgesAttrs := edgesElement.(types.Object).Attributes()
 					edgesValue.Classes = edgesAttrs["classes"].(types.String).ValueStringPointer()
 					edgesDataValue := pingone.DaVinciFlowGraphDataRequestElementsEdgeData{}
 					edgesDataAttrs := edgesAttrs["data"].(types.Object).Attributes()
-					edgesDataValue.Id = edgesDataAttrs["id"].(types.String).ValueString()
+					edgesDataValue.Id = edgesElementId
 					edgesDataValue.Source = edgesDataAttrs["source"].(types.String).ValueString()
 					edgesDataValue.Target = edgesDataAttrs["target"].(types.String).ValueString()
 					edgesValue.Data = edgesDataValue
@@ -801,7 +783,7 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 			}
 			if !graphDataElementsAttrs["nodes"].IsNull() && !graphDataElementsAttrs["nodes"].IsUnknown() {
 				graphDataElementsValue.Nodes = []pingone.DaVinciFlowGraphDataRequestElementsNode{}
-				for _, nodesElement := range graphDataElementsAttrs["nodes"].(types.Map).Elements() {
+				for nodesElementId, nodesElement := range graphDataElementsAttrs["nodes"].(types.Map).Elements() {
 					nodesValue := pingone.DaVinciFlowGraphDataRequestElementsNode{}
 					nodesAttrs := nodesElement.(types.Object).Attributes()
 					nodesValue.Classes = nodesAttrs["classes"].(types.String).ValueStringPointer()
@@ -810,7 +792,7 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 					nodesDataValue.CapabilityName = nodesDataAttrs["capability_name"].(types.String).ValueStringPointer()
 					nodesDataValue.ConnectionId = nodesDataAttrs["connection_id"].(types.String).ValueStringPointer()
 					nodesDataValue.ConnectorId = nodesDataAttrs["connector_id"].(types.String).ValueStringPointer()
-					nodesDataValue.Id = nodesDataAttrs["id"].(types.String).ValueString()
+					nodesDataValue.Id = nodesElementId
 					nodesDataValue.IdUnique = nodesDataAttrs["id_unique"].(types.String).ValueStringPointer()
 					nodesDataValue.Label = nodesDataAttrs["label"].(types.String).ValueStringPointer()
 					nodesDataValue.Name = nodesDataAttrs["name"].(types.String).ValueStringPointer()
@@ -1153,13 +1135,13 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 			graphDataElementsAttrs := graphDataAttrs["elements"].(types.Object).Attributes()
 			if !graphDataElementsAttrs["edges"].IsNull() && !graphDataElementsAttrs["edges"].IsUnknown() {
 				graphDataElementsValue.Edges = []pingone.DaVinciFlowGraphDataRequestElementsEdge{}
-				for _, edgesElement := range graphDataElementsAttrs["edges"].(types.Map).Elements() {
+				for edgesElementId, edgesElement := range graphDataElementsAttrs["edges"].(types.Map).Elements() {
 					edgesValue := pingone.DaVinciFlowGraphDataRequestElementsEdge{}
 					edgesAttrs := edgesElement.(types.Object).Attributes()
 					edgesValue.Classes = edgesAttrs["classes"].(types.String).ValueStringPointer()
 					edgesDataValue := pingone.DaVinciFlowGraphDataRequestElementsEdgeData{}
 					edgesDataAttrs := edgesAttrs["data"].(types.Object).Attributes()
-					edgesDataValue.Id = edgesDataAttrs["id"].(types.String).ValueString()
+					edgesDataValue.Id = edgesElementId
 					edgesDataValue.Source = edgesDataAttrs["source"].(types.String).ValueString()
 					edgesDataValue.Target = edgesDataAttrs["target"].(types.String).ValueString()
 					edgesValue.Data = edgesDataValue
@@ -1190,7 +1172,7 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 			}
 			if !graphDataElementsAttrs["nodes"].IsNull() && !graphDataElementsAttrs["nodes"].IsUnknown() {
 				graphDataElementsValue.Nodes = []pingone.DaVinciFlowGraphDataRequestElementsNode{}
-				for _, nodesElement := range graphDataElementsAttrs["nodes"].(types.Map).Elements() {
+				for nodesElementId, nodesElement := range graphDataElementsAttrs["nodes"].(types.Map).Elements() {
 					nodesValue := pingone.DaVinciFlowGraphDataRequestElementsNode{}
 					nodesAttrs := nodesElement.(types.Object).Attributes()
 					nodesValue.Classes = nodesAttrs["classes"].(types.String).ValueStringPointer()
@@ -1199,7 +1181,7 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 					nodesDataValue.CapabilityName = nodesDataAttrs["capability_name"].(types.String).ValueStringPointer()
 					nodesDataValue.ConnectionId = nodesDataAttrs["connection_id"].(types.String).ValueStringPointer()
 					nodesDataValue.ConnectorId = nodesDataAttrs["connector_id"].(types.String).ValueStringPointer()
-					nodesDataValue.Id = nodesDataAttrs["id"].(types.String).ValueString()
+					nodesDataValue.Id = nodesElementId
 					nodesDataValue.IdUnique = nodesDataAttrs["id_unique"].(types.String).ValueStringPointer()
 					nodesDataValue.Label = nodesDataAttrs["label"].(types.String).ValueStringPointer()
 					nodesDataValue.Name = nodesDataAttrs["name"].(types.String).ValueStringPointer()
@@ -1543,7 +1525,6 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 	state.Enabled = types.BoolPointerValue(response.Enabled)
 	// graph_data
 	graphDataElementsEdgesDataAttrTypes := map[string]attr.Type{
-		"id":     types.StringType,
 		"source": types.StringType,
 		"target": types.StringType,
 	}
@@ -1568,7 +1549,6 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 		"capability_name": types.StringType,
 		"connection_id":   types.StringType,
 		"connector_id":    types.StringType,
-		"id":              types.StringType,
 		"id_unique":       types.StringType,
 		"label":           types.StringType,
 		"name":            types.StringType,
@@ -1637,7 +1617,6 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 		graphDataElementsEdgesValues := make(map[string]attr.Value)
 		for _, graphDataElementsEdgesResponseValue := range response.GraphData.Elements.Edges {
 			graphDataElementsEdgesDataValue, diags := types.ObjectValue(graphDataElementsEdgesDataAttrTypes, map[string]attr.Value{
-				"id":     types.StringValue(graphDataElementsEdgesResponseValue.Data.Id),
 				"source": types.StringValue(graphDataElementsEdgesResponseValue.Data.Source),
 				"target": types.StringValue(graphDataElementsEdgesResponseValue.Data.Target),
 			})
@@ -1686,7 +1665,6 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 				"capability_name": types.StringPointerValue(graphDataElementsNodesResponseValue.Data.CapabilityName),
 				"connection_id":   types.StringPointerValue(graphDataElementsNodesResponseValue.Data.ConnectionId),
 				"connector_id":    types.StringPointerValue(graphDataElementsNodesResponseValue.Data.ConnectorId),
-				"id":              types.StringValue(graphDataElementsNodesResponseValue.Data.Id),
 				"id_unique":       types.StringPointerValue(graphDataElementsNodesResponseValue.Data.IdUnique),
 				"label":           types.StringPointerValue(graphDataElementsNodesResponseValue.Data.Label),
 				"name":            types.StringPointerValue(graphDataElementsNodesResponseValue.Data.Name),
@@ -2153,7 +2131,7 @@ func (r *davinciFlowResource) Read(ctx context.Context, req resource.ReadRequest
 		},
 		"GetFlowById",
 		framework.CustomErrorResourceNotFoundWarning,
-		framework.InsufficientPrivilegeRetryable,
+		framework.DefaultCreateReadRetryable,
 		&responseData,
 	)...)
 
@@ -2221,7 +2199,7 @@ func (r *davinciFlowResource) Update(ctx context.Context, req resource.UpdateReq
 		},
 		"ReplaceFlowById",
 		framework.DefaultCustomError,
-		framework.InsufficientPrivilegeRetryable,
+		framework.DefaultRetryable,
 		&responseData,
 	)...)
 
@@ -2276,7 +2254,7 @@ func (r *davinciFlowResource) Delete(ctx context.Context, req resource.DeleteReq
 		},
 		"DeleteFlowById",
 		framework.CustomErrorResourceNotFoundWarning,
-		framework.InsufficientPrivilegeRetryable,
+		framework.DefaultCreateReadRetryable,
 		nil,
 	)...)
 }

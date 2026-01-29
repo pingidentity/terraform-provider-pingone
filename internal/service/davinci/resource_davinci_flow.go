@@ -12,7 +12,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -114,6 +113,19 @@ func (r *davinciFlowResource) ValidateConfig(ctx context.Context, req resource.V
 			)
 		}
 	}
+
+	// Warn if log_level is set to Debug (3)
+	if !data.Settings.IsNull() && !data.Settings.IsUnknown() {
+		settingsAttrs := data.Settings.Attributes()
+		logLevel := settingsAttrs["log_level"].(types.Int32)
+		if !logLevel.IsNull() && !logLevel.IsUnknown() && logLevel.ValueInt32() == 3 {
+			resp.Diagnostics.AddAttributeWarning(
+				path.Root("settings").AtMapKey("log_level"),
+				"DaVinci flow settings.log_level set to Debug",
+				"The flow log level is set to Debug (3). For standard operation, it's recommended to set the log level to Info (2) or None (1) unless active troubleshooting is needed.",
+			)
+		}
+	}
 }
 
 func (r *davinciFlowResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
@@ -139,30 +151,6 @@ func (r *davinciFlowResource) ModifyPlan(ctx context.Context, req resource.Modif
 		}
 		resp.Diagnostics.Append(resp.Plan.Set(ctx, plan)...)
 	}
-
-	// Validate that nodes and edges have correct map key values
-	if !plan.GraphData.IsNull() && !plan.GraphData.IsUnknown() {
-		graphDataAttrs := plan.GraphData.Attributes()
-		if !graphDataAttrs["elements"].IsNull() && !graphDataAttrs["elements"].IsUnknown() {
-			graphDataElementsAttrs := graphDataAttrs["elements"].(types.Object).Attributes()
-
-			// nodes
-			if !graphDataElementsAttrs["nodes"].IsNull() && !graphDataElementsAttrs["nodes"].IsUnknown() {
-				nodesMap := graphDataElementsAttrs["nodes"].(types.Map)
-				for key, val := range nodesMap.Elements() {
-					r.validateNodeKey(val.(types.Object).Attributes()["data"], key, resp.Diagnostics)
-				}
-			}
-
-			// edges
-			if !graphDataElementsAttrs["edges"].IsNull() && !graphDataElementsAttrs["edges"].IsUnknown() {
-				edgesSet := graphDataElementsAttrs["edges"].(types.Map)
-				for key, val := range edgesSet.Elements() {
-					r.validateEdgeKey(val.(types.Object).Attributes()["data"], key, resp.Diagnostics)
-				}
-			}
-		}
-	}
 }
 
 func (m *davinciFlowResourceModel) getGraphDataElementsNodes() *types.Map {
@@ -185,40 +173,6 @@ func (r *davinciFlowResource) isUpdateRequiredAfterCreate(plan, createResponse d
 
 	// Check that the create returned all the nodes, but the content did not match the plan
 	return len(planNodes.Elements()) == len(createResponseNodes.Elements()) && !planNodes.Equal(createResponseNodes)
-}
-
-func (r *davinciFlowResource) validateNodeKey(nodeDataAttr attr.Value, actualKey string, diags diag.Diagnostics) {
-	if !nodeDataAttr.IsNull() && !nodeDataAttr.IsUnknown() {
-		nodeDataAttrs := nodeDataAttr.(types.Object).Attributes()
-		idAttr := nodeDataAttrs["id"]
-		if !idAttr.IsNull() && !idAttr.IsUnknown() && idAttr.(types.String).ValueString() != "" {
-			expectedKey := idAttr.(types.String).ValueString()
-			if actualKey != expectedKey {
-				diags.AddAttributeError(
-					path.Root("graph_data").AtName("elements").AtName("nodes").AtMapKey(actualKey),
-					"Node key mismatch",
-					fmt.Sprintf("The map key for this node ('%s') does not match the expected value ('%s'). The key should match the node's 'id' attribute.", actualKey, expectedKey),
-				)
-			}
-		}
-	}
-}
-
-func (r *davinciFlowResource) validateEdgeKey(edgeDataAttr attr.Value, actualKey string, diags diag.Diagnostics) {
-	if !edgeDataAttr.IsNull() && !edgeDataAttr.IsUnknown() {
-		edgeDataAttrs := edgeDataAttr.(types.Object).Attributes()
-		edgeId := edgeDataAttrs["id"]
-		if !edgeId.IsNull() && !edgeId.IsUnknown() && edgeId.(types.String).ValueString() != "" {
-			expectedKey := edgeId.(types.String).ValueString()
-			if actualKey != expectedKey {
-				diags.AddAttributeError(
-					path.Root("graph_data").AtName("elements").AtName("edges").AtMapKey(actualKey),
-					"Edge key mismatch",
-					fmt.Sprintf("The map key for this edge ('%s') does not match the expected key ('%s') based on the edge data values. The key should match the edge's 'id' attribute.", actualKey, expectedKey),
-				)
-			}
-		}
-	}
 }
 
 func (r *davinciFlowResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -264,7 +218,7 @@ func (r *davinciFlowResource) Create(ctx context.Context, req resource.CreateReq
 		},
 		"CreateFlow",
 		framework.DefaultCustomError,
-		framework.InsufficientPrivilegeRetryable,
+		framework.DefaultCreateReadRetryable,
 		&createResponseData,
 	)...)
 
@@ -295,7 +249,7 @@ func (r *davinciFlowResource) Create(ctx context.Context, req resource.CreateReq
 			},
 			"ReplaceFlowById-Create",
 			framework.DefaultCustomError,
-			framework.InsufficientPrivilegeRetryable,
+			framework.DefaultCreateReadRetryable,
 			&updateResponseData,
 		)...)
 

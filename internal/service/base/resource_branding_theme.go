@@ -146,7 +146,7 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 				Computed:    true,
 
 				PlanModifiers: []planmodifier.Bool{
-					boolplanmodifier.UseStateForUnknown(),
+					boolplanmodifier.UseNonNullStateForUnknown(),
 				},
 			},
 

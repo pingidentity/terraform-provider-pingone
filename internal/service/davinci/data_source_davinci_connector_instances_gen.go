@@ -204,7 +204,7 @@ func (r *davinciConnectorInstancesDataSource) Read(ctx context.Context, req data
 		},
 		"GetConnectorInstances",
 		framework.DefaultCustomError,
-		framework.InsufficientPrivilegeRetryable,
+		framework.DefaultCreateReadRetryable,
 		&responseData,
 	)...)
 

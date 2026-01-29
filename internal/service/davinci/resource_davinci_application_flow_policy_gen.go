@@ -148,7 +148,7 @@ func (r *davinciApplicationFlowPolicyResource) Schema(ctx context.Context, req r
 				Computed:    true,
 				Description: "The ID of this resource.",
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.UseNonNullStateForUnknown(),
 				},
 			},
 			"name": schema.StringAttribute{
@@ -225,7 +225,7 @@ func (r *davinciApplicationFlowPolicyResource) Schema(ctx context.Context, req r
 				Optional: true,
 				Computed: true,
 				PlanModifiers: []planmodifier.Object{
-					objectplanmodifier.UseStateForUnknown(),
+					objectplanmodifier.UseNonNullStateForUnknown(),
 				},
 				// No default because it will differ for PingOne vs non-PingOne flows
 			},
@@ -574,7 +574,7 @@ func (r *davinciApplicationFlowPolicyResource) Create(ctx context.Context, req r
 		},
 		"CreateFlowPolicyByDavinciApplicationId",
 		framework.DefaultCustomError,
-		framework.InsufficientPrivilegeRetryable,
+		framework.DefaultCreateReadRetryable,
 		&responseData,
 	)...)
 
@@ -630,7 +630,7 @@ func (r *davinciApplicationFlowPolicyResource) Read(ctx context.Context, req res
 		},
 		"GetFlowPolicyByIdUsingDavinciApplicationId",
 		framework.CustomErrorResourceNotFoundWarning,
-		framework.InsufficientPrivilegeRetryable,
+		framework.DefaultCreateReadRetryable,
 		&responseData,
 	)...)
 
@@ -698,7 +698,7 @@ func (r *davinciApplicationFlowPolicyResource) Update(ctx context.Context, req r
 		},
 		"ReplaceFlowPolicyByIdUsingDavinciApplicationId",
 		framework.DefaultCustomError,
-		framework.InsufficientPrivilegeRetryable,
+		nil,
 		&responseData,
 	)...)
 
@@ -753,7 +753,7 @@ func (r *davinciApplicationFlowPolicyResource) Delete(ctx context.Context, req r
 		},
 		"DeleteFlowPolicyByIdUsingDavinciApplicationId",
 		framework.CustomErrorResourceNotFoundWarning,
-		framework.InsufficientPrivilegeRetryable,
+		framework.DefaultCreateReadRetryable,
 		nil,
 	)...)
 }

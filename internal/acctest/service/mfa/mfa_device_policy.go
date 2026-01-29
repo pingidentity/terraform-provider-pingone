@@ -61,7 +61,7 @@ func MFADevicePolicy_GetIDs(resourceName string, environmentID, resourceID *stri
 
 		rs, ok := s.RootModule().Resources[resourceName]
 		if !ok {
-			return fmt.Errorf("Resource Not found: %s", resourceName)
+			return fmt.Errorf("resource not found: %s", resourceName)
 		}
 
 		if resourceID != nil {
@@ -91,7 +91,7 @@ func TestCheckMFADevicePolicyApplicationMapResourceAttr(name, applicationResourc
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[applicationResource]
 		if !ok {
-			return fmt.Errorf("Resource Not found: %s", applicationResource)
+			return fmt.Errorf("resource not found: %s", applicationResource)
 		}
 
 		return resource.TestCheckResourceAttr(name, fmt.Sprintf(keyPattern, rs.Primary.ID), value)(s)
@@ -102,7 +102,7 @@ func TestCheckMFADevicePolicyApplicationMapNoResourceAttr(name, applicationResou
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[applicationResource]
 		if !ok {
-			return fmt.Errorf("Resource Not found: %s", applicationResource)
+			return fmt.Errorf("resource not found: %s", applicationResource)
 		}
 
 		return resource.TestCheckNoResourceAttr(name, fmt.Sprintf(keyPattern, rs.Primary.ID))(s)

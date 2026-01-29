@@ -195,7 +195,7 @@ func (r *davinciApplicationResource) Create(ctx context.Context, req resource.Cr
 		},
 		"CreateDavinciApplication",
 		framework.DefaultCustomError,
-		framework.InsufficientPrivilegeRetryable,
+		framework.DefaultCreateReadRetryable,
 		&createResponseData,
 	)...)
 
@@ -221,7 +221,7 @@ func (r *davinciApplicationResource) Create(ctx context.Context, req resource.Cr
 		},
 		"ReplaceDavinciApplicationById-Create",
 		framework.DefaultCustomError,
-		framework.InsufficientPrivilegeRetryable,
+		framework.DefaultCreateReadRetryable,
 		&responseData,
 	)...)
 

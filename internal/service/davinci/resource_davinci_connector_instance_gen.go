@@ -110,7 +110,7 @@ func (r *davinciConnectorInstanceResource) Schema(ctx context.Context, req resou
 				Computed:    true,
 				Description: "The ID of this resource.",
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.UseNonNullStateForUnknown(),
 				},
 				Validators: []validator.String{
 					stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), "Must be a valid UUID"),
@@ -254,7 +254,7 @@ func (r *davinciConnectorInstanceResource) Create(ctx context.Context, req resou
 		},
 		"CreateConnectorInstance",
 		framework.DefaultCustomError,
-		framework.InsufficientPrivilegeRetryable,
+		framework.DefaultCreateReadRetryable,
 		&responseData,
 	)...)
 
@@ -310,7 +310,7 @@ func (r *davinciConnectorInstanceResource) Read(ctx context.Context, req resourc
 		},
 		"GetConnectorInstanceById",
 		framework.CustomErrorResourceNotFoundWarning,
-		framework.InsufficientPrivilegeRetryable,
+		framework.DefaultCreateReadRetryable,
 		&responseData,
 	)...)
 
@@ -378,7 +378,7 @@ func (r *davinciConnectorInstanceResource) Update(ctx context.Context, req resou
 		},
 		"ReplaceConnectorInstanceById",
 		framework.DefaultCustomError,
-		framework.InsufficientPrivilegeRetryable,
+		nil,
 		&responseData,
 	)...)
 
@@ -433,7 +433,7 @@ func (r *davinciConnectorInstanceResource) Delete(ctx context.Context, req resou
 		},
 		"DeleteConnectorInstanceById",
 		framework.CustomErrorResourceNotFoundWarning,
-		framework.InsufficientPrivilegeRetryable,
+		framework.DefaultCreateReadRetryable,
 		nil,
 	)...)
 }
