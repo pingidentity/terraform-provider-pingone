@@ -1,0 +1,1 @@
+terraform import pingone_davinci_flow_enabled.example <environment_id>/<flow_id>
