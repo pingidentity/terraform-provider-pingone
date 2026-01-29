@@ -551,7 +551,7 @@ func (r *davinciVariableResource) Create(ctx context.Context, req resource.Creat
 		},
 		"CreateVariable",
 		framework.DefaultCustomError,
-		framework.DefaultRetryable,
+		framework.DefaultCreateReadRetryable,
 		&responseData,
 	)...)
 
@@ -616,7 +616,7 @@ func (r *davinciVariableResource) Read(ctx context.Context, req resource.ReadReq
 		},
 		"GetVariableById",
 		framework.CustomErrorResourceNotFoundWarning,
-		framework.DefaultRetryable,
+		framework.DefaultCreateReadRetryable,
 		&responseData,
 	)...)
 
@@ -757,7 +757,7 @@ func (r *davinciVariableResource) Delete(ctx context.Context, req resource.Delet
 		},
 		"DeleteVariableById",
 		framework.CustomErrorResourceNotFoundWarning,
-		framework.DefaultRetryable,
+		framework.DefaultCreateReadRetryable,
 		nil,
 	)...)
 }

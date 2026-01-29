@@ -220,7 +220,7 @@ func (r *davinciApplicationSecretResource) Create(ctx context.Context, req resou
 		},
 		"RotateDavinciApplicationSecret",
 		framework.DefaultCustomError,
-		framework.DefaultRetryable,
+		framework.DefaultCreateReadRetryable,
 		&responseData,
 	)...)
 
@@ -276,7 +276,7 @@ func (r *davinciApplicationSecretResource) Read(ctx context.Context, req resourc
 		},
 		"GetDavinciApplicationById",
 		framework.CustomErrorResourceNotFoundWarning,
-		framework.DefaultRetryable,
+		framework.DefaultCreateReadRetryable,
 		&responseData,
 	)...)
 

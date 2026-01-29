@@ -254,7 +254,7 @@ func (r *davinciConnectorInstanceResource) Create(ctx context.Context, req resou
 		},
 		"CreateConnectorInstance",
 		framework.DefaultCustomError,
-		framework.DefaultRetryable,
+		framework.DefaultCreateReadRetryable,
 		&responseData,
 	)...)
 
@@ -310,7 +310,7 @@ func (r *davinciConnectorInstanceResource) Read(ctx context.Context, req resourc
 		},
 		"GetConnectorInstanceById",
 		framework.CustomErrorResourceNotFoundWarning,
-		framework.DefaultRetryable,
+		framework.DefaultCreateReadRetryable,
 		&responseData,
 	)...)
 
@@ -433,7 +433,7 @@ func (r *davinciConnectorInstanceResource) Delete(ctx context.Context, req resou
 		},
 		"DeleteConnectorInstanceById",
 		framework.CustomErrorResourceNotFoundWarning,
-		framework.DefaultRetryable,
+		framework.DefaultCreateReadRetryable,
 		nil,
 	)...)
 }
