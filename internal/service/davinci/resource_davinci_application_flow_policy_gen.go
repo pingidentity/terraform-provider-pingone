@@ -574,7 +574,7 @@ func (r *davinciApplicationFlowPolicyResource) Create(ctx context.Context, req r
 		},
 		"CreateFlowPolicyByDavinciApplicationId",
 		framework.DefaultCustomError,
-		framework.InsufficientPrivilegeRetryable,
+		framework.DefaultCreateReadRetryable,
 		&responseData,
 	)...)
 
@@ -630,7 +630,7 @@ func (r *davinciApplicationFlowPolicyResource) Read(ctx context.Context, req res
 		},
 		"GetFlowPolicyByIdUsingDavinciApplicationId",
 		framework.CustomErrorResourceNotFoundWarning,
-		framework.InsufficientPrivilegeRetryable,
+		framework.DefaultCreateReadRetryable,
 		&responseData,
 	)...)
 
@@ -753,7 +753,7 @@ func (r *davinciApplicationFlowPolicyResource) Delete(ctx context.Context, req r
 		},
 		"DeleteFlowPolicyByIdUsingDavinciApplicationId",
 		framework.CustomErrorResourceNotFoundWarning,
-		framework.InsufficientPrivilegeRetryable,
+		framework.DefaultCreateReadRetryable,
 		nil,
 	)...)
 }

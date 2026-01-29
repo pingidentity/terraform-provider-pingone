@@ -257,7 +257,7 @@ func (r *davinciApplicationsDataSource) Read(ctx context.Context, req datasource
 		},
 		"GetDavinciApplications",
 		framework.DefaultCustomError,
-		framework.InsufficientPrivilegeRetryable,
+		framework.DefaultCreateReadRetryable,
 		&responseData,
 	)...)
 
