@@ -330,7 +330,6 @@ resource "pingone_davinci_flow" "%[3]s" {
       nodes = {
         "8bnj41592a" = {
           data = {
-            id              = "8bnj41592a"
             node_type       = "CONNECTION"
             connector_id    = "pingOneSSOConnector"
             label           = "PingOne"
@@ -435,7 +434,6 @@ resource "pingone_davinci_flow" "%[2]s" {
       nodes = {
         "zlgncqvws2" = {
           data = {
-            id            = "zlgncqvws2"
             node_type     = "CONNECTION"
             connection_id = pingone_davinci_connector_instance.%[2]s-errors.id
             connector_id  = "errorConnector"

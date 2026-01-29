@@ -228,7 +228,6 @@ resource "pingone_davinci_flow" "%[2]s" {
       nodes = {
         "8bnj41592a" = {
           data = {
-            id              = "8bnj41592a"
             node_type       = "CONNECTION"
             connector_id    = "pingOneSSOConnector"
             label           = "PingOne"
@@ -323,7 +322,6 @@ resource "pingone_davinci_flow" "%[3]s" {
       nodes = {
         "8bnj41592a" = {
           data = {
-            id              = "8bnj41592a"
             node_type       = "CONNECTION"
             connector_id    = "pingOneSSOConnector"
             label           = "PingOne"
