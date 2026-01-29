@@ -753,7 +753,7 @@ func (r *davinciApplicationFlowPolicyResource) Delete(ctx context.Context, req r
 		},
 		"DeleteFlowPolicyByIdUsingDavinciApplicationId",
 		framework.CustomErrorResourceNotFoundWarning,
-		framework.DefaultRetryable,
+		framework.InsufficientPrivilegeRetryable,
 		nil,
 	)...)
 }

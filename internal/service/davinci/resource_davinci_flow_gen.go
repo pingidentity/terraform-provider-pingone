@@ -2266,7 +2266,7 @@ func (r *davinciFlowResource) Delete(ctx context.Context, req resource.DeleteReq
 		},
 		"DeleteFlowById",
 		framework.CustomErrorResourceNotFoundWarning,
-		framework.DefaultRetryable,
+		framework.InsufficientPrivilegeRetryable,
 		nil,
 	)...)
 }

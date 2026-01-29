@@ -524,7 +524,7 @@ func (r *davinciApplicationResource) Delete(ctx context.Context, req resource.De
 		},
 		"DeleteDavinciApplicationById",
 		framework.CustomErrorResourceNotFoundWarning,
-		framework.DefaultRetryable,
+		framework.InsufficientPrivilegeRetryable,
 		nil,
 	)...)
 }
