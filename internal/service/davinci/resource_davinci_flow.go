@@ -364,37 +364,59 @@ func removeUnknownKeysFromJsonMap(expectedJson map[string]interface{}, actualJso
 				nestedJson, nestedDiags := removeUnknownKeysFromJsonMap(plannedNested, responseNested)
 				diags.Append(nestedDiags...)
 				actualJsonCopy[key] = nestedJson
+				continue
 			}
 
-			// If the value is an array, recurse for each element that is an object
+			// If the value is an array, recurse using the array handler
 			plannedArray, isPlannedArray := expectedJson[key].([]interface{})
 			responseArray, isResponseArray := actualJsonCopy[key].([]interface{})
 			if plannedArray != nil && responseArray != nil && isPlannedArray && isResponseArray {
-				cleanedArray := make([]interface{}, len(responseArray))
-				for i := 0; i < len(responseArray); i++ {
-					// If we have a corresponding planned element, use it as reference
-					var plannedElement map[string]interface{}
-					var isPlanMap bool
-					if i < len(plannedArray) {
-						plannedElement, isPlanMap = plannedArray[i].(map[string]interface{})
-					}
-
-					responseElement, isResponseMap := responseArray[i].(map[string]interface{})
-					if plannedElement != nil && responseElement != nil && isPlanMap && isResponseMap {
-						cleanedElement, nestedDiags := removeUnknownKeysFromJsonMap(plannedElement, responseElement)
-						diags.Append(nestedDiags...)
-						cleanedArray[i] = cleanedElement
-					} else {
-						// If not a map or no planned element, keep as-is
-						cleanedArray[i] = responseArray[i]
-					}
-				}
+				cleanedArray, arrayDiags := removeUnknownKeysFromJsonArray(plannedArray, responseArray)
+				diags.Append(arrayDiags...)
 				actualJsonCopy[key] = cleanedArray
 			}
 		}
 	}
 
 	return actualJsonCopy, diags
+}
+
+func removeUnknownKeysFromJsonArray(expectedArray []interface{}, actualArray []interface{}) ([]interface{}, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	cleanedArray := make([]interface{}, len(actualArray))
+
+	for i := 0; i < len(actualArray); i++ {
+		// Find corresponding planned element
+		var plannedElement interface{}
+		if i < len(expectedArray) {
+			plannedElement = expectedArray[i]
+
+			// Handle nested objects
+			plannedMap, isPlannedMap := plannedElement.(map[string]interface{})
+			responseMap, isResponseMap := actualArray[i].(map[string]interface{})
+			if plannedMap != nil && responseMap != nil && isPlannedMap && isResponseMap {
+				cleanedElement, nestedDiags := removeUnknownKeysFromJsonMap(plannedMap, responseMap)
+				diags.Append(nestedDiags...)
+				cleanedArray[i] = cleanedElement
+				continue
+			}
+
+			// Handle nested arrays
+			plannedNestedArray, isPlannedArray := plannedElement.([]interface{})
+			responseNestedArray, isResponseArray := actualArray[i].([]interface{})
+			if plannedNestedArray != nil && responseNestedArray != nil && isPlannedArray && isResponseArray {
+				cleanedElement, nestedDiags := removeUnknownKeysFromJsonArray(plannedNestedArray, responseNestedArray)
+				diags.Append(nestedDiags...)
+				cleanedArray[i] = cleanedElement
+				continue
+			}
+		}
+
+		// If not a map or array, or no planned element, keep as-is
+		cleanedArray[i] = actualArray[i]
+	}
+
+	return cleanedArray, diags
 }
 
 func buildJsonNormalizedValueFromMap(jsonMap map[string]interface{}) (jsontypes.Normalized, diag.Diagnostics) {
