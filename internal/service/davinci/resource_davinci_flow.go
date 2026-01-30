@@ -320,8 +320,27 @@ func (m *davinciFlowResourceModel) normalizeNodeDataProperties(planProperties js
 		return normalizedProperties, diags
 	}
 
+	// Make a deep copy of responseProperties to avoid mutating the input
+	responsePropertiesBytes, err := json.Marshal(responseProperties)
+	if err != nil {
+		diags.AddError(
+			"Error Marshaling response properties",
+			fmt.Sprintf("An error occurred while marshaling: %s", err.Error()),
+		)
+		return normalizedProperties, diags
+	}
+	var responsePropertiesCopy map[string]interface{}
+	err = json.Unmarshal(responsePropertiesBytes, &responsePropertiesCopy)
+	if err != nil {
+		diags.AddError(
+			"Error Unmarshaling response properties",
+			fmt.Sprintf("An error occurred while unmarshaling: %s", err.Error()),
+		)
+		return normalizedProperties, diags
+	}
+
 	// Remove keys from the response that were not in the plan
-	cleanedResponseProperties, removeDiags := removeUnknownKeysFromJsonMap(plannedPropertiesMap, responseProperties)
+	cleanedResponseProperties, removeDiags := removeUnknownKeysFromJsonMap(plannedPropertiesMap, responsePropertiesCopy)
 	diags.Append(removeDiags...)
 
 	normalizedProperties, normalizeDiags := buildJsonNormalizedValueFromMap(cleanedResponseProperties)
@@ -329,58 +348,43 @@ func (m *davinciFlowResourceModel) normalizeNodeDataProperties(planProperties js
 	return normalizedProperties, diags
 }
 
+// removeUnknownKeysFromJsonMap removes keys from actualJson that are not present in expectedJson.
+// This function mutates actualJson in place for nested objects.
 func removeUnknownKeysFromJsonMap(expectedJson map[string]interface{}, actualJson map[string]interface{}) (map[string]interface{}, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	// Make a deep copy of actualJson to avoid mutating the input
-	actualJsonBytes, err := json.Marshal(actualJson)
-	if err != nil {
-		diags.AddError(
-			"Error Marshaling actual JSON map",
-			fmt.Sprintf("An error occurred while marshaling: %s", err.Error()),
-		)
-		return actualJson, diags
-	}
-	var actualJsonCopy map[string]interface{}
-	err = json.Unmarshal(actualJsonBytes, &actualJsonCopy)
-	if err != nil {
-		diags.AddError(
-			"Error Unmarshaling actual JSON map",
-			fmt.Sprintf("An error occurred while unmarshaling: %s", err.Error()),
-		)
-		return actualJson, diags
-	}
-
-	for key := range actualJsonCopy {
+	for key := range actualJson {
 		if _, ok := expectedJson[key]; !ok {
 			diags.AddWarning("API returned properties key not present in plan",
 				fmt.Sprintf("The key '%s' was returned by the API but is not present in the planned properties", key))
-			delete(actualJsonCopy, key)
+			delete(actualJson, key)
 		} else {
 			// If the value is a nested object, recurse
 			plannedNested, isPlannedNested := expectedJson[key].(map[string]interface{})
-			responseNested, isResponseNested := actualJsonCopy[key].(map[string]interface{})
+			responseNested, isResponseNested := actualJson[key].(map[string]interface{})
 			if plannedNested != nil && responseNested != nil && isPlannedNested && isResponseNested {
 				nestedJson, nestedDiags := removeUnknownKeysFromJsonMap(plannedNested, responseNested)
 				diags.Append(nestedDiags...)
-				actualJsonCopy[key] = nestedJson
+				actualJson[key] = nestedJson
 				continue
 			}
 
 			// If the value is an array, recurse using the array handler
 			plannedArray, isPlannedArray := expectedJson[key].([]interface{})
-			responseArray, isResponseArray := actualJsonCopy[key].([]interface{})
+			responseArray, isResponseArray := actualJson[key].([]interface{})
 			if plannedArray != nil && responseArray != nil && isPlannedArray && isResponseArray {
 				cleanedArray, arrayDiags := removeUnknownKeysFromJsonArray(plannedArray, responseArray)
 				diags.Append(arrayDiags...)
-				actualJsonCopy[key] = cleanedArray
+				actualJson[key] = cleanedArray
 			}
 		}
 	}
 
-	return actualJsonCopy, diags
+	return actualJson, diags
 }
 
+// removeUnknownKeysFromJsonArray processes array elements, recursing into nested objects and arrays.
+// This function mutates nested objects and arrays within actualArray in place.
 func removeUnknownKeysFromJsonArray(expectedArray []interface{}, actualArray []interface{}) ([]interface{}, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	cleanedArray := make([]interface{}, len(actualArray))
