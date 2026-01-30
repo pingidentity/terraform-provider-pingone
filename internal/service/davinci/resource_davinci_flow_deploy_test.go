@@ -411,7 +411,7 @@ resource "pingone_davinci_flow_deploy" "%[3]s" {
 `, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
-func davinciFlowDeploy_BrokenFlowHCL(t *testing.T, resourceName string, withBootstrap bool) string {
+func davinciFlowDeploy_BrokenFlowHCL(_ *testing.T, resourceName string, withBootstrap bool) string {
 	return fmt.Sprintf(`
 		%[1]s
 
