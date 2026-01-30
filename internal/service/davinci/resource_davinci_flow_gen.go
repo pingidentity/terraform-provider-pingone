@@ -1654,7 +1654,7 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 				// Get the planned data.properties value for this node
 				plannedNodeDataProperties := state.getPlannedNodeDataProperties(graphDataElementsNodesResponseValue.Data.Id)
 				// Normalize the response, ignoring json keys that were not planned
-				graphDataElementsNodesDataPropertiesValue, diags = state.normalizeNodeDataProperties(plannedNodeDataProperties, graphDataElementsNodesResponseValue.Data.Properties)
+				graphDataElementsNodesDataPropertiesValue, diags = state.normalizeNodeDataProperties(graphDataElementsNodesResponseValue.Data.Id, plannedNodeDataProperties, graphDataElementsNodesResponseValue.Data.Properties)
 				respDiags.Append(diags...)
 			}
 			graphDataElementsNodesDataValue, diags := types.ObjectValue(graphDataElementsNodesDataAttrTypes, map[string]attr.Value{
