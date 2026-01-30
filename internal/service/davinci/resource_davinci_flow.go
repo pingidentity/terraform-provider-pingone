@@ -360,10 +360,36 @@ func removeUnknownKeysFromJsonMap(expectedJson map[string]interface{}, actualJso
 			// If the value is a nested object, recurse
 			plannedNested, isPlannedNested := expectedJson[key].(map[string]interface{})
 			responseNested, isResponseNested := actualJsonCopy[key].(map[string]interface{})
-			if isPlannedNested && isResponseNested {
+			if plannedNested != nil && responseNested != nil && isPlannedNested && isResponseNested {
 				nestedJson, nestedDiags := removeUnknownKeysFromJsonMap(plannedNested, responseNested)
 				diags.Append(nestedDiags...)
 				actualJsonCopy[key] = nestedJson
+			}
+
+			// If the value is an array, recurse for each element that is an object
+			plannedArray, isPlannedArray := expectedJson[key].([]interface{})
+			responseArray, isResponseArray := actualJsonCopy[key].([]interface{})
+			if plannedArray != nil && responseArray != nil && isPlannedArray && isResponseArray {
+				cleanedArray := make([]interface{}, len(responseArray))
+				for i := 0; i < len(responseArray); i++ {
+					// If we have a corresponding planned element, use it as reference
+					var plannedElement map[string]interface{}
+					var isPlanMap bool
+					if i < len(plannedArray) {
+						plannedElement, isPlanMap = plannedArray[i].(map[string]interface{})
+					}
+
+					responseElement, isResponseMap := responseArray[i].(map[string]interface{})
+					if plannedElement != nil && responseElement != nil && isPlanMap && isResponseMap {
+						cleanedElement, nestedDiags := removeUnknownKeysFromJsonMap(plannedElement, responseElement)
+						diags.Append(nestedDiags...)
+						cleanedArray[i] = cleanedElement
+					} else {
+						// If not a map or no planned element, keep as-is
+						cleanedArray[i] = responseArray[i]
+					}
+				}
+				actualJsonCopy[key] = cleanedArray
 			}
 		}
 	}
