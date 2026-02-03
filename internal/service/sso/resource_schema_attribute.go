@@ -128,7 +128,7 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 
 	uniqueDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Indicates whether or not the attribute must have a unique value within the PingOne environment.",
-	).UnmodifiableDataLossProtection().DefaultValue("false")
+	).DefaultValue("false")
 
 	multivaluedDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Indicates whether the attribute has multiple values or a single one. Maximum number of values stored is 1,000.",
@@ -224,10 +224,6 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 				MarkdownDescription: uniqueDescription.MarkdownDescription,
 				Optional:            true,
 				Computed:            true,
-
-				PlanModifiers: []planmodifier.Bool{
-					boolplanmodifierinternal.UnmodifiableDataLossProtection(),
-				},
 
 				Validators: []validator.Bool{
 					boolvalidatorinternal.MustNotBeTrueIfPathSetToValue(

@@ -708,13 +708,9 @@ func TestAccSchemaAttribute_DLP(t *testing.T) {
 				Config:  testAccSchemaAttributeConfig_StringFull(resourceName, name, false, false),
 				Destroy: true,
 			},
-			// Unique & multivalued
+			// Multivalued
 			{
 				Config: testAccSchemaAttributeConfig_StringFull(resourceName, name, true, false),
-			},
-			{
-				Config:      testAccSchemaAttributeConfig_StringFull(resourceName, name, false, false),
-				ExpectError: regexp.MustCompile(`Data Loss Protection`),
 			},
 			{
 				Config:      testAccSchemaAttributeConfig_StringFull(resourceName, name, true, true),
