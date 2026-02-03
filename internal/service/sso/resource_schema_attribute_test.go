@@ -720,7 +720,7 @@ func TestAccSchemaAttribute_DLP(t *testing.T) {
 				Config:  testAccSchemaAttributeConfig_StringFull(resourceName, name, true, false),
 				Destroy: true,
 			},
-			// Enumerated values
+			// Enumerated values - enable on existing attribute
 			{
 				Config: testAccSchemaAttributeConfig_StringFull(resourceName, name, false, false),
 			},
@@ -732,6 +732,7 @@ func TestAccSchemaAttribute_DLP(t *testing.T) {
 				Config:  testAccSchemaAttributeConfig_StringFull(resourceName, name, false, false),
 				Destroy: true,
 			},
+			// Enumerated values - delete existing value
 			{
 				Config: testAccSchemaAttributeConfig_EnumeratedValues2(resourceName, name, "STRING"),
 			},
