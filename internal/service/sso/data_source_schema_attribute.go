@@ -26,22 +26,8 @@ import (
 type SchemaAttributeDataSource serviceClientType
 
 type SchemaAttributeDataSourceModel struct {
-	Id               pingonetypes.ResourceIDValue `tfsdk:"id"`
-	EnvironmentId    pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
-	SchemaId         pingonetypes.ResourceIDValue `tfsdk:"schema_id"`
-	AttributeId      pingonetypes.ResourceIDValue `tfsdk:"attribute_id"`
-	Description      types.String                 `tfsdk:"description"`
-	DisplayName      types.String                 `tfsdk:"display_name"`
-	Enabled          types.Bool                   `tfsdk:"enabled"`
-	EnumeratedValues types.Set                    `tfsdk:"enumerated_values"`
-	LdapAttribute    types.String                 `tfsdk:"ldap_attribute"`
-	Multivalued      types.Bool                   `tfsdk:"multivalued"`
-	Name             types.String                 `tfsdk:"name"`
-	RegexValidation  types.Object                 `tfsdk:"regex_validation"`
-	Required         types.Bool                   `tfsdk:"required"`
-	SchemaType       types.String                 `tfsdk:"schema_type"`
-	Type             types.String                 `tfsdk:"type"`
-	Unique           types.Bool                   `tfsdk:"unique"`
+	SchemaAttributeResourceModelV1
+	AttributeId pingonetypes.ResourceIDValue `tfsdk:"attribute_id"`
 }
 
 // Framework interfaces
@@ -299,41 +285,13 @@ func (r *SchemaAttributeDataSource) Read(ctx context.Context, req datasource.Rea
 }
 
 func (p *SchemaAttributeDataSourceModel) toState(apiObject *management.SchemaAttribute) diag.Diagnostics {
-	var diags diag.Diagnostics
+	diags := p.SchemaAttributeResourceModelV1.toState(apiObject)
 
-	if apiObject == nil {
-		diags.AddError(
-			"Data object missing",
-			"Cannot convert the data object to state as the data object is null.  Please report this to the provider maintainers.",
-		)
-
+	if diags.HasError() {
 		return diags
 	}
 
-	var d diag.Diagnostics
-
-	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
-	p.AttributeId = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
-	p.EnvironmentId = framework.PingOneResourceIDOkToTF(apiObject.Environment.GetIdOk())
-	p.SchemaId = framework.PingOneResourceIDOkToTF(apiObject.Schema.GetIdOk())
-	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
-	p.DisplayName = framework.StringOkToTF(apiObject.GetDisplayNameOk())
-	p.Enabled = framework.BoolOkToTF(apiObject.GetEnabledOk())
-
-	p.EnumeratedValues, d = schemaAttributeEnumeratedValuesOkToTF(apiObject.GetEnumeratedValuesOk())
-	diags.Append(d...)
-
-	p.LdapAttribute = framework.StringOkToTF(apiObject.GetLdapAttributeOk())
-	p.Multivalued = framework.BoolOkToTF(apiObject.GetMultiValuedOk())
-	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
-
-	p.RegexValidation, d = schemaAttributeRegexValidationOkToTF(apiObject.GetRegexValidationOk())
-	diags.Append(d...)
-
-	p.Required = framework.BoolOkToTF(apiObject.GetRequiredOk())
-	p.SchemaType = framework.EnumOkToTF(apiObject.GetSchemaTypeOk())
-	p.Type = framework.EnumOkToTF(apiObject.GetTypeOk())
-	p.Unique = framework.BoolOkToTF(apiObject.GetUniqueOk())
+	p.AttributeId = p.Id
 
 	return diags
 }
