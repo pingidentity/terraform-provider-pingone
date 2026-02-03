@@ -732,6 +732,17 @@ func TestAccSchemaAttribute_DLP(t *testing.T) {
 				Config:  testAccSchemaAttributeConfig_StringFull(resourceName, name, false, false),
 				Destroy: true,
 			},
+			{
+				Config: testAccSchemaAttributeConfig_EnumeratedValues2(resourceName, name, "STRING"),
+			},
+			{
+				Config:      testAccSchemaAttributeConfig_EnumeratedValues1(resourceName, name, "STRING"),
+				ExpectError: regexp.MustCompile(`Data Loss Protection`),
+			},
+			{
+				Config:  testAccSchemaAttributeConfig_EnumeratedValues2(resourceName, name, "STRING"),
+				Destroy: true,
+			},
 		},
 	})
 }
