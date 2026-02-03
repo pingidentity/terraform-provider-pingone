@@ -73,6 +73,7 @@ func DataSources() []func() datasource.DataSource {
 		NewResourceScopesDataSource,
 		NewResourceSecretDataSource,
 		NewSchemaDataSource,
+		NewSchemaAttributeDataSource,
 		NewUserDataSource,
 		NewUsersDataSource,
 	}
