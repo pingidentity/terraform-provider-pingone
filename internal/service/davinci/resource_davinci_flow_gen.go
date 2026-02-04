@@ -21,6 +21,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float32planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/mapdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
@@ -180,6 +182,9 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 			},
 			"enabled": schema.BoolAttribute{
 				Computed: true,
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"environment_id": schema.StringAttribute{
 				Required:    true,
@@ -278,7 +283,7 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 													Optional: true,
 													Computed: true,
 													PlanModifiers: []planmodifier.String{
-														stringplanmodifier.UseNonNullStateForUnknown(),
+														stringplanmodifier.UseStateForUnknown(),
 													},
 												},
 												"connector_id": schema.StringAttribute{
@@ -288,7 +293,7 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 													Optional: true,
 													Computed: true,
 													PlanModifiers: []planmodifier.String{
-														stringplanmodifier.UseNonNullStateForUnknown(),
+														stringplanmodifier.UseStateForUnknown(),
 													},
 												},
 												"label": schema.StringAttribute{
@@ -298,7 +303,7 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 													Optional: true,
 													Computed: true,
 													PlanModifiers: []planmodifier.String{
-														stringplanmodifier.UseNonNullStateForUnknown(),
+														stringplanmodifier.UseStateForUnknown(),
 													},
 												},
 												"node_type": schema.StringAttribute{
@@ -509,6 +514,9 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 			},
 			"published_version": schema.Float32Attribute{
 				Computed: true,
+				PlanModifiers: []planmodifier.Float32{
+					float32planmodifier.UseStateForUnknown(),
+				},
 			},
 			"settings": schema.SingleNestedAttribute{
 				Attributes: map[string]schema.Attribute{
