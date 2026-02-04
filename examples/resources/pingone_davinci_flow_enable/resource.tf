@@ -74,7 +74,7 @@ resource "pingone_davinci_flow" "example" {
   }
 }
 
-resource "pingone_davinci_flow_enabled" "example" {
+resource "pingone_davinci_flow_enable" "example" {
   environment_id = var.environment_id
   flow_id        = pingone_davinci_flow.example.id
   enabled        = true

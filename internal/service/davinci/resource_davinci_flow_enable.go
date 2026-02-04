@@ -27,22 +27,22 @@ import (
 )
 
 var (
-	_ resource.Resource                = &davinciFlowEnabledResource{}
-	_ resource.ResourceWithConfigure   = &davinciFlowEnabledResource{}
-	_ resource.ResourceWithImportState = &davinciFlowEnabledResource{}
+	_ resource.Resource                = &davinciFlowEnableResource{}
+	_ resource.ResourceWithConfigure   = &davinciFlowEnableResource{}
+	_ resource.ResourceWithImportState = &davinciFlowEnableResource{}
 )
 
-func NewDavinciFlowEnabledResource() resource.Resource {
-	return &davinciFlowEnabledResource{}
+func NewDavinciFlowEnableResource() resource.Resource {
+	return &davinciFlowEnableResource{}
 }
 
-type davinciFlowEnabledResource serviceClientType
+type davinciFlowEnableResource serviceClientType
 
-func (r *davinciFlowEnabledResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_davinci_flow_enabled"
+func (r *davinciFlowEnableResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_davinci_flow_enable"
 }
 
-func (r *davinciFlowEnabledResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *davinciFlowEnableResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -67,14 +67,14 @@ func (r *davinciFlowEnabledResource) Configure(ctx context.Context, req resource
 	}
 }
 
-type davinciFlowEnabledResourceModel struct {
+type davinciFlowEnableResourceModel struct {
 	Enabled       types.Bool   `tfsdk:"enabled"`
 	EnvironmentId types.String `tfsdk:"environment_id"`
 	FlowId        types.String `tfsdk:"flow_id"`
 	Id            types.String `tfsdk:"id"`
 }
 
-func (r *davinciFlowEnabledResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *davinciFlowEnableResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: "Resource to enable or disable a DaVinci flow.",
 		Attributes: map[string]schema.Attribute{
@@ -113,7 +113,7 @@ func (r *davinciFlowEnabledResource) Schema(ctx context.Context, req resource.Sc
 	}
 }
 
-func (model *davinciFlowEnabledResourceModel) buildClientStruct() (*pingone.DaVinciFlowEnableRequest, diag.Diagnostics) {
+func (model *davinciFlowEnableResourceModel) buildClientStruct() (*pingone.DaVinciFlowEnableRequest, diag.Diagnostics) {
 	result := &pingone.DaVinciFlowEnableRequest{}
 	var respDiags diag.Diagnostics
 	// enabled
@@ -121,7 +121,7 @@ func (model *davinciFlowEnabledResourceModel) buildClientStruct() (*pingone.DaVi
 	return result, respDiags
 }
 
-func (state *davinciFlowEnabledResourceModel) readClientResponse(response *pingone.DaVinciFlowEnabledResponse) diag.Diagnostics {
+func (state *davinciFlowEnableResourceModel) readClientResponse(response *pingone.DaVinciFlowEnabledResponse) diag.Diagnostics {
 	var respDiags diag.Diagnostics
 	// enabled
 	state.Enabled = types.BoolValue(response.Enabled)
@@ -131,7 +131,7 @@ func (state *davinciFlowEnabledResourceModel) readClientResponse(response *pingo
 	return respDiags
 }
 
-func (state *davinciFlowEnabledResourceModel) readClientResponseFlow(response *pingone.DaVinciFlowResponse) diag.Diagnostics {
+func (state *davinciFlowEnableResourceModel) readClientResponseFlow(response *pingone.DaVinciFlowResponse) diag.Diagnostics {
 	var respDiags diag.Diagnostics
 	// enabled
 	state.Enabled = types.BoolPointerValue(response.Enabled)
@@ -142,8 +142,8 @@ func (state *davinciFlowEnabledResourceModel) readClientResponseFlow(response *p
 	return respDiags
 }
 
-func (r *davinciFlowEnabledResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data davinciFlowEnabledResourceModel
+func (r *davinciFlowEnableResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var data davinciFlowEnableResourceModel
 
 	if r.Client == nil {
 		resp.Diagnostics.AddError(
@@ -204,8 +204,8 @@ func (r *davinciFlowEnabledResource) Create(ctx context.Context, req resource.Cr
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *davinciFlowEnabledResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data davinciFlowEnabledResourceModel
+func (r *davinciFlowEnableResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data davinciFlowEnableResourceModel
 
 	if r.Client == nil {
 		resp.Diagnostics.AddError(
@@ -266,8 +266,8 @@ func (r *davinciFlowEnabledResource) Read(ctx context.Context, req resource.Read
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *davinciFlowEnabledResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data davinciFlowEnabledResourceModel
+func (r *davinciFlowEnableResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var data davinciFlowEnableResourceModel
 
 	if r.Client == nil {
 		resp.Diagnostics.AddError(
@@ -329,10 +329,10 @@ func (r *davinciFlowEnabledResource) Update(ctx context.Context, req resource.Up
 }
 
 // This resource does not represent a real resource in PingOne, so nothing to do on delete.
-func (r *davinciFlowEnabledResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *davinciFlowEnableResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 }
 
-func (r *davinciFlowEnabledResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r *davinciFlowEnableResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 
 	idComponents := []framework.ImportComponent{
 		{
