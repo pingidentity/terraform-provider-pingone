@@ -13,12 +13,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -29,23 +27,22 @@ import (
 )
 
 var (
-	_ resource.Resource                = &davinciApplicationSecretResource{}
-	_ resource.ResourceWithConfigure   = &davinciApplicationSecretResource{}
-	_ resource.ResourceWithImportState = &davinciApplicationSecretResource{}
-	_ resource.ResourceWithModifyPlan  = &davinciApplicationSecretResource{}
+	_ resource.Resource                = &davinciFlowEnableResource{}
+	_ resource.ResourceWithConfigure   = &davinciFlowEnableResource{}
+	_ resource.ResourceWithImportState = &davinciFlowEnableResource{}
 )
 
-func NewDavinciApplicationSecretResource() resource.Resource {
-	return &davinciApplicationSecretResource{}
+func NewDavinciFlowEnableResource() resource.Resource {
+	return &davinciFlowEnableResource{}
 }
 
-type davinciApplicationSecretResource serviceClientType
+type davinciFlowEnableResource serviceClientType
 
-func (r *davinciApplicationSecretResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_davinci_application_secret"
+func (r *davinciFlowEnableResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_davinci_flow_enable"
 }
 
-func (r *davinciApplicationSecretResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *davinciFlowEnableResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -70,33 +67,36 @@ func (r *davinciApplicationSecretResource) Configure(ctx context.Context, req re
 	}
 }
 
-type davinciApplicationSecretResourceModel struct {
-	Oauth                 types.Object `tfsdk:"oauth"`
-	DavinciApplicationId  types.String `tfsdk:"davinci_application_id"`
-	EnvironmentId         types.String `tfsdk:"environment_id"`
-	Id                    types.String `tfsdk:"id"`
-	RotationTriggerValues types.Map    `tfsdk:"rotation_trigger_values"`
+type davinciFlowEnableResourceModel struct {
+	Enabled       types.Bool   `tfsdk:"enabled"`
+	EnvironmentId types.String `tfsdk:"environment_id"`
+	FlowId        types.String `tfsdk:"flow_id"`
+	Id            types.String `tfsdk:"id"`
 }
 
-func (r *davinciApplicationSecretResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *davinciFlowEnableResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Resource to rotate the OAuth client secret for a DaVinci application.",
+		Description: "Resource to enable or disable a DaVinci flow.",
 		Attributes: map[string]schema.Attribute{
-			"davinci_application_id": schema.StringAttribute{
+			"enabled": schema.BoolAttribute{
 				Required:    true,
-				Description: "This field is immutable and will trigger a replace plan if changed.",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
+				Description: "Whether the flow is enabled or disabled.",
 			},
 			"environment_id": schema.StringAttribute{
 				Required:    true,
-				Description: "The ID of the environment containing the DaVinci application.",
+				Description: "The ID of the environment containing the flow.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
 				Validators: []validator.String{
 					stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), "Must be a valid UUID"),
+				},
+			},
+			"flow_id": schema.StringAttribute{
+				Required:    true,
+				Description: "The ID of the flow to enable or disable.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
 				},
 			},
 			"id": schema.StringAttribute{
@@ -109,82 +109,41 @@ func (r *davinciApplicationSecretResource) Schema(ctx context.Context, req resou
 					stringplanmodifier.UseNonNullStateForUnknown(),
 				},
 			},
-			"oauth": schema.SingleNestedAttribute{
-				Attributes: map[string]schema.Attribute{
-					"client_secret": schema.StringAttribute{
-						Computed:  true,
-						Sensitive: true,
-						PlanModifiers: []planmodifier.String{
-							stringplanmodifier.UseNonNullStateForUnknown(),
-						},
-					},
-				},
-				Computed: true,
-				PlanModifiers: []planmodifier.Object{
-					objectplanmodifier.UseNonNullStateForUnknown(),
-				},
-			},
-			"rotation_trigger_values": schema.MapAttribute{
-				Description: "A meta-argument map of values that, if any values are changed, will force rotation of the application client secret. Adding values to and removing values from the map will not trigger a rotation. This parameter can be used to control time-based rotation using Terraform.",
-				Optional:    true,
-				ElementType: types.StringType,
-			},
 		},
 	}
 }
 
-// Rotate the client secret via RequiresReplace when the trigger values change
-func (r *davinciApplicationSecretResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
-	// Destruction plan
-	if req.Plan.Raw.IsNull() {
-		return
-	}
-
-	var plan, state types.Map
-	var planValues, stateValues map[string]attr.Value
-
-	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("rotation_trigger_values"), &plan)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	planValues = plan.Elements()
-
-	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("rotation_trigger_values"), &state)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	stateValues = state.Elements()
-
-	for k, v := range planValues {
-		if stateValue, ok := stateValues[k]; ok && (v == types.StringUnknown() || !stateValue.Equal(v)) {
-			resp.RequiresReplace = path.Paths{path.Root("rotation_trigger_values")}
-			break
-		}
-	}
+func (model *davinciFlowEnableResourceModel) buildClientStruct() (*pingone.DaVinciFlowEnableRequest, diag.Diagnostics) {
+	result := &pingone.DaVinciFlowEnableRequest{}
+	var respDiags diag.Diagnostics
+	// enabled
+	result.Enabled = model.Enabled.ValueBool()
+	return result, respDiags
 }
 
-func (state *davinciApplicationSecretResourceModel) readClientResponse(response *pingone.DaVinciApplicationResponse) diag.Diagnostics {
-	var respDiags, diags diag.Diagnostics
-	// davinci_application_id
-	state.DavinciApplicationId = types.StringValue(response.Id)
+func (state *davinciFlowEnableResourceModel) readClientResponse(response *pingone.DaVinciFlowEnabledResponse) diag.Diagnostics {
+	var respDiags diag.Diagnostics
+	// enabled
+	state.Enabled = types.BoolValue(response.Enabled)
 	// id
-	state.Id = types.StringValue(response.Id)
-	// oauth
-	oauthAttrTypes := map[string]attr.Type{
-		"client_secret": types.StringType,
-	}
-	oauthValue, diags := types.ObjectValue(oauthAttrTypes, map[string]attr.Value{
-		"client_secret": types.StringValue(response.Oauth.ClientSecret),
-	})
-	respDiags.Append(diags...)
-	state.Oauth = oauthValue
+	// Copy the flow_id value to id
+	state.Id = types.StringValue(state.FlowId.ValueString())
 	return respDiags
 }
 
-func (r *davinciApplicationSecretResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data davinciApplicationSecretResourceModel
+func (state *davinciFlowEnableResourceModel) readClientResponseFlow(response *pingone.DaVinciFlowResponse) diag.Diagnostics {
+	var respDiags diag.Diagnostics
+	// enabled
+	state.Enabled = types.BoolPointerValue(response.Enabled)
+	// flow_id
+	state.FlowId = types.StringValue(response.Id)
+	// id
+	state.Id = types.StringValue(response.Id)
+	return respDiags
+}
+
+func (r *davinciFlowEnableResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var data davinciFlowEnableResourceModel
 
 	if r.Client == nil {
 		resp.Diagnostics.AddError(
@@ -201,6 +160,12 @@ func (r *davinciApplicationSecretResource) Create(ctx context.Context, req resou
 	}
 
 	// Create API call logic
+	clientData, diags := data.buildClientStruct()
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	environmentIdUuid, err := uuid.Parse(data.EnvironmentId.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddAttributeError(
@@ -210,15 +175,15 @@ func (r *davinciApplicationSecretResource) Create(ctx context.Context, req resou
 		)
 		return
 	}
-	var responseData *pingone.DaVinciApplicationResponse
+	var responseData *pingone.DaVinciFlowEnabledResponse
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciApplicationsApi.RotateSecretByDavinciApplicationId(ctx, environmentIdUuid, data.DavinciApplicationId.ValueString()).RequestBody(map[string]interface{}{}).Execute()
+			fO, fR, fErr := r.Client.DaVinciFlowsApi.UpdateEnabledByFlowId(ctx, environmentIdUuid, data.FlowId.ValueString()).DaVinciFlowEnableRequest(*clientData).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
-		"RotateDavinciApplicationSecret",
+		"EnableFlow",
 		framework.DefaultCustomError,
 		framework.DefaultCreateReadRetryable,
 		&responseData,
@@ -239,8 +204,8 @@ func (r *davinciApplicationSecretResource) Create(ctx context.Context, req resou
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *davinciApplicationSecretResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data davinciApplicationSecretResourceModel
+func (r *davinciFlowEnableResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data davinciFlowEnableResourceModel
 
 	if r.Client == nil {
 		resp.Diagnostics.AddError(
@@ -256,7 +221,7 @@ func (r *davinciApplicationSecretResource) Read(ctx context.Context, req resourc
 		return
 	}
 
-	// Read API call logic
+	// Read API call logic for the flow itself
 	environmentIdUuid, err := uuid.Parse(data.EnvironmentId.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddAttributeError(
@@ -266,15 +231,15 @@ func (r *davinciApplicationSecretResource) Read(ctx context.Context, req resourc
 		)
 		return
 	}
-	var responseData *pingone.DaVinciApplicationResponse
+	var responseData *pingone.DaVinciFlowResponse
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.DaVinciApplicationsApi.GetDavinciApplicationById(ctx, environmentIdUuid, data.Id.ValueString()).Execute()
+			fO, fR, fErr := r.Client.DaVinciFlowsApi.GetFlowById(ctx, environmentIdUuid, data.Id.ValueString()).Execute()
 			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
-		"GetDavinciApplicationById",
+		"GetFlowById",
 		framework.CustomErrorResourceNotFoundWarning,
 		framework.DefaultCreateReadRetryable,
 		&responseData,
@@ -291,7 +256,7 @@ func (r *davinciApplicationSecretResource) Read(ctx context.Context, req resourc
 	}
 
 	// Read response into the model
-	resp.Diagnostics.Append(data.readClientResponse(responseData)...)
+	resp.Diagnostics.Append(data.readClientResponseFlow(responseData)...)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -301,16 +266,73 @@ func (r *davinciApplicationSecretResource) Read(ctx context.Context, req resourc
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *davinciApplicationSecretResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	// This will only happen when adding or removing rotation trigger values. Just copy the plan into state.
-	resp.State.Raw = req.Plan.Raw
+func (r *davinciFlowEnableResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var data davinciFlowEnableResourceModel
+
+	if r.Client == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.")
+		return
+	}
+
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Create API call logic
+	clientData, diags := data.buildClientStruct()
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	environmentIdUuid, err := uuid.Parse(data.EnvironmentId.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("environment_id"),
+			"Attribute Validation Error",
+			fmt.Sprintf("The value '%s' for attribute '%s' is not a valid UUID: %s", data.EnvironmentId.ValueString(), "EnvironmentId", err.Error()),
+		)
+		return
+	}
+	var responseData *pingone.DaVinciFlowEnabledResponse
+	resp.Diagnostics.Append(framework.ParseResponse(
+		ctx,
+
+		func() (any, *http.Response, error) {
+			fO, fR, fErr := r.Client.DaVinciFlowsApi.UpdateEnabledByFlowId(ctx, environmentIdUuid, data.FlowId.ValueString()).DaVinciFlowEnableRequest(*clientData).Execute()
+			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client, data.EnvironmentId.ValueString(), fO, fR, fErr)
+		},
+		"EnableFlow",
+		framework.DefaultCustomError,
+		nil,
+		&responseData,
+	)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Read response into the model
+	resp.Diagnostics.Append(data.readClientResponse(responseData)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Save data into Terraform state
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// This config object is edit-only, so Terraform can't delete it.
-func (r *davinciApplicationSecretResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+// This resource does not represent a real resource in PingOne, so nothing to do on delete.
+func (r *davinciFlowEnableResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 }
 
-func (r *davinciApplicationSecretResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r *davinciFlowEnableResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 
 	idComponents := []framework.ImportComponent{
 		{
@@ -318,9 +340,9 @@ func (r *davinciApplicationSecretResource) ImportState(ctx context.Context, req 
 			Regexp: verify.P1ResourceIDRegexp,
 		},
 		{
-			Label:     "davinci_application_id",
-			PrimaryID: true,
+			Label:     "flow_id",
 			Regexp:    verify.P1DVResourceIDRegexp,
+			PrimaryID: true,
 		},
 	}
 

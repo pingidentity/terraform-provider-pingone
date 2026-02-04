@@ -16,6 +16,9 @@ func BetaResources() []func() resource.Resource {
 		NewDavinciApplicationResource,
 		NewDavinciApplicationSecretResource,
 		NewDavinciConnectorInstanceResource,
+		NewDavinciFlowDeployResource,
+		NewDavinciFlowEnableResource,
+		NewDavinciFlowResource,
 		NewDavinciVariableResource,
 	}
 }

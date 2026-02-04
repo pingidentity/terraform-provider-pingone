@@ -19,6 +19,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -222,6 +223,11 @@ func (r *davinciApplicationFlowPolicyResource) Schema(ctx context.Context, req r
 					},
 				},
 				Optional: true,
+				Computed: true,
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.UseNonNullStateForUnknown(),
+				},
+				// No default because it will differ for PingOne vs non-PingOne flows
 			},
 		},
 	}
@@ -568,7 +574,7 @@ func (r *davinciApplicationFlowPolicyResource) Create(ctx context.Context, req r
 		},
 		"CreateFlowPolicyByDavinciApplicationId",
 		framework.DefaultCustomError,
-		framework.DefaultRetryable,
+		framework.DefaultCreateReadRetryable,
 		&responseData,
 	)...)
 
@@ -624,7 +630,7 @@ func (r *davinciApplicationFlowPolicyResource) Read(ctx context.Context, req res
 		},
 		"GetFlowPolicyByIdUsingDavinciApplicationId",
 		framework.CustomErrorResourceNotFoundWarning,
-		framework.DefaultRetryable,
+		framework.DefaultCreateReadRetryable,
 		&responseData,
 	)...)
 
@@ -692,7 +698,7 @@ func (r *davinciApplicationFlowPolicyResource) Update(ctx context.Context, req r
 		},
 		"ReplaceFlowPolicyByIdUsingDavinciApplicationId",
 		framework.DefaultCustomError,
-		framework.DefaultRetryable,
+		nil,
 		&responseData,
 	)...)
 
@@ -747,7 +753,7 @@ func (r *davinciApplicationFlowPolicyResource) Delete(ctx context.Context, req r
 		},
 		"DeleteFlowPolicyByIdUsingDavinciApplicationId",
 		framework.CustomErrorResourceNotFoundWarning,
-		framework.DefaultRetryable,
+		framework.DefaultCreateReadRetryable,
 		nil,
 	)...)
 }

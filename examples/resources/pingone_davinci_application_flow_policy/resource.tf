@@ -25,4 +25,10 @@ resource "pingone_davinci_application_flow_policy" "my_awesome_registration_flow
       weight  = 100
     }
   ]
+
+  # When destroying a pingone_davinci_flow resource referenced in a flow policy, you may need to set lifecycle.create_before_destroy to true.
+  # This ensures that the flow policy is updated to remove the reference to the flow before the flow is deleted.
+  # lifecycle {
+  #   create_before_destroy = true
+  # }
 }

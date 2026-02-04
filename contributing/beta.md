@@ -70,7 +70,7 @@ Publishing a beta release requires a specific sequence of steps to ensure the Te
 
 3.  **Commit the Documentation:** Commit the newly generated doc files to your release branch.
 
-4.  **Create the Release:** Once the beta documentation is committed and pushed, create a corresponding GitHub release. The tag name **must** match the version number and end with `-beta`, and the release should be marked as pre-release, **not** the latest release. Release notes are not added for beta functionality. You can use the "What's Changed" button to fill out the content of the GitHub release. The main release notes will be included on the non-beta release.
+4.  **Create the Release:** Once the beta documentation is committed and pushed, create a corresponding GitHub release. The tag name **must** match the version number and end with `-beta`, and the release should be marked as pre-release, **not** the latest release. **Be sure to target your `-beta-release` branch, rathen than the default branch.** Release notes are not added for beta functionality. You can use the "What's Changed" button to fill out the content of the GitHub release. The main release notes will be included on the non-beta release.
 
 Creating the GitHub release will automatically trigger a GitHub Action that runs Goreleaser, builds the beta provider binaries, and attaches them to the release. The Terraform registry will eventually pick up the new release and make it available to download.
 
