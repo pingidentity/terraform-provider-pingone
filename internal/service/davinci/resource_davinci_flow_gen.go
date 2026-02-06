@@ -24,6 +24,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float32planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/mapdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -417,10 +418,16 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 						"description": schema.StringAttribute{
 							Optional: true,
 							Computed: true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
 						},
 						"is_expanded": schema.BoolAttribute{
 							Optional: true,
 							Computed: true,
+							PlanModifiers: []planmodifier.Bool{
+								boolplanmodifier.UseStateForUnknown(),
+							},
 						},
 						"preferred_control_type": schema.StringAttribute{
 							Optional:            true,
@@ -447,6 +454,9 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 									"toggleSwitch",
 								),
 							},
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
 						},
 						"preferred_data_type": schema.StringAttribute{
 							Optional:            true,
@@ -466,6 +476,9 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 								// See https://github.com/hashicorp/terraform-plugin-framework/issues/898
 								internalstringvalidator.NotNull(),
 							},
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
 						},
 						"property_name": schema.StringAttribute{
 							Optional: true,
@@ -476,15 +489,24 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 								// See https://github.com/hashicorp/terraform-plugin-framework/issues/898
 								internalstringvalidator.NotNull(),
 							},
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
 						},
 						"required": schema.BoolAttribute{
 							Optional: true,
 							Computed: true,
+							PlanModifiers: []planmodifier.Bool{
+								boolplanmodifier.UseStateForUnknown(),
+							},
 						},
 					},
 				},
 				Optional: true,
 				Computed: true,
+				PlanModifiers: []planmodifier.List{
+					listplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"name": schema.StringAttribute{
 				Required: true,
