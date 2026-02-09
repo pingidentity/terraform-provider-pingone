@@ -102,8 +102,8 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 		"target": types.StringType,
 	}
 	graphDataElementsEdgesPositionAttrTypes := map[string]attr.Type{
-		"x": types.NumberType,
-		"y": types.NumberType,
+		"x": types.Float64Type,
+		"y": types.Float64Type,
 	}
 	graphDataElementsEdgesAttrTypes := map[string]attr.Type{
 		"classes":    types.StringType,
@@ -245,10 +245,10 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 										},
 										"position": schema.SingleNestedAttribute{
 											Attributes: map[string]schema.Attribute{
-												"x": schema.NumberAttribute{
+												"x": schema.Float64Attribute{
 													Required: true,
 												},
-												"y": schema.NumberAttribute{
+												"y": schema.Float64Attribute{
 													Required: true,
 												},
 											},
@@ -341,10 +341,10 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 										},
 										"position": schema.SingleNestedAttribute{
 											Attributes: map[string]schema.Attribute{
-												"x": schema.NumberAttribute{
+												"x": schema.Float64Attribute{
 													Required: true,
 												},
-												"y": schema.NumberAttribute{
+												"y": schema.Float64Attribute{
 													Required: true,
 												},
 											},
@@ -374,10 +374,10 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 					},
 					"pan": schema.SingleNestedAttribute{
 						Attributes: map[string]schema.Attribute{
-							"x": schema.NumberAttribute{
+							"x": schema.Float64Attribute{
 								Required: true,
 							},
-							"y": schema.NumberAttribute{
+							"y": schema.Float64Attribute{
 								Required: true,
 							},
 						},
@@ -794,14 +794,10 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 						edgesPositionValue := &pingone.DaVinciFlowGraphDataRequestElementsEdgePosition{}
 						edgesPositionAttrs := edgesAttrs["position"].(types.Object).Attributes()
 						if !edgesPositionAttrs["x"].IsNull() && !edgesPositionAttrs["x"].IsUnknown() {
-							edgesPositionValue.X = pingonetypes.BigFloatUnquoted{
-								Float: edgesPositionAttrs["x"].(types.Number).ValueBigFloat(),
-							}
+							edgesPositionValue.X = edgesPositionAttrs["x"].(types.Float64).ValueFloat64()
 						}
 						if !edgesPositionAttrs["y"].IsNull() && !edgesPositionAttrs["y"].IsUnknown() {
-							edgesPositionValue.Y = pingonetypes.BigFloatUnquoted{
-								Float: edgesPositionAttrs["y"].(types.Number).ValueBigFloat(),
-							}
+							edgesPositionValue.Y = edgesPositionAttrs["y"].(types.Float64).ValueFloat64()
 						}
 						edgesValue.Position = edgesPositionValue
 					}
@@ -849,14 +845,10 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 						nodesPositionValue := &pingone.DaVinciFlowGraphDataRequestElementsNodePosition{}
 						nodesPositionAttrs := nodesAttrs["position"].(types.Object).Attributes()
 						if !nodesPositionAttrs["x"].IsNull() && !nodesPositionAttrs["x"].IsUnknown() {
-							nodesPositionValue.X = pingonetypes.BigFloatUnquoted{
-								Float: nodesPositionAttrs["x"].(types.Number).ValueBigFloat(),
-							}
+							nodesPositionValue.X = nodesPositionAttrs["x"].(types.Float64).ValueFloat64()
 						}
 						if !nodesPositionAttrs["y"].IsNull() && !nodesPositionAttrs["y"].IsUnknown() {
-							nodesPositionValue.Y = pingonetypes.BigFloatUnquoted{
-								Float: nodesPositionAttrs["y"].(types.Number).ValueBigFloat(),
-							}
+							nodesPositionValue.Y = nodesPositionAttrs["y"].(types.Float64).ValueFloat64()
 						}
 						nodesValue.Position = nodesPositionValue
 					}
@@ -882,14 +874,10 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 			graphDataPanValue := &pingone.DaVinciFlowGraphDataRequestPan{}
 			graphDataPanAttrs := graphDataAttrs["pan"].(types.Object).Attributes()
 			if !graphDataPanAttrs["x"].IsNull() && !graphDataPanAttrs["x"].IsUnknown() {
-				graphDataPanValue.X = pingonetypes.BigFloatUnquoted{
-					Float: graphDataPanAttrs["x"].(types.Number).ValueBigFloat(),
-				}
+				graphDataPanValue.X = graphDataPanAttrs["x"].(types.Float64).ValueFloat64()
 			}
 			if !graphDataPanAttrs["y"].IsNull() && !graphDataPanAttrs["y"].IsUnknown() {
-				graphDataPanValue.Y = pingonetypes.BigFloatUnquoted{
-					Float: graphDataPanAttrs["y"].(types.Number).ValueBigFloat(),
-				}
+				graphDataPanValue.Y = graphDataPanAttrs["y"].(types.Float64).ValueFloat64()
 			}
 			graphDataValue.Pan = graphDataPanValue
 		}
@@ -1183,14 +1171,10 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 						edgesPositionValue := &pingone.DaVinciFlowGraphDataRequestElementsEdgePosition{}
 						edgesPositionAttrs := edgesAttrs["position"].(types.Object).Attributes()
 						if !edgesPositionAttrs["x"].IsNull() && !edgesPositionAttrs["x"].IsUnknown() {
-							edgesPositionValue.X = pingonetypes.BigFloatUnquoted{
-								Float: edgesPositionAttrs["x"].(types.Number).ValueBigFloat(),
-							}
+							edgesPositionValue.X = edgesPositionAttrs["x"].(types.Float64).ValueFloat64()
 						}
 						if !edgesPositionAttrs["y"].IsNull() && !edgesPositionAttrs["y"].IsUnknown() {
-							edgesPositionValue.Y = pingonetypes.BigFloatUnquoted{
-								Float: edgesPositionAttrs["y"].(types.Number).ValueBigFloat(),
-							}
+							edgesPositionValue.Y = edgesPositionAttrs["y"].(types.Float64).ValueFloat64()
 						}
 						edgesValue.Position = edgesPositionValue
 					}
@@ -1238,14 +1222,10 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 						nodesPositionValue := &pingone.DaVinciFlowGraphDataRequestElementsNodePosition{}
 						nodesPositionAttrs := nodesAttrs["position"].(types.Object).Attributes()
 						if !nodesPositionAttrs["x"].IsNull() && !nodesPositionAttrs["x"].IsUnknown() {
-							nodesPositionValue.X = pingonetypes.BigFloatUnquoted{
-								Float: nodesPositionAttrs["x"].(types.Number).ValueBigFloat(),
-							}
+							nodesPositionValue.X = nodesPositionAttrs["x"].(types.Float64).ValueFloat64()
 						}
 						if !nodesPositionAttrs["y"].IsNull() && !nodesPositionAttrs["y"].IsUnknown() {
-							nodesPositionValue.Y = pingonetypes.BigFloatUnquoted{
-								Float: nodesPositionAttrs["y"].(types.Number).ValueBigFloat(),
-							}
+							nodesPositionValue.Y = nodesPositionAttrs["y"].(types.Float64).ValueFloat64()
 						}
 						nodesValue.Position = nodesPositionValue
 					}
@@ -1271,14 +1251,10 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 			graphDataPanValue := &pingone.DaVinciFlowGraphDataRequestPan{}
 			graphDataPanAttrs := graphDataAttrs["pan"].(types.Object).Attributes()
 			if !graphDataPanAttrs["x"].IsNull() && !graphDataPanAttrs["x"].IsUnknown() {
-				graphDataPanValue.X = pingonetypes.BigFloatUnquoted{
-					Float: graphDataPanAttrs["x"].(types.Number).ValueBigFloat(),
-				}
+				graphDataPanValue.X = graphDataPanAttrs["x"].(types.Float64).ValueFloat64()
 			}
 			if !graphDataPanAttrs["y"].IsNull() && !graphDataPanAttrs["y"].IsUnknown() {
-				graphDataPanValue.Y = pingonetypes.BigFloatUnquoted{
-					Float: graphDataPanAttrs["y"].(types.Number).ValueBigFloat(),
-				}
+				graphDataPanValue.Y = graphDataPanAttrs["y"].(types.Float64).ValueFloat64()
 			}
 			graphDataValue.Pan = graphDataPanValue
 		}
@@ -1559,8 +1535,8 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 		"target": types.StringType,
 	}
 	graphDataElementsEdgesPositionAttrTypes := map[string]attr.Type{
-		"x": types.NumberType,
-		"y": types.NumberType,
+		"x": types.Float64Type,
+		"y": types.Float64Type,
 	}
 	graphDataElementsEdgesAttrTypes := map[string]attr.Type{
 		"classes":    types.StringType,
@@ -1588,8 +1564,8 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 		"type":            types.StringType,
 	}
 	graphDataElementsNodesPositionAttrTypes := map[string]attr.Type{
-		"x": types.NumberType,
-		"y": types.NumberType,
+		"x": types.Float64Type,
+		"y": types.Float64Type,
 	}
 	graphDataElementsNodesAttrTypes := map[string]attr.Type{
 		"classes":    types.StringType,
@@ -1609,8 +1585,8 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 		"nodes": types.MapType{ElemType: graphDataElementsNodesElementType},
 	}
 	graphDataPanAttrTypes := map[string]attr.Type{
-		"x": types.NumberType,
-		"y": types.NumberType,
+		"x": types.Float64Type,
+		"y": types.Float64Type,
 	}
 	graphDataAttrTypes := map[string]attr.Type{
 		"box_selection_enabled": types.BoolType,
@@ -1652,8 +1628,8 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			})
 			respDiags.Append(diags...)
 			graphDataElementsEdgesPositionValue, diags := types.ObjectValue(graphDataElementsEdgesPositionAttrTypes, map[string]attr.Value{
-				"x": types.NumberValue(graphDataElementsEdgesResponseValue.Position.X.Float),
-				"y": types.NumberValue(graphDataElementsEdgesResponseValue.Position.Y.Float),
+				"x": types.Float64Value(graphDataElementsEdgesResponseValue.Position.X),
+				"y": types.Float64Value(graphDataElementsEdgesResponseValue.Position.Y),
 			})
 			respDiags.Append(diags...)
 			graphDataElementsEdgesValue, diags := types.ObjectValue(graphDataElementsEdgesAttrTypes, map[string]attr.Value{
@@ -1705,8 +1681,8 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			})
 			respDiags.Append(diags...)
 			graphDataElementsNodesPositionValue, diags := types.ObjectValue(graphDataElementsNodesPositionAttrTypes, map[string]attr.Value{
-				"x": types.NumberValue(graphDataElementsNodesResponseValue.Position.X.Float),
-				"y": types.NumberValue(graphDataElementsNodesResponseValue.Position.Y.Float),
+				"x": types.Float64Value(graphDataElementsNodesResponseValue.Position.X),
+				"y": types.Float64Value(graphDataElementsNodesResponseValue.Position.Y),
 			})
 			respDiags.Append(diags...)
 			graphDataElementsNodesValue, diags := types.ObjectValue(graphDataElementsNodesAttrTypes, map[string]attr.Value{
@@ -1746,8 +1722,8 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			minZoomValue = types.NumberValue(response.GraphData.MinZoom.Float)
 		}
 		graphDataPanValue, diags := types.ObjectValue(graphDataPanAttrTypes, map[string]attr.Value{
-			"x": types.NumberValue(response.GraphData.Pan.X.Float),
-			"y": types.NumberValue(response.GraphData.Pan.Y.Float),
+			"x": types.Float64Value(response.GraphData.Pan.X),
+			"y": types.Float64Value(response.GraphData.Pan.Y),
 		})
 		respDiags.Append(diags...)
 		graphDataRendererValue := jsontypes.NewNormalizedNull()
