@@ -29,11 +29,23 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/pingidentity/pingone-go-client/pingone"
-	pingonetypes "github.com/pingidentity/pingone-go-client/types"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	internalstringvalidator "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
+
+// stringPointerNullIfEmpty converts a *string to a types.String, returning
+// Null when the pointer is nil or the value is an empty string.
+// This prevents collapsing nulls into empty strings in state.
+func stringPointerNullIfEmpty(p *string) types.String {
+	if p == nil {
+		return types.StringNull()
+	}
+	if *p == "" {
+		return types.StringNull()
+	}
+	return types.StringValue(*p)
+}
 
 var (
 	_ resource.Resource                = &davinciFlowResource{}
@@ -99,8 +111,8 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 		"target": types.StringType,
 	}
 	graphDataElementsEdgesPositionAttrTypes := map[string]attr.Type{
-		"x": types.NumberType,
-		"y": types.NumberType,
+		"x": types.Float64Type,
+		"y": types.Float64Type,
 	}
 	graphDataElementsEdgesAttrTypes := map[string]attr.Type{
 		"classes":    types.StringType,
@@ -239,10 +251,10 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 										},
 										"position": schema.SingleNestedAttribute{
 											Attributes: map[string]schema.Attribute{
-												"x": schema.NumberAttribute{
+												"x": schema.Float64Attribute{
 													Required: true,
 												},
-												"y": schema.NumberAttribute{
+												"y": schema.Float64Attribute{
 													Required: true,
 												},
 											},
@@ -335,10 +347,10 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 										},
 										"position": schema.SingleNestedAttribute{
 											Attributes: map[string]schema.Attribute{
-												"x": schema.NumberAttribute{
+												"x": schema.Float64Attribute{
 													Required: true,
 												},
-												"y": schema.NumberAttribute{
+												"y": schema.Float64Attribute{
 													Required: true,
 												},
 											},
@@ -360,18 +372,18 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 						},
 						Optional: true,
 					},
-					"max_zoom": schema.NumberAttribute{
+					"max_zoom": schema.Float64Attribute{
 						Optional: true,
 					},
-					"min_zoom": schema.NumberAttribute{
+					"min_zoom": schema.Float64Attribute{
 						Optional: true,
 					},
 					"pan": schema.SingleNestedAttribute{
 						Attributes: map[string]schema.Attribute{
-							"x": schema.NumberAttribute{
+							"x": schema.Float64Attribute{
 								Required: true,
 							},
-							"y": schema.NumberAttribute{
+							"y": schema.Float64Attribute{
 								Required: true,
 							},
 						},
@@ -474,7 +486,7 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 						},
 						"required": schema.BoolAttribute{
 							Optional: true,
-							Computed: true,
+							// Computed: true,
 						},
 					},
 				},
@@ -764,14 +776,10 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 						edgesPositionValue := &pingone.DaVinciFlowGraphDataRequestElementsEdgePosition{}
 						edgesPositionAttrs := edgesAttrs["position"].(types.Object).Attributes()
 						if !edgesPositionAttrs["x"].IsNull() && !edgesPositionAttrs["x"].IsUnknown() {
-							edgesPositionValue.X = pingonetypes.BigFloatUnquoted{
-								Float: edgesPositionAttrs["x"].(types.Number).ValueBigFloat(),
-							}
+							edgesPositionValue.X = edgesPositionAttrs["x"].(types.Float64).ValueFloat64()
 						}
 						if !edgesPositionAttrs["y"].IsNull() && !edgesPositionAttrs["y"].IsUnknown() {
-							edgesPositionValue.Y = pingonetypes.BigFloatUnquoted{
-								Float: edgesPositionAttrs["y"].(types.Number).ValueBigFloat(),
-							}
+							edgesPositionValue.Y = edgesPositionAttrs["y"].(types.Float64).ValueFloat64()
 						}
 						edgesValue.Position = edgesPositionValue
 					}
@@ -819,14 +827,10 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 						nodesPositionValue := &pingone.DaVinciFlowGraphDataRequestElementsNodePosition{}
 						nodesPositionAttrs := nodesAttrs["position"].(types.Object).Attributes()
 						if !nodesPositionAttrs["x"].IsNull() && !nodesPositionAttrs["x"].IsUnknown() {
-							nodesPositionValue.X = pingonetypes.BigFloatUnquoted{
-								Float: nodesPositionAttrs["x"].(types.Number).ValueBigFloat(),
-							}
+							nodesPositionValue.X = nodesPositionAttrs["x"].(types.Float64).ValueFloat64()
 						}
 						if !nodesPositionAttrs["y"].IsNull() && !nodesPositionAttrs["y"].IsUnknown() {
-							nodesPositionValue.Y = pingonetypes.BigFloatUnquoted{
-								Float: nodesPositionAttrs["y"].(types.Number).ValueBigFloat(),
-							}
+							nodesPositionValue.Y = nodesPositionAttrs["y"].(types.Float64).ValueFloat64()
 						}
 						nodesValue.Position = nodesPositionValue
 					}
@@ -839,27 +843,21 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 			graphDataValue.Elements = graphDataElementsValue
 		}
 		if !graphDataAttrs["max_zoom"].IsNull() && !graphDataAttrs["max_zoom"].IsUnknown() {
-			graphDataValue.MaxZoom = &pingonetypes.BigFloatUnquoted{
-				Float: graphDataAttrs["max_zoom"].(types.Number).ValueBigFloat(),
-			}
+			maxZoom := graphDataAttrs["max_zoom"].(types.Float64).ValueFloat64()
+			graphDataValue.MaxZoom = &maxZoom
 		}
 		if !graphDataAttrs["min_zoom"].IsNull() && !graphDataAttrs["min_zoom"].IsUnknown() {
-			graphDataValue.MinZoom = &pingonetypes.BigFloatUnquoted{
-				Float: graphDataAttrs["min_zoom"].(types.Number).ValueBigFloat(),
-			}
+			minZoom := graphDataAttrs["min_zoom"].(types.Float64).ValueFloat64()
+			graphDataValue.MinZoom = &minZoom
 		}
 		if !graphDataAttrs["pan"].IsNull() && !graphDataAttrs["pan"].IsUnknown() {
 			graphDataPanValue := &pingone.DaVinciFlowGraphDataRequestPan{}
 			graphDataPanAttrs := graphDataAttrs["pan"].(types.Object).Attributes()
 			if !graphDataPanAttrs["x"].IsNull() && !graphDataPanAttrs["x"].IsUnknown() {
-				graphDataPanValue.X = pingonetypes.BigFloatUnquoted{
-					Float: graphDataPanAttrs["x"].(types.Number).ValueBigFloat(),
-				}
+				graphDataPanValue.X = graphDataPanAttrs["x"].(types.Float64).ValueFloat64()
 			}
 			if !graphDataPanAttrs["y"].IsNull() && !graphDataPanAttrs["y"].IsUnknown() {
-				graphDataPanValue.Y = pingonetypes.BigFloatUnquoted{
-					Float: graphDataPanAttrs["y"].(types.Number).ValueBigFloat(),
-				}
+				graphDataPanValue.Y = graphDataPanAttrs["y"].(types.Float64).ValueFloat64()
 			}
 			graphDataValue.Pan = graphDataPanValue
 		}
@@ -1153,14 +1151,10 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 						edgesPositionValue := &pingone.DaVinciFlowGraphDataRequestElementsEdgePosition{}
 						edgesPositionAttrs := edgesAttrs["position"].(types.Object).Attributes()
 						if !edgesPositionAttrs["x"].IsNull() && !edgesPositionAttrs["x"].IsUnknown() {
-							edgesPositionValue.X = pingonetypes.BigFloatUnquoted{
-								Float: edgesPositionAttrs["x"].(types.Number).ValueBigFloat(),
-							}
+							edgesPositionValue.X = edgesPositionAttrs["x"].(types.Float64).ValueFloat64()
 						}
 						if !edgesPositionAttrs["y"].IsNull() && !edgesPositionAttrs["y"].IsUnknown() {
-							edgesPositionValue.Y = pingonetypes.BigFloatUnquoted{
-								Float: edgesPositionAttrs["y"].(types.Number).ValueBigFloat(),
-							}
+							edgesPositionValue.Y = edgesPositionAttrs["y"].(types.Float64).ValueFloat64()
 						}
 						edgesValue.Position = edgesPositionValue
 					}
@@ -1208,14 +1202,10 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 						nodesPositionValue := &pingone.DaVinciFlowGraphDataRequestElementsNodePosition{}
 						nodesPositionAttrs := nodesAttrs["position"].(types.Object).Attributes()
 						if !nodesPositionAttrs["x"].IsNull() && !nodesPositionAttrs["x"].IsUnknown() {
-							nodesPositionValue.X = pingonetypes.BigFloatUnquoted{
-								Float: nodesPositionAttrs["x"].(types.Number).ValueBigFloat(),
-							}
+							nodesPositionValue.X = nodesPositionAttrs["x"].(types.Float64).ValueFloat64()
 						}
 						if !nodesPositionAttrs["y"].IsNull() && !nodesPositionAttrs["y"].IsUnknown() {
-							nodesPositionValue.Y = pingonetypes.BigFloatUnquoted{
-								Float: nodesPositionAttrs["y"].(types.Number).ValueBigFloat(),
-							}
+							nodesPositionValue.Y = nodesPositionAttrs["y"].(types.Float64).ValueFloat64()
 						}
 						nodesValue.Position = nodesPositionValue
 					}
@@ -1228,27 +1218,21 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 			graphDataValue.Elements = graphDataElementsValue
 		}
 		if !graphDataAttrs["max_zoom"].IsNull() && !graphDataAttrs["max_zoom"].IsUnknown() {
-			graphDataValue.MaxZoom = &pingonetypes.BigFloatUnquoted{
-				Float: graphDataAttrs["max_zoom"].(types.Number).ValueBigFloat(),
-			}
+			maxZoom := graphDataAttrs["max_zoom"].(types.Float64).ValueFloat64()
+			graphDataValue.MaxZoom = &maxZoom
 		}
 		if !graphDataAttrs["min_zoom"].IsNull() && !graphDataAttrs["min_zoom"].IsUnknown() {
-			graphDataValue.MinZoom = &pingonetypes.BigFloatUnquoted{
-				Float: graphDataAttrs["min_zoom"].(types.Number).ValueBigFloat(),
-			}
+			minZoom := graphDataAttrs["min_zoom"].(types.Float64).ValueFloat64()
+			graphDataValue.MinZoom = &minZoom
 		}
 		if !graphDataAttrs["pan"].IsNull() && !graphDataAttrs["pan"].IsUnknown() {
 			graphDataPanValue := &pingone.DaVinciFlowGraphDataRequestPan{}
 			graphDataPanAttrs := graphDataAttrs["pan"].(types.Object).Attributes()
 			if !graphDataPanAttrs["x"].IsNull() && !graphDataPanAttrs["x"].IsUnknown() {
-				graphDataPanValue.X = pingonetypes.BigFloatUnquoted{
-					Float: graphDataPanAttrs["x"].(types.Number).ValueBigFloat(),
-				}
+				graphDataPanValue.X = graphDataPanAttrs["x"].(types.Float64).ValueFloat64()
 			}
 			if !graphDataPanAttrs["y"].IsNull() && !graphDataPanAttrs["y"].IsUnknown() {
-				graphDataPanValue.Y = pingonetypes.BigFloatUnquoted{
-					Float: graphDataPanAttrs["y"].(types.Number).ValueBigFloat(),
-				}
+				graphDataPanValue.Y = graphDataPanAttrs["y"].(types.Float64).ValueFloat64()
 			}
 			graphDataValue.Pan = graphDataPanValue
 		}
@@ -1529,8 +1513,8 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 		"target": types.StringType,
 	}
 	graphDataElementsEdgesPositionAttrTypes := map[string]attr.Type{
-		"x": types.NumberType,
-		"y": types.NumberType,
+		"x": types.Float64Type,
+		"y": types.Float64Type,
 	}
 	graphDataElementsEdgesAttrTypes := map[string]attr.Type{
 		"classes":    types.StringType,
@@ -1558,8 +1542,8 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 		"type":            types.StringType,
 	}
 	graphDataElementsNodesPositionAttrTypes := map[string]attr.Type{
-		"x": types.NumberType,
-		"y": types.NumberType,
+		"x": types.Float64Type,
+		"y": types.Float64Type,
 	}
 	graphDataElementsNodesAttrTypes := map[string]attr.Type{
 		"classes":    types.StringType,
@@ -1579,15 +1563,15 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 		"nodes": types.MapType{ElemType: graphDataElementsNodesElementType},
 	}
 	graphDataPanAttrTypes := map[string]attr.Type{
-		"x": types.NumberType,
-		"y": types.NumberType,
+		"x": types.Float64Type,
+		"y": types.Float64Type,
 	}
 	graphDataAttrTypes := map[string]attr.Type{
 		"box_selection_enabled": types.BoolType,
 		"data":                  jsontypes.NormalizedType{},
 		"elements":              types.ObjectType{AttrTypes: graphDataElementsAttrTypes},
-		"max_zoom":              types.NumberType,
-		"min_zoom":              types.NumberType,
+		"max_zoom":              types.Float64Type,
+		"min_zoom":              types.Float64Type,
 		"pan":                   types.ObjectType{AttrTypes: graphDataPanAttrTypes},
 		"panning_enabled":       types.BoolType,
 		"renderer":              jsontypes.NormalizedType{},
@@ -1622,8 +1606,8 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			})
 			respDiags.Append(diags...)
 			graphDataElementsEdgesPositionValue, diags := types.ObjectValue(graphDataElementsEdgesPositionAttrTypes, map[string]attr.Value{
-				"x": types.NumberValue(graphDataElementsEdgesResponseValue.Position.X.Float),
-				"y": types.NumberValue(graphDataElementsEdgesResponseValue.Position.Y.Float),
+				"x": types.Float64Value(graphDataElementsEdgesResponseValue.Position.X),
+				"y": types.Float64Value(graphDataElementsEdgesResponseValue.Position.Y),
 			})
 			respDiags.Append(diags...)
 			graphDataElementsEdgesValue, diags := types.ObjectValue(graphDataElementsEdgesAttrTypes, map[string]attr.Value{
@@ -1663,11 +1647,11 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			}
 			graphDataElementsNodesDataValue, diags := types.ObjectValue(graphDataElementsNodesDataAttrTypes, map[string]attr.Value{
 				"capability_name": types.StringPointerValue(graphDataElementsNodesResponseValue.Data.CapabilityName),
-				"connection_id":   types.StringPointerValue(graphDataElementsNodesResponseValue.Data.ConnectionId),
+				"connection_id":   stringPointerNullIfEmpty(graphDataElementsNodesResponseValue.Data.ConnectionId),
 				"connector_id":    types.StringPointerValue(graphDataElementsNodesResponseValue.Data.ConnectorId),
-				"id_unique":       types.StringPointerValue(graphDataElementsNodesResponseValue.Data.IdUnique),
+				"id_unique":       stringPointerNullIfEmpty(graphDataElementsNodesResponseValue.Data.IdUnique),
 				"label":           types.StringPointerValue(graphDataElementsNodesResponseValue.Data.Label),
-				"name":            types.StringPointerValue(graphDataElementsNodesResponseValue.Data.Name),
+				"name":            stringPointerNullIfEmpty(graphDataElementsNodesResponseValue.Data.Name),
 				"node_type":       types.StringValue(graphDataElementsNodesResponseValue.Data.NodeType),
 				"properties":      graphDataElementsNodesDataPropertiesValue,
 				"status":          types.StringPointerValue(graphDataElementsNodesResponseValue.Data.Status),
@@ -1675,8 +1659,8 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			})
 			respDiags.Append(diags...)
 			graphDataElementsNodesPositionValue, diags := types.ObjectValue(graphDataElementsNodesPositionAttrTypes, map[string]attr.Value{
-				"x": types.NumberValue(graphDataElementsNodesResponseValue.Position.X.Float),
-				"y": types.NumberValue(graphDataElementsNodesResponseValue.Position.Y.Float),
+				"x": types.Float64Value(graphDataElementsNodesResponseValue.Position.X),
+				"y": types.Float64Value(graphDataElementsNodesResponseValue.Position.Y),
 			})
 			respDiags.Append(diags...)
 			graphDataElementsNodesValue, diags := types.ObjectValue(graphDataElementsNodesAttrTypes, map[string]attr.Value{
@@ -1703,21 +1687,21 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			"nodes": graphDataElementsNodesValue,
 		})
 		respDiags.Append(diags...)
-		var maxZoomValue types.Number
-		if response.GraphData.MaxZoom == nil || response.GraphData.MaxZoom.Float == nil {
-			maxZoomValue = types.NumberNull()
+		var maxZoomValue types.Float64
+		if response.GraphData.MaxZoom == nil {
+			maxZoomValue = types.Float64Null()
 		} else {
-			maxZoomValue = types.NumberValue(response.GraphData.MaxZoom.Float)
+			maxZoomValue = types.Float64Value(*response.GraphData.MaxZoom)
 		}
-		var minZoomValue types.Number
-		if response.GraphData.MinZoom == nil || response.GraphData.MinZoom.Float == nil {
-			minZoomValue = types.NumberNull()
+		var minZoomValue types.Float64
+		if response.GraphData.MinZoom == nil {
+			minZoomValue = types.Float64Null()
 		} else {
-			minZoomValue = types.NumberValue(response.GraphData.MinZoom.Float)
+			minZoomValue = types.Float64Value(*response.GraphData.MinZoom)
 		}
 		graphDataPanValue, diags := types.ObjectValue(graphDataPanAttrTypes, map[string]attr.Value{
-			"x": types.NumberValue(response.GraphData.Pan.X.Float),
-			"y": types.NumberValue(response.GraphData.Pan.Y.Float),
+			"x": types.Float64Value(response.GraphData.Pan.X),
+			"y": types.Float64Value(response.GraphData.Pan.Y),
 		})
 		respDiags.Append(diags...)
 		graphDataRendererValue := jsontypes.NewNormalizedNull()
