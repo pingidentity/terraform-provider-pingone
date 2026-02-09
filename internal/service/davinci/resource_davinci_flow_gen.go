@@ -24,7 +24,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float32planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32default"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/mapdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -504,9 +503,6 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 				},
 				Optional: true,
 				Computed: true,
-				PlanModifiers: []planmodifier.List{
-					listplanmodifier.UseNonNullStateForUnknown(),
-				},
 			},
 			"name": schema.StringAttribute{
 				Required: true,
