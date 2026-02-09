@@ -817,7 +817,7 @@ resource "pingone_davinci_flow" "%[2]s" {
             })
           }
           position = {
-		    // This is the problematic value which can cause infinite plans
+            // This is the problematic value which can cause infinite plans
             x = 242.08120431461208
             y = 360
           }
