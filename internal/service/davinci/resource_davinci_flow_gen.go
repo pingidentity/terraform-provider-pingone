@@ -505,7 +505,7 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 				Optional: true,
 				Computed: true,
 				PlanModifiers: []planmodifier.List{
-					listplanmodifier.UseStateForUnknown(),
+					listplanmodifier.UseNonNullStateForUnknown(),
 				},
 			},
 			"name": schema.StringAttribute{
