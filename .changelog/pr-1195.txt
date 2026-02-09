@@ -1,0 +1,3 @@
+```release-note:internal
+add submodule and implement common changelog process
+```

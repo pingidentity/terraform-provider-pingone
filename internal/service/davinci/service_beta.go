@@ -1,4 +1,4 @@
-// Copyright © 2025 Ping Identity Corporation
+// Copyright © 2026 Ping Identity Corporation
 
 //go:build beta
 
@@ -17,7 +17,7 @@ func BetaResources() []func() resource.Resource {
 		NewDavinciApplicationSecretResource,
 		NewDavinciConnectorInstanceResource,
 		NewDavinciFlowDeployResource,
-		NewDavinciFlowEnabledResource,
+		NewDavinciFlowEnableResource,
 		NewDavinciFlowResource,
 		NewDavinciVariableResource,
 	}
