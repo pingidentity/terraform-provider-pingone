@@ -1750,16 +1750,16 @@ func TestAccForm_ItemSlateTextblob(t *testing.T) {
 		),
 	}
 
-	// minimalStep := resource.TestStep{
-	// 	Config: testAccFormConfig_ItemSlateTextblobMinimal(resourceName, name),
-	// 	Check: resource.ComposeTestCheckFunc(
-	// 		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
-	// 			"position.row": "0",
-	// 			"position.col": "0",
-	// 			"type":         "SLATE_TEXTBLOB",
-	// 		}),
-	// 	),
-	// }
+	minimalStep := resource.TestStep{
+		Config: testAccFormConfig_ItemSlateTextblobMinimal(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.*", map[string]string{
+				"position.row": "0",
+				"position.col": "0",
+				"type":         "SLATE_TEXTBLOB",
+			}),
+		),
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -1771,11 +1771,6 @@ func TestAccForm_ItemSlateTextblob(t *testing.T) {
 		CheckDestroy:             base.Form_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
-			// Validate
-			// {
-			// 	Config:      testAccFormConfig_ItemSlateTextblobMissingRequiredParams(resourceName, name),
-			// 	ExpectError: regexp.MustCompile(`Invalid DaVinci form configuration`),
-			// },
 			// Full step
 			fullStep,
 			{
@@ -1783,14 +1778,14 @@ func TestAccForm_ItemSlateTextblob(t *testing.T) {
 				Destroy: true,
 			},
 			// Minimal step
-			// minimalStep,
-			// {
-			// 	Config:  testAccFormConfig_ItemSlateTextblobMinimal(resourceName, name),
-			// 	Destroy: true,
-			// },
-			// // Change
-			// fullStep,
-			// minimalStep,
+			minimalStep,
+			{
+				Config:  testAccFormConfig_ItemSlateTextblobMinimal(resourceName, name),
+				Destroy: true,
+			},
+			// Change
+			fullStep,
+			minimalStep,
 			fullStep,
 			// Test importing the resource
 			{
@@ -4546,44 +4541,46 @@ resource "pingone_form" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-// func testAccFormConfig_ItemSlateTextblobMinimal(resourceName, name string) string {
-// 	return fmt.Sprintf(`
-// 	%[1]s
+func testAccFormConfig_ItemSlateTextblobMinimal(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
 
-// resource "pingone_form" "%[2]s" {
-//   environment_id = data.pingone_environment.general_test.id
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
 
-//   name = "%[3]s"
+  name = "%[3]s"
 
-//   mark_required = true
-//   mark_optional = false
+  mark_required = true
+  mark_optional = false
 
-//   cols = 4
+  cols = 4
 
-//   components = {
-//     fields = [
-//       {
-//         type = "SLATE_TEXTBLOB"
+  components = {
+    fields = [
+      {
+        type = "SLATE_TEXTBLOB"
 
-//         position = {
-//           row = 0
-//           col = 0
-//         }
-//       },
-//       {
-//         type = "SUBMIT_BUTTON"
+        position = {
+          row = 0
+          col = 0
+        }
+        
+        content = "[{\"children\":[{\"text\":\"Two baguettes in a zoo cage, the sign says 'Bread in captivity'.\"}]}]"
+      },
+      {
+        type = "SUBMIT_BUTTON"
 
-//         position = {
-//           row = 1
-//           col = 0
-//         }
+        position = {
+          row = 1
+          col = 0
+        }
 
-//         label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
-//       }
-//     ]
-//   }
-// }`, acctest.GenericSandboxEnvironment(), resourceName, name)
-// }
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
 
 func testAccFormConfig_NoSubmitButton(resourceName, name string) string {
 	return fmt.Sprintf(`
