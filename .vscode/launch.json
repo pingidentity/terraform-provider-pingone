@@ -21,6 +21,23 @@
             "showLog": true
         },
         {
+            "name": "Debug Provider (Beta) - Attach to Terraform",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}",
+            "env": {
+                "TF_LOG": "DEBUG",
+                "TF_LOG_PROVIDER": "DEBUG"
+            },
+            "args": [
+                "-debug"
+            ],
+            "buildFlags": "-tags=beta",
+            "console": "integratedTerminal",
+            "showLog": true
+        },
+        {
             "name": "Acceptance Tests - Current File",
             "type": "go",
             "request": "launch",

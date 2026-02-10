@@ -426,6 +426,34 @@ func TestAccDavinciFlow_BadParameters(t *testing.T) {
 	})
 }
 
+func TestAccDavinciFlow_FloatsDoNotCausePlans(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             davinciFlow_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: davinciFlow_MinimalFloatPlanDiffHCL(resourceName, false),
+			},
+			{
+				Config: davinciFlow_MinimalHCL(resourceName, false),
+			},
+			{
+				Config: davinciFlow_MinimalFloatPlanDiffHCL(resourceName, false),
+			},
+		},
+	})
+}
+
 // Minimal HCL with a one-node "flow"
 func davinciFlow_MinimalHCL(resourceName string, withBootstrap bool) string {
 	return fmt.Sprintf(`
@@ -733,6 +761,111 @@ resource "pingone_davinci_flow" "%[3]s" {
   }
 }
 `, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+}
+
+// Minimal HCL that previously caused permanent plan diffs when using Number types due to a specific problematic position value
+func davinciFlow_MinimalFloatPlanDiffHCL(resourceName string, withBootstrap bool) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_population" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[2]s"
+}
+
+resource "pingone_user" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  population_id = pingone_population.%[2]s.id
+
+  username = "exampleuser%[2]s"
+  email    = "exampleuser@pingidentity.com"
+}
+
+resource "pingone_davinci_flow" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[2]s"
+  description    = "This is a demo flow"
+  color          = "#00FF00"
+
+  graph_data = {
+    elements = {
+      nodes = {
+        "8bnj41592a" = {
+          data = {
+            id              = "8bnj41592a"
+            node_type       = "CONNECTION"
+            connector_id    = "pingOneSSOConnector"
+            label           = "PingOne"
+            status          = "configured"
+            capability_name = "userLookup"
+            type            = "action"
+            properties = jsonencode({
+              "additionalUserProperties" : {
+                "value" : []
+              },
+              "username" : {
+                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"${pingone_user.%[2]s.id}\"\n      }\n    ]\n  }\n]"
+              },
+              "population" : {
+                "value" : "${pingone_population.%[2]s.id}"
+              },
+              "userIdentifierForFindUser" : {
+                "value" : "[\n  {\n    \"children\": [\n      {\n        \"text\": \"${pingone_user.%[2]s.id}\"\n      }\n    ]\n  }\n]"
+              }
+            })
+          }
+          position = {
+            // This is the problematic value which can cause infinite plans
+            x = 242.08120431461208
+            y = 360
+          }
+          group      = "nodes"
+          removed    = false
+          selected   = false
+          selectable = true
+          locked     = false
+          grabbable  = true
+          pannable   = false
+        }
+      }
+    }
+
+    data = "{}"
+
+    box_selection_enabled = true
+    user_zooming_enabled  = true
+    zooming_enabled       = true
+    zoom                  = 1
+    min_zoom              = 0.01
+    max_zoom              = 10000
+    panning_enabled       = true
+    user_panning_enabled  = true
+
+    pan = {
+      x = 0
+      y = 0
+    }
+
+    renderer = jsonencode({
+      "name" : "null"
+    })
+  }
+
+  output_schema = {
+    output = {
+      type                 = "object",
+      properties           = jsonencode({}),
+      additionalProperties = true
+    }
+  }
+
+  trigger = {
+    type = "AUTHENTICATION"
+  }
+}
+`, acctest.DaVinciSandboxEnvironment(false), resourceName)
 }
 
 // Validate any computed values when applying minimal HCL
