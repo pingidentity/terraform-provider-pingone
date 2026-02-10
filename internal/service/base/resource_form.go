@@ -234,6 +234,7 @@ var (
 				"attribute_disabled",
 				"label_mode",
 				"required",
+				"visibility",
 			},
 		},
 		management.ENUMFORMFIELDTYPE_COMBOBOX: {
@@ -249,6 +250,7 @@ var (
 				"label_mode",
 				"layout",
 				"required",
+				"visibility",
 			},
 		},
 		management.ENUMFORMFIELDTYPE_DIVIDER: {
@@ -256,7 +258,9 @@ var (
 				"type",
 				"position",
 			},
-			Optional: []string{},
+			Optional: []string{
+				"visibility",
+			},
 		},
 		management.ENUMFORMFIELDTYPE_DROPDOWN: {
 			Required: []string{
@@ -271,6 +275,7 @@ var (
 				"label_mode",
 				"layout",
 				"required",
+				"visibility",
 			},
 		},
 		management.ENUMFORMFIELDTYPE_EMPTY_FIELD: {
@@ -278,14 +283,18 @@ var (
 				"type",
 				"position",
 			},
-			Optional: []string{},
+			Optional: []string{
+				"visibility",
+			},
 		},
 		management.ENUMFORMFIELDTYPE_ERROR_DISPLAY: {
 			Required: []string{
 				"type",
 				"position",
 			},
-			Optional: []string{},
+			Optional: []string{
+				"visibility",
+			},
 		},
 		management.ENUMFORMFIELDTYPE_FLOW_BUTTON: {
 			Required: []string{
@@ -296,6 +305,7 @@ var (
 			},
 			Optional: []string{
 				"styles",
+				"visibility",
 			},
 		},
 		management.ENUMFORMFIELDTYPE_FLOW_LINK: {
@@ -307,6 +317,7 @@ var (
 			},
 			Optional: []string{
 				"styles",
+				"visibility",
 			},
 		},
 		management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY: {
@@ -324,6 +335,7 @@ var (
 				"required",
 				"show_password_requirements",
 				"validation",
+				"visibility",
 			},
 		},
 		management.ENUMFORMFIELDTYPE_PASSWORD: {
@@ -340,6 +352,7 @@ var (
 				"required",
 				"show_password_requirements",
 				"validation",
+				"visibility",
 			},
 		},
 		management.ENUMFORMFIELDTYPE_QR_CODE: {
@@ -367,6 +380,7 @@ var (
 				"attribute_disabled",
 				"label_mode",
 				"required",
+				"visibility",
 			},
 		},
 		management.ENUMFORMFIELDTYPE_RECAPTCHA_V2: {
@@ -377,7 +391,9 @@ var (
 				"theme",
 				"alignment",
 			},
-			Optional: []string{},
+			Optional: []string{
+				"visibility",
+			},
 		},
 		management.ENUMFORMFIELDTYPE_SLATE_TEXTBLOB: {
 			Required: []string{
@@ -386,6 +402,7 @@ var (
 			},
 			Optional: []string{
 				"content",
+				"visibility",
 			},
 		},
 		management.ENUMFORMFIELDTYPE_SUBMIT_BUTTON: {
@@ -396,6 +413,7 @@ var (
 			},
 			Optional: []string{
 				"styles",
+				"visibility",
 			},
 		},
 		management.ENUMFORMFIELDTYPE_TEXT: {
@@ -411,6 +429,7 @@ var (
 				"label_mode",
 				"layout",
 				"required",
+				"visibility",
 			},
 		},
 	}
@@ -1133,13 +1152,13 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 									Optional:            true,
 
 									Attributes: map[string]schema.Attribute{
-										"type": schema.Int32Attribute{
+										"type": schema.StringAttribute{
 											Description:         componentsFieldsVisibilityTypeDescription.Description,
 											MarkdownDescription: componentsFieldsVisibilityTypeDescription.MarkdownDescription,
 											Required:            true,
 										},
 
-										"key": schema.Int32Attribute{
+										"key": schema.StringAttribute{
 											Description:         componentsFieldsVisibilityKeyDescription.Description,
 											MarkdownDescription: componentsFieldsVisibilityKeyDescription.MarkdownDescription,
 											Optional:            true,
@@ -1904,13 +1923,13 @@ func (p *formComponentsFieldResourceModel) expand(ctx context.Context) (*managem
 	case string(management.ENUMFORMFIELDTYPE_COMBOBOX):
 		data.FormFieldCombobox, d = p.expandFieldCombobox(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_DIVIDER):
-		data.FormFieldDivider = p.expandItemDivider(positionData)
+		data.FormFieldDivider, d = p.expandItemDivider(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_DROPDOWN):
 		data.FormFieldDropdown, d = p.expandFieldDropdown(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_EMPTY_FIELD):
-		data.FormFieldEmptyField = p.expandItemEmptyField(positionData)
+		data.FormFieldEmptyField, d = p.expandItemEmptyField(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_ERROR_DISPLAY):
-		data.FormFieldErrorDisplay = p.expandItemErrorDisplay(positionData)
+		data.FormFieldErrorDisplay, d = p.expandItemErrorDisplay(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_FLOW_BUTTON):
 		data.FormFieldFlowButton, d = p.expandItemFlowButton(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_FLOW_LINK):
@@ -1924,9 +1943,9 @@ func (p *formComponentsFieldResourceModel) expand(ctx context.Context) (*managem
 	case string(management.ENUMFORMFIELDTYPE_RADIO):
 		data.FormFieldRadio, d = p.expandFieldRadio(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_RECAPTCHA_V2):
-		data.FormFieldRecaptchaV2 = p.expandItemRecaptchaV2(positionData)
+		data.FormFieldRecaptchaV2, d = p.expandItemRecaptchaV2(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_SLATE_TEXTBLOB):
-		data.FormFieldSlateTextblob = p.expandItemSlateTextblob(positionData)
+		data.FormFieldSlateTextblob, d = p.expandItemSlateTextblob(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_SUBMIT_BUTTON):
 		data.FormFieldSubmitButton, d = p.expandFieldSubmitButton(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_TEXT):
@@ -2015,6 +2034,16 @@ func (p *formComponentsFieldResourceModel) expandFieldCheckbox(ctx context.Conte
 		data.SetRequired(p.Required.ValueBool())
 	}
 
+	if !p.Visibility.IsNull() && !p.Visibility.IsUnknown() {
+		var plan formComponentsFieldVisibilityResourceModel
+		diags.Append(p.Visibility.As(ctx, &plan, basetypes.ObjectAsOptions{})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetVisibility(*plan.expand())
+	}
+
 	return data, diags
 }
 
@@ -2061,17 +2090,38 @@ func (p *formComponentsFieldResourceModel) expandFieldCombobox(ctx context.Conte
 		data.SetRequired(p.Required.ValueBool())
 	}
 
+	if !p.Visibility.IsNull() && !p.Visibility.IsUnknown() {
+		var plan formComponentsFieldVisibilityResourceModel
+		diags.Append(p.Visibility.As(ctx, &plan, basetypes.ObjectAsOptions{})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetVisibility(*plan.expand())
+	}
+
 	return data, diags
 }
 
-func (p *formComponentsFieldResourceModel) expandItemDivider(positionData *management.FormFieldCommonPosition) *management.FormFieldDivider {
+func (p *formComponentsFieldResourceModel) expandItemDivider(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldDivider, diag.Diagnostics) {
+	var diags diag.Diagnostics
 
 	data := management.NewFormFieldDivider(
 		management.ENUMFORMFIELDTYPE_DIVIDER,
 		*positionData,
 	)
 
-	return data
+	if !p.Visibility.IsNull() && !p.Visibility.IsUnknown() {
+		var plan formComponentsFieldVisibilityResourceModel
+		diags.Append(p.Visibility.As(ctx, &plan, basetypes.ObjectAsOptions{})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetVisibility(*plan.expand())
+	}
+
+	return data, diags
 }
 
 func (p *formComponentsFieldResourceModel) expandFieldDropdown(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldDropdown, diag.Diagnostics) {
@@ -2117,27 +2167,59 @@ func (p *formComponentsFieldResourceModel) expandFieldDropdown(ctx context.Conte
 		data.SetRequired(p.Required.ValueBool())
 	}
 
+	if !p.Visibility.IsNull() && !p.Visibility.IsUnknown() {
+		var plan formComponentsFieldVisibilityResourceModel
+		diags.Append(p.Visibility.As(ctx, &plan, basetypes.ObjectAsOptions{})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetVisibility(*plan.expand())
+	}
+
 	return data, diags
 }
 
-func (p *formComponentsFieldResourceModel) expandItemEmptyField(positionData *management.FormFieldCommonPosition) *management.FormFieldEmptyField {
+func (p *formComponentsFieldResourceModel) expandItemEmptyField(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldEmptyField, diag.Diagnostics) {
+	var diags diag.Diagnostics
 
 	data := management.NewFormFieldEmptyField(
 		management.ENUMFORMFIELDTYPE_EMPTY_FIELD,
 		*positionData,
 	)
 
-	return data
+	if !p.Visibility.IsNull() && !p.Visibility.IsUnknown() {
+		var plan formComponentsFieldVisibilityResourceModel
+		diags.Append(p.Visibility.As(ctx, &plan, basetypes.ObjectAsOptions{})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetVisibility(*plan.expand())
+	}
+
+	return data, diags
 }
 
-func (p *formComponentsFieldResourceModel) expandItemErrorDisplay(positionData *management.FormFieldCommonPosition) *management.FormFieldErrorDisplay {
+func (p *formComponentsFieldResourceModel) expandItemErrorDisplay(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldErrorDisplay, diag.Diagnostics) {
+	var diags diag.Diagnostics
 
 	data := management.NewFormFieldErrorDisplay(
 		management.ENUMFORMFIELDTYPE_ERROR_DISPLAY,
 		*positionData,
 	)
 
-	return data
+	if !p.Visibility.IsNull() && !p.Visibility.IsUnknown() {
+		var plan formComponentsFieldVisibilityResourceModel
+		diags.Append(p.Visibility.As(ctx, &plan, basetypes.ObjectAsOptions{})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetVisibility(*plan.expand())
+	}
+
+	return data, diags
 }
 
 func (p *formComponentsFieldResourceModel) expandItemFlowButton(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldFlowButton, diag.Diagnostics) {
@@ -2166,6 +2248,16 @@ func (p *formComponentsFieldResourceModel) expandItemFlowButton(ctx context.Cont
 		if v, ok := stylesData.(*management.FormStyles); ok {
 			data.SetStyles(*v)
 		}
+	}
+
+	if !p.Visibility.IsNull() && !p.Visibility.IsUnknown() {
+		var plan formComponentsFieldVisibilityResourceModel
+		diags.Append(p.Visibility.As(ctx, &plan, basetypes.ObjectAsOptions{})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetVisibility(*plan.expand())
 	}
 
 	return data, diags
@@ -2197,6 +2289,16 @@ func (p *formComponentsFieldResourceModel) expandItemFlowLink(ctx context.Contex
 		if v, ok := stylesData.(*management.FormFlowLinkStyles); ok {
 			data.SetStyles(*v)
 		}
+	}
+
+	if !p.Visibility.IsNull() && !p.Visibility.IsUnknown() {
+		var plan formComponentsFieldVisibilityResourceModel
+		diags.Append(p.Visibility.As(ctx, &plan, basetypes.ObjectAsOptions{})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetVisibility(*plan.expand())
 	}
 
 	return data, diags
@@ -2253,6 +2355,16 @@ func (p *formComponentsFieldResourceModel) expandFieldPassword(ctx context.Conte
 		validationData := plan.expand()
 
 		data.SetValidation(*validationData)
+	}
+
+	if !p.Visibility.IsNull() && !p.Visibility.IsUnknown() {
+		var plan formComponentsFieldVisibilityResourceModel
+		diags.Append(p.Visibility.As(ctx, &plan, basetypes.ObjectAsOptions{})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetVisibility(*plan.expand())
 	}
 
 	return data, diags
@@ -2315,6 +2427,16 @@ func (p *formComponentsFieldResourceModel) expandFieldPasswordVerify(ctx context
 		data.SetValidation(*validationData)
 	}
 
+	if !p.Visibility.IsNull() && !p.Visibility.IsUnknown() {
+		var plan formComponentsFieldVisibilityResourceModel
+		diags.Append(p.Visibility.As(ctx, &plan, basetypes.ObjectAsOptions{})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetVisibility(*plan.expand())
+	}
+
 	return data, diags
 }
 
@@ -2358,6 +2480,16 @@ func (p *formComponentsFieldResourceModel) expandFieldRadio(ctx context.Context,
 		data.SetRequired(p.Required.ValueBool())
 	}
 
+	if !p.Visibility.IsNull() && !p.Visibility.IsUnknown() {
+		var plan formComponentsFieldVisibilityResourceModel
+		diags.Append(p.Visibility.As(ctx, &plan, basetypes.ObjectAsOptions{})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetVisibility(*plan.expand())
+	}
+
 	return data, diags
 }
 
@@ -2386,6 +2518,16 @@ func (p *formComponentsFieldResourceModel) expandFieldSubmitButton(ctx context.C
 		if v, ok := stylesData.(*management.FormStyles); ok {
 			data.SetStyles(*v)
 		}
+	}
+
+	if !p.Visibility.IsNull() && !p.Visibility.IsUnknown() {
+		var plan formComponentsFieldVisibilityResourceModel
+		diags.Append(p.Visibility.As(ctx, &plan, basetypes.ObjectAsOptions{})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetVisibility(*plan.expand())
 	}
 
 	return data, diags
@@ -2429,6 +2571,16 @@ func (p *formComponentsFieldResourceModel) expandFieldText(ctx context.Context, 
 		data.SetRequired(p.Required.ValueBool())
 	}
 
+	if !p.Visibility.IsNull() && !p.Visibility.IsUnknown() {
+		var visibilityPlan formComponentsFieldVisibilityResourceModel
+		diags.Append(p.Visibility.As(ctx, &visibilityPlan, basetypes.ObjectAsOptions{})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetVisibility(*visibilityPlan.expand())
+	}
+
 	return data, diags
 }
 
@@ -2469,7 +2621,9 @@ func (p *formComponentsFieldResourceModel) expandItemQRCode(ctx context.Context,
 	return data, diags
 }
 
-func (p *formComponentsFieldResourceModel) expandItemRecaptchaV2(positionData *management.FormFieldCommonPosition) *management.FormFieldRecaptchaV2 {
+func (p *formComponentsFieldResourceModel) expandItemRecaptchaV2(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldRecaptchaV2, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
 	data := management.NewFormFieldRecaptchaV2(
 		management.ENUMFORMFIELDTYPE_RECAPTCHA_V2,
 		*positionData,
@@ -2478,10 +2632,22 @@ func (p *formComponentsFieldResourceModel) expandItemRecaptchaV2(positionData *m
 		management.EnumFormItemAlignment(p.Alignment.ValueString()),
 	)
 
-	return data
+	if !p.Visibility.IsNull() && !p.Visibility.IsUnknown() {
+		var plan formComponentsFieldVisibilityResourceModel
+		diags.Append(p.Visibility.As(ctx, &plan, basetypes.ObjectAsOptions{})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetVisibility(*plan.expand())
+	}
+
+	return data, diags
 }
 
-func (p *formComponentsFieldResourceModel) expandItemSlateTextblob(positionData *management.FormFieldCommonPosition) *management.FormFieldSlateTextblob {
+func (p *formComponentsFieldResourceModel) expandItemSlateTextblob(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldSlateTextblob, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
 	data := management.NewFormFieldSlateTextblob(
 		management.ENUMFORMFIELDTYPE_SLATE_TEXTBLOB,
 		*positionData,
@@ -2491,7 +2657,17 @@ func (p *formComponentsFieldResourceModel) expandItemSlateTextblob(positionData 
 		data.SetContent(p.Content.ValueString())
 	}
 
-	return data
+	if !p.Visibility.IsNull() && !p.Visibility.IsUnknown() {
+		var plan formComponentsFieldVisibilityResourceModel
+		diags.Append(p.Visibility.As(ctx, &plan, basetypes.ObjectAsOptions{})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetVisibility(*plan.expand())
+	}
+
+	return data, diags
 }
 
 func (p *formComponentsFieldStylesResourceModel) expand(ctx context.Context, styleType string) (interface{}, diag.Diagnostics) {
@@ -2732,6 +2908,9 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			options, d := formComponentsFieldsElementOptionsOkToTF(t.GetOptionsOk())
 			diags.Append(d...)
 
+			visibility, d := formComponentsFieldsVisibilityOkToTF(t.GetVisibilityOk())
+			diags.Append(d...)
+
 			attributeMap = map[string]attr.Value{
 				"attribute_disabled":              framework.BoolOkToTF(t.GetAttributeDisabledOk()),
 				"key":                             framework.StringOkToTF(t.GetKeyOk()),
@@ -2748,6 +2927,7 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 				"required":                        framework.BoolOkToTF(t.GetRequiredOk()),
 				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
 				"validation":                      validation,
+				"visibility":                      visibility,
 			}
 
 		case *management.FormFieldCombobox:
@@ -2760,6 +2940,9 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			options, d := formComponentsFieldsElementOptionsOkToTF(t.GetOptionsOk())
 			diags.Append(d...)
 
+			visibility, d := formComponentsFieldsVisibilityOkToTF(t.GetVisibilityOk())
+			diags.Append(d...)
+
 			attributeMap = map[string]attr.Value{
 				"attribute_disabled":              framework.BoolOkToTF(t.GetAttributeDisabledOk()),
 				"key":                             framework.StringOkToTF(t.GetKeyOk()),
@@ -2776,15 +2959,20 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 				"required":                        framework.BoolOkToTF(t.GetRequiredOk()),
 				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
 				"validation":                      validation,
+				"visibility":                      visibility,
 			}
 
 		case *management.FormFieldDivider:
 			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
 			diags.Append(d...)
 
+			visibility, d := formComponentsFieldsVisibilityOkToTF(t.GetVisibilityOk())
+			diags.Append(d...)
+
 			attributeMap = map[string]attr.Value{
-				"position": position,
-				"type":     framework.EnumOkToTF(t.GetTypeOk()),
+				"position":   position,
+				"type":       framework.EnumOkToTF(t.GetTypeOk()),
+				"visibility": visibility,
 			}
 
 		case *management.FormFieldDropdown:
@@ -2797,6 +2985,9 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			options, d := formComponentsFieldsElementOptionsOkToTF(t.GetOptionsOk())
 			diags.Append(d...)
 
+			visibility, d := formComponentsFieldsVisibilityOkToTF(t.GetVisibilityOk())
+			diags.Append(d...)
+
 			attributeMap = map[string]attr.Value{
 				"attribute_disabled":              framework.BoolOkToTF(t.GetAttributeDisabledOk()),
 				"key":                             framework.StringOkToTF(t.GetKeyOk()),
@@ -2813,24 +3004,33 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 				"required":                        framework.BoolOkToTF(t.GetRequiredOk()),
 				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
 				"validation":                      validation,
+				"visibility":                      visibility,
 			}
 
 		case *management.FormFieldEmptyField:
 			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
 			diags.Append(d...)
 
+			visibility, d := formComponentsFieldsVisibilityOkToTF(t.GetVisibilityOk())
+			diags.Append(d...)
+
 			attributeMap = map[string]attr.Value{
-				"position": position,
-				"type":     framework.EnumOkToTF(t.GetTypeOk()),
+				"position":   position,
+				"type":       framework.EnumOkToTF(t.GetTypeOk()),
+				"visibility": visibility,
 			}
 
 		case *management.FormFieldErrorDisplay:
 			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
 			diags.Append(d...)
 
+			visibility, d := formComponentsFieldsVisibilityOkToTF(t.GetVisibilityOk())
+			diags.Append(d...)
+
 			attributeMap = map[string]attr.Value{
-				"position": position,
-				"type":     framework.EnumOkToTF(t.GetTypeOk()),
+				"position":   position,
+				"type":       framework.EnumOkToTF(t.GetTypeOk()),
+				"visibility": visibility,
 			}
 
 		case *management.FormFieldFlowButton:
@@ -2840,12 +3040,16 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			styles, d := formComponentsFieldsStylesOkToTF(t.GetStylesOk())
 			diags.Append(d...)
 
+			visibility, d := formComponentsFieldsVisibilityOkToTF(t.GetVisibilityOk())
+			diags.Append(d...)
+
 			attributeMap = map[string]attr.Value{
-				"key":      framework.StringOkToTF(t.GetKeyOk()),
-				"label":    framework.StringOkToTF(t.GetLabelOk()),
-				"position": position,
-				"styles":   styles,
-				"type":     framework.EnumOkToTF(t.GetTypeOk()),
+				"key":        framework.StringOkToTF(t.GetKeyOk()),
+				"label":      framework.StringOkToTF(t.GetLabelOk()),
+				"position":   position,
+				"styles":     styles,
+				"type":       framework.EnumOkToTF(t.GetTypeOk()),
+				"visibility": visibility,
 			}
 
 		case *management.FormFieldFlowLink:
@@ -2855,12 +3059,16 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			styles, d := formComponentsFieldsFlowLinkStylesOkToTF(t.GetStylesOk())
 			diags.Append(d...)
 
+			visibility, d := formComponentsFieldsVisibilityOkToTF(t.GetVisibilityOk())
+			diags.Append(d...)
+
 			attributeMap = map[string]attr.Value{
-				"key":      framework.StringOkToTF(t.GetKeyOk()),
-				"label":    framework.StringOkToTF(t.GetLabelOk()),
-				"position": position,
-				"styles":   styles,
-				"type":     framework.EnumOkToTF(t.GetTypeOk()),
+				"key":        framework.StringOkToTF(t.GetKeyOk()),
+				"label":      framework.StringOkToTF(t.GetLabelOk()),
+				"position":   position,
+				"styles":     styles,
+				"type":       framework.EnumOkToTF(t.GetTypeOk()),
+				"visibility": visibility,
 			}
 
 		case *management.FormFieldPassword:
@@ -2871,6 +3079,9 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			diags.Append(d...)
 
 			validation, d := formComponentsFieldsElementValidationOkToTF(t.GetValidationOk())
+			diags.Append(d...)
+
+			visibility, d := formComponentsFieldsVisibilityOkToTF(t.GetVisibilityOk())
 			diags.Append(d...)
 
 			attributeMap = map[string]attr.Value{
@@ -2890,6 +3101,7 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 				"show_password_requirements":      framework.BoolOkToTF(t.GetShowPasswordRequirementsOk()),
 				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
 				"validation":                      validation,
+				"visibility":                      visibility,
 			}
 
 		case *management.FormFieldPasswordVerify:
@@ -2900,6 +3112,9 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			diags.Append(d...)
 
 			validation, d := formComponentsFieldsElementValidationOkToTF(t.GetValidationOk())
+			diags.Append(d...)
+
+			visibility, d := formComponentsFieldsVisibilityOkToTF(t.GetVisibilityOk())
 			diags.Append(d...)
 
 			attributeMap = map[string]attr.Value{
@@ -2920,6 +3135,7 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 				"show_password_requirements":      framework.BoolOkToTF(t.GetShowPasswordRequirementsOk()),
 				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
 				"validation":                      validation,
+				"visibility":                      visibility,
 			}
 
 		case *management.FormFieldQrCode:
@@ -2948,6 +3164,9 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			options, d := formComponentsFieldsElementOptionsOkToTF(t.GetOptionsOk())
 			diags.Append(d...)
 
+			visibility, d := formComponentsFieldsVisibilityOkToTF(t.GetVisibilityOk())
+			diags.Append(d...)
+
 			attributeMap = map[string]attr.Value{
 				"attribute_disabled":              framework.BoolOkToTF(t.GetAttributeDisabledOk()),
 				"key":                             framework.StringOkToTF(t.GetKeyOk()),
@@ -2964,28 +3183,37 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 				"required":                        framework.BoolOkToTF(t.GetRequiredOk()),
 				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
 				"validation":                      validation,
+				"visibility":                      visibility,
 			}
 
 		case *management.FormFieldRecaptchaV2:
 			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
 			diags.Append(d...)
 
+			visibility, d := formComponentsFieldsVisibilityOkToTF(t.GetVisibilityOk())
+			diags.Append(d...)
+
 			attributeMap = map[string]attr.Value{
-				"alignment": framework.EnumOkToTF(t.GetAlignmentOk()),
-				"position":  position,
-				"size":      framework.EnumOkToTF(t.GetSizeOk()),
-				"theme":     framework.EnumOkToTF(t.GetThemeOk()),
-				"type":      framework.EnumOkToTF(t.GetTypeOk()),
+				"alignment":  framework.EnumOkToTF(t.GetAlignmentOk()),
+				"position":   position,
+				"size":       framework.EnumOkToTF(t.GetSizeOk()),
+				"theme":      framework.EnumOkToTF(t.GetThemeOk()),
+				"type":       framework.EnumOkToTF(t.GetTypeOk()),
+				"visibility": visibility,
 			}
 
 		case *management.FormFieldSlateTextblob:
 			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
 			diags.Append(d...)
 
+			visibility, d := formComponentsFieldsVisibilityOkToTF(t.GetVisibilityOk())
+			diags.Append(d...)
+
 			attributeMap = map[string]attr.Value{
-				"content":  framework.StringOkToTF(t.GetContentOk()),
-				"position": position,
-				"type":     framework.EnumOkToTF(t.GetTypeOk()),
+				"content":    framework.StringOkToTF(t.GetContentOk()),
+				"position":   position,
+				"type":       framework.EnumOkToTF(t.GetTypeOk()),
+				"visibility": visibility,
 			}
 
 		case *management.FormFieldSubmitButton:
@@ -2995,12 +3223,16 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			styles, d := formComponentsFieldsStylesOkToTF(t.GetStylesOk())
 			diags.Append(d...)
 
+			visibility, d := formComponentsFieldsVisibilityOkToTF(t.GetVisibilityOk())
+			diags.Append(d...)
+
 			attributeMap = map[string]attr.Value{
-				"key":      framework.StringOkToTF(t.GetKeyOk()),
-				"label":    framework.StringOkToTF(t.GetLabelOk()),
-				"position": position,
-				"styles":   styles,
-				"type":     framework.EnumOkToTF(t.GetTypeOk()),
+				"key":        framework.StringOkToTF(t.GetKeyOk()),
+				"label":      framework.StringOkToTF(t.GetLabelOk()),
+				"position":   position,
+				"styles":     styles,
+				"type":       framework.EnumOkToTF(t.GetTypeOk()),
+				"visibility": visibility,
 			}
 
 		case *management.FormFieldText:
@@ -3013,6 +3245,9 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			options, d := formComponentsFieldsElementOptionsOkToTF(t.GetOptionsOk())
 			diags.Append(d...)
 
+			visibility, d := formComponentsFieldsVisibilityOkToTF(t.GetVisibilityOk())
+			diags.Append(d...)
+
 			attributeMap = map[string]attr.Value{
 				"attribute_disabled":              framework.BoolOkToTF(t.GetAttributeDisabledOk()),
 				"key":                             framework.StringOkToTF(t.GetKeyOk()),
@@ -3029,6 +3264,7 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 				"required":                        framework.BoolOkToTF(t.GetRequiredOk()),
 				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
 				"validation":                      validation,
+				"visibility":                      visibility,
 			}
 		}
 
