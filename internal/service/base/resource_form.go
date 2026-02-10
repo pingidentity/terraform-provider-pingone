@@ -403,15 +403,6 @@ var (
 				"required",
 			},
 		},
-		management.ENUMFORMFIELDTYPE_TEXTBLOB: {
-			Required: []string{
-				"type",
-				"position",
-			},
-			Optional: []string{
-				"content",
-			},
-		},
 	}
 )
 
@@ -454,7 +445,6 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 		management.ENUMFORMFIELDTYPE_COMBOBOX,
 		management.ENUMFORMFIELDTYPE_DIVIDER,
 		management.ENUMFORMFIELDTYPE_EMPTY_FIELD,
-		management.ENUMFORMFIELDTYPE_TEXTBLOB,
 		management.ENUMFORMFIELDTYPE_SLATE_TEXTBLOB,
 		management.ENUMFORMFIELDTYPE_SUBMIT_BUTTON,
 		management.ENUMFORMFIELDTYPE_ERROR_DISPLAY,
@@ -509,7 +499,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 
 	componentsFieldsTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the type of form field.",
-	).AllowedValuesEnum(supportedFormFieldTypes).AppendMarkdownString(fmt.Sprintf("The `%s` form field type has been deprecated and will be removed in a future release.", string(management.ENUMFORMFIELDTYPE_TEXTBLOB)))
+	).AllowedValuesEnum(supportedFormFieldTypes)
 
 	componentsFieldsAttributeDisabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		formFieldValidationDocumentation("attribute_disabled"),
@@ -1672,13 +1662,6 @@ func (p *formResourceModel) validate(ctx context.Context, allowUnknowns bool) di
 					if field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_SUBMIT_BUTTON))) {
 						hasSubmitButton = true
 					}
-					if field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_TEXTBLOB))) {
-						diags.AddAttributeWarning(
-							path.Root("components").AtName("fields"),
-							"Deprecated form field type",
-							fmt.Sprintf("The %s form field type has been deprecated and will be removed in a future release.", field.Type.ValueString()),
-						)
-					}
 				}
 
 				// Validate Position conflicts
@@ -1929,8 +1912,6 @@ func (p *formComponentsFieldResourceModel) expand(ctx context.Context) (*managem
 		data.FormFieldSubmitButton, d = p.expandFieldSubmitButton(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_TEXT):
 		data.FormFieldText, d = p.expandFieldText(ctx, positionData)
-	case string(management.ENUMFORMFIELDTYPE_TEXTBLOB):
-		data.FormFieldTextblob = p.expandItemTextblob(positionData)
 	}
 
 	diags.Append(d...)
@@ -2473,20 +2454,6 @@ func (p *formComponentsFieldResourceModel) expandItemSlateTextblob(positionData 
 	return data
 }
 
-func (p *formComponentsFieldResourceModel) expandItemTextblob(positionData *management.FormFieldCommonPosition) *management.FormFieldTextblob {
-
-	data := management.NewFormFieldTextblob(
-		management.ENUMFORMFIELDTYPE_TEXTBLOB,
-		*positionData,
-	)
-
-	if !p.Content.IsNull() && !p.Content.IsUnknown() {
-		data.SetContent(p.Content.ValueString())
-	}
-
-	return data
-}
-
 func (p *formComponentsFieldStylesResourceModel) expand(ctx context.Context, styleType string) (interface{}, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -3019,16 +2986,6 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 				"required":                        framework.BoolOkToTF(t.GetRequiredOk()),
 				"type":                            framework.EnumOkToTF(t.GetTypeOk()),
 				"validation":                      validation,
-			}
-
-		case *management.FormFieldTextblob:
-			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
-			diags.Append(d...)
-
-			attributeMap = map[string]attr.Value{
-				"content":  framework.StringOkToTF(t.GetContentOk()),
-				"position": position,
-				"type":     framework.EnumOkToTF(t.GetTypeOk()),
 			}
 		}
 
