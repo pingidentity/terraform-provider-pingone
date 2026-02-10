@@ -172,7 +172,7 @@ var (
 		"theme":                           types.StringType,
 		"type":                            types.StringType,
 		"validation":                      types.ObjectType{AttrTypes: formComponentsFieldsFieldElementValidationTFObjectTypes},
-		"visibility":                      types.ObjectType{AttrTypes: formComponentsFieldsFieldVisibilityTFObjectTypes},
+		"visibility":                      types.ObjectType{AttrTypes: formComponentsFieldsVisibilityTFObjectTypes},
 	}
 
 	// Form Components Fields Position
@@ -215,7 +215,7 @@ var (
 		"top":    types.Int32Type,
 	}
 
-	formComponentsFieldsFieldVisibilityTFObjectTypes = map[string]attr.Type{
+	formComponentsFieldsVisibilityTFObjectTypes = map[string]attr.Type{
 		"type": types.StringType,
 		"key":  types.StringType,
 	}
@@ -351,6 +351,7 @@ var (
 			},
 			Optional: []string{
 				"fallback_text",
+				"visibility",
 			},
 		},
 		management.ENUMFORMFIELDTYPE_RADIO: {
@@ -696,6 +697,18 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 		formFieldValidationDocumentation("fallback_text"),
 	).AppendMarkdownString(
 		"A string that specifies the text label for fallback under the QR code.",
+	)
+
+	componentsFieldsVisibilityDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An object that specifies the visibility settings for a form field.",
+	)
+
+	componentsFieldsVisibilityTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the visibility behavior for the field.",
+	).AllowedValuesEnum(management.AllowedEnumFormFieldVisibilityEnumValues)
+
+	componentsFieldsVisibilityKeyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A non-unique string associated with the field when visibility is evaluated by DaVinci at runtime. If the `visibility.type` property is set to `SHOW_BY_DEFAULT` or `HIDE_BY_DEFAULT`, then this property is required.",
 	)
 
 	fieldTypesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -1114,7 +1127,26 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 									Optional:            true,
 								},
 
-								"visibility": schema.SingleNestedAttribute{},
+								"visibility": schema.SingleNestedAttribute{
+									Description:         componentsFieldsVisibilityDescription.Description,
+									MarkdownDescription: componentsFieldsVisibilityDescription.MarkdownDescription,
+									Optional:            true,
+
+									Attributes: map[string]schema.Attribute{
+										"type": schema.Int32Attribute{
+											Description:         componentsFieldsVisibilityTypeDescription.Description,
+											MarkdownDescription: componentsFieldsVisibilityTypeDescription.MarkdownDescription,
+											Required:            true,
+										},
+
+										"key": schema.Int32Attribute{
+											Description:         componentsFieldsVisibilityKeyDescription.Description,
+											MarkdownDescription: componentsFieldsVisibilityKeyDescription.MarkdownDescription,
+											Optional:            true,
+											//TODO validation - required if type is SHOW_BY_DEFAULT or HIDE_BY_DEFAULT
+										},
+									},
+								},
 							},
 						},
 
@@ -1888,7 +1920,7 @@ func (p *formComponentsFieldResourceModel) expand(ctx context.Context) (*managem
 	case string(management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY):
 		data.FormFieldPasswordVerify, d = p.expandFieldPasswordVerify(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_QR_CODE):
-		data.FormFieldQrCode = p.expandItemQRCode(positionData)
+		data.FormFieldQrCode, d = p.expandItemQRCode(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_RADIO):
 		data.FormFieldRadio, d = p.expandFieldRadio(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_RECAPTCHA_V2):
@@ -2400,7 +2432,19 @@ func (p *formComponentsFieldResourceModel) expandFieldText(ctx context.Context, 
 	return data, diags
 }
 
-func (p *formComponentsFieldResourceModel) expandItemQRCode(positionData *management.FormFieldCommonPosition) *management.FormFieldQrCode {
+func (p *formComponentsFieldVisibilityResourceModel) expand() *management.FormFieldCommonVisibility {
+	visibility := management.NewFormFieldCommonVisibility(
+		management.EnumFormFieldVisibility(p.Type.ValueString()))
+
+	if !p.Key.IsNull() && !p.Key.IsUnknown() {
+		visibility.SetKey(p.Key.ValueString())
+	}
+
+	return visibility
+}
+
+func (p *formComponentsFieldResourceModel) expandItemQRCode(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldQrCode, diag.Diagnostics) {
+	var diags diag.Diagnostics
 	data := management.NewFormFieldQrCode(
 		management.ENUMFORMFIELDTYPE_QR_CODE,
 		*positionData,
@@ -2412,7 +2456,17 @@ func (p *formComponentsFieldResourceModel) expandItemQRCode(positionData *manage
 		data.SetFallbackText(p.FallbackText.ValueString())
 	}
 
-	return data
+	if !p.Visibility.IsNull() && !p.Visibility.IsUnknown() {
+		var plan formComponentsFieldVisibilityResourceModel
+		diags.Append(p.Visibility.As(ctx, &plan, basetypes.ObjectAsOptions{})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetVisibility(*plan.expand())
+	}
+
+	return data, diags
 }
 
 func (p *formComponentsFieldResourceModel) expandItemRecaptchaV2(positionData *management.FormFieldCommonPosition) *management.FormFieldRecaptchaV2 {
@@ -2872,12 +2926,16 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
 			diags.Append(d...)
 
+			visibility, d := formComponentsFieldsVisibilityOkToTF(t.GetVisibilityOk())
+			diags.Append(d...)
+
 			attributeMap = map[string]attr.Value{
 				"alignment":     framework.EnumOkToTF(t.GetAlignmentOk()),
 				"fallback_text": framework.StringOkToTF(t.GetFallbackTextOk()),
 				"position":      position,
 				"size":          framework.EnumOkToTF(t.GetSizeOk()),
 				"type":          framework.EnumOkToTF(t.GetTypeOk()),
+				"visibility":    visibility,
 			}
 
 		case *management.FormFieldRadio:
@@ -3012,6 +3070,7 @@ func formComponentsFieldsConvertEmptyValuesToTFNulls(attributeMap map[string]att
 		"theme":                           types.StringNull(),
 		"type":                            types.StringNull(),
 		"validation":                      types.ObjectNull(formComponentsFieldsFieldElementValidationTFObjectTypes),
+		"visibility":                      types.ObjectNull(formComponentsFieldsVisibilityTFObjectTypes),
 	}
 
 	for k := range nullMap {
@@ -3152,6 +3211,22 @@ func formComponentsFieldsPaddingOkToTF(apiObject *management.FormStylesPadding, 
 		"left":   framework.Int32OkToTF(apiObject.GetLeftOk()),
 		"right":  framework.Int32OkToTF(apiObject.GetRightOk()),
 		"top":    framework.Int32OkToTF(apiObject.GetTopOk()),
+	})
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func formComponentsFieldsVisibilityOkToTF(apiObject *management.FormFieldCommonVisibility, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(formComponentsFieldsVisibilityTFObjectTypes), diags
+	}
+
+	objValue, d := types.ObjectValue(formComponentsFieldsVisibilityTFObjectTypes, map[string]attr.Value{
+		"type": framework.EnumOkToTF(apiObject.GetTypeOk()),
+		"key":  framework.StringOkToTF(apiObject.GetKeyOk()),
 	})
 	diags.Append(d...)
 
