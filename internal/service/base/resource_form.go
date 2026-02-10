@@ -61,6 +61,7 @@ type formComponentsFieldResourceModel struct {
 	Alignment                    types.String `tfsdk:"alignment"`
 	AttributeDisabled            types.Bool   `tfsdk:"attribute_disabled"`
 	Content                      types.String `tfsdk:"content"`
+	FallbackText                 types.String `tfsdk:"fallback_text"`
 	Key                          types.String `tfsdk:"key"`
 	Label                        types.String `tfsdk:"label"`
 	LabelMode                    types.String `tfsdk:"label_mode"`
@@ -73,15 +74,14 @@ type formComponentsFieldResourceModel struct {
 	OtherOptionKey               types.String `tfsdk:"other_option_key"`
 	OtherOptionLabel             types.String `tfsdk:"other_option_label"`
 	Position                     types.Object `tfsdk:"position"`
-	QrCodeType                   types.String `tfsdk:"qr_code_type"`
 	Required                     types.Bool   `tfsdk:"required"`
-	ShowBorder                   types.Bool   `tfsdk:"show_border"`
 	ShowPasswordRequirements     types.Bool   `tfsdk:"show_password_requirements"`
 	Size                         types.String `tfsdk:"size"`
 	Styles                       types.Object `tfsdk:"styles"`
 	Theme                        types.String `tfsdk:"theme"`
 	Type                         types.String `tfsdk:"type"`
 	Validation                   types.Object `tfsdk:"validation"`
+	Visibility                   types.Object `tfsdk:"visibility"`
 }
 
 type formComponentsFieldPositionResourceModel struct {
@@ -129,6 +129,11 @@ type formComponentsFieldButtonStylesPaddingResourceModel struct {
 	Top    types.Int32 `tfsdk:"top"`
 }
 
+type formComponentsFieldVisibilityResourceModel struct {
+	Type types.String `tfsdk:"type"`
+	Key  types.String `tfsdk:"key"`
+}
+
 type formComponentsFieldsSchemaDef struct {
 	Required []string
 	Optional []string
@@ -147,6 +152,7 @@ var (
 		"alignment":                       types.StringType,
 		"attribute_disabled":              types.BoolType,
 		"content":                         types.StringType,
+		"fallback_text":                   types.StringType,
 		"key":                             types.StringType,
 		"label_mode":                      types.StringType,
 		"label_password_verify":           types.StringType,
@@ -159,15 +165,14 @@ var (
 		"other_option_key":                types.StringType,
 		"other_option_label":              types.StringType,
 		"position":                        types.ObjectType{AttrTypes: formComponentsFieldsPositionTFObjectTypes},
-		"qr_code_type":                    types.StringType,
 		"required":                        types.BoolType,
-		"show_border":                     types.BoolType,
 		"show_password_requirements":      types.BoolType,
 		"size":                            types.StringType,
 		"styles":                          types.ObjectType{AttrTypes: formComponentsFieldsFieldStylesTFObjectTypes},
 		"theme":                           types.StringType,
 		"type":                            types.StringType,
 		"validation":                      types.ObjectType{AttrTypes: formComponentsFieldsFieldElementValidationTFObjectTypes},
+		"visibility":                      types.ObjectType{AttrTypes: formComponentsFieldsFieldVisibilityTFObjectTypes},
 	}
 
 	// Form Components Fields Position
@@ -208,6 +213,11 @@ var (
 		"left":   types.Int32Type,
 		"right":  types.Int32Type,
 		"top":    types.Int32Type,
+	}
+
+	formComponentsFieldsFieldVisibilityTFObjectTypes = map[string]attr.Type{
+		"type": types.StringType,
+		"key":  types.StringType,
 	}
 
 	formComponentsFieldsSchemaDefMap = map[management.EnumFormFieldType]formComponentsFieldsSchemaDef{
@@ -336,12 +346,11 @@ var (
 			Required: []string{
 				"type",
 				"position",
-				"key",
-				"qr_code_type",
 				"alignment",
+				"size",
 			},
 			Optional: []string{
-				"show_border",
+				"fallback_text",
 			},
 		},
 		management.ENUMFORMFIELDTYPE_RADIO: {
@@ -683,16 +692,10 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 		"A string that specifies the reCAPTCHA alignment.",
 	).AllowedValuesEnum(management.AllowedEnumFormItemAlignmentEnumValues)
 
-	componentsFieldsQrCodeTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		formFieldValidationDocumentation("qr_code_type"),
+	componentsFieldsFallbackTextDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		formFieldValidationDocumentation("fallback_text"),
 	).AppendMarkdownString(
-		"A string that specifies the QR Code type.",
-	)
-
-	componentsFieldsShowBorderDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		formFieldValidationDocumentation("show_border"),
-	).AppendMarkdownString(
-		"A boolean that specifies the border visibility.",
+		"A string that specifies the text label for fallback under the QR code.",
 	)
 
 	fieldTypesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -828,6 +831,12 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 								"content": schema.StringAttribute{
 									Description:         componentsFieldsContentDescription.Description,
 									MarkdownDescription: componentsFieldsContentDescription.MarkdownDescription,
+									Optional:            true,
+								},
+
+								"fallback_text": schema.StringAttribute{
+									Description:         componentsFieldsFallbackTextDescription.Description,
+									MarkdownDescription: componentsFieldsFallbackTextDescription.MarkdownDescription,
 									Optional:            true,
 								},
 
@@ -1105,18 +1114,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 									Optional:            true,
 								},
 
-								"qr_code_type": schema.StringAttribute{
-									Description:         componentsFieldsQrCodeTypeDescription.Description,
-									MarkdownDescription: componentsFieldsQrCodeTypeDescription.MarkdownDescription,
-									Optional:            true,
-								},
-
-								"show_border": schema.BoolAttribute{
-									Description:         componentsFieldsShowBorderDescription.Description,
-									MarkdownDescription: componentsFieldsShowBorderDescription.MarkdownDescription,
-									Optional:            true,
-									Computed:            true,
-								},
+								"visibility": schema.SingleNestedAttribute{},
 							},
 						},
 
@@ -1223,6 +1221,8 @@ func (r *formComponentsFieldResourceModel) validateFieldSet(field string) bool {
 		return !r.AttributeDisabled.IsNull()
 	case "content":
 		return !r.Content.IsNull()
+	case "fallback_text":
+		return !r.FallbackText.IsNull()
 	case "key":
 		return !r.Key.IsNull()
 	case "label":
@@ -1247,12 +1247,8 @@ func (r *formComponentsFieldResourceModel) validateFieldSet(field string) bool {
 		return !r.OtherOptionLabel.IsNull()
 	case "position":
 		return !r.Position.IsNull()
-	case "qr_code_type":
-		return !r.QrCodeType.IsNull()
 	case "required":
 		return !r.Required.IsNull()
-	case "show_border":
-		return !r.ShowBorder.IsNull()
 	case "show_password_requirements":
 		return !r.ShowPasswordRequirements.IsNull()
 	case "size":
@@ -1265,6 +1261,8 @@ func (r *formComponentsFieldResourceModel) validateFieldSet(field string) bool {
 		return !r.Type.IsNull()
 	case "validation":
 		return !r.Validation.IsNull()
+	case "visibility":
+		return !r.Visibility.IsNull()
 	default:
 		return false
 	}
@@ -1315,17 +1313,6 @@ func (r *FormResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRe
 				field.ShowPasswordRequirements = types.BoolValue(false)
 			default:
 				field.ShowPasswordRequirements = types.BoolNull()
-			}
-			modifiedPlan = true
-		}
-
-		// show_border default
-		if field.ShowBorder.IsUnknown() {
-			switch field.Type.ValueString() {
-			case string(management.ENUMFORMFIELDTYPE_QR_CODE):
-				field.ShowBorder = types.BoolValue(false)
-			default:
-				field.ShowBorder = types.BoolNull()
 			}
 			modifiedPlan = true
 		}
@@ -2417,13 +2404,12 @@ func (p *formComponentsFieldResourceModel) expandItemQRCode(positionData *manage
 	data := management.NewFormFieldQrCode(
 		management.ENUMFORMFIELDTYPE_QR_CODE,
 		*positionData,
-		p.Key.ValueString(),
-		management.EnumFormQrCodeType(p.QrCodeType.ValueString()),
 		management.EnumFormItemAlignment(p.Alignment.ValueString()),
+		management.EnumFormItemSize(p.Size.ValueString()),
 	)
 
-	if !p.ShowBorder.IsNull() && !p.ShowBorder.IsUnknown() {
-		data.SetShowBorder(p.ShowBorder.ValueBool())
+	if !p.FallbackText.IsNull() && !p.FallbackText.IsUnknown() {
+		data.SetFallbackText(p.FallbackText.ValueString())
 	}
 
 	return data
@@ -2887,12 +2873,11 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			diags.Append(d...)
 
 			attributeMap = map[string]attr.Value{
-				"alignment":    framework.EnumOkToTF(t.GetAlignmentOk()),
-				"key":          framework.StringOkToTF(t.GetKeyOk()),
-				"position":     position,
-				"qr_code_type": framework.EnumOkToTF(t.GetQrCodeTypeOk()),
-				"show_border":  framework.BoolOkToTF(t.GetShowBorderOk()),
-				"type":         framework.EnumOkToTF(t.GetTypeOk()),
+				"alignment":     framework.EnumOkToTF(t.GetAlignmentOk()),
+				"fallback_text": framework.StringOkToTF(t.GetFallbackTextOk()),
+				"position":      position,
+				"size":          framework.EnumOkToTF(t.GetSizeOk()),
+				"type":          framework.EnumOkToTF(t.GetTypeOk()),
 			}
 
 		case *management.FormFieldRadio:
@@ -3007,6 +2992,7 @@ func formComponentsFieldsConvertEmptyValuesToTFNulls(attributeMap map[string]att
 		"alignment":                       types.StringNull(),
 		"attribute_disabled":              types.BoolNull(),
 		"content":                         types.StringNull(),
+		"fallback_text":                   types.StringNull(),
 		"key":                             types.StringNull(),
 		"label_mode":                      types.StringNull(),
 		"label_password_verify":           types.StringNull(),
@@ -3019,9 +3005,7 @@ func formComponentsFieldsConvertEmptyValuesToTFNulls(attributeMap map[string]att
 		"other_option_key":                types.StringNull(),
 		"other_option_label":              types.StringNull(),
 		"position":                        types.ObjectNull(formComponentsFieldsPositionTFObjectTypes),
-		"qr_code_type":                    types.StringNull(),
 		"required":                        types.BoolNull(),
-		"show_border":                     types.BoolNull(),
 		"show_password_requirements":      types.BoolNull(),
 		"size":                            types.StringNull(),
 		"styles":                          types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes),
