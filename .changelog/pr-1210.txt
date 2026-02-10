@@ -1,0 +1,3 @@
+```release-note:bug
+Fixed an issue where `pingone_environment` resources could break because of missing service `deployment.id` attribute
+```
