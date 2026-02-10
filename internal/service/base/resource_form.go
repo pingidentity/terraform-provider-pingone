@@ -1162,7 +1162,16 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 											Description:         componentsFieldsVisibilityKeyDescription.Description,
 											MarkdownDescription: componentsFieldsVisibilityKeyDescription.MarkdownDescription,
 											Optional:            true,
-											//TODO validation - required if type is SHOW_BY_DEFAULT or HIDE_BY_DEFAULT
+											Validators: []validator.String{
+												stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+													types.StringValue(string(management.ENUMFORMFIELDVISIBILITY_HIDE_BY_DEFAULT)),
+													path.MatchRelative().AtParent().AtName("type"),
+												),
+												stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+													types.StringValue(string(management.ENUMFORMFIELDVISIBILITY_SHOW_BY_DEFAULT)),
+													path.MatchRelative().AtParent().AtName("type"),
+												),
+											},
 										},
 									},
 								},
