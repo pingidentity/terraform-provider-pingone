@@ -698,9 +698,9 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 	componentsFieldsSizeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		formFieldValidationDocumentation("size"),
 	).AppendMarkdownString(
-		fmt.Sprintf("A string that specifies the reCAPTCHA size or the QR code size. For reCAPTCHA fields, options are `%s`. For QR code fields, options are `%s`",
+		fmt.Sprintf("A string that specifies the reCAPTCHA size or the QR code size. For reCAPTCHA fields, options are `%s`. For QR code fields, options are `%s`.",
 			strings.Join(reCaptchaSizeAllowedValues, "`, `"),
-			strings.Join(genericSizeAllowedValues, "` ")),
+			strings.Join(genericSizeAllowedValues, "`, `")),
 	)
 
 	componentsFieldsThemeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
