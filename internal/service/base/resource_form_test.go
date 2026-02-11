@@ -129,6 +129,7 @@ func TestAccForm_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "cols", "4"),
 			resource.TestCheckResourceAttr(resourceFullName, "translation_method", "DEFAULT_VALUE"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
 	}
 
@@ -144,6 +145,7 @@ func TestAccForm_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "cols", "4"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "translation_method"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
 	}
 
@@ -266,6 +268,7 @@ func TestAccForm_Multiple(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.9.type", "DIVIDER"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.9.position.row", "6"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.9.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "3"),
 		),
 	}
 
@@ -291,6 +294,7 @@ func TestAccForm_Multiple(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.3.position.row", "3"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.3.position.col", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.3.label", "[{\"children\":[{\"text\":\"\"},{\"children\":[{\"text\":\"\"}],\"defaultTranslation\":\"Sign On\",\"inline\":true,\"key\":\"button.text.signOn\",\"type\":\"i18n\"},{\"text\":\"\"}],\"type\":\"paragraph\"}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "2"),
 		),
 	}
 
@@ -355,6 +359,7 @@ func TestAccForm_FieldCheckbox(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.1.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 2\"}]}]"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.2.value", "Option3"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.2.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 3\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "2"),
 		),
 	}
 
@@ -376,6 +381,7 @@ func TestAccForm_FieldCheckbox(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 1\"}]}]"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.1.value", "Option3"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.1.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 3\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
 	}
 
@@ -458,6 +464,7 @@ func TestAccForm_FieldCombobox(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.1.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 2\"}]}]"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.2.value", "Option3"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.2.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 3\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "2"),
 		),
 	}
 
@@ -478,6 +485,7 @@ func TestAccForm_FieldCombobox(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 1\"}]}]"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.1.value", "Option3"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.1.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 3\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
 	}
 
@@ -560,6 +568,7 @@ func TestAccForm_FieldDropdown(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.1.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 2\"}]}]"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.2.value", "Option3"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.2.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 3\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "2"),
 		),
 	}
 
@@ -580,6 +589,7 @@ func TestAccForm_FieldDropdown(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 1\"}]}]"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.1.value", "Option3"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.1.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 3\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
 	}
 
@@ -658,6 +668,7 @@ func TestAccForm_FieldPassword(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.attribute_disabled", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.show_password_requirements", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.validation.type", "NONE"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "2"),
 		),
 	}
 
@@ -675,6 +686,7 @@ func TestAccForm_FieldPassword(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_enabled", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_attribute_disabled", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.show_password_requirements", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
 	}
 
@@ -758,6 +770,7 @@ func TestAccForm_FieldPasswordVerify(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.attribute_disabled", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.show_password_requirements", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.validation.type", "NONE"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "3"),
 		),
 	}
 
@@ -775,6 +788,7 @@ func TestAccForm_FieldPasswordVerify(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_enabled", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_attribute_disabled", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.show_password_requirements", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
 	}
 
@@ -861,6 +875,7 @@ func TestAccForm_FieldRadio(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.1.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 2\"}]}]"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.2.value", "Option3"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.2.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 3\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "2"),
 		),
 	}
 
@@ -882,6 +897,7 @@ func TestAccForm_FieldRadio(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 1\"}]}]"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.1.value", "Option3"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.1.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 3\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
 	}
 
@@ -965,6 +981,7 @@ func TestAccForm_FieldSubmitButton(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.text_color", "#00FF00"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.border_color", "#0000FF"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.enabled", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
 	}
 
@@ -976,6 +993,7 @@ func TestAccForm_FieldSubmitButton(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "SUBMIT_BUTTON"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "language_bundle"),
 		),
 	}
 
@@ -1055,6 +1073,7 @@ func TestAccForm_FieldText(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.validation.type", "CUSTOM"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.validation.regex", "[a-zA-Z0-9]+"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.validation.error_message", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Must be alphanumeric\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "2"),
 		),
 	}
 
@@ -1072,6 +1091,7 @@ func TestAccForm_FieldText(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.validation.type", "NONE"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_enabled", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_attribute_disabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
 	}
 
@@ -1142,6 +1162,7 @@ func TestAccForm_ItemDivider(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.width", "50"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "DIVIDER"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
 	}
 
@@ -1152,6 +1173,7 @@ func TestAccForm_ItemDivider(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "DIVIDER"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
 	}
 
@@ -1218,6 +1240,7 @@ func TestAccForm_ItemEmptyField(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.1.position.col", "1"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.1.position.width", "50"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.1.type", "EMPTY_FIELD"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
 	}
 
@@ -1228,6 +1251,7 @@ func TestAccForm_ItemEmptyField(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.1.position.row", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.1.position.col", "1"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.1.type", "EMPTY_FIELD"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
 	}
 
@@ -1294,6 +1318,7 @@ func TestAccForm_ItemErrorDisplay(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.width", "50"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "ERROR_DISPLAY"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
 	}
 
@@ -1304,6 +1329,7 @@ func TestAccForm_ItemErrorDisplay(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "ERROR_DISPLAY"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
 	}
 
@@ -1384,6 +1410,7 @@ func TestAccForm_ItemFlowButton(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.text_color", "#00FF00"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.border_color", "#0000FF"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.enabled", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
 	}
 
@@ -1396,6 +1423,7 @@ func TestAccForm_ItemFlowButton(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "FLOW_BUTTON"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "button-field"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
 	}
 
@@ -1475,6 +1503,7 @@ func TestAccForm_ItemFlowLink(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.alignment", "RIGHT"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.text_color", "#00FF00"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.enabled", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
 	}
 
@@ -1487,6 +1516,7 @@ func TestAccForm_ItemFlowLink(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "FLOW_LINK"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "link-field"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
 	}
 
@@ -1561,6 +1591,7 @@ func TestAccForm_ItemQRCode(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.qr_code_type", "MFA_AUTH"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.show_border", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.alignment", "RIGHT"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
 	}
 
@@ -1575,6 +1606,7 @@ func TestAccForm_ItemQRCode(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.qr_code_type", "MFA_AUTH"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.show_border", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.alignment", "LEFT"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
 	}
 
@@ -1648,6 +1680,7 @@ func TestAccForm_ItemRecaptchaV2(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.theme", "LIGHT"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.size", "NORMAL"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.alignment", "RIGHT"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
 	}
 
@@ -1661,6 +1694,7 @@ func TestAccForm_ItemRecaptchaV2(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.theme", "DARK"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.size", "COMPACT"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.alignment", "LEFT"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
 	}
 
@@ -1732,6 +1766,7 @@ func TestAccForm_ItemSlateTextblob(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.width", "50"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "SLATE_TEXTBLOB"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.content", "[{\"children\":[{\"text\":\"Two baguettes in a zoo cage, the sign says 'Bread in captivity'.\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
 	}
 
@@ -1743,6 +1778,7 @@ func TestAccForm_ItemSlateTextblob(t *testing.T) {
 				"position.col": "0",
 				"type":         "SLATE_TEXTBLOB",
 			}),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
 	}
 
