@@ -710,6 +710,10 @@ resource "pingone_environment" "%[1]s" {
       type = "PingID-v2"
     }
   ]
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }`, resourceName, name, licenseID)
 }
 
