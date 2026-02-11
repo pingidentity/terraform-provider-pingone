@@ -1943,6 +1943,11 @@ resource "pingone_form" "%[2]s" {
         validation = {
           type = "NONE"
         }
+
+        visibility = {
+          type = "SHOW_BY_DEFAULT"
+          key = "mykey"
+        }
       },
       {
         type = "SUBMIT_BUTTON"
@@ -2419,6 +2424,11 @@ resource "pingone_form" "%[2]s" {
             label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 3\"}]}]"
           }
         ]
+
+                  visibility = {
+          type = "SHOW_BY_DEFAULT"
+          key = "mykey"
+        }
       },
       {
         type = "SUBMIT_BUTTON"
@@ -2609,6 +2619,11 @@ resource "pingone_form" "%[2]s" {
             label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 3\"}]}]"
           }
         ]
+
+                  visibility = {
+          type = "HIDE_BY_DEFAULT"
+          key = "mykey2"
+        }
       },
       {
         type = "SUBMIT_BUTTON"
@@ -2786,6 +2801,11 @@ resource "pingone_form" "%[2]s" {
             label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 3\"}]}]"
           }
         ]
+
+         visibility = {
+          type = "SHOW_BY_DEFAULT"
+          key = "mykey"
+        }
       },
       {
         type = "SUBMIT_BUTTON"
@@ -2941,6 +2961,10 @@ resource "pingone_form" "%[2]s" {
 
         validation = {
           type = "NONE"
+        }
+
+        visibility = {
+          type = "ALWAYS_VISIBLE"
         }
       },
       {
@@ -3121,6 +3145,11 @@ resource "pingone_form" "%[2]s" {
 
         validation = {
           type = "NONE"
+        }
+
+         visibility = {
+          type = "SHOW_BY_DEFAULT"
+          key = "mykey"
         }
       },
       {
@@ -3311,6 +3340,11 @@ resource "pingone_form" "%[2]s" {
             label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 3\"}]}]"
           }
         ]
+
+                visibility = {
+          type = "HIDE_BY_DEFAULT"
+          key = "mykey2"
+        }
       },
       {
         type = "SUBMIT_BUTTON"
@@ -3478,6 +3512,10 @@ resource "pingone_form" "%[2]s" {
           border_color     = "#0000FF"
           enabled          = true
         }
+
+        visibility = {
+          type = "ALWAYS_VISIBLE"
+        }
       }
     ]
   }
@@ -3579,6 +3617,10 @@ resource "pingone_form" "%[2]s" {
           type          = "CUSTOM"
           regex         = "[a-zA-Z0-9]+"
           error_message = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Must be alphanumeric\"}]}]"
+        }
+
+        visibility = {
+          type = "ALWAYS_VISIBLE"
         }
       },
       {
@@ -3710,6 +3752,11 @@ resource "pingone_form" "%[2]s" {
           col   = 0
           width = 50
         }
+
+         visibility = {
+          type = "SHOW_BY_DEFAULT"
+          key = "mykey"
+        }
       },
       {
         type = "SUBMIT_BUTTON"
@@ -3806,6 +3853,11 @@ resource "pingone_form" "%[2]s" {
           col   = 1
           width = 50
         }
+
+         visibility = {
+          type = "HIDE_BY_DEFAULT"
+          key = "mykey2"
+        }
       },
       {
         type = "SUBMIT_BUTTON"
@@ -3901,6 +3953,10 @@ resource "pingone_form" "%[2]s" {
           row   = 0
           col   = 0
           width = 50
+        }
+
+        visibility = {
+          type = "ALWAYS_VISIBLE"
         }
       },
       {
@@ -4003,6 +4059,11 @@ resource "pingone_form" "%[2]s" {
           text_color       = "#00FF00"
           border_color     = "#0000FF"
           enabled          = true
+        }
+
+                visibility = {
+          type = "SHOW_BY_DEFAULT"
+          key = "mykey"
         }
       },
       {
@@ -4144,6 +4205,11 @@ resource "pingone_form" "%[2]s" {
           alignment  = "RIGHT"
           text_color = "#00FF00"
           enabled    = true
+        }
+
+                visibility = {
+          type = "HIDE_BY_DEFAULT"
+          key = "mykey2"
         }
       },
       {
@@ -4404,6 +4470,10 @@ resource "pingone_form" "%[2]s" {
         theme     = "LIGHT"
         size      = "NORMAL"
         alignment = "RIGHT"
+
+                visibility = {
+          type = "ALWAYS_VISIBLE"
+        }
       },
       {
         type = "SUBMIT_BUTTON"
@@ -4528,6 +4598,11 @@ resource "pingone_form" "%[2]s" {
         }
 
         content = "[{\"children\":[{\"text\":\"Two baguettes in a zoo cage, the sign says 'Bread in captivity'.\"}]}]"
+
+                visibility = {
+          type = "SHOW_BY_DEFAULT"
+          key = "mykey"
+        }
       },
       {
         type = "SUBMIT_BUTTON"
