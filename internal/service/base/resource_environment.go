@@ -497,7 +497,7 @@ func (r *EnvironmentResource) ModifyPlan(ctx context.Context, req resource.Modif
 		plan.Services = serviceDefault
 	}
 
-	// Handle `PING_ONE_ID` scenarios
+	// Handle PingID scenarios
 	if req.State.Raw.IsNull() {
 		resp.Diagnostics.Append(r.validateServices(ctx, plan.Services, nil)...)
 	} else {
@@ -1323,93 +1323,101 @@ func (r *EnvironmentResource) validateServices(ctx context.Context, services bas
 		return diags
 	}
 
-	pingOneIdProduct, err := model.FindProductByAPICode(management.ENUMPRODUCTTYPE_ONE_ID)
-	if err != nil {
-		diags.AddAttributeError(
-			path.Root("services"),
-			"Cannot find PING_ONE_ID product",
-			"In validating the configuration, the PING_ONE_ID product could not be found. This is always a bug in the provider. Please report this issue to the provider maintainers.",
-		)
-		return diags
+	restrictedServices := []management.EnumProductType{
+		management.ENUMPRODUCTTYPE_ONE_ID,
+		management.ENUMPRODUCTTYPE_ID,
 	}
 
-	// Find PING_ONE_ID in Plan
-	var pingOneIdServicePlan *environmentServiceModel
-	for _, service := range servicesPlan {
-		if service.Type.Equal(types.StringValue(pingOneIdProduct.ProductCode)) {
-			s := service
-			pingOneIdServicePlan = &s
-			break
-		}
-	}
+	for _, restrictedServiceType := range restrictedServices {
 
-	isCreate := stateServices == nil
-	pingOneIdInState := false
-
-	if !isCreate && !stateServices.IsNull() {
-		var servicesState []environmentServiceModel
-		diags.Append(stateServices.ElementsAs(ctx, &servicesState, false)...)
-		if diags.HasError() {
+		product, err := model.FindProductByAPICode(restrictedServiceType)
+		if err != nil {
+			diags.AddAttributeError(
+				path.Root("services"),
+				fmt.Sprintf("Cannot find %s product", restrictedServiceType),
+				fmt.Sprintf("In validating the configuration, the %s product could not be found. This is always a bug in the provider. Please report this issue to the provider maintainers.", restrictedServiceType),
+			)
 			return diags
 		}
-		for _, s := range servicesState {
-			if s.Type.Equal(types.StringValue(pingOneIdProduct.ProductCode)) {
-				pingOneIdInState = true
+
+		// Find restricted service in Plan
+		var servicePlan *environmentServiceModel
+		for _, service := range servicesPlan {
+			if service.Type.Equal(types.StringValue(product.ProductCode)) {
+				s := service
+				servicePlan = &s
 				break
 			}
 		}
-	}
 
-	if isCreate {
-		if pingOneIdServicePlan != nil {
-			// PING_ONE_ID cannot be included on create
-			diags.AddAttributeError(
-				path.Root("services"),
-				"Invalid service configuration",
-				fmt.Sprintf("New environments created through Terraform cannot include the `%s` service. Please create the environment in the PingOne console first, then import the environment into your Terraform state.", pingOneIdProduct.ProductCode),
-			)
-		}
-	} else {
-		// Check for removal
-		if pingOneIdInState && pingOneIdServicePlan == nil {
-			diags.AddAttributeError(
-				path.Root("services"),
-				"Cannot remove PING_ONE_ID service",
-				fmt.Sprintf("The `%s` service cannot be removed from an environment via Terraform configuration. Please create a new environment without the `%s` service.", pingOneIdProduct.ProductCode, pingOneIdProduct.ProductCode),
-			)
-		}
+		isCreate := stateServices == nil
+		serviceInState := false
 
-		if pingOneIdServicePlan != nil {
-			// Check for `deployment` and `deployment.id`
-			if !pingOneIdServicePlan.Deployment.IsNull() && !pingOneIdServicePlan.Deployment.IsUnknown() {
-				var deploymentPlan struct {
-					Id types.String `tfsdk:"id"`
-				}
-				diags.Append(pingOneIdServicePlan.Deployment.As(ctx, &deploymentPlan, basetypes.ObjectAsOptions{
-					UnhandledNullAsEmpty:    false,
-					UnhandledUnknownAsEmpty: false,
-				})...)
-				if diags.HasError() {
-					return diags
-				}
-
-				if !deploymentPlan.Id.IsNull() && !deploymentPlan.Id.IsUnknown() {
-					return diags
+		if !isCreate && !stateServices.IsNull() {
+			var servicesState []environmentServiceModel
+			diags.Append(stateServices.ElementsAs(ctx, &servicesState, false)...)
+			if diags.HasError() {
+				return diags
+			}
+			for _, s := range servicesState {
+				if s.Type.Equal(types.StringValue(product.ProductCode)) {
+					serviceInState = true
+					break
 				}
 			}
+		}
 
-			if !pingOneIdInState { // `PING_ONE_ID` is in the plan but not in state
+		if isCreate {
+			if servicePlan != nil {
+				// Restricted service cannot be included on create
 				diags.AddAttributeError(
 					path.Root("services"),
 					"Invalid service configuration",
-					fmt.Sprintf("The `%s` service cannot be added via Terraform configuration. This service must be enabled/configured in the PingOne Console first, and then imported or refreshed into the Terraform state.", pingOneIdProduct.ProductCode),
+					fmt.Sprintf("New environments created through Terraform cannot include the `%s` service. Please create the environment in the PingOne console first, then import the environment into your Terraform state.", product.ProductCode),
 				)
-			} else { // `PING_ONE_ID` is in the plan and state but missing deployment ID
+			}
+		} else {
+			// Check for removal
+			if serviceInState && servicePlan == nil {
 				diags.AddAttributeError(
 					path.Root("services"),
-					"Missing deployment ID",
-					fmt.Sprintf("The `%s` service is present in the configuration but missing a deployment ID in the state. Please run `terraform refresh` to update the state with the external configuration.", pingOneIdProduct.ProductCode),
+					fmt.Sprintf("Cannot remove %s service", restrictedServiceType),
+					fmt.Sprintf("The `%s` service cannot be removed from an environment via Terraform configuration. Please create a new environment without the `%s` service.", product.ProductCode, product.ProductCode),
 				)
+			}
+
+			if servicePlan != nil {
+				// Check for `deployment` and `deployment.id`
+				if !servicePlan.Deployment.IsNull() && !servicePlan.Deployment.IsUnknown() {
+					var deploymentPlan struct {
+						Id types.String `tfsdk:"id"`
+					}
+					diags.Append(servicePlan.Deployment.As(ctx, &deploymentPlan, basetypes.ObjectAsOptions{
+						UnhandledNullAsEmpty:    false,
+						UnhandledUnknownAsEmpty: false,
+					})...)
+					if diags.HasError() {
+						return diags
+					}
+
+					if !deploymentPlan.Id.IsNull() && !deploymentPlan.Id.IsUnknown() {
+						continue
+					}
+				}
+
+				if !serviceInState { // Restricted service is in the plan but not in state
+					diags.AddAttributeError(
+						path.Root("services"),
+						"Invalid service configuration",
+						fmt.Sprintf("The `%s` service cannot be added via Terraform configuration. This service must be enabled/configured in the PingOne Console first, and then imported or refreshed into the Terraform state.", product.ProductCode),
+					)
+				} else { // Restricted service is in the plan and state but missing deployment ID
+					diags.AddAttributeError(
+						path.Root("services"),
+						"Missing deployment ID",
+						fmt.Sprintf("The `%s` service is present in the configuration but missing a deployment ID in the state. Please run `terraform refresh` to update the state with the external configuration.", product.ProductCode),
+					)
+				}
 			}
 		}
 	}
