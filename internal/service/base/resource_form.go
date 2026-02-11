@@ -22,7 +22,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -615,7 +614,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 	)
 
 	componentsFieldsOtherOptionKeyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies whether the form identifies that the choice is a custom choice not from a predefined list.",
+		"A string that specifies the key associated with the other option.",
 	)
 
 	componentsFieldsOtherOptionLabelDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -623,11 +622,11 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 	)
 
 	componentsFieldsOtherOptionInputLabelDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies the label for the other option in drop-down controls.",
+		"A string that specifies the label placeholder text for the other option in drop-down controls.",
 	)
 
 	componentsFieldsOtherOptionAttributeDisabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A boolean that specifies whether the directory attribute option is disabled. Set to `true` if it references a PingOne directory attribute.",
+		"A boolean that specifies whether the other option is disabled.",
 	)
 
 	componentsFieldsShowPasswordRequirementsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -985,42 +984,32 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 								"other_option_enabled": schema.BoolAttribute{
 									Description:         componentsFieldsOtherOptionEnabledDescription.Description,
 									MarkdownDescription: componentsFieldsOtherOptionEnabledDescription.MarkdownDescription,
+									Optional:            true,
 									Computed:            true,
 								},
 
 								"other_option_key": schema.StringAttribute{
 									Description:         componentsFieldsOtherOptionKeyDescription.Description,
 									MarkdownDescription: componentsFieldsOtherOptionKeyDescription.MarkdownDescription,
-									Computed:            true,
-
-									PlanModifiers: []planmodifier.String{
-										stringplanmodifier.UseNonNullStateForUnknown(),
-									},
+									Optional:            true,
 								},
 
 								"other_option_label": schema.StringAttribute{
 									Description:         componentsFieldsOtherOptionLabelDescription.Description,
 									MarkdownDescription: componentsFieldsOtherOptionLabelDescription.MarkdownDescription,
-									Computed:            true,
-
-									PlanModifiers: []planmodifier.String{
-										stringplanmodifier.UseNonNullStateForUnknown(),
-									},
+									Optional:            true,
 								},
 
 								"other_option_input_label": schema.StringAttribute{
 									Description:         componentsFieldsOtherOptionInputLabelDescription.Description,
 									MarkdownDescription: componentsFieldsOtherOptionInputLabelDescription.MarkdownDescription,
-									Computed:            true,
-
-									PlanModifiers: []planmodifier.String{
-										stringplanmodifier.UseNonNullStateForUnknown(),
-									},
+									Optional:            true,
 								},
 
 								"other_option_attribute_disabled": schema.BoolAttribute{
 									Description:         componentsFieldsOtherOptionAttributeDisabledDescription.Description,
 									MarkdownDescription: componentsFieldsOtherOptionAttributeDisabledDescription.MarkdownDescription,
+									Optional:            true,
 									Computed:            true,
 								},
 
@@ -1396,24 +1385,6 @@ func (r *FormResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRe
 			default:
 				field.OtherOptionEnabled = types.BoolNull()
 			}
-			modifiedPlan = true
-		}
-
-		// other_option_input_label default
-		if field.OtherOptionInputLabel.IsUnknown() {
-			field.OtherOptionInputLabel = types.StringNull()
-			modifiedPlan = true
-		}
-
-		// other_option_key default
-		if field.OtherOptionKey.IsUnknown() {
-			field.OtherOptionKey = types.StringNull()
-			modifiedPlan = true
-		}
-
-		// other_option_label default
-		if field.OtherOptionLabel.IsUnknown() {
-			field.OtherOptionLabel = types.StringNull()
 			modifiedPlan = true
 		}
 
@@ -2043,6 +2014,26 @@ func (p *formComponentsFieldResourceModel) expandFieldCheckbox(ctx context.Conte
 		data.SetRequired(p.Required.ValueBool())
 	}
 
+	if !p.OtherOptionEnabled.IsNull() && !p.OtherOptionEnabled.IsUnknown() {
+		data.SetOtherOptionEnabled(p.OtherOptionEnabled.ValueBool())
+	}
+
+	if !p.OtherOptionKey.IsNull() && !p.OtherOptionKey.IsUnknown() {
+		data.SetOtherOptionKey(p.OtherOptionKey.ValueString())
+	}
+
+	if !p.OtherOptionLabel.IsNull() && !p.OtherOptionLabel.IsUnknown() {
+		data.SetOtherOptionLabel(p.OtherOptionLabel.ValueString())
+	}
+
+	if !p.OtherOptionInputLabel.IsNull() && !p.OtherOptionInputLabel.IsUnknown() {
+		data.SetOtherOptionInputLabel(p.OtherOptionInputLabel.ValueString())
+	}
+
+	if !p.OtherOptionAttributeDisabled.IsNull() && !p.OtherOptionAttributeDisabled.IsUnknown() {
+		data.SetOtherOptionAttributeDisabled(p.OtherOptionAttributeDisabled.ValueBool())
+	}
+
 	if !p.Visibility.IsNull() && !p.Visibility.IsUnknown() {
 		var plan formComponentsFieldVisibilityResourceModel
 		diags.Append(p.Visibility.As(ctx, &plan, basetypes.ObjectAsOptions{})...)
@@ -2097,6 +2088,26 @@ func (p *formComponentsFieldResourceModel) expandFieldCombobox(ctx context.Conte
 
 	if !p.Required.IsNull() && !p.Required.IsUnknown() {
 		data.SetRequired(p.Required.ValueBool())
+	}
+
+	if !p.OtherOptionEnabled.IsNull() && !p.OtherOptionEnabled.IsUnknown() {
+		data.SetOtherOptionEnabled(p.OtherOptionEnabled.ValueBool())
+	}
+
+	if !p.OtherOptionKey.IsNull() && !p.OtherOptionKey.IsUnknown() {
+		data.SetOtherOptionKey(p.OtherOptionKey.ValueString())
+	}
+
+	if !p.OtherOptionLabel.IsNull() && !p.OtherOptionLabel.IsUnknown() {
+		data.SetOtherOptionLabel(p.OtherOptionLabel.ValueString())
+	}
+
+	if !p.OtherOptionInputLabel.IsNull() && !p.OtherOptionInputLabel.IsUnknown() {
+		data.SetOtherOptionInputLabel(p.OtherOptionInputLabel.ValueString())
+	}
+
+	if !p.OtherOptionAttributeDisabled.IsNull() && !p.OtherOptionAttributeDisabled.IsUnknown() {
+		data.SetOtherOptionAttributeDisabled(p.OtherOptionAttributeDisabled.ValueBool())
 	}
 
 	if !p.Visibility.IsNull() && !p.Visibility.IsUnknown() {
@@ -2174,6 +2185,26 @@ func (p *formComponentsFieldResourceModel) expandFieldDropdown(ctx context.Conte
 
 	if !p.Required.IsNull() && !p.Required.IsUnknown() {
 		data.SetRequired(p.Required.ValueBool())
+	}
+
+	if !p.OtherOptionEnabled.IsNull() && !p.OtherOptionEnabled.IsUnknown() {
+		data.SetOtherOptionEnabled(p.OtherOptionEnabled.ValueBool())
+	}
+
+	if !p.OtherOptionKey.IsNull() && !p.OtherOptionKey.IsUnknown() {
+		data.SetOtherOptionKey(p.OtherOptionKey.ValueString())
+	}
+
+	if !p.OtherOptionLabel.IsNull() && !p.OtherOptionLabel.IsUnknown() {
+		data.SetOtherOptionLabel(p.OtherOptionLabel.ValueString())
+	}
+
+	if !p.OtherOptionInputLabel.IsNull() && !p.OtherOptionInputLabel.IsUnknown() {
+		data.SetOtherOptionInputLabel(p.OtherOptionInputLabel.ValueString())
+	}
+
+	if !p.OtherOptionAttributeDisabled.IsNull() && !p.OtherOptionAttributeDisabled.IsUnknown() {
+		data.SetOtherOptionAttributeDisabled(p.OtherOptionAttributeDisabled.ValueBool())
 	}
 
 	if !p.Visibility.IsNull() && !p.Visibility.IsUnknown() {
@@ -2366,6 +2397,26 @@ func (p *formComponentsFieldResourceModel) expandFieldPassword(ctx context.Conte
 		data.SetValidation(*validationData)
 	}
 
+	if !p.OtherOptionEnabled.IsNull() && !p.OtherOptionEnabled.IsUnknown() {
+		data.SetOtherOptionEnabled(p.OtherOptionEnabled.ValueBool())
+	}
+
+	if !p.OtherOptionKey.IsNull() && !p.OtherOptionKey.IsUnknown() {
+		data.SetOtherOptionKey(p.OtherOptionKey.ValueString())
+	}
+
+	if !p.OtherOptionLabel.IsNull() && !p.OtherOptionLabel.IsUnknown() {
+		data.SetOtherOptionLabel(p.OtherOptionLabel.ValueString())
+	}
+
+	if !p.OtherOptionInputLabel.IsNull() && !p.OtherOptionInputLabel.IsUnknown() {
+		data.SetOtherOptionInputLabel(p.OtherOptionInputLabel.ValueString())
+	}
+
+	if !p.OtherOptionAttributeDisabled.IsNull() && !p.OtherOptionAttributeDisabled.IsUnknown() {
+		data.SetOtherOptionAttributeDisabled(p.OtherOptionAttributeDisabled.ValueBool())
+	}
+
 	if !p.Visibility.IsNull() && !p.Visibility.IsUnknown() {
 		var plan formComponentsFieldVisibilityResourceModel
 		diags.Append(p.Visibility.As(ctx, &plan, basetypes.ObjectAsOptions{})...)
@@ -2436,6 +2487,26 @@ func (p *formComponentsFieldResourceModel) expandFieldPasswordVerify(ctx context
 		data.SetValidation(*validationData)
 	}
 
+	if !p.OtherOptionEnabled.IsNull() && !p.OtherOptionEnabled.IsUnknown() {
+		data.SetOtherOptionEnabled(p.OtherOptionEnabled.ValueBool())
+	}
+
+	if !p.OtherOptionKey.IsNull() && !p.OtherOptionKey.IsUnknown() {
+		data.SetOtherOptionKey(p.OtherOptionKey.ValueString())
+	}
+
+	if !p.OtherOptionLabel.IsNull() && !p.OtherOptionLabel.IsUnknown() {
+		data.SetOtherOptionLabel(p.OtherOptionLabel.ValueString())
+	}
+
+	if !p.OtherOptionInputLabel.IsNull() && !p.OtherOptionInputLabel.IsUnknown() {
+		data.SetOtherOptionInputLabel(p.OtherOptionInputLabel.ValueString())
+	}
+
+	if !p.OtherOptionAttributeDisabled.IsNull() && !p.OtherOptionAttributeDisabled.IsUnknown() {
+		data.SetOtherOptionAttributeDisabled(p.OtherOptionAttributeDisabled.ValueBool())
+	}
+
 	if !p.Visibility.IsNull() && !p.Visibility.IsUnknown() {
 		var plan formComponentsFieldVisibilityResourceModel
 		diags.Append(p.Visibility.As(ctx, &plan, basetypes.ObjectAsOptions{})...)
@@ -2487,6 +2558,26 @@ func (p *formComponentsFieldResourceModel) expandFieldRadio(ctx context.Context,
 
 	if !p.Required.IsNull() && !p.Required.IsUnknown() {
 		data.SetRequired(p.Required.ValueBool())
+	}
+
+	if !p.OtherOptionEnabled.IsNull() && !p.OtherOptionEnabled.IsUnknown() {
+		data.SetOtherOptionEnabled(p.OtherOptionEnabled.ValueBool())
+	}
+
+	if !p.OtherOptionKey.IsNull() && !p.OtherOptionKey.IsUnknown() {
+		data.SetOtherOptionKey(p.OtherOptionKey.ValueString())
+	}
+
+	if !p.OtherOptionLabel.IsNull() && !p.OtherOptionLabel.IsUnknown() {
+		data.SetOtherOptionLabel(p.OtherOptionLabel.ValueString())
+	}
+
+	if !p.OtherOptionInputLabel.IsNull() && !p.OtherOptionInputLabel.IsUnknown() {
+		data.SetOtherOptionInputLabel(p.OtherOptionInputLabel.ValueString())
+	}
+
+	if !p.OtherOptionAttributeDisabled.IsNull() && !p.OtherOptionAttributeDisabled.IsUnknown() {
+		data.SetOtherOptionAttributeDisabled(p.OtherOptionAttributeDisabled.ValueBool())
 	}
 
 	if !p.Visibility.IsNull() && !p.Visibility.IsUnknown() {
@@ -2578,6 +2669,26 @@ func (p *formComponentsFieldResourceModel) expandFieldText(ctx context.Context, 
 
 	if !p.Required.IsNull() && !p.Required.IsUnknown() {
 		data.SetRequired(p.Required.ValueBool())
+	}
+
+	if !p.OtherOptionEnabled.IsNull() && !p.OtherOptionEnabled.IsUnknown() {
+		data.SetOtherOptionEnabled(p.OtherOptionEnabled.ValueBool())
+	}
+
+	if !p.OtherOptionKey.IsNull() && !p.OtherOptionKey.IsUnknown() {
+		data.SetOtherOptionKey(p.OtherOptionKey.ValueString())
+	}
+
+	if !p.OtherOptionLabel.IsNull() && !p.OtherOptionLabel.IsUnknown() {
+		data.SetOtherOptionLabel(p.OtherOptionLabel.ValueString())
+	}
+
+	if !p.OtherOptionInputLabel.IsNull() && !p.OtherOptionInputLabel.IsUnknown() {
+		data.SetOtherOptionInputLabel(p.OtherOptionInputLabel.ValueString())
+	}
+
+	if !p.OtherOptionAttributeDisabled.IsNull() && !p.OtherOptionAttributeDisabled.IsUnknown() {
+		data.SetOtherOptionAttributeDisabled(p.OtherOptionAttributeDisabled.ValueBool())
 	}
 
 	if !p.Visibility.IsNull() && !p.Visibility.IsUnknown() {
