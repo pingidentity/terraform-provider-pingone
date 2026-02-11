@@ -1556,7 +1556,6 @@ func TestAccForm_ItemFlowLink(t *testing.T) {
 }
 
 func TestAccForm_ItemQRCode(t *testing.T) {
-	t.Skipf("Skipping test due to QR code functionality not being fully released in PingOne. Test should be re-enabled when QR code functionality is fully released.")
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -4271,10 +4270,14 @@ resource "pingone_form" "%[2]s" {
           width = 50
         }
 
-        key          = "qr-code-field-full"
-        qr_code_type = "MFA_AUTH"
         alignment    = "RIGHT"
-        show_border  = true
+        key = "myqrcode"
+        size = "MEDIUM"
+        fallback_text = "fallback"
+        visibility = {
+          type = "SHOW_BY_DEFAULT"
+          key = "mykey"
+        }
       },
       {
         type = "SUBMIT_BUTTON"
@@ -4315,9 +4318,9 @@ resource "pingone_form" "%[2]s" {
           col = 0
         }
 
-        key          = "qr-code-field"
-        qr_code_type = "MFA_AUTH"
         alignment    = "LEFT"
+        key = "myqrcode"
+        size = "LARGE"
       },
       {
         type = "SUBMIT_BUTTON"
