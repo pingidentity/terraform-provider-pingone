@@ -349,8 +349,6 @@ func TestAccForm_FieldCheckbox(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", fmt.Sprintf("user.%s", name)),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.required", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.attribute_disabled", "false"),
-			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_enabled", "false"),
-			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_attribute_disabled", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.0.value", "Option1"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 1\"}]}]"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.1.value", "Option2"),
@@ -454,8 +452,6 @@ func TestAccForm_FieldCombobox(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "user.locale"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.required", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.attribute_disabled", "false"),
-			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_enabled", "false"),
-			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_attribute_disabled", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.0.value", "Option1"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 1\"}]}]"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.1.value", "Option2"),
@@ -558,8 +554,6 @@ func TestAccForm_FieldDropdown(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "user.locale"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.required", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.attribute_disabled", "false"),
-			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_enabled", "false"),
-			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_attribute_disabled", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.0.value", "Option1"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 1\"}]}]"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.1.value", "Option2"),
@@ -662,8 +656,6 @@ func TestAccForm_FieldPassword(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "user.password"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.required", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.attribute_disabled", "false"),
-			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_enabled", "false"),
-			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_attribute_disabled", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.show_password_requirements", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.validation.type", "NONE"),
 		),
@@ -764,8 +756,6 @@ func TestAccForm_FieldPasswordVerify(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "user.password"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.required", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.attribute_disabled", "false"),
-			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_enabled", "false"),
-			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_attribute_disabled", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.show_password_requirements", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.validation.type", "NONE"),
 		),
@@ -865,8 +855,6 @@ func TestAccForm_FieldRadio(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "user.locale"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.required", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.attribute_disabled", "false"),
-			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_enabled", "false"),
-			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_attribute_disabled", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.0.value", "Option1"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 1\"}]}]"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.options.1.value", "Option2"),
@@ -1067,8 +1055,6 @@ func TestAccForm_FieldText(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.validation.type", "CUSTOM"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.validation.regex", "[a-zA-Z0-9]+"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.validation.error_message", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Must be alphanumeric\"}]}]"),
-			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_enabled", "false"),
-			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_attribute_disabled", "false"),
 		),
 	}
 
@@ -2425,6 +2411,12 @@ resource "pingone_form" "%[2]s" {
           }
         ]
 
+        other_option_attribute_disabled = false
+        other_option_enabled = true
+        other_option_input_label = "OtherInput"
+        other_option_key = "otherkey"
+        other_option_label = "Other"
+
                   visibility = {
           type = "SHOW_BY_DEFAULT"
           key = "mykey"
@@ -2620,6 +2612,12 @@ resource "pingone_form" "%[2]s" {
           }
         ]
 
+        other_option_attribute_disabled = false
+        other_option_enabled = true
+        other_option_input_label = "OtherInput"
+        other_option_key = "otherkey"
+        other_option_label = "Other"
+
                   visibility = {
           type = "HIDE_BY_DEFAULT"
           key = "mykey2"
@@ -2802,6 +2800,12 @@ resource "pingone_form" "%[2]s" {
           }
         ]
 
+        other_option_attribute_disabled = false
+        other_option_enabled = true
+        other_option_input_label = "OtherInput"
+        other_option_key = "otherkey"
+        other_option_label = "Other"
+
          visibility = {
           type = "SHOW_BY_DEFAULT"
           key = "mykey"
@@ -2958,6 +2962,12 @@ resource "pingone_form" "%[2]s" {
         required                   = true
         attribute_disabled         = false
         show_password_requirements = true
+
+        other_option_attribute_disabled = false
+        other_option_enabled = true
+        other_option_input_label = "OtherInput"
+        other_option_key = "otherkey"
+        other_option_label = "Other"
 
         validation = {
           type = "NONE"
@@ -3142,6 +3152,12 @@ resource "pingone_form" "%[2]s" {
         required                   = true
         attribute_disabled         = false
         show_password_requirements = true
+
+        other_option_attribute_disabled = false
+        other_option_enabled = true
+        other_option_input_label = "OtherInput"
+        other_option_key = "otherkey"
+        other_option_label = "Other"
 
         validation = {
           type = "NONE"
@@ -3340,6 +3356,12 @@ resource "pingone_form" "%[2]s" {
             label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Option 3\"}]}]"
           }
         ]
+
+        other_option_attribute_disabled = false
+        other_option_enabled = true
+        other_option_input_label = "OtherInput"
+        other_option_key = "otherkey"
+        other_option_label = "Other"
 
                 visibility = {
           type = "HIDE_BY_DEFAULT"
@@ -3613,6 +3635,12 @@ resource "pingone_form" "%[2]s" {
         key                = "user.username"
         required           = true
         attribute_disabled = false
+
+        other_option_attribute_disabled = false
+        other_option_enabled = true
+        other_option_input_label = "OtherInput"
+        other_option_label = "Other"
+
         validation = {
           type          = "CUSTOM"
           regex         = "[a-zA-Z0-9]+"
