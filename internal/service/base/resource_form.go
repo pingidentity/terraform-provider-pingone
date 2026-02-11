@@ -47,6 +47,7 @@ type formResourceModel struct {
 	Cols              types.Int32                  `tfsdk:"cols"`
 	Components        types.Object                 `tfsdk:"components"`
 	FieldTypes        types.Set                    `tfsdk:"field_types"`
+	LanguageBundle    types.Map                    `tfsdk:"language_bundle"`
 	MarkOptional      types.Bool                   `tfsdk:"mark_optional"`
 	MarkRequired      types.Bool                   `tfsdk:"mark_required"`
 	TranslationMethod types.String                 `tfsdk:"translation_method"`
@@ -737,6 +738,10 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 		"A set of strings that specifies the field types in the form.",
 	).AllowedValuesEnum(supportedFormFieldTypes)
 
+	languageBundleDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An object that provides a map of i18n keys to their translations. This object includes both the keys and their default translations. The PingOne language management service finds this object, and creates the new keys for translation for this form.",
+	)
+
 	markOptionalDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether optional fields are highlighted in the rendered form.",
 	)
@@ -1190,6 +1195,13 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Computed:            true,
 
 				ElementType: types.StringType,
+			},
+
+			"language_bundle": schema.MapAttribute{
+				ElementType:         types.StringType,
+				Description:         languageBundleDescription.Description,
+				MarkdownDescription: languageBundleDescription.MarkdownDescription,
+				Computed:            true,
 			},
 
 			"mark_optional": schema.BoolAttribute{
@@ -3003,6 +3015,7 @@ func (p *formResourceModel) toState(apiObject *management.Form) diag.Diagnostics
 	p.Category = framework.EnumOkToTF(apiObject.GetCategoryOk())
 	p.Cols = framework.Int32OkToTF(apiObject.GetColsOk())
 	p.FieldTypes = framework.EnumSetOkToTF(apiObject.GetFieldTypesOk())
+	p.LanguageBundle = framework.StringMapOkToTF(apiObject.GetLanguageBundleOk())
 	p.MarkOptional = framework.BoolOkToTF(apiObject.GetMarkOptionalOk())
 	p.MarkRequired = framework.BoolOkToTF(apiObject.GetMarkRequiredOk())
 	p.TranslationMethod = framework.EnumOkToTF(apiObject.GetTranslationMethodOk())

@@ -216,6 +216,7 @@ resource "pingone_form" "my_awesome_form" {
 
 - `field_types` (Set of String) A set of strings that specifies the field types in the form.  Options are `CHECKBOX`, `COMBOBOX`, `DIVIDER`, `DROPDOWN`, `EMPTY_FIELD`, `ERROR_DISPLAY`, `FLOW_BUTTON`, `FLOW_LINK`, `PASSWORD`, `PASSWORD_VERIFY`, `QR_CODE`, `RADIO`, `RECAPTCHA_V2`, `SLATE_TEXTBLOB`, `SUBMIT_BUTTON`, `TEXT`.
 - `id` (String) The ID of this resource.
+- `language_bundle` (Map of String) An object that provides a map of i18n keys to their translations. This object includes both the keys and their default translations. The PingOne language management service finds this object, and creates the new keys for translation for this form.
 
 <a id="nestedatt--components"></a>
 ### Nested Schema for `components`
