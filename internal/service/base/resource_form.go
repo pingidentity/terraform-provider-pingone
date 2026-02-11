@@ -693,11 +693,15 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 		"A string that specifies the unit to apply to the `width` parameter.",
 	).AllowedValuesEnum(management.AllowedEnumFormStylesWidthUnitEnumValues)
 
+	reCaptchaSizeAllowedValues := utils.EnumSliceToStringSlice(management.AllowedEnumFormRecaptchaV2SizeEnumValues)
+	genericSizeAllowedValues := utils.EnumSliceToStringSlice(management.AllowedEnumFormItemSizeEnumValues)
 	componentsFieldsSizeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		formFieldValidationDocumentation("size"),
 	).AppendMarkdownString(
-		"A string that specifies the reCAPTCHA size.",
-	).AllowedValuesEnum(management.AllowedEnumFormRecaptchaV2SizeEnumValues)
+		fmt.Sprintf("A string that specifies the reCAPTCHA size or the QR code size. For reCAPTCHA fields, options are `%s`. For QR code fields, options are `%s`",
+			strings.Join(reCaptchaSizeAllowedValues, "`, `"),
+			strings.Join(genericSizeAllowedValues, "` ")),
+	)
 
 	componentsFieldsThemeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		formFieldValidationDocumentation("theme"),
@@ -1121,6 +1125,12 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 									Description:         componentsFieldsSizeDescription.Description,
 									MarkdownDescription: componentsFieldsSizeDescription.MarkdownDescription,
 									Optional:            true,
+
+									Validators: []validator.String{
+										stringvalidator.OneOf(append(
+											utils.EnumSliceToStringSlice(management.AllowedEnumFormRecaptchaV2SizeEnumValues),
+											utils.EnumSliceToStringSlice(management.AllowedEnumFormItemSizeEnumValues)...)...),
+									},
 								},
 
 								"theme": schema.StringAttribute{
@@ -1791,6 +1801,30 @@ func (p *formResourceModel) validate(ctx context.Context, allowUnknowns bool) di
 								fmt.Sprintf("The `validation.type` parameter must be set to `NONE` for the `%s` field type.", field.Type.ValueString()),
 							)
 						}
+					}
+				}
+
+				// Validate size value for QR_CODE and RECAPTCHA_V2
+				if field.Type.ValueString() == string(management.ENUMFORMFIELDTYPE_QR_CODE) {
+					sizeValue := field.Size.ValueString()
+					validSizes := utils.EnumSliceToStringSlice(management.AllowedEnumFormItemSizeEnumValues)
+					if !slices.Contains(validSizes, sizeValue) {
+						diags.AddAttributeError(
+							path.Root("components").AtName("fields"),
+							"Invalid DaVinci form configuration",
+							fmt.Sprintf("The `size` parameter must be set to one of [%s] for the `%s` field type.", strings.Join(validSizes, ", "), field.Type.ValueString()),
+						)
+					}
+				}
+				if field.Type.ValueString() == string(management.ENUMFORMFIELDTYPE_RECAPTCHA_V2) {
+					sizeValue := field.Size.ValueString()
+					validSizes := utils.EnumSliceToStringSlice(management.AllowedEnumFormRecaptchaV2SizeEnumValues)
+					if !slices.Contains(validSizes, sizeValue) {
+						diags.AddAttributeError(
+							path.Root("components").AtName("fields"),
+							"Invalid DaVinci form configuration",
+							fmt.Sprintf("The `size` parameter must be set to one of [%s] for the `%s` field type.", strings.Join(validSizes, ", "), field.Type.ValueString()),
+						)
 					}
 				}
 			}
