@@ -59,9 +59,9 @@ data "pingone_password_policies" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
   depends_on = [
-	pingone_password_policy.%[2]s-policy1,
-	pingone_password_policy.%[2]s-policy2,
-	pingone_password_policy.%[2]s-policy3,
+    pingone_password_policy.%[2]s-policy1,
+    pingone_password_policy.%[2]s-policy2,
+    pingone_password_policy.%[2]s-policy3,
   ]
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
