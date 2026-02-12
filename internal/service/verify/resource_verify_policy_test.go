@@ -302,7 +302,7 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "transaction.data_collection.timeout.time_unit", "SECONDS"),
 		resource.TestCheckResourceAttr(resourceFullName, "transaction.data_collection_only", "true"),
 
-		resource.TestCheckResourceAttr(resourceFullName, "voice.verify", "OPTIONAL"),
+		resource.TestCheckResourceAttr(resourceFullName, "voice.verify", "REQUIRED"),
 		resource.TestCheckResourceAttr(resourceFullName, "voice.enrollment", "false"),
 		resource.TestCheckResourceAttr(resourceFullName, "voice.comparison_threshold", "LOW"),
 		resource.TestCheckResourceAttr(resourceFullName, "voice.liveness_threshold", "LOW"),
@@ -806,7 +806,7 @@ resource "pingone_verify_policy" "%[2]s" {
   }
 
   voice = {
-    verify               = "OPTIONAL"
+    verify               = "REQUIRED"
     enrollment           = false
     comparison_threshold = "LOW"
     liveness_threshold   = "LOW"
