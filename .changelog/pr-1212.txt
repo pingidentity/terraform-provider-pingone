@@ -1,0 +1,3 @@
+```release-note:new-data-source
+Added new `pingone_password_policies` data source
+```
