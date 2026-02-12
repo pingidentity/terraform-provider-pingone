@@ -181,6 +181,18 @@ func (r *EnvironmentDataSource) Schema(ctx context.Context, req datasource.Schem
 							Computed:            true,
 						},
 
+						"deployment": schema.SingleNestedAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies the external resource associated with this product, containing state and settings related to the external resource.").Description,
+							Computed:    true,
+
+							Attributes: map[string]schema.Attribute{
+								"id": schema.StringAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of the external resource associated with this product").Description,
+									Computed:    true,
+								},
+							},
+						},
+
 						"tags": schema.SetAttribute{
 							Description:         serviceTagsDescription.Description,
 							MarkdownDescription: serviceTagsDescription.MarkdownDescription,

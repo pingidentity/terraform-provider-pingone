@@ -11,7 +11,7 @@ Resource to create and manage PingOne environments.
 
 ~> PingOne environments are created with a default population and at least one service added.  Default populations can be managed with the `pingone_population_default` resource.
 
-~> This `pingone_environment` resource does not yet support creation of WORKFORCE enabled environments.
+~> This `pingone_environment` resource does not yet support creation of `WORKFORCE` enabled environments or the addition of `PingID-v2` services to new or existing environments.
 
 ## Example Usage
 
@@ -75,6 +75,10 @@ Optional:
 - `console_url` (String) A string that specifies the custom console URL to set.  Generally used with services that are deployed separately to the PingOne SaaS service, such as `PingFederate`, `PingAccess`, `PingDirectory`, `PingAuthorize` and `PingCentral`.
 - `tags` (Set of String) A set of string tags to apply upon environment creation.  Only configurable when the service `type` is `DaVinci`.  Options are `DAVINCI_MINIMAL` (allows for a creation of an environment without example/demo configuration in the DaVinci service).  This field is immutable and will trigger a replace plan if changed.
 
+Read-Only:
+
+- `deployment` (Attributes) A single object that specifies the external resource associated with this product, containing state and settings related to the external resource. (see [below for nested schema](#nestedatt--services--deployment))
+
 <a id="nestedatt--services--bookmarks"></a>
 ### Nested Schema for `services.bookmarks`
 
@@ -82,6 +86,14 @@ Required:
 
 - `name` (String) A string that specifies the bookmark name.
 - `url` (String) A string that represents the bookmark URL.
+
+
+<a id="nestedatt--services--deployment"></a>
+### Nested Schema for `services.deployment`
+
+Read-Only:
+
+- `id` (String) A string that specifies the ID of the external resource associated with this product
 
 ## Import
 

@@ -468,6 +468,209 @@ func TestAccEnvironment_BadParameters(t *testing.T) {
 	})
 }
 
+func TestAccEnvironment_DeploymentID(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckRegionSupportsWorkforce(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             nil,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.WorkforceV2SandboxEnvironment(),
+				Check: resource.ComposeTestCheckFunc(
+					testCheckEnvironmentServiceHasDeploymentID("data.pingone_environment.workforce_test", "PingID-v2"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccEnvironment_ServiceInvalidAddPingIDV1(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGenEnvironment()
+
+	name := resourceName
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             baselegacysdk.Environment_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccEnvironmentConfig_Minimal(resourceName, name, licenseID),
+			},
+			{
+				Config:      testAccEnvironmentConfig_AddPingIDV1(resourceName, name, licenseID),
+				ExpectError: regexp.MustCompile(`The .* service cannot be added via Terraform configuration`),
+			},
+		},
+	})
+}
+
+func TestAccEnvironment_ServiceInvalidAddPingIDV2(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGenEnvironment()
+
+	name := resourceName
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             baselegacysdk.Environment_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccEnvironmentConfig_Minimal(resourceName, name, licenseID),
+			},
+			{
+				Config:      testAccEnvironmentConfig_AddPingID(resourceName, name, licenseID),
+				ExpectError: regexp.MustCompile(`The .* service cannot be added via Terraform configuration`),
+			},
+		},
+	})
+}
+
+func TestAccEnvironment_ServiceInvalidRemovePingIDV1(t *testing.T) {
+	resourceName := acctest.ResourceNameGenEnvironment()
+	resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	var environmentID string
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckRegionSupportsWorkforce(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             nil,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Step 1: Find the environment ID
+			{
+				Config: acctest.WorkforceV1SandboxEnvironment(),
+				Check:  base.Environment_GetIDs("data.pingone_environment.workforce_test", &environmentID),
+			},
+			// Step 2: Import with PingID present in config
+			{
+				Config:       testAccEnvironmentConfig_WorkforceWithPingIDV1(resourceName, acctest.WorkforceV1SandboxEnvironmentName, licenseID),
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func(_ *terraform.State) (string, error) {
+					return environmentID, nil
+				},
+				ImportState:        true,
+				ImportStateVerify:  false,
+				ImportStatePersist: true,
+			},
+			// Step 3: Remove PingID in config -> Expect Error
+			{
+				Config:      testAccEnvironmentConfig_Workforce(resourceName, acctest.WorkforceV1SandboxEnvironmentName, licenseID),
+				ExpectError: regexp.MustCompile(`Cannot remove .* service`),
+			},
+			// Step 4: Prevent destroy of Workforce environment
+			{
+				Config: testAccEnvironmentConfig_RemoveWorkforcePreventDestroy(resourceName, acctest.WorkforceV1SandboxEnvironmentName, licenseID),
+			},
+		},
+	})
+}
+
+func TestAccEnvironment_ServiceInvalidRemovePingIDV2(t *testing.T) {
+	resourceName := acctest.ResourceNameGenEnvironment()
+	resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	var environmentID string
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckRegionSupportsWorkforce(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             nil,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Step 1: Find the environment ID
+			{
+				Config: acctest.WorkforceV2SandboxEnvironment(),
+				Check:  base.Environment_GetIDs("data.pingone_environment.workforce_test", &environmentID),
+			},
+			// Step 2: Import with PingID present in config
+			{
+				Config:       testAccEnvironmentConfig_WorkforceWithPingID(resourceName, acctest.WorkforceV2SandboxEnvironmentName, licenseID),
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func(_ *terraform.State) (string, error) {
+					return environmentID, nil
+				},
+				ImportState:        true,
+				ImportStateVerify:  false,
+				ImportStatePersist: true,
+			},
+			// Step 3: Remove PingID in config -> Expect Error
+			{
+				Config:      testAccEnvironmentConfig_Workforce(resourceName, acctest.WorkforceV2SandboxEnvironmentName, licenseID),
+				ExpectError: regexp.MustCompile(`Cannot remove .* service`),
+			},
+			// Step 4: Prevent destroy of Workforce environment
+			{
+				Config: testAccEnvironmentConfig_RemoveWorkforcePreventDestroy(resourceName, acctest.WorkforceV2SandboxEnvironmentName, licenseID),
+			},
+		},
+	})
+}
+
+func testCheckEnvironmentServiceHasDeploymentID(resourceName, serviceType string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("Not found: %s", resourceName)
+		}
+
+		for key, value := range rs.Primary.Attributes {
+			// The key format is services.HASH.type
+			if strings.HasPrefix(key, "services.") && strings.HasSuffix(key, ".type") && value == serviceType {
+				baseKey := strings.TrimSuffix(key, ".type")
+				deploymentIdKey := fmt.Sprintf("%s.deployment.id", baseKey)
+
+				if v, ok := rs.Primary.Attributes[deploymentIdKey]; ok && v != "" {
+					return nil
+				}
+
+				return fmt.Errorf("Deployment ID not found for service type %s", serviceType)
+			}
+		}
+
+		return fmt.Errorf("Service type %s not found in environment", serviceType)
+	}
+}
+
 func testAccEnvironmentConfig_Full(resourceName, name, region, licenseID string) string {
 	return fmt.Sprintf(`
 resource "pingone_environment" "%[1]s" {
@@ -553,6 +756,56 @@ resource "pingone_environment" "%[1]s" {
 }`, resourceName, name, licenseID)
 }
 
+func testAccEnvironmentConfig_AddPingID(resourceName, name, licenseID string) string {
+	return fmt.Sprintf(`
+resource "pingone_environment" "%[1]s" {
+  name       = "%[2]s"
+  license_id = "%[3]s"
+
+  services = [
+    {
+      type = "SSO"
+    },
+    {
+      type = "PingID-v2"
+    }
+  ]
+}`, resourceName, name, licenseID)
+}
+
+func testAccEnvironmentConfig_WorkforceWithPingID(resourceName, name, licenseID string) string {
+	return fmt.Sprintf(`
+resource "pingone_environment" "%[1]s" {
+  name       = "%[2]s"
+  license_id = "%[3]s"
+  solution   = "WORKFORCE"
+
+  services = [
+    {
+      type = "SSO"
+    },
+    {
+      type = "PingID-v2"
+    }
+  ]
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}`, resourceName, name, licenseID)
+}
+
+func testAccEnvironmentConfig_RemoveWorkforcePreventDestroy(resourceName, name, licenseID string) string {
+	return fmt.Sprintf(`
+removed {
+	from = pingone_environment.%[1]s
+
+	lifecycle {
+		destroy = false
+	}
+}`, resourceName, name, licenseID)
+}
+
 func testAccEnvironmentConfig_Workforce(resourceName, name, licenseID string) string {
 	return fmt.Sprintf(`
 resource "pingone_environment" "%[1]s" {
@@ -565,6 +818,10 @@ resource "pingone_environment" "%[1]s" {
       type = "SSO"
     }
   ]
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }`, resourceName, name, licenseID)
 }
 
@@ -596,4 +853,43 @@ resource "pingone_environment" "%[1]s" {
     }
   ]
 }`, resourceName, name, region, licenseID)
+}
+
+func testAccEnvironmentConfig_AddPingIDV1(resourceName, name, licenseID string) string {
+	return fmt.Sprintf(`
+resource "pingone_environment" "%[1]s" {
+  name       = "%[2]s"
+  license_id = "%[3]s"
+
+  services = [
+    {
+      type = "SSO"
+    },
+    {
+      type = "PingID"
+    }
+  ]
+}`, resourceName, name, licenseID)
+}
+
+func testAccEnvironmentConfig_WorkforceWithPingIDV1(resourceName, name, licenseID string) string {
+	return fmt.Sprintf(`
+resource "pingone_environment" "%[1]s" {
+  name       = "%[2]s"
+  license_id = "%[3]s"
+  solution   = "WORKFORCE"
+
+  services = [
+    {
+      type = "SSO"
+    },
+    {
+      type = "PingID"
+    }
+  ]
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}`, resourceName, name, licenseID)
 }

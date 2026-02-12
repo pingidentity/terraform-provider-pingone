@@ -61,6 +61,7 @@ type environmentResourceModel struct {
 type environmentServiceModel struct {
 	Type       types.String `tfsdk:"type"`
 	ConsoleUrl types.String `tfsdk:"console_url"`
+	Deployment types.Object `tfsdk:"deployment"`
 	Bookmarks  types.Set    `tfsdk:"bookmarks"`
 	Tags       types.Set    `tfsdk:"tags"`
 }
@@ -74,8 +75,13 @@ var (
 	environmentServiceTFObjectTypes = map[string]attr.Type{
 		"type":        types.StringType,
 		"console_url": types.StringType,
+		"deployment":  types.ObjectType{AttrTypes: environmentServiceDeploymentTFObjectTypes},
 		"bookmarks":   types.SetType{ElemType: types.ObjectType{AttrTypes: environmentServiceBookmarkTFObjectTypes}},
 		"tags":        types.SetType{ElemType: types.StringType},
+	}
+
+	environmentServiceDeploymentTFObjectTypes = map[string]attr.Type{
+		"id": types.StringType,
 	}
 
 	environmentServiceBookmarkTFObjectTypes = map[string]attr.Type{
@@ -302,6 +308,18 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 							Optional: true,
 						},
 
+						"deployment": schema.SingleNestedAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies the external resource associated with this product, containing state and settings related to the external resource.").Description,
+							Computed:    true,
+
+							Attributes: map[string]schema.Attribute{
+								"id": schema.StringAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of the external resource associated with this product").Description,
+									Computed:    true,
+								},
+							},
+						},
+
 						"tags": schema.SetAttribute{
 							Description:         serviceTagsDescription.Description,
 							MarkdownDescription: serviceTagsDescription.MarkdownDescription,
@@ -417,12 +435,48 @@ func (r *EnvironmentResource) ModifyPlan(ctx context.Context, req resource.Modif
 		return
 	}
 
+	// Copy deployment ID from state to plan to avoid known issues with set attributes
+	if !req.State.Raw.IsNull() && !state.Services.IsNull() {
+		var serviceState []environmentServiceModel
+		resp.Diagnostics.Append(state.Services.ElementsAs(ctx, &serviceState, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		serviceStateMap := make(map[string]environmentServiceModel)
+		for _, v := range serviceState {
+			serviceStateMap[v.Type.ValueString()] = v
+		}
+
+		for i, v := range servicePlan {
+			if v.Deployment.IsUnknown() || v.Deployment.IsNull() {
+				if stateService, ok := serviceStateMap[v.Type.ValueString()]; ok {
+					if !stateService.Deployment.IsNull() {
+						servicePlan[i].Deployment = stateService.Deployment
+					} else {
+						servicePlan[i].Deployment = types.ObjectNull(environmentServiceDeploymentTFObjectTypes)
+					}
+				}
+			}
+		}
+
+		serviceList, d := types.SetValueFrom(ctx, types.ObjectType{AttrTypes: environmentServiceTFObjectTypes}, servicePlan)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("services"), serviceList)...)
+		plan.Services = serviceList
+	}
+
 	if len(servicePlan) == 0 {
 
 		serviceDefaultMap := map[string]attr.Value{
 			"type":        framework.StringToTF("SSO"),
 			"console_url": types.StringNull(),
-			"bookmark":    types.SetNull(types.ObjectType{AttrTypes: environmentServiceBookmarkTFObjectTypes}),
+			"deployment":  types.ObjectNull(environmentServiceDeploymentTFObjectTypes),
+			"bookmarks":   types.SetNull(types.ObjectType{AttrTypes: environmentServiceBookmarkTFObjectTypes}),
 			"tags":        types.SetNull(types.StringType),
 		}
 
@@ -439,9 +493,17 @@ func (r *EnvironmentResource) ModifyPlan(ctx context.Context, req resource.Modif
 			return
 		}
 
-		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("service"), serviceDefault)...)
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("services"), serviceDefault)...)
+		plan.Services = serviceDefault
 	}
 
+	// Validate that PingID services are not being added or removed via Terraform
+	// and that existing PingID services have deployment IDs
+	if req.State.Raw.IsNull() {
+		resp.Diagnostics.Append(r.validateServices(ctx, plan.Services, nil)...)
+	} else {
+		resp.Diagnostics.Append(r.validateServices(ctx, plan.Services, &state.Services)...)
+	}
 }
 
 func (r *EnvironmentResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
@@ -695,7 +757,6 @@ func (r *EnvironmentResource) Update(ctx context.Context, req resource.UpdateReq
 	// The bill of materials
 	var billOfMaterialsResponse *management.BillOfMaterials
 	if !plan.Services.Equal(state.Services) {
-
 		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
@@ -708,12 +769,9 @@ func (r *EnvironmentResource) Update(ctx context.Context, req resource.UpdateReq
 			retryEnvironmentDefault,
 			&billOfMaterialsResponse,
 		)...)
-
 	} else {
-
 		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
-
 			func() (any, *http.Response, error) {
 				fO, fR, fErr := r.Client.ManagementAPIClient.BillOfMaterialsBOMApi.ReadOneBillOfMaterials(ctx, plan.Id.ValueString()).Execute()
 				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.Id.ValueString(), fO, fR, fErr)
@@ -723,7 +781,6 @@ func (r *EnvironmentResource) Update(ctx context.Context, req resource.UpdateReq
 			retryEnvironmentDefault,
 			&billOfMaterialsResponse,
 		)...)
-
 	}
 	if resp.Diagnostics.HasError() {
 		return
@@ -994,6 +1051,24 @@ func (p *environmentServiceModel) expand(ctx context.Context) (*management.BillO
 
 		bomService.SetTags(servicesTagsEnum)
 	}
+	if !p.Deployment.IsNull() && !p.Deployment.IsUnknown() {
+		var deploymentPlan struct {
+			Id types.String `tfsdk:"id"`
+		}
+		diags.Append(p.Deployment.As(ctx, &deploymentPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		if !deploymentPlan.Id.IsNull() && !deploymentPlan.Id.IsUnknown() {
+			deployment := management.NewBillOfMaterialsProductsInnerDeployment()
+			deployment.SetId(deploymentPlan.Id.ValueString())
+			bomService.SetDeployment(*deployment)
+		}
+	}
 
 	return bomService, diags
 }
@@ -1085,6 +1160,18 @@ func toStateEnvironmentServices(services []management.BillOfMaterialsProductsInn
 		}
 
 		service["tags"] = framework.EnumSetOkToTF(v.GetTagsOk())
+
+		if c, ok := v.GetDeploymentOk(); ok {
+			deploymentMap := map[string]attr.Value{
+				"id": framework.StringOkToTF(c.GetIdOk()),
+			}
+
+			deployment, d := types.ObjectValue(environmentServiceDeploymentTFObjectTypes, deploymentMap)
+			diags.Append(d...)
+			service["deployment"] = deployment
+		} else {
+			service["deployment"] = types.ObjectNull(environmentServiceDeploymentTFObjectTypes)
+		}
 
 		bookmarks, d := toStateEnvironmentServicesBookmark(v.GetBookmarks())
 		diags.Append(d...)
@@ -1223,6 +1310,122 @@ func (r *EnvironmentResource) environmentServicesValidateTags(ctx context.Contex
 
 	return diags
 }
+
+func (r *EnvironmentResource) validateServices(ctx context.Context, services basetypes.SetValue, stateServices *basetypes.SetValue) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	if services.IsNull() || services.IsUnknown() {
+		return diags
+	}
+
+	var servicesPlan []environmentServiceModel
+	diags.Append(services.ElementsAs(ctx, &servicesPlan, false)...)
+	if diags.HasError() {
+		return diags
+	}
+
+	restrictedServices := []management.EnumProductType{
+		management.ENUMPRODUCTTYPE_ONE_ID,
+		management.ENUMPRODUCTTYPE_ID,
+	}
+
+	for _, restrictedServiceType := range restrictedServices {
+
+		product, err := model.FindProductByAPICode(restrictedServiceType)
+		if err != nil {
+			diags.AddAttributeError(
+				path.Root("services"),
+				fmt.Sprintf("Cannot find %s product", restrictedServiceType),
+				fmt.Sprintf("In validating the configuration, the %s product could not be found. This is always a bug in the provider. Please report this issue to the provider maintainers.", restrictedServiceType),
+			)
+			return diags
+		}
+
+		// Find restricted service in Plan
+		var servicePlan *environmentServiceModel
+		for _, service := range servicesPlan {
+			if service.Type.Equal(types.StringValue(product.ProductCode)) {
+				s := service
+				servicePlan = &s
+				break
+			}
+		}
+
+		isCreate := stateServices == nil
+		serviceInState := false
+
+		if !isCreate && !stateServices.IsNull() {
+			var servicesState []environmentServiceModel
+			diags.Append(stateServices.ElementsAs(ctx, &servicesState, false)...)
+			if diags.HasError() {
+				return diags
+			}
+			for _, s := range servicesState {
+				if s.Type.Equal(types.StringValue(product.ProductCode)) {
+					serviceInState = true
+					break
+				}
+			}
+		}
+
+		if isCreate {
+			if servicePlan != nil {
+				// Restricted service cannot be included on create
+				diags.AddAttributeError(
+					path.Root("services"),
+					"Invalid service configuration",
+					fmt.Sprintf("New environments created through Terraform cannot include the `%s` service. Please create the environment in the PingOne console first, then import the environment into your Terraform state.", product.ProductCode),
+				)
+			}
+		} else {
+			// Check for removal
+			if serviceInState && servicePlan == nil {
+				diags.AddAttributeError(
+					path.Root("services"),
+					fmt.Sprintf("Cannot remove %s service", restrictedServiceType),
+					fmt.Sprintf("The `%s` service cannot be removed from an environment via Terraform configuration. Please create a new environment without the `%s` service.", product.ProductCode, product.ProductCode),
+				)
+			}
+
+			if servicePlan != nil {
+				// Check for `deployment` and `deployment.id`
+				if !servicePlan.Deployment.IsNull() && !servicePlan.Deployment.IsUnknown() {
+					var deploymentPlan struct {
+						Id types.String `tfsdk:"id"`
+					}
+					diags.Append(servicePlan.Deployment.As(ctx, &deploymentPlan, basetypes.ObjectAsOptions{
+						UnhandledNullAsEmpty:    false,
+						UnhandledUnknownAsEmpty: false,
+					})...)
+					if diags.HasError() {
+						return diags
+					}
+
+					if !deploymentPlan.Id.IsNull() && !deploymentPlan.Id.IsUnknown() {
+						continue
+					}
+				}
+
+				if !serviceInState { // Restricted service is in the plan but not in state
+					diags.AddAttributeError(
+						path.Root("services"),
+						"Invalid service configuration",
+						fmt.Sprintf("The `%s` service cannot be added via Terraform configuration. This service must be enabled/configured in the PingOne Console first, and then imported or refreshed into the Terraform state.", product.ProductCode),
+					)
+				} else { // Restricted service is in the plan and state but missing deployment ID
+					diags.AddAttributeError(
+						path.Root("services"),
+						"Missing deployment ID",
+						fmt.Sprintf("The `%s` service is present in the configuration but missing a deployment ID in the state. Please run `terraform refresh` to update the state with the external configuration.", product.ProductCode),
+					)
+				}
+			}
+		}
+	}
+
+	return diags
+}
+
 func (r *EnvironmentResource) validateSolutionValue(solutionType basetypes.StringValue) diag.Diagnostics {
 	var diags diag.Diagnostics
 
