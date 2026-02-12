@@ -1,0 +1,13 @@
+= Release Notes for v1.15.1
+:toc:
+:toclevels: 3
+:sectnums:
+
+Release Date: 2026-02-12
+
+== BUG FIXES
+* link:https://github.com/pingidentity/terraform-provider-pingone/commit/4b876e2e[4b876e2e] `resource/pingone_environment`: Fixed an issue where the resource could break due to a missing service `deployment.id` attribute link:https://github.com/pingidentity/terraform-provider-pingone/pull/1210[#1210]
+
+== NOTES
+* link:https://github.com/pingidentity/terraform-provider-pingone/commit/a6b60c97[a6b60c97] bump `github.com/pingidentity/pingone-go-client` v0.7.0 => v0.8.0 link:https://github.com/pingidentity/terraform-provider-pingone/pull/1208[#1208]
+
