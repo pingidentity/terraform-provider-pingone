@@ -497,7 +497,8 @@ func (r *EnvironmentResource) ModifyPlan(ctx context.Context, req resource.Modif
 		plan.Services = serviceDefault
 	}
 
-	// Handle PingID scenarios
+	// Validate that PingID services are not being added or removed via Terraform
+	// and that existing PingID services have deployment IDs
 	if req.State.Raw.IsNull() {
 		resp.Diagnostics.Append(r.validateServices(ctx, plan.Services, nil)...)
 	} else {
