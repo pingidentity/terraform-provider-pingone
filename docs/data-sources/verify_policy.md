@@ -156,36 +156,6 @@ Read-Only:
 Read-Only:
 
 - `enabled` (Boolean) Whether Aadhaar verification is enabled.  Defaults to `false`.
-- `otp` (Attributes) Aadhaar one-time password (OTP) configuration. (see [below for nested schema](#nestedatt--government_id--aadhaar--otp))
-
-<a id="nestedatt--government_id--aadhaar--otp"></a>
-### Nested Schema for `government_id.aadhaar.otp`
-
-Read-Only:
-
-- `deliveries` (Attributes) OTP delivery configuration. (see [below for nested schema](#nestedatt--government_id--aadhaar--otp--deliveries))
-
-<a id="nestedatt--government_id--aadhaar--otp--deliveries"></a>
-### Nested Schema for `government_id.aadhaar.otp.deliveries`
-
-Read-Only:
-
-- `cooldown` (Attributes) Cooldown (waiting period between OTP deliveries) configuration. (see [below for nested schema](#nestedatt--government_id--aadhaar--otp--deliveries--cooldown))
-- `count` (Number) Number of OTP deliveries permitted. The allowed range is `1 - 3`.  Defaults to `3`.
-
-<a id="nestedatt--government_id--aadhaar--otp--deliveries--cooldown"></a>
-### Nested Schema for `government_id.aadhaar.otp.deliveries.cooldown`
-
-Read-Only:
-
-- `duration` (Number) Cooldown duration for Aadhaar OTP deliveries.
-    - If `cooldown.time_unit` is `MINUTES`, the allowed range is `1 - 30`.
-    - If `cooldown.time_unit` is `SECONDS`, the allowed range is `60 - 1800`.
-    - Defaults to `60 SECONDS`.
-- `time_unit` (String) Time unit of the Aadhaar OTP cooldown duration.  Options are `MINUTES`, `SECONDS`.  Defaults to `SECONDS`.
-
-
-
 
 
 
