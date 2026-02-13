@@ -1,0 +1,3 @@
+```release-note:new-data-source
+`pingone_system_application`
+```
