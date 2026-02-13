@@ -21,6 +21,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/service"
 )
 
 // Types
@@ -33,9 +34,15 @@ type systemApplicationDataSourceModel struct {
 	Name                      types.String                 `tfsdk:"name"`
 	Description               types.String                 `tfsdk:"description"`
 	Type                      types.String                 `tfsdk:"type"`
+	Protocol                  types.String                 `tfsdk:"protocol"`
 	Enabled                   types.Bool                   `tfsdk:"enabled"`
+	HiddenFromAppPortal       types.Bool                   `tfsdk:"hidden_from_app_portal"`
+	Icon                      types.Object                 `tfsdk:"icon"`
 	AccessControlRoleType     types.String                 `tfsdk:"access_control_role_type"`
 	AccessControlGroupOptions types.Object                 `tfsdk:"access_control_group_options"`
+	ClientId                  types.String                 `tfsdk:"client_id"`
+	PkceEnforcement           types.String                 `tfsdk:"pkce_enforcement"`
+	TokenEndpointAuthMethod   types.String                 `tfsdk:"token_endpoint_auth_method"`
 	ApplyDefaultTheme         types.Bool                   `tfsdk:"apply_default_theme"`
 	EnableDefaultThemeFooter  types.Bool                   `tfsdk:"enable_default_theme_footer"`
 }
@@ -62,7 +69,7 @@ func (r *SystemApplicationDataSource) Metadata(ctx context.Context, req datasour
 	resp.TypeName = req.ProviderTypeName + "_system_application"
 }
 
-func (r *SystemApplicationDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) { //TODO add hidden_from_app_portal, icon, protocol, client_id, pkce_enforcement, token_endpoint_auth_method
+func (r *SystemApplicationDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	// schema descriptions and validation settings
 	const attrMinLength = 1
 
@@ -146,9 +153,35 @@ func (r *SystemApplicationDataSource) Schema(ctx context.Context, req datasource
 				Computed:            true,
 			},
 
+			"protocol": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the protocol used by the application.").Description,
+				Computed:    true,
+			},
+
 			"enabled": schema.BoolAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies the enabled/disabled status of the application.").Description,
 				Computed:    true,
+			},
+
+			"hidden_from_app_portal": schema.BoolAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean to specify whether the application is hidden in the application portal despite the configured group access policy.").Description,
+				Computed:    true,
+			},
+
+			"icon": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("The HREF and the ID for the application icon.").Description,
+				Computed:    true,
+
+				Attributes: map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("The ID for the application icon.").Description,
+						Computed:    true,
+					},
+					"href": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("The HREF for the application icon.").Description,
+						Computed:    true,
+					},
+				},
 			},
 
 			"access_control_role_type": schema.StringAttribute{
@@ -175,6 +208,21 @@ func (r *SystemApplicationDataSource) Schema(ctx context.Context, req datasource
 						Computed:            true,
 					},
 				},
+			},
+
+			"client_id": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the application ID used to authenticate to the authorization server.").Description,
+				Computed:    true,
+			},
+
+			"pkce_enforcement": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies how PKCE request parameters are handled on the authorize request.").Description,
+				Computed:    true,
+			},
+
+			"token_endpoint_auth_method": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the client authentication methods supported by the token endpoint.").Description,
+				Computed:    true,
 			},
 
 			"apply_default_theme": schema.BoolAttribute{
@@ -360,30 +408,40 @@ func (p *systemApplicationDataSourceModel) toState(apiObject *management.ReadOne
 
 	if apiObject.ApplicationPingOnePortal != nil {
 		apiObjectCommon = management.Application{
-			Id:            apiObject.ApplicationPingOnePortal.Id,
-			Name:          apiObject.ApplicationPingOnePortal.Name,
-			Environment:   apiObject.ApplicationPingOnePortal.Environment,
-			Type:          apiObject.ApplicationPingOnePortal.Type,
-			Enabled:       apiObject.ApplicationPingOnePortal.Enabled,
-			Description:   apiObject.ApplicationPingOnePortal.Description,
-			AccessControl: apiObject.ApplicationPingOnePortal.AccessControl,
+			Id:                  apiObject.ApplicationPingOnePortal.Id,
+			Name:                apiObject.ApplicationPingOnePortal.Name,
+			Environment:         apiObject.ApplicationPingOnePortal.Environment,
+			Type:                apiObject.ApplicationPingOnePortal.Type,
+			Protocol:            apiObject.ApplicationPingOnePortal.Protocol,
+			Enabled:             apiObject.ApplicationPingOnePortal.Enabled,
+			Description:         apiObject.ApplicationPingOnePortal.Description,
+			HiddenFromAppPortal: apiObject.ApplicationPingOnePortal.HiddenFromAppPortal,
+			Icon:                apiObject.ApplicationPingOnePortal.Icon,
+			AccessControl:       apiObject.ApplicationPingOnePortal.AccessControl,
 		}
 
+		p.PkceEnforcement = framework.EnumOkToTF(apiObject.ApplicationPingOnePortal.GetPkceEnforcementOk())
+		p.TokenEndpointAuthMethod = framework.EnumOkToTF(apiObject.ApplicationPingOnePortal.GetTokenEndpointAuthMethodOk())
 		p.ApplyDefaultTheme = framework.BoolOkToTF(apiObject.ApplicationPingOnePortal.GetApplyDefaultThemeOk())
 		p.EnableDefaultThemeFooter = types.BoolNull()
 	}
 
 	if apiObject.ApplicationPingOneSelfService != nil {
 		apiObjectCommon = management.Application{
-			Id:            apiObject.ApplicationPingOneSelfService.Id,
-			Name:          apiObject.ApplicationPingOneSelfService.Name,
-			Environment:   apiObject.ApplicationPingOneSelfService.Environment,
-			Type:          apiObject.ApplicationPingOneSelfService.Type,
-			Enabled:       apiObject.ApplicationPingOneSelfService.Enabled,
-			Description:   apiObject.ApplicationPingOneSelfService.Description,
-			AccessControl: apiObject.ApplicationPingOneSelfService.AccessControl,
+			Id:                  apiObject.ApplicationPingOneSelfService.Id,
+			Name:                apiObject.ApplicationPingOneSelfService.Name,
+			Environment:         apiObject.ApplicationPingOneSelfService.Environment,
+			Type:                apiObject.ApplicationPingOneSelfService.Type,
+			Protocol:            apiObject.ApplicationPingOneSelfService.Protocol,
+			Enabled:             apiObject.ApplicationPingOneSelfService.Enabled,
+			Description:         apiObject.ApplicationPingOneSelfService.Description,
+			HiddenFromAppPortal: apiObject.ApplicationPingOneSelfService.HiddenFromAppPortal,
+			Icon:                apiObject.ApplicationPingOneSelfService.Icon,
+			AccessControl:       apiObject.ApplicationPingOneSelfService.AccessControl,
 		}
 
+		p.PkceEnforcement = framework.EnumOkToTF(apiObject.ApplicationPingOneSelfService.GetPkceEnforcementOk())
+		p.TokenEndpointAuthMethod = framework.EnumOkToTF(apiObject.ApplicationPingOneSelfService.GetTokenEndpointAuthMethodOk())
 		p.ApplyDefaultTheme = framework.BoolOkToTF(apiObject.ApplicationPingOneSelfService.GetApplyDefaultThemeOk())
 		p.EnableDefaultThemeFooter = framework.BoolOkToTF(apiObject.ApplicationPingOneSelfService.GetEnableDefaultThemeFooterOk())
 	}
@@ -391,12 +449,18 @@ func (p *systemApplicationDataSourceModel) toState(apiObject *management.ReadOne
 	p.Id = framework.PingOneResourceIDToTF(apiObjectCommon.GetId())
 	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObjectCommon.GetEnvironment().Id)
 	p.Type = framework.EnumOkToTF(apiObjectCommon.GetTypeOk())
+	p.Protocol = framework.EnumOkToTF(apiObjectCommon.GetProtocolOk())
 	p.Name = framework.StringOkToTF(apiObjectCommon.GetNameOk())
 	p.Description = framework.StringOkToTF(apiObjectCommon.GetDescriptionOk())
 	p.Enabled = framework.BoolOkToTF(apiObjectCommon.GetEnabledOk())
+	p.HiddenFromAppPortal = framework.BoolOkToTF(apiObjectCommon.GetHiddenFromAppPortalOk())
 
-	p.AccessControlRoleType = types.StringNull()
-	p.AccessControlGroupOptions = types.ObjectNull(systemApplicationAccessControlGroupOptionsTFObjectTypes)
+	var d diag.Diagnostics
+	p.Icon, d = service.ImageOkToTF(apiObjectCommon.GetIconOk())
+	diags.Append(d...)
+
+	// Client ID is the same as the application ID for system applications
+	p.ClientId = framework.StringOkToTF(apiObjectCommon.GetIdOk())
 	if v, ok := apiObjectCommon.GetAccessControlOk(); ok {
 		if v1, ok := v.GetRoleOk(); ok {
 			p.AccessControlRoleType = framework.EnumOkToTF(v1.GetTypeOk())
