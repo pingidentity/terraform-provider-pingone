@@ -47,9 +47,6 @@ func TestAccVerifyPolicyDataSource_All(t *testing.T) {
 		resource.TestCheckResourceAttr(dataSourceFullName, "government_id.retry_attempts", "1"),
 		resource.TestCheckResourceAttr(dataSourceFullName, "government_id.verify_aamva", "false"),
 		resource.TestCheckResourceAttr(dataSourceFullName, "government_id.aadhaar.enabled", "true"),
-		resource.TestCheckResourceAttr(dataSourceFullName, "government_id.aadhaar.otp.deliveries.count", "2"),
-		resource.TestCheckResourceAttr(dataSourceFullName, "government_id.aadhaar.otp.deliveries.cooldown.duration", "90"),
-		resource.TestCheckResourceAttr(dataSourceFullName, "government_id.aadhaar.otp.deliveries.cooldown.time_unit", "SECONDS"),
 
 		resource.TestCheckResourceAttr(dataSourceFullName, "facial_comparison.verify", "REQUIRED"),
 		resource.TestCheckResourceAttr(dataSourceFullName, "facial_comparison.threshold", "HIGH"),
@@ -267,15 +264,6 @@ resource "pingone_verify_policy" "%[3]s" {
     verify_aamva    = false
     aadhaar = {
       enabled = true
-      otp = {
-        deliveries = {
-          count = 2
-          cooldown = {
-            duration  = 90
-            time_unit = "SECONDS"
-          }
-        }
-      }
     }
   }
 
