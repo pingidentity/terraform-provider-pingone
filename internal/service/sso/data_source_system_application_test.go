@@ -36,13 +36,16 @@ func TestAccSystemApplicationDataSource_PingOnePortalByID(t *testing.T) {
 					resource.TestCheckResourceAttr(dataSourceFullName, "name", "PingOne Application Portal"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "description"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "enabled", "true"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "hidden_from_app_portal"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "access_control_group_options.type", "ALL_GROUPS"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "access_control_group_options.groups.#", "2"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "hidden_from_app_portal", "false"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "icon.id"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "icon.href"),
 					resource.TestMatchResourceAttr(dataSourceFullName, "client_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "pkce_enforcement"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "token_endpoint_auth_method"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "apply_default_theme"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "pkce_enforcement", "OPTIONAL"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "token_endpoint_auth_method", "NONE"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "apply_default_theme", "true"),
 				),
 			},
 		},
@@ -72,13 +75,12 @@ func TestAccSystemApplicationDataSource_PingOnePortalByName(t *testing.T) {
 					resource.TestCheckResourceAttr(dataSourceFullName, "name", "PingOne Application Portal"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "description"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "enabled", "true"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "hidden_from_app_portal"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "hidden_from_app_portal", "false"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "icon.id"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "icon.href"),
 					resource.TestMatchResourceAttr(dataSourceFullName, "client_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "pkce_enforcement"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "token_endpoint_auth_method"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "apply_default_theme"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "pkce_enforcement", "OPTIONAL"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "token_endpoint_auth_method", "NONE"),
 				),
 			},
 			{
@@ -91,13 +93,12 @@ func TestAccSystemApplicationDataSource_PingOnePortalByName(t *testing.T) {
 					resource.TestCheckResourceAttr(dataSourceFullName, "name", "PingOne Application Portal"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "description"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "enabled", "true"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "hidden_from_app_portal"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "hidden_from_app_portal", "false"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "icon.id"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "icon.href"),
 					resource.TestMatchResourceAttr(dataSourceFullName, "client_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "pkce_enforcement"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "token_endpoint_auth_method"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "apply_default_theme"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "pkce_enforcement", "OPTIONAL"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "token_endpoint_auth_method", "NONE"),
 				),
 			},
 		},
@@ -127,14 +128,17 @@ func TestAccSystemApplicationDataSource_PingOneSelfServiceByID(t *testing.T) {
 					resource.TestCheckResourceAttr(dataSourceFullName, "name", "PingOne Self-Service - MyAccount"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "description"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "enabled", "true"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "hidden_from_app_portal"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "access_control_group_options.type", "ALL_GROUPS"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "access_control_group_options.groups.#", "2"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "hidden_from_app_portal", "false"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "icon.id"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "icon.href"),
 					resource.TestMatchResourceAttr(dataSourceFullName, "client_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "pkce_enforcement"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "token_endpoint_auth_method"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "apply_default_theme"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "enable_default_theme_footer"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "pkce_enforcement", "OPTIONAL"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "token_endpoint_auth_method", "NONE"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "apply_default_theme", "true"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "enable_default_theme_footer", "true"),
 				),
 			},
 		},
@@ -164,14 +168,12 @@ func TestAccSystemApplicationDataSource_PingOneSelfServiceByName(t *testing.T) {
 					resource.TestCheckResourceAttr(dataSourceFullName, "name", "PingOne Self-Service - MyAccount"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "description"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "enabled", "true"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "hidden_from_app_portal"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "hidden_from_app_portal", "false"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "icon.id"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "icon.href"),
 					resource.TestMatchResourceAttr(dataSourceFullName, "client_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "pkce_enforcement"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "token_endpoint_auth_method"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "apply_default_theme"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "enable_default_theme_footer"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "pkce_enforcement", "OPTIONAL"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "token_endpoint_auth_method", "NONE"),
 				),
 			},
 			{
@@ -184,14 +186,12 @@ func TestAccSystemApplicationDataSource_PingOneSelfServiceByName(t *testing.T) {
 					resource.TestCheckResourceAttr(dataSourceFullName, "name", "PingOne Self-Service - MyAccount"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "description"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "enabled", "true"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "hidden_from_app_portal"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "hidden_from_app_portal", "false"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "icon.id"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "icon.href"),
 					resource.TestMatchResourceAttr(dataSourceFullName, "client_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "pkce_enforcement"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "token_endpoint_auth_method"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "apply_default_theme"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "enable_default_theme_footer"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "pkce_enforcement", "OPTIONAL"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "token_endpoint_auth_method", "NONE"),
 				),
 			},
 		},
@@ -247,15 +247,41 @@ func testAccSystemApplicationDataSource_PingOnePortalByID(resourceName string) s
 	return fmt.Sprintf(`
 %[1]s
 
-// Have to look up the ID first via the same data source
-data "pingone_system_application" "portal_lookup" {
+resource "pingone_group" "%[2]s-1" {
   environment_id = data.pingone_environment.general_test.id
-  name           = "PingOne Application Portal"
+
+  name = "%[2]s-1"
+}
+
+resource "pingone_group" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[2]s-2"
+}
+
+resource "pingone_system_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  type    = "PING_ONE_PORTAL"
+  enabled = true
+
+  access_control_role_type = "ADMIN_USERS_ONLY"
+  access_control_group_options = {
+    groups = [
+      pingone_group.%[2]s-2.id,
+      pingone_group.%[2]s-1.id,
+    ]
+
+    type = "ALL_GROUPS"
+  }
+
+  apply_default_theme = true
+
 }
 
 data "pingone_system_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  application_id = data.pingone_system_application.portal_lookup.id
+  application_id = pingone_system_application.%[2]s.id
 }`, acctest.GenericSandboxEnvironment(), resourceName)
 }
 
@@ -279,15 +305,42 @@ func testAccSystemApplicationDataSource_PingOneSelfServiceByID(resourceName stri
 	return fmt.Sprintf(`
 %[1]s
 
-// Have to look up the ID first via the same data source
-data "pingone_system_application" "selfservice_lookup" {
+resource "pingone_group" "%[2]s-1" {
   environment_id = data.pingone_environment.general_test.id
-  name           = "PingOne Self-Service - MyAccount"
+
+  name = "%[2]s-1"
+}
+
+resource "pingone_group" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[2]s-2"
+}
+
+resource "pingone_system_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  type    = "PING_ONE_SELF_SERVICE"
+  enabled = true
+
+  access_control_role_type = "ADMIN_USERS_ONLY"
+  access_control_group_options = {
+    groups = [
+      pingone_group.%[2]s-2.id,
+      pingone_group.%[2]s-1.id,
+    ]
+
+    type = "ALL_GROUPS"
+  }
+
+  apply_default_theme         = true
+  enable_default_theme_footer = true
+
 }
 
 data "pingone_system_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  application_id = data.pingone_system_application.selfservice_lookup.id
+  application_id = pingone_system_application.%[2]s.id
 }`, acctest.GenericSandboxEnvironment(), resourceName)
 }
 
