@@ -1,6 +1,6 @@
 // Copyright © 2026 Ping Identity Corporation
 
-package sso
+package base
 
 import (
 	"context"

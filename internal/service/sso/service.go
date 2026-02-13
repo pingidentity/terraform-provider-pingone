@@ -53,7 +53,6 @@ func DataSources() []func() datasource.DataSource {
 	dataSources := []func() datasource.DataSource{
 		NewAdministratorSecurityDataSource,
 		NewApplicationDataSource,
-		NewSystemApplicationDataSource,
 		NewApplicationFlowPolicyAssignmentsDataSource,
 		NewApplicationSecretDataSource,
 		NewApplicationSignOnPolicyAssignmentsDataSource,

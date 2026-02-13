@@ -1,6 +1,6 @@
 ---
 page_title: "pingone_system_application Data Source - terraform-provider-pingone"
-subcategory: "SSO"
+subcategory: "Platform"
 description: |-
   Data source to retrieve information about a built-in system application (PingOne Self-Service or PingOne Portal) in PingOne.
 ---

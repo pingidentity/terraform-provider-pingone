@@ -1,6 +1,6 @@
 // Copyright © 2026 Ping Identity Corporation
 
-package sso_test
+package base_test
 
 import (
 	"fmt"
