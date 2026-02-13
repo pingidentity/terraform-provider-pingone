@@ -31,6 +31,7 @@ type systemApplicationDataSourceModel struct {
 	EnvironmentId             pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
 	ApplicationId             pingonetypes.ResourceIDValue `tfsdk:"application_id"`
 	Name                      types.String                 `tfsdk:"name"`
+	Description               types.String                 `tfsdk:"description"`
 	Type                      types.String                 `tfsdk:"type"`
 	Enabled                   types.Bool                   `tfsdk:"enabled"`
 	AccessControlRoleType     types.String                 `tfsdk:"access_control_role_type"`
@@ -61,7 +62,7 @@ func (r *SystemApplicationDataSource) Metadata(ctx context.Context, req datasour
 	resp.TypeName = req.ProviderTypeName + "_system_application"
 }
 
-func (r *SystemApplicationDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (r *SystemApplicationDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) { //TODO add hidden_from_app_portal, icon, protocol, client_id, pkce_enforcement, token_endpoint_auth_method
 	// schema descriptions and validation settings
 	const attrMinLength = 1
 
@@ -135,7 +136,10 @@ func (r *SystemApplicationDataSource) Schema(ctx context.Context, req datasource
 					),
 				},
 			},
-
+			"description": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the description of the application.").Description,
+				Computed:    true,
+			},
 			"type": schema.StringAttribute{
 				Description:         typeDescription.Description,
 				MarkdownDescription: typeDescription.MarkdownDescription,
@@ -388,6 +392,7 @@ func (p *systemApplicationDataSourceModel) toState(apiObject *management.ReadOne
 	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObjectCommon.GetEnvironment().Id)
 	p.Type = framework.EnumOkToTF(apiObjectCommon.GetTypeOk())
 	p.Name = framework.StringOkToTF(apiObjectCommon.GetNameOk())
+	p.Description = framework.StringOkToTF(apiObjectCommon.GetDescriptionOk())
 	p.Enabled = framework.BoolOkToTF(apiObjectCommon.GetEnabledOk())
 
 	p.AccessControlRoleType = types.StringNull()
