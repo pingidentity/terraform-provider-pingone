@@ -7,11 +7,14 @@ package davinci
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -270,4 +273,167 @@ func (r *davinciFlowResource) Create(ctx context.Context, req resource.CreateReq
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (plan *davinciFlowResourceModel) getPlannedNodeDataProperties(nodeId string) jsontypes.Normalized {
+	plannedNodeDataProperties := jsontypes.NewNormalizedNull()
+	if !plan.GraphData.IsNull() && !plan.GraphData.IsUnknown() {
+		plannedGraphDataAttrs := plan.GraphData.Attributes()
+		if !plannedGraphDataAttrs["elements"].IsNull() && !plannedGraphDataAttrs["elements"].IsUnknown() {
+			plannedGraphDataElementsAttrs := plannedGraphDataAttrs["elements"].(types.Object).Attributes()
+			if !plannedGraphDataElementsAttrs["nodes"].IsNull() && !plannedGraphDataElementsAttrs["nodes"].IsUnknown() {
+				plannedGraphDataElementsNodesMap := plannedGraphDataElementsAttrs["nodes"].(types.Map)
+				plannedNodeAttrValue, ok := plannedGraphDataElementsNodesMap.Elements()[nodeId]
+				if ok {
+					plannedNodeAttrs := plannedNodeAttrValue.(types.Object).Attributes()
+					if !plannedNodeAttrs["data"].IsNull() && !plannedNodeAttrs["data"].IsUnknown() {
+						plannedNodeDataAttrs := plannedNodeAttrs["data"].(types.Object).Attributes()
+						if !plannedNodeDataAttrs["properties"].IsNull() && !plannedNodeDataAttrs["properties"].IsUnknown() {
+							plannedNodeDataProperties = plannedNodeDataAttrs["properties"].(jsontypes.Normalized)
+						}
+					}
+				}
+			}
+		}
+	}
+	return plannedNodeDataProperties
+}
+
+// Get a normalized json type from the response, ignoring json keys that were not included in the planned data.properties value
+func (m *davinciFlowResourceModel) normalizeNodeDataProperties(nodeId string, planProperties jsontypes.Normalized, responseProperties map[string]interface{}) (jsontypes.Normalized, diag.Diagnostics) {
+	if planProperties.IsNull() || planProperties.IsUnknown() {
+		// We have no known keys, so just accept whatever the API returned
+		return buildJsonNormalizedValueFromMap(nodeId, responseProperties)
+	}
+
+	var diags diag.Diagnostics
+	var normalizedProperties jsontypes.Normalized
+
+	// Get a map of the known keys from the planned properties
+	plannedPropertiesMap := make(map[string]interface{})
+	err := json.Unmarshal([]byte(planProperties.ValueString()), &plannedPropertiesMap)
+	if err != nil {
+		diags.AddError(
+			"Error Unmarshaling planned graphData.elements.nodes.data.properties",
+			fmt.Sprintf("An error occurred while unmarshaling for node ID %s: %s", nodeId, err.Error()),
+		)
+		return normalizedProperties, diags
+	}
+
+	// Make a deep copy of responseProperties to avoid mutating the input
+	responsePropertiesBytes, err := json.Marshal(responseProperties)
+	if err != nil {
+		diags.AddError(
+			"Error Marshaling response graphData.elements.nodes.data.properties",
+			fmt.Sprintf("An error occurred while marshaling for node ID %s: %s", nodeId, err.Error()),
+		)
+		return normalizedProperties, diags
+	}
+	var responsePropertiesCopy map[string]interface{}
+	err = json.Unmarshal(responsePropertiesBytes, &responsePropertiesCopy)
+	if err != nil {
+		diags.AddError(
+			"Error Unmarshaling response graphData.elements.nodes.data.properties",
+			fmt.Sprintf("An error occurred while unmarshaling for node ID %s: %s", nodeId, err.Error()),
+		)
+		return normalizedProperties, diags
+	}
+
+	// Remove keys from the response that were not in the plan
+	cleanedResponseProperties, removeDiags := removeUnknownKeysFromJsonMap(nodeId, plannedPropertiesMap, responsePropertiesCopy)
+	diags.Append(removeDiags...)
+
+	normalizedProperties, normalizeDiags := buildJsonNormalizedValueFromMap(nodeId, cleanedResponseProperties)
+	diags.Append(normalizeDiags...)
+	return normalizedProperties, diags
+}
+
+// removeUnknownKeysFromJsonMap removes keys from actualJson that are not present in expectedJson.
+// This function mutates actualJson in place for nested objects.
+func removeUnknownKeysFromJsonMap(nodeId string, expectedJson map[string]interface{}, actualJson map[string]interface{}) (map[string]interface{}, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	for key := range actualJson {
+		if _, ok := expectedJson[key]; !ok {
+			diags.AddWarning("API returned graphData.elements.nodes.data.properties json key not present in plan",
+				fmt.Sprintf("The json key '%s' was returned by the API but is not present in the planned graphData.elements.nodes.data.properties value for node id %s", key, nodeId))
+			delete(actualJson, key)
+		} else {
+			// If the value is a nested object, recurse
+			plannedNested, isPlannedNested := expectedJson[key].(map[string]interface{})
+			responseNested, isResponseNested := actualJson[key].(map[string]interface{})
+			if plannedNested != nil && responseNested != nil && isPlannedNested && isResponseNested {
+				nestedJson, nestedDiags := removeUnknownKeysFromJsonMap(nodeId, plannedNested, responseNested)
+				diags.Append(nestedDiags...)
+				actualJson[key] = nestedJson
+				continue
+			}
+
+			// If the value is an array, recurse using the array handler
+			plannedArray, isPlannedArray := expectedJson[key].([]interface{})
+			responseArray, isResponseArray := actualJson[key].([]interface{})
+			if plannedArray != nil && responseArray != nil && isPlannedArray && isResponseArray {
+				cleanedArray, arrayDiags := removeUnknownKeysFromJsonArray(nodeId, plannedArray, responseArray)
+				diags.Append(arrayDiags...)
+				actualJson[key] = cleanedArray
+			}
+		}
+	}
+
+	return actualJson, diags
+}
+
+// removeUnknownKeysFromJsonArray processes array elements, recursing into nested objects and arrays.
+// This function mutates nested objects and arrays within actualArray in place.
+func removeUnknownKeysFromJsonArray(nodeId string, expectedArray []interface{}, actualArray []interface{}) ([]interface{}, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	cleanedArray := make([]interface{}, len(actualArray))
+
+	for i := 0; i < len(actualArray); i++ {
+		// Find corresponding planned element
+		var plannedElement interface{}
+		if i < len(expectedArray) {
+			plannedElement = expectedArray[i]
+
+			// Handle nested objects
+			plannedMap, isPlannedMap := plannedElement.(map[string]interface{})
+			responseMap, isResponseMap := actualArray[i].(map[string]interface{})
+			if plannedMap != nil && responseMap != nil && isPlannedMap && isResponseMap {
+				cleanedElement, nestedDiags := removeUnknownKeysFromJsonMap(nodeId, plannedMap, responseMap)
+				diags.Append(nestedDiags...)
+				cleanedArray[i] = cleanedElement
+				continue
+			}
+
+			// Handle nested arrays
+			plannedNestedArray, isPlannedArray := plannedElement.([]interface{})
+			responseNestedArray, isResponseArray := actualArray[i].([]interface{})
+			if plannedNestedArray != nil && responseNestedArray != nil && isPlannedArray && isResponseArray {
+				cleanedElement, nestedDiags := removeUnknownKeysFromJsonArray(nodeId, plannedNestedArray, responseNestedArray)
+				diags.Append(nestedDiags...)
+				cleanedArray[i] = cleanedElement
+				continue
+			}
+		}
+
+		// If not a map or array, or no planned element, keep as-is
+		cleanedArray[i] = actualArray[i]
+	}
+
+	return cleanedArray, diags
+}
+
+func buildJsonNormalizedValueFromMap(nodeId string, jsonMap map[string]interface{}) (jsontypes.Normalized, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	normalizedProperties := jsontypes.NewNormalizedNull()
+	graphDataElementsNodesDataPropertiesBytes, err := json.Marshal(jsonMap)
+	if err != nil {
+		diags.AddError(
+			"Error Marshaling graphData.elements.nodes.data.properties",
+			fmt.Sprintf("An error occurred while marshaling graphData.elements.nodes.data.properties for node id %s: %s", nodeId, err.Error()),
+		)
+	} else {
+		normalizedProperties = jsontypes.NewNormalizedValue(string(graphDataElementsNodesDataPropertiesBytes))
+	}
+	return normalizedProperties, diags
 }

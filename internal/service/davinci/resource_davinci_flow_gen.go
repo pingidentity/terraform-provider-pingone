@@ -1653,15 +1653,11 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			if graphDataElementsNodesResponseValue.Data.Properties == nil {
 				graphDataElementsNodesDataPropertiesValue = jsontypes.NewNormalizedNull()
 			} else {
-				graphDataElementsNodesDataPropertiesBytes, err := json.Marshal(graphDataElementsNodesResponseValue.Data.Properties)
-				if err != nil {
-					respDiags.AddError(
-						"Error Marshaling graphData.elements.nodes.data.properties",
-						fmt.Sprintf("An error occurred while marshaling: %s", err.Error()),
-					)
-				} else {
-					graphDataElementsNodesDataPropertiesValue = jsontypes.NewNormalizedValue(string(graphDataElementsNodesDataPropertiesBytes))
-				}
+				// Get the planned data.properties value for this node
+				plannedNodeDataProperties := state.getPlannedNodeDataProperties(graphDataElementsNodesResponseValue.Data.Id)
+				// Normalize the response, ignoring json keys that were not planned
+				graphDataElementsNodesDataPropertiesValue, diags = state.normalizeNodeDataProperties(graphDataElementsNodesResponseValue.Data.Id, plannedNodeDataProperties, graphDataElementsNodesResponseValue.Data.Properties)
+				respDiags.Append(diags...)
 			}
 			graphDataElementsNodesDataValue, diags := types.ObjectValue(graphDataElementsNodesDataAttrTypes, map[string]attr.Value{
 				"capability_name": types.StringPointerValue(graphDataElementsNodesResponseValue.Data.CapabilityName),
