@@ -4,11 +4,13 @@ package base_test
 
 import (
 	"fmt"
+	"os"
 	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -18,17 +20,23 @@ func TestAccSystemApplicationDataSource_PingOnePortalByID(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	dataSourceFullName := fmt.Sprintf("data.pingone_system_application.%s", resourceName)
 
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckNoBeta(t)
+			acctest.PreCheckNewEnvironment(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSystemApplicationDataSource_PingOnePortalByID(resourceName),
+				// Use new env to avoid conflicts with other system application tests
+				Config: testAccSystemApplicationDataSource_PingOnePortalByID(environmentName, licenseID, resourceName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -114,17 +122,23 @@ func TestAccSystemApplicationDataSource_PingOneSelfServiceByID(t *testing.T) {
 	resourceName := acctest.ResourceNameGen()
 	dataSourceFullName := fmt.Sprintf("data.pingone_system_application.%s", resourceName)
 
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckNoBeta(t)
+			acctest.PreCheckNewEnvironment(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSystemApplicationDataSource_PingOneSelfServiceByID(resourceName),
+				// Use new env to avoid conflicts with other system application tests
+				Config: testAccSystemApplicationDataSource_PingOneSelfServiceByID(environmentName, licenseID, resourceName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -254,24 +268,24 @@ func TestAccSystemApplicationDataSource_NotSystemApplication(t *testing.T) {
 	})
 }
 
-func testAccSystemApplicationDataSource_PingOnePortalByID(resourceName string) string {
+func testAccSystemApplicationDataSource_PingOnePortalByID(environmentName, licenseID, resourceName string) string {
 	return fmt.Sprintf(`
 %[1]s
 
-resource "pingone_group" "%[2]s-1" {
-  environment_id = data.pingone_environment.general_test.id
+resource "pingone_group" "%[3]s-1" {
+  environment_id = pingone_environment.%[2]s.id
 
-  name = "%[2]s-1"
+  name = "%[3]s-1"
 }
 
-resource "pingone_group" "%[2]s-2" {
-  environment_id = data.pingone_environment.general_test.id
+resource "pingone_group" "%[3]s-2" {
+  environment_id = pingone_environment.%[2]s.id
 
-  name = "%[2]s-2"
+  name = "%[3]s-2"
 }
 
-resource "pingone_system_application" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
+resource "pingone_system_application" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
 
   type    = "PING_ONE_PORTAL"
   enabled = true
@@ -279,8 +293,8 @@ resource "pingone_system_application" "%[2]s" {
   access_control_role_type = "ADMIN_USERS_ONLY"
   access_control_group_options = {
     groups = [
-      pingone_group.%[2]s-2.id,
-      pingone_group.%[2]s-1.id,
+      pingone_group.%[3]s-2.id,
+      pingone_group.%[3]s-1.id,
     ]
 
     type = "ALL_GROUPS"
@@ -290,10 +304,10 @@ resource "pingone_system_application" "%[2]s" {
 
 }
 
-data "pingone_system_application" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-  application_id = pingone_system_application.%[2]s.id
-}`, acctest.GenericSandboxEnvironment(), resourceName)
+data "pingone_system_application" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  application_id = pingone_system_application.%[3]s.id
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
 func testAccSystemApplicationDataSource_PingOnePortalByName(resourceName string, insensitivityCheck bool) string {
@@ -312,24 +326,24 @@ data "pingone_system_application" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName, nameComparator)
 }
 
-func testAccSystemApplicationDataSource_PingOneSelfServiceByID(resourceName string) string {
+func testAccSystemApplicationDataSource_PingOneSelfServiceByID(environmentName, licenseID, resourceName string) string {
 	return fmt.Sprintf(`
 %[1]s
 
-resource "pingone_group" "%[2]s-1" {
-  environment_id = data.pingone_environment.general_test.id
+resource "pingone_group" "%[3]s-1" {
+  environment_id = pingone_environment.%[2]s.id
 
-  name = "%[2]s-1"
+  name = "%[3]s-1"
 }
 
-resource "pingone_group" "%[2]s-2" {
-  environment_id = data.pingone_environment.general_test.id
+resource "pingone_group" "%[3]s-2" {
+  environment_id = pingone_environment.%[2]s.id
 
-  name = "%[2]s-2"
+  name = "%[3]s-2"
 }
 
-resource "pingone_system_application" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
+resource "pingone_system_application" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
 
   type    = "PING_ONE_SELF_SERVICE"
   enabled = true
@@ -337,8 +351,8 @@ resource "pingone_system_application" "%[2]s" {
   access_control_role_type = "ADMIN_USERS_ONLY"
   access_control_group_options = {
     groups = [
-      pingone_group.%[2]s-2.id,
-      pingone_group.%[2]s-1.id,
+      pingone_group.%[3]s-2.id,
+      pingone_group.%[3]s-1.id,
     ]
 
     type = "ALL_GROUPS"
@@ -349,10 +363,10 @@ resource "pingone_system_application" "%[2]s" {
 
 }
 
-data "pingone_system_application" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-  application_id = pingone_system_application.%[2]s.id
-}`, acctest.GenericSandboxEnvironment(), resourceName)
+data "pingone_system_application" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  application_id = pingone_system_application.%[3]s.id
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
 func testAccSystemApplicationDataSource_PingOneSelfServiceByName(resourceName string, insensitivityCheck bool) string {
