@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -31,6 +32,7 @@ func TestAccSystemApplicationDataSource_PingOnePortalByID(t *testing.T) {
 			acctest.PreCheckNoBeta(t)
 			acctest.PreCheckNewEnvironment(t)
 		},
+		CheckDestroy:             base.Environment_CheckDestroy,
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
@@ -134,6 +136,7 @@ func TestAccSystemApplicationDataSource_PingOneSelfServiceByID(t *testing.T) {
 			acctest.PreCheckNewEnvironment(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             base.Environment_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
