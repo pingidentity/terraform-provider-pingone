@@ -492,7 +492,6 @@ func (p *systemApplicationDataSourceModel) toState(apiObject *management.ReadOne
 	return diags
 }
 
-// isSystemApplication checks if the response contains a system application type
 func isSystemApplication(application *management.ReadOneApplication200Response) bool {
 	if application == nil {
 		return false
