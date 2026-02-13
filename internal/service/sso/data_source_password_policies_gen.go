@@ -15,6 +15,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
 var (
@@ -138,7 +139,7 @@ func (r *passwordPoliciesDataSource) Read(ctx context.Context, req datasource.Re
 		},
 		"ReadAllPasswordPolicies",
 		legacysdk.DefaultCustomError,
-		nil,
+		sdk.DefaultCreateReadRetryable,
 		&responseData,
 	)...)
 	if resp.Diagnostics.HasError() {
