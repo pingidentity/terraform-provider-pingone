@@ -1565,8 +1565,8 @@ github.com/patrickcping/pingone-go-sdk-v2/mfa v0.24.1 h1:V5mHrY66qZXVYZc3sdUHXiI
 github.com/patrickcping/pingone-go-sdk-v2/mfa v0.24.1/go.mod h1:2c47ma7Nu7X+hQTuBcB70FosnlUxjhsWPmlm/ErEJ80=
 github.com/patrickcping/pingone-go-sdk-v2/risk v0.21.0 h1:oW3EPdempOpVQXlCfKBqhQKusbeIZZMO3exImxXOFp4=
 github.com/patrickcping/pingone-go-sdk-v2/risk v0.21.0/go.mod h1:KWnR7E21iWFjVtks/v7ck2Rcwc2/JjkORGM/eX/hdb8=
-github.com/patrickcping/pingone-go-sdk-v2/verify v0.10.0 h1:8QylfS8b6dltv8caQzVUYcdZvMNNxToudaYUV6HKASg=
-github.com/patrickcping/pingone-go-sdk-v2/verify v0.10.0/go.mod h1:sEHtJxZAepYvjnKF1g4RREMcGTWrBams5ctSKHSvZxo=
+github.com/patrickcping/pingone-go-sdk-v2/verify v0.11.0 h1:jvBvlOVABzmrmTtADA053YRE6hRdX6BDYrtny+yLZ0k=
+github.com/patrickcping/pingone-go-sdk-v2/verify v0.11.0/go.mod h1:sEHtJxZAepYvjnKF1g4RREMcGTWrBams5ctSKHSvZxo=
 github.com/pavius/impi v0.0.3 h1:DND6MzU+BLABhOZXbELR3FU8b+zDgcq4dOCNLhiTYuI=
 github.com/pavius/impi v0.0.3/go.mod h1:x/hU0bfdWIhuOT1SKwiJg++yvkk6EuOtJk8WtDZqgr8=
 github.com/pelletier/go-toml/v2 v2.2.4 h1:mye9XuhQ6gvn5h28+VilKrrPoQVanw5PMw/TB0t5Ec4=
