@@ -63,7 +63,7 @@ func TestAccSystemApplicationDataSource_PingOnePortalByID(t *testing.T) {
 	})
 }
 
-func TestAccSystemApplicationDataSource_PingOnePortalByName(t *testing.T) {
+func TestAccSystemApplicationDataSource_PingOnePortalByType(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -79,25 +79,7 @@ func TestAccSystemApplicationDataSource_PingOnePortalByName(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSystemApplicationDataSource_PingOnePortalByName(resourceName, false),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(dataSourceFullName, "type", "PING_ONE_PORTAL"),
-					resource.TestCheckResourceAttr(dataSourceFullName, "protocol", "OPENID_CONNECT"),
-					resource.TestCheckResourceAttr(dataSourceFullName, "name", "PingOne Application Portal"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "description"),
-					resource.TestCheckResourceAttr(dataSourceFullName, "enabled", "true"),
-					resource.TestCheckResourceAttr(dataSourceFullName, "hidden_from_app_portal", "false"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "icon.id"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "icon.href"),
-					resource.TestMatchResourceAttr(dataSourceFullName, "client_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(dataSourceFullName, "pkce_enforcement", "OPTIONAL"),
-					resource.TestCheckResourceAttr(dataSourceFullName, "token_endpoint_auth_method", "NONE"),
-				),
-			},
-			{
-				Config: testAccSystemApplicationDataSource_PingOnePortalByName(resourceName, true),
+				Config: testAccSystemApplicationDataSource_PingOnePortalByType(resourceName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -167,7 +149,7 @@ func TestAccSystemApplicationDataSource_PingOneSelfServiceByID(t *testing.T) {
 	})
 }
 
-func TestAccSystemApplicationDataSource_PingOneSelfServiceByName(t *testing.T) {
+func TestAccSystemApplicationDataSource_PingOneSelfServiceByType(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
@@ -183,25 +165,7 @@ func TestAccSystemApplicationDataSource_PingOneSelfServiceByName(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSystemApplicationDataSource_PingOneSelfServiceByName(resourceName, false),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(dataSourceFullName, "type", "PING_ONE_SELF_SERVICE"),
-					resource.TestCheckResourceAttr(dataSourceFullName, "protocol", "OPENID_CONNECT"),
-					resource.TestCheckResourceAttr(dataSourceFullName, "name", "PingOne Self-Service - MyAccount"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "description"),
-					resource.TestCheckResourceAttr(dataSourceFullName, "enabled", "true"),
-					resource.TestCheckResourceAttr(dataSourceFullName, "hidden_from_app_portal", "false"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "icon.id"),
-					resource.TestCheckResourceAttrSet(dataSourceFullName, "icon.href"),
-					resource.TestMatchResourceAttr(dataSourceFullName, "client_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(dataSourceFullName, "pkce_enforcement", "OPTIONAL"),
-					resource.TestCheckResourceAttr(dataSourceFullName, "token_endpoint_auth_method", "NONE"),
-				),
-			},
-			{
-				Config: testAccSystemApplicationDataSource_PingOneSelfServiceByName(resourceName, true),
+				Config: testAccSystemApplicationDataSource_PingOneSelfServiceByType(resourceName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -241,8 +205,8 @@ func TestAccSystemApplicationDataSource_NotFound(t *testing.T) {
 				ExpectError: regexp.MustCompile("Error: Error when calling `ReadOneApplication`: Unable to find Application with ID"),
 			},
 			{
-				Config:      testAccSystemApplicationDataSource_NotFoundByName(resourceName),
-				ExpectError: regexp.MustCompile("Cannot find the system application from name"),
+				Config:      testAccSystemApplicationDataSource_InvalidType(resourceName),
+				ExpectError: regexp.MustCompile("Attribute type value must be one of"),
 			},
 		},
 	})
@@ -313,20 +277,14 @@ data "pingone_system_application" "%[3]s" {
 }`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
-func testAccSystemApplicationDataSource_PingOnePortalByName(resourceName string, insensitivityCheck bool) string {
-	// If insensitivityCheck is true, alter the case of the name
-	nameComparator := "PingOne Application Portal"
-	if insensitivityCheck {
-		nameComparator = acctest.AlterStringCasing(nameComparator)
-	}
-
+func testAccSystemApplicationDataSource_PingOnePortalByType(resourceName string) string {
 	return fmt.Sprintf(`
 %[1]s
 
 data "pingone_system_application" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s"
-}`, acctest.GenericSandboxEnvironment(), resourceName, nameComparator)
+	environment_id = data.pingone_environment.general_test.id
+	type           = "PING_ONE_PORTAL"
+}`, acctest.GenericSandboxEnvironment(), resourceName)
 }
 
 func testAccSystemApplicationDataSource_PingOneSelfServiceByID(environmentName, licenseID, resourceName string) string {
@@ -372,20 +330,14 @@ data "pingone_system_application" "%[3]s" {
 }`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
-func testAccSystemApplicationDataSource_PingOneSelfServiceByName(resourceName string, insensitivityCheck bool) string {
-	// If insensitivityCheck is true, alter the case of the name
-	nameComparator := "PingOne Self-Service - MyAccount"
-	if insensitivityCheck {
-		nameComparator = acctest.AlterStringCasing(nameComparator)
-	}
-
+func testAccSystemApplicationDataSource_PingOneSelfServiceByType(resourceName string) string {
 	return fmt.Sprintf(`
 %[1]s
 
 data "pingone_system_application" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s"
-}`, acctest.GenericSandboxEnvironment(), resourceName, nameComparator)
+	environment_id = data.pingone_environment.general_test.id
+	type           = "PING_ONE_SELF_SERVICE"
+}`, acctest.GenericSandboxEnvironment(), resourceName)
 }
 
 func testAccSystemApplicationDataSource_NotFoundByID(resourceName string) string {
@@ -398,13 +350,13 @@ data "pingone_system_application" "%[2]s" {
 }`, acctest.GenericSandboxEnvironment(), resourceName)
 }
 
-func testAccSystemApplicationDataSource_NotFoundByName(resourceName string) string {
+func testAccSystemApplicationDataSource_InvalidType(resourceName string) string {
 	return fmt.Sprintf(`
 %[1]s
 
 data "pingone_system_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  name           = "NonExistentSystemApplication"
+  type           = "FAKE_TYPE"
 }`, acctest.GenericSandboxEnvironment(), resourceName)
 }
 
