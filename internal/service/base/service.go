@@ -69,6 +69,7 @@ func DataSources() []func() datasource.DataSource {
 		NewRoleDataSource,
 		NewRolesDataSource,
 		NewSystemApplicationDataSource,
+		NewSystemApplicationsDataSource,
 		NewTrustedEmailDomainDataSource,
 		NewTrustedEmailDomainDKIMDataSource,
 		NewTrustedEmailDomainOwnershipDataSource,
