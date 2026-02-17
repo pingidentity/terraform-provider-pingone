@@ -63,7 +63,7 @@ data "pingone_system_applications" "%[2]s" {
 
   depends_on = [
     data.pingone_system_application.%[2]s_portal,
-	data.pingone_system_application.%[2]s_self_service,
+    data.pingone_system_application.%[2]s_self_service,
   ]
 }
 `, acctest.GenericSandboxEnvironment(), resourceName, name)
