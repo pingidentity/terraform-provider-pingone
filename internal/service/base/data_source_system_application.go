@@ -75,18 +75,18 @@ func (r *SystemApplicationDataSource) Schema(ctx context.Context, req datasource
 
 	applicationIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The identifier (UUID) of the system application.",
-	).ExactlyOneOf([]string{"application_id", "name"}).AppendMarkdownString("Must be a valid PingOne resource ID.")
+	).ExactlyOneOf([]string{"application_id", "type"}).AppendMarkdownString("Must be a valid PingOne resource ID.")
 
 	nameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The name of the system application.",
-	).ExactlyOneOf([]string{"application_id", "name"})
+	)
 
 	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the type of system application.",
 	).AllowedValues(
 		string(management.ENUMAPPLICATIONTYPE_PING_ONE_PORTAL),
 		string(management.ENUMAPPLICATIONTYPE_PING_ONE_SELF_SERVICE),
-	)
+	).ExactlyOneOf([]string{"application_id", "type"})
 
 	accessControlRoleTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the user role required to access the application. A user is an admin user if they have one or more of the following roles assigned: `Organization Admin`, `Environment Admin`, `Identity Data Admin`, or `Client Application Developer`.",
@@ -127,7 +127,7 @@ func (r *SystemApplicationDataSource) Schema(ctx context.Context, req datasource
 
 				Validators: []validator.String{
 					stringvalidator.ExactlyOneOf(
-						path.MatchRelative().AtParent().AtName("name"),
+						path.MatchRelative().AtParent().AtName("type"),
 					),
 				},
 			},
@@ -135,13 +135,7 @@ func (r *SystemApplicationDataSource) Schema(ctx context.Context, req datasource
 			"name": schema.StringAttribute{
 				Description:         nameDescription.Description,
 				MarkdownDescription: nameDescription.MarkdownDescription,
-				Optional:            true,
-
-				Validators: []validator.String{
-					stringvalidator.ExactlyOneOf(
-						path.MatchRelative().AtParent().AtName("application_id"),
-					),
-				},
+				Computed:            true,
 			},
 			"description": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the description of the application.").Description,
@@ -150,7 +144,17 @@ func (r *SystemApplicationDataSource) Schema(ctx context.Context, req datasource
 			"type": schema.StringAttribute{
 				Description:         typeDescription.Description,
 				MarkdownDescription: typeDescription.MarkdownDescription,
-				Computed:            true,
+				Optional:            true,
+
+				Validators: []validator.String{
+					stringvalidator.ExactlyOneOf(
+						path.MatchRelative().AtParent().AtName("application_id"),
+					),
+					stringvalidator.OneOf(
+						string(management.ENUMAPPLICATIONTYPE_PING_ONE_PORTAL),
+						string(management.ENUMAPPLICATIONTYPE_PING_ONE_SELF_SERVICE),
+					),
+				},
 			},
 
 			"protocol": schema.StringAttribute{
@@ -303,7 +307,7 @@ func (r *SystemApplicationDataSource) Read(ctx context.Context, req datasource.R
 			return
 		}
 
-	} else if !data.Name.IsNull() {
+	} else if !data.Type.IsNull() {
 		// Run the API call
 		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
@@ -328,17 +332,15 @@ func (r *SystemApplicationDataSource) Read(ctx context.Context, req datasource.R
 						for _, applicationObj = range applications {
 							applicationInstance := applicationObj.GetActualInstance()
 
-							applicationName := ""
+							var appType management.EnumApplicationType
 
 							switch v := applicationInstance.(type) {
 							case *management.ApplicationPingOnePortal:
-								applicationName = v.GetName()
-
+								appType = v.GetType()
 							case *management.ApplicationPingOneSelfService:
-								applicationName = v.GetName()
+								appType = v.GetType()
 							}
-
-							if applicationName != "" && strings.EqualFold(applicationName, data.Name.ValueString()) {
+							if appType != "" && strings.EqualFold(string(appType), data.Type.ValueString()) {
 								return &applicationObj, pageCursor.HTTPResponse, nil
 							}
 						}
@@ -358,9 +360,9 @@ func (r *SystemApplicationDataSource) Read(ctx context.Context, req datasource.R
 
 		if application == nil {
 			resp.Diagnostics.AddError(
-				"Cannot find the system application from name",
-				fmt.Sprintf("The system application name %s for environment %s cannot be found. Only system application types (%s, %s) are retrievable by this data source.",
-					data.Name.String(),
+				"Cannot find the system application from type",
+				fmt.Sprintf("The system application type %s for environment %s cannot be found. Only system application types (%s, %s) are retrievable by this data source.",
+					data.Type.String(),
 					data.EnvironmentId.String(),
 					string(management.ENUMAPPLICATIONTYPE_PING_ONE_PORTAL),
 					string(management.ENUMAPPLICATIONTYPE_PING_ONE_SELF_SERVICE)),
@@ -371,7 +373,7 @@ func (r *SystemApplicationDataSource) Read(ctx context.Context, req datasource.R
 	} else {
 		resp.Diagnostics.AddError(
 			"Missing parameter",
-			"Cannot find the requested PingOne System Application: application_id or name argument must be set.",
+			"Cannot find the requested PingOne System Application: application_id or type argument must be set.",
 		)
 		return
 	}
