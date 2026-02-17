@@ -282,8 +282,8 @@ func testAccSystemApplicationDataSource_PingOnePortalByType(resourceName string)
 %[1]s
 
 data "pingone_system_application" "%[2]s" {
-	environment_id = data.pingone_environment.general_test.id
-	type           = "PING_ONE_PORTAL"
+  environment_id = data.pingone_environment.general_test.id
+  type           = "PING_ONE_PORTAL"
 }`, acctest.GenericSandboxEnvironment(), resourceName)
 }
 
@@ -335,8 +335,8 @@ func testAccSystemApplicationDataSource_PingOneSelfServiceByType(resourceName st
 %[1]s
 
 data "pingone_system_application" "%[2]s" {
-	environment_id = data.pingone_environment.general_test.id
-	type           = "PING_ONE_SELF_SERVICE"
+  environment_id = data.pingone_environment.general_test.id
+  type           = "PING_ONE_SELF_SERVICE"
 }`, acctest.GenericSandboxEnvironment(), resourceName)
 }
 

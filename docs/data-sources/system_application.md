@@ -37,8 +37,8 @@ data "pingone_system_application" "example_by_id" {
 
 ### Optional
 
-- `application_id` (String) The identifier (UUID) of the system application.  Exactly one of the following must be defined: `application_id`, `name`.  Must be a valid PingOne resource ID.
-- `name` (String) The name of the system application.  Exactly one of the following must be defined: `application_id`, `name`.
+- `application_id` (String) The identifier (UUID) of the system application.  Exactly one of the following must be defined: `application_id`, `type`.  Must be a valid PingOne resource ID.
+- `type` (String) A string that specifies the type of system application.  Options are `PING_ONE_PORTAL`, `PING_ONE_SELF_SERVICE`.  Exactly one of the following must be defined: `application_id`, `type`.
 
 ### Read-Only
 
@@ -52,10 +52,10 @@ data "pingone_system_application" "example_by_id" {
 - `hidden_from_app_portal` (Boolean) A boolean to specify whether the application is hidden in the application portal despite the configured group access policy.
 - `icon` (Attributes) The HREF and the ID for the application icon. (see [below for nested schema](#nestedatt--icon))
 - `id` (String) The ID of this resource.
+- `name` (String) The name of the system application.
 - `pkce_enforcement` (String) A string that specifies how PKCE request parameters are handled on the authorize request.
 - `protocol` (String) A string that specifies the protocol used by the application.
 - `token_endpoint_auth_method` (String) A string that specifies the client authentication methods supported by the token endpoint.
-- `type` (String) A string that specifies the type of system application.  Options are `PING_ONE_PORTAL`, `PING_ONE_SELF_SERVICE`.
 
 <a id="nestedatt--access_control_group_options"></a>
 ### Nested Schema for `access_control_group_options`
