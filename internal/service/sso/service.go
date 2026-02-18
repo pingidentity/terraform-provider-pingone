@@ -54,6 +54,7 @@ func DataSources() []func() datasource.DataSource {
 		NewAdministratorSecurityDataSource,
 		NewApplicationDataSource,
 		NewApplicationFlowPolicyAssignmentsDataSource,
+		NewApplicationRoleAssignmentsDataSource,
 		NewApplicationSecretDataSource,
 		NewApplicationSignOnPolicyAssignmentsDataSource,
 		NewCustomRoleDataSource,
