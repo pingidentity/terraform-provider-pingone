@@ -1100,6 +1100,11 @@ func (p *applicationDataSourceModel) toState(ctx context.Context, apiObject *man
 
 		p.WSFedOptions, d = applicationWsfedOptionsToTF(v)
 		diags = append(diags, d...)
+	default:
+		diags.AddError(
+			"Invalid application type",
+			"Only OIDC, SAML, WSFED, and External Link application types are retrievable by this data source.",
+		)
 	}
 
 	return diags
