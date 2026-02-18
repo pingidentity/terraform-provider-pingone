@@ -49,15 +49,15 @@ func RetryWrapper(ctx context.Context, timeout time.Duration, f SDKInterfaceFunc
 		// SDK handles most typical retry logic already
 		resp, r, err = f()
 
-		if err != nil || r.StatusCode >= 300 {
+		if err != nil || (r != nil && r.StatusCode >= 300) {
 
 			var errorModel *pingone.GeneralError
 
 			switch t := err.(type) {
 			case pingone.APIError:
-				tflog.Error(ctx, fmt.Sprintf("Error when calling `%s`: %v\n\nResponse code: %d\nResponse content-type: %s\nFull response body: %+v", requestID, t.Error(), r.StatusCode, r.Header.Get("Content-Type"), r.Body))
+				tflog.Error(ctx, fmt.Sprintf("Error when calling `%s`: %v\n\n%s", requestID, t.Error(), responseErrorDetails(r)))
 			case *url.Error:
-				tflog.Warn(ctx, fmt.Sprintf("Detected HTTP error %s\n\nResponse code: %d\nResponse content-type: %s", t.Err.Error(), r.StatusCode, r.Header.Get("Content-Type")))
+				tflog.Warn(ctx, fmt.Sprintf("Detected HTTP error %s\n\n%s", t.Err.Error(), responseErrorDetails(r)))
 			default:
 				// Attempt to marshal the error into pingone.GeneralError
 				errorUnmarshaled := false
@@ -91,4 +91,11 @@ func RetryWrapper(ctx context.Context, timeout time.Duration, f SDKInterfaceFunc
 	}
 
 	return resp, r, nil
+}
+
+func responseErrorDetails(r *http.Response) string {
+	if r == nil {
+		return "HTTP response is nil"
+	}
+	return fmt.Sprintf("Response code: %d\nResponse content-type: %s\nFull response body: %+v", r.StatusCode, r.Header.Get("Content-Type"), r.Body)
 }
