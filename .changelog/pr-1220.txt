@@ -1,0 +1,3 @@
+```release-note:bug
+Fixed a potential panic that could occur when the `PINGONE_ENVIRONMENT_ID` environment variable was set to a different value than the `environment_id` value defined in the provider configuration block. This bug only affected beta DaVinci resources.
+```
