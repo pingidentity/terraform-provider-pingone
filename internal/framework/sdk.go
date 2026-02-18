@@ -17,6 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/pingidentity/pingone-go-client/config"
 	"github.com/pingidentity/pingone-go-client/pingone"
+	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 )
 
 type SDKInterfaceFunc func() (any, *http.Response, error)
@@ -114,9 +115,9 @@ func ParseResponseWithCustomTimeout(ctx context.Context, f SDKInterfaceFunc, req
 		switch t := err.(type) {
 		case pingone.APIError:
 			diags.AddError(fmt.Sprintf("Error when calling `%s`: %v", requestID, t.Error()), "")
-			tflog.Error(ctx, fmt.Sprintf("Error when calling `%s`: %v\n\n%s", requestID, t.Error(), responseErrorDetails(r)))
+			tflog.Error(ctx, fmt.Sprintf("Error when calling `%s`: %v\n\n%s", requestID, t.Error(), utils.ResponseErrorDetails(r)))
 		case *url.Error:
-			tflog.Warn(ctx, fmt.Sprintf("Detected HTTP error %s\n\n%s", t.Err.Error(), responseErrorDetails(r)))
+			tflog.Warn(ctx, fmt.Sprintf("Detected HTTP error %s\n\n%s", t.Err.Error(), utils.ResponseErrorDetails(r)))
 			diags.AddError(fmt.Sprintf("Error when calling `%s`: %v", requestID, t.Error()), "")
 		default:
 			// Attempt to marshal the error into pingone.GeneralError

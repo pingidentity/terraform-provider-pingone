@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 )
 
 type CustomError func(model.P1Error) diag.Diagnostics
@@ -75,7 +76,7 @@ func ParseResponseWithCustomTimeout(ctx context.Context, f framework.SDKInterfac
 		customRetryConditions,
 	)
 
-	if err != nil || r.StatusCode >= 300 {
+	if err != nil || (r != nil && r.StatusCode >= 300) {
 
 		switch t := err.(type) {
 		case *model.GenericOpenAPIError:
@@ -103,7 +104,7 @@ func ParseResponseWithCustomTimeout(ctx context.Context, f framework.SDKInterfac
 				Summary:  fmt.Sprintf("Error when calling `%s`: %v", sdkMethod, t.Error()),
 			})
 
-			tflog.Error(ctx, fmt.Sprintf("Error when calling `%s`: %v\n\nFull response body: %+v", sdkMethod, t.Error(), r.Body))
+			tflog.Error(ctx, fmt.Sprintf("Error when calling `%s`: %v\n\n%s", sdkMethod, t.Error(), utils.ResponseErrorDetails(r)))
 
 			return nil, diags
 

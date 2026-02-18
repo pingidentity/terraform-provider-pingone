@@ -60,7 +60,7 @@ func RetryWrapper(ctx context.Context, timeout time.Duration, f framework.SDKInt
 		// error could be management, mfa, authorize, credentials
 		resp, r, err = f()
 
-		if err != nil || r.StatusCode >= 300 {
+		if err != nil || (r != nil && r.StatusCode >= 300) {
 
 			var errorModel *model.P1Error
 			var err1 error

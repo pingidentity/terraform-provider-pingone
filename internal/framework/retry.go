@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/pingidentity/pingone-go-client/pingone"
+	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 )
 
 type Retryable func(context.Context, *http.Response, *pingone.GeneralError) bool
@@ -55,9 +56,9 @@ func RetryWrapper(ctx context.Context, timeout time.Duration, f SDKInterfaceFunc
 
 			switch t := err.(type) {
 			case pingone.APIError:
-				tflog.Error(ctx, fmt.Sprintf("Error when calling `%s`: %v\n\n%s", requestID, t.Error(), responseErrorDetails(r)))
+				tflog.Error(ctx, fmt.Sprintf("Error when calling `%s`: %v\n\n%s", requestID, t.Error(), utils.ResponseErrorDetails(r)))
 			case *url.Error:
-				tflog.Warn(ctx, fmt.Sprintf("Detected HTTP error %s\n\n%s", t.Err.Error(), responseErrorDetails(r)))
+				tflog.Warn(ctx, fmt.Sprintf("Detected HTTP error %s\n\n%s", t.Err.Error(), utils.ResponseErrorDetails(r)))
 			default:
 				// Attempt to marshal the error into pingone.GeneralError
 				errorUnmarshaled := false
@@ -91,11 +92,4 @@ func RetryWrapper(ctx context.Context, timeout time.Duration, f SDKInterfaceFunc
 	}
 
 	return resp, r, nil
-}
-
-func responseErrorDetails(r *http.Response) string {
-	if r == nil {
-		return "HTTP response is nil"
-	}
-	return fmt.Sprintf("Response code: %d\nResponse content-type: %s\nFull response body: %+v", r.StatusCode, r.Header.Get("Content-Type"), r.Body)
 }
