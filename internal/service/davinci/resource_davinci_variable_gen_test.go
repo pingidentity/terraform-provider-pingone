@@ -200,6 +200,21 @@ func TestAccDavinciVariable_Number(t *testing.T) {
 				Config: davinciVariable_NumberHCL(resourceName),
 				Check:  davinciVariable_CheckComputedValuesMinimal(resourceName),
 			},
+			{
+				// Update to zero
+				Config: davinciVariable_NumberZeroHCL(resourceName),
+				Check:  davinciVariable_CheckComputedValuesMinimal(resourceName),
+			},
+			{
+				// Destroy the resource
+				Config:  davinciVariable_NumberZeroHCL(resourceName),
+				Destroy: true,
+			},
+			{
+				// Create as zero
+				Config: davinciVariable_NumberZeroHCL(resourceName),
+				Check:  davinciVariable_CheckComputedValuesMinimal(resourceName),
+			},
 		},
 	})
 }
@@ -949,6 +964,23 @@ resource "pingone_davinci_variable" "%[2]s" {
   name           = "%[2]s"
   value = {
     secret_string = ""
+  }
+}
+`, acctest.GenericSandboxEnvironment(), resourceName)
+}
+
+func davinciVariable_NumberZeroHCL(resourceName string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_davinci_variable" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  context        = "flowInstance"
+  data_type      = "number"
+  mutable        = false
+  name           = "%[2]s"
+  value = {
+    float32 = 0
   }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
