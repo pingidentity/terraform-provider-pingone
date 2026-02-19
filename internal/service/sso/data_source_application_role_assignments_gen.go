@@ -66,7 +66,7 @@ type applicationRoleAssignmentsDataSourceModel struct {
 
 func (r *applicationRoleAssignmentsDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Data source to retrieve all application_role_assignments.",
+		Description: "Data source to retrieve all role assignments for a given application.",
 		Attributes: map[string]schema.Attribute{
 			"environment_id": framework.Attr_LinkID(
 				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to read assignments from."),

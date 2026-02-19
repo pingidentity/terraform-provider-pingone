@@ -2,12 +2,12 @@
 page_title: "pingone_application_role_assignments Data Source - terraform-provider-pingone"
 subcategory: "SSO"
 description: |-
-  Data source to retrieve all application_role_assignments.
+  Data source to retrieve all role assignments for a given application.
 ---
 
 # pingone_application_role_assignments (Data Source)
 
-Data source to retrieve all application_role_assignments.
+Data source to retrieve all role assignments for a given application.
 
 ## Example Usage
 
