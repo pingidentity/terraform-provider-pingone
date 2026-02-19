@@ -24,9 +24,9 @@ data "pingone_application_role_assignments" "all_role_assignments_by_app" {
 
 ### Required
 
-- `application_id` (String) The ID of the application to filter assignments from.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `application_id` (String) The ID of the application to read assignments from.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `environment_id` (String) The ID of the environment to read assignments from.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 
 ### Read-Only
 
-- `ids` (List of String) The list of resulting IDs of application_role_assignments objects that have been successfully retrieved.
+- `ids` (List of String) A list of role IDs assigned to the given `application_id`.

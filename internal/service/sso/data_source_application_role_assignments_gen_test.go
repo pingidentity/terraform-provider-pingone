@@ -34,8 +34,9 @@ func TestAccApplicationRoleAssignmentsDataSource_Full(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "application_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(dataSourceFullName, "ids.#", "1"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "ids.#", "2"),
 					resource.TestMatchResourceAttr(dataSourceFullName, "ids.0", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullName, "ids.1", verify.P1ResourceIDRegexpFullString),
 				),
 			},
 		},
@@ -91,10 +92,22 @@ data "pingone_role" "%[2]s_identity_data_admin" {
   name = "Identity Data Admin"
 }
 
+data "pingone_role" "%[2]s_client_application_developer" {
+  name = "Client Application Developer"
+}
+
 resource "pingone_application_role_assignment" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   application_id = pingone_application.%[2]s.id
   role_id        = data.pingone_role.%[2]s_identity_data_admin.id
+
+  scope_environment_id = data.pingone_environment.general_test.id
+}
+
+resource "pingone_application_role_assignment" "%[2]s_2" {
+  environment_id = data.pingone_environment.general_test.id
+  application_id = pingone_application.%[2]s.id
+  role_id        = data.pingone_role.%[2]s_client_application_developer.id
 
   scope_environment_id = data.pingone_environment.general_test.id
 }
@@ -105,6 +118,7 @@ data "pingone_application_role_assignments" "%[2]s" {
 
   depends_on = [
     pingone_application_role_assignment.%[2]s,
+    pingone_application_role_assignment.%[2]s_2,
   ]
 }
 `, acctest.GenericSandboxEnvironment(), resourceName, name)
@@ -120,12 +134,9 @@ resource "pingone_application" "%[2]s" {
   enabled        = true
 
   oidc_options = {
-    type                       = "SINGLE_PAGE_APP"
-    grant_types                = ["AUTHORIZATION_CODE"]
-    response_types             = ["CODE"]
-    pkce_enforcement           = "S256_REQUIRED"
-    token_endpoint_auth_method = "NONE"
-    redirect_uris              = ["https://www.pingidentity.com"]
+    type                       = "WORKER"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
   }
 }
 

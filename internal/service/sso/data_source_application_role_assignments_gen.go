@@ -12,10 +12,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
 var (
@@ -73,11 +73,11 @@ func (r *applicationRoleAssignmentsDataSource) Schema(ctx context.Context, req d
 			),
 
 			"application_id": framework.Attr_LinkID(
-				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the application to filter assignments from."),
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the application to read assignments from."),
 			),
 
 			"ids": framework.Attr_DataSourceReturnIDs(framework.SchemaAttributeDescriptionFromMarkdown(
-				"The list of resulting IDs of application_role_assignments objects that have been successfully retrieved.",
+				"A list of role IDs assigned to the given `application_id`.",
 			)),
 		},
 	}
@@ -131,13 +131,8 @@ func (r *applicationRoleAssignmentsDataSource) Read(ctx context.Context, req dat
 			return foundIDs, initialHttpResponse, nil
 		},
 		"ReadApplicationRoleAssignments",
-		func(r *http.Response, p1Error *model.P1Error) diag.Diagnostics {
-			if r != nil && r.StatusCode == 404 {
-				return make(diag.Diagnostics, 0)
-			}
-			return nil
-		},
-		nil,
+		legacysdk.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
 		&arAssignmentIDs,
 	)...)
 	if resp.Diagnostics.HasError() {
