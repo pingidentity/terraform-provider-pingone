@@ -221,6 +221,7 @@ func (r *davinciVariableResource) Schema(ctx context.Context, req resource.Schem
 						Optional:  true,
 						Sensitive: true,
 						Validators: []validator.String{
+							stringvalidator.LengthAtLeast(1),
 							stringvalidator.ExactlyOneOf(
 								path.MatchRelative().AtParent().AtName("bool"),
 								path.MatchRelative().AtParent().AtName("float32"),
@@ -232,6 +233,7 @@ func (r *davinciVariableResource) Schema(ctx context.Context, req resource.Schem
 					"string": schema.StringAttribute{
 						Optional: true,
 						Validators: []validator.String{
+							stringvalidator.LengthAtLeast(1),
 							stringvalidator.ExactlyOneOf(
 								path.MatchRelative().AtParent().AtName("bool"),
 								path.MatchRelative().AtParent().AtName("float32"),
