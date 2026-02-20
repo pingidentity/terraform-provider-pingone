@@ -43,6 +43,11 @@ func (m requiresReplaceIfModifier) PlanModifyBool(ctx context.Context, req planm
 		return
 	}
 
+	// This handles import scenarios where the attribute is not returned by the API.
+	if req.StateValue.IsNull() {
+		return
+	}
+
 	// Do not error if the plan and state values are equal.
 	if req.PlanValue.Equal(req.StateValue) {
 		return

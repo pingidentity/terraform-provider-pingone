@@ -94,6 +94,7 @@ var (
 	_ resource.Resource                 = &SchemaAttributeResource{}
 	_ resource.ResourceWithConfigure    = &SchemaAttributeResource{}
 	_ resource.ResourceWithImportState  = &SchemaAttributeResource{}
+	_ resource.ResourceWithModifyPlan   = &SchemaAttributeResource{}
 	_ resource.ResourceWithUpgradeState = &SchemaAttributeResource{}
 )
 
@@ -186,11 +187,13 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 			"display_name": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("The display name of the attribute such as 'T-shirt size'. If provided, it must not be an empty string. Valid characters consist of any Unicode letter, mark (for example, accent or umlaut), numeric character, forward slash, dot, apostrophe, underscore, space, or hyphen.").Description,
 				Optional:    true,
+				Computed:    true,
 			},
 
 			"description": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A description of the attribute. If provided, it must not be an empty string. Valid characters consists of any Unicode letter, mark (for example, accent or umlaut), numeric character, punctuation character, or space.").Description,
 				Optional:    true,
+				Computed:    true,
 			},
 
 			"enabled": schema.BoolAttribute{
@@ -401,6 +404,41 @@ func (r *SchemaAttributeResource) Configure(ctx context.Context, req resource.Co
 	}
 }
 
+func (r *SchemaAttributeResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	if req.Plan.Raw.IsNull() || req.State.Raw.IsNull() {
+		return
+	}
+
+	var state, config SchemaAttributeResourceModelV1
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if state.SchemaType.ValueString() == string(management.ENUMSCHEMAATTRIBUTESCHEMATYPE_STANDARD) {
+		if config.DisplayName.IsNull() || config.DisplayName.IsUnknown() {
+			resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("display_name"), state.DisplayName)...)
+		}
+
+		if config.Description.IsNull() || config.Description.IsUnknown() {
+			resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("description"), state.Description)...)
+		}
+
+		return
+	}
+
+	if state.SchemaType.ValueString() == string(management.ENUMSCHEMAATTRIBUTESCHEMATYPE_CUSTOM) {
+		if config.DisplayName.IsNull() {
+			resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("display_name"), types.StringNull())...)
+		}
+
+		if config.Description.IsNull() {
+			resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("description"), types.StringNull())...)
+		}
+	}
+}
+
 func (r *SchemaAttributeResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state SchemaAttributeResourceModelV1
 
@@ -498,29 +536,6 @@ func (r *SchemaAttributeResource) Read(ctx context.Context, req resource.ReadReq
 		return
 	}
 
-	var schemaResponse *management.Schema
-	resp.Diagnostics.Append(legacysdk.ParseResponse(
-		ctx,
-
-		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.ManagementAPIClient.SchemasApi.ReadOneSchema(ctx, data.EnvironmentId.ValueString(), data.SchemaId.ValueString()).Execute()
-			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
-		},
-		"ReadOneSchema",
-		legacysdk.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultCreateReadRetryable,
-		&schemaResponse,
-	)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// Remove from state if resource is not found
-	if schemaResponse == nil {
-		resp.State.RemoveResource(ctx)
-		return
-	}
-
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(data.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -540,6 +555,23 @@ func (r *SchemaAttributeResource) Update(ctx context.Context, req resource.Updat
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if state.SchemaType.ValueString() == string(management.ENUMSCHEMAATTRIBUTESCHEMATYPE_STANDARD) {
+		immutableStandardChanges := standardImmutableChanges(plan, state)
+		if len(immutableStandardChanges) > 0 {
+			resp.Diagnostics.AddError(
+				"Invalid update for STANDARD schema attribute",
+				fmt.Sprintf("STANDARD schema attributes can only update 'enabled' (all types) and additionally 'unique' and 'regex_validation' for STRING attributes. Immutable attributes changed: %v", immutableStandardChanges),
+			)
+			return
+		}
+		normalizeStandardImmutableState(&plan, state)
 	}
 
 	// Get the schema ID
@@ -582,6 +614,60 @@ func (r *SchemaAttributeResource) Update(ctx context.Context, req resource.Updat
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
+func standardImmutableChanges(plan, state SchemaAttributeResourceModelV1) []string {
+	immutableStandardChanges := make([]string, 0)
+
+	if !plan.Name.Equal(state.Name) {
+		immutableStandardChanges = append(immutableStandardChanges, "name")
+	}
+
+	if !plan.Type.Equal(state.Type) {
+		immutableStandardChanges = append(immutableStandardChanges, "type")
+	}
+
+	if !plan.Multivalued.Equal(state.Multivalued) {
+		immutableStandardChanges = append(immutableStandardChanges, "multivalued")
+	}
+
+	if !plan.EnumeratedValues.Equal(state.EnumeratedValues) {
+		immutableStandardChanges = append(immutableStandardChanges, "enumerated_values")
+	}
+
+	if !plan.DisplayName.IsNull() && !plan.DisplayName.IsUnknown() && !plan.DisplayName.Equal(state.DisplayName) {
+		immutableStandardChanges = append(immutableStandardChanges, "display_name")
+	}
+
+	if !plan.Description.IsNull() && !plan.Description.IsUnknown() && !plan.Description.Equal(state.Description) {
+		immutableStandardChanges = append(immutableStandardChanges, "description")
+	}
+
+	if !plan.SchemaType.IsNull() && !plan.SchemaType.IsUnknown() && !plan.SchemaType.Equal(state.SchemaType) {
+		immutableStandardChanges = append(immutableStandardChanges, "schema_type")
+	}
+
+	if state.Type.ValueString() != string(management.ENUMSCHEMAATTRIBUTETYPE_STRING) {
+		if !plan.Unique.Equal(state.Unique) {
+			immutableStandardChanges = append(immutableStandardChanges, "unique")
+		}
+
+		if !plan.RegexValidation.Equal(state.RegexValidation) {
+			immutableStandardChanges = append(immutableStandardChanges, "regex_validation")
+		}
+	}
+
+	return immutableStandardChanges
+}
+
+func normalizeStandardImmutableState(plan *SchemaAttributeResourceModelV1, state SchemaAttributeResourceModelV1) {
+	plan.Name = state.Name
+	plan.Type = state.Type
+	plan.Multivalued = state.Multivalued
+	plan.EnumeratedValues = state.EnumeratedValues
+	plan.DisplayName = state.DisplayName
+	plan.Description = state.Description
+	plan.SchemaType = state.SchemaType
+}
+
 func (r *SchemaAttributeResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *SchemaAttributeResourceModelV1
 
@@ -595,6 +681,35 @@ func (r *SchemaAttributeResource) Delete(ctx context.Context, req resource.Delet
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if data.SchemaType.ValueString() == string(management.ENUMSCHEMAATTRIBUTESCHEMATYPE_STANDARD) {
+		// Reset to defaults
+		updateModel := *data
+		updateModel.Enabled = types.BoolValue(true)
+		updateModel.Unique = types.BoolValue(false)
+		updateModel.RegexValidation = types.ObjectNull(schemaAttributeRegexValidationTFObjectTypes)
+
+		updateAttribute, d := updateModel.expand(ctx, "UPDATE")
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
+			ctx,
+
+			func() (any, *http.Response, error) {
+				fO, fR, fErr := r.Client.ManagementAPIClient.SchemasApi.UpdateAttributePut(ctx, data.EnvironmentId.ValueString(), data.SchemaId.ValueString(), data.Id.ValueString()).SchemaAttribute(*updateAttribute).Execute()
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			},
+			"UpdateAttributePut",
+			legacysdk.CustomErrorResourceNotFoundWarning,
+			nil,
+			nil,
+		)...)
+
 		return
 	}
 
@@ -644,6 +759,31 @@ func (r *SchemaAttributeResource) ImportState(ctx context.Context, req resource.
 		return
 	}
 
+	if r.Client == nil || r.Client.ManagementAPIClient == nil {
+		resp.Diagnostics.AddError(
+			"Client not initialized",
+			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
+		)
+		return
+	}
+
+	attribute, _, err := r.Client.ManagementAPIClient.SchemasApi.ReadOneAttribute(ctx, attributes["environment_id"], attributes["schema_id"], attributes["schema_attribute_id"]).Execute()
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Cannot import schema attribute",
+			fmt.Sprintf("Failed to read schema attribute during import: %v", err),
+		)
+		return
+	}
+
+	if attribute.GetSchemaType() == management.ENUMSCHEMAATTRIBUTESCHEMATYPE_CORE {
+		resp.Diagnostics.AddError(
+			"Invalid import for CORE schema attribute",
+			"CORE schema attributes are immutable and cannot be managed with the pingone_schema_attribute resource. Use the pingone_schema_attribute data source instead.",
+		)
+		return
+	}
+
 	for _, idComponent := range idComponents {
 		pathKey := idComponent.Label
 
@@ -670,7 +810,11 @@ func (p *SchemaAttributeResourceModelV1) expand(ctx context.Context, action stri
 
 	data := *management.NewSchemaAttribute(p.Enabled.ValueBool(), p.Name.ValueString(), management.EnumSchemaAttributeType(attrType))
 
-	data.SetSchemaType(management.ENUMSCHEMAATTRIBUTESCHEMATYPE_CUSTOM)
+	if action == "CREATE" {
+		data.SetSchemaType(management.ENUMSCHEMAATTRIBUTESCHEMATYPE_CUSTOM)
+	} else if !p.SchemaType.IsNull() && !p.SchemaType.IsUnknown() {
+		data.SetSchemaType(management.EnumSchemaAttributeSchemaType(p.SchemaType.ValueString()))
+	}
 
 	if !p.DisplayName.IsNull() && !p.DisplayName.IsUnknown() {
 		data.SetDisplayName(p.DisplayName.ValueString())
@@ -801,6 +945,9 @@ func (p *SchemaAttributeResourceModelV1) toState(apiObject *management.SchemaAtt
 
 	p.LdapAttribute = framework.StringOkToTF(apiObject.GetLdapAttributeOk())
 	p.Multivalued = framework.BoolOkToTF(apiObject.GetMultiValuedOk())
+	if p.Multivalued.IsNull() {
+		p.Multivalued = types.BoolValue(false)
+	}
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 
 	p.RegexValidation, d = schemaAttributeRegexValidationOkToTF(apiObject.GetRegexValidationOk())
