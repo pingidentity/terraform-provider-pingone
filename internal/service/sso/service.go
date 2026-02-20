@@ -62,6 +62,7 @@ func DataSources() []func() datasource.DataSource {
 		NewFlowPoliciesDataSource,
 		NewFlowPolicyDataSource,
 		NewGroupDataSource,
+		NewGroupRoleAssignmentsDataSource,
 		NewGroupsDataSource,
 		NewPasswordPoliciesDataSource,
 		NewPasswordPolicyDataSource,
