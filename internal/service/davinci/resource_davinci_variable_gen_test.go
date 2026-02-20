@@ -200,6 +200,21 @@ func TestAccDavinciVariable_Number(t *testing.T) {
 				Config: davinciVariable_NumberHCL(resourceName),
 				Check:  davinciVariable_CheckComputedValuesMinimal(resourceName),
 			},
+			{
+				// Update to zero
+				Config: davinciVariable_NumberZeroHCL(resourceName),
+				Check:  davinciVariable_CheckComputedValuesMinimal(resourceName),
+			},
+			{
+				// Destroy the resource
+				Config:  davinciVariable_NumberZeroHCL(resourceName),
+				Destroy: true,
+			},
+			{
+				// Create as zero
+				Config: davinciVariable_NumberZeroHCL(resourceName),
+				Check:  davinciVariable_CheckComputedValuesMinimal(resourceName),
+			},
 		},
 	})
 }
@@ -472,6 +487,32 @@ func TestAccDavinciVariable_BadParameters(t *testing.T) {
 				ImportStateId: "badformat/badformat",
 				ImportState:   true,
 				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+		},
+	})
+}
+
+func TestAccDavinciVariable_InvalidConfig(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             davinciVariable_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config:      davinciVariable_EmptyStringHCL(resourceName),
+				ExpectError: regexp.MustCompile(`value.string string length must be at least 1`),
+			},
+			{
+				Config:      davinciVariable_EmptySecretStringHCL(resourceName),
+				ExpectError: regexp.MustCompile(`value.secret_string string length must be at least 1`),
 			},
 		},
 	})
@@ -892,6 +933,57 @@ resource "pingone_davinci_variable" "%[2]s" {
   }
 }
 `, acctest.DaVinciSandboxEnvironment(withBootstrapConfig), resourceName)
+}
+
+func davinciVariable_EmptyStringHCL(resourceName string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_davinci_variable" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  context        = "flowInstance"
+  data_type      = "string"
+  mutable        = false
+  name           = "%[2]s"
+  value = {
+    string = ""
+  }
+}
+`, acctest.GenericSandboxEnvironment(), resourceName)
+}
+
+func davinciVariable_EmptySecretStringHCL(resourceName string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_davinci_variable" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  context        = "flowInstance"
+  data_type      = "string"
+  mutable        = false
+  name           = "%[2]s"
+  value = {
+    secret_string = ""
+  }
+}
+`, acctest.GenericSandboxEnvironment(), resourceName)
+}
+
+func davinciVariable_NumberZeroHCL(resourceName string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_davinci_variable" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  context        = "flowInstance"
+  data_type      = "number"
+  mutable        = false
+  name           = "%[2]s"
+  value = {
+    float32 = 0
+  }
+}
+`, acctest.GenericSandboxEnvironment(), resourceName)
 }
 
 // Validate any computed values when applying minimal HCL
