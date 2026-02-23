@@ -11,6 +11,14 @@ description: |-
 
 ~> This resource carries data and if destroyed, could result in data loss.  Please use the `lifecycle.prevent_destroy` meta-argument ([documentation link](https://developer.hashicorp.com/terraform/language/meta-arguments/lifecycle#prevent_destroy)) to prevent accidental data loss.
 
+## Managing `STANDARD` Attributes
+
+Attributes with a `schema_type` of `STANDARD` are supplied by default in PingOne environments. To manage a `STANDARD` attribute with Terraform, it must be imported into the Terraform state.
+
+When managing `STANDARD` attributes, the following behaviors apply:
+- **Modifiable Properties**: Only the `enabled`, `unique`, and `regex_validation` properties can be updated, consistent with the attribute `type`. All other properties are immutable.
+- **Deletion**: `STANDARD` attributes cannot be deleted from PingOne. When a `pingone_schema_attribute` resource managing a `STANDARD` attribute is destroyed in Terraform, the provider will reset the attribute's values to their defaults in the PingOne service (`enabled = true`, `unique = false`, and `regex_validation` removed) and then remove the resource from local state.
+
 ## Example Usage
 
 {{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource.tf") }}

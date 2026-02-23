@@ -118,7 +118,7 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 	)
 
 	enabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Indicates whether or not the attribute is enabled.",
+		"Indicates whether or not the attribute is enabled. Can be updated for `STANDARD` attributes.",
 	).DefaultValue("true")
 
 	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -128,7 +128,7 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 	).UnmodifiableDataLossProtection().DefaultValue(string(management.ENUMSCHEMAATTRIBUTETYPE_STRING))
 
 	uniqueDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Indicates whether or not the attribute must have a unique value within the PingOne environment.",
+		"Indicates whether or not the attribute must have a unique value within the PingOne environment. Can only be set where the attribute type is `STRING`. Can be updated for `STANDARD` attributes.",
 	).DefaultValue("false")
 
 	multivaluedDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -146,7 +146,7 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 	)
 
 	regexValidationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A single object representation of the optional regular expression representation of this attribute.  Can only be set where the attribute type is `STRING` and cannot be set alongside `enumerated_values`.",
+		"A single object representation of the optional regular expression representation of this attribute.  Can only be set where the attribute type is `STRING` and cannot be set alongside `enumerated_values`. Can be updated for `STANDARD` attributes.",
 	)
 
 	resp.Schema = schema.Schema{
@@ -154,7 +154,7 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 		Version: 1,
 
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage PingOne schema attributes.",
+		Description: "Resource to create and manage PingOne schema attributes. Attributes with a `schema_type` of `STANDARD` are supported, but must be imported into Terraform state before they can be managed. Attributes with a `schema_type` of `CORE` are not supported and should be read using the `pingone_schema_attribute` data source.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),

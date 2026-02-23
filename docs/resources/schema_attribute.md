@@ -2,14 +2,22 @@
 page_title: "pingone_schema_attribute Resource - terraform-provider-pingone"
 subcategory: "SSO"
 description: |-
-  Resource to create and manage PingOne schema attributes.
+  Resource to create and manage PingOne schema attributes. Attributes with a schema_type of STANDARD are supported, but must be imported into Terraform state before they can be managed. Attributes with a schema_type of CORE are not supported and should be read using the pingone_schema_attribute data source.
 ---
 
 # pingone_schema_attribute (Resource)
 
-Resource to create and manage PingOne schema attributes.
+Resource to create and manage PingOne schema attributes. Attributes with a `schema_type` of `STANDARD` are supported, but must be imported into Terraform state before they can be managed. Attributes with a `schema_type` of `CORE` are not supported and should be read using the `pingone_schema_attribute` data source.
 
 ~> This resource carries data and if destroyed, could result in data loss.  Please use the `lifecycle.prevent_destroy` meta-argument ([documentation link](https://developer.hashicorp.com/terraform/language/meta-arguments/lifecycle#prevent_destroy)) to prevent accidental data loss.
+
+## Managing `STANDARD` Attributes
+
+Attributes with a `schema_type` of `STANDARD` are supplied by default in PingOne environments. To manage a `STANDARD` attribute with Terraform, it must be imported into the Terraform state.
+
+When managing `STANDARD` attributes, the following behaviors apply:
+- **Modifiable Properties**: Only the `enabled`, `unique`, and `regex_validation` properties can be updated, consistent with the attribute `type`. All other properties are immutable.
+- **Deletion**: `STANDARD` attributes cannot be deleted from PingOne. When a `pingone_schema_attribute` resource managing a `STANDARD` attribute is destroyed in Terraform, the provider will reset the attribute's values to their defaults in the PingOne service (`enabled = true`, `unique = false`, and `regex_validation` removed) and then remove the resource from local state.
 
 ## Example Usage
 
@@ -79,12 +87,12 @@ resource "pingone_schema_attribute" "my_awesome_regex_attribute" {
 
 - `description` (String) A description of the attribute. If provided, it must not be an empty string. Valid characters consists of any Unicode letter, mark (for example, accent or umlaut), numeric character, punctuation character, or space.
 - `display_name` (String) The display name of the attribute such as 'T-shirt size'. If provided, it must not be an empty string. Valid characters consist of any Unicode letter, mark (for example, accent or umlaut), numeric character, forward slash, dot, apostrophe, underscore, space, or hyphen.
-- `enabled` (Boolean) Indicates whether or not the attribute is enabled.  Defaults to `true`.
+- `enabled` (Boolean) Indicates whether or not the attribute is enabled. Can be updated for `STANDARD` attributes.  Defaults to `true`.
 - `enumerated_values` (Attributes Set) A set of one or more enumerated values for the attribute. If provided, it must not be an empty set.  Can only be set where the attribute type is `STRING` and cannot be set alongside `regex_validation`.  If the attribute has been created without enumerated values and this parameter is added later, this will trigger a replacement plan of the attribute resource.  If the attribute has been created with enumerated values that are subsequently removed, this will update without needing to replace the attribute resource. (see [below for nested schema](#nestedatt--enumerated_values))
 - `multivalued` (Boolean) Indicates whether the attribute has multiple values or a single one. Maximum number of values stored is 1,000.  This field is immutable and cannot be changed once defined.  To protect against accidental data loss, this resource must be replaced manually (for example, by using Terraform's [plan `-replace` command option](https://developer.hashicorp.com/terraform/cli/commands/plan#replace-address)).  Any data that is stored against this resource must be manually exported before the resource is removed and re-imported once the resource has been replaced.  Defaults to `false`.
-- `regex_validation` (Attributes) A single object representation of the optional regular expression representation of this attribute.  Can only be set where the attribute type is `STRING` and cannot be set alongside `enumerated_values`. (see [below for nested schema](#nestedatt--regex_validation))
+- `regex_validation` (Attributes) A single object representation of the optional regular expression representation of this attribute.  Can only be set where the attribute type is `STRING` and cannot be set alongside `enumerated_values`. Can be updated for `STANDARD` attributes. (see [below for nested schema](#nestedatt--regex_validation))
 - `type` (String) The type of the attribute.  Options are `BOOLEAN`, `COMPLEX`, `JSON`, `STRING`.  `COMPLEX` and `BOOLEAN` attributes cannot be created, but standard attributes of those types may be updated. `JSON` attributes are limited by size (total size must not exceed 16KB).  This field is immutable and cannot be changed once defined.  To protect against accidental data loss, this resource must be replaced manually (for example, by using Terraform's [plan `-replace` command option](https://developer.hashicorp.com/terraform/cli/commands/plan#replace-address)).  Any data that is stored against this resource must be manually exported before the resource is removed and re-imported once the resource has been replaced.  Defaults to `STRING`.
-- `unique` (Boolean) Indicates whether or not the attribute must have a unique value within the PingOne environment.  Defaults to `false`.
+- `unique` (Boolean) Indicates whether or not the attribute must have a unique value within the PingOne environment. Can only be set where the attribute type is `STRING`. Can be updated for `STANDARD` attributes.  Defaults to `false`.
 
 ### Read-Only
 

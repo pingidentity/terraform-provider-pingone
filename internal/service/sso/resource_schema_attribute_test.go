@@ -12,7 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
-	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 	baselegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/sso"
@@ -901,7 +900,7 @@ func TestAccSchemaAttribute_DeleteBehavior(t *testing.T) {
 	})
 }
 
-func TestAccSchemaAttribute_ImportCoreUnsupported(t *testing.T) {
+func TestAccSchemaAttribute_CoreUnsupported(t *testing.T) {
 	t.Parallel()
 
 	environmentName := acctest.ResourceNameGenEnvironment()
@@ -963,131 +962,131 @@ func testAccSchemaAttributeScenarioConfig_CustomResource(environmentName, licens
 	return fmt.Sprintf(`
 		%s
 
-		resource "pingone_schema_attribute" "custom" {
-			environment_id = pingone_environment.%s.id
+resource "pingone_schema_attribute" "custom" {
+  environment_id = pingone_environment.%s.id
 
-			name = "%s"
-			type = "STRING"
-		}
-	`, legacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, attributeName)
+  name = "%s"
+  type = "STRING"
+}
+	`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, attributeName)
 }
 
 func testAccSchemaAttributeScenarioConfig_BuiltInDataSources(environmentName, licenseID string) string {
 	return fmt.Sprintf(`
 		%s
 
-		data "pingone_schema" "user" {
-			environment_id = pingone_environment.%s.id
-			name           = "User"
-		}
+data "pingone_schema" "user" {
+  environment_id = pingone_environment.%s.id
+  name           = "User"
+}
 
-		data "pingone_schema_attribute" "email" {
-			environment_id = pingone_environment.%s.id
-			schema_id      = data.pingone_schema.user.id
-			name           = "email"
-		}
+data "pingone_schema_attribute" "email" {
+  environment_id = pingone_environment.%s.id
+  schema_id      = data.pingone_schema.user.id
+  name           = "email"
+}
 
-		data "pingone_schema_attribute" "account" {
-			environment_id = pingone_environment.%s.id
-			schema_id      = data.pingone_schema.user.id
-			name           = "account"
-		}
-	`, legacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, environmentName, environmentName)
+data "pingone_schema_attribute" "account" {
+  environment_id = pingone_environment.%s.id
+  schema_id      = data.pingone_schema.user.id
+  name           = "account"
+}
+	`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, environmentName, environmentName)
 }
 
 func testAccSchemaAttributeScenarioConfig_StandardResource(environmentName, licenseID string, enabled, unique bool) string {
 	return fmt.Sprintf(`
 		%s
 
-		data "pingone_schema" "user" {
-			environment_id = pingone_environment.%s.id
-			name           = "User"
-		}
+data "pingone_schema" "user" {
+  environment_id = pingone_environment.%s.id
+  name           = "User"
+}
 
-		resource "pingone_schema_attribute" "email" {
-			environment_id = pingone_environment.%s.id
+resource "pingone_schema_attribute" "email" {
+  environment_id = pingone_environment.%s.id
 
-			name    = "email"
-			enabled = %t
-			unique  = %t
+  name    = "email"
+  enabled = %t
+  unique  = %t
 
-			regex_validation = {
-				pattern      = "^[^@]+@[^@]+$"
-				requirements = "Must look like an email"
-			}
-		}
-	`, legacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, environmentName, enabled, unique)
+  regex_validation = {
+    pattern      = "^[^@]+@[^@]+$"
+    requirements = "Must look like an email"
+  }
+}
+	`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, environmentName, enabled, unique)
 }
 
 func testAccSchemaAttributeScenarioConfig_StandardImport(environmentName, licenseID string, enabled, unique bool) string {
 	return fmt.Sprintf(`
 		%s
 
-		data "pingone_schema" "user" {
-			environment_id = pingone_environment.%s.id
-			name           = "User"
-		}
+data "pingone_schema" "user" {
+  environment_id = pingone_environment.%s.id
+  name           = "User"
+}
 
-		data "pingone_schema_attribute" "email" {
-			environment_id = pingone_environment.%s.id
-			schema_id      = data.pingone_schema.user.id
-			name           = "email"
-		}
+data "pingone_schema_attribute" "email" {
+  environment_id = pingone_environment.%s.id
+  schema_id      = data.pingone_schema.user.id
+  name           = "email"
+}
 
-		resource "pingone_schema_attribute" "email" {
-			environment_id = pingone_environment.%s.id
+resource "pingone_schema_attribute" "email" {
+  environment_id = pingone_environment.%s.id
 
-			name    = "email"
-			enabled = %t
-			unique  = %t
+  name    = "email"
+  enabled = %t
+  unique  = %t
 
-			regex_validation = {
-				pattern      = "^[^@]+@[^@]+$"
-				requirements = "Must look like an email"
-			}
-		}
-	`, legacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, environmentName, environmentName, enabled, unique)
+  regex_validation = {
+    pattern      = "^[^@]+@[^@]+$"
+    requirements = "Must look like an email"
+  }
+}
+	`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, environmentName, environmentName, enabled, unique)
 }
 
 func testAccSchemaAttributeScenarioConfig_CoreImport(environmentName, licenseID string) string {
 	return fmt.Sprintf(`
 		%s
 
-		data "pingone_schema" "user" {
-			environment_id = pingone_environment.%s.id
-			name           = "User"
-		}
+data "pingone_schema" "user" {
+  environment_id = pingone_environment.%s.id
+  name           = "User"
+}
 
-		data "pingone_schema_attribute" "account" {
-			environment_id = pingone_environment.%s.id
-			schema_id      = data.pingone_schema.user.id
-			name           = "account"
-		}
+data "pingone_schema_attribute" "account" {
+  environment_id = pingone_environment.%s.id
+  schema_id      = data.pingone_schema.user.id
+  name           = "account"
+}
 
-		resource "pingone_schema_attribute" "account" {
-			environment_id = pingone_environment.%s.id
+resource "pingone_schema_attribute" "account" {
+  environment_id = pingone_environment.%s.id
 
-			name = "account"
-			type = "COMPLEX"
-		}
-	`, legacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, environmentName, environmentName)
+  name = "account"
+  type = "COMPLEX"
+}
+	`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, environmentName, environmentName)
 }
 
 func testAccSchemaAttributeScenarioConfig_CustomNotFound(environmentName, licenseID, attributeName string) string {
 	return fmt.Sprintf(`
 		%s
 
-		data "pingone_schema" "user" {
-			environment_id = pingone_environment.%s.id
-			name           = "User"
-		}
+data "pingone_schema" "user" {
+  environment_id = pingone_environment.%s.id
+  name           = "User"
+}
 
-		data "pingone_schema_attribute" "custom" {
-			environment_id = pingone_environment.%s.id
-			schema_id      = data.pingone_schema.user.id
-			name           = "%s"
-		}
-	`, legacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, environmentName, attributeName)
+data "pingone_schema_attribute" "custom" {
+  environment_id = pingone_environment.%s.id
+  schema_id      = data.pingone_schema.user.id
+  name           = "%s"
+}
+	`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, environmentName, attributeName)
 }
 
 func testAccSchemaAttributeConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
@@ -1281,33 +1280,33 @@ func testAccSchemaAttributeConfig_StandardDataSource(environmentName, licenseID 
 	return fmt.Sprintf(`
 		%s
 
-		data "pingone_schema" "user" {
-		environment_id = pingone_environment.%s.id
-		name           = "User"
-		}
+data "pingone_schema" "user" {
+  environment_id = pingone_environment.%s.id
+  name           = "User"
+}
 
-		data "pingone_schema_attribute" "email" {
-		environment_id = pingone_environment.%s.id
-		schema_id      = data.pingone_schema.user.id
-		name           = "email"
-		}
-	`, legacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, environmentName)
+data "pingone_schema_attribute" "email" {
+  environment_id = pingone_environment.%s.id
+  schema_id      = data.pingone_schema.user.id
+  name           = "email"
+}
+	`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, environmentName)
 }
 
 func testAccSchemaAttributeConfig_StandardResource(environmentName, licenseID string, enabled bool) string {
 	return fmt.Sprintf(`
 		%s
 
-		data "pingone_schema" "user" {
-		environment_id = pingone_environment.%s.id
-		name           = "User"
-		}
+data "pingone_schema" "user" {
+  environment_id = pingone_environment.%s.id
+  name           = "User"
+}
 
-		resource "pingone_schema_attribute" "email" {
-		environment_id = pingone_environment.%s.id
+resource "pingone_schema_attribute" "email" {
+  environment_id = pingone_environment.%s.id
 
-		name         = "email"
-		enabled      = %t
-		}
-	`, legacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, environmentName, enabled)
+  name    = "email"
+  enabled = %t
+}
+	`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, environmentName, enabled)
 }
