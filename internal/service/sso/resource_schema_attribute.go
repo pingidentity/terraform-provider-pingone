@@ -634,6 +634,15 @@ func (r *SchemaAttributeResource) Read(ctx context.Context, req resource.ReadReq
 		return
 	}
 
+	if response.GetSchemaType() == management.ENUMSCHEMAATTRIBUTESCHEMATYPE_CORE {
+		resp.Diagnostics.AddError(
+			"Invalid import for CORE schema attribute",
+			"CORE schema attributes are immutable and cannot be managed with the pingone_schema_attribute resource. Use the pingone_schema_attribute data source instead.",
+		)
+		resp.State.RemoveResource(ctx)
+		return
+	}
+
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(data.toState(response)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -854,31 +863,6 @@ func (r *SchemaAttributeResource) ImportState(ctx context.Context, req resource.
 		resp.Diagnostics.AddError(
 			"Unexpected Import Identifier",
 			err.Error(),
-		)
-		return
-	}
-
-	if r.Client == nil || r.Client.ManagementAPIClient == nil {
-		resp.Diagnostics.AddError(
-			"Client not initialized",
-			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
-		)
-		return
-	}
-
-	attribute, _, err := r.Client.ManagementAPIClient.SchemasApi.ReadOneAttribute(ctx, attributes["environment_id"], attributes["schema_id"], attributes["schema_attribute_id"]).Execute()
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Cannot import schema attribute",
-			fmt.Sprintf("Failed to read schema attribute during import: %v", err),
-		)
-		return
-	}
-
-	if attribute.GetSchemaType() == management.ENUMSCHEMAATTRIBUTESCHEMATYPE_CORE {
-		resp.Diagnostics.AddError(
-			"Invalid import for CORE schema attribute",
-			"CORE schema attributes are immutable and cannot be managed with the pingone_schema_attribute resource. Use the pingone_schema_attribute data source instead.",
 		)
 		return
 	}
