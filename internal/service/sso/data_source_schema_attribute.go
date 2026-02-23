@@ -62,6 +62,8 @@ func (r *SchemaAttributeDataSource) Schema(ctx context.Context, req datasource.S
 
 	schemaIdDescription := framework.SchemaAttributeDescriptionFromMarkdown("The ID of the schema the schema attribute belongs to.").AppendMarkdownString("Must be a valid PingOne resource ID.")
 
+	subAttributesDescription := framework.SchemaAttributeDescriptionFromMarkdown("The list of sub-attributes of this attribute. Only `COMPLEX` attribute types can have sub-attributes, and only one-level of nesting is allowed. The leaf attribute definition must have a type of `STRING` or `JSON`. A `COMPLEX` attribute definition must have at least one child attribute definition.")
+
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		Description: "Data source to read PingOne schema attribute data.",
@@ -177,6 +179,52 @@ func (r *SchemaAttributeDataSource) Schema(ctx context.Context, req datasource.S
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A set of one or more strings that do not match the regular expression.").Description,
 						Computed:    true,
 						ElementType: types.StringType,
+					},
+				},
+			},
+
+			"sub_attributes": schema.ListNestedAttribute{
+				Description:         subAttributesDescription.Description,
+				MarkdownDescription: subAttributesDescription.MarkdownDescription,
+				Computed:            true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("The system name of the sub-attribute.").Description,
+							Computed:    true,
+						},
+						"display_name": schema.StringAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("The display name of the sub-attribute.").Description,
+							Computed:    true,
+						},
+						"description": schema.StringAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("A description of the sub-attribute.").Description,
+							Computed:    true,
+						},
+						"enabled": schema.BoolAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("Indicates whether or not the sub-attribute is enabled.").Description,
+							Computed:    true,
+						},
+						"required": schema.BoolAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("Indicates whether or not the sub-attribute is required.").Description,
+							Computed:    true,
+						},
+						"schema_type": schema.StringAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("The schema type of the sub-attribute.").Description,
+							Computed:    true,
+						},
+						"type": schema.StringAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("The type of the sub-attribute.").Description,
+							Computed:    true,
+						},
+						"unique": schema.BoolAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("Indicates whether or not the sub-attribute must have a unique value within the PingOne environment.").Description,
+							Computed:    true,
+						},
+						"multivalued": schema.BoolAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("Indicates whether the sub-attribute has multiple values or a single one.").Description,
+							Computed:    true,
+						},
 					},
 				},
 			},

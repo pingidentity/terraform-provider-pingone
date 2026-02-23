@@ -52,6 +52,7 @@ type SchemaAttributeResourceModelV1 struct {
 	Multivalued      types.Bool                   `tfsdk:"multivalued"`
 	Name             types.String                 `tfsdk:"name"`
 	RegexValidation  types.Object                 `tfsdk:"regex_validation"`
+	SubAttributes    types.List                   `tfsdk:"sub_attributes"`
 	Required         types.Bool                   `tfsdk:"required"`
 	SchemaId         pingonetypes.ResourceIDValue `tfsdk:"schema_id"`
 	SchemaType       types.String                 `tfsdk:"schema_type"`
@@ -72,6 +73,18 @@ type SchemaAttributeRegexValidationModel struct {
 	ValuesPatternShouldNotMatch types.Set    `tfsdk:"values_pattern_should_not_match"`
 }
 
+type SchemaAttributeSubAttributesResourceModel struct {
+	Description types.String `tfsdk:"description"`
+	DisplayName types.String `tfsdk:"display_name"`
+	Enabled     types.Bool   `tfsdk:"enabled"`
+	Multivalued types.Bool   `tfsdk:"multivalued"`
+	Name        types.String `tfsdk:"name"`
+	Required    types.Bool   `tfsdk:"required"`
+	SchemaType  types.String `tfsdk:"schema_type"`
+	Type        types.String `tfsdk:"type"`
+	Unique      types.Bool   `tfsdk:"unique"`
+}
+
 var (
 	schemaAttributeEnumeratedValuesTFObjectTypes = map[string]attr.Type{
 		"archived":    types.BoolType,
@@ -85,9 +98,27 @@ var (
 		"values_pattern_should_match":     types.SetType{ElemType: types.StringType},
 		"values_pattern_should_not_match": types.SetType{ElemType: types.StringType},
 	}
+
+	schemaAttributeSubAttributesTFObjectTypes = map[string]attr.Type{
+		"description":  types.StringType,
+		"display_name": types.StringType,
+		"enabled":      types.BoolType,
+		"multivalued":  types.BoolType,
+		"name":         types.StringType,
+		"required":     types.BoolType,
+		"schema_type":  types.StringType,
+		"type":         types.StringType,
+		"unique":       types.BoolType,
+	}
 )
 
-const schemaName = "User"
+const (
+	schemaName = "User"
+
+	immutableDataLossProtectionDescription = "This field is immutable and cannot be changed once defined.  To protect against accidental data loss, this resource must be replaced manually (for example, by using Terraform's plan `-replace` command option https://developer.hashicorp.com/terraform/cli/commands/plan#replace-address).  Any data that is stored against this resource must be manually exported before the resource is removed and re-imported once the resource has been replaced."
+
+	immutableDataLossProtectionMarkdownDescription = "This field is immutable and cannot be changed once defined.  To protect against accidental data loss, this resource must be replaced manually (for example, by using Terraform's [plan `-replace` command option](https://developer.hashicorp.com/terraform/cli/commands/plan#replace-address)).  Any data that is stored against this resource must be manually exported before the resource is removed and re-imported once the resource has been replaced."
+)
 
 // Framework interfaces
 var (
@@ -147,6 +178,10 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 
 	regexValidationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A single object representation of the optional regular expression representation of this attribute.  Can only be set where the attribute type is `STRING` and cannot be set alongside `enumerated_values`. Can be updated for `STANDARD` attributes.",
+	)
+
+	subAttributesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The list of sub-attributes of this attribute. Only `COMPLEX` attribute types can have sub-attributes, and only one-level of nesting is allowed. The leaf attribute definition must have a type of `STRING` or `JSON`. A `COMPLEX` attribute definition must have at least one child attribute definition.",
 	)
 
 	resp.Schema = schema.Schema{
@@ -212,7 +247,11 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 				Computed:            true,
 
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifierinternal.UnmodifiableDataLossProtection(),
+					stringplanmodifierinternal.UnmodifiableDataLossProtectionIf(
+						unmodifiableDataLossProtectionIfStringConfigValueSet,
+						immutableDataLossProtectionDescription,
+						immutableDataLossProtectionMarkdownDescription,
+					),
 				},
 
 				Default: stringdefault.StaticString(string(management.ENUMSCHEMAATTRIBUTETYPE_STRING)),
@@ -253,7 +292,11 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 				Computed:            true,
 
 				PlanModifiers: []planmodifier.Bool{
-					boolplanmodifierinternal.UnmodifiableDataLossProtection(),
+					boolplanmodifierinternal.UnmodifiableDataLossProtectionIf(
+						unmodifiableDataLossProtectionIfBoolConfigValueSet,
+						immutableDataLossProtectionDescription,
+						immutableDataLossProtectionMarkdownDescription,
+					),
 				},
 
 				Default: booldefault.StaticBool(false),
@@ -347,6 +390,53 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 				},
 			},
 
+			"sub_attributes": schema.ListNestedAttribute{
+				Description:         subAttributesDescription.Description,
+				MarkdownDescription: subAttributesDescription.MarkdownDescription,
+				Computed:            true,
+
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("The system name of the sub-attribute.").Description,
+							Computed:    true,
+						},
+						"display_name": schema.StringAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("The display name of the sub-attribute.").Description,
+							Computed:    true,
+						},
+						"description": schema.StringAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("A description of the sub-attribute.").Description,
+							Computed:    true,
+						},
+						"enabled": schema.BoolAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("Indicates whether or not the sub-attribute is enabled.").Description,
+							Computed:    true,
+						},
+						"required": schema.BoolAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("Indicates whether or not the sub-attribute is required.").Description,
+							Computed:    true,
+						},
+						"schema_type": schema.StringAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("The schema type of the sub-attribute.").Description,
+							Computed:    true,
+						},
+						"type": schema.StringAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("The type of the sub-attribute.").Description,
+							Computed:    true,
+						},
+						"unique": schema.BoolAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("Indicates whether or not the sub-attribute must have a unique value within the PingOne environment.").Description,
+							Computed:    true,
+						},
+						"multivalued": schema.BoolAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("Indicates whether the sub-attribute has multiple values or a single one.").Description,
+							Computed:    true,
+						},
+					},
+				},
+			},
+
 			"required": schema.BoolAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("Indicates whether or not the attribute is required.").Description,
 				Computed:    true,
@@ -417,6 +507,14 @@ func (r *SchemaAttributeResource) ModifyPlan(ctx context.Context, req resource.M
 	}
 
 	if state.SchemaType.ValueString() == string(management.ENUMSCHEMAATTRIBUTESCHEMATYPE_STANDARD) {
+
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("type"), state.Type)...)
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("multivalued"), state.Multivalued)...)
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("enumerated_values"), state.EnumeratedValues)...)
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("ldap_attribute"), state.LdapAttribute)...)
+
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("sub_attributes"), state.SubAttributes)...)
+
 		if config.DisplayName.IsNull() || config.DisplayName.IsUnknown() {
 			resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("display_name"), state.DisplayName)...)
 		}
@@ -661,6 +759,7 @@ func standardImmutableChanges(plan, state SchemaAttributeResourceModelV1) []stri
 func normalizeStandardImmutableState(plan *SchemaAttributeResourceModelV1, state SchemaAttributeResourceModelV1) {
 	plan.Name = state.Name
 	plan.Type = state.Type
+	plan.SubAttributes = state.SubAttributes
 	plan.Multivalued = state.Multivalued
 	plan.EnumeratedValues = state.EnumeratedValues
 	plan.DisplayName = state.DisplayName
@@ -917,6 +1016,47 @@ func (p *SchemaAttributeResourceModelV1) expand(ctx context.Context, action stri
 		data.SetRegexValidation(*regexValidation)
 	}
 
+	if !p.SubAttributes.IsNull() && !p.SubAttributes.IsUnknown() {
+		var plan []SchemaAttributeSubAttributesResourceModel
+		diags.Append(p.SubAttributes.ElementsAs(ctx, &plan, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		subAttributes := make([]management.SchemaAttribute, 0, len(plan))
+		for _, v := range plan {
+			subAttribute := management.NewSchemaAttribute(v.Enabled.ValueBool(), v.Name.ValueString(), management.EnumSchemaAttributeType(v.Type.ValueString()))
+
+			if !v.DisplayName.IsNull() && !v.DisplayName.IsUnknown() {
+				subAttribute.SetDisplayName(v.DisplayName.ValueString())
+			}
+
+			if !v.Description.IsNull() && !v.Description.IsUnknown() {
+				subAttribute.SetDescription(v.Description.ValueString())
+			}
+
+			if !v.Required.IsNull() && !v.Required.IsUnknown() {
+				subAttribute.SetRequired(v.Required.ValueBool())
+			}
+
+			if !v.SchemaType.IsNull() && !v.SchemaType.IsUnknown() {
+				subAttribute.SetSchemaType(management.EnumSchemaAttributeSchemaType(v.SchemaType.ValueString()))
+			}
+
+			if !v.Unique.IsNull() && !v.Unique.IsUnknown() {
+				subAttribute.SetUnique(v.Unique.ValueBool())
+			}
+
+			if !v.Multivalued.IsNull() && !v.Multivalued.IsUnknown() {
+				subAttribute.SetMultiValued(v.Multivalued.ValueBool())
+			}
+
+			subAttributes = append(subAttributes, *subAttribute)
+		}
+
+		data.SetSubAttributes(subAttributes)
+	}
+
 	return &data, diags
 }
 
@@ -951,6 +1091,9 @@ func (p *SchemaAttributeResourceModelV1) toState(apiObject *management.SchemaAtt
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 
 	p.RegexValidation, d = schemaAttributeRegexValidationOkToTF(apiObject.GetRegexValidationOk())
+	diags.Append(d...)
+
+	p.SubAttributes, d = schemaAttributeSubAttributesOkToTF(apiObject.GetSubAttributesOk())
 	diags.Append(d...)
 
 	p.Required = framework.BoolOkToTF(apiObject.GetRequiredOk())
@@ -1011,6 +1154,40 @@ func schemaAttributeRegexValidationOkToTF(apiObject *management.SchemaAttributeR
 	return flattenedObj, diags
 }
 
+func schemaAttributeSubAttributesOkToTF(apiObject []management.SchemaAttribute, ok bool) (types.List, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	tfObjType := types.ObjectType{AttrTypes: schemaAttributeSubAttributesTFObjectTypes}
+
+	if !ok || len(apiObject) == 0 {
+		return types.ListNull(tfObjType), diags
+	}
+
+	flattenedList := []attr.Value{}
+	for _, v := range apiObject {
+		objMap := map[string]attr.Value{
+			"description":  framework.StringOkToTF(v.GetDescriptionOk()),
+			"display_name": framework.StringOkToTF(v.GetDisplayNameOk()),
+			"enabled":      framework.BoolOkToTF(v.GetEnabledOk()),
+			"multivalued":  framework.BoolOkToTF(v.GetMultiValuedOk()),
+			"name":         framework.StringOkToTF(v.GetNameOk()),
+			"required":     framework.BoolOkToTF(v.GetRequiredOk()),
+			"schema_type":  framework.EnumOkToTF(v.GetSchemaTypeOk()),
+			"type":         framework.EnumOkToTF(v.GetTypeOk()),
+			"unique":       framework.BoolOkToTF(v.GetUniqueOk()),
+		}
+
+		flattenedObj, d := types.ObjectValue(schemaAttributeSubAttributesTFObjectTypes, objMap)
+		diags.Append(d...)
+
+		flattenedList = append(flattenedList, flattenedObj)
+	}
+
+	returnVar, d := types.ListValue(tfObjType, flattenedList)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
 func unmodifiableDataLossProtectionIfElementRemoved(ctx context.Context, req planmodifier.SetRequest, resp *setplanmodifierinternal.UnmodifiableDataLossProtectionIfFuncResponse) {
 	// If the configuration is unknown, this cannot be sure what to do yet.
 	if req.ConfigValue.IsUnknown() {
@@ -1049,4 +1226,32 @@ func unmodifiableDataLossProtectionIfElementRemoved(ctx context.Context, req pla
 	}
 
 	resp.Error = false
+}
+
+func unmodifiableDataLossProtectionIfStringConfigValueSet(ctx context.Context, req planmodifier.StringRequest, resp *stringplanmodifierinternal.UnmodifiableDataLossProtectionIfFuncResponse) {
+	if req.ConfigValue.IsUnknown() {
+		resp.Error = false
+		return
+	}
+
+	if req.ConfigValue.IsNull() {
+		resp.Error = false
+		return
+	}
+
+	resp.Error = true
+}
+
+func unmodifiableDataLossProtectionIfBoolConfigValueSet(ctx context.Context, req planmodifier.BoolRequest, resp *boolplanmodifierinternal.UnmodifiableDataLossProtectionIfFuncResponse) {
+	if req.ConfigValue.IsUnknown() {
+		resp.Error = false
+		return
+	}
+
+	if req.ConfigValue.IsNull() {
+		resp.Error = false
+		return
+	}
+
+	resp.Error = true
 }

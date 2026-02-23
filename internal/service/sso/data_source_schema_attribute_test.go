@@ -99,7 +99,8 @@ func TestAccSchemaAttributeDataSource_BuiltIn(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	dataSourceFullNameStandard := fmt.Sprintf("data.pingone_schema_attribute.%s_standard", resourceName)
+	dataSourceFullNameStandardString := fmt.Sprintf("data.pingone_schema_attribute.%s_standard", resourceName)
+	dataSourceFullNameStandardComplex := fmt.Sprintf("data.pingone_schema_attribute.%s_standard_complex", resourceName)
 	dataSourceFullNameCore := fmt.Sprintf("data.pingone_schema_attribute.%s_core", resourceName)
 
 	resource.Test(t, resource.TestCase{
@@ -114,14 +115,23 @@ func TestAccSchemaAttributeDataSource_BuiltIn(t *testing.T) {
 			{
 				Config: testAccSchemaAttributeDataSourceConfig_StandardAndCore(resourceName),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullNameStandard, "id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(dataSourceFullNameStandard, "environment_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(dataSourceFullNameStandard, "schema_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(dataSourceFullNameStandard, "attribute_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(dataSourceFullNameStandard, "name", "email"),
-					resource.TestCheckResourceAttr(dataSourceFullNameStandard, "type", "STRING"),
-					resource.TestCheckResourceAttr(dataSourceFullNameStandard, "multivalued", "false"),
-					resource.TestCheckResourceAttr(dataSourceFullNameStandard, "schema_type", "STANDARD"),
+					resource.TestMatchResourceAttr(dataSourceFullNameStandardString, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullNameStandardString, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullNameStandardString, "schema_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullNameStandardString, "attribute_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(dataSourceFullNameStandardString, "name", "email"),
+					resource.TestCheckResourceAttr(dataSourceFullNameStandardString, "type", "STRING"),
+					resource.TestCheckResourceAttr(dataSourceFullNameStandardString, "multivalued", "false"),
+					resource.TestCheckResourceAttr(dataSourceFullNameStandardString, "schema_type", "STANDARD"),
+
+					resource.TestMatchResourceAttr(dataSourceFullNameStandardComplex, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullNameStandardComplex, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullNameStandardComplex, "schema_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(dataSourceFullNameStandardComplex, "attribute_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(dataSourceFullNameStandardComplex, "name", "address"),
+					resource.TestCheckResourceAttr(dataSourceFullNameStandardComplex, "type", "COMPLEX"),
+					resource.TestCheckResourceAttr(dataSourceFullNameStandardComplex, "schema_type", "STANDARD"),
+					testCheckSubAttributesAtLeastOne(dataSourceFullNameStandardComplex),
 
 					resource.TestMatchResourceAttr(dataSourceFullNameCore, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullNameCore, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -274,6 +284,13 @@ data "pingone_schema_attribute" "%[2]s_standard" {
   schema_id      = data.pingone_schema.%[2]s_schema.id
 
   name = "email"
+}
+
+data "pingone_schema_attribute" "%[2]s_standard_complex" {
+  environment_id = data.pingone_environment.general_test.id
+  schema_id      = data.pingone_schema.%[2]s_schema.id
+
+  name = "address"
 }
 
 data "pingone_schema_attribute" "%[2]s_core" {

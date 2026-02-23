@@ -52,6 +52,7 @@ data "pingone_schema_attribute" "example_by_id" {
 - `regex_validation` (Attributes) A single object representation of the optional regular expression representation of this attribute. (see [below for nested schema](#nestedatt--regex_validation))
 - `required` (Boolean) Indicates whether or not the attribute is required.
 - `schema_type` (String) The schema type of the attribute.
+- `sub_attributes` (Attributes List) The list of sub-attributes of this attribute. Only `COMPLEX` attribute types can have sub-attributes, and only one-level of nesting is allowed. The leaf attribute definition must have a type of `STRING` or `JSON`. A `COMPLEX` attribute definition must have at least one child attribute definition. (see [below for nested schema](#nestedatt--sub_attributes))
 - `type` (String) The type of the attribute.
 - `unique` (Boolean) Indicates whether or not the attribute must have a unique value within the PingOne environment.
 
@@ -74,3 +75,19 @@ Read-Only:
 - `requirements` (String) A string that specifies a developer friendly description of the regular expression requirements.
 - `values_pattern_should_match` (Set of String) A set of one or more strings matching the regular expression.
 - `values_pattern_should_not_match` (Set of String) A set of one or more strings that do not match the regular expression.
+
+
+<a id="nestedatt--sub_attributes"></a>
+### Nested Schema for `sub_attributes`
+
+Read-Only:
+
+- `description` (String) A description of the sub-attribute.
+- `display_name` (String) The display name of the sub-attribute.
+- `enabled` (Boolean) Indicates whether or not the sub-attribute is enabled.
+- `multivalued` (Boolean) Indicates whether the sub-attribute has multiple values or a single one.
+- `name` (String) The system name of the sub-attribute.
+- `required` (Boolean) Indicates whether or not the sub-attribute is required.
+- `schema_type` (String) The schema type of the sub-attribute.
+- `type` (String) The type of the sub-attribute.
+- `unique` (Boolean) Indicates whether or not the sub-attribute must have a unique value within the PingOne environment.

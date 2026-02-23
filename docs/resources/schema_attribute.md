@@ -101,6 +101,7 @@ resource "pingone_schema_attribute" "my_awesome_regex_attribute" {
 - `required` (Boolean) Indicates whether or not the attribute is required.
 - `schema_id` (String) The ID of the schema the schema attribute is applied to.
 - `schema_type` (String) The schema type of the attribute.  Options are `CORE`, `CUSTOM`, `STANDARD`.  `CORE` and `STANDARD` attributes are supplied by default. `CORE` attributes cannot be updated or deleted. `STANDARD` attributes cannot be deleted, but their mutable properties can be updated. `CUSTOM` attributes can be deleted, and their mutable properties can be updated. New attributes are created with a schema type of `CUSTOM`.
+- `sub_attributes` (Attributes List) The list of sub-attributes of this attribute. Only `COMPLEX` attribute types can have sub-attributes, and only one-level of nesting is allowed. The leaf attribute definition must have a type of `STRING` or `JSON`. A `COMPLEX` attribute definition must have at least one child attribute definition. (see [below for nested schema](#nestedatt--sub_attributes))
 
 <a id="nestedatt--enumerated_values"></a>
 ### Nested Schema for `enumerated_values`
@@ -127,6 +128,22 @@ Optional:
 
 - `values_pattern_should_match` (Set of String) A set of one or more strings matching the regular expression.
 - `values_pattern_should_not_match` (Set of String) A set of one or more strings that do not match the regular expression.
+
+
+<a id="nestedatt--sub_attributes"></a>
+### Nested Schema for `sub_attributes`
+
+Read-Only:
+
+- `description` (String) A description of the sub-attribute.
+- `display_name` (String) The display name of the sub-attribute.
+- `enabled` (Boolean) Indicates whether or not the sub-attribute is enabled.
+- `multivalued` (Boolean) Indicates whether the sub-attribute has multiple values or a single one.
+- `name` (String) The system name of the sub-attribute.
+- `required` (Boolean) Indicates whether or not the sub-attribute is required.
+- `schema_type` (String) The schema type of the sub-attribute.
+- `type` (String) The type of the sub-attribute.
+- `unique` (Boolean) Indicates whether or not the sub-attribute must have a unique value within the PingOne environment.
 
 ## Import
 
