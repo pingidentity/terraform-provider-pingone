@@ -27,6 +27,10 @@ When managing `STANDARD` attributes, the following behaviors apply:
 
 {{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-with-regex-validation.tf") }}
 
+## Example Usage - Standard Attribute
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-standard-attribute.tf") }}
+
 {{ .SchemaMarkdown | trimspace }}
 
 {{ if .HasImport -}}
