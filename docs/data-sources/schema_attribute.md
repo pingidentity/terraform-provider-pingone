@@ -52,7 +52,7 @@ data "pingone_schema_attribute" "example_by_id" {
 - `regex_validation` (Attributes) A single object representation of the optional regular expression representation of this attribute. (see [below for nested schema](#nestedatt--regex_validation))
 - `required` (Boolean) Indicates whether or not the attribute is required.
 - `schema_type` (String) The schema type of the attribute.
-- `sub_attributes` (Attributes List) The list of sub-attributes of this attribute. Only `COMPLEX` attribute types can have sub-attributes, and only one-level of nesting is allowed. The leaf attribute definition must have a type of `STRING` or `JSON`. A `COMPLEX` attribute definition must have at least one child attribute definition. (see [below for nested schema](#nestedatt--sub_attributes))
+- `sub_attributes` (Attributes Set) The set of sub-attributes of this attribute. Only `COMPLEX` attribute types can have sub-attributes, and only one-level of nesting is allowed. The leaf attribute definition must have a type of `STRING` or `JSON`. A `COMPLEX` attribute definition must have at least one child attribute definition. (see [below for nested schema](#nestedatt--sub_attributes))
 - `type` (String) The type of the attribute.
 - `unique` (Boolean) Indicates whether or not the attribute must have a unique value within the PingOne environment.
 

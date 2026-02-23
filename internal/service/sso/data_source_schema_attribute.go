@@ -62,7 +62,7 @@ func (r *SchemaAttributeDataSource) Schema(ctx context.Context, req datasource.S
 
 	schemaIdDescription := framework.SchemaAttributeDescriptionFromMarkdown("The ID of the schema the schema attribute belongs to.").AppendMarkdownString("Must be a valid PingOne resource ID.")
 
-	subAttributesDescription := framework.SchemaAttributeDescriptionFromMarkdown("The list of sub-attributes of this attribute. Only `COMPLEX` attribute types can have sub-attributes, and only one-level of nesting is allowed. The leaf attribute definition must have a type of `STRING` or `JSON`. A `COMPLEX` attribute definition must have at least one child attribute definition.")
+	subAttributesDescription := framework.SchemaAttributeDescriptionFromMarkdown("The set of sub-attributes of this attribute. Only `COMPLEX` attribute types can have sub-attributes, and only one-level of nesting is allowed. The leaf attribute definition must have a type of `STRING` or `JSON`. A `COMPLEX` attribute definition must have at least one child attribute definition.")
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -183,7 +183,7 @@ func (r *SchemaAttributeDataSource) Schema(ctx context.Context, req datasource.S
 				},
 			},
 
-			"sub_attributes": schema.ListNestedAttribute{
+			"sub_attributes": schema.SetNestedAttribute{
 				Description:         subAttributesDescription.Description,
 				MarkdownDescription: subAttributesDescription.MarkdownDescription,
 				Computed:            true,

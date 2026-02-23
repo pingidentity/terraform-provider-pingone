@@ -52,7 +52,7 @@ type SchemaAttributeResourceModelV1 struct {
 	Multivalued      types.Bool                   `tfsdk:"multivalued"`
 	Name             types.String                 `tfsdk:"name"`
 	RegexValidation  types.Object                 `tfsdk:"regex_validation"`
-	SubAttributes    types.List                   `tfsdk:"sub_attributes"`
+	SubAttributes    types.Set                    `tfsdk:"sub_attributes"`
 	Required         types.Bool                   `tfsdk:"required"`
 	SchemaId         pingonetypes.ResourceIDValue `tfsdk:"schema_id"`
 	SchemaType       types.String                 `tfsdk:"schema_type"`
@@ -181,7 +181,7 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 	)
 
 	subAttributesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The list of sub-attributes of this attribute. Only `COMPLEX` attribute types can have sub-attributes, and only one-level of nesting is allowed. The leaf attribute definition must have a type of `STRING` or `JSON`. A `COMPLEX` attribute definition must have at least one child attribute definition.",
+		"The set of sub-attributes of this attribute. Only `COMPLEX` attribute types can have sub-attributes, and only one-level of nesting is allowed. The leaf attribute definition must have a type of `STRING` or `JSON`. A `COMPLEX` attribute definition must have at least one child attribute definition.",
 	)
 
 	resp.Schema = schema.Schema{
@@ -390,7 +390,7 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 				},
 			},
 
-			"sub_attributes": schema.ListNestedAttribute{
+			"sub_attributes": schema.SetNestedAttribute{
 				Description:         subAttributesDescription.Description,
 				MarkdownDescription: subAttributesDescription.MarkdownDescription,
 				Computed:            true,
@@ -1154,12 +1154,12 @@ func schemaAttributeRegexValidationOkToTF(apiObject *management.SchemaAttributeR
 	return flattenedObj, diags
 }
 
-func schemaAttributeSubAttributesOkToTF(apiObject []management.SchemaAttribute, ok bool) (types.List, diag.Diagnostics) {
+func schemaAttributeSubAttributesOkToTF(apiObject []management.SchemaAttribute, ok bool) (types.Set, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	tfObjType := types.ObjectType{AttrTypes: schemaAttributeSubAttributesTFObjectTypes}
 
 	if !ok || len(apiObject) == 0 {
-		return types.ListNull(tfObjType), diags
+		return types.SetNull(tfObjType), diags
 	}
 
 	flattenedList := []attr.Value{}
@@ -1182,7 +1182,7 @@ func schemaAttributeSubAttributesOkToTF(apiObject []management.SchemaAttribute, 
 		flattenedList = append(flattenedList, flattenedObj)
 	}
 
-	returnVar, d := types.ListValue(tfObjType, flattenedList)
+	returnVar, d := types.SetValue(tfObjType, flattenedList)
 	diags.Append(d...)
 
 	return returnVar, diags

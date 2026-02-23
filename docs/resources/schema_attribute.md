@@ -131,7 +131,7 @@ resource "pingone_schema_attribute" "email" {
 - `required` (Boolean) Indicates whether or not the attribute is required.
 - `schema_id` (String) The ID of the schema the schema attribute is applied to.
 - `schema_type` (String) The schema type of the attribute.  Options are `CORE`, `CUSTOM`, `STANDARD`.  `CORE` and `STANDARD` attributes are supplied by default. `CORE` attributes cannot be updated or deleted. `STANDARD` attributes cannot be deleted, but their mutable properties can be updated. `CUSTOM` attributes can be deleted, and their mutable properties can be updated. New attributes are created with a schema type of `CUSTOM`.
-- `sub_attributes` (Attributes List) The list of sub-attributes of this attribute. Only `COMPLEX` attribute types can have sub-attributes, and only one-level of nesting is allowed. The leaf attribute definition must have a type of `STRING` or `JSON`. A `COMPLEX` attribute definition must have at least one child attribute definition. (see [below for nested schema](#nestedatt--sub_attributes))
+- `sub_attributes` (Attributes Set) The set of sub-attributes of this attribute. Only `COMPLEX` attribute types can have sub-attributes, and only one-level of nesting is allowed. The leaf attribute definition must have a type of `STRING` or `JSON`. A `COMPLEX` attribute definition must have at least one child attribute definition. (see [below for nested schema](#nestedatt--sub_attributes))
 
 <a id="nestedatt--enumerated_values"></a>
 ### Nested Schema for `enumerated_values`
