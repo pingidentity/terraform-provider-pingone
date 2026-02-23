@@ -294,7 +294,7 @@ func TestAccSchemaAttribute_StringEnumeratedValues(t *testing.T) {
 			minimalCheck,
 			{
 				Config:      testAccSchemaAttributeConfig_EnumeratedValues1(resourceName, name, "STRING"),
-				ExpectError: regexp.MustCompile(`Data Loss Protection`),
+				ExpectError: regexp.MustCompile(`Immutable Attribute`),
 			},
 			// Test importing the resource
 			{
@@ -703,7 +703,7 @@ func TestAccSchemaAttribute_DLP(t *testing.T) {
 			},
 			{
 				Config:      testAccSchemaAttributeConfig_JSONFull(resourceName, name, false, false),
-				ExpectError: regexp.MustCompile(`Data Loss Protection`),
+				ExpectError: regexp.MustCompile(`Immutable Attribute`),
 			},
 			{
 				Config:  testAccSchemaAttributeConfig_StringFull(resourceName, name, false, false),
@@ -715,7 +715,7 @@ func TestAccSchemaAttribute_DLP(t *testing.T) {
 			},
 			{
 				Config:      testAccSchemaAttributeConfig_StringFull(resourceName, name, true, true),
-				ExpectError: regexp.MustCompile(`Data Loss Protection`),
+				ExpectError: regexp.MustCompile(`Immutable Attribute`),
 			},
 			{
 				Config:  testAccSchemaAttributeConfig_StringFull(resourceName, name, true, false),
@@ -727,7 +727,7 @@ func TestAccSchemaAttribute_DLP(t *testing.T) {
 			},
 			{
 				Config:      testAccSchemaAttributeConfig_EnumeratedValues1(resourceName, name, "STRING"),
-				ExpectError: regexp.MustCompile(`Data Loss Protection`),
+				ExpectError: regexp.MustCompile(`Immutable Attribute`),
 			},
 			{
 				Config:  testAccSchemaAttributeConfig_StringFull(resourceName, name, false, false),
@@ -739,7 +739,7 @@ func TestAccSchemaAttribute_DLP(t *testing.T) {
 			},
 			{
 				Config:      testAccSchemaAttributeConfig_EnumeratedValues1(resourceName, name, "STRING"),
-				ExpectError: regexp.MustCompile(`Data Loss Protection`),
+				ExpectError: regexp.MustCompile(`Immutable Attribute`),
 			},
 			{
 				Config:  testAccSchemaAttributeConfig_EnumeratedValues2(resourceName, name, "STRING"),
@@ -807,12 +807,12 @@ func TestAccSchemaAttribute_StandardString(t *testing.T) {
 			{
 				// Step 4: Negative - immutable multivalued changes are rejected
 				Config:      testAccSchemaAttributeConfig_StandardResourceWithMultivalued(environmentName, licenseID, false, true),
-				ExpectError: regexp.MustCompile(`Data Loss Protection`),
+				ExpectError: regexp.MustCompile(`Immutable Attribute`),
 			},
 			{
 				// Step 5: Negative - immutable type changes are rejected
 				Config:      testAccSchemaAttributeConfig_StandardResourceWithType(environmentName, licenseID, false, "JSON"),
-				ExpectError: regexp.MustCompile(`Data Loss Protection`),
+				ExpectError: regexp.MustCompile(`Immutable Attribute`),
 			},
 			{
 				// Step 6: Positive - explicitly setting immutable fields to same values is allowed
@@ -893,12 +893,12 @@ func TestAccSchemaAttribute_StandardComplex(t *testing.T) {
 			{
 				// Step 3: Verify immutable type changes are blocked for imported STANDARD COMPLEX attributes
 				Config:      testAccSchemaAttributeConfig_StandardComplexResourceWithType(environmentName, licenseID, true, "STRING"),
-				ExpectError: regexp.MustCompile(`Data Loss Protection`),
+				ExpectError: regexp.MustCompile(`Immutable Attribute`),
 			},
 			{
 				// Step 4: Verify immutable multivalued changes are blocked for imported STANDARD COMPLEX attributes
 				Config:      testAccSchemaAttributeConfig_StandardComplexResourceWithMultivalued(environmentName, licenseID, true, true),
-				ExpectError: regexp.MustCompile(`Data Loss Protection`),
+				ExpectError: regexp.MustCompile(`Immutable Attribute`),
 			},
 			{
 				// Step 5: Explicitly setting immutable fields to the same values is allowed

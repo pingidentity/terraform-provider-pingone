@@ -115,9 +115,11 @@ var (
 const (
 	schemaName = "User"
 
-	immutableDataLossProtectionDescription = "This field is immutable and cannot be changed once defined.  To protect against accidental data loss, this resource must be replaced manually (for example, by using Terraform's plan `-replace` command option https://developer.hashicorp.com/terraform/cli/commands/plan#replace-address).  Any data that is stored against this resource must be manually exported before the resource is removed and re-imported once the resource has been replaced."
+	immutableAttributeUpdateRejectedSummary = "Immutable Attribute"
 
-	immutableDataLossProtectionMarkdownDescription = "This field is immutable and cannot be changed once defined.  To protect against accidental data loss, this resource must be replaced manually (for example, by using Terraform's [plan `-replace` command option](https://developer.hashicorp.com/terraform/cli/commands/plan#replace-address)).  Any data that is stored against this resource must be manually exported before the resource is removed and re-imported once the resource has been replaced."
+	immutableAttributeDescription = "This field is immutable for existing schema attributes and cannot be changed after creation. For CUSTOM schema attributes, use Terraform replacement (for example, with Terraform's plan `-replace` command option https://developer.hashicorp.com/terraform/cli/commands/plan#replace-address)."
+
+	immutableAttributeMarkdownDescription = "This field is immutable for existing schema attributes and cannot be changed after creation. For CUSTOM schema attributes, use Terraform replacement (for example, with Terraform's [plan `-replace` command option](https://developer.hashicorp.com/terraform/cli/commands/plan#replace-address))."
 )
 
 // Framework interfaces
@@ -247,10 +249,11 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 				Computed:            true,
 
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifierinternal.UnmodifiableDataLossProtectionIf(
+					stringplanmodifierinternal.UnmodifiableDataLossProtectionIfWithSummary(
 						unmodifiableDataLossProtectionIfStringConfigValueSet,
-						immutableDataLossProtectionDescription,
-						immutableDataLossProtectionMarkdownDescription,
+						immutableAttributeUpdateRejectedSummary,
+						immutableAttributeDescription,
+						immutableAttributeMarkdownDescription,
 					),
 				},
 
@@ -292,10 +295,11 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 				Computed:            true,
 
 				PlanModifiers: []planmodifier.Bool{
-					boolplanmodifierinternal.UnmodifiableDataLossProtectionIf(
+					boolplanmodifierinternal.UnmodifiableDataLossProtectionIfWithSummary(
 						unmodifiableDataLossProtectionIfBoolConfigValueSet,
-						immutableDataLossProtectionDescription,
-						immutableDataLossProtectionMarkdownDescription,
+						immutableAttributeUpdateRejectedSummary,
+						immutableAttributeDescription,
+						immutableAttributeMarkdownDescription,
 					),
 				},
 
@@ -330,13 +334,15 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 				},
 
 				PlanModifiers: []planmodifier.Set{
-					setplanmodifierinternal.UnmodifiableDataLossProtectionIf(
+					setplanmodifierinternal.UnmodifiableDataLossProtectionIfWithSummary(
 						setplanmodifierinternal.UnmodifiableDataLossProtectionIfPreviouslyNull(),
+						immutableAttributeUpdateRejectedSummary,
 						"The attribute has been previously created without enumerated values validation.  To add enumerated values validation, the attribute must be replaced.",
 						"The attribute has been previously created without enumerated values validation.  To add enumerated values validation, the attribute must be replaced.",
 					),
-					setplanmodifierinternal.UnmodifiableDataLossProtectionIf(
+					setplanmodifierinternal.UnmodifiableDataLossProtectionIfWithSummary(
 						unmodifiableDataLossProtectionIfElementRemoved,
+						immutableAttributeUpdateRejectedSummary,
 						"Enumerated values cannot be deleted but can be archived.",
 						"Enumerated values cannot be deleted but can be archived.",
 					),

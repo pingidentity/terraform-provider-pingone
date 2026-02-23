@@ -13,6 +13,16 @@ import (
 func UnmodifiableDataLossProtectionIf(f UnmodifiableDataLossProtectionIfFunc, description, markdownDescription string) planmodifier.String {
 	return requiresReplaceIfModifier{
 		ifFunc:              f,
+		errorSummary:        "Data Loss Protection",
+		description:         description,
+		markdownDescription: markdownDescription,
+	}
+}
+
+func UnmodifiableDataLossProtectionIfWithSummary(f UnmodifiableDataLossProtectionIfFunc, errorSummary, description, markdownDescription string) planmodifier.String {
+	return requiresReplaceIfModifier{
+		ifFunc:              f,
+		errorSummary:        errorSummary,
 		description:         description,
 		markdownDescription: markdownDescription,
 	}
@@ -20,6 +30,7 @@ func UnmodifiableDataLossProtectionIf(f UnmodifiableDataLossProtectionIfFunc, de
 
 type requiresReplaceIfModifier struct {
 	ifFunc              UnmodifiableDataLossProtectionIfFunc
+	errorSummary        string
 	description         string
 	markdownDescription string
 }
@@ -57,7 +68,7 @@ func (m requiresReplaceIfModifier) PlanModifyString(ctx context.Context, req pla
 	if ifFuncResp.Error {
 		resp.Diagnostics.AddAttributeError(
 			req.Path,
-			"Data Loss Protection",
+			m.errorSummary,
 			m.Description(ctx),
 		)
 	}
