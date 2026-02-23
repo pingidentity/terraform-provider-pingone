@@ -1553,8 +1553,8 @@ github.com/otiai10/mint v1.3.1/go.mod h1:/yxELlJQ0ufhjUwhshSj+wFjZ78CnZ48/1wtmBH
 github.com/owenrumney/go-sarif v1.1.1/go.mod h1:dNDiPlF04ESR/6fHlPyq7gHKmrM0sHUvAGjsoh8ZH0U=
 github.com/owenrumney/go-sarif/v2 v2.3.3 h1:ubWDJcF5i3L/EIOER+ZyQ03IfplbSU1BLOE26uKQIIU=
 github.com/owenrumney/go-sarif/v2 v2.3.3/go.mod h1:MSqMMx9WqlBSY7pXoOZWgEsVB4FDNfhcaXDA1j6Sr+w=
-github.com/patrickcping/pingone-go-sdk-v2 v0.14.5 h1:gArfQrp9yIUSs3Uaze5H96vMdEZN7YRrmD6teNlrixg=
-github.com/patrickcping/pingone-go-sdk-v2 v0.14.5/go.mod h1:gzH+QLj1+CdHuCoF8i562M8SL0mElvT+opQPi63hkCg=
+github.com/patrickcping/pingone-go-sdk-v2 v0.14.6 h1:UjBvosbvJ0GbM+AT5pSTJGRrYC/T2e+dY9YmAnnA3Aw=
+github.com/patrickcping/pingone-go-sdk-v2 v0.14.6/go.mod h1:7lNnFiXTub5tDFDGuF07DqnPYpFndmgWZvSAdGKS8uw=
 github.com/patrickcping/pingone-go-sdk-v2/authorize v0.8.2 h1:9tsJMj3aHOaF4Bdxvgk5kmYuOPNKGDXHWolcth8xS64=
 github.com/patrickcping/pingone-go-sdk-v2/authorize v0.8.2/go.mod h1:42Te708LzeYC5z8axZopRPvQseDb1cvmWn8VNxO+YUc=
 github.com/patrickcping/pingone-go-sdk-v2/credentials v0.12.0 h1:NH1rJ4RuciyKEjV8WQ6chOSdwNbtTPuCUOedHX7GKas=
@@ -1565,8 +1565,8 @@ github.com/patrickcping/pingone-go-sdk-v2/mfa v0.24.1 h1:V5mHrY66qZXVYZc3sdUHXiI
 github.com/patrickcping/pingone-go-sdk-v2/mfa v0.24.1/go.mod h1:2c47ma7Nu7X+hQTuBcB70FosnlUxjhsWPmlm/ErEJ80=
 github.com/patrickcping/pingone-go-sdk-v2/risk v0.21.0 h1:oW3EPdempOpVQXlCfKBqhQKusbeIZZMO3exImxXOFp4=
 github.com/patrickcping/pingone-go-sdk-v2/risk v0.21.0/go.mod h1:KWnR7E21iWFjVtks/v7ck2Rcwc2/JjkORGM/eX/hdb8=
-github.com/patrickcping/pingone-go-sdk-v2/verify v0.10.0 h1:8QylfS8b6dltv8caQzVUYcdZvMNNxToudaYUV6HKASg=
-github.com/patrickcping/pingone-go-sdk-v2/verify v0.10.0/go.mod h1:sEHtJxZAepYvjnKF1g4RREMcGTWrBams5ctSKHSvZxo=
+github.com/patrickcping/pingone-go-sdk-v2/verify v0.11.0 h1:jvBvlOVABzmrmTtADA053YRE6hRdX6BDYrtny+yLZ0k=
+github.com/patrickcping/pingone-go-sdk-v2/verify v0.11.0/go.mod h1:sEHtJxZAepYvjnKF1g4RREMcGTWrBams5ctSKHSvZxo=
 github.com/pavius/impi v0.0.3 h1:DND6MzU+BLABhOZXbELR3FU8b+zDgcq4dOCNLhiTYuI=
 github.com/pavius/impi v0.0.3/go.mod h1:x/hU0bfdWIhuOT1SKwiJg++yvkk6EuOtJk8WtDZqgr8=
 github.com/pelletier/go-toml/v2 v2.2.4 h1:mye9XuhQ6gvn5h28+VilKrrPoQVanw5PMw/TB0t5Ec4=
@@ -2088,8 +2088,8 @@ golang.org/x/oauth2 v0.4.0/go.mod h1:RznEsdpjGAINPTOF0UH/t+xJ75L18YO3Ho6Pyn+uRec
 golang.org/x/oauth2 v0.5.0/go.mod h1:9/XBHVqLaWO3/BRHs5jbpYCnOZVjj5V0ndyaAM7KB4I=
 golang.org/x/oauth2 v0.6.0/go.mod h1:ycmewcwgD4Rpr3eZJLSB4Kyyljb3qDh40vJ8STE5HKw=
 golang.org/x/oauth2 v0.7.0/go.mod h1:hPLQkd9LyjfXTiRohC/41GhcFqxisoUQ99sCUOHO9x4=
-golang.org/x/oauth2 v0.34.0 h1:hqK/t4AKgbqWkdkcAeI8XLmbK+4m4G5YeQRrmiotGlw=
-golang.org/x/oauth2 v0.34.0/go.mod h1:lzm5WQJQwKZ3nwavOZ3IS5Aulzxi68dUSgRHujetwEA=
+golang.org/x/oauth2 v0.35.0 h1:Mv2mzuHuZuY2+bkyWXIHMfhNdJAdwW3FuWeCPYN5GVQ=
+golang.org/x/oauth2 v0.35.0/go.mod h1:lzm5WQJQwKZ3nwavOZ3IS5Aulzxi68dUSgRHujetwEA=
 golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sync v0.0.0-20181108010431-42b317875d0f/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sync v0.0.0-20181221193216-37e7f081c4d4/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
