@@ -1,0 +1,7 @@
+```release-note:enhancement
+`resource/pingone_schema_attribute`: Add support for managing imported `STANDARD` schema attributes
+```
+
+```release-note:new-data-source
+pingone_schema_attribute
+```
