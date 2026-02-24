@@ -1,6 +1,8 @@
 name: Refresh Connector Schema
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '0 13 1 * *'
 
 jobs:
   generate:
