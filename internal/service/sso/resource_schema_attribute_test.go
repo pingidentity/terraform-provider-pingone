@@ -1482,18 +1482,18 @@ func testAccSchemaAttributeConfig_StandardResourceWithAllImmutableFields(environ
 		%s
 
 data "pingone_schema" "user" {
-	environment_id = pingone_environment.%s.id
-	name           = "User"
+  environment_id = pingone_environment.%s.id
+  name           = "User"
 }
 
 resource "pingone_schema_attribute" "email" {
-	environment_id = pingone_environment.%s.id
+  environment_id = pingone_environment.%s.id
 
-	name              = "email"
-	enabled           = %t
-	type              = "%s"
-	display_name      = "%s"
-	description       = "%s"
+  name         = "email"
+  enabled      = %t
+  type         = "%s"
+  display_name = "%s"
+  description  = "%s"
 }
 	`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, environmentName, enabled, attrType, displayName, description)
 }
@@ -1521,18 +1521,18 @@ func testAccSchemaAttributeConfig_StandardComplexResourceWithAllImmutableFields(
 		%s
 
 data "pingone_schema" "user" {
-	environment_id = pingone_environment.%s.id
-	name           = "User"
+  environment_id = pingone_environment.%s.id
+  name           = "User"
 }
 
 resource "pingone_schema_attribute" "address" {
-	environment_id = pingone_environment.%s.id
+  environment_id = pingone_environment.%s.id
 
-	name              = "address"
-	enabled           = %t
-	type              = "%s"
-	display_name      = "%s"
-	description       = "%s"
+  name         = "address"
+  enabled      = %t
+  type         = "%s"
+  display_name = "%s"
+  description  = "%s"
 }
 	`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, environmentName, enabled, attrType, displayName, description)
 }
