@@ -40,6 +40,8 @@ type PasswordPolicyDataSourceModel struct {
 	Lockout                       types.Object                 `tfsdk:"lockout"`
 	MinCharacters                 types.Object                 `tfsdk:"min_characters"`
 	NumberSequenceRule            types.Object                 `tfsdk:"number_sequence_rule"`
+	QwertySequenceRule            types.Object                 `tfsdk:"qwerty_sequence_rule"`
+	ShiftedNumberRowSequenceRule  types.Object                 `tfsdk:"shifted_number_row_sequence_rule"`
 	PasswordAgeMax                types.Int32                  `tfsdk:"password_age_max"`
 	PasswordAgeMin                types.Int32                  `tfsdk:"password_age_min"`
 	MaxRepeatedCharacters         types.Int32                  `tfsdk:"max_repeated_characters"`
@@ -130,16 +132,32 @@ func (r *PasswordPolicyDataSource) Schema(ctx context.Context, req datasource.Sc
 	)
 
 	alphabetSequenceRuleMaxLengthDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"An integer that specifies the maximum number of allowed sequential English letters in the password. Must be a value of `2` or `3`.",
-	)
+		"An integer that specifies the maximum number of allowed sequential English letters in the password.",
+	).AllowedValues(sequenceRuleMaxLengthMin, sequenceRuleMaxLengthMax)
 
 	numberSequenceRuleDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A single object that specifies options to control sequential number checks for passwords.",
 	)
 
 	numberSequenceRuleMaxLengthDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"An integer that specifies the maximum number of allowed sequential numbers in the password. Must be a value of `2` or `3`.",
+		"An integer that specifies the maximum number of allowed sequential numbers in the password.",
+	).AllowedValues(sequenceRuleMaxLengthMin, sequenceRuleMaxLengthMax)
+
+	qwertySequenceRuleDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies options to control sequential qwerty keyboard checks for passwords.",
 	)
+
+	qwertySequenceRuleMaxLengthDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that specifies the maximum number of allowed sequential qwerty keyboard characters in the password.",
+	).FixedValue(sequenceRuleMaxLengthMax)
+
+	shiftedNumberRowSequenceRuleDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies options to control sequential shifted number-row character checks for passwords.",
+	)
+
+	shiftedNumberRowSequenceRuleMaxLengthDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that specifies the maximum number of allowed sequential shifted number-row characters in the password.",
+	).AllowedValues(sequenceRuleMaxLengthMin, sequenceRuleMaxLengthMax)
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -308,6 +326,34 @@ func (r *PasswordPolicyDataSource) Schema(ctx context.Context, req datasource.Sc
 					"max_length": schema.Int32Attribute{
 						Description:         numberSequenceRuleMaxLengthDescription.Description,
 						MarkdownDescription: numberSequenceRuleMaxLengthDescription.MarkdownDescription,
+						Computed:            true,
+					},
+				},
+			},
+
+			"qwerty_sequence_rule": schema.SingleNestedAttribute{
+				Description:         qwertySequenceRuleDescription.Description,
+				MarkdownDescription: qwertySequenceRuleDescription.MarkdownDescription,
+				Computed:            true,
+
+				Attributes: map[string]schema.Attribute{
+					"max_length": schema.Int32Attribute{
+						Description:         qwertySequenceRuleMaxLengthDescription.Description,
+						MarkdownDescription: qwertySequenceRuleMaxLengthDescription.MarkdownDescription,
+						Computed:            true,
+					},
+				},
+			},
+
+			"shifted_number_row_sequence_rule": schema.SingleNestedAttribute{
+				Description:         shiftedNumberRowSequenceRuleDescription.Description,
+				MarkdownDescription: shiftedNumberRowSequenceRuleDescription.MarkdownDescription,
+				Computed:            true,
+
+				Attributes: map[string]schema.Attribute{
+					"max_length": schema.Int32Attribute{
+						Description:         shiftedNumberRowSequenceRuleMaxLengthDescription.Description,
+						MarkdownDescription: shiftedNumberRowSequenceRuleMaxLengthDescription.MarkdownDescription,
 						Computed:            true,
 					},
 				},
@@ -515,6 +561,12 @@ func (p *PasswordPolicyDataSourceModel) toState(apiObject *management.PasswordPo
 	diags.Append(d...)
 
 	p.NumberSequenceRule, d = passwordPolicySequenceRuleOkToTF(apiObject.GetNumberSequenceRuleOk())
+	diags.Append(d...)
+
+	p.QwertySequenceRule, d = passwordPolicySequenceRuleOkToTF(apiObject.GetQwertySequenceRuleOk())
+	diags.Append(d...)
+
+	p.ShiftedNumberRowSequenceRule, d = passwordPolicySequenceRuleOkToTF(apiObject.GetShiftedNumberRowSequenceRuleOk())
 	diags.Append(d...)
 
 	p.PasswordAgeMax = framework.Int32OkToTF(apiObject.GetMaxAgeDaysOk())

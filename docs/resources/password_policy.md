@@ -59,6 +59,14 @@ resource "pingone_password_policy" "my_password_policy" {
     max_length = 3
   }
 
+  qwerty_sequence_rule = {
+    max_length = 3
+  }
+
+  shifted_number_row_sequence_rule = {
+    max_length = 3
+  }
+
   max_repeated_characters = 2
   min_complexity          = 7
   min_unique_characters   = 5
@@ -91,6 +99,8 @@ resource "pingone_password_policy" "my_password_policy" {
 - `number_sequence_rule` (Attributes) A single object that specifies options to control sequential number checks for passwords. (see [below for nested schema](#nestedatt--number_sequence_rule))
 - `password_age_max` (Number) An integer that specifies the maximum number of days the same password can be used before it must be changed. The value must be a positive, non-zero integer.  The value must be greater than the sum of `min` (if set) + 21 (the expiration warning interval for passwords).
 - `password_age_min` (Number) An integer that specifies the minimum number of days a password must be used before changing. The value must be a positive, non-zero integer. This property is not enforced when not present.
+- `qwerty_sequence_rule` (Attributes) A single object that specifies options to control sequential QWERTY keyboard checks for passwords. (see [below for nested schema](#nestedatt--qwerty_sequence_rule))
+- `shifted_number_row_sequence_rule` (Attributes) A single object that specifies options to control sequential symbol row character checks for passwords. (see [below for nested schema](#nestedatt--shifted_number_row_sequence_rule))
 
 ### Read-Only
 
@@ -102,7 +112,7 @@ resource "pingone_password_policy" "my_password_policy" {
 
 Optional:
 
-- `max_length` (Number) An integer that specifies the maximum number of allowed sequential English letters in the password. Must be a value of `2` or `3`.
+- `max_length` (Number) An integer that specifies the maximum number of allowed sequential English letters in the password.  Options are `2`, `3`.
 
 
 <a id="nestedatt--history"></a>
@@ -151,7 +161,23 @@ Optional:
 
 Optional:
 
-- `max_length` (Number) An integer that specifies the maximum number of allowed sequential numbers in the password. Must be a value of `2` or `3`.
+- `max_length` (Number) An integer that specifies the maximum number of allowed sequential numbers in the password.  Options are `2`, `3`.
+
+
+<a id="nestedatt--qwerty_sequence_rule"></a>
+### Nested Schema for `qwerty_sequence_rule`
+
+Optional:
+
+- `max_length` (Number) An integer that specifies the maximum number of allowed sequential QWERTY keyboard characters in the password.  Fixed value of `3`.
+
+
+<a id="nestedatt--shifted_number_row_sequence_rule"></a>
+### Nested Schema for `shifted_number_row_sequence_rule`
+
+Optional:
+
+- `max_length` (Number) An integer that specifies the maximum number of allowed sequential symbol row characters in the password.  Options are `2`, `3`.
 
 ## Import
 

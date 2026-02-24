@@ -46,6 +46,8 @@ func TestAccPasswordPolicyDataSource_ByNameFull(t *testing.T) {
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "password_age_min"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "alphabet_sequence_rule.max_length"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "number_sequence_rule.max_length"),
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "qwerty_sequence_rule.max_length"),
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "shifted_number_row_sequence_rule.max_length"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "name", resourceFullName, "name"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "description", resourceFullName, "description"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "default", resourceFullName, "default"),
@@ -59,6 +61,8 @@ func TestAccPasswordPolicyDataSource_ByNameFull(t *testing.T) {
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "password_age_min", resourceFullName, "password_age_min"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "alphabet_sequence_rule.max_length", resourceFullName, "alphabet_sequence_rule.max_length"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "number_sequence_rule.max_length", resourceFullName, "number_sequence_rule.max_length"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "qwerty_sequence_rule.max_length", resourceFullName, "qwerty_sequence_rule.max_length"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "shifted_number_row_sequence_rule.max_length", resourceFullName, "shifted_number_row_sequence_rule.max_length"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "max_repeated_characters", resourceFullName, "max_repeated_characters"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "min_complexity", resourceFullName, "min_complexity"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "min_unique_characters", resourceFullName, "min_unique_characters"),
@@ -111,6 +115,8 @@ func TestAccPasswordPolicyDataSource_ByIDFull(t *testing.T) {
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "password_age_min"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "alphabet_sequence_rule.max_length"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "number_sequence_rule.max_length"),
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "qwerty_sequence_rule.max_length"),
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "shifted_number_row_sequence_rule.max_length"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "name", resourceFullName, "name"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "description", resourceFullName, "description"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "default", resourceFullName, "default"),
@@ -124,6 +130,8 @@ func TestAccPasswordPolicyDataSource_ByIDFull(t *testing.T) {
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "password_age_min", resourceFullName, "password_age_min"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "alphabet_sequence_rule.max_length", resourceFullName, "alphabet_sequence_rule.max_length"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "number_sequence_rule.max_length", resourceFullName, "number_sequence_rule.max_length"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "qwerty_sequence_rule.max_length", resourceFullName, "qwerty_sequence_rule.max_length"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "shifted_number_row_sequence_rule.max_length", resourceFullName, "shifted_number_row_sequence_rule.max_length"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "max_repeated_characters", resourceFullName, "max_repeated_characters"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "min_complexity", resourceFullName, "min_complexity"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "min_unique_characters", resourceFullName, "min_unique_characters"),
@@ -216,6 +224,14 @@ resource "pingone_password_policy" "%[2]s" {
     max_length = 3
   }
 
+  qwerty_sequence_rule = {
+    max_length = 3
+  }
+
+  shifted_number_row_sequence_rule = {
+    max_length = 3
+  }
+
   max_repeated_characters = 2
   min_complexity          = 7
   min_unique_characters   = 5
@@ -276,6 +292,14 @@ resource "pingone_password_policy" "%[2]s" {
   }
 
   number_sequence_rule = {
+    max_length = 3
+  }
+
+  qwerty_sequence_rule = {
+    max_length = 3
+  }
+
+  shifted_number_row_sequence_rule = {
     max_length = 3
   }
 

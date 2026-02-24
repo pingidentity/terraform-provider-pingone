@@ -45,6 +45,14 @@ resource "pingone_password_policy" "my_password_policy" {
     max_length = 3
   }
 
+  qwerty_sequence_rule = {
+    max_length = 3
+  }
+
+  shifted_number_row_sequence_rule = {
+    max_length = 3
+  }
+
   max_repeated_characters = 2
   min_complexity          = 7
   min_unique_characters   = 5

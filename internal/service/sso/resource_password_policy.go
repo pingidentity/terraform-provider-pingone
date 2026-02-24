@@ -46,6 +46,8 @@ type passwordPolicyResourceModelV1 struct {
 	Lockout                       types.Object                 `tfsdk:"lockout"`
 	MinCharacters                 types.Object                 `tfsdk:"min_characters"`
 	NumberSequenceRule            types.Object                 `tfsdk:"number_sequence_rule"`
+	QwertySequenceRule            types.Object                 `tfsdk:"qwerty_sequence_rule"`
+	ShiftedNumberRowSequenceRule  types.Object                 `tfsdk:"shifted_number_row_sequence_rule"`
 	PasswordAgeMax                types.Int32                  `tfsdk:"password_age_max"`
 	PasswordAgeMin                types.Int32                  `tfsdk:"password_age_min"`
 	MaxRepeatedCharacters         types.Int32                  `tfsdk:"max_repeated_characters"`
@@ -207,16 +209,32 @@ func (r *PasswordPolicyResource) Schema(ctx context.Context, req resource.Schema
 	)
 
 	alphabetSequenceRuleMaxLengthDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"An integer that specifies the maximum number of allowed sequential English letters in the password. Must be a value of `2` or `3`.",
-	)
+		"An integer that specifies the maximum number of allowed sequential English letters in the password.",
+	).AllowedValues(sequenceRuleMaxLengthMin, sequenceRuleMaxLengthMax)
 
 	numberSequenceRuleDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A single object that specifies options to control sequential number checks for passwords.",
 	)
 
 	numberSequenceRuleMaxLengthDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"An integer that specifies the maximum number of allowed sequential numbers in the password. Must be a value of `2` or `3`.",
+		"An integer that specifies the maximum number of allowed sequential numbers in the password.",
+	).AllowedValues(sequenceRuleMaxLengthMin, sequenceRuleMaxLengthMax)
+
+	qwertySequenceRuleDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies options to control sequential QWERTY keyboard checks for passwords.",
 	)
+
+	qwertySequenceRuleMaxLengthDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that specifies the maximum number of allowed sequential QWERTY keyboard characters in the password.",
+	).FixedValue(sequenceRuleMaxLengthMax)
+
+	shiftedNumberRowSequenceRuleDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies options to control sequential symbol row character checks for passwords.",
+	)
+
+	shiftedNumberRowSequenceRuleMaxLengthDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that specifies the maximum number of allowed sequential symbol row characters in the password.",
+	).AllowedValues(sequenceRuleMaxLengthMin, sequenceRuleMaxLengthMax)
 
 	resp.Schema = schema.Schema{
 
@@ -440,6 +458,42 @@ func (r *PasswordPolicyResource) Schema(ctx context.Context, req resource.Schema
 					"max_length": schema.Int32Attribute{
 						Description:         numberSequenceRuleMaxLengthDescription.Description,
 						MarkdownDescription: numberSequenceRuleMaxLengthDescription.MarkdownDescription,
+						Optional:            true,
+
+						Validators: []validator.Int32{
+							int32validator.OneOf(sequenceRuleMaxLengthMin, sequenceRuleMaxLengthMax),
+						},
+					},
+				},
+			},
+
+			"qwerty_sequence_rule": schema.SingleNestedAttribute{
+				Description:         qwertySequenceRuleDescription.Description,
+				MarkdownDescription: qwertySequenceRuleDescription.MarkdownDescription,
+				Optional:            true,
+
+				Attributes: map[string]schema.Attribute{
+					"max_length": schema.Int32Attribute{
+						Description:         qwertySequenceRuleMaxLengthDescription.Description,
+						MarkdownDescription: qwertySequenceRuleMaxLengthDescription.MarkdownDescription,
+						Optional:            true,
+
+						Validators: []validator.Int32{
+							int32validator.Between(sequenceRuleMaxLengthMax, sequenceRuleMaxLengthMax),
+						},
+					},
+				},
+			},
+
+			"shifted_number_row_sequence_rule": schema.SingleNestedAttribute{
+				Description:         shiftedNumberRowSequenceRuleDescription.Description,
+				MarkdownDescription: shiftedNumberRowSequenceRuleDescription.MarkdownDescription,
+				Optional:            true,
+
+				Attributes: map[string]schema.Attribute{
+					"max_length": schema.Int32Attribute{
+						Description:         shiftedNumberRowSequenceRuleMaxLengthDescription.Description,
+						MarkdownDescription: shiftedNumberRowSequenceRuleMaxLengthDescription.MarkdownDescription,
 						Optional:            true,
 
 						Validators: []validator.Int32{
@@ -932,6 +986,44 @@ func (p *passwordPolicyResourceModelV1) expand(ctx context.Context) (*management
 		data.SetNumberSequenceRule(*numberSequenceRule)
 	}
 
+	if !p.QwertySequenceRule.IsNull() && !p.QwertySequenceRule.IsUnknown() {
+		var plan passwordPolicySequenceRuleResourceModelV1
+		diags.Append(p.QwertySequenceRule.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		qwertySequenceRule := management.NewPasswordPolicyQwertySequenceRule()
+
+		if !plan.MaxLength.IsNull() && !plan.MaxLength.IsUnknown() {
+			qwertySequenceRule.SetMaxLength(plan.MaxLength.ValueInt32())
+		}
+
+		data.SetQwertySequenceRule(*qwertySequenceRule)
+	}
+
+	if !p.ShiftedNumberRowSequenceRule.IsNull() && !p.ShiftedNumberRowSequenceRule.IsUnknown() {
+		var plan passwordPolicySequenceRuleResourceModelV1
+		diags.Append(p.ShiftedNumberRowSequenceRule.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		shiftedNumberRowSequenceRule := management.NewPasswordPolicyShiftedNumberRowSequenceRule()
+
+		if !plan.MaxLength.IsNull() && !plan.MaxLength.IsUnknown() {
+			shiftedNumberRowSequenceRule.SetMaxLength(plan.MaxLength.ValueInt32())
+		}
+
+		data.SetShiftedNumberRowSequenceRule(*shiftedNumberRowSequenceRule)
+	}
+
 	if !p.PasswordAgeMax.IsNull() && !p.PasswordAgeMax.IsUnknown() {
 		data.SetMaxAgeDays(p.PasswordAgeMax.ValueInt32())
 	}
@@ -995,6 +1087,12 @@ func (p *passwordPolicyResourceModelV1) toState(apiObject *management.PasswordPo
 	diags.Append(d...)
 
 	p.NumberSequenceRule, d = passwordPolicySequenceRuleOkToTF(apiObject.GetNumberSequenceRuleOk())
+	diags.Append(d...)
+
+	p.QwertySequenceRule, d = passwordPolicySequenceRuleOkToTF(apiObject.GetQwertySequenceRuleOk())
+	diags.Append(d...)
+
+	p.ShiftedNumberRowSequenceRule, d = passwordPolicySequenceRuleOkToTF(apiObject.GetShiftedNumberRowSequenceRuleOk())
 	diags.Append(d...)
 
 	p.PasswordAgeMax = framework.Int32OkToTF(apiObject.GetMaxAgeDaysOk())
