@@ -1,0 +1,16 @@
+resource "pingone_davinci_connector_instance" "{{ .ConnectorId }}" {
+  environment_id = var.pingone_environment_id
+
+  connector = {
+    id = "{{ .ConnectorId }}"
+  }
+  name = "My awesome {{ .ConnectorId }}"
+
+{{- if .Properties }}
+  properties = jsonencode({
+{{- range .Properties }}
+    "{{ .Name }}" = {{ .Value }}
+{{- end }}
+  })
+{{- end }}
+}

@@ -28,7 +28,7 @@ build:
 install: build
 	go install $(BUILD_TAGS) -ldflags="-X main.version=$(VERSION)$(VERSION_SUFFIX)"
 
-generate: build fmt
+generate: build fmt generateconnectorref
 	GOFLAGS="$(BUILD_TAGS)" go tool tfplugindocs generate --provider-name terraform-provider-pingone
 
 test: build
@@ -115,4 +115,10 @@ devcheck: build vet fmt generate docscategorycheck lint test sweep testacc
 
 devchecknotest: build vet fmt generate docscategorycheck lint
 
-.PHONY: build install generate docscategorycheck test testacc sweep vet fmtcheck depscheck lint golangci-lint importlint providerlint tflint terrafmt terrafmtcheck betatagscheck devcheck devchecknotest
+generateconnectorref: build
+	@echo "==> Generating connector docs & examples..."
+	rm -rf examples/davinci-connector-instances/*.tf || true
+	mkdir -p examples/davinci-connector-instances
+	cd tools/dvgenerate && go run ./cmd/generate
+
+.PHONY: build install generate docscategorycheck test testacc sweep vet fmtcheck depscheck lint golangci-lint importlint providerlint tflint terrafmt terrafmtcheck betatagscheck devcheck devchecknotest generateconnectorref

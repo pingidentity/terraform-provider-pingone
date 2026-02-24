@@ -1,0 +1,3361 @@
+---
+layout: ""
+page_title: "Connector Instance Parameter Reference"
+description: |-
+  The guide describes the connection parameters for all connectors in the DaVinci platform, with examples of how to define within Terraform using the `pingone_davinci_connector_instance` resource.
+---
+
+# DaVinci Connection Instance Definitions
+
+Below is a list of all available DaVinci Connections available for use in the `pingone_davinci_connector_instance` resource. 
+If the `value` type of a property is not defined it must be inferred.
+
+
+## 1Kosmos connector
+
+Connector ID (`connector.id` in the resource): `connector1Kosmos`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `customAuth` (json):  Console display name: "Custom Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connector1Kosmos.tf") }}
+
+
+## AWS Lambda
+
+Connector ID (`connector.id` in the resource): `connectorAWSLambda`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `accessKeyId` (string): Access key to connect to AWS Environment. Console display name: "Access Key Id".
+* `region` (string): AWS Region where the Lambda function is created. Console display name: "AWS Region".
+* `secretAccessKey` (string): Secret Key to access the AWS. Console display name: "AWS Secret Key".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorAWSLambda.tf") }}
+
+
+## AWS Login
+
+Connector ID (`connector.id` in the resource): `awsIdpConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `openId` (json):  Console display name: "OpenId Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/awsIdpConnector.tf") }}
+
+
+## AWS Secrets Manager
+
+Connector ID (`connector.id` in the resource): `connectorAmazonAwsSecretsManager`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `accessKeyId` (string): The AWS Access Key. Console display name: "AWS Access Key".
+* `region` (string): The AWS Region. Console display name: "AWS Region".
+* `secretAccessKey` (string): The AWS Access Secret. Console display name: "AWS Access Secret".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorAmazonAwsSecretsManager.tf") }}
+
+
+## AbuseIPDB
+
+Connector ID (`connector.id` in the resource): `connectorAbuseipdb`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiKey` (string): API Key gathered from AbuseIPDB tenant. Console display name: "API Key".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorAbuseipdb.tf") }}
+
+
+## ActiveCampaign API
+
+Connector ID (`connector.id` in the resource): `connector-oai-activecampaignapi`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `authApiKey` (string): The authentication key to the ActiveCampaign API. Console display name: "API Key".
+* `authApiVersion` (string): The version of the ActiveCampaign API. Console display name: "API Version".
+* `basePath` (string): The base URL for contacting the API. Console display name: "Base Path".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connector-oai-activecampaignapi.tf") }}
+
+
+## Acuant
+
+Connector ID (`connector.id` in the resource): `connectorAcuant`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `customAuth` (json):  Console display name: "Custom Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorAcuant.tf") }}
+
+
+## Adobe Marketo
+
+Connector ID (`connector.id` in the resource): `adobemarketoConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `clientId` (string): Your Adobe Marketo client ID. Console display name: "Client ID".
+* `clientSecret` (string): Your Adobe Marketo client secret. Console display name: "Client Secret".
+* `endpoint` (string): The API endpoint for your Adobe Marketo instance, such as "abc123.mktorest.com/rest". Console display name: "API URL".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/adobemarketoConnector.tf") }}
+
+
+## Akamai MFA
+
+Connector ID (`connector.id` in the resource): `akamaiConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `customAuth` (json):  Console display name: "Custom Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/akamaiConnector.tf") }}
+
+
+## Allthenticate
+
+Connector ID (`connector.id` in the resource): `connectorAllthenticate`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `customAuth` (json):  Console display name: "Custom Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorAllthenticate.tf") }}
+
+
+## Amazon DynamoDB
+
+Connector ID (`connector.id` in the resource): `connectorAmazonDynamoDB`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `awsAccessKey` (string): Your AWS Access Key. Console display name: "AWS Access Key".
+* `awsAccessSecret` (string): Access Secret corresponding with Access Key found in Your Security Credentials. Console display name: "AWS Access Secret".
+* `awsRegion` (string): The AWS Region you are using the connector for. Console display name: "AWS Region".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorAmazonDynamoDB.tf") }}
+
+
+## Amazon Simple Email Service
+
+Connector ID (`connector.id` in the resource): `amazonSimpleEmailConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `awsAccessKey` (string):  Console display name: "AWS Access Key".
+* `awsAccessSecret` (string):  Console display name: "AWS Access Secret".
+* `awsRegion` (string):  Console display name: "AWS Region".
+* `from` (string): The email address that the message appears to originate from, as registered with your AWS account, such as "support@mycompany.com". Console display name: "From (Default) *".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/amazonSimpleEmailConnector.tf") }}
+
+
+## Annotation
+
+Connector ID (`connector.id` in the resource): `annotationConnector`
+
+*No properties*
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/annotationConnector.tf") }}
+
+
+## Apple Login
+
+Connector ID (`connector.id` in the resource): `appleConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `customAuth` (json):  Console display name: "Custom Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/appleConnector.tf") }}
+
+
+## Argyle
+
+Connector ID (`connector.id` in the resource): `argyleConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiUrl` (string):  Console display name: "API Server URL".
+* `clientId` (string):  Console display name: "Client ID".
+* `clientSecret` (string):  Console display name: "Client Secret".
+* `javascriptWebUrl` (string): Argyle loader javascript web URL. Console display name: "Argyle Loader Javascript Web URL".
+* `pluginKey` (string):  Console display name: "Plugin Key".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/argyleConnector.tf") }}
+
+
+## Asignio
+
+Connector ID (`connector.id` in the resource): `connectorAsignio`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `customAuth` (json):  Console display name: "Custom Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorAsignio.tf") }}
+
+
+## AuthID
+
+Connector ID (`connector.id` in the resource): `connectorAuthid`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `customAuth` (json):  Console display name: "Custom Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorAuthid.tf") }}
+
+
+## AuthenticID
+
+Connector ID (`connector.id` in the resource): `authenticIdConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `accountAccessKey` (string): Your Account Access Key provided by AuthenticID . Console display name: "Account Access Key".
+* `androidSDKLicenseKey` (string): License key is whitelisted for specific package name. Console display name: "Android SDK Licence Key".
+* `apiUrl` (string): AuthenticID REST API URL for sandbox/production environments. Console display name: "REST API URL".
+* `baseUrl` (string): AuthenticID API URL for sandbox/production environments. Console display name: "Base URL".
+* `clientCertificate` (string): Your Client Certificate provided by AuthenticID. Console display name: "Client Certificate".
+* `clientKey` (string): Your Client Key provided by AuthenticID. Console display name: "Client Key".
+* `iOSSDKLicenseKey` (string): License key is whitelisted for specific bundle id. Console display name: "iOS SDK Licence Key".
+* `passphrase` (string): Your Certificate Passphrase provided by AuthenticID. Console display name: "Certificate Passphrase".
+* `secretToken` (string): Your Secret Token provided by AuthenticID. Console display name: "Secret Token".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/authenticIdConnector.tf") }}
+
+
+## Authomize API
+
+Connector ID (`connector.id` in the resource): `connector-oai-authomizeapireference`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `authApiKey` (string): Your Authomize API key. Console display name: "API Key".
+* `basePath` (string): The base URL for the Authomize API, such as "https://api.authomize.com". Console display name: "Base URL".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connector-oai-authomizeapireference.tf") }}
+
+
+## Authomize Incident Connector
+
+Connector ID (`connector.id` in the resource): `connectorAuthomize`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiKey` (string): The API Key from the Authomize API Tokens creation page. Console display name: "Authomize API Key".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorAuthomize.tf") }}
+
+
+## Azure AD User Management
+
+Connector ID (`connector.id` in the resource): `azureUserManagementConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `baseUrl` (string): The Microsoft API URL to target. For a custom value, select Use Custom API URL and enter a value in the Custom API URL field. Console display name: "API URL".
+* `customApiUrl` (string): The URL for the Microsoft Graph API, such as "https://graph.microsoft.com/v1.0". Console display name: "Custom API URL".
+* `customAuth` (json):  Console display name: "Custom Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/azureUserManagementConnector.tf") }}
+
+
+## Badge
+
+Connector ID (`connector.id` in the resource): `connectorBadge`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `customAuth` (json):  Console display name: "Custom Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorBadge.tf") }}
+
+
+## BambooHR
+
+Connector ID (`connector.id` in the resource): `bambooConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiKey` (string):  Console display name: "API Key".
+* `baseUrl` (string):  BambooHR Base URL. Console display name: "Base URL".
+* `companySubDomain` (string):  Your BambooHR subdomain. Console display name: "Company Sub Domain".
+* `flowId` (string): Select ID of the flow to execute when BambooHR sends a webhook. Console display name: "Flow ID".
+* `skWebhookUri` (string): Use this url as the Webhook URL in the Third Party Integration's configuration. Console display name: "DaVinci Webhook URL".
+* `webhookToken` (string): Create a webhook token and configure it in the bambooHR webhook url. Console display name: "Webhook Token".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/bambooConnector.tf") }}
+
+
+## Berbix
+
+Connector ID (`connector.id` in the resource): `connectorBerbix`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `domainName` (string): Provide Berbix domain name. Console display name: "Domain Name".
+* `path` (string): Provide path of the API. Console display name: "Path".
+* `username` (string): Provide your Berbix user name. Console display name: "User Name".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorBerbix.tf") }}
+
+
+## Beyond Identity
+
+Connector ID (`connector.id` in the resource): `connectorBeyondIdentity`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `openId` (json):  Console display name: "OpenId Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorBeyondIdentity.tf") }}
+
+
+## BeyondTrust - Password Safe
+
+Connector ID (`connector.id` in the resource): `connectorBTps`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiKey` (string): API Key from your Password Safe environment. Console display name: "API Key".
+* `apiUser` (string): API User from your Password Safe environment. Console display name: "API User".
+* `domain` (string): Domain of your Password Safe environment. Console display name: "PasswordSafe Hostname".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorBTps.tf") }}
+
+
+## BeyondTrust - Privileged Remote Access
+
+Connector ID (`connector.id` in the resource): `connectorBTpra`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `clientID` (string): PRA API Client ID. Console display name: "Client ID".
+* `clientSecret` (string): PRA API Client Secret. Console display name: "Client Secret".
+* `praAPIurl` (string): URL of PRA Appliance. Console display name: "PRA Web API Address".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorBTpra.tf") }}
+
+
+## BeyondTrust - Remote Support
+
+Connector ID (`connector.id` in the resource): `connectorBTrs`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `clientID` (string): RS API Client ID. Console display name: "Client ID".
+* `clientSecret` (string): RS API Client Secret. Console display name: "Client Secret".
+* `rsAPIurl` (string): URL of RS Appliance. Console display name: "RS Web API Address".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorBTrs.tf") }}
+
+
+## BioCatch
+
+Connector ID (`connector.id` in the resource): `biocatchConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiUrl` (string):  Console display name: "API Server URL".
+* `customerId` (string):  Console display name: "Customer ID".
+* `javascriptCdnUrl` (string):  Console display name: "Javascript CDN URL".
+* `sdkToken` (string):  Console display name: "SDK Token".
+* `truthApiKey` (string): Fraudulent/Genuine Session Reporting API Key. Console display name: "Truth-mapping API Key".
+* `truthApiUrl` (string): Fraudulent/Genuine Session Reporting. Console display name: "Truth-mapping API URL".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/biocatchConnector.tf") }}
+
+
+## Bitbucket Login
+
+Connector ID (`connector.id` in the resource): `bitbucketIdpConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `oauth2` (json):  Console display name: "Oauth2 Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/bitbucketIdpConnector.tf") }}
+
+
+## CASTLE
+
+Connector ID (`connector.id` in the resource): `castleConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiSecret` (string): Your 32-character Castle API secret, such as “Olc…QBF”. Console display name: "API Secret".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/castleConnector.tf") }}
+
+
+## CLEAR
+
+Connector ID (`connector.id` in the resource): `connectorClear`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `customAuth` (json):  Console display name: "Custom Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorClear.tf") }}
+
+
+## Challenge
+
+Connector ID (`connector.id` in the resource): `challengeConnector`
+
+*No properties*
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/challengeConnector.tf") }}
+
+
+## Circle Access
+
+Connector ID (`connector.id` in the resource): `connectorCircleAccess`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `appKey` (string): App Key. Console display name: "App Key".
+* `customAuth` (json):  Console display name: "Custom Parameters".
+* `loginUrl` (string): The URL of your Circle Access login. Console display name: "Login Url".
+* `readKey` (string): Read Key. Console display name: "Read Key".
+* `returnToUrl` (string): When using the embedded flow player widget and an IDP/Social Login connector, provide a callback URL to return back to the application. Console display name: "Application Return To URL".
+* `writeKey` (string): Write key. Console display name: "Write Key".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorCircleAccess.tf") }}
+
+
+## Clearbit
+
+Connector ID (`connector.id` in the resource): `connectorClearbit`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiKey` (string): Clearbit API Key. Console display name: "API Key".
+* `riskApiVersion` (string): Clearbit - Risk API Version. Console display name: "Risk API Version".
+* `version` (string): Clearbit - Person API Version. Console display name: "Person API Version".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorClearbit.tf") }}
+
+
+## Cloudflare
+
+Connector ID (`connector.id` in the resource): `connectorCloudflare`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `accountId` (string): Cloudflare Account ID. Console display name: "Account ID".
+* `apiToken` (string): Cloudflare API Token. Console display name: "API Token".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorCloudflare.tf") }}
+
+
+## Code Snippet
+
+Connector ID (`connector.id` in the resource): `codeSnippetConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `code` (string): Follow example for code. Caution: Custom code is for advanced users only. Before using custom code, review the security risks in the DaVinci documentation by searching for "Using custom code safely". Console display name: "Code Snippet".
+* `inputSchema` (string): Follow example for JSON schema. Console display name: "Input Schema".
+* `outputSchema` (string): Follow example for JSON schema. Console display name: "Output Schema".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/codeSnippetConnector.tf") }}
+
+
+## Comply Advantage
+
+Connector ID (`connector.id` in the resource): `complyAdvatangeConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiKey` (string): API Key is the API key that you can retrieve from Comply Advantage Admin Portal. Console display name: "API Key".
+* `baseUrl` (string): Comply Advantage API URL for sandbox/production environments. Console display name: "Base URL".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/complyAdvatangeConnector.tf") }}
+
+
+## ConnectID
+
+Connector ID (`connector.id` in the resource): `connectIdConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `customAuth` (json):  Console display name: "Custom Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectIdConnector.tf") }}
+
+
+## Cookie
+
+Connector ID (`connector.id` in the resource): `cookieConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `hmacSigningKey` (string): Base64 encoded 256 bit key. Console display name: "HMAC Signing Key".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/cookieConnector.tf") }}
+
+
+## Copper API
+
+Connector ID (`connector.id` in the resource): `connector-oai-copperdeveloperapi`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `basePath` (string): The base URL for contacting the API. Console display name: "Base Path".
+* `contentType` (string): Content type. Console display name: "Content-Type".
+* `xPWAccessToken` (string): API Key. Console display name: "X-PW-AccessToken".
+* `xPWApplication` (string): Application. Console display name: "X-PW-Application".
+* `xPWUserEmail` (string): Email address of token owner. Console display name: "X-PW-UserEmail".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connector-oai-copperdeveloperapi.tf") }}
+
+
+## Credova
+
+Connector ID (`connector.id` in the resource): `credovaConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `baseUrl` (string): Base URL for Credova API. Console display name: "Base URL".
+* `password` (string): Password for the Credova Developer Portal. Console display name: "Credova Password".
+* `username` (string): Username for the Credova Developer Portal. Console display name: "Credova Username".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/credovaConnector.tf") }}
+
+
+## CrowdStrike
+
+Connector ID (`connector.id` in the resource): `crowdStrikeConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `baseURL` (string): The base URL of the CrowdStrike environment. Console display name: "CrowdStrike Base URL".
+* `clientId` (string): The Client ID of the application in CrowdStrike. Console display name: "Client ID".
+* `clientSecret` (string): The Client Secret provided by CrowdStrike. Console display name: "Client Secret".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/crowdStrikeConnector.tf") }}
+
+
+## Daon IDV
+
+Connector ID (`connector.id` in the resource): `connectorDaonidv`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `openId` (json):  Console display name: "OpenId Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorDaonidv.tf") }}
+
+
+## Daon IdentityX
+
+Connector ID (`connector.id` in the resource): `daonConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiUrl` (string): The protocol, host and base path to the IdX API. E.g. https://api.identityx-cloud.com/tenant1/IdentityXServices/rest/v1. Console display name: "API Base URL".
+* `password` (string): The password of the user to authenticate API calls. Console display name: "Admin Password".
+* `username` (string): The userId to authenticate API calls. Console display name: "Admin Username".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/daonConnector.tf") }}
+
+
+## Data Zoo
+
+Connector ID (`connector.id` in the resource): `dataZooConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `password` (string):  Console display name: "Data Zoo Password".
+* `username` (string):  Console display name: "Data Zoo Username".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/dataZooConnector.tf") }}
+
+
+## Datadog API
+
+Connector ID (`connector.id` in the resource): `connector-oai-datadogapi`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `authApiKey` (string): The API key for an account that has access to the Datadog API. Console display name: "Authentication API Key".
+* `authApplicationKey` (string): The Application key for an account that has access to the Datadog API. Console display name: "Authentication Application Key".
+* `basePath` (string): The base URL for contacting the Datadog API, such as "https://api.us3.datadoghq.com". Console display name: "API URL".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connector-oai-datadogapi.tf") }}
+
+
+## DeBounce
+
+Connector ID (`connector.id` in the resource): `connectorDeBounce`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiKey` (string): A DeBounce API Key is physically a token/code of 13 random alphanumeric characters. If you need to create an API key, please log in to your DeBounce account and then navigate to the API section. Console display name: "API Key".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorDeBounce.tf") }}
+
+
+## Device Policy
+
+Connector ID (`connector.id` in the resource): `devicePolicyConnector`
+
+*No properties*
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/devicePolicyConnector.tf") }}
+
+
+## DigiLocker
+
+Connector ID (`connector.id` in the resource): `digilockerConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `oauth2` (json):  Console display name: "Oauth2 Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/digilockerConnector.tf") }}
+
+
+## Digidentity
+
+Connector ID (`connector.id` in the resource): `digidentityConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `oauth2` (json):  Console display name: "Oauth2 Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/digidentityConnector.tf") }}
+
+
+## Druva inSync Cloud API
+
+Connector ID (`connector.id` in the resource): `connector-oai-druvainsynccloud`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `authClientId` (string): The Client ID of the authenticating application. Console display name: "Client ID".
+* `authClientSecret` (string): The Secret Key for the authenticating application. Console display name: "Secret Key".
+* `authTokenUrl` (string): The URL used to obtain an access token. Console display name: "Token URL".
+* `basePath` (string): The base URL for contacting the API. Console display name: "Base Path".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connector-oai-druvainsynccloud.tf") }}
+
+
+## Duo
+
+Connector ID (`connector.id` in the resource): `duoConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `customAuth` (json):  Console display name: "Custom Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/duoConnector.tf") }}
+
+
+## Entrust
+
+Connector ID (`connector.id` in the resource): `entrustConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `applicationId` (string): The application ID for the Identity as a Service application. Console display name: "Application ID".
+* `serviceDomain` (string): The domain of the Entrust service. Format is '<customer>.<region>.trustedauth.com'. For example, 'mycompany.us.trustedauth.com'. Console display name: "Service Domain".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/entrustConnector.tf") }}
+
+
+## Equifax
+
+Connector ID (`connector.id` in the resource): `equifaxConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `baseUrl` (string): Base URL for Equifax API. Console display name: "Base URL".
+* `clientId` (string): When you Create a New App, Equifax will assign a Client ID per environment for the API Product. Console display name: "Client ID".
+* `clientSecret` (string): When you Create a New App, Equifax will assign a Client Secret per environment for the API Product. Console display name: "Client Secret".
+* `equifaxSoapApiEnvironment` (string): SOAP API WSDL Environment. Console display name: "SOAP API Environment".
+* `memberNumber` (string): Unique Identifier of Customer. Please contact Equifax Sales Representative during client onboarding for this value. Console display name: "Member Number".
+* `password` (string): Password provided by Equifax for SOAP API. Console display name: "Password for SOAP API".
+* `username` (string): Username provided by Equifax for SOAP API. Console display name: "Username for SOAP API".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/equifaxConnector.tf") }}
+
+
+## Error Message
+
+Connector ID (`connector.id` in the resource): `errorConnector`
+
+*No properties*
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/errorConnector.tf") }}
+
+
+## Facebook Login
+
+Connector ID (`connector.id` in the resource): `facebookIdpConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `oauth2` (json):  Console display name: "Oauth2 Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/facebookIdpConnector.tf") }}
+
+
+## Fingerprint JS
+
+Connector ID (`connector.id` in the resource): `fingerprintjsConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiToken` (string):  Console display name: "Fingerprint Subscription API Token".
+* `javascriptCdnUrl` (string):  Console display name: "Javascript CDN URL".
+* `token` (string):  Console display name: "Fingerprint Subscription Browser Token".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/fingerprintjsConnector.tf") }}
+
+
+## Finicity
+
+Connector ID (`connector.id` in the resource): `finicityConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `appKey` (string): Finicity App Key from Finicity Developer Portal. Console display name: "Finicity App Key".
+* `baseUrl` (string): Base URL for Finicity API. Console display name: "Base URL".
+* `partnerId` (string): The partner id you can obtain from your Finicity developer dashboard. Console display name: "Partner ID".
+* `partnerSecret` (string): Partner Secret from Finicity Developer Portal. Console display name: "Partner Secret".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/finicityConnector.tf") }}
+
+
+## Flow Analytics
+
+Connector ID (`connector.id` in the resource): `analyticsConnector`
+
+*No properties*
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/analyticsConnector.tf") }}
+
+
+## Flow Conductor
+
+Connector ID (`connector.id` in the resource): `flowConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `enforcedSignedToken` (boolean):  Console display name: "Enforce Signed Token".
+* `inputSchema` (string): Follow example for JSON schema. Console display name: "Input Schema".
+* `pemPublicKey` (string): pem public key. Console display name: "Public Key".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/flowConnector.tf") }}
+
+
+## Forter
+
+Connector ID (`connector.id` in the resource): `forterConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiVersion` (string): API Version. Console display name: " Forter API Version".
+* `secretKey` (string): Secret Key from Forter tenant. Console display name: "Forter Secret Key".
+* `siteId` (string): Site ID from Forter tenant. Console display name: "Forter SiteID".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/forterConnector.tf") }}
+
+
+## Freshdesk
+
+Connector ID (`connector.id` in the resource): `connectorFreshdesk`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiKey` (string): Make sure that the "APIkey:X" is Base64-encoded before pasting into the text field. Console display name: "Freshdesk API Key".
+* `baseURL` (string): The <tenant>.freshdesk.com URL or custom domain. Console display name: "Freshdesk Base URL (or Domain)".
+* `version` (string): The current Freshdesk API Version. Console display name: "Freshdesk API Version".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorFreshdesk.tf") }}
+
+
+## Freshservice
+
+Connector ID (`connector.id` in the resource): `connectorFreshservice`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiKey` (string): Your Freshservice API key. Console display name: "API Key".
+* `domain` (string): Your Freshservice domain. Example: https://domain.freshservice.com/. Console display name: "Domain".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorFreshservice.tf") }}
+
+
+## Functions
+
+Connector ID (`connector.id` in the resource): `functionsConnector`
+
+*No properties*
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/functionsConnector.tf") }}
+
+
+## GBG
+
+Connector ID (`connector.id` in the resource): `gbgConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `password` (string):  Console display name: "GBG Password".
+* `requestUrl` (string):  Console display name: "Request URL".
+* `soapAction` (string): SOAP Action is a header required for the soap request. Console display name: "Soap Action URL".
+* `username` (string):  Console display name: "GBG Username".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/gbgConnector.tf") }}
+
+
+## GitHub API
+
+Connector ID (`connector.id` in the resource): `connector-oai-github`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiVersion` (string): The GitHub v3 REST API version, such as "2022-11-28". Console display name: "API Version".
+* `authBearerToken` (string): The authentication bearer token that has access to GitHub v3 REST API. Console display name: "Authentication Bearer Token".
+* `basePath` (string): The base URL for the GitHub API, such as "https://api.github.com". Console display name: "API URL".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connector-oai-github.tf") }}
+
+
+## GitHub Login
+
+Connector ID (`connector.id` in the resource): `githubIdpConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `oauth2` (json):  Console display name: "Oauth2 Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/githubIdpConnector.tf") }}
+
+
+## Google Analytics (Universal Analytics)
+
+Connector ID (`connector.id` in the resource): `connectorGoogleanalyticsUA`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `trackingID` (string): The tracking ID / web property ID. The format is UA-XXXX-Y. All collected data is associated by this ID. Console display name: "Tracking ID".
+* `version` (string): The Protocol version. The current value is '1'. This will only change when there are changes made that are not backwards compatible. Console display name: "Version".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorGoogleanalyticsUA.tf") }}
+
+
+## Google Chrome Enterprise Device Trust
+
+Connector ID (`connector.id` in the resource): `connectorGoogleChromeEnterprise`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `customAuth` (json):  Console display name: "Custom Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorGoogleChromeEnterprise.tf") }}
+
+
+## Google Login
+
+Connector ID (`connector.id` in the resource): `googleConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `openId` (json):  Console display name: "OpenId Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/googleConnector.tf") }}
+
+
+## Google Workspace Admin
+
+Connector ID (`connector.id` in the resource): `googleWorkSpaceAdminConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `iss` (string): The email address associated with the Google Workspace service, such as "google-workspace-admin@xenon-set-123456.iam.gserviceaccount.com". Console display name: "Service Account Email Address".
+* `privateKey` (string): The private key associated with the public key that you added to the Google Workspace service. Console display name: "Private Key".
+* `sub` (string): The administrator's email address. Console display name: "Admin Email Address".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/googleWorkSpaceAdminConnector.tf") }}
+
+
+## HTTP
+
+Connector ID (`connector.id` in the resource): `httpConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `connectionId` (string):  Console display name: "Select an OpenID token management connection for signed HTTP responses.".
+* `recaptchaSecretKey` (string): The Secret Key from reCAPTCHA Admin dashboard. Console display name: "reCAPTCHA v2 Secret Key".
+* `recaptchaSiteKey` (string): The Site Key from reCAPTCHA Admin dashboard. Console display name: "reCAPTCHA v2 Site Key".
+* `whiteList` (string): Enter the hostname for the trusted sites that host your HTML. Note: Ensure that the content hosted on these sites can be trusted and that publishing safeguards are in place to prevent unexpected issues. Console display name: "Trusted Sites".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/httpConnector.tf") }}
+
+
+## HUMAN
+
+Connector ID (`connector.id` in the resource): `connectorHuman`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `humanAuthenticationToken` (string): Bearer Token from HUMAN. Console display name: "HUMAN Authentication Token".
+* `humanCustomerID` (string): Customer ID from HUMAN. Console display name: "HUMAN Customer ID".
+* `humanPolicyName` (string): HUMAN mitigation policy name. Console display name: "HUMAN Policy Name".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorHuman.tf") }}
+
+
+## HUMAN
+
+Connector ID (`connector.id` in the resource): `humanCompromisedConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `appId` (string): App ID from your HUMAN Tenant. Console display name: "HUMAN App ID".
+* `authToken` (string): Auth Token from your HUMAN Tenant. Console display name: "HUMAN Auth Token".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/humanCompromisedConnector.tf") }}
+
+
+## HYPR
+
+Connector ID (`connector.id` in the resource): `hyprConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `customAuth` (json):  Console display name: "Custom Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/hyprConnector.tf") }}
+
+
+## HYPR Adapt
+
+Connector ID (`connector.id` in the resource): `connectorHyprAdapt`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `accessToken` (string): Access Token. Console display name: "HYPR Adapt Access Token".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorHyprAdapt.tf") }}
+
+
+## Have I Been Pwned
+
+Connector ID (`connector.id` in the resource): `haveIBeenPwnedConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiKey` (string):  Console display name: "Have I Been Pwned API Key".
+* `apiUrl` (string):  Console display name: "API Server URL".
+* `userAgent` (string):  
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/haveIBeenPwnedConnector.tf") }}
+
+
+## Hellō Connector
+
+Connector ID (`connector.id` in the resource): `connectorHello`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `customAuth` (json):  Console display name: "Custom Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorHello.tf") }}
+
+
+## HubSpot Companies API
+
+Connector ID (`connector.id` in the resource): `connector-oai-hubspotcompanies`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `authBearerToken` (string): The authenticating token. Console display name: "Bearer token".
+* `basePath` (string): The base URL for contacting the API. Console display name: "Base Path".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connector-oai-hubspotcompanies.tf") }}
+
+
+## Hubspot
+
+Connector ID (`connector.id` in the resource): `connectorHubspot`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `bearerToken` (string): Your unique API key. Console display name: "API Key".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorHubspot.tf") }}
+
+
+## ID DataWeb
+
+Connector ID (`connector.id` in the resource): `idDatawebConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `customAuth` (json):  Console display name: "Custom Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/idDatawebConnector.tf") }}
+
+
+## ID R&D
+
+Connector ID (`connector.id` in the resource): `idranddConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiKey` (string):  Console display name: "API Key".
+* `apiUrl` (string):  Console display name: "API Server URL".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/idranddConnector.tf") }}
+
+
+## ID.me
+
+Connector ID (`connector.id` in the resource): `idMeConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `oauth2` (json):  Console display name: "Oauth2 Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/idMeConnector.tf") }}
+
+
+## ID.me - Community Verification
+
+Connector ID (`connector.id` in the resource): `idmecommunityConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `openId` (json):  Console display name: "OpenId Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/idmecommunityConnector.tf") }}
+
+
+## ID.me - Identity Verification
+
+Connector ID (`connector.id` in the resource): `connectorIdMeIdentity`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `openId` (json):  Console display name: "OpenId Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorIdMeIdentity.tf") }}
+
+
+## IDEMIA
+
+Connector ID (`connector.id` in the resource): `idemiaConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apikey` (string):  Console display name: "API Key".
+* `baseUrl` (string): Base Url for IDEMIA API. Can be found in the dashboard documents. Console display name: "IDEMIA API base URL".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/idemiaConnector.tf") }}
+
+
+## IDI Data
+
+Connector ID (`connector.id` in the resource): `skPeopleIntelligenceConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `authUrl` (string):  Console display name: "Authorization URL".
+* `clientId` (string):  Console display name: "Client ID".
+* `clientSecret` (string):  Console display name: "Client Secret".
+* `dppa` (string):  Console display name: "DPPA".
+* `glba` (string):  Console display name: "GLBA".
+* `searchUrl` (string):  Console display name: "Search URL".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/skPeopleIntelligenceConnector.tf") }}
+
+
+## IDI coreIDENTITY
+
+Connector ID (`connector.id` in the resource): `connectorIdiVERIFIED`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiSecret` (string): Please enter your API secret that IDI coreIDENTITY has provided you. Console display name: "API Secret".
+* `companyKey` (string): Please enter the company key that IDI coreIDENTITY has assigned. Console display name: "Company Key".
+* `idiEnv` (string): Please choose which coreIDENTITY environment you would like to query . Console display name: "Environment".
+* `siteKey` (string): Please enter your site key that IDI coreIDENTITY has provided you. Console display name: "Site Key".
+* `uniqueUrl` (string): Please enter your unique URL that IDI coreIDENTITY has provided you. Console display name: "Unique URL".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorIdiVERIFIED.tf") }}
+
+
+## IDmelon
+
+Connector ID (`connector.id` in the resource): `connectorIdmelon`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `customAuth` (json):  Console display name: "Custom Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorIdmelon.tf") }}
+
+
+## IDmission
+
+Connector ID (`connector.id` in the resource): `idmissionConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `authDescription` (string):  Console display name: "Authentication Description".
+* `connectorName` (string):  Console display name: "Connector Name".
+* `description` (string):  Console display name: "Description".
+* `details1` (string):  Console display name: "Credentials Details 1".
+* `details2` (string):  Console display name: "Credentials Details 2".
+* `iconUrl` (string):  Console display name: "Icon URL".
+* `iconUrlPng` (string):  Console display name: "Icon URL in PNG".
+* `loginId` (string):  Console display name: "Sign On ID".
+* `merchantId` (string):  Console display name: "Merchant ID".
+* `password` (string):  Console display name: "Password".
+* `productId` (string):  Console display name: "Product ID".
+* `productName` (string):  Console display name: "Product Name".
+* `showCredAddedOn` (boolean):  Console display name: "Show Credentials Added On?".
+* `showCredAddedVia` (boolean):  Console display name: "Show Credentials Added through ?".
+* `title` (string):  Console display name: "Title".
+* `toolTip` (string):  Console display name: "Tooltip".
+* `url` (string):  Console display name: "IDmission Server URL".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/idmissionConnector.tf") }}
+
+
+## IDmission - OIDC
+
+Connector ID (`connector.id` in the resource): `idmissionOidcConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `customAuth` (json):  Console display name: "Custom Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/idmissionOidcConnector.tf") }}
+
+
+## IdRamp
+
+Connector ID (`connector.id` in the resource): `idrampOidcConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `customAuth` (json):  Console display name: "Custom Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/idrampOidcConnector.tf") }}
+
+
+## Image
+
+Connector ID (`connector.id` in the resource): `imageConnector`
+
+*No properties*
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/imageConnector.tf") }}
+
+
+## Incode
+
+Connector ID (`connector.id` in the resource): `incodeConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `customAuth` (json):  Console display name: "Custom Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/incodeConnector.tf") }}
+
+
+## Infinipoint
+
+Connector ID (`connector.id` in the resource): `connectorInfinipoint`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `customAuth` (json):  Console display name: "Custom Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorInfinipoint.tf") }}
+
+
+## Intellicheck
+
+Connector ID (`connector.id` in the resource): `intellicheckConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiKey` (string): API Key from your Intellicheck tenant. Console display name: "API Key".
+* `baseUrl` (string): Base URL from your Intellicheck tenant (Including protocol - https://). Console display name: "Base URL".
+* `customerId` (string): Customer ID from your Intellicheck tenant. Console display name: "Customer ID".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/intellicheckConnector.tf") }}
+
+
+## Jamf
+
+Connector ID (`connector.id` in the resource): `connectorJamf`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `jamfPassword` (string): Enter Password for token. Console display name: "JAMF Password".
+* `jamfUsername` (string): Enter Username for token. Console display name: "JAMF Username".
+* `serverName` (string): Enter Server Name for Base URL. Console display name: "Server Name".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorJamf.tf") }}
+
+
+## Jira
+
+Connector ID (`connector.id` in the resource): `jiraConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiKey` (string): You may need to create a token from Jira with your credentials, if you haven't created one. Console display name: "Jira API token".
+* `apiUrl` (string): Base URL of the Jira instance. Console display name: "Base Url".
+* `email` (string): Email used for your Jira account. Console display name: "Email Address".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/jiraConnector.tf") }}
+
+
+## Jira Service Desk
+
+Connector ID (`connector.id` in the resource): `connectorJiraServiceDesk`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `JIRAServiceDeskAuth` (string): Bearer Authorization Token for JIRA Service Desk. Console display name: "Bearer Authorization Token for JIRA Service Desk".
+* `JIRAServiceDeskCreateData` (string): Raw JSON body to create new JIRA service desk request. Example: {   "requestParticipants": ["qm:a713c8ea-1075-4e30-9d96-891a7d181739:5ad6d69abfa3980ce712caae"   ],   "serviceDeskId": "10",   "requestTypeId": "25",   "requestFieldValues": {     "summary": "Request JSD help via REST",     "description": "I need a new *mouse* for my Mac"   } }. Console display name: "Raw JSON for creating new JIRA service desk request".
+* `JIRAServiceDeskURL` (string): URL for JIRA Service Desk. Example: your-domain.atlassian.net. Console display name: "JIRA Service Desk URL".
+* `JIRAServiceDeskUpdateData` (string): Raw JSON body to update JIRA service desk request. Example: {"id": "1","additionalComment": {"body": "I have fixed the problem."}}. Console display name: "Raw JSON for updating JIRA service desk".
+* `method` (string): The HTTP Method. Console display name: "Method".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorJiraServiceDesk.tf") }}
+
+
+## Jumio
+
+Connector ID (`connector.id` in the resource): `jumioConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiKey` (string):  Console display name: "API Key".
+* `authDescription` (string):  Console display name: "Authentication Description".
+* `authUrl` (string):  Console display name: "Base URL for Authentication".
+* `authorizationTokenLifetime` (number): default: 1800 (30 minutes). maximum: 5184000 (60 days). Console display name: "Time Transaction URL Valid (seconds)".
+* `baseColor` (string): Must be passed with bgColor. Console display name: "HEX Main Color".
+* `bgColor` (string): Must be passed with baseColor. Console display name: "HEX Background Color.".
+* `callbackUrl` (string):  Console display name: "Callback URL".
+* `clientSecret` (string):  Console display name: "API Secret".
+* `connectorName` (string):  Console display name: "Connector Name".
+* `description` (string):  Console display name: "Description".
+* `details1` (string):  Console display name: "Credentials Details 1".
+* `details2` (string):  Console display name: "Credentials Details 2".
+* `doNotShowInIframe` (boolean): If this is true, user will be redirected to the verification url and then redirected back when complete. Console display name: "Do not show in iFrame".
+* `docVerificationUrl` (string):  Console display name: "Document Verification Url".
+* `headerImageUrl` (string): Logo must be: landscape (16:9 or 4:3), min. height of 192 pixels, size 8-64 KB. Console display name: "Custom Header Logo URL".
+* `iconUrl` (string):  Console display name: "Icon URL".
+* `iconUrlPng` (string):  Console display name: "Icon URL in PNG".
+* `locale` (string): Renders content in the specified language. Console display name: "Locale".
+* `showCredAddedOn` (boolean):  Console display name: "Show Credentials Added On?".
+* `showCredAddedVia` (boolean):  Console display name: "Show Credentials Added through ?".
+* `title` (string):  Console display name: "Title".
+* `toolTip` (string):  Console display name: "Tooltip".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/jumioConnector.tf") }}
+
+
+## KBA
+
+Connector ID (`connector.id` in the resource): `kbaConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `authDescription` (string):  Console display name: "Authentication Description".
+* `connectorName` (string):  Console display name: "Connector Name".
+* `description` (string):  Console display name: "Description".
+* `details1` (string):  Console display name: "Credentials Details 1".
+* `details2` (string):  Console display name: "Credentials Details 2".
+* `formFieldsList` (json):  Console display name: "Fields List".
+* `iconUrl` (string):  Console display name: "Icon URL".
+* `iconUrlPng` (string):  Console display name: "Icon URL in PNG".
+* `showCredAddedOn` (boolean):  Console display name: "Show Credentials Added On?".
+* `showCredAddedVia` (boolean):  Console display name: "Show Credentials Added through ?".
+* `title` (string):  Console display name: "Title".
+* `toolTip` (string):  Console display name: "Tooltip".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/kbaConnector.tf") }}
+
+
+## KYXStart
+
+Connector ID (`connector.id` in the resource): `kyxstartConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `clientId` (string): KYXStart Client ID. Console display name: "Client ID".
+* `clientSecret` (string): KYXStart Client Secret. Console display name: "Client Secret".
+* `tenantName` (string): Tenant Name from KYXStart Account. Console display name: "Tenant Name".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/kyxstartConnector.tf") }}
+
+
+## Kaizen Secure Voiz
+
+Connector ID (`connector.id` in the resource): `kaizenVoizConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiUrl` (string): example: http://<server_root>/ksvvoiceservice/rest/service. Console display name: "API Server URL".
+* `applicationName` (string):  Console display name: "Application Name".
+* `authDescription` (string):  Console display name: "Authentication Description".
+* `connectorName` (string):  Console display name: "Connector Name".
+* `description` (string):  Console display name: "Description".
+* `details1` (string):  Console display name: "Credentials Details 1".
+* `details2` (string):  Console display name: "Credentials Details 2".
+* `iconUrl` (string):  Console display name: "Icon URL".
+* `iconUrlPng` (string):  Console display name: "Icon URL in PNG".
+* `showCredAddedOn` (boolean):  Console display name: "Show Credentials Added On?".
+* `showCredAddedVia` (boolean):  Console display name: "Show Credentials Added through ?".
+* `title` (string):  Console display name: "Title".
+* `toolTip` (string):  Console display name: "Tooltip".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/kaizenVoizConnector.tf") }}
+
+
+## Keyless
+
+Connector ID (`connector.id` in the resource): `connectorKeyless`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `customAuth` (json):  Console display name: "Custom Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorKeyless.tf") }}
+
+
+## Keyri QR Login
+
+Connector ID (`connector.id` in the resource): `connectorKeyri`
+
+*No properties*
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorKeyri.tf") }}
+
+
+## LDAP
+
+Connector ID (`connector.id` in the resource): `pingOneLDAPConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `clientId` (string): The Client ID of your PingOne Worker application. Console display name: "Client ID".
+* `clientSecret` (string): The Client Secret of your PingOne Worker application. Console display name: "Client Secret".
+* `envId` (string): Your PingOne environment ID. Console display name: "Environment ID".
+* `gatewayId` (string): Your PingOne LDAP gateway ID. Console display name: "Gateway ID".
+* `region` (string): The region in which your PingOne environment exists. Console display name: "Region".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/pingOneLDAPConnector.tf") }}
+
+
+## LaunchDarkly API
+
+Connector ID (`connector.id` in the resource): `connector-oai-launchdarklyrestapi`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `authApiKey` (string): The authentication key to the LaunchDarkly REST API. Console display name: "API Key".
+* `basePath` (string): The base URL for contacting the API. Console display name: "Base Path".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connector-oai-launchdarklyrestapi.tf") }}
+
+
+## LexisNexis
+
+Connector ID (`connector.id` in the resource): `lexisnexisV2Connector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiKey` (string): Your LexisNexis API key, such as “o3x9ywfs26rm1zvl”. Console display name: "API Key".
+* `apiUrl` (string): The API URL to target. For a custom value, select Use Custom API URL and enter a value in the Custom API URL field. Console display name: "API URL".
+* `orgId` (string): Your LexisNexis organization ID, such as “4en6ll2s”. Console display name: "Organization ID".
+* `useCustomApiURL` (string): The API URL to target, such as “https://h.online-metrix.net”. Console display name: "Custom API URL".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/lexisnexisV2Connector.tf") }}
+
+
+## LinkedIn Login
+
+Connector ID (`connector.id` in the resource): `linkedInConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `oauth2` (json):  Console display name: "Oauth2 Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/linkedInConnector.tf") }}
+
+
+## Location Policy
+
+Connector ID (`connector.id` in the resource): `locationPolicyConnector`
+
+*No properties*
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/locationPolicyConnector.tf") }}
+
+
+## Mailchimp
+
+Connector ID (`connector.id` in the resource): `connectorMailchimp`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `transactionalApiKey` (string): The Transactional API Key is used to send data to the transactional API. Console display name: "Transactional API Key".
+* `transactionalApiVersion` (string): Mailchimp - Transactional API Version. Console display name: "Transactional API Version".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorMailchimp.tf") }}
+
+
+## Mailgun
+
+Connector ID (`connector.id` in the resource): `connectorMailgun`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiKey` (string): Mailgun API Key. Console display name: "API Key".
+* `apiVersion` (string): Mailgun API Version. Console display name: "API Version".
+* `mailgunDomain` (string): Name of the desired domain (e.g. mail.mycompany.com). Console display name: "Domain".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorMailgun.tf") }}
+
+
+## Mailjet API
+
+Connector ID (`connector.id` in the resource): `connector-oai-mailjetapi`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `authPassword` (string): API Secret Key. Console display name: "API Secret Key".
+* `authUsername` (string): API Key. Console display name: "API Key".
+* `basePath` (string): The base URL for contacting the API. Console display name: "Base Path".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connector-oai-mailjetapi.tf") }}
+
+
+## Melissa Global Address
+
+Connector ID (`connector.id` in the resource): `melissaConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiKey` (string): License Key is the API key that you can retrieve from Melissa Admin Portal. Console display name: "License Key".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/melissaConnector.tf") }}
+
+
+## Microsoft Dynamics - Customer Insights
+
+Connector ID (`connector.id` in the resource): `microsoftDynamicsCustomerInsightsConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `baseURL` (string): Base URL. Console display name: "Base URL".
+* `clientId` (string): Client ID. Console display name: "Client ID".
+* `clientSecret` (string): Client Secret. Console display name: "Client Secret".
+* `environmentName` (string): Environment Name. Console display name: "Environment Name".
+* `grantType` (string): Grant Type. Console display name: "Grant Type".
+* `tenant` (string): Tenant. Console display name: "Tenant".
+* `version` (string): Web API Version. Console display name: "Version".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/microsoftDynamicsCustomerInsightsConnector.tf") }}
+
+
+## Microsoft Edge for Business
+
+Connector ID (`connector.id` in the resource): `connectorMicrosoftEdge`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `customAuth` (json):  Console display name: "Custom Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorMicrosoftEdge.tf") }}
+
+
+## Microsoft Intune
+
+Connector ID (`connector.id` in the resource): `connectorMicrosoftIntune`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `clientId` (string): Client ID. Console display name: "Client ID".
+* `clientSecret` (string): Client Secret. Console display name: "Client Secret".
+* `grantType` (string): Grant Type. Console display name: "Grant Type".
+* `scope` (string): Scope. Console display name: "Scope".
+* `tenant` (string): Tenant. Console display name: "Tenant".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorMicrosoftIntune.tf") }}
+
+
+## Microsoft Login
+
+Connector ID (`connector.id` in the resource): `microsoftIdpConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `openId` (json):  Console display name: "OpenId Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/microsoftIdpConnector.tf") }}
+
+
+## Microsoft Teams
+
+Connector ID (`connector.id` in the resource): `microsoftTeamsConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `customAuth` (json):  Console display name: "Custom Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/microsoftTeamsConnector.tf") }}
+
+
+## NuData Security
+
+Connector ID (`connector.id` in the resource): `nudataConnector`
+
+*No properties*
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/nudataConnector.tf") }}
+
+
+## Nuance
+
+Connector ID (`connector.id` in the resource): `nuanceConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `authDescription` (string):  Console display name: "Authentication Description".
+* `configSetName` (string): The Config Set Name for accessing Nuance API. Console display name: "Config Set Name".
+* `connectorName` (string):  Console display name: "Connector Name".
+* `description` (string):  Console display name: "Description".
+* `details1` (string):  Console display name: "Credentials Details 1".
+* `details2` (string):  Console display name: "Credentials Details 2".
+* `iconUrl` (string):  Console display name: "Icon URL".
+* `iconUrlPng` (string):  Console display name: "Icon URL in PNG".
+* `passphrase1` (string): Passphrase that the user will need to speak for voice sample. Console display name: "Passphrase One".
+* `passphrase2` (string): Passphrase that the user will need to speak for voice sample. Console display name: "Passphrase Two".
+* `passphrase3` (string): Passphrase that the user will need to speak for voice sample. Console display name: "Passphrase Three".
+* `passphrase4` (string): Passphrase that the user will need to speak for voice sample. Console display name: "Passphrase Four".
+* `passphrase5` (string): Passphrase that the user will need to speak for voice sample. Console display name: "Passphrase Five".
+* `showCredAddedOn` (boolean):  Console display name: "Show Credentials Added On?".
+* `showCredAddedVia` (boolean):  Console display name: "Show Credentials Added through ?".
+* `title` (string):  Console display name: "Title".
+* `toolTip` (string):  Console display name: "Tooltip".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/nuanceConnector.tf") }}
+
+
+## OIDC & OAuth IdP
+
+Connector ID (`connector.id` in the resource): `genericConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `customAuth` (json):  Console display name: "Custom Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/genericConnector.tf") }}
+
+
+## OPSWAT MetaAccess
+
+Connector ID (`connector.id` in the resource): `connectorOpswat`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `clientID` (string): Oauth client key for authenticating API calls with MetaAccess. Console display name: "Oauth Client Key".
+* `clientSecret` (string): Oauth client secret for authenticating API calls with MetaAccess. Console display name: "Oauth Client Secret".
+* `crossDomainApiPort` (string): MetaAccess Cross-Domain API integration port. Console display name: "Cross-Domain API Port".
+* `maDomain` (string): MetaAccess domain for your environment. Console display name: "MetaAccess Domain".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorOpswat.tf") }}
+
+
+## OneTrust
+
+Connector ID (`connector.id` in the resource): `oneTrustConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `clientId` (string): Your OneTrust application client ID. Console display name: "Client ID".
+* `clientSecret` (string): Your OneTrust application client secret. Console display name: "Client Secret".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/oneTrustConnector.tf") }}
+
+
+## Onfido
+
+Connector ID (`connector.id` in the resource): `onfidoConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `androidPackageName` (string): Your Android Application's Package Name. Console display name: "Android Application Package Name".
+* `apiKey` (string):  Console display name: "API Key".
+* `authDescription` (string):  Console display name: "Authentication Description".
+* `baseUrl` (string):  Console display name: "Base URL".
+* `connectorName` (string):  Console display name: "Connector Name".
+* `customizeSteps` (boolean):  Console display name: "Customize Steps".
+* `description` (string):  Console display name: "Description".
+* `details1` (string):  Console display name: "Credentials Details 1".
+* `details2` (string):  Console display name: "Credentials Details 2".
+* `iOSBundleId` (string): Your iOS Application's Bundle ID. Console display name: "iOS Application Bundle ID".
+* `iconUrl` (string):  Console display name: "Icon URL".
+* `iconUrlPng` (string):  Console display name: "Icon URL in PNG".
+* `javascriptCSSUrl` (string):  Console display name: "CSS URL".
+* `javascriptCdnUrl` (string):  Console display name: "Javascript CDN URL".
+* `language` (string):  Console display name: "Language".
+* `referenceStepsList` (json):  
+* `referrerUrl` (string):  Console display name: "Referrer URL".
+* `retrieveReports` (boolean):  Console display name: "Retrieve Reports".
+* `shouldCloseOnOverlayClick` (boolean):  Console display name: "Close on Overlay Click".
+* `showCredAddedOn` (boolean):  Console display name: "Show Credentials Added On?".
+* `showCredAddedVia` (boolean):  Console display name: "Show Credentials Added through ?".
+* `stepsList` (boolean): The Proof of Address document capture is currently a BETA feature, and it cannot be used in conjunction with the document and face steps as part of a single SDK flow. Console display name: "ID Verification Steps".
+* `title` (string):  Console display name: "Title".
+* `toolTip` (string):  Console display name: "Tooltip".
+* `useLanguage` (boolean):  Console display name: "Customize Language".
+* `useModal` (boolean):  Console display name: "Modal".
+* `viewDescriptions` (string):  Console display name: "OnFido Description".
+* `viewTitle` (string):  Console display name: "OnFido Title".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/onfidoConnector.tf") }}
+
+
+## PaloAlto Prisma Connector
+
+Connector ID (`connector.id` in the resource): `connectorPaloAltoPrisma`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `baseURL` (string): Prisma Base URL. Console display name: "Prisma Base URL".
+* `prismaPassword` (string): Secret Key. Console display name: "Prisma - Secret Key".
+* `prismaUsername` (string): Access Key. Console display name: "Prisma - Access Key".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorPaloAltoPrisma.tf") }}
+
+
+## PingAccess Administration
+
+Connector ID (`connector.id` in the resource): `connector-oai-pingaccessadministrativeapi`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `authPassword` (string): The password for an account that has access to the PingAccess administrative API. Console display name: "Authenticating Password".
+* `authUsername` (string): The username for an account that has access to the PingAccess administrative API. Console display name: "Authenticating Username".
+* `basePath` (string): The base URL for the PingAccess Administrative API, such as "https://localhost:9000/pa-admin-api/v3". Console display name: "API URL".
+* `sslVerification` (string): When enabled, DaVinci verifies the PingAccess SSL certificate and uses encrypted communication. Console display name: "Use SSL Verification".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connector-oai-pingaccessadministrativeapi.tf") }}
+
+
+## PingFederate
+
+Connector ID (`connector.id` in the resource): `pingFederateConnectorV2`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `openId` (json):  Console display name: "OpenId Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/pingFederateConnectorV2.tf") }}
+
+
+## PingFederate Administration
+
+Connector ID (`connector.id` in the resource): `connector-oai-pfadminapi`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `authPassword` (string): The password for an account that has access to the PingFederate administrative API. Console display name: "Authenticating Password".
+* `authUsername` (string): The username for an account that has access to the PingFederate administrative API. Console display name: "Authenticating Username".
+* `basePath` (string): The base URL for the PingFederate administrative API, such as "https://8.8.4.4:9999/pf-admin-api/v1". Console display name: "API URL".
+* `sslVerification` (string): When enabled, DaVinci verifies the PingFederate SSL certificate and uses encrypted communication. Console display name: "Use SSL Verification".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connector-oai-pfadminapi.tf") }}
+
+
+## PingID
+
+Connector ID (`connector.id` in the resource): `pingIdConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `customAuth` (json):  Console display name: "Custom Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/pingIdConnector.tf") }}
+
+
+## PingOne
+
+Connector ID (`connector.id` in the resource): `pingOneSSOConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `clientId` (string): The Client ID of your PingOne Worker application. Console display name: "Client ID".
+* `clientSecret` (string): The Client Secret of your PingOne Worker application. Console display name: "Client Secret".
+* `envId` (string): Your PingOne environment ID. Console display name: "Environment ID".
+* `envRegionInfo` (string): If you want to connect with a different PingOne environment, enter the environment and credential information below. Console display name: "The default PingOne environment is configured automatically.".
+* `region` (string): The region in which your PingOne environment exists. Console display name: "Region".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/pingOneSSOConnector.tf") }}
+
+
+## PingOne Advanced Identity Cloud Access Request
+
+Connector ID (`connector.id` in the resource): `accessRequestConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `baseURL` (string): The API URL to target. Console display name: "Identity Cloud Base URL".
+* `endUserClientId` (string): The Client ID from the end user account. Console display name: "End User Client ID".
+* `endUserClientPrivateKey` (string): The Client Private Key from the end user account. Console display name: "End User Client Private Key".
+* `realm` (string): The Realm configured in Identity Cloud. Console display name: "Realm".
+* `serviceAccountId` (string): The account ID for your Identity Cloud service account. You can find this ID under the account settings of your service account. Console display name: "Service Account ID".
+* `serviceAccountPrivateKey` (string): The private key for your Identity Cloud service account. You can find this private key under the account settings of your service account. Console display name: "Service Account Private Key".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/accessRequestConnector.tf") }}
+
+
+## PingOne Advanced Identity Cloud Login Connector
+
+Connector ID (`connector.id` in the resource): `pingoneAdvancedIdentityCloudLoginConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `openId` (json):  Console display name: "OpenId Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/pingoneAdvancedIdentityCloudLoginConnector.tf") }}
+
+
+## PingOne Authentication
+
+Connector ID (`connector.id` in the resource): `pingOneAuthenticationConnector`
+
+*No properties*
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/pingOneAuthenticationConnector.tf") }}
+
+
+## PingOne Authorize
+
+Connector ID (`connector.id` in the resource): `pingOneAuthorizeConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `clientId` (string): The Client ID of the PingOne worker application. Console display name: "Client ID".
+* `clientSecret` (string): The Client Secret of the PingOne worker application. Console display name: "Client Secret".
+* `endpointURL` (string): The PingOne Authorize decision endpoint or ID to which the connector submits decision requests. Console display name: "Endpoint".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/pingOneAuthorizeConnector.tf") }}
+
+
+## PingOne Authorize - API Access Management
+
+Connector ID (`connector.id` in the resource): `pingauthadapter`
+
+*No properties*
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/pingauthadapter.tf") }}
+
+
+## PingOne Credentials
+
+Connector ID (`connector.id` in the resource): `pingOneCredentialsConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `clientId` (string): The Client ID of your PingOne Worker application. Console display name: "Client ID".
+* `clientSecret` (string): The Client Secret of your PingOne Worker application. Console display name: "Client Secret".
+* `digitalWalletApplicationId` (string): Identifier (UUID) associated with the credential digital wallet app. Console display name: "Digital Wallet Application ID".
+* `envId` (string): Your PingOne Environment ID. Console display name: "Environment ID".
+* `region` (string): The region your PingOne environment is in. Console display name: "Region".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/pingOneCredentialsConnector.tf") }}
+
+
+## PingOne Forms
+
+Connector ID (`connector.id` in the resource): `pingOneFormsConnector`
+
+*No properties*
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/pingOneFormsConnector.tf") }}
+
+
+## PingOne MFA
+
+Connector ID (`connector.id` in the resource): `pingOneMfaConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `clientId` (string): The Client ID of your PingOne Worker application. Console display name: "Client ID".
+* `clientSecret` (string): The Client Secret of your PingOne Worker application. Console display name: "Client Secret".
+* `envId` (string): Your PingOne Environment ID. Console display name: "Environment ID".
+* `policyId` (string): The ID of your PingOne MFA device authentication policy. Console display name: "Policy ID".
+* `region` (string): The region in which your PingOne environment exists. Console display name: "Region".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/pingOneMfaConnector.tf") }}
+
+
+## PingOne Notifications
+
+Connector ID (`connector.id` in the resource): `notificationsConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `clientId` (string): The Client ID of your PingOne Worker application. Console display name: "Client ID".
+* `clientSecret` (string): The Client Secret of your PingOne Worker application. Console display name: "Client Secret".
+* `envId` (string): Your PingOne Environment ID. Console display name: "Environment ID".
+* `notificationPolicyId` (string): A unique identifier for the policy. Console display name: "Notification Policy ID".
+* `region` (string): The region in which your PingOne environment exists. Console display name: "Region".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/notificationsConnector.tf") }}
+
+
+## PingOne Protect
+
+Connector ID (`connector.id` in the resource): `pingOneRiskConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `clientId` (string): The id for your Application found in Ping's Dashboard. Console display name: "Client ID".
+* `clientSecret` (string): Client Secret from your App in Ping's Dashboard. Console display name: "Client Secret".
+* `envId` (string): Your Environment ID provided by Ping. Console display name: "Environment ID".
+* `region` (string): The region your PingOne environment is in. Console display name: "Region".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/pingOneRiskConnector.tf") }}
+
+
+## PingOne RADIUS Gateway
+
+Connector ID (`connector.id` in the resource): `pingOneIntegrationsConnector`
+
+*No properties*
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/pingOneIntegrationsConnector.tf") }}
+
+
+## PingOne Scope Consent
+
+Connector ID (`connector.id` in the resource): `pingOneScopeConsentConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `clientId` (string): The Client ID of your PingOne Worker application. Console display name: "Client ID".
+* `clientSecret` (string): The Client Secret of your PingOne Worker application. Console display name: "Client Secret".
+* `envId` (string): Your PingOne Environment ID. Console display name: "Environment ID".
+* `region` (string): The region in which your PingOne environment exists. Console display name: "Region".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/pingOneScopeConsentConnector.tf") }}
+
+
+## PingOne Verify
+
+Connector ID (`connector.id` in the resource): `pingOneVerifyConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `clientId` (string): The Client ID of your PingOne Worker application. Console display name: "Client ID".
+* `clientSecret` (string): The Client Secret of your PingOne Worker application. Console display name: "Client Secret".
+* `envId` (string): Your PingOne Environment ID. Console display name: "Environment ID".
+* `region` (string): The region your PingOne environment is in. Console display name: "Region".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/pingOneVerifyConnector.tf") }}
+
+
+## Private ID
+
+Connector ID (`connector.id` in the resource): `privateidConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `customAuth` (json):  Console display name: "Custom Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/privateidConnector.tf") }}
+
+
+## Prove
+
+Connector ID (`connector.id` in the resource): `payfoneConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `appClientId` (string):  Console display name: "App Client ID".
+* `baseUrl` (string):  Console display name: "Prove Base URL".
+* `clientId` (string):  Console display name: "Client ID".
+* `password` (string):  Console display name: "Password".
+* `simulatorMode` (boolean):  Console display name: "Simulator Mode?".
+* `simulatorPhoneNumber` (string):  Console display name: "Simulator Phone Number".
+* `skCallbackBaseUrl` (string): Use this url as the callback base URL. Console display name: "Callback Base URL".
+* `username` (string):  Console display name: "Username".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/payfoneConnector.tf") }}
+
+
+## Prove International
+
+Connector ID (`connector.id` in the resource): `proveConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `baseUrl` (string):  Console display name: "Prove Base URL".
+* `clientId` (string):  Console display name: "Prove Client ID".
+* `grantType` (string):  Console display name: "Prove Grant Type".
+* `password` (string):  Console display name: "Prove Password".
+* `username` (string):  Console display name: "Prove Username".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/proveConnector.tf") }}
+
+
+## RSA
+
+Connector ID (`connector.id` in the resource): `rsaConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `accessId` (string): RSA Access ID from Administration API key file. Console display name: "Access ID".
+* `accessKey` (string): RSA Access Key from Administration API key file. Console display name: "Access Key".
+* `baseUrl` (string): Base URL for RSA API that is provided in Administration API key file. Console display name: "Base URL".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/rsaConnector.tf") }}
+
+
+## ReadID by Inverid
+
+Connector ID (`connector.id` in the resource): `inveridConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `getApiKey` (string): Viewer API Key provided to you by Inverid. Console display name: "ReadID Viewer API Key".
+* `host` (string): Hostname provided to you by Inverid. Console display name: "ReadID Hostname".
+* `postApiKey` (string): Submitter API Key provided to you by Inverid. Console display name: "ReadID Submitter API Key".
+* `skWebhookUri` (string): Use this url as the Webhook URL in the Third Party Integration's configuration. Console display name: "Redirect Webhook URI".
+* `timeToLive` (string): Specify the duration (in minutes) a users session should stay active. Value must be between 30 and 72000. Console display name: "Time to live for ReadySession".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/inveridConnector.tf") }}
+
+
+## SAML
+
+Connector ID (`connector.id` in the resource): `samlConnector`
+
+*No properties*
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/samlConnector.tf") }}
+
+
+## SAML IdP
+
+Connector ID (`connector.id` in the resource): `samlIdpConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `saml` (json):  Console display name: "SAML Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/samlIdpConnector.tf") }}
+
+
+## SAP Identity API
+
+Connector ID (`connector.id` in the resource): `connector-oai-sapidentityapis`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `authApiKey` (string): The authentication key to the SAP Identity APIs. Console display name: "API Key".
+* `basePath` (string): The base URL for contacting the API. Console display name: "Base Path".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connector-oai-sapidentityapis.tf") }}
+
+
+## SEON
+
+Connector ID (`connector.id` in the resource): `seonConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `baseURL` (string): The API URL to target. Console display name: "API Base URL".
+* `licenseKey` (string): Your SEON license key. For help, see the SEON REST API documentation. Console display name: "License Key".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/seonConnector.tf") }}
+
+
+## SMTP Client
+
+Connector ID (`connector.id` in the resource): `smtpConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `hostname` (string): Example: smtp-relay.gmail.com. Console display name: "SMTP Server/Host".
+* `name` (string): Optional hostname of the client, used for identifying to the server, defaults to hostname of the machine. Console display name: "Client Name".
+* `password` (string):  Console display name: "Password".
+* `port` (number): Example: 25. Console display name: "SMTP Port".
+* `secureFlag` (boolean):  Console display name: "Secure Flag?".
+* `username` (string):  Console display name: "Username".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/smtpConnector.tf") }}
+
+
+## SailPoint IdentityNow
+
+Connector ID (`connector.id` in the resource): `connectorIdentityNow`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `clientId` (string): Client Id for your client found in IdentityNow's Dashboard. Console display name: "Client ID".
+* `clientSecret` (string): Client Secret from your client in IdentityNow's Dashboard. Console display name: "Client Secret".
+* `tenant` (string): The org name is displayed within the Org Details section of the dashboard. Console display name: "IdentityNow Tenant".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorIdentityNow.tf") }}
+
+
+## Salesforce
+
+Connector ID (`connector.id` in the resource): `salesforceConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `adminUsername` (string): The username of your Salesforce administrator account. Console display name: "Username".
+* `consumerKey` (string): The consumer key shown on your Salesforce connected app. Console display name: "Consumer Key".
+* `domainName` (string): Your Salesforce domain name, such as "mycompany-dev-ed". Console display name: "Domain Name".
+* `environment` (string): If the environment you specify in the Domain Name field is part of a sandbox organization, select Sandbox. Otherwise, select Production. Console display name: "Environment".
+* `privateKey` (string): The private key that corresponds to the X.509 certificate you added to your Salesforce connected app. Console display name: "Private Key".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/salesforceConnector.tf") }}
+
+
+## Salesforce Marketing Cloud (BETA)
+
+Connector ID (`connector.id` in the resource): `connectorSalesforceMarketingCloud`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `SalesforceMarketingCloudURL` (string): URL for Salesforce Marketing Cloud. Example: https://YOUR_SUBDOMAIN.rest.marketingcloudapis.com. Console display name: "Salesforce Marketing Cloud URL".
+* `accountId` (string): Account identifier, or MID, of the target business unit. Use to switch between business units. If you don’t specify account_id, the returned access token is in the context of the business unit that created the integration. Console display name: "Account ID".
+* `clientId` (string): Client ID issued when you create the API integration in Installed Packages. Console display name: "Client ID".
+* `clientSecret` (string): Client secret issued when you create the API integration in Installed Packages. Console display name: "Client Secret".
+* `scope` (string): Space-separated list of data-access permissions for your application. Console display name: "Scope".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorSalesforceMarketingCloud.tf") }}
+
+
+## Saviynt Connector Flows
+
+Connector ID (`connector.id` in the resource): `connectorSaviyntFlow`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `domainName` (string): Provide your Saviynt domain name. Console display name: "Saviynt Domain Name".
+* `path` (string): Provide your Saviynt path name. Console display name: "Saviynt Path Name".
+* `saviyntPassword` (string): Provide your Saviynt password. Console display name: "Saviynt Password".
+* `saviyntUserName` (string): Provide your Saviynt user name. Console display name: "Saviynt User Name".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorSaviyntFlow.tf") }}
+
+
+## Screen
+
+Connector ID (`connector.id` in the resource): `screenConnector`
+
+*No properties*
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/screenConnector.tf") }}
+
+
+## SecurID
+
+Connector ID (`connector.id` in the resource): `securIdConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiUrl` (string): The URL of your SecurID authentication API, such as "https://company.auth.securid.com". Console display name: "SecurID Authentication API REST URL".
+* `clientKey` (string): Your SecurID authentication client key, such as "vowc450ahs6nry66vok0pvaizwnfr43ewsqcm7tz". Console display name: "Client Key".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/securIdConnector.tf") }}
+
+
+## Securonix
+
+Connector ID (`connector.id` in the resource): `connectorSecuronix`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `domainName` (string): Domain Name. Console display name: "Domain Name".
+* `token` (string): Token for authentication. Console display name: "Token".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorSecuronix.tf") }}
+
+
+## Segment
+
+Connector ID (`connector.id` in the resource): `connectorSegment`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `version` (string): Segment - HTTP Tracking API Version. Console display name: "HTTP Tracking API Version".
+* `writeKey` (string): The Write Key is used to send data to a specific workplace. Console display name: "Write Key".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorSegment.tf") }}
+
+
+## SentiLink
+
+Connector ID (`connector.id` in the resource): `sentilinkConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `account` (string): Account ID of SentiLink. Console display name: "Account ID".
+* `apiUrl` (string):  Console display name: "API URL".
+* `javascriptCdnUrl` (string):  Console display name: "Javascript CDN URL".
+* `token` (string): Token ID for SentiLink account. Console display name: "Token ID".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/sentilinkConnector.tf") }}
+
+
+## ServiceNow
+
+Connector ID (`connector.id` in the resource): `servicenowConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `adminUsername` (string): Your ServiceNow administrator username. Console display name: "Username".
+* `apiUrl` (string): The API URL to target, such as "https://mycompany.service-now.com". Console display name: "API URL".
+* `password` (string): Your ServiceNow administrator password. Console display name: "Password".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/servicenowConnector.tf") }}
+
+
+## Shopify Connector
+
+Connector ID (`connector.id` in the resource): `connectorShopify`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `accessToken` (string): Your store's unique Admin API Access Token that goes into the X-Shopify-Access-Token property. Required scopes when generating Admin API Access Token: 'read_customers' and 'write_customers'. Note any Custom Shopify API calls you intend to use with this connector via Make Custom API Call capability, will have to be added as well. Console display name: "Admin API Access Token".
+* `apiVersion` (string): The Shopify version name ( ex. 2022-04 ). Console display name: "API Version Name".
+* `multipassSecret` (string): Shopify Multipass Secret. Console display name: "Multipass Secret".
+* `multipassStoreDomain` (string): Shopify Multipass Store Domain (yourstorename.myshopify.com). Console display name: "Multipass Store Domain".
+* `yourStoreName` (string): The name of your store as Shopify identifies you ( first text that comes after HTTPS:// ). Console display name: "Store Name".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorShopify.tf") }}
+
+
+## Sift
+
+Connector ID (`connector.id` in the resource): `siftConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiKey` (string): API Key from Sift Tenant. Console display name: "Sift API Key".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/siftConnector.tf") }}
+
+
+## Signicat
+
+Connector ID (`connector.id` in the resource): `connectorSignicat`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `customAuth` (json):  Console display name: "Custom Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorSignicat.tf") }}
+
+
+## Silverfort
+
+Connector ID (`connector.id` in the resource): `silverfortConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiKey` (string): Silverfort Risk API Key. Console display name: "Risk API Key".
+* `appUserSecret` (string): Silverfort App User Secret. Console display name: "App User Secret".
+* `consoleApi` (string): Silverfort App User ID. Console display name: "App User ID".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/silverfortConnector.tf") }}
+
+
+## Sinch
+
+Connector ID (`connector.id` in the resource): `sinchConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `acceptLanguage` (string): Language of SMS sent, if using Sinch provided templates will be chosen based on Accept-Language header. Examples include, but are not limited to pl-PL, no-NO, en-US. Console display name: "Language".
+* `applicationKey` (string): Verification Application Key from your Sinch Account. Console display name: "Sinch Application Key".
+* `secretKey` (string): Verification Secret Key from your Sinch Account. Console display name: "Sinch Secret Key".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/sinchConnector.tf") }}
+
+
+## Singpass Login
+
+Connector ID (`connector.id` in the resource): `singpassLoginConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `customAuth` (json):  Console display name: "Custom Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/singpassLoginConnector.tf") }}
+
+
+## Slack Login
+
+Connector ID (`connector.id` in the resource): `slackConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `oauth2` (json):  Console display name: "Oauth2 Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/slackConnector.tf") }}
+
+
+## Smarty Address Validator
+
+Connector ID (`connector.id` in the resource): `connectorSmarty`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `authId` (string): Smarty Authentication ID (Found on 'API Keys' tab in Smarty tenant). Console display name: "Auth ID".
+* `authToken` (string): Smarty Authentication Token (Found on 'API Keys' tab in Smarty tenant). Console display name: "Auth Token".
+* `license` (string): Smarty License Value (Found on 'Subscriptions' tab in Smarty tenant). Console display name: "License".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorSmarty.tf") }}
+
+
+## Socure
+
+Connector ID (`connector.id` in the resource): `socureConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiKey` (string): ID+ Key is the API key that you can retrieve from Socure Admin Portal. Console display name: "ID+ Key".
+* `baseUrl` (string): The Socure API URL to target. For a custom value, select Use Custom API URL and enter a value in the Custom API URL field. Console display name: "API URL".
+* `customApiUrl` (string): The URL for the Socure API, such as "https://example.socure.com". Console display name: "Custom API URL".
+* `sdkKey` (string): SDK Key that you can retrieve from Socure Admin Portal. Console display name: "SDK Key".
+* `skWebhookUri` (string): Use this url as the Webhook URL in the Third Party Integration's configuration. Console display name: "Webhook URL".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/socureConnector.tf") }}
+
+
+## Splunk
+
+Connector ID (`connector.id` in the resource): `splunkConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiUrl` (string): The Base API URL for Splunk. Console display name: "Base URL".
+* `port` (number): API Server Port. Console display name: "Port".
+* `token` (string): Splunk Token to make API requests. Console display name: "Token".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/splunkConnector.tf") }}
+
+
+## Spotify
+
+Connector ID (`connector.id` in the resource): `connectorSpotify`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `oauth2` (json):  Console display name: "Oauth2 Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorSpotify.tf") }}
+
+
+## SpyCloud Enterprise Protection
+
+Connector ID (`connector.id` in the resource): `connectorSpycloud`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiKey` (string): Contact SpyCloud to acquire an Employee ATO Prevention API Key that will work with DaVinci. Console display name: "SpyCloud Employee ATO Prevention API Key".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorSpycloud.tf") }}
+
+
+## String
+
+Connector ID (`connector.id` in the resource): `stringsConnector`
+
+*No properties*
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/stringsConnector.tf") }}
+
+
+## TMT Analysis
+
+Connector ID (`connector.id` in the resource): `tmtConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiKey` (string): API Key for TMT Analysis. Console display name: "API Key".
+* `apiSecret` (string): API Secret for TMT Analysis. Console display name: "API Secret".
+* `apiUrl` (string): The Base API URL for TMT Analysis. Console display name: "Base URL".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/tmtConnector.tf") }}
+
+
+## Tableau
+
+Connector ID (`connector.id` in the resource): `connectorTableau`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `addFlowPermissionsRequestBody` (string): Add Flow Permissions Request Body in XML Format. Example: <tsRequest><task><flowRun><flow id="flow-id"/><flowRunSpec><flowParameterSpecs><flowParameterSpec parameterId="parameter-id" overrideValue= "overrideValue"/><flowParameterSpecs><flowRunSpec></flowRun></task></tsRequest>. Console display name: "Add Flow Permissions Request Body in XML Format.".
+* `addUsertoSiteRequestBody` (string): Add User to Site Request Body in XML Format. Example: <tsRequest><user name="user-name" siteRole="site-role" authSetting="auth-setting" /></tsRequest>. Console display name: "Add User to Site Request Body in XML Format.".
+* `apiVersion` (string): The version of the API to use, such as 3.16. Console display name: "api-version".
+* `authId` (string): The Tableau-Auth sent along with every request. Console display name: "auth-ID".
+* `createScheduleBody` (string): This should contain the entire XML. Eg: <tsRequest><schedule name="schedule-name"priority="schedule-priority"type="schedule-type"frequency="schedule-frequency"executionOrder="schedule-execution-order"><frequencyDetails start="start-time" end="end-time"><intervals><interval interval-expression /></intervals></frequencyDetails></schedule></tsRequest>. Console display name: "XML file format to be used for creating schedule".
+* `datasourceId` (string): The ID of the flow. Console display name: "datasource-id".
+* `flowId` (string): The flow-id value for the flow you want to add permissions to. Console display name: "flow-id".
+* `groupId` (string): The ID of the group. Console display name: "group-id".
+* `jobId` (string): The ID of the job. Console display name: "job-id".
+* `scheduleId` (string): The ID of the schedule that you are associating with the data source. Console display name: "schedule-id".
+* `serverUrl` (string): The tableau server URL Example: https://www.tableau.com:8030. Console display name: "server-url".
+* `siteId` (string): The ID of the site that contains the view. Console display name: "site-id".
+* `taskId` (string): The ID of the extract refresh task. Console display name: "task-id".
+* `updateScheduleRequestBody` (string): This should contain the entire XML. Eg: <tsRequest><schedule name="hourly-schedule-1" priority="50" type="Extract" frequency="Hourly" executionOrder="Parallel"><frequencyDetails start="18:30:00" end="23:00:00"><intervals><interval hours="2" /></intervals></frequencyDetails></schedule></tsRequest>. Console display name: "XML file format to be used for updating schedule".
+* `updateUserRequestBody` (string): Update User Request Body in XML Format. <tsRequest><user fullName="new-full-name" email="new-email" password="new-password" siteRole="new-site-role" authSetting="new-auth-setting" /></tsRequest>. Console display name: "Update User Request Body in XML Format.".
+* `userId` (string): The ID of the user to get/give information for. Console display name: "user-id".
+* `workbookId` (string): The ID of the workbook to add to the schedule. Console display name: "workbook-id".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorTableau.tf") }}
+
+
+## Talend Identities Management API
+
+Connector ID (`connector.id` in the resource): `connector-oai-talendim`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `authBearerToken` (string): The authenticating token. Console display name: "Bearer Token".
+* `basePath` (string): The base URL for contacting the API. Console display name: "Base Path".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connector-oai-talendim.tf") }}
+
+
+## Talend SCIM API
+
+Connector ID (`connector.id` in the resource): `connector-oai-talendscim`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `authBearerToken` (string): The authenticating token. Console display name: "Bearer Token".
+* `basePath` (string): The base URL for contacting the API. Console display name: "Base Path".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connector-oai-talendscim.tf") }}
+
+
+## Teleport
+
+Connector ID (`connector.id` in the resource): `nodeConnector`
+
+*No properties*
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/nodeConnector.tf") }}
+
+
+## Telesign
+
+Connector ID (`connector.id` in the resource): `telesignConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `authDescription` (string):  Console display name: "Authentication Description".
+* `connectorName` (string):  Console display name: "Connector Name".
+* `description` (string):  Console display name: "Description".
+* `details1` (string):  Console display name: "Credentials Details 1".
+* `details2` (string):  Console display name: "Credentials Details 2".
+* `iconUrl` (string):  Console display name: "Icon URL".
+* `iconUrlPng` (string):  Console display name: "Icon URL in PNG".
+* `password` (string):  Console display name: "Password".
+* `providerName` (string):  Console display name: "Provider Name".
+* `showCredAddedOn` (boolean):  Console display name: "Show Credentials Added On?".
+* `showCredAddedVia` (boolean):  Console display name: "Show Credentials Added through ?".
+* `title` (string):  Console display name: "Title".
+* `toolTip` (string):  Console display name: "Tooltip".
+* `username` (string):  Console display name: "Username".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/telesignConnector.tf") }}
+
+
+## Token Management
+
+Connector ID (`connector.id` in the resource): `skOpenIdConnector`
+
+*No properties*
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/skOpenIdConnector.tf") }}
+
+
+## TransUnion TLOxp
+
+Connector ID (`connector.id` in the resource): `tutloxpConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiUrl` (string): The URL for your TransUnion API. Unnecessary to change unless you're testing against a demo tenant. Console display name: "API URL".
+* `dppaCode` (string): The DPPA code that determines the level of data access in the API. Console display name: "DPPA Purpose Code".
+* `glbCode` (string): The GLB code that determines the level of data access in the API. Console display name: "GLB Purpose Code".
+* `password` (string): The password for your API User. Console display name: "Password".
+* `username` (string): The username for your API user. Console display name: "Username".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/tutloxpConnector.tf") }}
+
+
+## TransUnion TruValidate
+
+Connector ID (`connector.id` in the resource): `transunionConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiUrl` (string): The Base API URL for TransUnion. Console display name: "Base URL".
+* `docVerificationPassword` (string): Password for Document Verification, provided by TransUnion. Console display name: "Password".
+* `docVerificationPublicKey` (string): Public Key for Document Verification, provided by TransUnion. Console display name: "Public Key".
+* `docVerificationSecret` (string): Secret for Document Verification, provided by TransUnion. Console display name: "Secret".
+* `docVerificationSiteId` (string): Site ID for Document Verification, provided by TransUnion. Console display name: "Site ID".
+* `docVerificationUsername` (string): Username for Document Verification, provided by TransUnion. Console display name: "Username".
+* `idVerificationPassword` (string): Password for ID Verification, provided by TransUnion. Console display name: "Password".
+* `idVerificationPublicKey` (string): Public Key for ID Verification, provided by TransUnion. Console display name: "Public Key".
+* `idVerificationSecret` (string): Secret for ID Verification, provided by TransUnion. Console display name: "Secret".
+* `idVerificationSiteId` (string): Site ID for ID Verification, provided by TransUnion. Console display name: "Site ID".
+* `idVerificationUsername` (string): Username for ID Verification, provided by TransUnion. Console display name: "Username".
+* `kbaPassword` (string): Password for KBA, provided by TransUnion. Console display name: "Password".
+* `kbaPublicKey` (string): Public Key for KBA, provided by TransUnion. Console display name: "Public Key".
+* `kbaSecret` (string): Secret for KBA, provided by TransUnion. Console display name: "Secret".
+* `kbaSiteId` (string): Site ID for KBA, provided by TransUnion. Console display name: "Site ID".
+* `kbaUsername` (string): Username for KBA, provided by TransUnion. Console display name: "Username".
+* `otpPassword` (string): Password for otp Verification, provided by TransUnion. Console display name: "Password".
+* `otpPublicKey` (string): Public Key for otp Verification, provided by TransUnion. Console display name: "Public Key".
+* `otpSecret` (string): Secret for otp Verification, provided by TransUnion. Console display name: "Secret".
+* `otpSiteId` (string): Site ID for otp Verification, provided by TransUnion. Console display name: "Site ID".
+* `otpUsername` (string): Username for otp Verification, provided by TransUnion. Console display name: "Username".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/transunionConnector.tf") }}
+
+
+## Treasure Data
+
+Connector ID (`connector.id` in the resource): `treasureDataConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiKey` (string): Treasure Data API Key. Console display name: "API Key".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/treasureDataConnector.tf") }}
+
+
+## Trulioo
+
+Connector ID (`connector.id` in the resource): `connectorTrulioo`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `clientID` (string): Trulioo Client ID. Console display name: "Client ID".
+* `clientSecret` (string): Trulioo Client Secret. Console display name: "Client Secret".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorTrulioo.tf") }}
+
+
+## Twilio
+
+Connector ID (`connector.id` in the resource): `twilioConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `accountSid` (string):  Console display name: "Account Sid".
+* `authDescription` (string):  Console display name: "Authentication Description".
+* `authMessageTemplate` (string):  Console display name: "Text Message Template (Authentication)".
+* `authToken` (string):  Console display name: "Auth Token".
+* `connectorName` (string):  Console display name: "Connector Name".
+* `description` (string):  Console display name: "Description".
+* `details1` (string):  Console display name: "Credentials Details 1".
+* `details2` (string):  Console display name: "Credentials Details 2".
+* `iconUrl` (string):  Console display name: "Icon URL".
+* `iconUrlPng` (string):  Console display name: "Icon URL in PNG".
+* `registerMessageTemplate` (string):  Console display name: "Text Message Template (Registration)".
+* `senderPhoneNumber` (string):  Console display name: "Sender Phone Number".
+* `showCredAddedOn` (boolean):  Console display name: "Show Credentials Added On?".
+* `showCredAddedVia` (boolean):  Console display name: "Show Credentials Added through ?".
+* `title` (string):  Console display name: "Title".
+* `toolTip` (string):  Console display name: "Tooltip".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/twilioConnector.tf") }}
+
+
+## TypingDNA
+
+Connector ID (`connector.id` in the resource): `typingdnaConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `customAuth` (json):  Console display name: "Custom Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/typingdnaConnector.tf") }}
+
+
+## UnifyID
+
+Connector ID (`connector.id` in the resource): `unifyIdConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `accountId` (string):  Console display name: "Account ID".
+* `apiKey` (string):  Console display name: "API Key".
+* `connectorName` (string):  Console display name: "Connector Name".
+* `details1` (string):  Console display name: "Credentials Details 1".
+* `details2` (string):  Console display name: "Credentials Details 2".
+* `iconUrl` (string):  Console display name: "Icon URL".
+* `iconUrlPng` (string):  Console display name: "Icon URL in PNG".
+* `sdkToken` (string):  Console display name: "SDK Token".
+* `showCredAddedOn` (boolean):  Console display name: "Show Credentials Added On?".
+* `showCredAddedVia` (boolean):  Console display name: "Show Credentials Added through ?".
+* `toolTip` (string):  Console display name: "Tooltip".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/unifyIdConnector.tf") }}
+
+
+## User Policy
+
+Connector ID (`connector.id` in the resource): `userPolicyConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `passwordExpiryInDays` (number): Choose 0 for never expire. Console display name: "Expires in the specified number of days".
+* `passwordExpiryNotification` (boolean):  Console display name: "Notify user before password expires".
+* `passwordLengthMax` (number):  Console display name: "Maximum Password Length".
+* `passwordLengthMin` (number):  Console display name: "Minimum Password Length".
+* `passwordLockoutAttempts` (number):  Console display name: "Number of failed login attempts before account is locked".
+* `passwordPreviousXPasswords` (number): Choose 0 if any previous passwords are allowed. This is not recommended. Console display name: "Number of unique user passwords associated with a user".
+* `passwordRequireLowercase` (boolean): Should the password contain lowercase characters?. Console display name: "Require Lowercase Characters".
+* `passwordRequireNumbers` (boolean): Should the password contain numbers?. Console display name: "Require Numbers".
+* `passwordRequireSpecial` (boolean): Should the password contain special character?. Console display name: "Require Special Characters".
+* `passwordRequireUppercase` (boolean): Should the password contain uppercase characters?. Console display name: "Require Uppercase Characters".
+* `passwordSpacesOk` (boolean): Are spaces allowed in the password?. Console display name: "Spaces Accepted".
+* `passwordsEnabled` (boolean):  Console display name: "Passwords Feature Enabled?".
+* `temporaryPasswordExpiryInDays` (number): If an administrator sets a temporary password, choose how long before it expires. Console display name: "Temporary password expires in the specified number of days".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/userPolicyConnector.tf") }}
+
+
+## User Pool
+
+Connector ID (`connector.id` in the resource): `skUserPool`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `customAttributes` (json):  
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/skUserPool.tf") }}
+
+
+## ValidSoft
+
+Connector ID (`connector.id` in the resource): `connectorValidsoft`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `customAuth` (json):  Console display name: "Custom Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorValidsoft.tf") }}
+
+
+## Variable
+
+Connector ID (`connector.id` in the resource): `variablesConnector`
+
+*No properties*
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/variablesConnector.tf") }}
+
+
+## Venafi Account Service API
+
+Connector ID (`connector.id` in the resource): `connector-oai-venafi`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `authApiKey` (string): The authentication key to the Venafi as a Service API for Account Service Operations. Console display name: "API Key".
+* `basePath` (string): The base URL for contacting the API. Console display name: "Base Path".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connector-oai-venafi.tf") }}
+
+
+## Vericlouds
+
+Connector ID (`connector.id` in the resource): `connectorVericlouds`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiSecret` (string): The API secret assigned by VeriClouds to the customer. The secret is also used for decrypting sensitive data such as leaked passwords. It is important to never share the secret with any 3rd party. Console display name: "apiSecret".
+* `apikey` (string): The API key assigned by VeriClouds to the customer. Console display name: "apiKey".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorVericlouds.tf") }}
+
+
+## Veriff
+
+Connector ID (`connector.id` in the resource): `veriffConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `access_token` (string): The API Key provided by Veriff, such as "323aa031-b4af-4e12-b354-de0da91a2ab0". Console display name: "API Key".
+* `baseUrl` (string): The API URL to target, such as “https://stationapi.veriff.com/”. Console display name: "Base URL".
+* `password` (string): The Share Secret Key from Veriff to create HMAC signature, such as "20bf4sf0-fbg7-488c-b4f1-d9594lf707bk". Console display name: "Shared Secret Key".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/veriffConnector.tf") }}
+
+
+## Verosint
+
+Connector ID (`connector.id` in the resource): `connector443id`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiKey` (string): This is the API key from your Verosint account. Remember, Your API KEY is like a serial number for your policy. If you want to utilize more than one policy, you can generate another API KEY and tailor that to a custom policy. Console display name: "API Key".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connector443id.tf") }}
+
+
+## Vidos
+
+Connector ID (`connector.id` in the resource): `mailchainConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiKey` (string): Enter your Vidos API Key obtained from the Vidos Dashboard with appropriate resolver or verifier permissions (visit https://dashboard.vidos.id/iam/api-keys). Console display name: "Vidos API Key".
+* `version` (string): The verification API specification version. Console display name: "Verifier Version".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/mailchainConnector.tf") }}
+
+
+## Webhook
+
+Connector ID (`connector.id` in the resource): `webhookConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `urls` (string): POST requests will be made to these registered url as selected later. Console display name: "Register URLs".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/webhookConnector.tf") }}
+
+
+## WhatsApp for Business
+
+Connector ID (`connector.id` in the resource): `connectorWhatsAppBusiness`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `accessToken` (string): WhatsApp Access Token. Console display name: "Access Token".
+* `appSecret` (string): WhatsApp App Secret for the application, it is used to verify the webhook signatures. Console display name: "App Secret".
+* `skWebhookUri` (string): Use this url as the Webhook URL in the Third Party Integration's configuration. Console display name: "Redirect Webhook URI".
+* `verifyToken` (string): Meta webhook verify token. Console display name: "Webhook Verify Token".
+* `version` (string): WhatsApp Graph API Version. Console display name: "Version".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorWhatsAppBusiness.tf") }}
+
+
+## WinMagic
+
+Connector ID (`connector.id` in the resource): `connectorWinmagic`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `openId` (json):  Console display name: "OpenId Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorWinmagic.tf") }}
+
+
+## WireWheel
+
+Connector ID (`connector.id` in the resource): `wireWheelConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `baseURL` (string): The base API URL of the WireWheel environment. Console display name: "WireWheel Base API URL".
+* `clientId` (string): Client ID from WireWheel Channel settings. Console display name: "Client ID".
+* `clientSecret` (string): Client Secret from WireWheel Channel settings. Console display name: "Client Secret".
+* `issuerId` (string): Issuer URL from WireWheel Channel settings. Console display name: "Issuer URL".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/wireWheelConnector.tf") }}
+
+
+## X Login
+
+Connector ID (`connector.id` in the resource): `twitterIdpConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `customAuth` (json):  Console display name: "Custom Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/twitterIdpConnector.tf") }}
+
+
+## Yoti
+
+Connector ID (`connector.id` in the resource): `yotiConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `customAuth` (json):  Console display name: "Custom Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/yotiConnector.tf") }}
+
+
+## Zendesk
+
+Connector ID (`connector.id` in the resource): `connectorZendesk`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiToken` (string): An Active Zendesk API Token (admin center->Apps&Integrations->Zendesk API). Console display name: "Zendesk API Token".
+* `emailUsername` (string): Email used as 'username' for your Zendesk account. Console display name: "Email of User (username)".
+* `subdomain` (string): Your Zendesk subdomain (ex. {subdomain}.zendesk.com/api/v2/...). Console display name: "Subdomain".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorZendesk.tf") }}
+
+
+## Zoop.one
+
+Connector ID (`connector.id` in the resource): `zoopConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `agencyId` (string):  Console display name: "Zoop Agency ID".
+* `apiKey` (string):  Console display name: "Zoop API Key".
+* `apiUrl` (string):  Console display name: "Zoop API URL".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/zoopConnector.tf") }}
+
+
+## Zscaler ZIA
+
+Connector ID (`connector.id` in the resource): `connectorZscaler`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `basePath` (string): basePath. Console display name: "Base Path".
+* `baseURL` (string): baseURL. Console display name: "Base URL".
+* `zscalerAPIkey` (string): Zscaler APIkey. Console display name: "Zscaler APIkey".
+* `zscalerPassword` (string): Zscaler Domain Password. Console display name: "Zscaler Password".
+* `zscalerUsername` (string): Zscaler Domain Username. Console display name: "Zscaler Username".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorZscaler.tf") }}
+
+
+## iProov
+
+Connector ID (`connector.id` in the resource): `iproovConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `allowLandscape` (boolean):  Console display name: "Allow Landscape".
+* `apiKey` (string):  Console display name: "API Key".
+* `authDescription` (string):  Console display name: "Authentication Description".
+* `baseUrl` (string):  Console display name: "Base URL".
+* `color1` (string): Ex. #000000. Console display name: "Loading Tint Color".
+* `color2` (string): Ex. #000000. Console display name: "Not Ready Tint Color".
+* `color3` (string): Ex. #000000. Console display name: "Ready Tint Color".
+* `color4` (string): Ex. #000000. Console display name: "Liveness Tint Color".
+* `connectorName` (string):  Console display name: "Connector Name".
+* `customTitle` (string): Specify a custom title to be shown. Defaults to show an iProov-generated message. Set to empty string "" to hide the message entirely.  Console display name: "Custom Title".
+* `description` (string):  Console display name: "Description".
+* `details1` (string):  Console display name: "Credentials Details 1".
+* `details2` (string):  Console display name: "Credentials Details 2".
+* `enableCameraSelector` (boolean):  Console display name: "Enable Camera Selector".
+* `iconUrl` (string):  Console display name: "Icon URL".
+* `iconUrlPng` (string):  Console display name: "Icon URL in PNG".
+* `javascriptCSSUrl` (string):  Console display name: "CSS URL".
+* `javascriptCdnUrl` (string):  Console display name: "Javascript CDN URL".
+* `kioskMode` (boolean):  Console display name: "Kiosk Mode".
+* `logo` (string): You can use a custom logo by simply passing a relative link, absolute path or data URI to your logo. If you do not want a logo to show pass the logo attribute as null. Console display name: "Logo".
+* `password` (string):  Console display name: "Password".
+* `secret` (string):  Console display name: "Secret".
+* `showCountdown` (boolean):  Console display name: "Show Countdown".
+* `showCredAddedOn` (boolean):  Console display name: "Show Credentials Added On?".
+* `showCredAddedVia` (boolean):  Console display name: "Show Credentials Added through ?".
+* `startScreenTitle` (string):  Console display name: "Start Screen Title".
+* `title` (string):  Console display name: "Title".
+* `toolTip` (string):  Console display name: "Tooltip".
+* `username` (string):  Console display name: "Username".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/iproovConnector.tf") }}
+
+
+## iProov API
+
+Connector ID (`connector.id` in the resource): `iproovV2Connector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiKey` (string): Your iProov Service Provider API key. This can be obtained from your iPortal account. Please contact support@iproov.com for more information. Console display name: "iProov API Key".
+* `secret` (string): Your iProov Service Provider Secret. This can be obtained from your iPortal account. Please contact support@iproov.com for more information. Console display name: "iProov Secret".
+* `tenant` (string): The iProov tenant URL (do not include https://). This can be obtained from your iPortal account. Please contact support@iproov.com for more information. Console display name: "iProov Tenant".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/iproovV2Connector.tf") }}
+
+
+## iProov OIDC
+
+Connector ID (`connector.id` in the resource): `connectorSvipe`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `customAuth` (json):  Console display name: "Custom Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorSvipe.tf") }}
+
+
+## iovation
+
+Connector ID (`connector.id` in the resource): `iovationConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiUrl` (string):  Console display name: "API Server URL".
+* `javascriptCdnUrl` (string): iovation loader javascript CDN. Console display name: "iovation loader Javascript CDN URL".
+* `subKey` (string): This will be an iovation assigned value that tracks requests from your site. This is primarily used for debugging and troubleshooting purposes. Console display name: "Sub Key".
+* `subscriberAccount` (string):  Console display name: "Subscriber Account".
+* `subscriberId` (string):  Console display name: "Subscriber ID".
+* `subscriberPasscode` (string):  Console display name: "Subscriber Passcode".
+* `version` (string): This is the version of the script to load. The value should either correspond to a specific version you wish to use, or one of the following aliases to get the latest version of the code: general5 - the latest stable version of the javascript, early5 - the latest available version of the javascript. Console display name: "Version".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/iovationConnector.tf") }}
+
+
+## ipgeolocation.io
+
+Connector ID (`connector.id` in the resource): `connectorIPGeolocationio`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiKey` (string): Developer subscription API key. Console display name: "API key".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorIPGeolocationio.tf") }}
+
+
+## ipregistry
+
+Connector ID (`connector.id` in the resource): `connectorIPregistry`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `apiKey` (string): API Key used to authenticate to the ipregistry.co API. Console display name: "API Key".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorIPregistry.tf") }}
+
+
+## ipstack
+
+Connector ID (`connector.id` in the resource): `connectorIPStack`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `allowInsecureIPStackConnection` (string): The Free IPStack Subscription Plan does not support HTTPS connections. For more information refer to https://ipstack.com/plan. Console display name: "Allow Insecure ipstack Connection?".
+* `apiKey` (string): The ipstack API key to use the service. Console display name: "API key".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorIPStack.tf") }}
+
+
+## mParticle
+
+Connector ID (`connector.id` in the resource): `mparticleConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `clientID` (string): Client ID from mParticle tenant. Console display name: "Client ID".
+* `clientSecret` (string): Client Secret from mParticle tenant. Console display name: "Client Secret".
+* `pod` (string): Pod from mParticle tenant. Only required for 'Upload an event batch' capability. Console display name: "Pod".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/mparticleConnector.tf") }}
+
+
+## neoEYED
+
+Connector ID (`connector.id` in the resource): `neoeyedConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `appKey` (string): Unique key for the application. Console display name: "Application Key".
+* `javascriptCdnUrl` (string): URL of javascript CDN of neoEYED. Console display name: "Javascript CDN URL".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/neoeyedConnector.tf") }}
+
+
+## randomuser.me
+
+Connector ID (`connector.id` in the resource): `connectorRandomUserMe`
+
+*No properties*
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorRandomUserMe.tf") }}
+
+
+## tru.ID
+
+Connector ID (`connector.id` in the resource): `connectorTruid`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `customAuth` (json):  Console display name: "Custom Parameters".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/connectorTruid.tf") }}
+

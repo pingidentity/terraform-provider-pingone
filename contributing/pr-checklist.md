@@ -190,9 +190,9 @@ make docscategorycheck
 
 ## Changelog
 
-- [ ] **Changelog Entry**. Create a changelog entry file in the `.changelog/` directory following the [Changelog process](changelog-process.md) guide. The file should be named `<PR_number>.txt` and contain appropriate release notes for your changes. Note: `CHANGELOG.md` should NOT be updated directly.
+- [ ] **Changelog Entry**. Create a changelog entry file in the `.changelog/` directory following the [Changelog process](changelog-process.md) guide. The file should be named `pr-<PR_number>.txt` and contain appropriate release notes for your changes. Note: `CHANGELOG.md` should NOT be updated directly.
   - *Verification*:
-    - File exists at `.changelog/<PR_number>.txt`
+    - File exists at `.changelog/pr-<PR_number>.txt`
     - File contains properly formatted release note entries
     - Release note type matches the changes made (new-resource, enhancement, bug, etc.)
 
