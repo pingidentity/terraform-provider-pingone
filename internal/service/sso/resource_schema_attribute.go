@@ -513,6 +513,11 @@ func (r *SchemaAttributeResource) ModifyPlan(ctx context.Context, req resource.M
 	}
 
 	if state.SchemaType.ValueString() == string(management.ENUMSCHEMAATTRIBUTESCHEMATYPE_STANDARD) {
+		addStandardImmutableConfigDiagnostics(&resp.Diagnostics, config)
+
+		if resp.Diagnostics.HasError() {
+			return
+		}
 
 		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("type"), state.Type)...)
 		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("multivalued"), state.Multivalued)...)
@@ -520,14 +525,8 @@ func (r *SchemaAttributeResource) ModifyPlan(ctx context.Context, req resource.M
 		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("ldap_attribute"), state.LdapAttribute)...)
 
 		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("sub_attributes"), state.SubAttributes)...)
-
-		if config.DisplayName.IsNull() || config.DisplayName.IsUnknown() {
-			resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("display_name"), state.DisplayName)...)
-		}
-
-		if config.Description.IsNull() || config.Description.IsUnknown() {
-			resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("description"), state.Description)...)
-		}
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("display_name"), state.DisplayName)...)
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("description"), state.Description)...)
 
 		return
 	}
@@ -540,6 +539,33 @@ func (r *SchemaAttributeResource) ModifyPlan(ctx context.Context, req resource.M
 		if config.Description.IsNull() {
 			resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("description"), types.StringNull())...)
 		}
+	}
+}
+
+func addStandardImmutableConfigDiagnostics(diags *diag.Diagnostics, config SchemaAttributeResourceModelV1) {
+	type immutableFieldConfig struct {
+		name         string
+		isConfigured bool
+	}
+
+	immutableFields := []immutableFieldConfig{
+		{name: "type", isConfigured: !config.Type.IsNull()},
+		{name: "multivalued", isConfigured: !config.Multivalued.IsNull()},
+		{name: "enumerated_values", isConfigured: !config.EnumeratedValues.IsNull()},
+		{name: "display_name", isConfigured: !config.DisplayName.IsNull()},
+		{name: "description", isConfigured: !config.Description.IsNull()},
+	}
+
+	for _, field := range immutableFields {
+		if !field.isConfigured {
+			continue
+		}
+
+		diags.AddAttributeError(
+			path.Root(field.name),
+			immutableAttributeUpdateRejectedSummary,
+			fmt.Sprintf("`%s` cannot be configured for STANDARD schema attributes. Remove it from configuration and allow the provider to manage this value from state/API.", field.name),
+		)
 	}
 }
 

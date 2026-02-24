@@ -805,28 +805,12 @@ func TestAccSchemaAttribute_StandardString(t *testing.T) {
 				),
 			},
 			{
-				// Step 4: Negative - immutable multivalued changes are rejected
-				Config:      testAccSchemaAttributeConfig_StandardResourceWithMultivalued(environmentName, licenseID, false, true),
-				ExpectError: regexp.MustCompile(`Immutable Attribute`),
+				// Step 4: Negative - configuring multiple immutable fields is rejected with field-level errors for each configured immutable field
+				Config:      testAccSchemaAttributeConfig_StandardResourceWithAllImmutableFields(environmentName, licenseID, false, "STRING", "Email", "Standard email attribute"),
+				ExpectError: testAccSchemaAttributeImmutableFieldsErrorRegex("type", "display_name", "description"),
 			},
 			{
-				// Step 5: Negative - immutable type changes are rejected
-				Config:      testAccSchemaAttributeConfig_StandardResourceWithType(environmentName, licenseID, false, "JSON"),
-				ExpectError: regexp.MustCompile(`Immutable Attribute`),
-			},
-			{
-				// Step 6: Positive - explicitly setting immutable fields to same values is allowed
-				Config: testAccSchemaAttributeConfig_StandardResourceMutableWithTypeAndMultivalued(environmentName, licenseID, false, true, "^[^@]+@example[.]com$", "Must be an @example.com email", "STRING", false),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(fullResourceName, "enabled", "false"),
-					resource.TestCheckResourceAttr(fullResourceName, "unique", "true"),
-					resource.TestCheckResourceAttr(fullResourceName, "type", "STRING"),
-					resource.TestCheckResourceAttr(fullResourceName, "multivalued", "false"),
-					resource.TestCheckResourceAttr(fullResourceName, "schema_type", "STANDARD"),
-				),
-			},
-			{
-				// Step 7: Re-import and verify once resource is already managed
+				// Step 5: Re-import and verify once resource is already managed
 				Config:       testAccSchemaAttributeConfig_StandardResourceMutable(environmentName, licenseID, false, true, "^[^@]+@example[.]com$", "Must be an @example.com email"),
 				ResourceName: fullResourceName,
 				ImportState:  true,
@@ -891,37 +875,23 @@ func TestAccSchemaAttribute_StandardComplex(t *testing.T) {
 				ImportStatePersist: true,
 			},
 			{
-				// Step 3: Verify immutable type changes are blocked for imported STANDARD COMPLEX attributes
-				Config:      testAccSchemaAttributeConfig_StandardComplexResourceWithType(environmentName, licenseID, true, "STRING"),
-				ExpectError: regexp.MustCompile(`Immutable Attribute`),
-			},
-			{
-				// Step 4: Verify immutable multivalued changes are blocked for imported STANDARD COMPLEX attributes
-				Config:      testAccSchemaAttributeConfig_StandardComplexResourceWithMultivalued(environmentName, licenseID, true, true),
-				ExpectError: regexp.MustCompile(`Immutable Attribute`),
-			},
-			{
-				// Step 5: Explicitly setting immutable fields to the same values is allowed
-				Config: testAccSchemaAttributeConfig_StandardComplexResourceWithTypeAndMultivalued(environmentName, licenseID, true, "COMPLEX", false),
+				// Step 3: Positive - mutable fields (enabled) can be updated
+				Config: testAccSchemaAttributeConfig_StandardComplexResource(environmentName, licenseID, false),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(fullResourceName, "schema_type", "STANDARD"),
-					resource.TestCheckResourceAttr(fullResourceName, "type", "COMPLEX"),
-					resource.TestCheckResourceAttr(fullResourceName, "multivalued", "false"),
-					testCheckSubAttributesAtLeastOne(fullResourceName),
-				),
-			},
-			{
-				// Step 6: Re-apply resource config and verify immutable API-derived fields are preserved in state
-				Config: testAccSchemaAttributeConfig_StandardComplexResource(environmentName, licenseID, true),
-				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(fullResourceName, "enabled", "false"),
 					resource.TestCheckResourceAttr(fullResourceName, "schema_type", "STANDARD"),
 					resource.TestCheckResourceAttr(fullResourceName, "type", "COMPLEX"),
 					testCheckSubAttributesAtLeastOne(fullResourceName),
 				),
 			},
 			{
-				// Step 7: Re-import from the managed resource ID and verify import/state consistency
-				Config:       testAccSchemaAttributeConfig_StandardComplexResource(environmentName, licenseID, true),
+				// Step 4: Negative - configuring multiple immutable fields is rejected with field-level errors for each configured immutable field
+				Config:      testAccSchemaAttributeConfig_StandardComplexResourceWithAllImmutableFields(environmentName, licenseID, false, "COMPLEX", "Address", "Standard address attribute"),
+				ExpectError: testAccSchemaAttributeImmutableFieldsErrorRegex("type", "display_name", "description"),
+			},
+			{
+				// Step 5: Re-import and verify once resource is already managed
+				Config:       testAccSchemaAttributeConfig_StandardComplexResource(environmentName, licenseID, false),
 				ResourceName: fullResourceName,
 				ImportState:  true,
 				ImportStateIdFunc: func(s *terraform.State) (string, error) {
@@ -1100,6 +1070,17 @@ func testCheckSubAttributesAtLeastOne(resourceName string) resource.TestCheckFun
 
 		return nil
 	}
+}
+
+func testAccSchemaAttributeImmutableFieldsErrorRegex(fields ...string) *regexp.Regexp {
+	pattern := `(?s)`
+
+	for _, field := range fields {
+		fieldMessage := fmt.Sprintf("`%s` cannot be configured for STANDARD schema attributes", field)
+		pattern += ".*" + regexp.QuoteMeta(fieldMessage)
+	}
+
+	return regexp.MustCompile(pattern)
 }
 
 func testAccSchemaAttributeScenarioConfig_CustomResource(environmentName, licenseID, attributeName string) string {
@@ -1496,68 +1477,25 @@ resource "pingone_schema_attribute" "email" {
 	`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, environmentName, enabled, unique, pattern, requirements)
 }
 
-func testAccSchemaAttributeConfig_StandardResourceWithType(environmentName, licenseID string, enabled bool, attrType string) string {
+func testAccSchemaAttributeConfig_StandardResourceWithAllImmutableFields(environmentName, licenseID string, enabled bool, attrType string, displayName, description string) string {
 	return fmt.Sprintf(`
 		%s
 
 data "pingone_schema" "user" {
-  environment_id = pingone_environment.%s.id
-  name           = "User"
+	environment_id = pingone_environment.%s.id
+	name           = "User"
 }
 
 resource "pingone_schema_attribute" "email" {
-  environment_id = pingone_environment.%s.id
+	environment_id = pingone_environment.%s.id
 
-  name    = "email"
-  enabled = %t
-  type    = "%s"
+	name              = "email"
+	enabled           = %t
+	type              = "%s"
+	display_name      = "%s"
+	description       = "%s"
 }
-	`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, environmentName, enabled, attrType)
-}
-
-func testAccSchemaAttributeConfig_StandardResourceWithMultivalued(environmentName, licenseID string, enabled, multivalued bool) string {
-	return fmt.Sprintf(`
-		%s
-
-data "pingone_schema" "user" {
-  environment_id = pingone_environment.%s.id
-  name           = "User"
-}
-
-resource "pingone_schema_attribute" "email" {
-  environment_id = pingone_environment.%s.id
-
-  name        = "email"
-  enabled     = %t
-  multivalued = %t
-}
-	`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, environmentName, enabled, multivalued)
-}
-
-func testAccSchemaAttributeConfig_StandardResourceMutableWithTypeAndMultivalued(environmentName, licenseID string, enabled, unique bool, pattern, requirements, attrType string, multivalued bool) string {
-	return fmt.Sprintf(`
-		%s
-
-data "pingone_schema" "user" {
-  environment_id = pingone_environment.%s.id
-  name           = "User"
-}
-
-resource "pingone_schema_attribute" "email" {
-  environment_id = pingone_environment.%s.id
-
-  name        = "email"
-  enabled     = %t
-  unique      = %t
-  type        = "%s"
-  multivalued = %t
-
-  regex_validation = {
-    pattern      = "%s"
-    requirements = "%s"
-  }
-}
-	`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, environmentName, enabled, unique, attrType, multivalued, pattern, requirements)
+	`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, environmentName, enabled, attrType, displayName, description)
 }
 
 func testAccSchemaAttributeConfig_StandardComplexResource(environmentName, licenseID string, enabled bool) string {
@@ -1578,60 +1516,23 @@ resource "pingone_schema_attribute" "address" {
 	`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, environmentName, enabled)
 }
 
-func testAccSchemaAttributeConfig_StandardComplexResourceWithType(environmentName, licenseID string, enabled bool, attrType string) string {
+func testAccSchemaAttributeConfig_StandardComplexResourceWithAllImmutableFields(environmentName, licenseID string, enabled bool, attrType string, displayName, description string) string {
 	return fmt.Sprintf(`
 		%s
 
 data "pingone_schema" "user" {
-  environment_id = pingone_environment.%s.id
-  name           = "User"
+	environment_id = pingone_environment.%s.id
+	name           = "User"
 }
 
 resource "pingone_schema_attribute" "address" {
-  environment_id = pingone_environment.%s.id
+	environment_id = pingone_environment.%s.id
 
-  name    = "address"
-  type    = "%s"
-  enabled = %t
+	name              = "address"
+	enabled           = %t
+	type              = "%s"
+	display_name      = "%s"
+	description       = "%s"
 }
-	`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, environmentName, attrType, enabled)
-}
-
-func testAccSchemaAttributeConfig_StandardComplexResourceWithTypeAndMultivalued(environmentName, licenseID string, enabled bool, attrType string, multivalued bool) string {
-	return fmt.Sprintf(`
-		%s
-
-data "pingone_schema" "user" {
-  environment_id = pingone_environment.%s.id
-  name           = "User"
-}
-
-resource "pingone_schema_attribute" "address" {
-  environment_id = pingone_environment.%s.id
-
-  name        = "address"
-  type        = "%s"
-  enabled     = %t
-  multivalued = %t
-}
-	`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, environmentName, attrType, enabled, multivalued)
-}
-
-func testAccSchemaAttributeConfig_StandardComplexResourceWithMultivalued(environmentName, licenseID string, enabled, multivalued bool) string {
-	return fmt.Sprintf(`
-		%s
-
-data "pingone_schema" "user" {
-  environment_id = pingone_environment.%s.id
-  name           = "User"
-}
-
-resource "pingone_schema_attribute" "address" {
-  environment_id = pingone_environment.%s.id
-
-  name        = "address"
-  enabled     = %t
-  multivalued = %t
-}
-	`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, environmentName, enabled, multivalued)
+	`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, environmentName, enabled, attrType, displayName, description)
 }
