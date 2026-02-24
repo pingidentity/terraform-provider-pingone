@@ -40,10 +40,12 @@ type passwordPolicyResourceModelV1 struct {
 	Default                       types.Bool                   `tfsdk:"default"`
 	ExcludesCommonlyUsedPasswords types.Bool                   `tfsdk:"excludes_commonly_used_passwords"`
 	ExcludesProfileData           types.Bool                   `tfsdk:"excludes_profile_data"`
+	AlphabetSequenceRule          types.Object                 `tfsdk:"alphabet_sequence_rule"`
 	History                       types.Object                 `tfsdk:"history"`
 	Length                        types.Object                 `tfsdk:"length"`
 	Lockout                       types.Object                 `tfsdk:"lockout"`
 	MinCharacters                 types.Object                 `tfsdk:"min_characters"`
+	NumberSequenceRule            types.Object                 `tfsdk:"number_sequence_rule"`
 	PasswordAgeMax                types.Int32                  `tfsdk:"password_age_max"`
 	PasswordAgeMin                types.Int32                  `tfsdk:"password_age_min"`
 	MaxRepeatedCharacters         types.Int32                  `tfsdk:"max_repeated_characters"`
@@ -75,10 +77,18 @@ type passwordPolicyMinCharactersResourceModelV1 struct {
 	SpecialCharacters     types.Int32 `tfsdk:"special_characters"`
 }
 
+type passwordPolicySequenceRuleResourceModelV1 struct {
+	MaxLength types.Int32 `tfsdk:"max_length"`
+}
+
 var (
 	passwordPolicyHistoryTFObjectTypes = map[string]attr.Type{
 		"count":          types.Int32Type,
 		"retention_days": types.Int32Type,
+	}
+
+	passwordPolicySequenceRuleTFObjectTypes = map[string]attr.Type{
+		"max_length": types.Int32Type,
 	}
 
 	passwordPolicyLengthTFObjectTypes = map[string]attr.Type{
@@ -111,6 +121,8 @@ const (
 	passwordLengthMax               = 255
 	passwordLengthMinMin            = 8
 	passwordLengthMinMax            = 32
+	sequenceRuleMaxLengthMin        = 2
+	sequenceRuleMaxLengthMax        = 3
 	minCharactersFixedValue         = 0
 	maxCharactersFixedValue         = 1
 	maxRepeatedCharactersFixedValue = 2
@@ -190,6 +202,22 @@ func (r *PasswordPolicyResource) Schema(ctx context.Context, req resource.Schema
 		"A boolean that, when set to `true`, ensures that the proposed password is not too similar to the user's current password based on the Levenshtein distance algorithm. The value of this parameter is evaluated only for password change actions in which the user enters both the current and the new password. By design, PingOne does not know the user's current password.",
 	).DefaultValue(false)
 
+	alphabetSequenceRuleDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies options to control sequential English-letter checks for passwords.",
+	)
+
+	alphabetSequenceRuleMaxLengthDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that specifies the maximum number of allowed sequential English letters in the password. Must be a value of `2` or `3`.",
+	)
+
+	numberSequenceRuleDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies options to control sequential number checks for passwords.",
+	)
+
+	numberSequenceRuleMaxLengthDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that specifies the maximum number of allowed sequential numbers in the password. Must be a value of `2` or `3`.",
+	)
+
 	resp.Schema = schema.Schema{
 
 		Version: 1,
@@ -243,6 +271,24 @@ func (r *PasswordPolicyResource) Schema(ctx context.Context, req resource.Schema
 				Computed:            true,
 
 				Default: booldefault.StaticBool(false),
+			},
+
+			"alphabet_sequence_rule": schema.SingleNestedAttribute{
+				Description:         alphabetSequenceRuleDescription.Description,
+				MarkdownDescription: alphabetSequenceRuleDescription.MarkdownDescription,
+				Optional:            true,
+
+				Attributes: map[string]schema.Attribute{
+					"max_length": schema.Int32Attribute{
+						Description:         alphabetSequenceRuleMaxLengthDescription.Description,
+						MarkdownDescription: alphabetSequenceRuleMaxLengthDescription.MarkdownDescription,
+						Optional:            true,
+
+						Validators: []validator.Int32{
+							int32validator.OneOf(sequenceRuleMaxLengthMin, sequenceRuleMaxLengthMax),
+						},
+					},
+				},
 			},
 
 			"history": schema.SingleNestedAttribute{
@@ -380,6 +426,24 @@ func (r *PasswordPolicyResource) Schema(ctx context.Context, req resource.Schema
 
 						Validators: []validator.Int32{
 							int32validator.Between(minCharactersFixedValue, maxCharactersFixedValue),
+						},
+					},
+				},
+			},
+
+			"number_sequence_rule": schema.SingleNestedAttribute{
+				Description:         numberSequenceRuleDescription.Description,
+				MarkdownDescription: numberSequenceRuleDescription.MarkdownDescription,
+				Optional:            true,
+
+				Attributes: map[string]schema.Attribute{
+					"max_length": schema.Int32Attribute{
+						Description:         numberSequenceRuleMaxLengthDescription.Description,
+						MarkdownDescription: numberSequenceRuleMaxLengthDescription.MarkdownDescription,
+						Optional:            true,
+
+						Validators: []validator.Int32{
+							int32validator.OneOf(sequenceRuleMaxLengthMin, sequenceRuleMaxLengthMax),
 						},
 					},
 				},
@@ -753,6 +817,25 @@ func (p *passwordPolicyResourceModelV1) expand(ctx context.Context) (*management
 		data.SetHistory(*history)
 	}
 
+	if !p.AlphabetSequenceRule.IsNull() && !p.AlphabetSequenceRule.IsUnknown() {
+		var plan passwordPolicySequenceRuleResourceModelV1
+		diags.Append(p.AlphabetSequenceRule.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		alphabetSequenceRule := management.NewPasswordPolicyAlphabetSequenceRule()
+
+		if !plan.MaxLength.IsNull() && !plan.MaxLength.IsUnknown() {
+			alphabetSequenceRule.SetMaxLength(plan.MaxLength.ValueInt32())
+		}
+
+		data.SetAlphabetSequenceRule(*alphabetSequenceRule)
+	}
+
 	if !p.Length.IsNull() && !p.Length.IsUnknown() {
 		var plan passwordPolicyLengthResourceModelV1
 		diags.Append(p.Length.As(ctx, &plan, basetypes.ObjectAsOptions{
@@ -830,6 +913,25 @@ func (p *passwordPolicyResourceModelV1) expand(ctx context.Context) (*management
 		data.SetMinCharacters(*minCharacters)
 	}
 
+	if !p.NumberSequenceRule.IsNull() && !p.NumberSequenceRule.IsUnknown() {
+		var plan passwordPolicySequenceRuleResourceModelV1
+		diags.Append(p.NumberSequenceRule.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		numberSequenceRule := management.NewPasswordPolicyNumberSequenceRule()
+
+		if !plan.MaxLength.IsNull() && !plan.MaxLength.IsUnknown() {
+			numberSequenceRule.SetMaxLength(plan.MaxLength.ValueInt32())
+		}
+
+		data.SetNumberSequenceRule(*numberSequenceRule)
+	}
+
 	if !p.PasswordAgeMax.IsNull() && !p.PasswordAgeMax.IsUnknown() {
 		data.SetMaxAgeDays(p.PasswordAgeMax.ValueInt32())
 	}
@@ -877,6 +979,9 @@ func (p *passwordPolicyResourceModelV1) toState(apiObject *management.PasswordPo
 	p.ExcludesCommonlyUsedPasswords = framework.BoolOkToTF(apiObject.GetExcludesCommonlyUsedOk())
 	p.ExcludesProfileData = framework.BoolOkToTF(apiObject.GetExcludesProfileDataOk())
 
+	p.AlphabetSequenceRule, d = passwordPolicySequenceRuleOkToTF(apiObject.GetAlphabetSequenceRuleOk())
+	diags.Append(d...)
+
 	p.History, d = passwordPolicyHistoryOkToTF(apiObject.GetHistoryOk())
 	diags.Append(d...)
 
@@ -887,6 +992,9 @@ func (p *passwordPolicyResourceModelV1) toState(apiObject *management.PasswordPo
 	diags.Append(d...)
 
 	p.MinCharacters, d = passwordPolicyMinCharactersOkToTF(apiObject.GetMinCharactersOk())
+	diags.Append(d...)
+
+	p.NumberSequenceRule, d = passwordPolicySequenceRuleOkToTF(apiObject.GetNumberSequenceRuleOk())
 	diags.Append(d...)
 
 	p.PasswordAgeMax = framework.Int32OkToTF(apiObject.GetMaxAgeDaysOk())
@@ -913,6 +1021,25 @@ func passwordPolicyHistoryOkToTF(apiObject *management.PasswordPolicyHistory, ok
 	}
 
 	returnVar, d := types.ObjectValue(passwordPolicyHistoryTFObjectTypes, o)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func passwordPolicySequenceRuleOkToTF(apiObject interface {
+	GetMaxLengthOk() (*int32, bool)
+}, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(passwordPolicySequenceRuleTFObjectTypes), diags
+	}
+
+	o := map[string]attr.Value{
+		"max_length": framework.Int32OkToTF(apiObject.GetMaxLengthOk()),
+	}
+
+	returnVar, d := types.ObjectValue(passwordPolicySequenceRuleTFObjectTypes, o)
 	diags.Append(d...)
 
 	return returnVar, diags

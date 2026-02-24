@@ -34,10 +34,12 @@ type PasswordPolicyDataSourceModel struct {
 	Default                       types.Bool                   `tfsdk:"default"`
 	ExcludesCommonlyUsedPasswords types.Bool                   `tfsdk:"excludes_commonly_used_passwords"`
 	ExcludesProfileData           types.Bool                   `tfsdk:"excludes_profile_data"`
+	AlphabetSequenceRule          types.Object                 `tfsdk:"alphabet_sequence_rule"`
 	History                       types.Object                 `tfsdk:"history"`
 	Length                        types.Object                 `tfsdk:"length"`
 	Lockout                       types.Object                 `tfsdk:"lockout"`
 	MinCharacters                 types.Object                 `tfsdk:"min_characters"`
+	NumberSequenceRule            types.Object                 `tfsdk:"number_sequence_rule"`
 	PasswordAgeMax                types.Int32                  `tfsdk:"password_age_max"`
 	PasswordAgeMin                types.Int32                  `tfsdk:"password_age_min"`
 	MaxRepeatedCharacters         types.Int32                  `tfsdk:"max_repeated_characters"`
@@ -123,6 +125,22 @@ func (r *PasswordPolicyDataSource) Schema(ctx context.Context, req datasource.Sc
 		"A boolean that, when set to `true`, ensures that the proposed password is not too similar to the user's current password based on the Levenshtein distance algorithm. The value of this parameter is evaluated only for password change actions in which the user enters both the current and the new password. By design, PingOne does not know the user's current password.",
 	).DefaultValue(false)
 
+	alphabetSequenceRuleDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies options to control sequential English-letter checks for passwords.",
+	)
+
+	alphabetSequenceRuleMaxLengthDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that specifies the maximum number of allowed sequential English letters in the password. Must be a value of `2` or `3`.",
+	)
+
+	numberSequenceRuleDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies options to control sequential number checks for passwords.",
+	)
+
+	numberSequenceRuleMaxLengthDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that specifies the maximum number of allowed sequential numbers in the password. Must be a value of `2` or `3`.",
+	)
+
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		Description: "Datasource to retrieve a PingOne password policy in an environment by ID or by name.",
@@ -180,6 +198,20 @@ func (r *PasswordPolicyDataSource) Schema(ctx context.Context, req datasource.Sc
 				Description:         excludeProfileDataDescription.Description,
 				MarkdownDescription: excludeProfileDataDescription.MarkdownDescription,
 				Computed:            true,
+			},
+
+			"alphabet_sequence_rule": schema.SingleNestedAttribute{
+				Description:         alphabetSequenceRuleDescription.Description,
+				MarkdownDescription: alphabetSequenceRuleDescription.MarkdownDescription,
+				Computed:            true,
+
+				Attributes: map[string]schema.Attribute{
+					"max_length": schema.Int32Attribute{
+						Description:         alphabetSequenceRuleMaxLengthDescription.Description,
+						MarkdownDescription: alphabetSequenceRuleMaxLengthDescription.MarkdownDescription,
+						Computed:            true,
+					},
+				},
 			},
 
 			"history": schema.SingleNestedAttribute{
@@ -262,6 +294,20 @@ func (r *PasswordPolicyDataSource) Schema(ctx context.Context, req datasource.Sc
 					"special_characters": schema.Int32Attribute{
 						Description:         minCharactersSpecialCharactersDescription.Description,
 						MarkdownDescription: minCharactersSpecialCharactersDescription.MarkdownDescription,
+						Computed:            true,
+					},
+				},
+			},
+
+			"number_sequence_rule": schema.SingleNestedAttribute{
+				Description:         numberSequenceRuleDescription.Description,
+				MarkdownDescription: numberSequenceRuleDescription.MarkdownDescription,
+				Computed:            true,
+
+				Attributes: map[string]schema.Attribute{
+					"max_length": schema.Int32Attribute{
+						Description:         numberSequenceRuleMaxLengthDescription.Description,
+						MarkdownDescription: numberSequenceRuleMaxLengthDescription.MarkdownDescription,
 						Computed:            true,
 					},
 				},
@@ -453,6 +499,9 @@ func (p *PasswordPolicyDataSourceModel) toState(apiObject *management.PasswordPo
 	p.ExcludesCommonlyUsedPasswords = framework.BoolOkToTF(apiObject.GetExcludesCommonlyUsedOk())
 	p.ExcludesProfileData = framework.BoolOkToTF(apiObject.GetExcludesProfileDataOk())
 
+	p.AlphabetSequenceRule, d = passwordPolicySequenceRuleOkToTF(apiObject.GetAlphabetSequenceRuleOk())
+	diags.Append(d...)
+
 	p.History, d = passwordPolicyHistoryOkToTF(apiObject.GetHistoryOk())
 	diags.Append(d...)
 
@@ -463,6 +512,9 @@ func (p *PasswordPolicyDataSourceModel) toState(apiObject *management.PasswordPo
 	diags.Append(d...)
 
 	p.MinCharacters, d = passwordPolicyMinCharactersOkToTF(apiObject.GetMinCharactersOk())
+	diags.Append(d...)
+
+	p.NumberSequenceRule, d = passwordPolicySequenceRuleOkToTF(apiObject.GetNumberSequenceRuleOk())
 	diags.Append(d...)
 
 	p.PasswordAgeMax = framework.Int32OkToTF(apiObject.GetMaxAgeDaysOk())

@@ -51,6 +51,14 @@ resource "pingone_password_policy" "my_password_policy" {
     special_characters     = 1
   }
 
+  alphabet_sequence_rule = {
+    max_length = 3
+  }
+
+  number_sequence_rule = {
+    max_length = 3
+  }
+
   max_repeated_characters = 2
   min_complexity          = 7
   min_unique_characters   = 5
@@ -67,6 +75,7 @@ resource "pingone_password_policy" "my_password_policy" {
 
 ### Optional
 
+- `alphabet_sequence_rule` (Attributes) A single object that specifies options to control sequential English-letter checks for passwords. (see [below for nested schema](#nestedatt--alphabet_sequence_rule))
 - `default` (Boolean) A boolean that specifies whether this password policy is enforced as the default within the environment. When set to `true`, all other password policies are set to `false`.  Defaults to `false`.
 - `description` (String) A string that specifies the description to apply to the password policy.
 - `excludes_commonly_used_passwords` (Boolean) A boolean that specifies whether to ensure the password is not one of the commonly used passwords.  Defaults to `false`.
@@ -79,6 +88,7 @@ resource "pingone_password_policy" "my_password_policy" {
 - `min_complexity` (Number) An integer that specifies the minimum complexity of the password based on the concept of password haystacks. The value is the number of days required to exhaust the entire search space during a brute force attack. This property is not enforced when not present.  Fixed value of `7`.
 - `min_unique_characters` (Number) An integer that specifies the minimum number of unique characters required. This property is not enforced when not present.  Fixed value of `5`.
 - `not_similar_to_current` (Boolean) A boolean that, when set to `true`, ensures that the proposed password is not too similar to the user's current password based on the Levenshtein distance algorithm. The value of this parameter is evaluated only for password change actions in which the user enters both the current and the new password. By design, PingOne does not know the user's current password.  Defaults to `false`.
+- `number_sequence_rule` (Attributes) A single object that specifies options to control sequential number checks for passwords. (see [below for nested schema](#nestedatt--number_sequence_rule))
 - `password_age_max` (Number) An integer that specifies the maximum number of days the same password can be used before it must be changed. The value must be a positive, non-zero integer.  The value must be greater than the sum of `min` (if set) + 21 (the expiration warning interval for passwords).
 - `password_age_min` (Number) An integer that specifies the minimum number of days a password must be used before changing. The value must be a positive, non-zero integer. This property is not enforced when not present.
 
@@ -86,6 +96,14 @@ resource "pingone_password_policy" "my_password_policy" {
 
 - `id` (String) The ID of this resource.
 - `population_count` (Number) An integer that specifies the number of populations associated with the password policy.
+
+<a id="nestedatt--alphabet_sequence_rule"></a>
+### Nested Schema for `alphabet_sequence_rule`
+
+Optional:
+
+- `max_length` (Number) An integer that specifies the maximum number of allowed sequential English letters in the password. Must be a value of `2` or `3`.
+
 
 <a id="nestedatt--history"></a>
 ### Nested Schema for `history`
@@ -126,6 +144,14 @@ Optional:
 - `alphabetical_uppercase` (Number) An integer that specifies the count of alphabetical uppercase characters (`ABCDEFGHIJKLMNOPQRSTUVWXYZ`) that should feature in the user's password. Setting to `0` will remove the requirement. The default of `1` will be removed in the next major release.  Defaults to `1`.
 - `numeric` (Number) An integer that specifies the count of numeric characters (`0123456789`) that should feature in the user's password. Setting to `0` will remove the requirement. The default of `1` will be removed in the next major release.  Defaults to `1`.
 - `special_characters` (Number) An integer that specifies the count of special characters (`~!@#$%^&*()-_=+[]{}\|;:,.<>/?`) that should feature in the user's password. Setting to `0` will remove the requirement. The default of `1` will be removed in the next major release.  Defaults to `1`.
+
+
+<a id="nestedatt--number_sequence_rule"></a>
+### Nested Schema for `number_sequence_rule`
+
+Optional:
+
+- `max_length` (Number) An integer that specifies the maximum number of allowed sequential numbers in the password. Must be a value of `2` or `3`.
 
 ## Import
 

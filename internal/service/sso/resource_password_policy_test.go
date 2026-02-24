@@ -147,6 +147,8 @@ func TestAccPasswordPolicy_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "min_characters.alphabetical_lowercase", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "min_characters.numeric", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "min_characters.special_characters", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "alphabet_sequence_rule.max_length", "3"),
+					resource.TestCheckResourceAttr(resourceFullName, "number_sequence_rule.max_length", "3"),
 					resource.TestCheckResourceAttr(resourceFullName, "password_age_max", "35"),
 					resource.TestCheckResourceAttr(resourceFullName, "password_age_min", "2"),
 					resource.TestCheckResourceAttr(resourceFullName, "max_repeated_characters", "2"),
@@ -211,6 +213,8 @@ func TestAccPasswordPolicy_Minimal(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "length"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "lockout"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "min_characters"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "alphabet_sequence_rule"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "number_sequence_rule"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "password_age_max"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "password_age_min"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "max_repeated_characters"),
@@ -315,6 +319,14 @@ resource "pingone_password_policy" "%[2]s" {
     alphabetical_lowercase = 1
     numeric                = 1
     special_characters     = 1
+  }
+
+  alphabet_sequence_rule = {
+    max_length = 3
+  }
+
+  number_sequence_rule = {
+    max_length = 3
   }
 
   max_repeated_characters = 2

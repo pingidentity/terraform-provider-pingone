@@ -37,6 +37,14 @@ resource "pingone_password_policy" "my_password_policy" {
     special_characters     = 1
   }
 
+  alphabet_sequence_rule = {
+    max_length = 3
+  }
+
+  number_sequence_rule = {
+    max_length = 3
+  }
+
   max_repeated_characters = 2
   min_complexity          = 7
   min_unique_characters   = 5
