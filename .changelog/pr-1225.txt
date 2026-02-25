@@ -1,0 +1,11 @@
+```release-note:enhancement
+`resource/pingone_schema_attribute`: Add support for managing imported `STANDARD` schema attributes
+```
+
+```release-note:enhancement
+`resource/pingone_schema_attribute`: Remove data loss protection from `unique`, allowing in-place updates (no resource replacement required)
+```
+
+```release-note:new-data-source
+pingone_schema_attribute
+```
