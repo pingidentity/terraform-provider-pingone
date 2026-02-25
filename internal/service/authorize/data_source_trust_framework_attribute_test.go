@@ -1,4 +1,6 @@
-// Copyright © 2025 Ping Identity Corporation
+// Copyright © 2026 Ping Identity Corporation
+
+//go:build beta
 
 package authorize_test
 
