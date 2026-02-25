@@ -24,9 +24,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
-	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
+	"github.com/patrickcping/pingone-go-sdk-v2/authorizeeditor"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -125,7 +126,7 @@ func (r *PolicyManagementRuleResource) Schema(ctx context.Context, req resource.
 
 				Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
 					attributeMap := map[string]attr.Value{
-						"type": types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_EMPTY)),
+						"type": types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_EMPTY)),
 					}
 
 					attributeMap = editorDataConditionConvertEmptyValuesToTFNulls(attributeMap, 1)
@@ -157,7 +158,7 @@ func (r *PolicyManagementRuleResource) Configure(ctx context.Context, req resour
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -201,16 +202,16 @@ func (r *PolicyManagementRuleResource) Create(ctx context.Context, req resource.
 	}
 
 	// Run the API call
-	var response *authorize.AuthorizeEditorDataRulesReferenceableRuleDTO
-	resp.Diagnostics.Append(framework.ParseResponse(
+	var response *authorizeeditor.AuthorizeEditorDataRulesReferenceableRuleDTO
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorRulesApi.CreateRule(ctx, plan.EnvironmentId.ValueString()).AuthorizeEditorDataRulesRuleDTO(*policyManagementRule).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorRulesApi.CreateRule(ctx, plan.EnvironmentId.ValueString()).AuthorizeEditorDataRulesRuleDTO(*policyManagementRule).Execute()
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateRule",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		retryAuthorizeEditorCreateUpdate,
 		&response,
 	)...)
@@ -245,16 +246,16 @@ func (r *PolicyManagementRuleResource) Read(ctx context.Context, req resource.Re
 	}
 
 	// Run the API call
-	var response *authorize.AuthorizeEditorDataRulesReferenceableRuleDTO
-	resp.Diagnostics.Append(framework.ParseResponse(
+	var response *authorizeeditor.AuthorizeEditorDataRulesReferenceableRuleDTO
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorRulesApi.GetRule(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorRulesApi.GetRule(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"GetRule",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		nil,
 		&response,
 	)...)
@@ -292,16 +293,16 @@ func (r *PolicyManagementRuleResource) Update(ctx context.Context, req resource.
 	}
 
 	// Run the API call
-	var getResponse *authorize.AuthorizeEditorDataRulesReferenceableRuleDTO
-	resp.Diagnostics.Append(framework.ParseResponse(
+	var getResponse *authorizeeditor.AuthorizeEditorDataRulesReferenceableRuleDTO
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorRulesApi.GetRule(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorRulesApi.GetRule(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Execute()
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"GetRule-Update",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		retryAuthorizeEditorCreateUpdate,
 		&getResponse,
 	)...)
@@ -319,16 +320,16 @@ func (r *PolicyManagementRuleResource) Update(ctx context.Context, req resource.
 	}
 
 	// Run the API call
-	var response *authorize.AuthorizeEditorDataRulesReferenceableRuleDTO
-	resp.Diagnostics.Append(framework.ParseResponse(
+	var response *authorizeeditor.AuthorizeEditorDataRulesReferenceableRuleDTO
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorRulesApi.UpdateRule(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).AuthorizeEditorDataRulesReferenceableRuleDTO(*policyManagementRule).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorRulesApi.UpdateRule(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).AuthorizeEditorDataRulesReferenceableRuleDTO(*policyManagementRule).Execute()
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateRule",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		nil,
 		&response,
 	)...)
@@ -372,15 +373,15 @@ func (r *PolicyManagementRuleResource) Delete(ctx context.Context, req resource.
 		},
 		Refresh: func() (interface{}, string, error) {
 			// Run the API call
-			resp.Diagnostics.Append(framework.ParseResponse(
+			resp.Diagnostics.Append(legacysdk.ParseResponse(
 				ctx,
 
 				func() (any, *http.Response, error) {
-					fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorRulesApi.DeleteRule(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
+					fR, fErr := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorRulesApi.DeleteRule(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+					return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 				},
 				"DeleteRule",
-				framework.CustomErrorResourceNotFoundWarning,
+				legacysdk.CustomErrorResourceNotFoundWarning,
 				nil,
 				nil,
 			)...)
@@ -388,8 +389,8 @@ func (r *PolicyManagementRuleResource) Delete(ctx context.Context, req resource.
 				return nil, "ERROR", fmt.Errorf("Error deleting authorize rule (%s)", data.Id.ValueString())
 			}
 
-			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorRulesApi.GetRule(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			getResp, r, err := framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorRulesApi.GetRule(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			getResp, r, err := legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 
 			if err != nil || r == nil {
 				return getResp, "ERROR", err
@@ -448,7 +449,7 @@ func (r *PolicyManagementRuleResource) ImportState(ctx context.Context, req reso
 	}
 }
 
-func (p *policyManagementRuleResourceModel) expandCreate(ctx context.Context) (*authorize.AuthorizeEditorDataRulesRuleDTO, diag.Diagnostics) {
+func (p *policyManagementRuleResourceModel) expandCreate(ctx context.Context) (*authorizeeditor.AuthorizeEditorDataRulesRuleDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	effectSettings, d := expandEditorDataRulesEffectSettings(ctx, p.EffectSettings)
@@ -458,7 +459,7 @@ func (p *policyManagementRuleResourceModel) expandCreate(ctx context.Context) (*
 	}
 
 	// Main object
-	data := authorize.NewAuthorizeEditorDataRulesRuleDTO(
+	data := authorizeeditor.NewAuthorizeEditorDataRulesRuleDTO(
 		p.Name.ValueString(),
 		*effectSettings,
 	)
@@ -501,7 +502,7 @@ func (p *policyManagementRuleResourceModel) expandCreate(ctx context.Context) (*
 	return data, diags
 }
 
-func (p *policyManagementRuleResourceModel) expandUpdate(ctx context.Context, versionId string) (*authorize.AuthorizeEditorDataRulesReferenceableRuleDTO, diag.Diagnostics) {
+func (p *policyManagementRuleResourceModel) expandUpdate(ctx context.Context, versionId string) (*authorizeeditor.AuthorizeEditorDataRulesReferenceableRuleDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	dataCreate, d := p.expandCreate(ctx)
@@ -517,7 +518,7 @@ func (p *policyManagementRuleResourceModel) expandUpdate(ctx context.Context, ve
 		return nil, diags
 	}
 
-	var data *authorize.AuthorizeEditorDataRulesReferenceableRuleDTO
+	var data *authorizeeditor.AuthorizeEditorDataRulesReferenceableRuleDTO
 	err = json.Unmarshal(bytes, &data)
 	if err != nil {
 		diags.AddError("Failed to unmarshal data", err.Error())
@@ -535,7 +536,7 @@ func (p *policyManagementRuleResourceModel) expandUpdate(ctx context.Context, ve
 	return data, diags
 }
 
-func (p *policyManagementRuleResourceModel) toState(ctx context.Context, apiObject *authorize.AuthorizeEditorDataRulesReferenceableRuleDTO) diag.Diagnostics {
+func (p *policyManagementRuleResourceModel) toState(ctx context.Context, apiObject *authorizeeditor.AuthorizeEditorDataRulesReferenceableRuleDTO) diag.Diagnostics {
 	var diags, d diag.Diagnostics
 
 	if apiObject == nil {

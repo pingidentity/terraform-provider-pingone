@@ -22,7 +22,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
+	"github.com/patrickcping/pingone-go-sdk-v2/authorizeeditor"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	listvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/listvalidator"
 	objectvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectvalidator"
@@ -56,7 +56,7 @@ func dataPolicyChildObjectSchemaAttributesIteration(iteration int32) (attributes
 
 	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the type of the policy child.",
-	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataPoliciesPolicyChildCommonTypeEnumValues)
+	).AllowedValuesEnum(authorizeeditor.AllowedEnumAuthorizeEditorDataPoliciesPolicyChildCommonTypeEnumValues)
 
 	valueDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that defines a relationship to a child policy.",
@@ -64,35 +64,35 @@ func dataPolicyChildObjectSchemaAttributesIteration(iteration int32) (attributes
 
 	nameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies a user-friendly name to apply to the authorization policy.  The value must be unique.",
-	).AppendMarkdownString(fmt.Sprintf("Required when `type` is `%s` or `%s` and `value` is not set.", string(authorize.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_POLICY), string(authorize.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_RULE)))
+	).AppendMarkdownString(fmt.Sprintf("Required when `type` is `%s` or `%s` and `value` is not set.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_POLICY), string(authorizeeditor.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_RULE)))
 
 	descriptionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies a description to apply to the policy.",
-	).AppendMarkdownString(fmt.Sprintf("Optional when `type` is `%s` or `%s` and `value` is not set.", string(authorize.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_POLICY), string(authorize.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_RULE))).AppendMarkdownString("Also requires `name`.")
+	).AppendMarkdownString(fmt.Sprintf("Optional when `type` is `%s` or `%s` and `value` is not set.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_POLICY), string(authorizeeditor.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_RULE))).AppendMarkdownString("Also requires `name`.")
 
 	enabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether the policy is enabled, and whether the policy is evaluated.",
-	).AppendMarkdownString(fmt.Sprintf("Optional when `type` is `%s` or `%s` and `value` is not set.", string(authorize.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_POLICY), string(authorize.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_RULE))).DefaultValue(true).AppendMarkdownString("Also requires `name`.")
+	).AppendMarkdownString(fmt.Sprintf("Optional when `type` is `%s` or `%s` and `value` is not set.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_POLICY), string(authorizeeditor.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_RULE))).DefaultValue(true).AppendMarkdownString("Also requires `name`.")
 
 	conditionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that specifies configuration settings for an authorization condition to apply to the policy.",
-	).AppendMarkdownString(fmt.Sprintf("Optional when `type` is `%s` or `%s` and `value` is not set.", string(authorize.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_POLICY), string(authorize.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_RULE))).AppendMarkdownString("Also requires `name`.")
+	).AppendMarkdownString(fmt.Sprintf("Optional when `type` is `%s` or `%s` and `value` is not set.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_POLICY), string(authorizeeditor.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_RULE))).AppendMarkdownString("Also requires `name`.")
 
 	combiningAlgorithmDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that specifies configuration settings that determine how rules are combined to produce an authorization decision.",
-	).AppendMarkdownString(fmt.Sprintf("Required when `type` is `%s` and cannot be set when `type` is `%s` or `value` is set.", string(authorize.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_POLICY), string(authorize.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_RULE))).AppendMarkdownString("Also requires `name`.")
+	).AppendMarkdownString(fmt.Sprintf("Required when `type` is `%s` and cannot be set when `type` is `%s` or `value` is set.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_POLICY), string(authorizeeditor.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_RULE))).AppendMarkdownString("Also requires `name`.")
 
 	repetitionSettingsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that specifies configuration settings that appies the policy to each item of the specific attribute, filtered by decision.",
-	).AppendMarkdownString(fmt.Sprintf("Optional when `type` is `%s` and cannot be set when `type` is `%s` or `value` is set.", string(authorize.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_POLICY), string(authorize.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_RULE))).AppendMarkdownString("Also requires `name` and `combining_algorithm`.")
+	).AppendMarkdownString(fmt.Sprintf("Optional when `type` is `%s` and cannot be set when `type` is `%s` or `value` is set.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_POLICY), string(authorizeeditor.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_RULE))).AppendMarkdownString("Also requires `name` and `combining_algorithm`.")
 
 	effectSettingsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that specifies configuration settings that determine how child rules are combined to produce an outcome for the policy.",
-	).AppendMarkdownString(fmt.Sprintf("Required when `type` is `%s` and cannot be set when `type` is `%s` or `value` is set.", string(authorize.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_RULE), string(authorize.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_POLICY))).AppendMarkdownString("Also requires `name`.")
+	).AppendMarkdownString(fmt.Sprintf("Required when `type` is `%s` and cannot be set when `type` is `%s` or `value` is set.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_RULE), string(authorizeeditor.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_POLICY))).AppendMarkdownString("Also requires `name`.")
 
 	childrenDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An ordered list of objects that specifies child policies or policy sets. Policies can either be specified by reference using the `value` field, or by inline definition.",
-	).AppendMarkdownString(fmt.Sprintf("Required when `type` is `%s` and cannot be set when `type` is `%s` or `value` is set.", string(authorize.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_POLICY), string(authorize.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_RULE))).AppendMarkdownString("Also requires `name` and `combining_algorithm`.")
+	).AppendMarkdownString(fmt.Sprintf("Required when `type` is `%s` and cannot be set when `type` is `%s` or `value` is set.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_POLICY), string(authorizeeditor.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_RULE))).AppendMarkdownString("Also requires `name` and `combining_algorithm`.")
 
 	// valueConflictsWithExpressions := make([]path.Expression, 0, len(valueConflictingPathKeys))
 
@@ -141,7 +141,7 @@ func dataPolicyChildObjectSchemaAttributesIteration(iteration int32) (attributes
 			Required:            true,
 
 			Validators: []validator.String{
-				stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataPoliciesPolicyChildCommonTypeEnumValues)...),
+				stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorizeeditor.AllowedEnumAuthorizeEditorDataPoliciesPolicyChildCommonTypeEnumValues)...),
 			},
 		},
 
@@ -250,11 +250,11 @@ func dataPolicyChildObjectSchemaAttributesIteration(iteration int32) (attributes
 					path.MatchRelative().AtParent().AtName("value"),
 				),
 				objectvalidatorinternal.ConflictsIfMatchesPathValue(
-					types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_RULE)),
+					types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_RULE)),
 					path.MatchRelative().AtParent().AtName("type"),
 				),
 				objectvalidatorinternal.IsRequiredIfMatchesPathValue(
-					types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_POLICY)),
+					types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_POLICY)),
 					path.MatchRelative().AtParent().AtName("type"),
 				),
 				objectvalidator.AlsoRequires(
@@ -283,7 +283,7 @@ func dataPolicyChildObjectSchemaAttributesIteration(iteration int32) (attributes
 					path.MatchRelative().AtParent().AtName("value"),
 				),
 				objectvalidatorinternal.ConflictsIfMatchesPathValue(
-					types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_RULE)),
+					types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_RULE)),
 					path.MatchRelative().AtParent().AtName("type"),
 				),
 				objectvalidator.AlsoRequires(
@@ -305,11 +305,11 @@ func dataPolicyChildObjectSchemaAttributesIteration(iteration int32) (attributes
 					path.MatchRelative().AtParent().AtName("value"),
 				),
 				objectvalidatorinternal.ConflictsIfMatchesPathValue(
-					types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_POLICY)),
+					types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_POLICY)),
 					path.MatchRelative().AtParent().AtName("type"),
 				),
 				objectvalidatorinternal.IsRequiredIfMatchesPathValue(
-					types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_RULE)),
+					types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_RULE)),
 					path.MatchRelative().AtParent().AtName("type"),
 				),
 				objectvalidator.AlsoRequires(
@@ -335,7 +335,7 @@ func dataPolicyChildObjectSchemaAttributesIteration(iteration int32) (attributes
 					path.MatchRelative().AtParent().AtName("value"),
 				),
 				listvalidatorinternal.ConflictsIfMatchesPathValue(
-					types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_RULE)),
+					types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_RULE)),
 					path.MatchRelative().AtParent().AtName("type"),
 				),
 				listvalidator.AlsoRequires(
@@ -414,16 +414,16 @@ func initializeEditorDataPolicyChildTFObjectTypes(iteration int32) map[string]at
 	return attrMap
 }
 
-func expandEditorDataPolicyChildren(ctx context.Context, policyChildren basetypes.ListValue) (policyChildObjects []authorize.AuthorizeEditorDataPoliciesPolicyChild, diags diag.Diagnostics) {
+func expandEditorDataPolicyChildren(ctx context.Context, policyChildren basetypes.ListValue) (policyChildObjects []authorizeeditor.AuthorizeEditorDataPoliciesPolicyChild, diags diag.Diagnostics) {
 	const initialIteration = 1
 	return expandEditorDataPolicyChildrenIteration(ctx, policyChildren, initialIteration)
 }
 
-func expandEditorDataPolicyChildrenIteration(ctx context.Context, policyChildren basetypes.ListValue, iteration int32) (policyChildObjects []authorize.AuthorizeEditorDataPoliciesPolicyChild, diags diag.Diagnostics) {
+func expandEditorDataPolicyChildrenIteration(ctx context.Context, policyChildren basetypes.ListValue, iteration int32) (policyChildObjects []authorizeeditor.AuthorizeEditorDataPoliciesPolicyChild, diags diag.Diagnostics) {
 
 	leaf := iteration >= policyChildNestedIterationMaxDepth
 
-	returnPolicies := make([]authorize.AuthorizeEditorDataPoliciesPolicyChild, 0)
+	returnPolicies := make([]authorizeeditor.AuthorizeEditorDataPoliciesPolicyChild, 0)
 
 	if leaf {
 		var plan []editorDataPolicyChildLeafResourceModel
@@ -460,16 +460,16 @@ func expandEditorDataPolicyChildrenIteration(ctx context.Context, policyChildren
 	return returnPolicies, diags
 }
 
-func (p *editorDataPolicyChildLeafResourceModel) expand(ctx context.Context) (*authorize.AuthorizeEditorDataPoliciesPolicyChild, diag.Diagnostics) {
+func (p *editorDataPolicyChildLeafResourceModel) expand(ctx context.Context) (*authorizeeditor.AuthorizeEditorDataPoliciesPolicyChild, diag.Diagnostics) {
 	var diags, d diag.Diagnostics
 
-	data := authorize.AuthorizeEditorDataPoliciesPolicyChild{}
+	data := authorizeeditor.AuthorizeEditorDataPoliciesPolicyChild{}
 
-	switch authorize.EnumAuthorizeEditorDataPoliciesPolicyChildCommonType(p.Type.ValueString()) {
-	case authorize.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_POLICY:
+	switch authorizeeditor.EnumAuthorizeEditorDataPoliciesPolicyChildCommonType(p.Type.ValueString()) {
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_POLICY:
 		data.AuthorizeEditorDataPoliciesPolicyChildPolicy, d = p.expandPolicy(ctx)
 		diags.Append(d...)
-	case authorize.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_RULE:
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_RULE:
 		data.AuthorizeEditorDataPoliciesPolicyChildRule, d = p.expandRule(ctx)
 		diags.Append(d...)
 	default:
@@ -486,16 +486,16 @@ func (p *editorDataPolicyChildLeafResourceModel) expand(ctx context.Context) (*a
 	return &data, diags
 }
 
-func (p *editorDataPolicyChildResourceModel) expand(ctx context.Context, iteration int32) (*authorize.AuthorizeEditorDataPoliciesPolicyChild, diag.Diagnostics) {
+func (p *editorDataPolicyChildResourceModel) expand(ctx context.Context, iteration int32) (*authorizeeditor.AuthorizeEditorDataPoliciesPolicyChild, diag.Diagnostics) {
 	var diags, d diag.Diagnostics
 
-	data := authorize.AuthorizeEditorDataPoliciesPolicyChild{}
+	data := authorizeeditor.AuthorizeEditorDataPoliciesPolicyChild{}
 
-	switch authorize.EnumAuthorizeEditorDataPoliciesPolicyChildCommonType(p.Type.ValueString()) {
-	case authorize.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_POLICY:
+	switch authorizeeditor.EnumAuthorizeEditorDataPoliciesPolicyChildCommonType(p.Type.ValueString()) {
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_POLICY:
 		data.AuthorizeEditorDataPoliciesPolicyChildPolicy, d = p.expandPolicy(ctx, iteration)
 		diags.Append(d...)
-	case authorize.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_RULE:
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATAPOLICIESPOLICYCHILDCOMMONTYPE_RULE:
 		data.AuthorizeEditorDataPoliciesPolicyChildRule, d = p.expandRule(ctx)
 		diags.Append(d...)
 	default:
@@ -512,7 +512,7 @@ func (p *editorDataPolicyChildResourceModel) expand(ctx context.Context, iterati
 	return &data, diags
 }
 
-func (p *editorDataPolicyChildResourceModel) expandPolicy(ctx context.Context, iteration int32) (*authorize.AuthorizeEditorDataPoliciesPolicyChildPolicy, diag.Diagnostics) {
+func (p *editorDataPolicyChildResourceModel) expandPolicy(ctx context.Context, iteration int32) (*authorizeeditor.AuthorizeEditorDataPoliciesPolicyChildPolicy, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	data, d := expandChildPolicyChildPolicy(ctx, p.Name, p.Type, p.Description, p.Enabled, p.CombiningAlgorithm, p.Condition, p.RepetitionSettings, p.Value)
@@ -534,7 +534,7 @@ func (p *editorDataPolicyChildResourceModel) expandPolicy(ctx context.Context, i
 	return data, diags
 }
 
-func (p *editorDataPolicyChildLeafResourceModel) expandPolicy(ctx context.Context) (*authorize.AuthorizeEditorDataPoliciesPolicyChildPolicy, diag.Diagnostics) {
+func (p *editorDataPolicyChildLeafResourceModel) expandPolicy(ctx context.Context) (*authorizeeditor.AuthorizeEditorDataPoliciesPolicyChildPolicy, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	data, d := expandChildPolicyChildPolicy(ctx, p.Name, p.Type, p.Description, p.Enabled, p.CombiningAlgorithm, p.Condition, p.RepetitionSettings, p.Value)
@@ -546,11 +546,11 @@ func (p *editorDataPolicyChildLeafResourceModel) expandPolicy(ctx context.Contex
 	return data, diags
 }
 
-func expandChildPolicyChildPolicy(ctx context.Context, name, policyChildType, description basetypes.StringValue, enabled basetypes.BoolValue, combiningAlgorithm, condition, repetitionSettings, refValue basetypes.ObjectValue) (*authorize.AuthorizeEditorDataPoliciesPolicyChildPolicy, diag.Diagnostics) {
+func expandChildPolicyChildPolicy(ctx context.Context, name, policyChildType, description basetypes.StringValue, enabled basetypes.BoolValue, combiningAlgorithm, condition, repetitionSettings, refValue basetypes.ObjectValue) (*authorizeeditor.AuthorizeEditorDataPoliciesPolicyChildPolicy, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	data := authorize.NewAuthorizeEditorDataPoliciesPolicyChildPolicy(
-		authorize.EnumAuthorizeEditorDataPoliciesPolicyChildCommonType(policyChildType.ValueString()),
+	data := authorizeeditor.NewAuthorizeEditorDataPoliciesPolicyChildPolicy(
+		authorizeeditor.EnumAuthorizeEditorDataPoliciesPolicyChildCommonType(policyChildType.ValueString()),
 	)
 
 	if !refValue.IsNull() && !refValue.IsUnknown() {
@@ -636,7 +636,7 @@ func expandChildPolicyChildPolicy(ctx context.Context, name, policyChildType, de
 	return data, diags
 }
 
-func (p *editorDataPolicyChildResourceModel) expandRule(ctx context.Context) (*authorize.AuthorizeEditorDataPoliciesPolicyChildRule, diag.Diagnostics) {
+func (p *editorDataPolicyChildResourceModel) expandRule(ctx context.Context) (*authorizeeditor.AuthorizeEditorDataPoliciesPolicyChildRule, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	data, d := expandChildPolicyChildRule(ctx, p.Name, p.Type, p.Description, p.Enabled, p.Condition, p.EffectSettings, p.Value)
@@ -648,7 +648,7 @@ func (p *editorDataPolicyChildResourceModel) expandRule(ctx context.Context) (*a
 	return data, diags
 }
 
-func (p *editorDataPolicyChildLeafResourceModel) expandRule(ctx context.Context) (*authorize.AuthorizeEditorDataPoliciesPolicyChildRule, diag.Diagnostics) {
+func (p *editorDataPolicyChildLeafResourceModel) expandRule(ctx context.Context) (*authorizeeditor.AuthorizeEditorDataPoliciesPolicyChildRule, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	data, d := expandChildPolicyChildRule(ctx, p.Name, p.Type, p.Description, p.Enabled, p.Condition, p.EffectSettings, p.Value)
@@ -660,11 +660,11 @@ func (p *editorDataPolicyChildLeafResourceModel) expandRule(ctx context.Context)
 	return data, diags
 }
 
-func expandChildPolicyChildRule(ctx context.Context, name, policyChildType, description basetypes.StringValue, enabled basetypes.BoolValue, condition, effectSettings, refValue basetypes.ObjectValue) (*authorize.AuthorizeEditorDataPoliciesPolicyChildRule, diag.Diagnostics) {
+func expandChildPolicyChildRule(ctx context.Context, name, policyChildType, description basetypes.StringValue, enabled basetypes.BoolValue, condition, effectSettings, refValue basetypes.ObjectValue) (*authorizeeditor.AuthorizeEditorDataPoliciesPolicyChildRule, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	data := authorize.NewAuthorizeEditorDataPoliciesPolicyChildRule(
-		authorize.EnumAuthorizeEditorDataPoliciesPolicyChildCommonType(policyChildType.ValueString()),
+	data := authorizeeditor.NewAuthorizeEditorDataPoliciesPolicyChildRule(
+		authorizeeditor.EnumAuthorizeEditorDataPoliciesPolicyChildCommonType(policyChildType.ValueString()),
 	)
 
 	if !refValue.IsNull() && !refValue.IsUnknown() {
@@ -735,11 +735,11 @@ func expandChildPolicyChildRule(ctx context.Context, name, policyChildType, desc
 	return data, diags
 }
 
-func editorDataPolicyChildrenOkToListTF(ctx context.Context, apiObject []authorize.AuthorizeEditorDataPoliciesPolicyChild, ok bool) (basetypes.ListValue, diag.Diagnostics) {
+func editorDataPolicyChildrenOkToListTF(ctx context.Context, apiObject []authorizeeditor.AuthorizeEditorDataPoliciesPolicyChild, ok bool) (basetypes.ListValue, diag.Diagnostics) {
 	return editorDataPolicyChildrenOkToListTFIteration(ctx, 1, apiObject, ok)
 }
 
-func editorDataPolicyChildrenOkToListTFIteration(ctx context.Context, iteration int32, apiObject []authorize.AuthorizeEditorDataPoliciesPolicyChild, ok bool) (basetypes.ListValue, diag.Diagnostics) {
+func editorDataPolicyChildrenOkToListTFIteration(ctx context.Context, iteration int32, apiObject []authorizeeditor.AuthorizeEditorDataPoliciesPolicyChild, ok bool) (basetypes.ListValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	tfObjType := types.ObjectType{AttrTypes: initializeEditorDataPolicyChildTFObjectTypes(iteration)}
@@ -766,22 +766,22 @@ func editorDataPolicyChildrenOkToListTFIteration(ctx context.Context, iteration 
 	return returnVar, diags
 }
 
-func editorDataPolicyChildOkToTF(ctx context.Context, apiObject *authorize.AuthorizeEditorDataPoliciesPolicyChild, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+func editorDataPolicyChildOkToTF(ctx context.Context, apiObject *authorizeeditor.AuthorizeEditorDataPoliciesPolicyChild, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	const initialIteration = 1
 	return editorDataPolicyChildOkToTFIteration(ctx, initialIteration, apiObject, ok)
 }
 
-func editorDataPolicyChildOkToTFIteration(ctx context.Context, iteration int32, apiObject *authorize.AuthorizeEditorDataPoliciesPolicyChild, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+func editorDataPolicyChildOkToTFIteration(ctx context.Context, iteration int32, apiObject *authorizeeditor.AuthorizeEditorDataPoliciesPolicyChild, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if !ok || apiObject == nil || cmp.Equal(apiObject, &authorize.AuthorizeEditorDataPoliciesPolicyChild{}) {
+	if !ok || apiObject == nil || cmp.Equal(apiObject, &authorizeeditor.AuthorizeEditorDataPoliciesPolicyChild{}) {
 		return types.ObjectNull(initializeEditorDataPolicyChildTFObjectTypes(iteration)), diags
 	}
 
 	attributeMap := map[string]attr.Value{}
 
 	switch t := apiObject.GetActualInstance().(type) {
-	case *authorize.AuthorizeEditorDataPoliciesPolicyChildPolicy:
+	case *authorizeeditor.AuthorizeEditorDataPoliciesPolicyChildPolicy:
 		childrenVal, ok := t.GetChildrenOk()
 		children, d := editorDataPolicyChildrenOkToListTFIteration(ctx, iteration+1, childrenVal, ok)
 		diags.Append(d...)
@@ -814,7 +814,7 @@ func editorDataPolicyChildOkToTFIteration(ctx context.Context, iteration int32, 
 		attributeMap["repetition_settings"] = repetitionSettings
 		attributeMap["value"] = value
 
-	case *authorize.AuthorizeEditorDataPoliciesPolicyChildRule:
+	case *authorizeeditor.AuthorizeEditorDataPoliciesPolicyChildRule:
 		conditionVal, ok := t.GetConditionOk()
 		condition, d := editorDataConditionOkToTF(ctx, conditionVal, ok)
 		diags.Append(d...)

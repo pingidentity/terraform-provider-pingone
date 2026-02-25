@@ -18,7 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
+	"github.com/patrickcping/pingone-go-sdk-v2/authorizeeditor"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	objectvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectvalidator"
 	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
@@ -29,15 +29,15 @@ func dataInputObjectSchemaAttributes() (attributes map[string]schema.Attribute) 
 
 	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the type of the data value.",
-	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataInputDTOTypeEnumValues)
+	).AllowedValuesEnum(authorizeeditor.AllowedEnumAuthorizeEditorDataInputDTOTypeEnumValues)
 
 	attributeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that specifies configuration settings for the authorization attribute to use as the data value.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAINPUTDTOTYPE_ATTRIBUTE)))
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATAINPUTDTOTYPE_ATTRIBUTE)))
 
 	valueDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies a constant text value to use as the data value.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAINPUTDTOTYPE_CONSTANT)))
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATAINPUTDTOTYPE_CONSTANT)))
 
 	attributes = map[string]schema.Attribute{
 		"type": schema.StringAttribute{
@@ -46,7 +46,7 @@ func dataInputObjectSchemaAttributes() (attributes map[string]schema.Attribute) 
 			Required:            true,
 
 			Validators: []validator.String{
-				stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataInputDTOTypeEnumValues)...),
+				stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorizeeditor.AllowedEnumAuthorizeEditorDataInputDTOTypeEnumValues)...),
 			},
 		},
 
@@ -59,11 +59,11 @@ func dataInputObjectSchemaAttributes() (attributes map[string]schema.Attribute) 
 
 			Validators: []validator.Object{
 				objectvalidatorinternal.IsRequiredIfMatchesPathValue(
-					types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAINPUTDTOTYPE_ATTRIBUTE)),
+					types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATAINPUTDTOTYPE_ATTRIBUTE)),
 					path.MatchRoot("service_type"),
 				),
 				objectvalidatorinternal.ConflictsIfMatchesPathValue(
-					types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAINPUTDTOTYPE_CONSTANT)),
+					types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATAINPUTDTOTYPE_CONSTANT)),
 					path.MatchRoot("service_type"),
 				),
 			},
@@ -77,11 +77,11 @@ func dataInputObjectSchemaAttributes() (attributes map[string]schema.Attribute) 
 
 			Validators: []validator.String{
 				stringvalidatorinternal.IsRequiredIfMatchesPathValue(
-					types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAINPUTDTOTYPE_CONSTANT)),
+					types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATAINPUTDTOTYPE_CONSTANT)),
 					path.MatchRoot("service_type"),
 				),
 				stringvalidatorinternal.ConflictsIfMatchesPathValue(
-					types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAINPUTDTOTYPE_ATTRIBUTE)),
+					types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATAINPUTDTOTYPE_ATTRIBUTE)),
 					path.MatchRoot("service_type"),
 				),
 			},
@@ -105,16 +105,16 @@ var editorDataInputTFObjectTypes = map[string]attr.Type{
 	"value": types.StringType,
 }
 
-func (p *editorDataInputResourceModel) expand(ctx context.Context) (*authorize.AuthorizeEditorDataInputDTO, diag.Diagnostics) {
+func (p *editorDataInputResourceModel) expand(ctx context.Context) (*authorizeeditor.AuthorizeEditorDataInputDTO, diag.Diagnostics) {
 	var diags, d diag.Diagnostics
 
-	data := authorize.AuthorizeEditorDataInputDTO{}
+	data := authorizeeditor.AuthorizeEditorDataInputDTO{}
 
-	switch authorize.EnumAuthorizeEditorDataInputDTOType(p.Type.ValueString()) {
-	case authorize.ENUMAUTHORIZEEDITORDATAINPUTDTOTYPE_ATTRIBUTE:
+	switch authorizeeditor.EnumAuthorizeEditorDataInputDTOType(p.Type.ValueString()) {
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATAINPUTDTOTYPE_ATTRIBUTE:
 		data.AuthorizeEditorDataInputsAttributeInputDTO, d = p.expandAttributeInput(ctx)
 		diags.Append(d...)
-	case authorize.ENUMAUTHORIZEEDITORDATAINPUTDTOTYPE_CONSTANT:
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATAINPUTDTOTYPE_CONSTANT:
 		data.AuthorizeEditorDataInputsConstantInputDTO = p.expandConstantInput()
 	default:
 		diags.AddError(
@@ -130,7 +130,7 @@ func (p *editorDataInputResourceModel) expand(ctx context.Context) (*authorize.A
 	return &data, diags
 }
 
-func (p *editorDataInputResourceModel) expandAttributeInput(ctx context.Context) (*authorize.AuthorizeEditorDataInputsAttributeInputDTO, diag.Diagnostics) {
+func (p *editorDataInputResourceModel) expandAttributeInput(ctx context.Context) (*authorizeeditor.AuthorizeEditorDataInputsAttributeInputDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	attribute, d := expandEditorReferenceData(ctx, p.Attribute)
@@ -139,34 +139,34 @@ func (p *editorDataInputResourceModel) expandAttributeInput(ctx context.Context)
 		return nil, diags
 	}
 
-	data := authorize.NewAuthorizeEditorDataInputsAttributeInputDTO(
-		authorize.EnumAuthorizeEditorDataInputDTOType(p.Type.ValueString()),
+	data := authorizeeditor.NewAuthorizeEditorDataInputsAttributeInputDTO(
+		authorizeeditor.EnumAuthorizeEditorDataInputDTOType(p.Type.ValueString()),
 		*attribute,
 	)
 
 	return data, diags
 }
 
-func (p *editorDataInputResourceModel) expandConstantInput() *authorize.AuthorizeEditorDataInputsConstantInputDTO {
-	data := authorize.NewAuthorizeEditorDataInputsConstantInputDTO(
-		authorize.EnumAuthorizeEditorDataInputDTOType(p.Type.ValueString()),
+func (p *editorDataInputResourceModel) expandConstantInput() *authorizeeditor.AuthorizeEditorDataInputsConstantInputDTO {
+	data := authorizeeditor.NewAuthorizeEditorDataInputsConstantInputDTO(
+		authorizeeditor.EnumAuthorizeEditorDataInputDTOType(p.Type.ValueString()),
 		p.Value.ValueString(),
 	)
 
 	return data
 }
 
-func editorDataInputOkToTF(ctx context.Context, apiObject *authorize.AuthorizeEditorDataInputDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+func editorDataInputOkToTF(ctx context.Context, apiObject *authorizeeditor.AuthorizeEditorDataInputDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if !ok || apiObject == nil || cmp.Equal(apiObject, &authorize.AuthorizeEditorDataInputDTO{}) {
+	if !ok || apiObject == nil || cmp.Equal(apiObject, &authorizeeditor.AuthorizeEditorDataInputDTO{}) {
 		return types.ObjectNull(editorDataInputTFObjectTypes), diags
 	}
 
 	attributeMap := map[string]attr.Value{}
 
 	switch t := apiObject.GetActualInstance().(type) {
-	case *authorize.AuthorizeEditorDataInputsAttributeInputDTO:
+	case *authorizeeditor.AuthorizeEditorDataInputsAttributeInputDTO:
 
 		attributeResp, ok := t.GetAttributeOk()
 		value, d := editorDataReferenceObjectOkToTF(attributeResp, ok)
@@ -178,7 +178,7 @@ func editorDataInputOkToTF(ctx context.Context, apiObject *authorize.AuthorizeEd
 			"value":     types.StringNull(),
 		}
 
-	case *authorize.AuthorizeEditorDataInputsConstantInputDTO:
+	case *authorizeeditor.AuthorizeEditorDataInputsConstantInputDTO:
 
 		attributeMap = map[string]attr.Value{
 			"type":      framework.EnumOkToTF(t.GetTypeOk()),

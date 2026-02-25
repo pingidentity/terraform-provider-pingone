@@ -18,7 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
+	"github.com/patrickcping/pingone-go-sdk-v2/authorizeeditor"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	objectvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
@@ -28,11 +28,11 @@ func dataRulesEffectSettingsObjectSchemaAttributes() (attributes map[string]sche
 
 	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the type of the policy combination effect settings.",
-	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataRulesEffectSettingsDTOTypeEnumValues)
+	).AllowedValuesEnum(authorizeeditor.AllowedEnumAuthorizeEditorDataRulesEffectSettingsDTOTypeEnumValues)
 
 	conditionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that specifies the configuration settings for the condition to apply to the conditional policy combination effect settings.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s` or `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATARULESEFFECTSETTINGSDTOTYPE_CONDITIONAL_DENY_ELSE_PERMIT), string(authorize.ENUMAUTHORIZEEDITORDATARULESEFFECTSETTINGSDTOTYPE_CONDITIONAL_PERMIT_ELSE_DENY)))
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s` or `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATARULESEFFECTSETTINGSDTOTYPE_CONDITIONAL_DENY_ELSE_PERMIT), string(authorizeeditor.ENUMAUTHORIZEEDITORDATARULESEFFECTSETTINGSDTOTYPE_CONDITIONAL_PERMIT_ELSE_DENY)))
 
 	attributes = map[string]schema.Attribute{
 		"type": schema.StringAttribute{
@@ -41,7 +41,7 @@ func dataRulesEffectSettingsObjectSchemaAttributes() (attributes map[string]sche
 			Required:            true,
 
 			Validators: []validator.String{
-				stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataRulesEffectSettingsDTOTypeEnumValues)...),
+				stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorizeeditor.AllowedEnumAuthorizeEditorDataRulesEffectSettingsDTOTypeEnumValues)...),
 			},
 		},
 
@@ -59,19 +59,19 @@ func dataRulesEffectSettingsObjectSchemaAttributes() (attributes map[string]sche
 
 			Validators: []validator.Object{
 				objectvalidatorinternal.IsRequiredIfMatchesPathValue(
-					types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATARULESEFFECTSETTINGSDTOTYPE_CONDITIONAL_DENY_ELSE_PERMIT)),
+					types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATARULESEFFECTSETTINGSDTOTYPE_CONDITIONAL_DENY_ELSE_PERMIT)),
 					path.MatchRelative().AtParent().AtName("type"),
 				),
 				objectvalidatorinternal.IsRequiredIfMatchesPathValue(
-					types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATARULESEFFECTSETTINGSDTOTYPE_CONDITIONAL_PERMIT_ELSE_DENY)),
+					types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATARULESEFFECTSETTINGSDTOTYPE_CONDITIONAL_PERMIT_ELSE_DENY)),
 					path.MatchRelative().AtParent().AtName("type"),
 				),
 				objectvalidatorinternal.ConflictsIfMatchesPathValue(
-					types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATARULESEFFECTSETTINGSDTOTYPE_UNCONDITIONAL_DENY)),
+					types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATARULESEFFECTSETTINGSDTOTYPE_UNCONDITIONAL_DENY)),
 					path.MatchRelative().AtParent().AtName("type"),
 				),
 				objectvalidatorinternal.ConflictsIfMatchesPathValue(
-					types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATARULESEFFECTSETTINGSDTOTYPE_UNCONDITIONAL_PERMIT)),
+					types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATARULESEFFECTSETTINGSDTOTYPE_UNCONDITIONAL_PERMIT)),
 					path.MatchRelative().AtParent().AtName("type"),
 				),
 			},
@@ -93,7 +93,7 @@ var editorDataRulesEffectSettingsTFObjectTypes = map[string]attr.Type{
 	"condition": types.ObjectType{AttrTypes: editorDataConditionTFObjectTypes},
 }
 
-func expandEditorDataRulesEffectSettings(ctx context.Context, rulesEffectSettings basetypes.ObjectValue) (rulesEffectSettingsObject *authorize.AuthorizeEditorDataRulesEffectSettingsDTO, diags diag.Diagnostics) {
+func expandEditorDataRulesEffectSettings(ctx context.Context, rulesEffectSettings basetypes.ObjectValue) (rulesEffectSettingsObject *authorizeeditor.AuthorizeEditorDataRulesEffectSettingsDTO, diags diag.Diagnostics) {
 	var plan *editorDataRulesEffectSettingsResourceModel
 	diags.Append(rulesEffectSettings.As(ctx, &plan, basetypes.ObjectAsOptions{
 		UnhandledNullAsEmpty:    false,
@@ -112,22 +112,22 @@ func expandEditorDataRulesEffectSettings(ctx context.Context, rulesEffectSetting
 	return
 }
 
-func (p *editorDataRulesEffectSettingsResourceModel) expand(ctx context.Context) (*authorize.AuthorizeEditorDataRulesEffectSettingsDTO, diag.Diagnostics) {
+func (p *editorDataRulesEffectSettingsResourceModel) expand(ctx context.Context) (*authorizeeditor.AuthorizeEditorDataRulesEffectSettingsDTO, diag.Diagnostics) {
 	var diags, d diag.Diagnostics
 
-	data := authorize.AuthorizeEditorDataRulesEffectSettingsDTO{}
+	data := authorizeeditor.AuthorizeEditorDataRulesEffectSettingsDTO{}
 
-	switch authorize.EnumAuthorizeEditorDataRulesEffectSettingsDTOType(p.Type.ValueString()) {
-	case authorize.ENUMAUTHORIZEEDITORDATARULESEFFECTSETTINGSDTOTYPE_CONDITIONAL_DENY_ELSE_PERMIT:
+	switch authorizeeditor.EnumAuthorizeEditorDataRulesEffectSettingsDTOType(p.Type.ValueString()) {
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATARULESEFFECTSETTINGSDTOTYPE_CONDITIONAL_DENY_ELSE_PERMIT:
 		data.AuthorizeEditorDataRulesEffectSettingsConditionalDenyElsePermitDTO, d = p.expandConditionalDenyElsePermitRulesEffectSettings(ctx)
 		diags.Append(d...)
-	case authorize.ENUMAUTHORIZEEDITORDATARULESEFFECTSETTINGSDTOTYPE_CONDITIONAL_PERMIT_ELSE_DENY:
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATARULESEFFECTSETTINGSDTOTYPE_CONDITIONAL_PERMIT_ELSE_DENY:
 		data.AuthorizeEditorDataRulesEffectSettingsConditionalPermitElseDenyDTO, d = p.expandConditionalPermitElseDenyRulesEffectSettings(ctx)
 		diags.Append(d...)
-	case authorize.ENUMAUTHORIZEEDITORDATARULESEFFECTSETTINGSDTOTYPE_UNCONDITIONAL_DENY:
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATARULESEFFECTSETTINGSDTOTYPE_UNCONDITIONAL_DENY:
 		data.AuthorizeEditorDataRulesEffectSettingsUnconditionalDenyDTO = p.expandUnconditionalDenyRulesEffectSettings()
 		diags.Append(d...)
-	case authorize.ENUMAUTHORIZEEDITORDATARULESEFFECTSETTINGSDTOTYPE_UNCONDITIONAL_PERMIT:
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATARULESEFFECTSETTINGSDTOTYPE_UNCONDITIONAL_PERMIT:
 		data.AuthorizeEditorDataRulesEffectSettingsUnconditionalPermitDTO = p.expandUnconditionalPermitRulesEffectSettings()
 		diags.Append(d...)
 	default:
@@ -144,7 +144,7 @@ func (p *editorDataRulesEffectSettingsResourceModel) expand(ctx context.Context)
 	return &data, diags
 }
 
-func (p *editorDataRulesEffectSettingsResourceModel) expandConditionalDenyElsePermitRulesEffectSettings(ctx context.Context) (*authorize.AuthorizeEditorDataRulesEffectSettingsConditionalDenyElsePermitDTO, diag.Diagnostics) {
+func (p *editorDataRulesEffectSettingsResourceModel) expandConditionalDenyElsePermitRulesEffectSettings(ctx context.Context) (*authorizeeditor.AuthorizeEditorDataRulesEffectSettingsConditionalDenyElsePermitDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	condition, d := expandEditorDataCondition(ctx, p.Condition)
@@ -153,15 +153,15 @@ func (p *editorDataRulesEffectSettingsResourceModel) expandConditionalDenyElsePe
 		return nil, diags
 	}
 
-	data := authorize.NewAuthorizeEditorDataRulesEffectSettingsConditionalDenyElsePermitDTO(
-		authorize.EnumAuthorizeEditorDataRulesEffectSettingsDTOType(p.Type.ValueString()),
+	data := authorizeeditor.NewAuthorizeEditorDataRulesEffectSettingsConditionalDenyElsePermitDTO(
+		authorizeeditor.EnumAuthorizeEditorDataRulesEffectSettingsDTOType(p.Type.ValueString()),
 		*condition,
 	)
 
 	return data, diags
 }
 
-func (p *editorDataRulesEffectSettingsResourceModel) expandConditionalPermitElseDenyRulesEffectSettings(ctx context.Context) (*authorize.AuthorizeEditorDataRulesEffectSettingsConditionalPermitElseDenyDTO, diag.Diagnostics) {
+func (p *editorDataRulesEffectSettingsResourceModel) expandConditionalPermitElseDenyRulesEffectSettings(ctx context.Context) (*authorizeeditor.AuthorizeEditorDataRulesEffectSettingsConditionalPermitElseDenyDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	condition, d := expandEditorDataCondition(ctx, p.Condition)
@@ -170,43 +170,43 @@ func (p *editorDataRulesEffectSettingsResourceModel) expandConditionalPermitElse
 		return nil, diags
 	}
 
-	data := authorize.NewAuthorizeEditorDataRulesEffectSettingsConditionalPermitElseDenyDTO(
-		authorize.EnumAuthorizeEditorDataRulesEffectSettingsDTOType(p.Type.ValueString()),
+	data := authorizeeditor.NewAuthorizeEditorDataRulesEffectSettingsConditionalPermitElseDenyDTO(
+		authorizeeditor.EnumAuthorizeEditorDataRulesEffectSettingsDTOType(p.Type.ValueString()),
 		*condition,
 	)
 
 	return data, diags
 }
 
-func (p *editorDataRulesEffectSettingsResourceModel) expandUnconditionalDenyRulesEffectSettings() *authorize.AuthorizeEditorDataRulesEffectSettingsUnconditionalDenyDTO {
+func (p *editorDataRulesEffectSettingsResourceModel) expandUnconditionalDenyRulesEffectSettings() *authorizeeditor.AuthorizeEditorDataRulesEffectSettingsUnconditionalDenyDTO {
 
-	data := authorize.NewAuthorizeEditorDataRulesEffectSettingsUnconditionalDenyDTO(
-		authorize.EnumAuthorizeEditorDataRulesEffectSettingsDTOType(p.Type.ValueString()),
+	data := authorizeeditor.NewAuthorizeEditorDataRulesEffectSettingsUnconditionalDenyDTO(
+		authorizeeditor.EnumAuthorizeEditorDataRulesEffectSettingsDTOType(p.Type.ValueString()),
 	)
 
 	return data
 }
 
-func (p *editorDataRulesEffectSettingsResourceModel) expandUnconditionalPermitRulesEffectSettings() *authorize.AuthorizeEditorDataRulesEffectSettingsUnconditionalPermitDTO {
+func (p *editorDataRulesEffectSettingsResourceModel) expandUnconditionalPermitRulesEffectSettings() *authorizeeditor.AuthorizeEditorDataRulesEffectSettingsUnconditionalPermitDTO {
 
-	data := authorize.NewAuthorizeEditorDataRulesEffectSettingsUnconditionalPermitDTO(
-		authorize.EnumAuthorizeEditorDataRulesEffectSettingsDTOType(p.Type.ValueString()),
+	data := authorizeeditor.NewAuthorizeEditorDataRulesEffectSettingsUnconditionalPermitDTO(
+		authorizeeditor.EnumAuthorizeEditorDataRulesEffectSettingsDTOType(p.Type.ValueString()),
 	)
 
 	return data
 }
 
-func editorDataRulesEffectSettingsOkToTF(ctx context.Context, apiObject *authorize.AuthorizeEditorDataRulesEffectSettingsDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+func editorDataRulesEffectSettingsOkToTF(ctx context.Context, apiObject *authorizeeditor.AuthorizeEditorDataRulesEffectSettingsDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if !ok || apiObject == nil || cmp.Equal(apiObject, &authorize.AuthorizeEditorDataRulesEffectSettingsDTO{}) {
+	if !ok || apiObject == nil || cmp.Equal(apiObject, &authorizeeditor.AuthorizeEditorDataRulesEffectSettingsDTO{}) {
 		return types.ObjectNull(editorDataRulesEffectSettingsTFObjectTypes), diags
 	}
 
 	attributeMap := map[string]attr.Value{}
 
 	switch t := apiObject.GetActualInstance().(type) {
-	case *authorize.AuthorizeEditorDataRulesEffectSettingsConditionalDenyElsePermitDTO:
+	case *authorizeeditor.AuthorizeEditorDataRulesEffectSettingsConditionalDenyElsePermitDTO:
 
 		conditionResp, ok := t.GetConditionOk()
 		condition, d := editorDataConditionOkToTF(ctx, conditionResp, ok)
@@ -215,7 +215,7 @@ func editorDataRulesEffectSettingsOkToTF(ctx context.Context, apiObject *authori
 		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
 		attributeMap["condition"] = condition
 
-	case *authorize.AuthorizeEditorDataRulesEffectSettingsConditionalPermitElseDenyDTO:
+	case *authorizeeditor.AuthorizeEditorDataRulesEffectSettingsConditionalPermitElseDenyDTO:
 
 		conditionResp, ok := t.GetConditionOk()
 		condition, d := editorDataConditionOkToTF(ctx, conditionResp, ok)
@@ -224,11 +224,11 @@ func editorDataRulesEffectSettingsOkToTF(ctx context.Context, apiObject *authori
 		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
 		attributeMap["condition"] = condition
 
-	case *authorize.AuthorizeEditorDataRulesEffectSettingsUnconditionalDenyDTO:
+	case *authorizeeditor.AuthorizeEditorDataRulesEffectSettingsUnconditionalDenyDTO:
 
 		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
 
-	case *authorize.AuthorizeEditorDataRulesEffectSettingsUnconditionalPermitDTO:
+	case *authorizeeditor.AuthorizeEditorDataRulesEffectSettingsUnconditionalPermitDTO:
 
 		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
 

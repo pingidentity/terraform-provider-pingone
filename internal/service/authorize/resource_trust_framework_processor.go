@@ -21,9 +21,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
-	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
+	"github.com/patrickcping/pingone-go-sdk-v2/authorizeeditor"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -66,7 +67,7 @@ func (r *TrustFrameworkProcessorResource) Schema(ctx context.Context, req resour
 
 	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that describes the resource type.",
-	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataDefinitionsProcessorDefinitionDTOTypeEnumValues)
+	).AllowedValuesEnum(authorizeeditor.AllowedEnumAuthorizeEditorDataDefinitionsProcessorDefinitionDTOTypeEnumValues)
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -131,7 +132,7 @@ func (r *TrustFrameworkProcessorResource) Configure(ctx context.Context, req res
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -175,16 +176,16 @@ func (r *TrustFrameworkProcessorResource) Create(ctx context.Context, req resour
 	}
 
 	// Run the API call
-	var response *authorize.AuthorizeEditorDataDefinitionsProcessorDefinitionDTO
-	resp.Diagnostics.Append(framework.ParseResponse(
+	var response *authorizeeditor.AuthorizeEditorDataDefinitionsProcessorDefinitionDTO
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorProcessorsApi.CreateProcessor(ctx, plan.EnvironmentId.ValueString()).AuthorizeEditorDataDefinitionsProcessorDefinitionDTO(*trustFrameworkProcessor).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorProcessorsApi.CreateProcessor(ctx, plan.EnvironmentId.ValueString()).AuthorizeEditorDataDefinitionsProcessorDefinitionDTO(*trustFrameworkProcessor).Execute()
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateProcessor",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		retryAuthorizeEditorCreateUpdate,
 		&response,
 	)...)
@@ -222,16 +223,16 @@ func (r *TrustFrameworkProcessorResource) Read(ctx context.Context, req resource
 	}
 
 	// Run the API call
-	var response *authorize.AuthorizeEditorDataDefinitionsProcessorDefinitionDTO
-	resp.Diagnostics.Append(framework.ParseResponse(
+	var response *authorizeeditor.AuthorizeEditorDataDefinitionsProcessorDefinitionDTO
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorProcessorsApi.GetProcessor(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorProcessorsApi.GetProcessor(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"GetProcessor",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		nil,
 		&response,
 	)...)
@@ -268,16 +269,16 @@ func (r *TrustFrameworkProcessorResource) Update(ctx context.Context, req resour
 		return
 	}
 
-	var getResponse *authorize.AuthorizeEditorDataDefinitionsProcessorDefinitionDTO
-	resp.Diagnostics.Append(framework.ParseResponse(
+	var getResponse *authorizeeditor.AuthorizeEditorDataDefinitionsProcessorDefinitionDTO
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorProcessorsApi.GetProcessor(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorProcessorsApi.GetProcessor(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Execute()
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"GetProcessor-Update",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		nil,
 		&getResponse,
 	)...)
@@ -295,16 +296,16 @@ func (r *TrustFrameworkProcessorResource) Update(ctx context.Context, req resour
 	}
 
 	// Run the API call
-	var response *authorize.AuthorizeEditorDataDefinitionsProcessorDefinitionDTO
-	resp.Diagnostics.Append(framework.ParseResponse(
+	var response *authorizeeditor.AuthorizeEditorDataDefinitionsProcessorDefinitionDTO
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorProcessorsApi.UpdateProcessor(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).AuthorizeEditorDataDefinitionsProcessorDefinitionDTO(*trustFrameworkProcessor).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorProcessorsApi.UpdateProcessor(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).AuthorizeEditorDataDefinitionsProcessorDefinitionDTO(*trustFrameworkProcessor).Execute()
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateProcessor",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		retryAuthorizeEditorCreateUpdate,
 		&response,
 	)...)
@@ -348,15 +349,15 @@ func (r *TrustFrameworkProcessorResource) Delete(ctx context.Context, req resour
 		},
 		Refresh: func() (interface{}, string, error) {
 			// Run the API call
-			resp.Diagnostics.Append(framework.ParseResponse(
+			resp.Diagnostics.Append(legacysdk.ParseResponse(
 				ctx,
 
 				func() (any, *http.Response, error) {
-					fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorProcessorsApi.DeleteProcessor(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
+					fR, fErr := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorProcessorsApi.DeleteProcessor(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+					return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 				},
 				"DeleteProcessor",
-				framework.CustomErrorResourceNotFoundWarning,
+				legacysdk.CustomErrorResourceNotFoundWarning,
 				nil,
 				nil,
 			)...)
@@ -364,8 +365,8 @@ func (r *TrustFrameworkProcessorResource) Delete(ctx context.Context, req resour
 				return nil, "ERROR", fmt.Errorf("Error deleting authorize processor (%s)", data.Id.ValueString())
 			}
 
-			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorProcessorsApi.GetProcessor(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			getResp, r, err := framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorProcessorsApi.GetProcessor(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			getResp, r, err := legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 
 			if err != nil || r == nil {
 				return getResp, "ERROR", err
@@ -424,11 +425,11 @@ func (r *TrustFrameworkProcessorResource) ImportState(ctx context.Context, req r
 	}
 }
 
-func (p *trustFrameworkProcessorResourceModel) expand(ctx context.Context, updateVersionId *string) (*authorize.AuthorizeEditorDataDefinitionsProcessorDefinitionDTO, diag.Diagnostics) {
+func (p *trustFrameworkProcessorResourceModel) expand(ctx context.Context, updateVersionId *string) (*authorizeeditor.AuthorizeEditorDataDefinitionsProcessorDefinitionDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	// Main object
-	data := authorize.NewAuthorizeEditorDataDefinitionsProcessorDefinitionDTO(
+	data := authorizeeditor.NewAuthorizeEditorDataDefinitionsProcessorDefinitionDTO(
 		p.Name.ValueString(),
 	)
 
@@ -467,7 +468,7 @@ func (p *trustFrameworkProcessorResourceModel) expand(ctx context.Context, updat
 	return data, diags
 }
 
-func (p *trustFrameworkProcessorResourceModel) toState(ctx context.Context, apiObject *authorize.AuthorizeEditorDataDefinitionsProcessorDefinitionDTO) diag.Diagnostics {
+func (p *trustFrameworkProcessorResourceModel) toState(ctx context.Context, apiObject *authorizeeditor.AuthorizeEditorDataDefinitionsProcessorDefinitionDTO) diag.Diagnostics {
 	var diags, d diag.Diagnostics
 
 	if apiObject == nil {

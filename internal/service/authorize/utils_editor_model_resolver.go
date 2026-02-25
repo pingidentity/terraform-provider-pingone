@@ -20,7 +20,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
+	"github.com/patrickcping/pingone-go-sdk-v2/authorizeeditor"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	objectvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectvalidator"
 	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
@@ -31,23 +31,23 @@ func dataResolverObjectSchemaAttributes() (attributes map[string]schema.Attribut
 
 	resolversTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the resolver type.",
-	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataResolverDTOTypeEnumValues)
+	).AllowedValuesEnum(authorizeeditor.AllowedEnumAuthorizeEditorDataResolverDTOTypeEnumValues)
 
 	valueRefDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("A string that specifies configuration settings for the authorization attribute (if `type` is `%s`) or the authorization service (if `type` is `%s`) to use as the data value.", string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_ATTRIBUTE), string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_SERVICE)),
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s` or `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_ATTRIBUTE), string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_SERVICE)))
+		fmt.Sprintf("A string that specifies configuration settings for the authorization attribute (if `type` is `%s`) or the authorization service (if `type` is `%s`) to use as the data value.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_ATTRIBUTE), string(authorizeeditor.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_SERVICE)),
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s` or `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_ATTRIBUTE), string(authorizeeditor.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_SERVICE)))
 
 	valueTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that describes configuration settings for the output value type when using a constant value.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_CONSTANT)))
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_CONSTANT)))
 
 	valueDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("A string that specifies a constant text value to use as the resulting data value.  If `type` is `%s`, the options are `%s`.  If `type` is `%s`, any value can be configured.", string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_SYSTEM), strings.Join(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataAttributeResolversSystemResolverDTOValueEnumValues), "`, `"), string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_CONSTANT)),
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s` or `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_CONSTANT), string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_SYSTEM)))
+		fmt.Sprintf("A string that specifies a constant text value to use as the resulting data value.  If `type` is `%s`, the options are `%s`.  If `type` is `%s`, any value can be configured.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_SYSTEM), strings.Join(utils.EnumSliceToStringSlice(authorizeeditor.AllowedEnumAuthorizeEditorDataAttributeResolversSystemResolverDTOValueEnumValues), "`, `"), string(authorizeeditor.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_CONSTANT)),
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s` or `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_CONSTANT), string(authorizeeditor.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_SYSTEM)))
 
 	queryDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that specifies configuration settings for the query to use to resolve the data value.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_USER)))
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_USER)))
 
 	attributes = map[string]schema.Attribute{
 		"condition": schema.SingleNestedAttribute{
@@ -75,7 +75,7 @@ func dataResolverObjectSchemaAttributes() (attributes map[string]schema.Attribut
 			Required:            true,
 
 			Validators: []validator.String{
-				stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataResolverDTOTypeEnumValues)...),
+				stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorizeeditor.AllowedEnumAuthorizeEditorDataResolverDTOTypeEnumValues)...),
 			},
 		},
 
@@ -85,15 +85,15 @@ func dataResolverObjectSchemaAttributes() (attributes map[string]schema.Attribut
 			MarkdownDescription: valueRefDescription.MarkdownDescription,
 			Optional:            true,
 
-			Attributes: referenceIdObjectSchemaAttributes(framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("A string that specifies the ID of the authorization attribute (if `type` is `%s`) or the authorization service (if `type` is `%s`) in the trust framework.", string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_ATTRIBUTE), string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_SERVICE)))),
+			Attributes: referenceIdObjectSchemaAttributes(framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("A string that specifies the ID of the authorization attribute (if `type` is `%s`) or the authorization service (if `type` is `%s`) in the trust framework.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_ATTRIBUTE), string(authorizeeditor.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_SERVICE)))),
 
 			Validators: []validator.Object{
 				objectvalidatorinternal.IsRequiredIfMatchesPathValue(
-					types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_ATTRIBUTE)),
+					types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_ATTRIBUTE)),
 					path.MatchRelative().AtParent().AtName("type"),
 				),
 				objectvalidatorinternal.IsRequiredIfMatchesPathValue(
-					types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_SERVICE)),
+					types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_SERVICE)),
 					path.MatchRelative().AtParent().AtName("type"),
 				),
 			},
@@ -109,7 +109,7 @@ func dataResolverObjectSchemaAttributes() (attributes map[string]schema.Attribut
 
 			Validators: []validator.Object{
 				objectvalidatorinternal.IsRequiredIfMatchesPathValue(
-					types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_CONSTANT)),
+					types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_CONSTANT)),
 					path.MatchRelative().AtParent().AtName("type"),
 				),
 			},
@@ -134,15 +134,15 @@ func dataResolverObjectSchemaAttributes() (attributes map[string]schema.Attribut
 			Validators: []validator.String{
 				stringvalidator.Any(
 					stringvalidatorinternal.IsRequiredIfMatchesPathValue(
-						types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_CONSTANT)),
+						types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_CONSTANT)),
 						path.MatchRelative().AtParent().AtName("type"),
 					),
 					stringvalidator.All(
 						stringvalidatorinternal.IsRequiredIfMatchesPathValue(
-							types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_SYSTEM)),
+							types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_SYSTEM)),
 							path.MatchRelative().AtParent().AtName("type"),
 						),
-						stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataAttributeResolversSystemResolverDTOValueEnumValues)...),
+						stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorizeeditor.AllowedEnumAuthorizeEditorDataAttributeResolversSystemResolverDTOValueEnumValues)...),
 					),
 				),
 			},
@@ -158,7 +158,7 @@ func dataResolverObjectSchemaAttributes() (attributes map[string]schema.Attribut
 
 			Validators: []validator.Object{
 				objectvalidatorinternal.IsRequiredIfMatchesPathValue(
-					types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_USER)),
+					types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_USER)),
 					path.MatchRelative().AtParent().AtName("type"),
 				),
 			},
@@ -172,23 +172,23 @@ func dataSourceDataResolverObjectSchemaAttributes() (attributes map[string]dssch
 
 	resolversTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the resolver type.",
-	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataResolverDTOTypeEnumValues)
+	).AllowedValuesEnum(authorizeeditor.AllowedEnumAuthorizeEditorDataResolverDTOTypeEnumValues)
 
 	valueRefDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("A string that specifies configuration settings for the authorization attribute (if `type` is `%s`) or the authorization service (if `type` is `%s`) to use as the data value.", string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_ATTRIBUTE), string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_SERVICE)),
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s` or `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_ATTRIBUTE), string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_SERVICE)))
+		fmt.Sprintf("A string that specifies configuration settings for the authorization attribute (if `type` is `%s`) or the authorization service (if `type` is `%s`) to use as the data value.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_ATTRIBUTE), string(authorizeeditor.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_SERVICE)),
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s` or `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_ATTRIBUTE), string(authorizeeditor.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_SERVICE)))
 
 	valueTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that describes configuration settings for the output value type when using a constant value.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_CONSTANT)))
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_CONSTANT)))
 
 	valueDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("A string that specifies a constant text value to use as the resulting data value.  If `type` is `%s`, the options are `%s`.  If `type` is `%s`, any value can be configured.", string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_SYSTEM), strings.Join(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataAttributeResolversSystemResolverDTOValueEnumValues), "`, `"), string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_CONSTANT)),
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s` or `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_CONSTANT), string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_SYSTEM)))
+		fmt.Sprintf("A string that specifies a constant text value to use as the resulting data value.  If `type` is `%s`, the options are `%s`.  If `type` is `%s`, any value can be configured.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_SYSTEM), strings.Join(utils.EnumSliceToStringSlice(authorizeeditor.AllowedEnumAuthorizeEditorDataAttributeResolversSystemResolverDTOValueEnumValues), "`, `"), string(authorizeeditor.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_CONSTANT)),
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s` or `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_CONSTANT), string(authorizeeditor.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_SYSTEM)))
 
 	queryDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that specifies configuration settings for the query to use to resolve the data value.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_USER)))
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_USER)))
 
 	attributes = map[string]dsschema.Attribute{
 		"condition": schema.SingleNestedAttribute{
@@ -222,7 +222,7 @@ func dataSourceDataResolverObjectSchemaAttributes() (attributes map[string]dssch
 			MarkdownDescription: valueRefDescription.MarkdownDescription,
 			Computed:            true,
 
-			Attributes: referenceIdObjectSchemaAttributes(framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("A string that specifies the ID of the authorization attribute (if `type` is `%s`) or the authorization service (if `type` is `%s`) in the trust framework.", string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_ATTRIBUTE), string(authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_SERVICE)))),
+			Attributes: referenceIdObjectSchemaAttributes(framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("A string that specifies the ID of the authorization attribute (if `type` is `%s`) or the authorization service (if `type` is `%s`) in the trust framework.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_ATTRIBUTE), string(authorizeeditor.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_SERVICE)))),
 		},
 
 		// type == CONSTANT
@@ -288,7 +288,7 @@ var (
 	}
 )
 
-func expandEditorResolver(ctx context.Context, resolver basetypes.ObjectValue) (resolverObject *authorize.AuthorizeEditorDataResolverDTO, diags diag.Diagnostics) {
+func expandEditorResolver(ctx context.Context, resolver basetypes.ObjectValue) (resolverObject *authorizeeditor.AuthorizeEditorDataResolverDTO, diags diag.Diagnostics) {
 	var plan *editorDataResolverResourceModel
 	diags.Append(resolver.As(ctx, &plan, basetypes.ObjectAsOptions{
 		UnhandledNullAsEmpty:    false,
@@ -307,34 +307,34 @@ func expandEditorResolver(ctx context.Context, resolver basetypes.ObjectValue) (
 	return
 }
 
-func (p *editorDataResolverResourceModel) expand(ctx context.Context) (*authorize.AuthorizeEditorDataResolverDTO, diag.Diagnostics) {
+func (p *editorDataResolverResourceModel) expand(ctx context.Context) (*authorizeeditor.AuthorizeEditorDataResolverDTO, diag.Diagnostics) {
 	var diags, d diag.Diagnostics
 
-	data := authorize.AuthorizeEditorDataResolverDTO{}
+	data := authorizeeditor.AuthorizeEditorDataResolverDTO{}
 
-	switch authorize.EnumAuthorizeEditorDataResolverDTOType(p.Type.ValueString()) {
-	case authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_ATTRIBUTE:
+	switch authorizeeditor.EnumAuthorizeEditorDataResolverDTOType(p.Type.ValueString()) {
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_ATTRIBUTE:
 		data.AuthorizeEditorDataAttributeResolversAttributeResolverDTO, d = p.expandAttributeResolver(ctx)
 		diags.Append(d...)
-	case authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_CONSTANT:
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_CONSTANT:
 		data.AuthorizeEditorDataAttributeResolversConstantResolverDTO, d = p.expandConstantResolver(ctx)
 		diags.Append(d...)
-	case authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_CURRENT_REPETITION_VALUE:
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_CURRENT_REPETITION_VALUE:
 		data.AuthorizeEditorDataAttributeResolversCurrentRepetitionValueResolverDTO, d = p.expandCurrentRepetitionValueResolver(ctx)
 		diags.Append(d...)
-	case authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_CURRENT_USER_ID:
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_CURRENT_USER_ID:
 		data.AuthorizeEditorDataAttributeResolversCurrentUserIDResolverDTO, d = p.expandCurrentUserIdResolver(ctx)
 		diags.Append(d...)
-	case authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_REQUEST:
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_REQUEST:
 		data.AuthorizeEditorDataAttributeResolversRequestResolverDTO, d = p.expandRequestResolver(ctx)
 		diags.Append(d...)
-	case authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_SERVICE:
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_SERVICE:
 		data.AuthorizeEditorDataAttributeResolversServiceResolverDTO, d = p.expandServiceResolver(ctx)
 		diags.Append(d...)
-	case authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_SYSTEM:
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_SYSTEM:
 		data.AuthorizeEditorDataAttributeResolversSystemResolverDTO, d = p.expandSystemResolver(ctx)
 		diags.Append(d...)
-	case authorize.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_USER:
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATARESOLVERDTOTYPE_USER:
 		data.AuthorizeEditorDataAttributeResolversUserResolverDTO, d = p.expandUserResolver(ctx)
 		diags.Append(d...)
 	default:
@@ -351,7 +351,7 @@ func (p *editorDataResolverResourceModel) expand(ctx context.Context) (*authoriz
 	return &data, diags
 }
 
-func (p *editorDataResolverResourceModel) expandAttributeResolver(ctx context.Context) (*authorize.AuthorizeEditorDataAttributeResolversAttributeResolverDTO, diag.Diagnostics) {
+func (p *editorDataResolverResourceModel) expandAttributeResolver(ctx context.Context) (*authorizeeditor.AuthorizeEditorDataAttributeResolversAttributeResolverDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	valueRef, d := expandEditorReferenceData(ctx, p.ValueRef)
@@ -360,8 +360,8 @@ func (p *editorDataResolverResourceModel) expandAttributeResolver(ctx context.Co
 		return nil, diags
 	}
 
-	data := authorize.NewAuthorizeEditorDataAttributeResolversAttributeResolverDTO(
-		authorize.EnumAuthorizeEditorDataResolverDTOType(p.Type.ValueString()),
+	data := authorizeeditor.NewAuthorizeEditorDataAttributeResolversAttributeResolverDTO(
+		authorizeeditor.EnumAuthorizeEditorDataResolverDTOType(p.Type.ValueString()),
 		*valueRef,
 	)
 
@@ -397,7 +397,7 @@ func (p *editorDataResolverResourceModel) expandAttributeResolver(ctx context.Co
 	return data, diags
 }
 
-func (p *editorDataResolverResourceModel) expandConstantResolver(ctx context.Context) (*authorize.AuthorizeEditorDataAttributeResolversConstantResolverDTO, diag.Diagnostics) {
+func (p *editorDataResolverResourceModel) expandConstantResolver(ctx context.Context) (*authorizeeditor.AuthorizeEditorDataAttributeResolversConstantResolverDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	valueType, d := expandEditorValueType(ctx, p.ValueType)
@@ -406,8 +406,8 @@ func (p *editorDataResolverResourceModel) expandConstantResolver(ctx context.Con
 		return nil, diags
 	}
 
-	data := authorize.NewAuthorizeEditorDataAttributeResolversConstantResolverDTO(
-		authorize.EnumAuthorizeEditorDataResolverDTOType(p.Type.ValueString()),
+	data := authorizeeditor.NewAuthorizeEditorDataAttributeResolversConstantResolverDTO(
+		authorizeeditor.EnumAuthorizeEditorDataResolverDTOType(p.Type.ValueString()),
 		p.Value.ValueString(),
 		*valueType,
 	)
@@ -444,11 +444,11 @@ func (p *editorDataResolverResourceModel) expandConstantResolver(ctx context.Con
 	return data, diags
 }
 
-func (p *editorDataResolverResourceModel) expandCurrentRepetitionValueResolver(ctx context.Context) (*authorize.AuthorizeEditorDataAttributeResolversCurrentRepetitionValueResolverDTO, diag.Diagnostics) {
+func (p *editorDataResolverResourceModel) expandCurrentRepetitionValueResolver(ctx context.Context) (*authorizeeditor.AuthorizeEditorDataAttributeResolversCurrentRepetitionValueResolverDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	data := authorize.NewAuthorizeEditorDataAttributeResolversCurrentRepetitionValueResolverDTO(
-		authorize.EnumAuthorizeEditorDataResolverDTOType(p.Type.ValueString()),
+	data := authorizeeditor.NewAuthorizeEditorDataAttributeResolversCurrentRepetitionValueResolverDTO(
+		authorizeeditor.EnumAuthorizeEditorDataResolverDTOType(p.Type.ValueString()),
 	)
 
 	// Condition
@@ -483,11 +483,11 @@ func (p *editorDataResolverResourceModel) expandCurrentRepetitionValueResolver(c
 	return data, diags
 }
 
-func (p *editorDataResolverResourceModel) expandCurrentUserIdResolver(ctx context.Context) (*authorize.AuthorizeEditorDataAttributeResolversCurrentUserIDResolverDTO, diag.Diagnostics) {
+func (p *editorDataResolverResourceModel) expandCurrentUserIdResolver(ctx context.Context) (*authorizeeditor.AuthorizeEditorDataAttributeResolversCurrentUserIDResolverDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	data := authorize.NewAuthorizeEditorDataAttributeResolversCurrentUserIDResolverDTO(
-		authorize.EnumAuthorizeEditorDataResolverDTOType(p.Type.ValueString()),
+	data := authorizeeditor.NewAuthorizeEditorDataAttributeResolversCurrentUserIDResolverDTO(
+		authorizeeditor.EnumAuthorizeEditorDataResolverDTOType(p.Type.ValueString()),
 	)
 
 	// Condition
@@ -522,11 +522,11 @@ func (p *editorDataResolverResourceModel) expandCurrentUserIdResolver(ctx contex
 	return data, diags
 }
 
-func (p *editorDataResolverResourceModel) expandRequestResolver(ctx context.Context) (*authorize.AuthorizeEditorDataAttributeResolversRequestResolverDTO, diag.Diagnostics) {
+func (p *editorDataResolverResourceModel) expandRequestResolver(ctx context.Context) (*authorizeeditor.AuthorizeEditorDataAttributeResolversRequestResolverDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	data := authorize.NewAuthorizeEditorDataAttributeResolversRequestResolverDTO(
-		authorize.EnumAuthorizeEditorDataResolverDTOType(p.Type.ValueString()),
+	data := authorizeeditor.NewAuthorizeEditorDataAttributeResolversRequestResolverDTO(
+		authorizeeditor.EnumAuthorizeEditorDataResolverDTOType(p.Type.ValueString()),
 	)
 
 	// Condition
@@ -561,7 +561,7 @@ func (p *editorDataResolverResourceModel) expandRequestResolver(ctx context.Cont
 	return data, diags
 }
 
-func (p *editorDataResolverResourceModel) expandServiceResolver(ctx context.Context) (*authorize.AuthorizeEditorDataAttributeResolversServiceResolverDTO, diag.Diagnostics) {
+func (p *editorDataResolverResourceModel) expandServiceResolver(ctx context.Context) (*authorizeeditor.AuthorizeEditorDataAttributeResolversServiceResolverDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	valueRef, d := expandEditorReferenceData(ctx, p.ValueRef)
@@ -570,8 +570,8 @@ func (p *editorDataResolverResourceModel) expandServiceResolver(ctx context.Cont
 		return nil, diags
 	}
 
-	data := authorize.NewAuthorizeEditorDataAttributeResolversServiceResolverDTO(
-		authorize.EnumAuthorizeEditorDataResolverDTOType(p.Type.ValueString()),
+	data := authorizeeditor.NewAuthorizeEditorDataAttributeResolversServiceResolverDTO(
+		authorizeeditor.EnumAuthorizeEditorDataResolverDTOType(p.Type.ValueString()),
 		*valueRef,
 	)
 
@@ -607,12 +607,12 @@ func (p *editorDataResolverResourceModel) expandServiceResolver(ctx context.Cont
 	return data, diags
 }
 
-func (p *editorDataResolverResourceModel) expandSystemResolver(ctx context.Context) (*authorize.AuthorizeEditorDataAttributeResolversSystemResolverDTO, diag.Diagnostics) {
+func (p *editorDataResolverResourceModel) expandSystemResolver(ctx context.Context) (*authorizeeditor.AuthorizeEditorDataAttributeResolversSystemResolverDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	data := authorize.NewAuthorizeEditorDataAttributeResolversSystemResolverDTO(
-		authorize.EnumAuthorizeEditorDataResolverDTOType(p.Type.ValueString()),
-		authorize.EnumAuthorizeEditorDataAttributeResolversSystemResolverDTOValue(p.Value.ValueString()),
+	data := authorizeeditor.NewAuthorizeEditorDataAttributeResolversSystemResolverDTO(
+		authorizeeditor.EnumAuthorizeEditorDataResolverDTOType(p.Type.ValueString()),
+		authorizeeditor.EnumAuthorizeEditorDataAttributeResolversSystemResolverDTOValue(p.Value.ValueString()),
 	)
 
 	// Condition
@@ -647,7 +647,7 @@ func (p *editorDataResolverResourceModel) expandSystemResolver(ctx context.Conte
 	return data, diags
 }
 
-func (p *editorDataResolverResourceModel) expandUserResolver(ctx context.Context) (*authorize.AuthorizeEditorDataAttributeResolversUserResolverDTO, diag.Diagnostics) {
+func (p *editorDataResolverResourceModel) expandUserResolver(ctx context.Context) (*authorizeeditor.AuthorizeEditorDataAttributeResolversUserResolverDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	query, d := expandEditorResolverQuery(ctx, p.Query)
@@ -656,8 +656,8 @@ func (p *editorDataResolverResourceModel) expandUserResolver(ctx context.Context
 		return nil, diags
 	}
 
-	data := authorize.NewAuthorizeEditorDataAttributeResolversUserResolverDTO(
-		authorize.EnumAuthorizeEditorDataResolverDTOType(p.Type.ValueString()),
+	data := authorizeeditor.NewAuthorizeEditorDataAttributeResolversUserResolverDTO(
+		authorizeeditor.EnumAuthorizeEditorDataResolverDTOType(p.Type.ValueString()),
 		*query,
 	)
 
@@ -693,7 +693,7 @@ func (p *editorDataResolverResourceModel) expandUserResolver(ctx context.Context
 	return data, diags
 }
 
-func editorResolversOkToListTF(ctx context.Context, apiObject []authorize.AuthorizeEditorDataResolverDTO, ok bool) (basetypes.ListValue, diag.Diagnostics) {
+func editorResolversOkToListTF(ctx context.Context, apiObject []authorizeeditor.AuthorizeEditorDataResolverDTO, ok bool) (basetypes.ListValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	tfObjType := types.ObjectType{AttrTypes: editorDataResolverTFObjectTypes}
@@ -720,7 +720,7 @@ func editorResolversOkToListTF(ctx context.Context, apiObject []authorize.Author
 	return returnVar, diags
 }
 
-func editorResolversOkToSetTF(ctx context.Context, apiObject []authorize.AuthorizeEditorDataResolverDTO, ok bool) (basetypes.SetValue, diag.Diagnostics) {
+func editorResolversOkToSetTF(ctx context.Context, apiObject []authorizeeditor.AuthorizeEditorDataResolverDTO, ok bool) (basetypes.SetValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	tfObjType := types.ObjectType{AttrTypes: editorDataResolverTFObjectTypes}
@@ -747,17 +747,17 @@ func editorResolversOkToSetTF(ctx context.Context, apiObject []authorize.Authori
 	return returnVar, diags
 }
 
-func editorDataResolverOkToTF(ctx context.Context, apiObject *authorize.AuthorizeEditorDataResolverDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+func editorDataResolverOkToTF(ctx context.Context, apiObject *authorizeeditor.AuthorizeEditorDataResolverDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if !ok || apiObject == nil || cmp.Equal(apiObject, &authorize.AuthorizeEditorDataResolverDTO{}) {
+	if !ok || apiObject == nil || cmp.Equal(apiObject, &authorizeeditor.AuthorizeEditorDataResolverDTO{}) {
 		return types.ObjectNull(editorDataResolverTFObjectTypes), diags
 	}
 
 	attributeMap := map[string]attr.Value{}
 
 	switch t := apiObject.GetActualInstance().(type) {
-	case *authorize.AuthorizeEditorDataAttributeResolversAttributeResolverDTO:
+	case *authorizeeditor.AuthorizeEditorDataAttributeResolversAttributeResolverDTO:
 
 		conditionValue, ok := t.GetConditionOk()
 		condition, d := editorDataConditionOkToTF(ctx, conditionValue, ok)
@@ -776,7 +776,7 @@ func editorDataResolverOkToTF(ctx context.Context, apiObject *authorize.Authoriz
 		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
 		attributeMap["value_ref"] = valueRef
 
-	case *authorize.AuthorizeEditorDataAttributeResolversConstantResolverDTO:
+	case *authorizeeditor.AuthorizeEditorDataAttributeResolversConstantResolverDTO:
 
 		conditionValue, ok := t.GetConditionOk()
 		condition, d := editorDataConditionOkToTF(ctx, conditionValue, ok)
@@ -796,7 +796,7 @@ func editorDataResolverOkToTF(ctx context.Context, apiObject *authorize.Authoriz
 		attributeMap["value_type"] = valueType
 		attributeMap["value"] = framework.StringOkToTF(t.GetValueOk())
 
-	case *authorize.AuthorizeEditorDataAttributeResolversCurrentRepetitionValueResolverDTO:
+	case *authorizeeditor.AuthorizeEditorDataAttributeResolversCurrentRepetitionValueResolverDTO:
 
 		conditionValue, ok := t.GetConditionOk()
 		condition, d := editorDataConditionOkToTF(ctx, conditionValue, ok)
@@ -811,7 +811,7 @@ func editorDataResolverOkToTF(ctx context.Context, apiObject *authorize.Authoriz
 		attributeMap["processor"] = processor
 		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
 
-	case *authorize.AuthorizeEditorDataAttributeResolversCurrentUserIDResolverDTO:
+	case *authorizeeditor.AuthorizeEditorDataAttributeResolversCurrentUserIDResolverDTO:
 
 		conditionValue, ok := t.GetConditionOk()
 		condition, d := editorDataConditionOkToTF(ctx, conditionValue, ok)
@@ -826,7 +826,7 @@ func editorDataResolverOkToTF(ctx context.Context, apiObject *authorize.Authoriz
 		attributeMap["processor"] = processor
 		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
 
-	case *authorize.AuthorizeEditorDataAttributeResolversRequestResolverDTO:
+	case *authorizeeditor.AuthorizeEditorDataAttributeResolversRequestResolverDTO:
 
 		conditionValue, ok := t.GetConditionOk()
 		condition, d := editorDataConditionOkToTF(ctx, conditionValue, ok)
@@ -841,7 +841,7 @@ func editorDataResolverOkToTF(ctx context.Context, apiObject *authorize.Authoriz
 		attributeMap["processor"] = processor
 		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
 
-	case *authorize.AuthorizeEditorDataAttributeResolversServiceResolverDTO:
+	case *authorizeeditor.AuthorizeEditorDataAttributeResolversServiceResolverDTO:
 
 		conditionValue, ok := t.GetConditionOk()
 		condition, d := editorDataConditionOkToTF(ctx, conditionValue, ok)
@@ -860,7 +860,7 @@ func editorDataResolverOkToTF(ctx context.Context, apiObject *authorize.Authoriz
 		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
 		attributeMap["value_ref"] = valueRef
 
-	case *authorize.AuthorizeEditorDataAttributeResolversSystemResolverDTO:
+	case *authorizeeditor.AuthorizeEditorDataAttributeResolversSystemResolverDTO:
 
 		conditionValue, ok := t.GetConditionOk()
 		condition, d := editorDataConditionOkToTF(ctx, conditionValue, ok)
@@ -876,7 +876,7 @@ func editorDataResolverOkToTF(ctx context.Context, apiObject *authorize.Authoriz
 		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
 		attributeMap["value"] = framework.EnumOkToTF(t.GetValueOk())
 
-	case *authorize.AuthorizeEditorDataAttributeResolversUserResolverDTO:
+	case *authorizeeditor.AuthorizeEditorDataAttributeResolversUserResolverDTO:
 
 		conditionValue, ok := t.GetConditionOk()
 		condition, d := editorDataConditionOkToTF(ctx, conditionValue, ok)

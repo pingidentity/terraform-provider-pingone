@@ -19,7 +19,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
+	"github.com/patrickcping/pingone-go-sdk-v2/authorizeeditor"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	objectvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectvalidator"
 	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
@@ -29,7 +29,7 @@ import (
 
 const conditionNestedIterationMaxDepth = 4
 
-var leafConditionTypes = []authorize.EnumAuthorizeEditorDataConditionDTOType{
+var leafConditionTypes = []authorizeeditor.EnumAuthorizeEditorDataConditionDTOType{
 	"COMPARISON",
 	"EMPTY",
 	"REFERENCE",
@@ -42,7 +42,7 @@ func dataConditionObjectSchemaAttributes() (attributes map[string]schema.Attribu
 
 func dataConditionObjectSchemaAttributesIteration(iteration int32) (attributes map[string]schema.Attribute) {
 
-	supportedTypes := authorize.AllowedEnumAuthorizeEditorDataConditionDTOTypeEnumValues
+	supportedTypes := authorizeeditor.AllowedEnumAuthorizeEditorDataConditionDTOTypeEnumValues
 
 	if iteration >= conditionNestedIterationMaxDepth {
 		supportedTypes = leafConditionTypes
@@ -54,27 +54,27 @@ func dataConditionObjectSchemaAttributesIteration(iteration int32) (attributes m
 
 	comparatorDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the comparison operator used to evaluate the authorization condition.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_COMPARISON))).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataConditionsComparisonConditionDTOComparatorEnumValues)
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_COMPARISON))).AllowedValuesEnum(authorizeeditor.AllowedEnumAuthorizeEditorDataConditionsComparisonConditionDTOComparatorEnumValues)
 
 	leftDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that specifies configuration settings that apply to the left side of the authorization condition statement.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_COMPARISON)))
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_COMPARISON)))
 
 	rightDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that specifies configuration settings that apply to the right side of the authorization condition statement.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_COMPARISON)))
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_COMPARISON)))
 
 	conditionsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A set of objects that specifies configuration settings for multiple authorization conditions to evaluate.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s` or `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_AND), string(authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_OR)))
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s` or `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_AND), string(authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_OR)))
 
 	conditionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that specifies configuration settings for a single authorization condition to evaluate.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_NOT)))
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_NOT)))
 
 	referenceDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that specifies configuration settings for the authorization condition reference to evaluate.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_REFERENCE)))
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_REFERENCE)))
 
 	attributes = map[string]schema.Attribute{
 		"type": schema.StringAttribute{
@@ -89,16 +89,16 @@ func dataConditionObjectSchemaAttributesIteration(iteration int32) (attributes m
 	}
 
 	// type == "COMPARISON"
-	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_COMPARISON) {
+	if slices.Contains(supportedTypes, authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_COMPARISON) {
 		attributes["comparator"] = schema.StringAttribute{
 			Description:         comparatorDescription.Description,
 			MarkdownDescription: comparatorDescription.MarkdownDescription,
 			Optional:            true,
 
 			Validators: []validator.String{
-				stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataConditionsComparisonConditionDTOComparatorEnumValues)...),
+				stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorizeeditor.AllowedEnumAuthorizeEditorDataConditionsComparisonConditionDTOComparatorEnumValues)...),
 				stringvalidatorinternal.IsRequiredIfMatchesPathValue(
-					types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_COMPARISON)),
+					types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_COMPARISON)),
 					path.MatchRelative().AtParent().AtName("type"),
 				),
 			},
@@ -111,7 +111,7 @@ func dataConditionObjectSchemaAttributesIteration(iteration int32) (attributes m
 
 			Validators: []validator.Object{
 				objectvalidatorinternal.IsRequiredIfMatchesPathValue(
-					types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_COMPARISON)),
+					types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_COMPARISON)),
 					path.MatchRelative().AtParent().AtName("type"),
 				),
 			},
@@ -126,7 +126,7 @@ func dataConditionObjectSchemaAttributesIteration(iteration int32) (attributes m
 
 			Validators: []validator.Object{
 				objectvalidatorinternal.IsRequiredIfMatchesPathValue(
-					types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_COMPARISON)),
+					types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_COMPARISON)),
 					path.MatchRelative().AtParent().AtName("type"),
 				),
 			},
@@ -136,8 +136,8 @@ func dataConditionObjectSchemaAttributesIteration(iteration int32) (attributes m
 	}
 
 	// type == "AND", type == "OR"
-	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_AND) ||
-		slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_OR) {
+	if slices.Contains(supportedTypes, authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_AND) ||
+		slices.Contains(supportedTypes, authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_OR) {
 		attributes["conditions"] = schema.SetNestedAttribute{
 			Description:         conditionsDescription.Description,
 			MarkdownDescription: conditionsDescription.MarkdownDescription,
@@ -145,11 +145,11 @@ func dataConditionObjectSchemaAttributesIteration(iteration int32) (attributes m
 
 			Validators: []validator.Set{
 				setvalidatorinternal.IsRequiredIfMatchesPathValue(
-					types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_AND)),
+					types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_AND)),
 					path.MatchRelative().AtParent().AtName("type"),
 				),
 				setvalidatorinternal.IsRequiredIfMatchesPathValue(
-					types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_OR)),
+					types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_OR)),
 					path.MatchRelative().AtParent().AtName("type"),
 				),
 			},
@@ -164,7 +164,7 @@ func dataConditionObjectSchemaAttributesIteration(iteration int32) (attributes m
 	// (same as base object)
 
 	// type == "NOT"
-	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_NOT) {
+	if slices.Contains(supportedTypes, authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_NOT) {
 		attributes["condition"] = schema.SingleNestedAttribute{
 			Description:         conditionDescription.Description,
 			MarkdownDescription: conditionDescription.MarkdownDescription,
@@ -172,7 +172,7 @@ func dataConditionObjectSchemaAttributesIteration(iteration int32) (attributes m
 
 			Validators: []validator.Object{
 				objectvalidatorinternal.IsRequiredIfMatchesPathValue(
-					types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_NOT)),
+					types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_NOT)),
 					path.MatchRelative().AtParent().AtName("type"),
 				),
 			},
@@ -182,7 +182,7 @@ func dataConditionObjectSchemaAttributesIteration(iteration int32) (attributes m
 	}
 
 	// type == "REFERENCE"
-	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_REFERENCE) {
+	if slices.Contains(supportedTypes, authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_REFERENCE) {
 		attributes["reference"] = schema.SingleNestedAttribute{
 			Description:         referenceDescription.Description,
 			MarkdownDescription: referenceDescription.MarkdownDescription,
@@ -192,7 +192,7 @@ func dataConditionObjectSchemaAttributesIteration(iteration int32) (attributes m
 
 			Validators: []validator.Object{
 				objectvalidatorinternal.IsRequiredIfMatchesPathValue(
-					types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_REFERENCE)),
+					types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_REFERENCE)),
 					path.MatchRelative().AtParent().AtName("type"),
 				),
 			},
@@ -224,7 +224,7 @@ var editorDataConditionTFObjectTypes = initializeEditorDataConditionTFObjectType
 
 func initializeEditorDataConditionTFObjectTypes(iteration int32) map[string]attr.Type {
 
-	supportedTypes := authorize.AllowedEnumAuthorizeEditorDataConditionDTOTypeEnumValues
+	supportedTypes := authorizeeditor.AllowedEnumAuthorizeEditorDataConditionDTOTypeEnumValues
 
 	if iteration >= conditionNestedIterationMaxDepth {
 		supportedTypes = leafConditionTypes
@@ -234,36 +234,36 @@ func initializeEditorDataConditionTFObjectTypes(iteration int32) map[string]attr
 		"type": types.StringType,
 	}
 
-	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_COMPARISON) {
+	if slices.Contains(supportedTypes, authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_COMPARISON) {
 		attrMap["comparator"] = types.StringType
 		attrMap["left"] = types.ObjectType{AttrTypes: editorDataConditionComparandLeftTFObjectTypes}
 		attrMap["right"] = types.ObjectType{AttrTypes: editorDataConditionComparandRightTFObjectTypes}
 	}
 
-	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_AND) ||
-		slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_OR) {
+	if slices.Contains(supportedTypes, authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_AND) ||
+		slices.Contains(supportedTypes, authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_OR) {
 		attrMap["conditions"] = types.SetType{
 			ElemType: types.ObjectType{AttrTypes: initializeEditorDataConditionTFObjectTypes(iteration + 1)},
 		}
 	}
 
-	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_NOT) {
+	if slices.Contains(supportedTypes, authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_NOT) {
 		attrMap["condition"] = types.ObjectType{AttrTypes: initializeEditorDataConditionTFObjectTypes(iteration + 1)}
 	}
 
-	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_REFERENCE) {
+	if slices.Contains(supportedTypes, authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_REFERENCE) {
 		attrMap["reference"] = types.ObjectType{AttrTypes: editorReferenceObjectTFObjectTypes}
 	}
 
 	return attrMap
 }
 
-func expandEditorDataCondition(ctx context.Context, condition basetypes.ObjectValue) (conditionObject *authorize.AuthorizeEditorDataConditionDTO, diags diag.Diagnostics) {
+func expandEditorDataCondition(ctx context.Context, condition basetypes.ObjectValue) (conditionObject *authorizeeditor.AuthorizeEditorDataConditionDTO, diags diag.Diagnostics) {
 	const initialIteration = 1
 	return expandEditorDataConditionIteration(ctx, condition, initialIteration)
 }
 
-func expandEditorDataConditionIteration(ctx context.Context, condition basetypes.ObjectValue, iteration int32) (conditionObject *authorize.AuthorizeEditorDataConditionDTO, diags diag.Diagnostics) {
+func expandEditorDataConditionIteration(ctx context.Context, condition basetypes.ObjectValue, iteration int32) (conditionObject *authorizeeditor.AuthorizeEditorDataConditionDTO, diags diag.Diagnostics) {
 	var d diag.Diagnostics
 
 	leaf := iteration >= conditionNestedIterationMaxDepth
@@ -300,12 +300,12 @@ func expandEditorDataConditionIteration(ctx context.Context, condition basetypes
 	return conditionObject, diags
 }
 
-func expandEditorDataConditions(ctx context.Context, conditions basetypes.SetValue) (conditionSet []authorize.AuthorizeEditorDataConditionDTO, diags diag.Diagnostics) {
+func expandEditorDataConditions(ctx context.Context, conditions basetypes.SetValue) (conditionSet []authorizeeditor.AuthorizeEditorDataConditionDTO, diags diag.Diagnostics) {
 	const initialIteration = 1
 	return expandEditorDataConditionsIteration(ctx, conditions, initialIteration)
 }
 
-func expandEditorDataConditionsIteration(ctx context.Context, conditions basetypes.SetValue, iteration int32) (conditionSet []authorize.AuthorizeEditorDataConditionDTO, diags diag.Diagnostics) {
+func expandEditorDataConditionsIteration(ctx context.Context, conditions basetypes.SetValue, iteration int32) (conditionSet []authorizeeditor.AuthorizeEditorDataConditionDTO, diags diag.Diagnostics) {
 
 	leaf := iteration >= conditionNestedIterationMaxDepth
 
@@ -316,7 +316,7 @@ func expandEditorDataConditionsIteration(ctx context.Context, conditions basetyp
 			return nil, diags
 		}
 
-		conditionSet = make([]authorize.AuthorizeEditorDataConditionDTO, 0, len(plan))
+		conditionSet = make([]authorizeeditor.AuthorizeEditorDataConditionDTO, 0, len(plan))
 		for _, conditionPlan := range plan {
 
 			conditionObject, d := conditionPlan.expand(ctx)
@@ -336,7 +336,7 @@ func expandEditorDataConditionsIteration(ctx context.Context, conditions basetyp
 			return nil, diags
 		}
 
-		conditionSet = make([]authorize.AuthorizeEditorDataConditionDTO, 0, len(plan))
+		conditionSet = make([]authorizeeditor.AuthorizeEditorDataConditionDTO, 0, len(plan))
 		for _, conditionPlan := range plan {
 
 			conditionObject, d := conditionPlan.expand(ctx, iteration)
@@ -353,27 +353,27 @@ func expandEditorDataConditionsIteration(ctx context.Context, conditions basetyp
 	return conditionSet, diags
 }
 
-func (p *editorDataConditionResourceModel) expand(ctx context.Context, iteration int32) (*authorize.AuthorizeEditorDataConditionDTO, diag.Diagnostics) {
+func (p *editorDataConditionResourceModel) expand(ctx context.Context, iteration int32) (*authorizeeditor.AuthorizeEditorDataConditionDTO, diag.Diagnostics) {
 	var diags, d diag.Diagnostics
 
-	data := authorize.AuthorizeEditorDataConditionDTO{}
+	data := authorizeeditor.AuthorizeEditorDataConditionDTO{}
 
-	switch authorize.EnumAuthorizeEditorDataConditionDTOType(p.Type.ValueString()) {
-	case authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_AND:
+	switch authorizeeditor.EnumAuthorizeEditorDataConditionDTOType(p.Type.ValueString()) {
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_AND:
 		data.AuthorizeEditorDataConditionsAndConditionDTO, d = p.expandAndCondition(ctx, iteration)
 		diags.Append(d...)
-	case authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_COMPARISON:
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_COMPARISON:
 		data.AuthorizeEditorDataConditionsComparisonConditionDTO, d = p.expandComparisonCondition(ctx)
 		diags.Append(d...)
-	case authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_EMPTY:
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_EMPTY:
 		data.AuthorizeEditorDataConditionsEmptyConditionDTO = p.expandEmptyCondition()
-	case authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_NOT:
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_NOT:
 		data.AuthorizeEditorDataConditionsNotConditionDTO, d = p.expandNotCondition(ctx, iteration)
 		diags.Append(d...)
-	case authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_OR:
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_OR:
 		data.AuthorizeEditorDataConditionsOrConditionDTO, d = p.expandOrCondition(ctx, iteration)
 		diags.Append(d...)
-	case authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_REFERENCE:
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_REFERENCE:
 		data.AuthorizeEditorDataConditionsReferenceConditionDTO, d = p.expandReferenceCondition(ctx)
 		diags.Append(d...)
 	default:
@@ -390,33 +390,33 @@ func (p *editorDataConditionResourceModel) expand(ctx context.Context, iteration
 	return &data, diags
 }
 
-func (p *editorDataConditionLeafResourceModel) expand(ctx context.Context) (*authorize.AuthorizeEditorDataConditionDTO, diag.Diagnostics) {
+func (p *editorDataConditionLeafResourceModel) expand(ctx context.Context) (*authorizeeditor.AuthorizeEditorDataConditionDTO, diag.Diagnostics) {
 	var diags, d diag.Diagnostics
 
-	data := authorize.AuthorizeEditorDataConditionDTO{}
+	data := authorizeeditor.AuthorizeEditorDataConditionDTO{}
 
-	switch authorize.EnumAuthorizeEditorDataConditionDTOType(p.Type.ValueString()) {
-	case authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_AND:
+	switch authorizeeditor.EnumAuthorizeEditorDataConditionDTOType(p.Type.ValueString()) {
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_AND:
 		diags.AddError(
 			"Invalid leaf condition type",
 			fmt.Sprintf("The leaf condition type '%s' is not supported.  Please raise an issue with the provider maintainers.", p.Type.ValueString()),
 		)
-	case authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_COMPARISON:
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_COMPARISON:
 		data.AuthorizeEditorDataConditionsComparisonConditionDTO, d = p.expandComparisonCondition(ctx)
 		diags.Append(d...)
-	case authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_EMPTY:
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_EMPTY:
 		data.AuthorizeEditorDataConditionsEmptyConditionDTO = p.expandEmptyCondition()
-	case authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_NOT:
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_NOT:
 		diags.AddError(
 			"Invalid leaf condition type",
 			fmt.Sprintf("The leaf condition type '%s' is not supported.  Please raise an issue with the provider maintainers.", p.Type.ValueString()),
 		)
-	case authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_OR:
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_OR:
 		diags.AddError(
 			"Invalid leaf condition type",
 			fmt.Sprintf("The leaf condition type '%s' is not supported.  Please raise an issue with the provider maintainers.", p.Type.ValueString()),
 		)
-	case authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_REFERENCE:
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_REFERENCE:
 		data.AuthorizeEditorDataConditionsReferenceConditionDTO, d = p.expandReferenceCondition(ctx)
 		diags.Append(d...)
 	default:
@@ -433,7 +433,7 @@ func (p *editorDataConditionLeafResourceModel) expand(ctx context.Context) (*aut
 	return &data, diags
 }
 
-func (p *editorDataConditionResourceModel) expandAndCondition(ctx context.Context, iteration int32) (*authorize.AuthorizeEditorDataConditionsAndConditionDTO, diag.Diagnostics) {
+func (p *editorDataConditionResourceModel) expandAndCondition(ctx context.Context, iteration int32) (*authorizeeditor.AuthorizeEditorDataConditionsAndConditionDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	conditions, d := expandEditorDataConditionsIteration(ctx, p.Conditions, iteration+1)
@@ -442,23 +442,23 @@ func (p *editorDataConditionResourceModel) expandAndCondition(ctx context.Contex
 		return nil, diags
 	}
 
-	data := authorize.NewAuthorizeEditorDataConditionsAndConditionDTO(
-		authorize.EnumAuthorizeEditorDataConditionDTOType(p.Type.ValueString()),
+	data := authorizeeditor.NewAuthorizeEditorDataConditionsAndConditionDTO(
+		authorizeeditor.EnumAuthorizeEditorDataConditionDTOType(p.Type.ValueString()),
 		conditions,
 	)
 
 	return data, diags
 }
 
-func (p *editorDataConditionResourceModel) expandComparisonCondition(ctx context.Context) (*authorize.AuthorizeEditorDataConditionsComparisonConditionDTO, diag.Diagnostics) {
+func (p *editorDataConditionResourceModel) expandComparisonCondition(ctx context.Context) (*authorizeeditor.AuthorizeEditorDataConditionsComparisonConditionDTO, diag.Diagnostics) {
 	return expandComparisonCondition(ctx, p.Left, p.Right, p.Comparator)
 }
 
-func (p *editorDataConditionLeafResourceModel) expandComparisonCondition(ctx context.Context) (*authorize.AuthorizeEditorDataConditionsComparisonConditionDTO, diag.Diagnostics) {
+func (p *editorDataConditionLeafResourceModel) expandComparisonCondition(ctx context.Context) (*authorizeeditor.AuthorizeEditorDataConditionsComparisonConditionDTO, diag.Diagnostics) {
 	return expandComparisonCondition(ctx, p.Left, p.Right, p.Comparator)
 }
 
-func expandComparisonCondition(ctx context.Context, leftComparand, rightComparand basetypes.ObjectValue, comparator basetypes.StringValue) (*authorize.AuthorizeEditorDataConditionsComparisonConditionDTO, diag.Diagnostics) {
+func expandComparisonCondition(ctx context.Context, leftComparand, rightComparand basetypes.ObjectValue, comparator basetypes.StringValue) (*authorizeeditor.AuthorizeEditorDataConditionsComparisonConditionDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	left, d := expandEditorDataConditionLeftComparand(ctx, leftComparand)
@@ -470,34 +470,34 @@ func expandComparisonCondition(ctx context.Context, leftComparand, rightComparan
 		return nil, diags
 	}
 
-	data := authorize.NewAuthorizeEditorDataConditionsComparisonConditionDTO(
-		authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_COMPARISON,
+	data := authorizeeditor.NewAuthorizeEditorDataConditionsComparisonConditionDTO(
+		authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_COMPARISON,
 		*left,
 		*right,
-		authorize.EnumAuthorizeEditorDataConditionsComparisonConditionDTOComparator(comparator.ValueString()),
+		authorizeeditor.EnumAuthorizeEditorDataConditionsComparisonConditionDTOComparator(comparator.ValueString()),
 	)
 
 	return data, diags
 }
 
-func (p *editorDataConditionResourceModel) expandEmptyCondition() *authorize.AuthorizeEditorDataConditionsEmptyConditionDTO {
+func (p *editorDataConditionResourceModel) expandEmptyCondition() *authorizeeditor.AuthorizeEditorDataConditionsEmptyConditionDTO {
 	return expandEmptyCondition()
 }
 
-func (p *editorDataConditionLeafResourceModel) expandEmptyCondition() *authorize.AuthorizeEditorDataConditionsEmptyConditionDTO {
+func (p *editorDataConditionLeafResourceModel) expandEmptyCondition() *authorizeeditor.AuthorizeEditorDataConditionsEmptyConditionDTO {
 	return expandEmptyCondition()
 }
 
-func expandEmptyCondition() *authorize.AuthorizeEditorDataConditionsEmptyConditionDTO {
+func expandEmptyCondition() *authorizeeditor.AuthorizeEditorDataConditionsEmptyConditionDTO {
 
-	data := authorize.NewAuthorizeEditorDataConditionsEmptyConditionDTO(
-		authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_EMPTY,
+	data := authorizeeditor.NewAuthorizeEditorDataConditionsEmptyConditionDTO(
+		authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_EMPTY,
 	)
 
 	return data
 }
 
-func (p *editorDataConditionResourceModel) expandNotCondition(ctx context.Context, iteration int32) (*authorize.AuthorizeEditorDataConditionsNotConditionDTO, diag.Diagnostics) {
+func (p *editorDataConditionResourceModel) expandNotCondition(ctx context.Context, iteration int32) (*authorizeeditor.AuthorizeEditorDataConditionsNotConditionDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	condition, d := expandEditorDataConditionIteration(ctx, p.Condition, iteration+1)
@@ -506,15 +506,15 @@ func (p *editorDataConditionResourceModel) expandNotCondition(ctx context.Contex
 		return nil, diags
 	}
 
-	data := authorize.NewAuthorizeEditorDataConditionsNotConditionDTO(
-		authorize.EnumAuthorizeEditorDataConditionDTOType(p.Type.ValueString()),
+	data := authorizeeditor.NewAuthorizeEditorDataConditionsNotConditionDTO(
+		authorizeeditor.EnumAuthorizeEditorDataConditionDTOType(p.Type.ValueString()),
 		*condition,
 	)
 
 	return data, diags
 }
 
-func (p *editorDataConditionResourceModel) expandOrCondition(ctx context.Context, iteration int32) (*authorize.AuthorizeEditorDataConditionsOrConditionDTO, diag.Diagnostics) {
+func (p *editorDataConditionResourceModel) expandOrCondition(ctx context.Context, iteration int32) (*authorizeeditor.AuthorizeEditorDataConditionsOrConditionDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	conditions, d := expandEditorDataConditionsIteration(ctx, p.Conditions, iteration+1)
@@ -523,23 +523,23 @@ func (p *editorDataConditionResourceModel) expandOrCondition(ctx context.Context
 		return nil, diags
 	}
 
-	data := authorize.NewAuthorizeEditorDataConditionsOrConditionDTO(
-		authorize.EnumAuthorizeEditorDataConditionDTOType(p.Type.ValueString()),
+	data := authorizeeditor.NewAuthorizeEditorDataConditionsOrConditionDTO(
+		authorizeeditor.EnumAuthorizeEditorDataConditionDTOType(p.Type.ValueString()),
 		conditions,
 	)
 
 	return data, diags
 }
 
-func (p *editorDataConditionResourceModel) expandReferenceCondition(ctx context.Context) (*authorize.AuthorizeEditorDataConditionsReferenceConditionDTO, diag.Diagnostics) {
+func (p *editorDataConditionResourceModel) expandReferenceCondition(ctx context.Context) (*authorizeeditor.AuthorizeEditorDataConditionsReferenceConditionDTO, diag.Diagnostics) {
 	return expandReferenceCondition(ctx, p.Reference)
 }
 
-func (p *editorDataConditionLeafResourceModel) expandReferenceCondition(ctx context.Context) (*authorize.AuthorizeEditorDataConditionsReferenceConditionDTO, diag.Diagnostics) {
+func (p *editorDataConditionLeafResourceModel) expandReferenceCondition(ctx context.Context) (*authorizeeditor.AuthorizeEditorDataConditionsReferenceConditionDTO, diag.Diagnostics) {
 	return expandReferenceCondition(ctx, p.Reference)
 }
 
-func expandReferenceCondition(ctx context.Context, referenceObj basetypes.ObjectValue) (*authorize.AuthorizeEditorDataConditionsReferenceConditionDTO, diag.Diagnostics) {
+func expandReferenceCondition(ctx context.Context, referenceObj basetypes.ObjectValue) (*authorizeeditor.AuthorizeEditorDataConditionsReferenceConditionDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	reference, d := expandEditorReferenceData(ctx, referenceObj)
@@ -548,15 +548,15 @@ func expandReferenceCondition(ctx context.Context, referenceObj basetypes.Object
 		return nil, diags
 	}
 
-	data := authorize.NewAuthorizeEditorDataConditionsReferenceConditionDTO(
-		authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_REFERENCE,
+	data := authorizeeditor.NewAuthorizeEditorDataConditionsReferenceConditionDTO(
+		authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_REFERENCE,
 		*reference,
 	)
 
 	return data, diags
 }
 
-func editorDataConditionsOkToSetTFIteration(ctx context.Context, iteration int32, apiObject []authorize.AuthorizeEditorDataConditionDTO, ok bool) (basetypes.SetValue, diag.Diagnostics) {
+func editorDataConditionsOkToSetTFIteration(ctx context.Context, iteration int32, apiObject []authorizeeditor.AuthorizeEditorDataConditionDTO, ok bool) (basetypes.SetValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	tfObjType := types.ObjectType{AttrTypes: initializeEditorDataConditionTFObjectTypes(iteration)}
@@ -583,22 +583,22 @@ func editorDataConditionsOkToSetTFIteration(ctx context.Context, iteration int32
 	return returnVar, diags
 }
 
-func editorDataConditionOkToTF(ctx context.Context, apiObject *authorize.AuthorizeEditorDataConditionDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+func editorDataConditionOkToTF(ctx context.Context, apiObject *authorizeeditor.AuthorizeEditorDataConditionDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	const initialIteration = 1
 	return editorDataConditionOkToTFIteration(ctx, initialIteration, apiObject, ok)
 }
 
-func editorDataConditionOkToTFIteration(ctx context.Context, iteration int32, apiObject *authorize.AuthorizeEditorDataConditionDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+func editorDataConditionOkToTFIteration(ctx context.Context, iteration int32, apiObject *authorizeeditor.AuthorizeEditorDataConditionDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if !ok || apiObject == nil || cmp.Equal(apiObject, &authorize.AuthorizeEditorDataConditionDTO{}) {
+	if !ok || apiObject == nil || cmp.Equal(apiObject, &authorizeeditor.AuthorizeEditorDataConditionDTO{}) {
 		return types.ObjectNull(initializeEditorDataConditionTFObjectTypes(iteration)), diags
 	}
 
 	attributeMap := map[string]attr.Value{}
 
 	switch t := apiObject.GetActualInstance().(type) {
-	case *authorize.AuthorizeEditorDataConditionsAndConditionDTO:
+	case *authorizeeditor.AuthorizeEditorDataConditionsAndConditionDTO:
 
 		conditionsResp, ok := t.GetConditionsOk()
 		conditions, d := editorDataConditionsOkToSetTFIteration(ctx, iteration+1, conditionsResp, ok)
@@ -607,7 +607,7 @@ func editorDataConditionOkToTFIteration(ctx context.Context, iteration int32, ap
 		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
 		attributeMap["conditions"] = conditions
 
-	case *authorize.AuthorizeEditorDataConditionsComparisonConditionDTO:
+	case *authorizeeditor.AuthorizeEditorDataConditionsComparisonConditionDTO:
 
 		leftResp, ok := t.GetLeftOk()
 		left, d := editorDataConditionComparandLeftOkToTF(ctx, leftResp, ok)
@@ -622,11 +622,11 @@ func editorDataConditionOkToTFIteration(ctx context.Context, iteration int32, ap
 		attributeMap["left"] = left
 		attributeMap["right"] = right
 
-	case *authorize.AuthorizeEditorDataConditionsEmptyConditionDTO:
+	case *authorizeeditor.AuthorizeEditorDataConditionsEmptyConditionDTO:
 
 		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
 
-	case *authorize.AuthorizeEditorDataConditionsNotConditionDTO:
+	case *authorizeeditor.AuthorizeEditorDataConditionsNotConditionDTO:
 
 		conditionResp, ok := t.GetConditionOk()
 		condition, d := editorDataConditionOkToTFIteration(ctx, iteration+1, conditionResp, ok)
@@ -635,7 +635,7 @@ func editorDataConditionOkToTFIteration(ctx context.Context, iteration int32, ap
 		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
 		attributeMap["condition"] = condition
 
-	case *authorize.AuthorizeEditorDataConditionsOrConditionDTO:
+	case *authorizeeditor.AuthorizeEditorDataConditionsOrConditionDTO:
 
 		conditionsResp, ok := t.GetConditionsOk()
 		conditions, d := editorDataConditionsOkToSetTFIteration(ctx, iteration+1, conditionsResp, ok)
@@ -644,7 +644,7 @@ func editorDataConditionOkToTFIteration(ctx context.Context, iteration int32, ap
 		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
 		attributeMap["conditions"] = conditions
 
-	case *authorize.AuthorizeEditorDataConditionsReferenceConditionDTO:
+	case *authorizeeditor.AuthorizeEditorDataConditionsReferenceConditionDTO:
 
 		reference, d := editorDataReferenceObjectOkToTF(t.GetReferenceOk())
 		diags.Append(d...)
@@ -673,7 +673,7 @@ func editorDataConditionOkToTFIteration(ctx context.Context, iteration int32, ap
 
 func editorDataConditionConvertEmptyValuesToTFNulls(attributeMap map[string]attr.Value, iteration int32) map[string]attr.Value {
 
-	supportedTypes := authorize.AllowedEnumAuthorizeEditorDataConditionDTOTypeEnumValues
+	supportedTypes := authorizeeditor.AllowedEnumAuthorizeEditorDataConditionDTOTypeEnumValues
 
 	if iteration >= conditionNestedIterationMaxDepth {
 		supportedTypes = leafConditionTypes
@@ -683,22 +683,22 @@ func editorDataConditionConvertEmptyValuesToTFNulls(attributeMap map[string]attr
 		"type": types.StringNull(),
 	}
 
-	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_COMPARISON) {
+	if slices.Contains(supportedTypes, authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_COMPARISON) {
 		nullMap["comparator"] = types.StringNull()
 		nullMap["left"] = types.ObjectNull(editorDataConditionComparandLeftTFObjectTypes)
 		nullMap["right"] = types.ObjectNull(editorDataConditionComparandRightTFObjectTypes)
 	}
 
-	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_AND) ||
-		slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_OR) {
+	if slices.Contains(supportedTypes, authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_AND) ||
+		slices.Contains(supportedTypes, authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_OR) {
 		nullMap["conditions"] = types.SetNull(types.ObjectType{AttrTypes: initializeEditorDataConditionTFObjectTypes(iteration + 1)})
 	}
 
-	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_NOT) {
+	if slices.Contains(supportedTypes, authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_NOT) {
 		nullMap["condition"] = types.ObjectNull(initializeEditorDataConditionTFObjectTypes(iteration + 1))
 	}
 
-	if slices.Contains(supportedTypes, authorize.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_REFERENCE) {
+	if slices.Contains(supportedTypes, authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONDTOTYPE_REFERENCE) {
 		nullMap["reference"] = types.ObjectNull(editorReferenceObjectTFObjectTypes)
 	}
 

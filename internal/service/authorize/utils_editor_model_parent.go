@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
+	"github.com/patrickcping/pingone-go-sdk-v2/authorizeeditor"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 )
 
@@ -35,7 +35,7 @@ func dataSourceParentObjectSchema(descriptionName string) schema.SingleNestedAtt
 
 type editorParentResourceModel editorReferenceDataResourceModel
 
-func expandEditorParent(ctx context.Context, parent basetypes.ObjectValue) (parentObject *authorize.AuthorizeEditorDataReferenceObjectDTO, diags diag.Diagnostics) {
+func expandEditorParent(ctx context.Context, parent basetypes.ObjectValue) (parentObject *authorizeeditor.AuthorizeEditorDataReferenceObjectDTO, diags diag.Diagnostics) {
 	var plan *editorParentResourceModel
 	diags.Append(parent.As(ctx, &plan, basetypes.ObjectAsOptions{
 		UnhandledNullAsEmpty:    false,
@@ -50,11 +50,11 @@ func expandEditorParent(ctx context.Context, parent basetypes.ObjectValue) (pare
 	return
 }
 
-func (p *editorParentResourceModel) expand() *authorize.AuthorizeEditorDataReferenceObjectDTO {
+func (p *editorParentResourceModel) expand() *authorizeeditor.AuthorizeEditorDataReferenceObjectDTO {
 	referenceDataResourceModel := editorReferenceDataResourceModel(*p)
 	return referenceDataResourceModel.expand()
 }
 
-func editorParentOkToTF(apiObject *authorize.AuthorizeEditorDataReferenceObjectDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+func editorParentOkToTF(apiObject *authorizeeditor.AuthorizeEditorDataReferenceObjectDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	return editorDataReferenceObjectOkToTF(apiObject, ok)
 }

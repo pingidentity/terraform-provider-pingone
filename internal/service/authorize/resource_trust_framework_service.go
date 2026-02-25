@@ -28,10 +28,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
-	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
+	"github.com/patrickcping/pingone-go-sdk-v2/authorizeeditor"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	int32validatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/int32validator"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	listvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/listvalidator"
 	objectvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectvalidator"
 	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
@@ -200,23 +201,23 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 
 	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that describes the resource type.",
-	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataDefinitionsServiceDefinitionDTOTypeEnumValues)
+	).AllowedValuesEnum(authorizeeditor.AllowedEnumAuthorizeEditorDataDefinitionsServiceDefinitionDTOTypeEnumValues)
 
 	serviceTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the type of service.",
-	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataDefinitionsServiceDefinitionDTOServiceTypeEnumValues)
+	).AllowedValuesEnum(authorizeeditor.AllowedEnumAuthorizeEditorDataDefinitionsServiceDefinitionDTOServiceTypeEnumValues)
 
 	processorDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that specifies configuration settings for the processor to transform the value returned from the resolver.",
-	).AppendMarkdownString(fmt.Sprintf("This field is optional when `service_type` is `%s` or `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR), string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)))
+	).AppendMarkdownString(fmt.Sprintf("This field is optional when `service_type` is `%s` or `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR), string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)))
 
 	valueTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that specifies configuration settings for the final output type of the service.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s` or `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR), string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)))
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s` or `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR), string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)))
 
 	serviceSettingsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that specifies configuration settings for the service connection.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s` or `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR), string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)))
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s` or `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR), string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)))
 
 	serviceSettingsMaximumConcurrentRequestsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An integer that specifies the number of maximum concurrent requests to the service. The value must be greater than or equal to `1`.",
@@ -232,99 +233,99 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 
 	serviceSettingsUrlDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the URL of the HTTP service.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)))
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)))
 
 	serviceSettingsVerbDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the HTTP method to use.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP))).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataServiceSettingsHttpServiceSettingsDTOVerbEnumValues)
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP))).AllowedValuesEnum(authorizeeditor.AllowedEnumAuthorizeEditorDataServiceSettingsHttpServiceSettingsDTOVerbEnumValues)
 
 	serviceSettingsBodyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the body of the HTTP request.",
-	).AppendMarkdownString(fmt.Sprintf("This field is optional when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)))
+	).AppendMarkdownString(fmt.Sprintf("This field is optional when `service_type` is `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)))
 
 	serviceSettingsContentTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the content type of the HTTP request.  The service will use the value of this field to set the `Content-Type` header.",
-	).AppendMarkdownString(fmt.Sprintf("This field is optional when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)))
+	).AppendMarkdownString(fmt.Sprintf("This field is optional when `service_type` is `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)))
 
 	serviceSettingsHeadersDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A set of objects that specify the headers to include in the HTTP request.",
-	).AppendMarkdownString(fmt.Sprintf("This field is optional when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)))
+	).AppendMarkdownString(fmt.Sprintf("This field is optional when `service_type` is `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)))
 
 	serviceSettingsAuthenticationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that specifies configuration settings for authenticating to the service.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)))
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)))
 
 	serviceSettingsAuthenticationTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the type of service authentication to use.",
-	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataAuthenticationDTOTypeEnumValues)
+	).AllowedValuesEnum(authorizeeditor.AllowedEnumAuthorizeEditorDataAuthenticationDTOTypeEnumValues)
 
 	serviceSettingsAuthenticationNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that specifies Trust Framework authorization attribute that contains the user name to use for basic authentication.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_BASIC)))
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_BASIC)))
 
 	serviceSettingsAuthenticationPasswordDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that specifies the Trust Framework authorization attribute that contains the user password to use for basic authentication.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_BASIC)))
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_BASIC)))
 
 	serviceSettingsAuthenticationTokenEndpointDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the HTTPS token endpoint to use for authentication.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_CLIENT_CREDENTIALS)))
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_CLIENT_CREDENTIALS)))
 
 	serviceSettingsAuthenticationClientIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the client ID to use for client credentials authentication.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_CLIENT_CREDENTIALS)))
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_CLIENT_CREDENTIALS)))
 
 	serviceSettingsAuthenticationClientSecretDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that specifies the Trust Framework authorization attribute that contains the client secret to use for client credentials authentication.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_CLIENT_CREDENTIALS)))
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_CLIENT_CREDENTIALS)))
 
 	serviceSettingsAuthenticationScopeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the scope(s) to request from the token endpoint during client credentials authentication.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_CLIENT_CREDENTIALS)))
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_CLIENT_CREDENTIALS)))
 
 	serviceSettingsAuthenticationTokenDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that specifies configuration settings for the token value to use for static token authentication.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_TOKEN)))
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_TOKEN)))
 
 	serviceSettingsTlsSettingsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that specifies configuration settings when connecting to the service using TLS.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)))
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)))
 
 	serviceSettingsTlsSettingsTlsValidationTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the TLS validation type.",
-	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataTlsSettingsDTOTlsValidationTypeEnumValues)
+	).AllowedValuesEnum(authorizeeditor.AllowedEnumAuthorizeEditorDataTlsSettingsDTOTlsValidationTypeEnumValues)
 
 	serviceSettingsChannelDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the connector channel to use for the service.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR))).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataServiceSettingsConnectorServiceSettingsDTOChannelEnumValues)
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR))).AllowedValuesEnum(authorizeeditor.AllowedEnumAuthorizeEditorDataServiceSettingsConnectorServiceSettingsDTOChannelEnumValues)
 
 	serviceSettingsCodeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the connector code to use for the service.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR))).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataServiceSettingsConnectorServiceSettingsDTOCodeEnumValues)
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR))).AllowedValuesEnum(authorizeeditor.AllowedEnumAuthorizeEditorDataServiceSettingsConnectorServiceSettingsDTOCodeEnumValues)
 
 	serviceSettingsCapabilityDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the connector capability associated with the connector code and channel.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)))
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)))
 
 	serviceSettingsSchemaVersionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An integer that specifies the schema version of the connector template.",
-	).AppendMarkdownString(fmt.Sprintf("This field is optional when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)))
+	).AppendMarkdownString(fmt.Sprintf("This field is optional when `service_type` is `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)))
 
 	serviceSettingsInputMappingsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A list of objects that specify configuration settings for the input mappings to use for the service.  Input mappings may be attribute based, or input based.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)))
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `service_type` is `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)))
 
 	serviceSettingsInputMappingTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the input mapping type.",
-	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataInputMappingDTOTypeEnumValues)
+	).AllowedValuesEnum(authorizeeditor.AllowedEnumAuthorizeEditorDataInputMappingDTOTypeEnumValues)
 
 	serviceSettingsInputMappingValueRefDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that specifies configuration settings for the trust framework attribute to use as an input mapping.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAINPUTMAPPINGDTOTYPE_ATTRIBUTE)))
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATAINPUTMAPPINGDTOTYPE_ATTRIBUTE)))
 
 	serviceSettingsInputMappingValueDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the value for the input mapping.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAINPUTMAPPINGDTOTYPE_INPUT)))
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATAINPUTMAPPINGDTOTYPE_INPUT)))
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -386,7 +387,7 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 				Required:            true,
 
 				Validators: []validator.String{
-					stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataDefinitionsServiceDefinitionDTOServiceTypeEnumValues)...),
+					stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorizeeditor.AllowedEnumAuthorizeEditorDataDefinitionsServiceDefinitionDTOServiceTypeEnumValues)...),
 				},
 			},
 
@@ -403,7 +404,7 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 
 				Validators: []validator.Object{
 					objectvalidatorinternal.ConflictsIfMatchesPathValue(
-						types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_NONE)),
+						types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_NONE)),
 						path.MatchRoot("service_type"),
 					),
 				},
@@ -418,15 +419,15 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 
 				Validators: []validator.Object{
 					objectvalidatorinternal.IsRequiredIfMatchesPathValue(
-						types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)),
+						types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)),
 						path.MatchRoot("service_type"),
 					),
 					objectvalidatorinternal.IsRequiredIfMatchesPathValue(
-						types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)),
+						types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)),
 						path.MatchRoot("service_type"),
 					),
 					objectvalidatorinternal.ConflictsIfMatchesPathValue(
-						types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_NONE)),
+						types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_NONE)),
 						path.MatchRoot("service_type"),
 					),
 				},
@@ -441,15 +442,15 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 
 				Validators: []validator.Object{
 					objectvalidatorinternal.IsRequiredIfMatchesPathValue(
-						types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)),
+						types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)),
 						path.MatchRoot("service_type"),
 					),
 					objectvalidatorinternal.IsRequiredIfMatchesPathValue(
-						types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)),
+						types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)),
 						path.MatchRoot("service_type"),
 					),
 					objectvalidatorinternal.ConflictsIfMatchesPathValue(
-						types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_NONE)),
+						types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_NONE)),
 						path.MatchRoot("service_type"),
 					),
 				},
@@ -492,11 +493,11 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 
 						Validators: []validator.String{
 							stringvalidatorinternal.IsRequiredIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)),
+								types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)),
 								path.MatchRoot("service_type"),
 							),
 							stringvalidatorinternal.ConflictsIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)),
+								types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)),
 								path.MatchRoot("service_type"),
 							),
 						},
@@ -508,13 +509,13 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 						Optional:            true,
 
 						Validators: []validator.String{
-							stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataServiceSettingsHttpServiceSettingsDTOVerbEnumValues)...),
+							stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorizeeditor.AllowedEnumAuthorizeEditorDataServiceSettingsHttpServiceSettingsDTOVerbEnumValues)...),
 							stringvalidatorinternal.IsRequiredIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)),
+								types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)),
 								path.MatchRoot("service_type"),
 							),
 							stringvalidatorinternal.ConflictsIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)),
+								types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)),
 								path.MatchRoot("service_type"),
 							),
 						},
@@ -527,7 +528,7 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 
 						Validators: []validator.String{
 							stringvalidatorinternal.ConflictsIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)),
+								types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)),
 								path.MatchRoot("service_type"),
 							),
 						},
@@ -540,7 +541,7 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 
 						Validators: []validator.String{
 							stringvalidatorinternal.ConflictsIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)),
+								types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)),
 								path.MatchRoot("service_type"),
 							),
 						},
@@ -553,7 +554,7 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 
 						Validators: []validator.Set{
 							setvalidatorinternal.ConflictsIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)),
+								types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)),
 								path.MatchRoot("service_type"),
 							),
 						},
@@ -582,11 +583,11 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 
 						Validators: []validator.Object{
 							objectvalidatorinternal.IsRequiredIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)),
+								types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)),
 								path.MatchRoot("service_type"),
 							),
 							objectvalidatorinternal.ConflictsIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)),
+								types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)),
 								path.MatchRoot("service_type"),
 							),
 						},
@@ -598,7 +599,7 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 								Required:            true,
 
 								Validators: []validator.String{
-									stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataAuthenticationDTOTypeEnumValues)...),
+									stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorizeeditor.AllowedEnumAuthorizeEditorDataAuthenticationDTOTypeEnumValues)...),
 								},
 							},
 
@@ -610,7 +611,7 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 
 								Validators: []validator.Object{
 									objectvalidatorinternal.IsRequiredIfMatchesPathValue(
-										types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_BASIC)),
+										types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_BASIC)),
 										path.MatchRelative().AtParent().AtName("type"),
 									),
 								},
@@ -625,7 +626,7 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 
 								Validators: []validator.Object{
 									objectvalidatorinternal.IsRequiredIfMatchesPathValue(
-										types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_BASIC)),
+										types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_BASIC)),
 										path.MatchRelative().AtParent().AtName("type"),
 									),
 								},
@@ -641,7 +642,7 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 
 								Validators: []validator.String{
 									stringvalidatorinternal.IsRequiredIfMatchesPathValue(
-										types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_CLIENT_CREDENTIALS)),
+										types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_CLIENT_CREDENTIALS)),
 										path.MatchRelative().AtParent().AtName("type"),
 									),
 								},
@@ -654,7 +655,7 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 
 								Validators: []validator.String{
 									stringvalidatorinternal.IsRequiredIfMatchesPathValue(
-										types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_CLIENT_CREDENTIALS)),
+										types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_CLIENT_CREDENTIALS)),
 										path.MatchRelative().AtParent().AtName("type"),
 									),
 								},
@@ -667,7 +668,7 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 
 								Validators: []validator.Object{
 									objectvalidatorinternal.IsRequiredIfMatchesPathValue(
-										types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_CLIENT_CREDENTIALS)),
+										types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_CLIENT_CREDENTIALS)),
 										path.MatchRelative().AtParent().AtName("type"),
 									),
 								},
@@ -682,7 +683,7 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 
 								Validators: []validator.String{
 									stringvalidatorinternal.IsRequiredIfMatchesPathValue(
-										types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_CLIENT_CREDENTIALS)),
+										types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_CLIENT_CREDENTIALS)),
 										path.MatchRelative().AtParent().AtName("type"),
 									),
 								},
@@ -699,7 +700,7 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 
 								Validators: []validator.Object{
 									objectvalidatorinternal.IsRequiredIfMatchesPathValue(
-										types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_TOKEN)),
+										types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_TOKEN)),
 										path.MatchRelative().AtParent().AtName("type"),
 									),
 								},
@@ -716,11 +717,11 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 
 						Validators: []validator.Object{
 							objectvalidatorinternal.IsRequiredIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)),
+								types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)),
 								path.MatchRoot("service_type"),
 							),
 							objectvalidatorinternal.ConflictsIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)),
+								types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)),
 								path.MatchRoot("service_type"),
 							),
 						},
@@ -732,7 +733,7 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 								Required:            true,
 
 								Validators: []validator.String{
-									stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataTlsSettingsDTOTlsValidationTypeEnumValues)...),
+									stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorizeeditor.AllowedEnumAuthorizeEditorDataTlsSettingsDTOTlsValidationTypeEnumValues)...),
 								},
 							},
 						},
@@ -744,13 +745,13 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 						Optional:            true,
 
 						Validators: []validator.String{
-							stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataServiceSettingsConnectorServiceSettingsDTOChannelEnumValues)...),
+							stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorizeeditor.AllowedEnumAuthorizeEditorDataServiceSettingsConnectorServiceSettingsDTOChannelEnumValues)...),
 							stringvalidatorinternal.IsRequiredIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)),
+								types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)),
 								path.MatchRoot("service_type"),
 							),
 							stringvalidatorinternal.ConflictsIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)),
+								types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)),
 								path.MatchRoot("service_type"),
 							),
 						},
@@ -762,13 +763,13 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 						Optional:            true,
 
 						Validators: []validator.String{
-							stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataServiceSettingsConnectorServiceSettingsDTOCodeEnumValues)...),
+							stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorizeeditor.AllowedEnumAuthorizeEditorDataServiceSettingsConnectorServiceSettingsDTOCodeEnumValues)...),
 							stringvalidatorinternal.IsRequiredIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)),
+								types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)),
 								path.MatchRoot("service_type"),
 							),
 							stringvalidatorinternal.ConflictsIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)),
+								types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)),
 								path.MatchRoot("service_type"),
 							),
 						},
@@ -781,11 +782,11 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 
 						Validators: []validator.String{
 							stringvalidatorinternal.IsRequiredIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)),
+								types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)),
 								path.MatchRoot("service_type"),
 							),
 							stringvalidatorinternal.ConflictsIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)),
+								types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)),
 								path.MatchRoot("service_type"),
 							),
 						},
@@ -798,7 +799,7 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 
 						Validators: []validator.Int32{
 							int32validatorinternal.ConflictsIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)),
+								types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)),
 								path.MatchRoot("service_type"),
 							),
 						},
@@ -811,11 +812,11 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 
 						Validators: []validator.List{
 							listvalidatorinternal.IsRequiredIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)),
+								types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR)),
 								path.MatchRoot("service_type"),
 							),
 							listvalidatorinternal.ConflictsIfMatchesPathValue(
-								types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)),
+								types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP)),
 								path.MatchRoot("service_type"),
 							),
 						},
@@ -833,7 +834,7 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 									Required:            true,
 
 									Validators: []validator.String{
-										stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataInputMappingDTOTypeEnumValues)...),
+										stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorizeeditor.AllowedEnumAuthorizeEditorDataInputMappingDTOTypeEnumValues)...),
 									},
 								},
 
@@ -844,11 +845,11 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 
 									Validators: []validator.Object{
 										objectvalidatorinternal.IsRequiredIfMatchesPathValue(
-											types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAINPUTMAPPINGDTOTYPE_ATTRIBUTE)),
+											types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATAINPUTMAPPINGDTOTYPE_ATTRIBUTE)),
 											path.MatchRelative().AtParent().AtName("type"),
 										),
 										objectvalidatorinternal.ConflictsIfMatchesPathValue(
-											types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAINPUTMAPPINGDTOTYPE_INPUT)),
+											types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATAINPUTMAPPINGDTOTYPE_INPUT)),
 											path.MatchRelative().AtParent().AtName("type"),
 										),
 									},
@@ -863,11 +864,11 @@ func (r *TrustFrameworkServiceResource) Schema(ctx context.Context, req resource
 
 									Validators: []validator.String{
 										stringvalidatorinternal.IsRequiredIfMatchesPathValue(
-											types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAINPUTMAPPINGDTOTYPE_INPUT)),
+											types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATAINPUTMAPPINGDTOTYPE_INPUT)),
 											path.MatchRelative().AtParent().AtName("type"),
 										),
 										stringvalidatorinternal.ConflictsIfMatchesPathValue(
-											types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAINPUTMAPPINGDTOTYPE_ATTRIBUTE)),
+											types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATAINPUTMAPPINGDTOTYPE_ATTRIBUTE)),
 											path.MatchRelative().AtParent().AtName("type"),
 										),
 									},
@@ -887,7 +888,7 @@ func (r *TrustFrameworkServiceResource) Configure(ctx context.Context, req resou
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -931,16 +932,16 @@ func (r *TrustFrameworkServiceResource) Create(ctx context.Context, req resource
 	}
 
 	// Run the API call
-	var response *authorize.AuthorizeEditorDataDefinitionsServiceDefinitionDTO
-	resp.Diagnostics.Append(framework.ParseResponse(
+	var response *authorizeeditor.AuthorizeEditorDataDefinitionsServiceDefinitionDTO
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorServicesApi.CreateService(ctx, plan.EnvironmentId.ValueString()).AuthorizeEditorDataDefinitionsServiceDefinitionDTO(*trustFrameworkService).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorServicesApi.CreateService(ctx, plan.EnvironmentId.ValueString()).AuthorizeEditorDataDefinitionsServiceDefinitionDTO(*trustFrameworkService).Execute()
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateService",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		retryAuthorizeEditorCreateUpdate,
 		&response,
 	)...)
@@ -975,16 +976,16 @@ func (r *TrustFrameworkServiceResource) Read(ctx context.Context, req resource.R
 	}
 
 	// Run the API call
-	var response *authorize.AuthorizeEditorDataDefinitionsServiceDefinitionDTO
-	resp.Diagnostics.Append(framework.ParseResponse(
+	var response *authorizeeditor.AuthorizeEditorDataDefinitionsServiceDefinitionDTO
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorServicesApi.GetService(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorServicesApi.GetService(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"GetService",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		nil,
 		&response,
 	)...)
@@ -1022,16 +1023,16 @@ func (r *TrustFrameworkServiceResource) Update(ctx context.Context, req resource
 	}
 
 	// Run the API call
-	var getResponse *authorize.AuthorizeEditorDataDefinitionsServiceDefinitionDTO
-	resp.Diagnostics.Append(framework.ParseResponse(
+	var getResponse *authorizeeditor.AuthorizeEditorDataDefinitionsServiceDefinitionDTO
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorServicesApi.GetService(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorServicesApi.GetService(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Execute()
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"GetService-Update",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		retryAuthorizeEditorCreateUpdate,
 		&getResponse,
 	)...)
@@ -1044,11 +1045,11 @@ func (r *TrustFrameworkServiceResource) Update(ctx context.Context, req resource
 	var version string
 
 	switch t := serviceObj.(type) {
-	case *authorize.AuthorizeEditorDataServicesConnectorServiceDefinitionDTO:
+	case *authorizeeditor.AuthorizeEditorDataServicesConnectorServiceDefinitionDTO:
 		version = t.GetVersion()
-	case *authorize.AuthorizeEditorDataServicesHttpServiceDefinitionDTO:
+	case *authorizeeditor.AuthorizeEditorDataServicesHttpServiceDefinitionDTO:
 		version = t.GetVersion()
-	case *authorize.AuthorizeEditorDataServicesNoneServiceDefinitionDTO:
+	case *authorizeeditor.AuthorizeEditorDataServicesNoneServiceDefinitionDTO:
 		version = t.GetVersion()
 	default:
 		tflog.Error(
@@ -1080,16 +1081,16 @@ func (r *TrustFrameworkServiceResource) Update(ctx context.Context, req resource
 	}
 
 	// Run the API call
-	var response *authorize.AuthorizeEditorDataDefinitionsServiceDefinitionDTO
-	resp.Diagnostics.Append(framework.ParseResponse(
+	var response *authorizeeditor.AuthorizeEditorDataDefinitionsServiceDefinitionDTO
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorServicesApi.UpdateService(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).AuthorizeEditorDataDefinitionsServiceDefinitionDTO(*trustFrameworkService).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorServicesApi.UpdateService(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).AuthorizeEditorDataDefinitionsServiceDefinitionDTO(*trustFrameworkService).Execute()
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateService",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		nil,
 		&response,
 	)...)
@@ -1133,15 +1134,15 @@ func (r *TrustFrameworkServiceResource) Delete(ctx context.Context, req resource
 		},
 		Refresh: func() (interface{}, string, error) {
 			// Run the API call
-			resp.Diagnostics.Append(framework.ParseResponse(
+			resp.Diagnostics.Append(legacysdk.ParseResponse(
 				ctx,
 
 				func() (any, *http.Response, error) {
-					fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorServicesApi.DeleteService(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
+					fR, fErr := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorServicesApi.DeleteService(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+					return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 				},
 				"DeleteService",
-				framework.CustomErrorResourceNotFoundWarning,
+				legacysdk.CustomErrorResourceNotFoundWarning,
 				nil,
 				nil,
 			)...)
@@ -1149,8 +1150,8 @@ func (r *TrustFrameworkServiceResource) Delete(ctx context.Context, req resource
 				return nil, "ERROR", fmt.Errorf("Error deleting authorize service (%s)", data.Id.ValueString())
 			}
 
-			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorServicesApi.GetService(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			getResp, r, err := framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorServicesApi.GetService(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			getResp, r, err := legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 
 			if err != nil || r == nil {
 				return getResp, "ERROR", err
@@ -1209,10 +1210,10 @@ func (r *TrustFrameworkServiceResource) ImportState(ctx context.Context, req res
 	}
 }
 
-func (p *trustFrameworkServiceResourceModel) expand(ctx context.Context, updateVersionId *string) (*authorize.AuthorizeEditorDataDefinitionsServiceDefinitionDTO, diag.Diagnostics) {
+func (p *trustFrameworkServiceResourceModel) expand(ctx context.Context, updateVersionId *string) (*authorizeeditor.AuthorizeEditorDataDefinitionsServiceDefinitionDTO, diag.Diagnostics) {
 	var diags, d diag.Diagnostics
 
-	data := authorize.AuthorizeEditorDataDefinitionsServiceDefinitionDTO{}
+	data := authorizeeditor.AuthorizeEditorDataDefinitionsServiceDefinitionDTO{}
 
 	commonData, d := p.expandCommon(ctx, updateVersionId)
 	diags.Append(d...)
@@ -1220,14 +1221,14 @@ func (p *trustFrameworkServiceResourceModel) expand(ctx context.Context, updateV
 		return nil, diags
 	}
 
-	switch authorize.EnumAuthorizeEditorDataDefinitionsServiceDefinitionDTOServiceType(p.ServiceType.ValueString()) {
-	case authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR:
+	switch authorizeeditor.EnumAuthorizeEditorDataDefinitionsServiceDefinitionDTOServiceType(p.ServiceType.ValueString()) {
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR:
 		data.AuthorizeEditorDataServicesConnectorServiceDefinitionDTO, d = p.expandConnectorService(ctx, commonData)
 		diags.Append(d...)
-	case authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP:
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP:
 		data.AuthorizeEditorDataServicesHttpServiceDefinitionDTO, d = p.expandHttpService(ctx, commonData)
 		diags.Append(d...)
-	case authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_NONE:
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_NONE:
 		data.AuthorizeEditorDataServicesNoneServiceDefinitionDTO, d = p.expandNoneService(commonData)
 		diags.Append(d...)
 	default:
@@ -1244,12 +1245,12 @@ func (p *trustFrameworkServiceResourceModel) expand(ctx context.Context, updateV
 	return &data, diags
 }
 
-func (p *trustFrameworkServiceResourceModel) expandCommon(ctx context.Context, updateVersionId *string) (*authorize.AuthorizeEditorDataDefinitionsServiceDefinitionDTOCommon, diag.Diagnostics) {
+func (p *trustFrameworkServiceResourceModel) expandCommon(ctx context.Context, updateVersionId *string) (*authorizeeditor.AuthorizeEditorDataDefinitionsServiceDefinitionDTOCommon, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	data := authorize.NewAuthorizeEditorDataDefinitionsServiceDefinitionDTOCommon(
+	data := authorizeeditor.NewAuthorizeEditorDataDefinitionsServiceDefinitionDTOCommon(
 		p.Name.ValueString(),
-		authorize.EnumAuthorizeEditorDataDefinitionsServiceDefinitionDTOServiceType(p.ServiceType.ValueString()),
+		authorizeeditor.EnumAuthorizeEditorDataDefinitionsServiceDefinitionDTOServiceType(p.ServiceType.ValueString()),
 	)
 
 	if !p.Description.IsNull() && !p.Description.IsUnknown() {
@@ -1292,9 +1293,9 @@ func (p *trustFrameworkServiceResourceModel) expandCommon(ctx context.Context, u
 	return data, diags
 }
 
-func (p *trustFrameworkServiceCacheSettingsResourceModel) expand() *authorize.AuthorizeEditorDataCacheSettingsDTO {
+func (p *trustFrameworkServiceCacheSettingsResourceModel) expand() *authorizeeditor.AuthorizeEditorDataCacheSettingsDTO {
 
-	data := authorize.NewAuthorizeEditorDataCacheSettingsDTO()
+	data := authorizeeditor.NewAuthorizeEditorDataCacheSettingsDTO()
 
 	if !p.TtlSeconds.IsNull() && !p.TtlSeconds.IsUnknown() {
 		data.SetTtlSeconds(p.TtlSeconds.ValueInt32())
@@ -1303,10 +1304,10 @@ func (p *trustFrameworkServiceCacheSettingsResourceModel) expand() *authorize.Au
 	return data
 }
 
-func (p *trustFrameworkServiceResourceModel) expandConnectorService(ctx context.Context, commonData *authorize.AuthorizeEditorDataDefinitionsServiceDefinitionDTOCommon) (*authorize.AuthorizeEditorDataServicesConnectorServiceDefinitionDTO, diag.Diagnostics) {
+func (p *trustFrameworkServiceResourceModel) expandConnectorService(ctx context.Context, commonData *authorizeeditor.AuthorizeEditorDataDefinitionsServiceDefinitionDTOCommon) (*authorizeeditor.AuthorizeEditorDataServicesConnectorServiceDefinitionDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if p.ServiceType.ValueString() != string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR) {
+	if p.ServiceType.ValueString() != string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_CONNECTOR) {
 		return nil, diags
 	}
 
@@ -1317,7 +1318,7 @@ func (p *trustFrameworkServiceResourceModel) expandConnectorService(ctx context.
 		return nil, diags
 	}
 
-	var data *authorize.AuthorizeEditorDataServicesConnectorServiceDefinitionDTO
+	var data *authorizeeditor.AuthorizeEditorDataServicesConnectorServiceDefinitionDTO
 	err = json.Unmarshal(bytes, &data)
 	if err != nil {
 		diags.AddError("Failed to unmarshal data", err.Error())
@@ -1361,10 +1362,10 @@ func (p *trustFrameworkServiceResourceModel) expandConnectorService(ctx context.
 	return data, diags
 }
 
-func (p *trustFrameworkServiceResourceModel) expandHttpService(ctx context.Context, commonData *authorize.AuthorizeEditorDataDefinitionsServiceDefinitionDTOCommon) (*authorize.AuthorizeEditorDataServicesHttpServiceDefinitionDTO, diag.Diagnostics) {
+func (p *trustFrameworkServiceResourceModel) expandHttpService(ctx context.Context, commonData *authorizeeditor.AuthorizeEditorDataDefinitionsServiceDefinitionDTOCommon) (*authorizeeditor.AuthorizeEditorDataServicesHttpServiceDefinitionDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if p.ServiceType.ValueString() != string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP) {
+	if p.ServiceType.ValueString() != string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_HTTP) {
 		return nil, diags
 	}
 
@@ -1375,7 +1376,7 @@ func (p *trustFrameworkServiceResourceModel) expandHttpService(ctx context.Conte
 		return nil, diags
 	}
 
-	var data *authorize.AuthorizeEditorDataServicesHttpServiceDefinitionDTO
+	var data *authorizeeditor.AuthorizeEditorDataServicesHttpServiceDefinitionDTO
 	err = json.Unmarshal(bytes, &data)
 	if err != nil {
 		diags.AddError("Failed to unmarshal data", err.Error())
@@ -1419,10 +1420,10 @@ func (p *trustFrameworkServiceResourceModel) expandHttpService(ctx context.Conte
 	return data, diags
 }
 
-func (p *trustFrameworkServiceResourceModel) expandNoneService(commonData *authorize.AuthorizeEditorDataDefinitionsServiceDefinitionDTOCommon) (*authorize.AuthorizeEditorDataServicesNoneServiceDefinitionDTO, diag.Diagnostics) {
+func (p *trustFrameworkServiceResourceModel) expandNoneService(commonData *authorizeeditor.AuthorizeEditorDataDefinitionsServiceDefinitionDTOCommon) (*authorizeeditor.AuthorizeEditorDataServicesNoneServiceDefinitionDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if p.ServiceType.ValueString() != string(authorize.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_NONE) {
+	if p.ServiceType.ValueString() != string(authorizeeditor.ENUMAUTHORIZEEDITORDATADEFINITIONSSERVICEDEFINITIONDTOSERVICETYPE_NONE) {
 		return nil, diags
 	}
 
@@ -1433,7 +1434,7 @@ func (p *trustFrameworkServiceResourceModel) expandNoneService(commonData *autho
 		return nil, diags
 	}
 
-	var data *authorize.AuthorizeEditorDataServicesNoneServiceDefinitionDTO
+	var data *authorizeeditor.AuthorizeEditorDataServicesNoneServiceDefinitionDTO
 	err = json.Unmarshal(bytes, &data)
 	if err != nil {
 		diags.AddError("Failed to unmarshal data", err.Error())
@@ -1443,10 +1444,10 @@ func (p *trustFrameworkServiceResourceModel) expandNoneService(commonData *autho
 	return data, diags
 }
 
-func (p *trustFrameworkServiceServiceSettingsResourceModel) expandConnector(ctx context.Context) (*authorize.AuthorizeEditorDataServiceSettingsConnectorServiceSettingsDTO, diag.Diagnostics) {
+func (p *trustFrameworkServiceServiceSettingsResourceModel) expandConnector(ctx context.Context) (*authorizeeditor.AuthorizeEditorDataServiceSettingsConnectorServiceSettingsDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	inputMappings := make([]authorize.AuthorizeEditorDataInputMappingDTO, 0)
+	inputMappings := make([]authorizeeditor.AuthorizeEditorDataInputMappingDTO, 0)
 
 	var inputMappingsPlan []trustFrameworkServiceServiceSettingsInputMappingResourceModel
 	diags.Append(p.InputMappings.ElementsAs(ctx, &inputMappingsPlan, false)...)
@@ -1464,9 +1465,9 @@ func (p *trustFrameworkServiceServiceSettingsResourceModel) expandConnector(ctx 
 		inputMappings = append(inputMappings, *inputMapping)
 	}
 
-	data := authorize.NewAuthorizeEditorDataServiceSettingsConnectorServiceSettingsDTO(
-		authorize.EnumAuthorizeEditorDataServiceSettingsConnectorServiceSettingsDTOChannel(p.Channel.ValueString()),
-		authorize.EnumAuthorizeEditorDataServiceSettingsConnectorServiceSettingsDTOCode(p.Code.ValueString()),
+	data := authorizeeditor.NewAuthorizeEditorDataServiceSettingsConnectorServiceSettingsDTO(
+		authorizeeditor.EnumAuthorizeEditorDataServiceSettingsConnectorServiceSettingsDTOChannel(p.Channel.ValueString()),
+		authorizeeditor.EnumAuthorizeEditorDataServiceSettingsConnectorServiceSettingsDTOCode(p.Code.ValueString()),
 		p.Capability.ValueString(),
 		inputMappings,
 	)
@@ -1490,16 +1491,16 @@ func (p *trustFrameworkServiceServiceSettingsResourceModel) expandConnector(ctx 
 	return data, diags
 }
 
-func (p *trustFrameworkServiceServiceSettingsInputMappingResourceModel) expand(ctx context.Context) (*authorize.AuthorizeEditorDataInputMappingDTO, diag.Diagnostics) {
+func (p *trustFrameworkServiceServiceSettingsInputMappingResourceModel) expand(ctx context.Context) (*authorizeeditor.AuthorizeEditorDataInputMappingDTO, diag.Diagnostics) {
 	var diags, d diag.Diagnostics
 
-	data := authorize.AuthorizeEditorDataInputMappingDTO{}
+	data := authorizeeditor.AuthorizeEditorDataInputMappingDTO{}
 
-	switch authorize.EnumAuthorizeEditorDataInputMappingDTOType(p.Type.ValueString()) {
-	case authorize.ENUMAUTHORIZEEDITORDATAINPUTMAPPINGDTOTYPE_ATTRIBUTE:
+	switch authorizeeditor.EnumAuthorizeEditorDataInputMappingDTOType(p.Type.ValueString()) {
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATAINPUTMAPPINGDTOTYPE_ATTRIBUTE:
 		data.AuthorizeEditorDataInputMappingsAttributeInputMappingDTO, d = p.expandAttributeType(ctx)
 		diags.Append(d...)
-	case authorize.ENUMAUTHORIZEEDITORDATAINPUTMAPPINGDTOTYPE_INPUT:
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATAINPUTMAPPINGDTOTYPE_INPUT:
 		data.AuthorizeEditorDataInputMappingsInputInputMappingDTO = p.expandInputType()
 	default:
 		diags.AddError(
@@ -1515,7 +1516,7 @@ func (p *trustFrameworkServiceServiceSettingsInputMappingResourceModel) expand(c
 	return &data, diags
 }
 
-func (p *trustFrameworkServiceServiceSettingsInputMappingResourceModel) expandAttributeType(ctx context.Context) (*authorize.AuthorizeEditorDataInputMappingsAttributeInputMappingDTO, diag.Diagnostics) {
+func (p *trustFrameworkServiceServiceSettingsInputMappingResourceModel) expandAttributeType(ctx context.Context) (*authorizeeditor.AuthorizeEditorDataInputMappingsAttributeInputMappingDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	valueRef, d := expandEditorReferenceData(ctx, p.ValueRef)
@@ -1524,27 +1525,27 @@ func (p *trustFrameworkServiceServiceSettingsInputMappingResourceModel) expandAt
 		return nil, diags
 	}
 
-	data := authorize.NewAuthorizeEditorDataInputMappingsAttributeInputMappingDTO(
+	data := authorizeeditor.NewAuthorizeEditorDataInputMappingsAttributeInputMappingDTO(
 		p.Property.ValueString(),
-		authorize.EnumAuthorizeEditorDataInputMappingDTOType(p.Type.ValueString()),
+		authorizeeditor.EnumAuthorizeEditorDataInputMappingDTOType(p.Type.ValueString()),
 		*valueRef,
 	)
 
 	return data, diags
 }
 
-func (p *trustFrameworkServiceServiceSettingsInputMappingResourceModel) expandInputType() *authorize.AuthorizeEditorDataInputMappingsInputInputMappingDTO {
+func (p *trustFrameworkServiceServiceSettingsInputMappingResourceModel) expandInputType() *authorizeeditor.AuthorizeEditorDataInputMappingsInputInputMappingDTO {
 
-	data := authorize.NewAuthorizeEditorDataInputMappingsInputInputMappingDTO(
+	data := authorizeeditor.NewAuthorizeEditorDataInputMappingsInputInputMappingDTO(
 		p.Property.ValueString(),
-		authorize.EnumAuthorizeEditorDataInputMappingDTOType(p.Type.ValueString()),
+		authorizeeditor.EnumAuthorizeEditorDataInputMappingDTOType(p.Type.ValueString()),
 		p.Value.ValueString(),
 	)
 
 	return data
 }
 
-func (p *trustFrameworkServiceServiceSettingsResourceModel) expandHttp(ctx context.Context) (*authorize.AuthorizeEditorDataServiceSettingsHttpServiceSettingsDTO, diag.Diagnostics) {
+func (p *trustFrameworkServiceServiceSettingsResourceModel) expandHttp(ctx context.Context) (*authorizeeditor.AuthorizeEditorDataServiceSettingsHttpServiceSettingsDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var authenticationPlan *trustFrameworkServiceServiceSettingsAuthenticationResourceModel
@@ -1573,9 +1574,9 @@ func (p *trustFrameworkServiceServiceSettingsResourceModel) expandHttp(ctx conte
 
 	tlsSettings := tlsSettingsPlan.expand()
 
-	data := authorize.NewAuthorizeEditorDataServiceSettingsHttpServiceSettingsDTO(
+	data := authorizeeditor.NewAuthorizeEditorDataServiceSettingsHttpServiceSettingsDTO(
 		p.Url.ValueString(),
-		authorize.EnumAuthorizeEditorDataServiceSettingsHttpServiceSettingsDTOVerb(p.Verb.ValueString()),
+		authorizeeditor.EnumAuthorizeEditorDataServiceSettingsHttpServiceSettingsDTOVerb(p.Verb.ValueString()),
 		*authentication,
 		*tlsSettings,
 	)
@@ -1601,7 +1602,7 @@ func (p *trustFrameworkServiceServiceSettingsResourceModel) expandHttp(ctx conte
 	}
 
 	if !p.Headers.IsNull() && !p.Headers.IsUnknown() {
-		headers := make([]authorize.AuthorizeEditorDataHttpRequestHeaderDTO, 0)
+		headers := make([]authorizeeditor.AuthorizeEditorDataHttpRequestHeaderDTO, 0)
 
 		var plan []trustFrameworkServiceServiceSettingsHeaderResourceModel
 		diags.Append(p.Headers.ElementsAs(ctx, &plan, false)...)
@@ -1625,10 +1626,10 @@ func (p *trustFrameworkServiceServiceSettingsResourceModel) expandHttp(ctx conte
 	return data, diags
 }
 
-func (p *trustFrameworkServiceServiceSettingsHeaderResourceModel) expand(ctx context.Context) (*authorize.AuthorizeEditorDataHttpRequestHeaderDTO, diag.Diagnostics) {
+func (p *trustFrameworkServiceServiceSettingsHeaderResourceModel) expand(ctx context.Context) (*authorizeeditor.AuthorizeEditorDataHttpRequestHeaderDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	data := authorize.NewAuthorizeEditorDataHttpRequestHeaderDTO(
+	data := authorizeeditor.NewAuthorizeEditorDataHttpRequestHeaderDTO(
 		p.Key.ValueString(),
 	)
 
@@ -1654,21 +1655,21 @@ func (p *trustFrameworkServiceServiceSettingsHeaderResourceModel) expand(ctx con
 	return data, diags
 }
 
-func (p *trustFrameworkServiceServiceSettingsAuthenticationResourceModel) expand(ctx context.Context) (*authorize.AuthorizeEditorDataAuthenticationDTO, diag.Diagnostics) {
+func (p *trustFrameworkServiceServiceSettingsAuthenticationResourceModel) expand(ctx context.Context) (*authorizeeditor.AuthorizeEditorDataAuthenticationDTO, diag.Diagnostics) {
 	var diags, d diag.Diagnostics
 
-	data := authorize.AuthorizeEditorDataAuthenticationDTO{}
+	data := authorizeeditor.AuthorizeEditorDataAuthenticationDTO{}
 
-	switch authorize.EnumAuthorizeEditorDataAuthenticationDTOType(p.Type.ValueString()) {
-	case authorize.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_BASIC:
+	switch authorizeeditor.EnumAuthorizeEditorDataAuthenticationDTOType(p.Type.ValueString()) {
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_BASIC:
 		data.AuthorizeEditorDataAuthenticationsBasicAuthenticationDTO, d = p.expandBasicAuth(ctx)
 		diags.Append(d...)
-	case authorize.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_CLIENT_CREDENTIALS:
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_CLIENT_CREDENTIALS:
 		data.AuthorizeEditorDataAuthenticationsClientCredentialsAuthenticationDTO, d = p.expandClientCredentialsAuth(ctx)
 		diags.Append(d...)
-	case authorize.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_NONE:
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_NONE:
 		data.AuthorizeEditorDataAuthenticationsNoneAuthenticationDTO = p.expandNoneAuth()
-	case authorize.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_TOKEN:
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATAAUTHENTICATIONDTOTYPE_TOKEN:
 		data.AuthorizeEditorDataAuthenticationsTokenAuthenticationDTO, d = p.expandTokenAuth(ctx)
 		diags.Append(d...)
 	default:
@@ -1685,7 +1686,7 @@ func (p *trustFrameworkServiceServiceSettingsAuthenticationResourceModel) expand
 	return &data, diags
 }
 
-func (p *trustFrameworkServiceServiceSettingsAuthenticationResourceModel) expandBasicAuth(ctx context.Context) (*authorize.AuthorizeEditorDataAuthenticationsBasicAuthenticationDTO, diag.Diagnostics) {
+func (p *trustFrameworkServiceServiceSettingsAuthenticationResourceModel) expandBasicAuth(ctx context.Context) (*authorizeeditor.AuthorizeEditorDataAuthenticationsBasicAuthenticationDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	name, d := expandEditorReferenceData(ctx, p.Name)
@@ -1700,8 +1701,8 @@ func (p *trustFrameworkServiceServiceSettingsAuthenticationResourceModel) expand
 		return nil, diags
 	}
 
-	data := authorize.NewAuthorizeEditorDataAuthenticationsBasicAuthenticationDTO(
-		authorize.EnumAuthorizeEditorDataAuthenticationDTOType(p.Type.ValueString()),
+	data := authorizeeditor.NewAuthorizeEditorDataAuthenticationsBasicAuthenticationDTO(
+		authorizeeditor.EnumAuthorizeEditorDataAuthenticationDTOType(p.Type.ValueString()),
 		*name,
 		*password,
 	)
@@ -1709,7 +1710,7 @@ func (p *trustFrameworkServiceServiceSettingsAuthenticationResourceModel) expand
 	return data, diags
 }
 
-func (p *trustFrameworkServiceServiceSettingsAuthenticationResourceModel) expandClientCredentialsAuth(ctx context.Context) (*authorize.AuthorizeEditorDataAuthenticationsClientCredentialsAuthenticationDTO, diag.Diagnostics) {
+func (p *trustFrameworkServiceServiceSettingsAuthenticationResourceModel) expandClientCredentialsAuth(ctx context.Context) (*authorizeeditor.AuthorizeEditorDataAuthenticationsClientCredentialsAuthenticationDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	clientSecret, d := expandEditorReferenceData(ctx, p.ClientSecret)
@@ -1718,8 +1719,8 @@ func (p *trustFrameworkServiceServiceSettingsAuthenticationResourceModel) expand
 		return nil, diags
 	}
 
-	data := authorize.NewAuthorizeEditorDataAuthenticationsClientCredentialsAuthenticationDTO(
-		authorize.EnumAuthorizeEditorDataAuthenticationDTOType(p.Type.ValueString()),
+	data := authorizeeditor.NewAuthorizeEditorDataAuthenticationsClientCredentialsAuthenticationDTO(
+		authorizeeditor.EnumAuthorizeEditorDataAuthenticationDTOType(p.Type.ValueString()),
 		p.TokenEndpoint.ValueString(),
 		p.ClientId.ValueString(),
 		*clientSecret,
@@ -1729,16 +1730,16 @@ func (p *trustFrameworkServiceServiceSettingsAuthenticationResourceModel) expand
 	return data, diags
 }
 
-func (p *trustFrameworkServiceServiceSettingsAuthenticationResourceModel) expandNoneAuth() *authorize.AuthorizeEditorDataAuthenticationsNoneAuthenticationDTO {
+func (p *trustFrameworkServiceServiceSettingsAuthenticationResourceModel) expandNoneAuth() *authorizeeditor.AuthorizeEditorDataAuthenticationsNoneAuthenticationDTO {
 
-	data := authorize.NewAuthorizeEditorDataAuthenticationsNoneAuthenticationDTO(
-		authorize.EnumAuthorizeEditorDataAuthenticationDTOType(p.Type.ValueString()),
+	data := authorizeeditor.NewAuthorizeEditorDataAuthenticationsNoneAuthenticationDTO(
+		authorizeeditor.EnumAuthorizeEditorDataAuthenticationDTOType(p.Type.ValueString()),
 	)
 
 	return data
 }
 
-func (p *trustFrameworkServiceServiceSettingsAuthenticationResourceModel) expandTokenAuth(ctx context.Context) (*authorize.AuthorizeEditorDataAuthenticationsTokenAuthenticationDTO, diag.Diagnostics) {
+func (p *trustFrameworkServiceServiceSettingsAuthenticationResourceModel) expandTokenAuth(ctx context.Context) (*authorizeeditor.AuthorizeEditorDataAuthenticationsTokenAuthenticationDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	token, d := expandEditorReferenceData(ctx, p.Token)
@@ -1747,24 +1748,24 @@ func (p *trustFrameworkServiceServiceSettingsAuthenticationResourceModel) expand
 		return nil, diags
 	}
 
-	data := authorize.NewAuthorizeEditorDataAuthenticationsTokenAuthenticationDTO(
-		authorize.EnumAuthorizeEditorDataAuthenticationDTOType(p.Type.ValueString()),
+	data := authorizeeditor.NewAuthorizeEditorDataAuthenticationsTokenAuthenticationDTO(
+		authorizeeditor.EnumAuthorizeEditorDataAuthenticationDTOType(p.Type.ValueString()),
 		*token,
 	)
 
 	return data, diags
 }
 
-func (p *trustFrameworkServiceServiceSettingsTlsSettingsResourceModel) expand() *authorize.AuthorizeEditorDataTlsSettingsDTO {
+func (p *trustFrameworkServiceServiceSettingsTlsSettingsResourceModel) expand() *authorizeeditor.AuthorizeEditorDataTlsSettingsDTO {
 
-	data := authorize.NewAuthorizeEditorDataTlsSettingsDTO(
-		authorize.EnumAuthorizeEditorDataTlsSettingsDTOTlsValidationType(p.TlsValidationType.ValueString()),
+	data := authorizeeditor.NewAuthorizeEditorDataTlsSettingsDTO(
+		authorizeeditor.EnumAuthorizeEditorDataTlsSettingsDTOTlsValidationType(p.TlsValidationType.ValueString()),
 	)
 
 	return data
 }
 
-func (p *trustFrameworkServiceResourceModel) toState(ctx context.Context, apiObject *authorize.AuthorizeEditorDataDefinitionsServiceDefinitionDTO) diag.Diagnostics {
+func (p *trustFrameworkServiceResourceModel) toState(ctx context.Context, apiObject *authorizeeditor.AuthorizeEditorDataDefinitionsServiceDefinitionDTO) diag.Diagnostics {
 	var diags, d diag.Diagnostics
 
 	if apiObject == nil {
@@ -1775,10 +1776,10 @@ func (p *trustFrameworkServiceResourceModel) toState(ctx context.Context, apiObj
 		return diags
 	}
 
-	apiObjectCommon := authorize.AuthorizeEditorDataDefinitionsServiceDefinitionDTOCommon{}
+	apiObjectCommon := authorizeeditor.AuthorizeEditorDataDefinitionsServiceDefinitionDTOCommon{}
 
 	if apiObject.AuthorizeEditorDataServicesConnectorServiceDefinitionDTO != nil {
-		apiObjectCommon = authorize.AuthorizeEditorDataDefinitionsServiceDefinitionDTOCommon{
+		apiObjectCommon = authorizeeditor.AuthorizeEditorDataDefinitionsServiceDefinitionDTOCommon{
 			Id:            apiObject.AuthorizeEditorDataServicesConnectorServiceDefinitionDTO.Id,
 			Version:       apiObject.AuthorizeEditorDataServicesConnectorServiceDefinitionDTO.Version,
 			Name:          apiObject.AuthorizeEditorDataServicesConnectorServiceDefinitionDTO.Name,
@@ -1792,7 +1793,7 @@ func (p *trustFrameworkServiceResourceModel) toState(ctx context.Context, apiObj
 	}
 
 	if apiObject.AuthorizeEditorDataServicesHttpServiceDefinitionDTO != nil {
-		apiObjectCommon = authorize.AuthorizeEditorDataDefinitionsServiceDefinitionDTOCommon{
+		apiObjectCommon = authorizeeditor.AuthorizeEditorDataDefinitionsServiceDefinitionDTOCommon{
 			Id:            apiObject.AuthorizeEditorDataServicesHttpServiceDefinitionDTO.Id,
 			Version:       apiObject.AuthorizeEditorDataServicesHttpServiceDefinitionDTO.Version,
 			Name:          apiObject.AuthorizeEditorDataServicesHttpServiceDefinitionDTO.Name,
@@ -1806,7 +1807,7 @@ func (p *trustFrameworkServiceResourceModel) toState(ctx context.Context, apiObj
 	}
 
 	if apiObject.AuthorizeEditorDataServicesNoneServiceDefinitionDTO != nil {
-		apiObjectCommon = authorize.AuthorizeEditorDataDefinitionsServiceDefinitionDTOCommon{
+		apiObjectCommon = authorizeeditor.AuthorizeEditorDataDefinitionsServiceDefinitionDTOCommon{
 			Id:            apiObject.AuthorizeEditorDataServicesNoneServiceDefinitionDTO.Id,
 			Version:       apiObject.AuthorizeEditorDataServicesNoneServiceDefinitionDTO.Version,
 			Name:          apiObject.AuthorizeEditorDataServicesNoneServiceDefinitionDTO.Name,
@@ -1871,7 +1872,7 @@ func (p *trustFrameworkServiceResourceModel) toState(ctx context.Context, apiObj
 	return diags
 }
 
-func trustFrameworkServiceCacheSettingsOkToTF(apiObject *authorize.AuthorizeEditorDataCacheSettingsDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+func trustFrameworkServiceCacheSettingsOkToTF(apiObject *authorizeeditor.AuthorizeEditorDataCacheSettingsDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -1886,7 +1887,7 @@ func trustFrameworkServiceCacheSettingsOkToTF(apiObject *authorize.AuthorizeEdit
 	return objValue, diags
 }
 
-func trustFrameworkServiceServiceSettingsConnectorOkToTF(ctx context.Context, apiObject *authorize.AuthorizeEditorDataServiceSettingsConnectorServiceSettingsDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+func trustFrameworkServiceServiceSettingsConnectorOkToTF(ctx context.Context, apiObject *authorizeeditor.AuthorizeEditorDataServiceSettingsConnectorServiceSettingsDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -1916,7 +1917,7 @@ func trustFrameworkServiceServiceSettingsConnectorOkToTF(ctx context.Context, ap
 	return objValue, diags
 }
 
-func trustFrameworkServiceServiceSettingsConnectorInputMappingsOkToTF(ctx context.Context, apiObject []authorize.AuthorizeEditorDataInputMappingDTO, ok bool) (basetypes.ListValue, diag.Diagnostics) {
+func trustFrameworkServiceServiceSettingsConnectorInputMappingsOkToTF(ctx context.Context, apiObject []authorizeeditor.AuthorizeEditorDataInputMappingDTO, ok bool) (basetypes.ListValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	tfObjType := types.ObjectType{AttrTypes: trustFrameworkServiceServiceSettingsInputMappingsTFObjectTypes}
@@ -1940,17 +1941,17 @@ func trustFrameworkServiceServiceSettingsConnectorInputMappingsOkToTF(ctx contex
 	return returnVar, diags
 }
 
-func trustFrameworkServiceServiceSettingsConnectorInputMappingOkToTF(ctx context.Context, apiObject *authorize.AuthorizeEditorDataInputMappingDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+func trustFrameworkServiceServiceSettingsConnectorInputMappingOkToTF(ctx context.Context, apiObject *authorizeeditor.AuthorizeEditorDataInputMappingDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if !ok || apiObject == nil || cmp.Equal(apiObject, &authorize.AuthorizeEditorDataInputMappingDTO{}) {
+	if !ok || apiObject == nil || cmp.Equal(apiObject, &authorizeeditor.AuthorizeEditorDataInputMappingDTO{}) {
 		return types.ObjectNull(trustFrameworkServiceServiceSettingsInputMappingsTFObjectTypes), diags
 	}
 
 	attributeMap := map[string]attr.Value{}
 
 	switch t := apiObject.GetActualInstance().(type) {
-	case *authorize.AuthorizeEditorDataInputMappingsAttributeInputMappingDTO:
+	case *authorizeeditor.AuthorizeEditorDataInputMappingsAttributeInputMappingDTO:
 
 		valueResp, ok := t.GetValueOk()
 		value, d := editorDataReferenceObjectOkToTF(valueResp, ok)
@@ -1960,7 +1961,7 @@ func trustFrameworkServiceServiceSettingsConnectorInputMappingOkToTF(ctx context
 		attributeMap["property"] = framework.StringOkToTF(t.GetPropertyOk())
 		attributeMap["value_ref"] = value
 
-	case *authorize.AuthorizeEditorDataInputMappingsInputInputMappingDTO:
+	case *authorizeeditor.AuthorizeEditorDataInputMappingsInputInputMappingDTO:
 
 		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
 		attributeMap["property"] = framework.StringOkToTF(t.GetPropertyOk())
@@ -2002,7 +2003,7 @@ func trustFrameworkServiceServiceSettingsConnectorInputMappingConvertEmptyValues
 	return attributeMap
 }
 
-func trustFrameworkServiceServiceSettingsHttpOkToTF(ctx context.Context, apiObject *authorize.AuthorizeEditorDataServiceSettingsHttpServiceSettingsDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+func trustFrameworkServiceServiceSettingsHttpOkToTF(ctx context.Context, apiObject *authorizeeditor.AuthorizeEditorDataServiceSettingsHttpServiceSettingsDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -2069,7 +2070,7 @@ func trustFrameworkServiceServiceSettingsConvertEmptyValuesToTFNulls(attributeMa
 	return attributeMap
 }
 
-func trustFrameworkServiceServiceSettingsHttpHeadersOkToTF(ctx context.Context, apiObject []authorize.AuthorizeEditorDataHttpRequestHeaderDTO, ok bool) (basetypes.SetValue, diag.Diagnostics) {
+func trustFrameworkServiceServiceSettingsHttpHeadersOkToTF(ctx context.Context, apiObject []authorizeeditor.AuthorizeEditorDataHttpRequestHeaderDTO, ok bool) (basetypes.SetValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	tfObjType := types.ObjectType{AttrTypes: trustFrameworkServiceServiceSettingsHeadersTFObjectTypes}
@@ -2100,17 +2101,17 @@ func trustFrameworkServiceServiceSettingsHttpHeadersOkToTF(ctx context.Context, 
 	return returnVar, diags
 }
 
-func trustFrameworkServiceServiceSettingsHttpAuthenticationOkToTF(ctx context.Context, apiObject *authorize.AuthorizeEditorDataAuthenticationDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+func trustFrameworkServiceServiceSettingsHttpAuthenticationOkToTF(ctx context.Context, apiObject *authorizeeditor.AuthorizeEditorDataAuthenticationDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if !ok || apiObject == nil || cmp.Equal(apiObject, &authorize.AuthorizeEditorDataAuthenticationDTO{}) {
+	if !ok || apiObject == nil || cmp.Equal(apiObject, &authorizeeditor.AuthorizeEditorDataAuthenticationDTO{}) {
 		return types.ObjectNull(trustFrameworkServiceServiceSettingsAuthenticationTFObjectTypes), diags
 	}
 
 	attributeMap := map[string]attr.Value{}
 
 	switch t := apiObject.GetActualInstance().(type) {
-	case *authorize.AuthorizeEditorDataAuthenticationsBasicAuthenticationDTO:
+	case *authorizeeditor.AuthorizeEditorDataAuthenticationsBasicAuthenticationDTO:
 
 		nameResp, ok := t.GetNameOk()
 		name, d := editorDataReferenceObjectOkToTF(nameResp, ok)
@@ -2124,7 +2125,7 @@ func trustFrameworkServiceServiceSettingsHttpAuthenticationOkToTF(ctx context.Co
 		attributeMap["name"] = name
 		attributeMap["password"] = password
 
-	case *authorize.AuthorizeEditorDataAuthenticationsClientCredentialsAuthenticationDTO:
+	case *authorizeeditor.AuthorizeEditorDataAuthenticationsClientCredentialsAuthenticationDTO:
 
 		clientSecretResp, ok := t.GetClientSecretOk()
 		clientSecret, d := editorDataReferenceObjectOkToTF(clientSecretResp, ok)
@@ -2136,11 +2137,11 @@ func trustFrameworkServiceServiceSettingsHttpAuthenticationOkToTF(ctx context.Co
 		attributeMap["client_secret"] = clientSecret
 		attributeMap["scope"] = framework.StringOkToTF(t.GetScopeOk())
 
-	case *authorize.AuthorizeEditorDataAuthenticationsNoneAuthenticationDTO:
+	case *authorizeeditor.AuthorizeEditorDataAuthenticationsNoneAuthenticationDTO:
 
 		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
 
-	case *authorize.AuthorizeEditorDataAuthenticationsTokenAuthenticationDTO:
+	case *authorizeeditor.AuthorizeEditorDataAuthenticationsTokenAuthenticationDTO:
 
 		tokenResp, ok := t.GetTokenOk()
 		token, d := editorDataReferenceObjectOkToTF(tokenResp, ok)
@@ -2189,7 +2190,7 @@ func trustFrameworkServiceServiceSettingsAuthenticationConvertEmptyValuesToTFNul
 	return attributeMap
 }
 
-func trustFrameworkServiceServiceSettingsHttpTlsSettingsOkToTF(apiObject *authorize.AuthorizeEditorDataTlsSettingsDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+func trustFrameworkServiceServiceSettingsHttpTlsSettingsOkToTF(apiObject *authorizeeditor.AuthorizeEditorDataTlsSettingsDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {

@@ -16,9 +16,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
+	"github.com/patrickcping/pingone-go-sdk-v2/authorizeeditor"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
@@ -73,14 +74,14 @@ func (r *TrustFrameworkAttributeDataSource) Schema(ctx context.Context, req data
 
 	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that describes the resource type.",
-	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataDefinitionsAttributeDefinitionDTOTypeEnumValues)
+	).AllowedValuesEnum(authorizeeditor.AllowedEnumAuthorizeEditorDataDefinitionsAttributeDefinitionDTOTypeEnumValues)
 
 	managedEntityDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that specifies configuration settings for a system-assigned set of restrictions and metadata related to the resource.",
 	)
 
 	valueSchemaDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("A string that specifies the JSON schema defition, where the output type is `%s`.", authorize.ENUMAUTHORIZEEDITORDATAVALUETYPEDTO_JSON),
+		fmt.Sprintf("A string that specifies the JSON schema defition, where the output type is `%s`.", authorizeeditor.ENUMAUTHORIZEEDITORDATAVALUETYPEDTO_JSON),
 	)
 
 	resp.Schema = schema.Schema{
@@ -196,7 +197,7 @@ func (r *TrustFrameworkAttributeDataSource) Configure(ctx context.Context, req d
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -232,20 +233,20 @@ func (r *TrustFrameworkAttributeDataSource) Read(ctx context.Context, req dataso
 		return
 	}
 
-	var trustFrameworkAttribute *authorize.AuthorizeEditorDataDefinitionsAttributeDefinitionDTO
+	var trustFrameworkAttribute *authorizeeditor.AuthorizeEditorDataDefinitionsAttributeDefinitionDTO
 
 	// TrustFrameworkAttribute API does not support SCIM filtering
 	if !data.AttributeId.IsNull() {
 		// Run the API call
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
-				fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorAttributesApi.GetAttribute(ctx, data.EnvironmentId.ValueString(), data.AttributeId.ValueString()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+				fO, fR, fErr := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorAttributesApi.GetAttribute(ctx, data.EnvironmentId.ValueString(), data.AttributeId.ValueString()).Execute()
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"GetAttribute",
-			framework.DefaultCustomError,
+			legacysdk.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
 			&trustFrameworkAttribute,
 		)...)
@@ -255,17 +256,17 @@ func (r *TrustFrameworkAttributeDataSource) Read(ctx context.Context, req dataso
 
 	} else if !data.FullName.IsNull() {
 		// Run the API call
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
-				pagedIterator := r.Client.AuthorizeAPIClient.AuthorizeEditorAttributesApi.ListAttributes(ctx, data.EnvironmentId.ValueString()).Execute()
+				pagedIterator := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorAttributesApi.ListAttributes(ctx, data.EnvironmentId.ValueString()).Execute()
 
 				var initialHttpResponse *http.Response
 
 				for pageCursor, err := range pagedIterator {
 					if err != nil {
-						return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+						return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
 					}
 
 					if initialHttpResponse == nil {
@@ -274,7 +275,7 @@ func (r *TrustFrameworkAttributeDataSource) Read(ctx context.Context, req dataso
 
 					if trustFrameworkAttributes, ok := pageCursor.EntityArray.Embedded.GetAuthorizationAttributesOk(); ok {
 
-						var trustFrameworkAttributeObj authorize.AuthorizeEditorDataDefinitionsAttributeDefinitionDTO
+						var trustFrameworkAttributeObj authorizeeditor.AuthorizeEditorDataDefinitionsAttributeDefinitionDTO
 						for _, trustFrameworkAttributeObj = range trustFrameworkAttributes {
 							if trustFrameworkAttributeObj.GetFullName() == data.FullName.ValueString() {
 								return &trustFrameworkAttributeObj, pageCursor.HTTPResponse, nil
@@ -286,7 +287,7 @@ func (r *TrustFrameworkAttributeDataSource) Read(ctx context.Context, req dataso
 				return nil, initialHttpResponse, nil
 			},
 			"ListAttributes",
-			framework.DefaultCustomError,
+			legacysdk.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
 			&trustFrameworkAttribute,
 		)...)
@@ -315,7 +316,7 @@ func (r *TrustFrameworkAttributeDataSource) Read(ctx context.Context, req dataso
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (p *trustFrameworkAttributeDataSourceModel) toState(ctx context.Context, apiObject *authorize.AuthorizeEditorDataDefinitionsAttributeDefinitionDTO) diag.Diagnostics {
+func (p *trustFrameworkAttributeDataSourceModel) toState(ctx context.Context, apiObject *authorizeeditor.AuthorizeEditorDataDefinitionsAttributeDefinitionDTO) diag.Diagnostics {
 	var diags, d diag.Diagnostics
 	if apiObject == nil {
 		diags.AddError(

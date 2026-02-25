@@ -23,9 +23,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
-	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
+	"github.com/patrickcping/pingone-go-sdk-v2/authorizeeditor"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -78,14 +79,14 @@ func (r *TrustFrameworkAttributeResource) Schema(ctx context.Context, req resour
 
 	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that describes the resource type.",
-	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataDefinitionsAttributeDefinitionDTOTypeEnumValues)
+	).AllowedValuesEnum(authorizeeditor.AllowedEnumAuthorizeEditorDataDefinitionsAttributeDefinitionDTOTypeEnumValues)
 
 	managedEntityDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that specifies configuration settings for a system-assigned set of restrictions and metadata related to the resource.",
 	)
 
 	valueSchemaDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("A string that specifies the JSON schema defition, where the output type is `%s`.", authorize.ENUMAUTHORIZEEDITORDATAVALUETYPEDTO_JSON),
+		fmt.Sprintf("A string that specifies the JSON schema defition, where the output type is `%s`.", authorizeeditor.ENUMAUTHORIZEEDITORDATAVALUETYPEDTO_JSON),
 	)
 
 	resp.Schema = schema.Schema{
@@ -191,7 +192,7 @@ func (r *TrustFrameworkAttributeResource) Configure(ctx context.Context, req res
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -235,16 +236,16 @@ func (r *TrustFrameworkAttributeResource) Create(ctx context.Context, req resour
 	}
 
 	// Run the API call
-	var response *authorize.AuthorizeEditorDataDefinitionsAttributeDefinitionDTO
-	resp.Diagnostics.Append(framework.ParseResponse(
+	var response *authorizeeditor.AuthorizeEditorDataDefinitionsAttributeDefinitionDTO
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorAttributesApi.CreateAttribute(ctx, plan.EnvironmentId.ValueString()).AuthorizeEditorDataDefinitionsAttributeDefinitionDTO(*trustFrameworkAttribute).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorAttributesApi.CreateAttribute(ctx, plan.EnvironmentId.ValueString()).AuthorizeEditorDataDefinitionsAttributeDefinitionDTO(*trustFrameworkAttribute).Execute()
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateAttribute",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		retryAuthorizeEditorCreateUpdate,
 		&response,
 	)...)
@@ -279,16 +280,16 @@ func (r *TrustFrameworkAttributeResource) Read(ctx context.Context, req resource
 	}
 
 	// Run the API call
-	var response *authorize.AuthorizeEditorDataDefinitionsAttributeDefinitionDTO
-	resp.Diagnostics.Append(framework.ParseResponse(
+	var response *authorizeeditor.AuthorizeEditorDataDefinitionsAttributeDefinitionDTO
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorAttributesApi.GetAttribute(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorAttributesApi.GetAttribute(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"GetAttribute",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		nil,
 		&response,
 	)...)
@@ -326,16 +327,16 @@ func (r *TrustFrameworkAttributeResource) Update(ctx context.Context, req resour
 	}
 
 	// Run the API call
-	var getResponse *authorize.AuthorizeEditorDataDefinitionsAttributeDefinitionDTO
-	resp.Diagnostics.Append(framework.ParseResponse(
+	var getResponse *authorizeeditor.AuthorizeEditorDataDefinitionsAttributeDefinitionDTO
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorAttributesApi.GetAttribute(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorAttributesApi.GetAttribute(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Execute()
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"GetAttribute-Update",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		retryAuthorizeEditorCreateUpdate,
 		&getResponse,
 	)...)
@@ -353,16 +354,16 @@ func (r *TrustFrameworkAttributeResource) Update(ctx context.Context, req resour
 	}
 
 	// Run the API call
-	var response *authorize.AuthorizeEditorDataDefinitionsAttributeDefinitionDTO
-	resp.Diagnostics.Append(framework.ParseResponse(
+	var response *authorizeeditor.AuthorizeEditorDataDefinitionsAttributeDefinitionDTO
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorAttributesApi.UpdateAttribute(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).AuthorizeEditorDataDefinitionsAttributeDefinitionDTO(*trustFrameworkAttribute).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorAttributesApi.UpdateAttribute(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).AuthorizeEditorDataDefinitionsAttributeDefinitionDTO(*trustFrameworkAttribute).Execute()
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateAttribute",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		nil,
 		&response,
 	)...)
@@ -406,15 +407,15 @@ func (r *TrustFrameworkAttributeResource) Delete(ctx context.Context, req resour
 		},
 		Refresh: func() (interface{}, string, error) {
 			// Run the API call
-			resp.Diagnostics.Append(framework.ParseResponse(
+			resp.Diagnostics.Append(legacysdk.ParseResponse(
 				ctx,
 
 				func() (any, *http.Response, error) {
-					fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorAttributesApi.DeleteAttribute(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
+					fR, fErr := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorAttributesApi.DeleteAttribute(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+					return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 				},
 				"DeleteAttribute",
-				framework.CustomErrorResourceNotFoundWarning,
+				legacysdk.CustomErrorResourceNotFoundWarning,
 				retryAuthorizeEditorDelete,
 				nil,
 			)...)
@@ -422,8 +423,8 @@ func (r *TrustFrameworkAttributeResource) Delete(ctx context.Context, req resour
 				return nil, "ERROR", fmt.Errorf("Error deleting authorize attribute (%s)", data.Id.ValueString())
 			}
 
-			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorAttributesApi.GetAttribute(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			getResp, r, err := framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorAttributesApi.GetAttribute(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			getResp, r, err := legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 
 			if err != nil || r == nil {
 				return getResp, "ERROR", err
@@ -482,7 +483,7 @@ func (r *TrustFrameworkAttributeResource) ImportState(ctx context.Context, req r
 	}
 }
 
-func (p *trustFrameworkAttributeResourceModel) expand(ctx context.Context, updateVersionId *string) (*authorize.AuthorizeEditorDataDefinitionsAttributeDefinitionDTO, diag.Diagnostics) {
+func (p *trustFrameworkAttributeResourceModel) expand(ctx context.Context, updateVersionId *string) (*authorizeeditor.AuthorizeEditorDataDefinitionsAttributeDefinitionDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	valueType, d := expandEditorValueType(ctx, p.ValueType)
@@ -492,7 +493,7 @@ func (p *trustFrameworkAttributeResourceModel) expand(ctx context.Context, updat
 	}
 
 	// Main object
-	data := authorize.NewAuthorizeEditorDataDefinitionsAttributeDefinitionDTO(
+	data := authorizeeditor.NewAuthorizeEditorDataDefinitionsAttributeDefinitionDTO(
 		p.Name.ValueString(),
 		*valueType,
 	)
@@ -542,7 +543,7 @@ func (p *trustFrameworkAttributeResourceModel) expand(ctx context.Context, updat
 			return nil, diags
 		}
 
-		resolvers := make([]authorize.AuthorizeEditorDataResolverDTO, 0, len(plan))
+		resolvers := make([]authorizeeditor.AuthorizeEditorDataResolverDTO, 0, len(plan))
 
 		for _, v := range plan {
 			resolver, d := v.expand(ctx)
@@ -572,7 +573,7 @@ func (p *trustFrameworkAttributeResourceModel) expand(ctx context.Context, updat
 	return data, diags
 }
 
-func (p *trustFrameworkAttributeResourceModel) toState(ctx context.Context, apiObject *authorize.AuthorizeEditorDataDefinitionsAttributeDefinitionDTO) diag.Diagnostics {
+func (p *trustFrameworkAttributeResourceModel) toState(ctx context.Context, apiObject *authorizeeditor.AuthorizeEditorDataDefinitionsAttributeDefinitionDTO) diag.Diagnostics {
 	var diags, d diag.Diagnostics
 
 	if apiObject == nil {

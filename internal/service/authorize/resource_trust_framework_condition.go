@@ -21,9 +21,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
-	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
+	"github.com/patrickcping/pingone-go-sdk-v2/authorizeeditor"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -66,7 +67,7 @@ func (r *TrustFrameworkConditionResource) Schema(ctx context.Context, req resour
 
 	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that describes the resource type.",
-	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataDefinitionsConditionDefinitionDTOTypeEnumValues)
+	).AllowedValuesEnum(authorizeeditor.AllowedEnumAuthorizeEditorDataDefinitionsConditionDefinitionDTOTypeEnumValues)
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -131,7 +132,7 @@ func (r *TrustFrameworkConditionResource) Configure(ctx context.Context, req res
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -175,16 +176,16 @@ func (r *TrustFrameworkConditionResource) Create(ctx context.Context, req resour
 	}
 
 	// Run the API call
-	var response *authorize.AuthorizeEditorDataDefinitionsConditionDefinitionDTO
-	resp.Diagnostics.Append(framework.ParseResponse(
+	var response *authorizeeditor.AuthorizeEditorDataDefinitionsConditionDefinitionDTO
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorConditionsApi.CreateCondition(ctx, plan.EnvironmentId.ValueString()).AuthorizeEditorDataDefinitionsConditionDefinitionDTO(*trustFrameworkCondition).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorConditionsApi.CreateCondition(ctx, plan.EnvironmentId.ValueString()).AuthorizeEditorDataDefinitionsConditionDefinitionDTO(*trustFrameworkCondition).Execute()
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateCondition",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		retryAuthorizeEditorCreateUpdate,
 		&response,
 	)...)
@@ -219,16 +220,16 @@ func (r *TrustFrameworkConditionResource) Read(ctx context.Context, req resource
 	}
 
 	// Run the API call
-	var response *authorize.AuthorizeEditorDataDefinitionsConditionDefinitionDTO
-	resp.Diagnostics.Append(framework.ParseResponse(
+	var response *authorizeeditor.AuthorizeEditorDataDefinitionsConditionDefinitionDTO
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorConditionsApi.GetCondition(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorConditionsApi.GetCondition(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"GetCondition",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		nil,
 		&response,
 	)...)
@@ -266,16 +267,16 @@ func (r *TrustFrameworkConditionResource) Update(ctx context.Context, req resour
 	}
 
 	// Run the API call
-	var getResponse *authorize.AuthorizeEditorDataDefinitionsConditionDefinitionDTO
-	resp.Diagnostics.Append(framework.ParseResponse(
+	var getResponse *authorizeeditor.AuthorizeEditorDataDefinitionsConditionDefinitionDTO
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorConditionsApi.GetCondition(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorConditionsApi.GetCondition(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Execute()
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"GetCondition-Update",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		nil,
 		&getResponse,
 	)...)
@@ -293,16 +294,16 @@ func (r *TrustFrameworkConditionResource) Update(ctx context.Context, req resour
 	}
 
 	// Run the API call
-	var response *authorize.AuthorizeEditorDataDefinitionsConditionDefinitionDTO
-	resp.Diagnostics.Append(framework.ParseResponse(
+	var response *authorizeeditor.AuthorizeEditorDataDefinitionsConditionDefinitionDTO
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorConditionsApi.UpdateCondition(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).AuthorizeEditorDataDefinitionsConditionDefinitionDTO(*trustFrameworkCondition).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorConditionsApi.UpdateCondition(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).AuthorizeEditorDataDefinitionsConditionDefinitionDTO(*trustFrameworkCondition).Execute()
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateCondition",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		retryAuthorizeEditorCreateUpdate,
 		&response,
 	)...)
@@ -346,15 +347,15 @@ func (r *TrustFrameworkConditionResource) Delete(ctx context.Context, req resour
 		},
 		Refresh: func() (interface{}, string, error) {
 			// Run the API call
-			resp.Diagnostics.Append(framework.ParseResponse(
+			resp.Diagnostics.Append(legacysdk.ParseResponse(
 				ctx,
 
 				func() (any, *http.Response, error) {
-					fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorConditionsApi.DeleteCondition(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
+					fR, fErr := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorConditionsApi.DeleteCondition(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+					return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 				},
 				"DeleteCondition",
-				framework.CustomErrorResourceNotFoundWarning,
+				legacysdk.CustomErrorResourceNotFoundWarning,
 				nil,
 				nil,
 			)...)
@@ -362,8 +363,8 @@ func (r *TrustFrameworkConditionResource) Delete(ctx context.Context, req resour
 				return nil, "ERROR", fmt.Errorf("Error deleting authorize condition (%s)", data.Id.ValueString())
 			}
 
-			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorConditionsApi.GetCondition(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			getResp, r, err := framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorConditionsApi.GetCondition(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			getResp, r, err := legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 
 			if err != nil || r == nil {
 				return getResp, "ERROR", err
@@ -422,7 +423,7 @@ func (r *TrustFrameworkConditionResource) ImportState(ctx context.Context, req r
 	}
 }
 
-func (p *trustFrameworkConditionResourceModel) expand(ctx context.Context, updateVersionId *string) (*authorize.AuthorizeEditorDataDefinitionsConditionDefinitionDTO, diag.Diagnostics) {
+func (p *trustFrameworkConditionResourceModel) expand(ctx context.Context, updateVersionId *string) (*authorizeeditor.AuthorizeEditorDataDefinitionsConditionDefinitionDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	condition, d := expandEditorDataCondition(ctx, p.Condition)
@@ -432,7 +433,7 @@ func (p *trustFrameworkConditionResourceModel) expand(ctx context.Context, updat
 	}
 
 	// Main object
-	data := authorize.NewAuthorizeEditorDataDefinitionsConditionDefinitionDTO(
+	data := authorizeeditor.NewAuthorizeEditorDataDefinitionsConditionDefinitionDTO(
 		p.Name.ValueString(),
 		*condition,
 	)
@@ -462,7 +463,7 @@ func (p *trustFrameworkConditionResourceModel) expand(ctx context.Context, updat
 	return data, diags
 }
 
-func (p *trustFrameworkConditionResourceModel) toState(ctx context.Context, apiObject *authorize.AuthorizeEditorDataDefinitionsConditionDefinitionDTO) diag.Diagnostics {
+func (p *trustFrameworkConditionResourceModel) toState(ctx context.Context, apiObject *authorizeeditor.AuthorizeEditorDataDefinitionsConditionDefinitionDTO) diag.Diagnostics {
 	var diags, d diag.Diagnostics
 
 	if apiObject == nil {

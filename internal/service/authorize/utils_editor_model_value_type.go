@@ -15,7 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
+	"github.com/patrickcping/pingone-go-sdk-v2/authorizeeditor"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
@@ -25,10 +25,10 @@ func valueTypeObjectSchemaAttributes(customValidators ...stringvalidatorinternal
 
 	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the type of the value.",
-	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataValueTypeDTOEnumValues)
+	).AllowedValuesEnum(authorizeeditor.AllowedEnumAuthorizeEditorDataValueTypeDTOEnumValues)
 
 	validators := []validator.String{
-		stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataValueTypeDTOEnumValues)...),
+		stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorizeeditor.AllowedEnumAuthorizeEditorDataValueTypeDTOEnumValues)...),
 	}
 
 	if len(customValidators) > 0 {
@@ -56,7 +56,7 @@ func dataSourceValueTypeObjectSchemaAttributes(customValidators ...stringvalidat
 
 	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the type of the value.",
-	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataValueTypeDTOEnumValues)
+	).AllowedValuesEnum(authorizeeditor.AllowedEnumAuthorizeEditorDataValueTypeDTOEnumValues)
 
 	if len(customValidators) > 0 {
 		for _, customValidator := range customValidators {
@@ -84,7 +84,7 @@ var editorValueTypeTFObjectTypes = map[string]attr.Type{
 	"type": types.StringType,
 }
 
-func expandEditorValueType(ctx context.Context, valueType basetypes.ObjectValue) (valueTypeObject *authorize.AuthorizeEditorDataValueTypeDTO, diags diag.Diagnostics) {
+func expandEditorValueType(ctx context.Context, valueType basetypes.ObjectValue) (valueTypeObject *authorizeeditor.AuthorizeEditorDataValueTypeDTO, diags diag.Diagnostics) {
 	var plan *editorValueTypeResourceModel
 	diags.Append(valueType.As(ctx, &plan, basetypes.ObjectAsOptions{
 		UnhandledNullAsEmpty:    false,
@@ -99,11 +99,11 @@ func expandEditorValueType(ctx context.Context, valueType basetypes.ObjectValue)
 	return
 }
 
-func (p *editorValueTypeResourceModel) expand() *authorize.AuthorizeEditorDataValueTypeDTO {
-	return authorize.NewAuthorizeEditorDataValueTypeDTO(authorize.EnumAuthorizeEditorDataValueTypeDTO(p.Type.ValueString()))
+func (p *editorValueTypeResourceModel) expand() *authorizeeditor.AuthorizeEditorDataValueTypeDTO {
+	return authorizeeditor.NewAuthorizeEditorDataValueTypeDTO(authorizeeditor.EnumAuthorizeEditorDataValueTypeDTO(p.Type.ValueString()))
 }
 
-func editorValueTypeOkToTF(apiObject *authorize.AuthorizeEditorDataValueTypeDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+func editorValueTypeOkToTF(apiObject *authorizeeditor.AuthorizeEditorDataValueTypeDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {

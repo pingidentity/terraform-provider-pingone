@@ -21,9 +21,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
-	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
+	"github.com/patrickcping/pingone-go-sdk-v2/authorizeeditor"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -69,11 +70,11 @@ func (r *PolicyManagementStatementResource) Schema(ctx context.Context, req reso
 
 	appliesToDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies what result the statement applies to.",
-	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataStatementsReferenceableStatementDTOAppliesToEnumValues)
+	).AllowedValuesEnum(authorizeeditor.AllowedEnumAuthorizeEditorDataStatementsReferenceableStatementDTOAppliesToEnumValues)
 
 	appliesIfDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies when to attach a final decision.",
-	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataStatementsReferenceableStatementDTOAppliesIfEnumValues)
+	).AllowedValuesEnum(authorizeeditor.AllowedEnumAuthorizeEditorDataStatementsReferenceableStatementDTOAppliesIfEnumValues)
 
 	obligatoryDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether the statement must be fulfilled as a condition of authorizing the decision request.",
@@ -119,7 +120,7 @@ func (r *PolicyManagementStatementResource) Schema(ctx context.Context, req reso
 				Required:            true,
 
 				Validators: []validator.String{
-					stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataStatementsReferenceableStatementDTOAppliesToEnumValues)...),
+					stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorizeeditor.AllowedEnumAuthorizeEditorDataStatementsReferenceableStatementDTOAppliesToEnumValues)...),
 				},
 			},
 
@@ -129,7 +130,7 @@ func (r *PolicyManagementStatementResource) Schema(ctx context.Context, req reso
 				Required:            true,
 
 				Validators: []validator.String{
-					stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataStatementsReferenceableStatementDTOAppliesIfEnumValues)...),
+					stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorizeeditor.AllowedEnumAuthorizeEditorDataStatementsReferenceableStatementDTOAppliesIfEnumValues)...),
 				},
 			},
 
@@ -174,7 +175,7 @@ func (r *PolicyManagementStatementResource) Configure(ctx context.Context, req r
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -218,16 +219,16 @@ func (r *PolicyManagementStatementResource) Create(ctx context.Context, req reso
 	}
 
 	// Run the API call
-	var response *authorize.AuthorizeEditorDataStatementsReferenceableStatementDTO
-	resp.Diagnostics.Append(framework.ParseResponse(
+	var response *authorizeeditor.AuthorizeEditorDataStatementsReferenceableStatementDTO
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorStatementsApi.CreateStatement(ctx, plan.EnvironmentId.ValueString()).AuthorizeEditorDataStatementsStatementDTO(*policyManagementStatement).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorStatementsApi.CreateStatement(ctx, plan.EnvironmentId.ValueString()).AuthorizeEditorDataStatementsStatementDTO(*policyManagementStatement).Execute()
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateStatement",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		retryAuthorizeEditorCreateUpdate,
 		&response,
 	)...)
@@ -262,16 +263,16 @@ func (r *PolicyManagementStatementResource) Read(ctx context.Context, req resour
 	}
 
 	// Run the API call
-	var response *authorize.AuthorizeEditorDataStatementsReferenceableStatementDTO
-	resp.Diagnostics.Append(framework.ParseResponse(
+	var response *authorizeeditor.AuthorizeEditorDataStatementsReferenceableStatementDTO
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorStatementsApi.GetStatement(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorStatementsApi.GetStatement(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"GetStatement",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		nil,
 		&response,
 	)...)
@@ -309,16 +310,16 @@ func (r *PolicyManagementStatementResource) Update(ctx context.Context, req reso
 	}
 
 	// Run the API call
-	var getResponse *authorize.AuthorizeEditorDataStatementsReferenceableStatementDTO
-	resp.Diagnostics.Append(framework.ParseResponse(
+	var getResponse *authorizeeditor.AuthorizeEditorDataStatementsReferenceableStatementDTO
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorStatementsApi.GetStatement(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorStatementsApi.GetStatement(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Execute()
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"GetStatement-Update",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		retryAuthorizeEditorCreateUpdate,
 		&getResponse,
 	)...)
@@ -336,16 +337,16 @@ func (r *PolicyManagementStatementResource) Update(ctx context.Context, req reso
 	}
 
 	// Run the API call
-	var response *authorize.AuthorizeEditorDataStatementsReferenceableStatementDTO
-	resp.Diagnostics.Append(framework.ParseResponse(
+	var response *authorizeeditor.AuthorizeEditorDataStatementsReferenceableStatementDTO
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorStatementsApi.UpdateStatement(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).AuthorizeEditorDataStatementsReferenceableStatementDTO(*policyManagementStatement).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorStatementsApi.UpdateStatement(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).AuthorizeEditorDataStatementsReferenceableStatementDTO(*policyManagementStatement).Execute()
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateStatement",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		nil,
 		&response,
 	)...)
@@ -389,15 +390,15 @@ func (r *PolicyManagementStatementResource) Delete(ctx context.Context, req reso
 		},
 		Refresh: func() (interface{}, string, error) {
 			// Run the API call
-			resp.Diagnostics.Append(framework.ParseResponse(
+			resp.Diagnostics.Append(legacysdk.ParseResponse(
 				ctx,
 
 				func() (any, *http.Response, error) {
-					fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorStatementsApi.DeleteStatement(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
+					fR, fErr := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorStatementsApi.DeleteStatement(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+					return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 				},
 				"DeleteStatement",
-				framework.CustomErrorResourceNotFoundWarning,
+				legacysdk.CustomErrorResourceNotFoundWarning,
 				nil,
 				nil,
 			)...)
@@ -405,8 +406,8 @@ func (r *PolicyManagementStatementResource) Delete(ctx context.Context, req reso
 				return nil, "ERROR", fmt.Errorf("Error deleting authorize statement (%s)", data.Id.ValueString())
 			}
 
-			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorStatementsApi.GetStatement(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			getResp, r, err := framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorStatementsApi.GetStatement(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
+			getResp, r, err := legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 
 			if err != nil || r == nil {
 				return getResp, "ERROR", err
@@ -465,10 +466,10 @@ func (r *PolicyManagementStatementResource) ImportState(ctx context.Context, req
 	}
 }
 
-func (p *policyManagementStatementResourceModel) expandCreate(ctx context.Context) (*authorize.AuthorizeEditorDataStatementsStatementDTO, diag.Diagnostics) {
+func (p *policyManagementStatementResourceModel) expandCreate(ctx context.Context) (*authorizeeditor.AuthorizeEditorDataStatementsStatementDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	attributes := make([]authorize.AuthorizeEditorDataReferenceObjectDTO, 0)
+	attributes := make([]authorizeeditor.AuthorizeEditorDataReferenceObjectDTO, 0)
 	var valueAttributesPlan []editorReferenceDataResourceModel
 	diags.Append(p.Attributes.ElementsAs(ctx, &valueAttributesPlan, false)...)
 	if diags.HasError() {
@@ -480,11 +481,11 @@ func (p *policyManagementStatementResourceModel) expandCreate(ctx context.Contex
 	}
 
 	// Main object
-	data := authorize.NewAuthorizeEditorDataStatementsStatementDTO(
+	data := authorizeeditor.NewAuthorizeEditorDataStatementsStatementDTO(
 		p.Name.ValueString(),
 		p.Code.ValueString(),
-		authorize.EnumAuthorizeEditorDataStatementsStatementDTOAppliesTo(p.AppliesTo.ValueString()),
-		authorize.EnumAuthorizeEditorDataStatementsStatementDTOAppliesIf(p.AppliesIf.ValueString()),
+		authorizeeditor.EnumAuthorizeEditorDataStatementsStatementDTOAppliesTo(p.AppliesTo.ValueString()),
+		authorizeeditor.EnumAuthorizeEditorDataStatementsStatementDTOAppliesIf(p.AppliesIf.ValueString()),
 		p.Payload.ValueString(),
 		attributes,
 	)
@@ -500,7 +501,7 @@ func (p *policyManagementStatementResourceModel) expandCreate(ctx context.Contex
 	return data, diags
 }
 
-func (p *policyManagementStatementResourceModel) expandUpdate(ctx context.Context, versionId string) (*authorize.AuthorizeEditorDataStatementsReferenceableStatementDTO, diag.Diagnostics) {
+func (p *policyManagementStatementResourceModel) expandUpdate(ctx context.Context, versionId string) (*authorizeeditor.AuthorizeEditorDataStatementsReferenceableStatementDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	dataCreate, d := p.expandCreate(ctx)
@@ -516,7 +517,7 @@ func (p *policyManagementStatementResourceModel) expandUpdate(ctx context.Contex
 		return nil, diags
 	}
 
-	var data *authorize.AuthorizeEditorDataStatementsReferenceableStatementDTO
+	var data *authorizeeditor.AuthorizeEditorDataStatementsReferenceableStatementDTO
 	err = json.Unmarshal(bytes, &data)
 	if err != nil {
 		diags.AddError("Failed to unmarshal data", err.Error())
@@ -534,7 +535,7 @@ func (p *policyManagementStatementResourceModel) expandUpdate(ctx context.Contex
 	return data, diags
 }
 
-func (p *policyManagementStatementResourceModel) toState(apiObject *authorize.AuthorizeEditorDataStatementsReferenceableStatementDTO) diag.Diagnostics {
+func (p *policyManagementStatementResourceModel) toState(apiObject *authorizeeditor.AuthorizeEditorDataStatementsReferenceableStatementDTO) diag.Diagnostics {
 	var diags, d diag.Diagnostics
 
 	if apiObject == nil {

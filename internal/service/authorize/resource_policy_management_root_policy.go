@@ -20,9 +20,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
+	"github.com/patrickcping/pingone-go-sdk-v2/authorizeeditor"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -78,7 +79,7 @@ func (r *PolicyManagementRootPolicyResource) Schema(ctx context.Context, req res
 
 	// repetitionSettingsDecisionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 	// 	"A string that specifies the decision filter.",
-	// ).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataPoliciesRepetitionSettingsDTODecisionEnumValues)
+	// ).AllowedValuesEnum(authorizeeditor.AllowedEnumAuthorizeEditorDataPoliciesRepetitionSettingsDTODecisionEnumValues)
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -180,7 +181,7 @@ func (r *PolicyManagementRootPolicyResource) Configure(ctx context.Context, req 
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -234,16 +235,16 @@ func (r *PolicyManagementRootPolicyResource) Create(ctx context.Context, req res
 	policyManagementRootPolicy.SetId(getResponse.GetId())
 
 	// Run the API call
-	var response *authorize.AuthorizeEditorDataPoliciesReferenceablePolicyDTO
-	resp.Diagnostics.Append(framework.ParseResponse(
+	var response *authorizeeditor.AuthorizeEditorDataPoliciesReferenceablePolicyDTO
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorPoliciesApi.UpdatePolicy(ctx, plan.EnvironmentId.ValueString(), getResponse.GetId()).AuthorizeEditorDataPoliciesReferenceablePolicyDTO(*policyManagementRootPolicy).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorPoliciesApi.UpdatePolicy(ctx, plan.EnvironmentId.ValueString(), getResponse.GetId()).AuthorizeEditorDataPoliciesReferenceablePolicyDTO(*policyManagementRootPolicy).Execute()
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdatePolicy-Create",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		nil,
 		&response,
 	)...)
@@ -330,16 +331,16 @@ func (r *PolicyManagementRootPolicyResource) Update(ctx context.Context, req res
 	policyManagementRootPolicy.SetId(getResponse.GetId())
 
 	// Run the API call
-	var response *authorize.AuthorizeEditorDataPoliciesReferenceablePolicyDTO
-	resp.Diagnostics.Append(framework.ParseResponse(
+	var response *authorizeeditor.AuthorizeEditorDataPoliciesReferenceablePolicyDTO
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorPoliciesApi.UpdatePolicy(ctx, plan.EnvironmentId.ValueString(), getResponse.GetId()).AuthorizeEditorDataPoliciesReferenceablePolicyDTO(*policyManagementRootPolicy).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorPoliciesApi.UpdatePolicy(ctx, plan.EnvironmentId.ValueString(), getResponse.GetId()).AuthorizeEditorDataPoliciesReferenceablePolicyDTO(*policyManagementRootPolicy).Execute()
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdatePolicy-Update",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		nil,
 		&response,
 	)...)
@@ -380,11 +381,11 @@ func (r *PolicyManagementRootPolicyResource) Delete(ctx context.Context, req res
 		return
 	}
 
-	policyManagementRootPolicy := authorize.NewAuthorizeEditorDataPoliciesReferenceablePolicyDTO(
+	policyManagementRootPolicy := authorizeeditor.NewAuthorizeEditorDataPoliciesReferenceablePolicyDTO(
 		getResponse.GetId(),
 		"Policies",
-		*authorize.NewAuthorizeEditorDataPoliciesCombiningAlgorithmDTO(
-			authorize.ENUMAUTHORIZEEDITORDATAPOLICIESCOMBININGALGORITHMDTOALGORITHM_PERMIT_OVERRIDES,
+		*authorizeeditor.NewAuthorizeEditorDataPoliciesCombiningAlgorithmDTO(
+			authorizeeditor.ENUMAUTHORIZEEDITORDATAPOLICIESCOMBININGALGORITHMDTOALGORITHM_PERMIT_OVERRIDES,
 		),
 		getResponse.GetVersion(),
 	)
@@ -392,16 +393,16 @@ func (r *PolicyManagementRootPolicyResource) Delete(ctx context.Context, req res
 	policyManagementRootPolicy.SetEnabled(true)
 
 	// Run the API call
-	var response *authorize.AuthorizeEditorDataPoliciesReferenceablePolicyDTO
-	resp.Diagnostics.Append(framework.ParseResponse(
+	var response *authorizeeditor.AuthorizeEditorDataPoliciesReferenceablePolicyDTO
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.AuthorizeAPIClient.AuthorizeEditorPoliciesApi.UpdatePolicy(ctx, data.EnvironmentId.ValueString(), getResponse.GetId()).AuthorizeEditorDataPoliciesReferenceablePolicyDTO(*policyManagementRootPolicy).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			fO, fR, fErr := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorPoliciesApi.UpdatePolicy(ctx, data.EnvironmentId.ValueString(), getResponse.GetId()).AuthorizeEditorDataPoliciesReferenceablePolicyDTO(*policyManagementRootPolicy).Execute()
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdatePolicy-Delete",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		nil,
 		&response,
 	)...)
@@ -437,7 +438,7 @@ func (r *PolicyManagementRootPolicyResource) ImportState(ctx context.Context, re
 	}
 }
 
-func (p *policyManagementRootPolicyResourceModel) expandCreate(ctx context.Context) (*authorize.AuthorizeEditorDataPoliciesPolicyDTO, diag.Diagnostics) {
+func (p *policyManagementRootPolicyResourceModel) expandCreate(ctx context.Context) (*authorizeeditor.AuthorizeEditorDataPoliciesPolicyDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var plan *policyManagementPolicyCombiningAlgorithmResourceModel
@@ -451,7 +452,7 @@ func (p *policyManagementRootPolicyResourceModel) expandCreate(ctx context.Conte
 
 	combiningAlgorithm := plan.expand()
 
-	data := authorize.NewAuthorizeEditorDataPoliciesPolicyDTO(
+	data := authorizeeditor.NewAuthorizeEditorDataPoliciesPolicyDTO(
 		p.Name.ValueString(),
 		*combiningAlgorithm,
 	)
@@ -517,7 +518,7 @@ func (p *policyManagementRootPolicyResourceModel) expandCreate(ctx context.Conte
 	return data, diags
 }
 
-func (p *policyManagementRootPolicyResourceModel) expandUpdate(ctx context.Context, versionId string) (*authorize.AuthorizeEditorDataPoliciesReferenceablePolicyDTO, diag.Diagnostics) {
+func (p *policyManagementRootPolicyResourceModel) expandUpdate(ctx context.Context, versionId string) (*authorizeeditor.AuthorizeEditorDataPoliciesReferenceablePolicyDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	dataCreate, d := p.expandCreate(ctx)
@@ -532,7 +533,7 @@ func (p *policyManagementRootPolicyResourceModel) expandUpdate(ctx context.Conte
 		return nil, diags
 	}
 
-	var data *authorize.AuthorizeEditorDataPoliciesReferenceablePolicyDTO
+	var data *authorizeeditor.AuthorizeEditorDataPoliciesReferenceablePolicyDTO
 	err = json.Unmarshal(bytes, &data)
 	if err != nil {
 		diags.AddError("Failed to unmarshal data", err.Error())
@@ -557,7 +558,7 @@ func (p *policyManagementRootPolicyResourceModel) expandUpdate(ctx context.Conte
 // 	return nil
 // }
 
-func (p *policyManagementRootPolicyResourceModel) toState(ctx context.Context, apiObject *authorize.AuthorizeEditorDataPoliciesReferenceablePolicyDTO) diag.Diagnostics {
+func (p *policyManagementRootPolicyResourceModel) toState(ctx context.Context, apiObject *authorizeeditor.AuthorizeEditorDataPoliciesReferenceablePolicyDTO) diag.Diagnostics {
 	var diags, d diag.Diagnostics
 
 	if apiObject == nil {
@@ -595,21 +596,21 @@ func (p *policyManagementRootPolicyResourceModel) toState(ctx context.Context, a
 	return diags
 }
 
-func (r *PolicyManagementRootPolicyResource) getRootPolicy(ctx context.Context, environmentId string) (*authorize.AuthorizeEditorDataPoliciesReferenceablePolicyDTO, diag.Diagnostics) {
+func (r *PolicyManagementRootPolicyResource) getRootPolicy(ctx context.Context, environmentId string) (*authorizeeditor.AuthorizeEditorDataPoliciesReferenceablePolicyDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	var response *authorize.AuthorizeEditorDataPoliciesReferenceablePolicyDTO
-	diags.Append(framework.ParseResponse(
+	var response *authorizeeditor.AuthorizeEditorDataPoliciesReferenceablePolicyDTO
+	diags.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
-			pagedIterator := r.Client.AuthorizeAPIClient.AuthorizeEditorPoliciesApi.ListRootPolicies(ctx, environmentId).Execute()
+			pagedIterator := r.Client.BetaAPIClients.AuthorizeEditorAPIClient.AuthorizeEditorPoliciesApi.ListRootPolicies(ctx, environmentId).Execute()
 
 			var initialHttpResponse *http.Response
 
 			for pageCursor, err := range pagedIterator {
 				if err != nil {
-					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, environmentId, nil, pageCursor.HTTPResponse, err)
+					return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, environmentId, nil, pageCursor.HTTPResponse, err)
 				}
 
 				if initialHttpResponse == nil {
@@ -618,7 +619,7 @@ func (r *PolicyManagementRootPolicyResource) getRootPolicy(ctx context.Context, 
 
 				if policies, ok := pageCursor.EntityArray.Embedded.GetAuthorizationPoliciesOk(); ok {
 
-					var policyObj authorize.AuthorizeEditorDataPoliciesReferenceablePolicyDTO
+					var policyObj authorizeeditor.AuthorizeEditorDataPoliciesReferenceablePolicyDTO
 					for _, policyObj = range policies {
 						if v, ok := policyObj.GetManagedEntityOk(); ok {
 							if v1, ok := v.GetOwnerOk(); ok {
@@ -634,7 +635,7 @@ func (r *PolicyManagementRootPolicyResource) getRootPolicy(ctx context.Context, 
 			return nil, initialHttpResponse, nil
 		},
 		"ListRootPolicies",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)

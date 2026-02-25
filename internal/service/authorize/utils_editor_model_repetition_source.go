@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
+	"github.com/patrickcping/pingone-go-sdk-v2/authorizeeditor"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 )
@@ -50,7 +50,7 @@ func dataSourceRepetitionSourceObjectSchema(descriptionName string) schema.Singl
 
 type editorRepetitionSourceResourceModel editorReferenceDataResourceModel
 
-func expandEditorRepetitionSource(ctx context.Context, repetitionSource basetypes.ObjectValue) (repetitionSourceObject *authorize.AuthorizeEditorDataReferenceObjectDTO, diags diag.Diagnostics) {
+func expandEditorRepetitionSource(ctx context.Context, repetitionSource basetypes.ObjectValue) (repetitionSourceObject *authorizeeditor.AuthorizeEditorDataReferenceObjectDTO, diags diag.Diagnostics) {
 	var plan *editorRepetitionSourceResourceModel
 	diags.Append(repetitionSource.As(ctx, &plan, basetypes.ObjectAsOptions{
 		UnhandledNullAsEmpty:    false,
@@ -65,11 +65,11 @@ func expandEditorRepetitionSource(ctx context.Context, repetitionSource basetype
 	return
 }
 
-func (p *editorRepetitionSourceResourceModel) expand() *authorize.AuthorizeEditorDataReferenceObjectDTO {
+func (p *editorRepetitionSourceResourceModel) expand() *authorizeeditor.AuthorizeEditorDataReferenceObjectDTO {
 	referenceDataResourceModel := editorReferenceDataResourceModel(*p)
 	return referenceDataResourceModel.expand()
 }
 
-func editorRepetitionSourceOkToTF(apiObject *authorize.AuthorizeEditorDataReferenceObjectDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+func editorRepetitionSourceOkToTF(apiObject *authorizeeditor.AuthorizeEditorDataReferenceObjectDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	return editorDataReferenceObjectOkToTF(apiObject, ok)
 }

@@ -12,7 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
+	"github.com/patrickcping/pingone-go-sdk-v2/authorizeeditor"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 )
@@ -44,7 +44,7 @@ var (
 	}
 )
 
-func expandEditorReferenceData(ctx context.Context, referenceData basetypes.ObjectValue) (referenceDataObject *authorize.AuthorizeEditorDataReferenceObjectDTO, diags diag.Diagnostics) {
+func expandEditorReferenceData(ctx context.Context, referenceData basetypes.ObjectValue) (referenceDataObject *authorizeeditor.AuthorizeEditorDataReferenceObjectDTO, diags diag.Diagnostics) {
 	var plan *editorReferenceDataResourceModel
 	diags.Append(referenceData.As(ctx, &plan, basetypes.ObjectAsOptions{
 		UnhandledNullAsEmpty:    false,
@@ -59,12 +59,12 @@ func expandEditorReferenceData(ctx context.Context, referenceData basetypes.Obje
 	return
 }
 
-func (p *editorReferenceDataResourceModel) expand() *authorize.AuthorizeEditorDataReferenceObjectDTO {
-	data := authorize.NewAuthorizeEditorDataReferenceObjectDTO(p.Id.ValueString())
+func (p *editorReferenceDataResourceModel) expand() *authorizeeditor.AuthorizeEditorDataReferenceObjectDTO {
+	data := authorizeeditor.NewAuthorizeEditorDataReferenceObjectDTO(p.Id.ValueString())
 	return data
 }
 
-func editorDataReferenceObjectOkToSetTF(apiObject []authorize.AuthorizeEditorDataReferenceObjectDTO, ok bool) (basetypes.SetValue, diag.Diagnostics) {
+func editorDataReferenceObjectOkToSetTF(apiObject []authorizeeditor.AuthorizeEditorDataReferenceObjectDTO, ok bool) (basetypes.SetValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	tfObjType := types.ObjectType{AttrTypes: editorReferenceObjectTFObjectTypes}
@@ -88,7 +88,7 @@ func editorDataReferenceObjectOkToSetTF(apiObject []authorize.AuthorizeEditorDat
 	return returnVar, diags
 }
 
-func editorDataReferenceObjectOkToTF(apiObject *authorize.AuthorizeEditorDataReferenceObjectDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+func editorDataReferenceObjectOkToTF(apiObject *authorizeeditor.AuthorizeEditorDataReferenceObjectDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {

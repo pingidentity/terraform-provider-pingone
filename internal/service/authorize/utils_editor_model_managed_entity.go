@@ -13,7 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
+	"github.com/patrickcping/pingone-go-sdk-v2/authorizeeditor"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 )
 
@@ -211,7 +211,7 @@ var (
 	}
 )
 
-func expandEditorManagedEntity(ctx context.Context, managedEntity basetypes.ObjectValue) (managedEntityObject *authorize.AuthorizeEditorDataManagedEntityDTO, diags diag.Diagnostics) {
+func expandEditorManagedEntity(ctx context.Context, managedEntity basetypes.ObjectValue) (managedEntityObject *authorizeeditor.AuthorizeEditorDataManagedEntityDTO, diags diag.Diagnostics) {
 	var plan *editorManagedEntityResourceModel
 	diags.Append(managedEntity.As(ctx, &plan, basetypes.ObjectAsOptions{
 		UnhandledNullAsEmpty:    false,
@@ -230,7 +230,7 @@ func expandEditorManagedEntity(ctx context.Context, managedEntity basetypes.Obje
 	return
 }
 
-func (p *editorManagedEntityResourceModel) expand(ctx context.Context) (*authorize.AuthorizeEditorDataManagedEntityDTO, diag.Diagnostics) {
+func (p *editorManagedEntityResourceModel) expand(ctx context.Context) (*authorizeeditor.AuthorizeEditorDataManagedEntityDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var ownerPlan *editorManagedEntityOwnerResourceModel
@@ -248,7 +248,7 @@ func (p *editorManagedEntityResourceModel) expand(ctx context.Context) (*authori
 		return nil, diags
 	}
 
-	data := authorize.NewAuthorizeEditorDataManagedEntityDTO(*owner)
+	data := authorizeeditor.NewAuthorizeEditorDataManagedEntityDTO(*owner)
 
 	if !p.Reference.IsNull() && !p.Reference.IsUnknown() {
 		var plan *editorManagedEntityReferenceResourceModel
@@ -283,7 +283,7 @@ func (p *editorManagedEntityResourceModel) expand(ctx context.Context) (*authori
 	return data, diags
 }
 
-func (p *editorManagedEntityOwnerResourceModel) expand(ctx context.Context) (*authorize.AuthorizeEditorDataManagedEntityOwnerDTO, diag.Diagnostics) {
+func (p *editorManagedEntityOwnerResourceModel) expand(ctx context.Context) (*authorizeeditor.AuthorizeEditorDataManagedEntityOwnerDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	var servicePlan *editorManagedEntityOwnerServiceResourceModel
@@ -297,23 +297,23 @@ func (p *editorManagedEntityOwnerResourceModel) expand(ctx context.Context) (*au
 
 	service := servicePlan.expand()
 
-	data := authorize.NewAuthorizeEditorDataManagedEntityOwnerDTO(*service)
+	data := authorizeeditor.NewAuthorizeEditorDataManagedEntityOwnerDTO(*service)
 
 	return data, diags
 }
 
-func (p *editorManagedEntityOwnerServiceResourceModel) expand() *authorize.AuthorizeEditorDataServiceObjectDTO {
+func (p *editorManagedEntityOwnerServiceResourceModel) expand() *authorizeeditor.AuthorizeEditorDataServiceObjectDTO {
 
-	data := authorize.NewAuthorizeEditorDataServiceObjectDTO(
+	data := authorizeeditor.NewAuthorizeEditorDataServiceObjectDTO(
 		p.Name.ValueString(),
 	)
 
 	return data
 }
 
-func (p *editorManagedEntityReferenceResourceModel) expand() *authorize.AuthorizeEditorDataManagedEntityManagedEntityReferenceDTO {
+func (p *editorManagedEntityReferenceResourceModel) expand() *authorizeeditor.AuthorizeEditorDataManagedEntityManagedEntityReferenceDTO {
 
-	data := authorize.NewAuthorizeEditorDataManagedEntityManagedEntityReferenceDTO()
+	data := authorizeeditor.NewAuthorizeEditorDataManagedEntityManagedEntityReferenceDTO()
 
 	if !p.Id.IsNull() && !p.Id.IsUnknown() {
 		data.SetId(p.Id.ValueString())
@@ -334,9 +334,9 @@ func (p *editorManagedEntityReferenceResourceModel) expand() *authorize.Authoriz
 	return data
 }
 
-func (p *editorManagedEntityRestrictionsResourceModel) expand() *authorize.AuthorizeEditorDataManagedEntityRestrictionsDTO {
+func (p *editorManagedEntityRestrictionsResourceModel) expand() *authorizeeditor.AuthorizeEditorDataManagedEntityRestrictionsDTO {
 
-	data := authorize.NewAuthorizeEditorDataManagedEntityRestrictionsDTO()
+	data := authorizeeditor.NewAuthorizeEditorDataManagedEntityRestrictionsDTO()
 
 	if !p.ReadOnly.IsNull() && !p.ReadOnly.IsUnknown() {
 		data.SetReadOnly(p.ReadOnly.ValueBool())
@@ -349,7 +349,7 @@ func (p *editorManagedEntityRestrictionsResourceModel) expand() *authorize.Autho
 	return data
 }
 
-func editorManagedEntityOkToTF(apiObject *authorize.AuthorizeEditorDataManagedEntityDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+func editorManagedEntityOkToTF(apiObject *authorizeeditor.AuthorizeEditorDataManagedEntityDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags, d diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -375,7 +375,7 @@ func editorManagedEntityOkToTF(apiObject *authorize.AuthorizeEditorDataManagedEn
 	return objValue, diags
 }
 
-func editorManagedEntityOwnerOkToTF(apiObject *authorize.AuthorizeEditorDataManagedEntityOwnerDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+func editorManagedEntityOwnerOkToTF(apiObject *authorizeeditor.AuthorizeEditorDataManagedEntityOwnerDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -393,7 +393,7 @@ func editorManagedEntityOwnerOkToTF(apiObject *authorize.AuthorizeEditorDataMana
 	return objValue, diags
 }
 
-func editorManagedEntityOwnerServiceOkToTF(apiObject *authorize.AuthorizeEditorDataServiceObjectDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+func editorManagedEntityOwnerServiceOkToTF(apiObject *authorizeeditor.AuthorizeEditorDataServiceObjectDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -408,7 +408,7 @@ func editorManagedEntityOwnerServiceOkToTF(apiObject *authorize.AuthorizeEditorD
 	return objValue, diags
 }
 
-func editorManagedEntityReferenceOkToTF(apiObject *authorize.AuthorizeEditorDataManagedEntityManagedEntityReferenceDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+func editorManagedEntityReferenceOkToTF(apiObject *authorizeeditor.AuthorizeEditorDataManagedEntityManagedEntityReferenceDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -426,7 +426,7 @@ func editorManagedEntityReferenceOkToTF(apiObject *authorize.AuthorizeEditorData
 	return objValue, diags
 }
 
-func editorManagedEntityRestrictionsOkToTF(apiObject *authorize.AuthorizeEditorDataManagedEntityRestrictionsDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+func editorManagedEntityRestrictionsOkToTF(apiObject *authorizeeditor.AuthorizeEditorDataManagedEntityRestrictionsDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {

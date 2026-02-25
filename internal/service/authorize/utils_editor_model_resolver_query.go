@@ -18,7 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
+	"github.com/patrickcping/pingone-go-sdk-v2/authorizeeditor"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
@@ -28,11 +28,11 @@ func dataResolverQueryObjectSchemaAttributes() (attributes map[string]schema.Att
 
 	queryTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"",
-	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataAttributeResolversUserQueryDTOTypeEnumValues)
+	).AllowedValuesEnum(authorizeeditor.AllowedEnumAuthorizeEditorDataAttributeResolversUserQueryDTOTypeEnumValues)
 
 	queryUserIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATAATTRIBUTERESOLVERSUSERQUERYDTOTYPE_USER_ID)))
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATAATTRIBUTERESOLVERSUSERQUERYDTOTYPE_USER_ID)))
 
 	attributes = map[string]schema.Attribute{
 		"type": schema.StringAttribute{
@@ -41,7 +41,7 @@ func dataResolverQueryObjectSchemaAttributes() (attributes map[string]schema.Att
 			Required:            true,
 
 			Validators: []validator.String{
-				stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataAttributeResolversUserQueryDTOTypeEnumValues)...),
+				stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorizeeditor.AllowedEnumAuthorizeEditorDataAttributeResolversUserQueryDTOTypeEnumValues)...),
 			},
 		},
 
@@ -52,7 +52,7 @@ func dataResolverQueryObjectSchemaAttributes() (attributes map[string]schema.Att
 
 			Validators: []validator.String{
 				stringvalidatorinternal.IsRequiredIfMatchesPathValue(
-					types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATAATTRIBUTERESOLVERSUSERQUERYDTOTYPE_USER_ID)),
+					types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATAATTRIBUTERESOLVERSUSERQUERYDTOTYPE_USER_ID)),
 					path.MatchRelative().AtParent().AtName("type"),
 				),
 			},
@@ -74,7 +74,7 @@ var (
 	}
 )
 
-func expandEditorResolverQuery(ctx context.Context, query basetypes.ObjectValue) (queryObject *authorize.AuthorizeEditorDataAttributeResolversUserQueryDTO, diags diag.Diagnostics) {
+func expandEditorResolverQuery(ctx context.Context, query basetypes.ObjectValue) (queryObject *authorizeeditor.AuthorizeEditorDataAttributeResolversUserQueryDTO, diags diag.Diagnostics) {
 	var plan *editorDataResolverQueryResourceModel
 	diags.Append(query.As(ctx, &plan, basetypes.ObjectAsOptions{
 		UnhandledNullAsEmpty:    false,
@@ -93,13 +93,13 @@ func expandEditorResolverQuery(ctx context.Context, query basetypes.ObjectValue)
 	return
 }
 
-func (p *editorDataResolverQueryResourceModel) expand() (*authorize.AuthorizeEditorDataAttributeResolversUserQueryDTO, diag.Diagnostics) {
+func (p *editorDataResolverQueryResourceModel) expand() (*authorizeeditor.AuthorizeEditorDataAttributeResolversUserQueryDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	data := authorize.AuthorizeEditorDataAttributeResolversUserQueryDTO{}
+	data := authorizeeditor.AuthorizeEditorDataAttributeResolversUserQueryDTO{}
 
-	switch authorize.EnumAuthorizeEditorDataAttributeResolversUserQueryDTOType(p.Type.ValueString()) {
-	case authorize.ENUMAUTHORIZEEDITORDATAATTRIBUTERESOLVERSUSERQUERYDTOTYPE_USER_ID:
+	switch authorizeeditor.EnumAuthorizeEditorDataAttributeResolversUserQueryDTOType(p.Type.ValueString()) {
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATAATTRIBUTERESOLVERSUSERQUERYDTOTYPE_USER_ID:
 		data.AuthorizeEditorDataAttributeResolversUserQueryUserIdQueryDTO = p.expandUserResolverQueryUserID()
 	default:
 		diags.AddError(
@@ -115,27 +115,27 @@ func (p *editorDataResolverQueryResourceModel) expand() (*authorize.AuthorizeEdi
 	return &data, diags
 }
 
-func (p *editorDataResolverQueryResourceModel) expandUserResolverQueryUserID() *authorize.AuthorizeEditorDataAttributeResolversUserQueryUserIdQueryDTO {
+func (p *editorDataResolverQueryResourceModel) expandUserResolverQueryUserID() *authorizeeditor.AuthorizeEditorDataAttributeResolversUserQueryUserIdQueryDTO {
 
-	data := authorize.NewAuthorizeEditorDataAttributeResolversUserQueryUserIdQueryDTO(
-		authorize.EnumAuthorizeEditorDataAttributeResolversUserQueryDTOType(p.Type.ValueString()),
+	data := authorizeeditor.NewAuthorizeEditorDataAttributeResolversUserQueryUserIdQueryDTO(
+		authorizeeditor.EnumAuthorizeEditorDataAttributeResolversUserQueryDTOType(p.Type.ValueString()),
 		p.UserId.ValueString(),
 	)
 
 	return data
 }
 
-func editorDataResolverQueryOkToTF(ctx context.Context, apiObject *authorize.AuthorizeEditorDataAttributeResolversUserQueryDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+func editorDataResolverQueryOkToTF(ctx context.Context, apiObject *authorizeeditor.AuthorizeEditorDataAttributeResolversUserQueryDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if !ok || apiObject == nil || cmp.Equal(apiObject, &authorize.AuthorizeEditorDataAttributeResolversUserQueryDTO{}) {
+	if !ok || apiObject == nil || cmp.Equal(apiObject, &authorizeeditor.AuthorizeEditorDataAttributeResolversUserQueryDTO{}) {
 		return types.ObjectNull(editorDataResolverQueryTFObjectTypes), diags
 	}
 
 	var attributeMap = map[string]attr.Value{}
 
 	switch t := apiObject.GetActualInstance().(type) {
-	case *authorize.AuthorizeEditorDataAttributeResolversUserQueryUserIdQueryDTO:
+	case *authorizeeditor.AuthorizeEditorDataAttributeResolversUserQueryUserIdQueryDTO:
 
 		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
 		attributeMap["user_id"] = framework.StringOkToTF(t.GetUserIdOk())

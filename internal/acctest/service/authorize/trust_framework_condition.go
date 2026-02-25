@@ -1,3 +1,7 @@
+// Copyright © 2026 Ping Identity Corporation
+
+//go:build beta
+
 package authorize
 
 import (
@@ -7,20 +11,21 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
-	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
+	"github.com/patrickcping/pingone-go-sdk-v2/authorizeeditor"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 )
 
 func TrustFrameworkCondition_CheckDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
-	p1Client, err := acctest.TestClient(ctx)
+	p1Client, err := legacysdk.TestClient(ctx)
 
 	if err != nil {
 		return err
 	}
 
-	apiClient := p1Client.API.AuthorizeAPIClient
+	apiClient := p1Client.API.BetaAPIClients.AuthorizeEditorAPIClient
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "pingone_authorize_trust_framework_condition" {
@@ -73,7 +78,7 @@ func TrustFrameworkCondition_GetIDs(resourceName string, environmentID, resource
 	}
 }
 
-func TrustFrameworkCondition_RemovalDrift_PreConfig(ctx context.Context, apiClient *authorize.APIClient, t *testing.T, environmentID, trustFrameworkConditionID string) {
+func TrustFrameworkCondition_RemovalDrift_PreConfig(ctx context.Context, apiClient *authorizeeditor.APIClient, t *testing.T, environmentID, trustFrameworkConditionID string) {
 	if environmentID == "" || trustFrameworkConditionID == "" {
 		t.Fatalf("One of environment ID or authorize editor condition ID cannot be determined. Environment ID: %s, Authorize Editor Condition ID: %s", environmentID, trustFrameworkConditionID)
 	}

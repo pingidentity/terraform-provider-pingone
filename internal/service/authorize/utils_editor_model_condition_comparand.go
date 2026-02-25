@@ -18,7 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
+	"github.com/patrickcping/pingone-go-sdk-v2/authorizeeditor"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
@@ -27,7 +27,7 @@ import (
 
 func dataConditionComparandObjectLeftSchemaAttributes() (attributes map[string]schema.Attribute) {
 
-	allowedValues := []authorize.EnumAuthorizeEditorDataConditionsComparandDTOType{
+	allowedValues := []authorizeeditor.EnumAuthorizeEditorDataConditionsComparandDTOType{
 		"ATTRIBUTE",
 	}
 
@@ -37,7 +37,7 @@ func dataConditionComparandObjectLeftSchemaAttributes() (attributes map[string]s
 
 	idDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the ID of the authorization attribute in the trust framework to use as the condition comparand.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATACONDITIONSCOMPARANDDTOTYPE_ATTRIBUTE))).AppendMarkdownString("Must be a valid PingOne resource ID.")
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONSCOMPARANDDTOTYPE_ATTRIBUTE))).AppendMarkdownString("Must be a valid PingOne resource ID.")
 
 	attributes = map[string]schema.Attribute{
 		"type": schema.StringAttribute{
@@ -60,7 +60,7 @@ func dataConditionComparandObjectLeftSchemaAttributes() (attributes map[string]s
 
 			Validators: []validator.String{
 				stringvalidatorinternal.IsRequiredIfMatchesPathValue(
-					types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATACONDITIONSCOMPARANDDTOTYPE_ATTRIBUTE)),
+					types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONSCOMPARANDDTOTYPE_ATTRIBUTE)),
 					path.MatchRelative().AtParent().AtName("type"),
 				),
 			},
@@ -74,15 +74,15 @@ func dataConditionComparandObjectRightSchemaAttributes() (attributes map[string]
 
 	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the authorization condition comparand type.",
-	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataConditionsComparandDTOTypeEnumValues)
+	).AllowedValuesEnum(authorizeeditor.AllowedEnumAuthorizeEditorDataConditionsComparandDTOTypeEnumValues)
 
 	idDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the ID of the authorization attribute in the trust framework to use as the condition comparand.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATACONDITIONSCOMPARANDDTOTYPE_ATTRIBUTE))).AppendMarkdownString("Must be a valid PingOne resource ID.")
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONSCOMPARANDDTOTYPE_ATTRIBUTE))).AppendMarkdownString("Must be a valid PingOne resource ID.")
 
 	valueDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies a constant text value to use as the condition comparand.",
-	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorize.ENUMAUTHORIZEEDITORDATACONDITIONSCOMPARANDDTOTYPE_CONSTANT)))
+	).AppendMarkdownString(fmt.Sprintf("This field is required when `type` is `%s`.", string(authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONSCOMPARANDDTOTYPE_CONSTANT)))
 
 	attributes = map[string]schema.Attribute{
 		"type": schema.StringAttribute{
@@ -91,7 +91,7 @@ func dataConditionComparandObjectRightSchemaAttributes() (attributes map[string]
 			Required:            true,
 
 			Validators: []validator.String{
-				stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataConditionsComparandDTOTypeEnumValues)...),
+				stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorizeeditor.AllowedEnumAuthorizeEditorDataConditionsComparandDTOTypeEnumValues)...),
 			},
 		},
 
@@ -105,7 +105,7 @@ func dataConditionComparandObjectRightSchemaAttributes() (attributes map[string]
 
 			Validators: []validator.String{
 				stringvalidatorinternal.IsRequiredIfMatchesPathValue(
-					types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATACONDITIONSCOMPARANDDTOTYPE_ATTRIBUTE)),
+					types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONSCOMPARANDDTOTYPE_ATTRIBUTE)),
 					path.MatchRelative().AtParent().AtName("type"),
 				),
 			},
@@ -119,7 +119,7 @@ func dataConditionComparandObjectRightSchemaAttributes() (attributes map[string]
 
 			Validators: []validator.String{
 				stringvalidatorinternal.IsRequiredIfMatchesPathValue(
-					types.StringValue(string(authorize.ENUMAUTHORIZEEDITORDATACONDITIONSCOMPARANDDTOTYPE_CONSTANT)),
+					types.StringValue(string(authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONSCOMPARANDDTOTYPE_CONSTANT)),
 					path.MatchRelative().AtParent().AtName("type"),
 				),
 			},
@@ -151,7 +151,7 @@ var editorDataConditionComparandRightTFObjectTypes = map[string]attr.Type{
 	"value": types.StringType,
 }
 
-func expandEditorDataConditionLeftComparand(ctx context.Context, conditionComparand basetypes.ObjectValue) (conditionComparandObject *authorize.AuthorizeEditorDataConditionsComparandLeftDTO, diags diag.Diagnostics) {
+func expandEditorDataConditionLeftComparand(ctx context.Context, conditionComparand basetypes.ObjectValue) (conditionComparandObject *authorizeeditor.AuthorizeEditorDataConditionsComparandLeftDTO, diags diag.Diagnostics) {
 	var plan *editorDataConditionComparandLeftResourceModel
 	diags.Append(conditionComparand.As(ctx, &plan, basetypes.ObjectAsOptions{
 		UnhandledNullAsEmpty:    false,
@@ -170,7 +170,7 @@ func expandEditorDataConditionLeftComparand(ctx context.Context, conditionCompar
 	return
 }
 
-func expandEditorDataConditionRightComparand(ctx context.Context, conditionComparand basetypes.ObjectValue) (conditionComparandObject *authorize.AuthorizeEditorDataConditionsComparandRightDTO, diags diag.Diagnostics) {
+func expandEditorDataConditionRightComparand(ctx context.Context, conditionComparand basetypes.ObjectValue) (conditionComparandObject *authorizeeditor.AuthorizeEditorDataConditionsComparandRightDTO, diags diag.Diagnostics) {
 	var plan *editorDataConditionComparandRightResourceModel
 	diags.Append(conditionComparand.As(ctx, &plan, basetypes.ObjectAsOptions{
 		UnhandledNullAsEmpty:    false,
@@ -189,13 +189,13 @@ func expandEditorDataConditionRightComparand(ctx context.Context, conditionCompa
 	return
 }
 
-func (p *editorDataConditionComparandLeftResourceModel) expandLeft() (*authorize.AuthorizeEditorDataConditionsComparandLeftDTO, diag.Diagnostics) {
+func (p *editorDataConditionComparandLeftResourceModel) expandLeft() (*authorizeeditor.AuthorizeEditorDataConditionsComparandLeftDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	data := authorize.AuthorizeEditorDataConditionsComparandLeftDTO{}
+	data := authorizeeditor.AuthorizeEditorDataConditionsComparandLeftDTO{}
 
-	switch authorize.EnumAuthorizeEditorDataConditionsComparandDTOType(p.Type.ValueString()) {
-	case authorize.ENUMAUTHORIZEEDITORDATACONDITIONSCOMPARANDDTOTYPE_ATTRIBUTE:
+	switch authorizeeditor.EnumAuthorizeEditorDataConditionsComparandDTOType(p.Type.ValueString()) {
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONSCOMPARANDDTOTYPE_ATTRIBUTE:
 		data.AuthorizeEditorDataConditionsComparandsAttributeComparandDTO = p.expandAttributeConditionComparand()
 	default:
 		diags.AddError(
@@ -211,15 +211,15 @@ func (p *editorDataConditionComparandLeftResourceModel) expandLeft() (*authorize
 	return &data, diags
 }
 
-func (p *editorDataConditionComparandRightResourceModel) expandRight() (*authorize.AuthorizeEditorDataConditionsComparandRightDTO, diag.Diagnostics) {
+func (p *editorDataConditionComparandRightResourceModel) expandRight() (*authorizeeditor.AuthorizeEditorDataConditionsComparandRightDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	data := authorize.AuthorizeEditorDataConditionsComparandRightDTO{}
+	data := authorizeeditor.AuthorizeEditorDataConditionsComparandRightDTO{}
 
-	switch authorize.EnumAuthorizeEditorDataConditionsComparandDTOType(p.Type.ValueString()) {
-	case authorize.ENUMAUTHORIZEEDITORDATACONDITIONSCOMPARANDDTOTYPE_ATTRIBUTE:
+	switch authorizeeditor.EnumAuthorizeEditorDataConditionsComparandDTOType(p.Type.ValueString()) {
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONSCOMPARANDDTOTYPE_ATTRIBUTE:
 		data.AuthorizeEditorDataConditionsComparandsAttributeComparandDTO = p.expandAttributeConditionComparand()
-	case authorize.ENUMAUTHORIZEEDITORDATACONDITIONSCOMPARANDDTOTYPE_CONSTANT:
+	case authorizeeditor.ENUMAUTHORIZEEDITORDATACONDITIONSCOMPARANDDTOTYPE_CONSTANT:
 		data.AuthorizeEditorDataConditionsComparandsConstantComparandDTO = p.expandConstantConditionComparand()
 	default:
 		diags.AddError(
@@ -235,45 +235,45 @@ func (p *editorDataConditionComparandRightResourceModel) expandRight() (*authori
 	return &data, diags
 }
 
-func (p *editorDataConditionComparandLeftResourceModel) expandAttributeConditionComparand() *authorize.AuthorizeEditorDataConditionsComparandsAttributeComparandDTO {
+func (p *editorDataConditionComparandLeftResourceModel) expandAttributeConditionComparand() *authorizeeditor.AuthorizeEditorDataConditionsComparandsAttributeComparandDTO {
 	return expandAttributeConditionComparand(p.Id.ValueString(), p.Type.ValueString())
 }
 
-func (p *editorDataConditionComparandRightResourceModel) expandAttributeConditionComparand() *authorize.AuthorizeEditorDataConditionsComparandsAttributeComparandDTO {
+func (p *editorDataConditionComparandRightResourceModel) expandAttributeConditionComparand() *authorizeeditor.AuthorizeEditorDataConditionsComparandsAttributeComparandDTO {
 	return expandAttributeConditionComparand(p.Id.ValueString(), p.Type.ValueString())
 }
 
-func expandAttributeConditionComparand(comparandId, comparandType string) *authorize.AuthorizeEditorDataConditionsComparandsAttributeComparandDTO {
+func expandAttributeConditionComparand(comparandId, comparandType string) *authorizeeditor.AuthorizeEditorDataConditionsComparandsAttributeComparandDTO {
 
-	data := authorize.NewAuthorizeEditorDataConditionsComparandsAttributeComparandDTO(
-		authorize.EnumAuthorizeEditorDataConditionsComparandDTOType(comparandType),
+	data := authorizeeditor.NewAuthorizeEditorDataConditionsComparandsAttributeComparandDTO(
+		authorizeeditor.EnumAuthorizeEditorDataConditionsComparandDTOType(comparandType),
 		comparandId,
 	)
 
 	return data
 }
 
-func (p *editorDataConditionComparandRightResourceModel) expandConstantConditionComparand() *authorize.AuthorizeEditorDataConditionsComparandsConstantComparandDTO {
+func (p *editorDataConditionComparandRightResourceModel) expandConstantConditionComparand() *authorizeeditor.AuthorizeEditorDataConditionsComparandsConstantComparandDTO {
 
-	data := authorize.NewAuthorizeEditorDataConditionsComparandsConstantComparandDTO(
-		authorize.EnumAuthorizeEditorDataConditionsComparandDTOType(p.Type.ValueString()),
+	data := authorizeeditor.NewAuthorizeEditorDataConditionsComparandsConstantComparandDTO(
+		authorizeeditor.EnumAuthorizeEditorDataConditionsComparandDTOType(p.Type.ValueString()),
 		p.Value.ValueString(),
 	)
 
 	return data
 }
 
-func editorDataConditionComparandLeftOkToTF(ctx context.Context, apiObject *authorize.AuthorizeEditorDataConditionsComparandLeftDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+func editorDataConditionComparandLeftOkToTF(ctx context.Context, apiObject *authorizeeditor.AuthorizeEditorDataConditionsComparandLeftDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if !ok || apiObject == nil || cmp.Equal(apiObject, &authorize.AuthorizeEditorDataConditionsComparandLeftDTO{}) {
+	if !ok || apiObject == nil || cmp.Equal(apiObject, &authorizeeditor.AuthorizeEditorDataConditionsComparandLeftDTO{}) {
 		return types.ObjectNull(editorDataConditionComparandLeftTFObjectTypes), diags
 	}
 
 	attributeMap := map[string]attr.Value{}
 
 	switch t := apiObject.GetActualInstance().(type) {
-	case *authorize.AuthorizeEditorDataConditionsComparandsAttributeComparandDTO:
+	case *authorizeeditor.AuthorizeEditorDataConditionsComparandsAttributeComparandDTO:
 
 		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
 		attributeMap["id"] = framework.PingOneResourceIDOkToTF(t.GetIdOk())
@@ -297,22 +297,22 @@ func editorDataConditionComparandLeftOkToTF(ctx context.Context, apiObject *auth
 	return objValue, diags
 }
 
-func editorDataConditionComparandRightOkToTF(ctx context.Context, apiObject *authorize.AuthorizeEditorDataConditionsComparandRightDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+func editorDataConditionComparandRightOkToTF(ctx context.Context, apiObject *authorizeeditor.AuthorizeEditorDataConditionsComparandRightDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	if !ok || apiObject == nil || cmp.Equal(apiObject, &authorize.AuthorizeEditorDataConditionsComparandRightDTO{}) {
+	if !ok || apiObject == nil || cmp.Equal(apiObject, &authorizeeditor.AuthorizeEditorDataConditionsComparandRightDTO{}) {
 		return types.ObjectNull(editorDataConditionComparandRightTFObjectTypes), diags
 	}
 
 	attributeMap := map[string]attr.Value{}
 
 	switch t := apiObject.GetActualInstance().(type) {
-	case *authorize.AuthorizeEditorDataConditionsComparandsAttributeComparandDTO:
+	case *authorizeeditor.AuthorizeEditorDataConditionsComparandsAttributeComparandDTO:
 
 		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
 		attributeMap["id"] = framework.PingOneResourceIDOkToTF(t.GetIdOk())
 
-	case *authorize.AuthorizeEditorDataConditionsComparandsConstantComparandDTO:
+	case *authorizeeditor.AuthorizeEditorDataConditionsComparandsConstantComparandDTO:
 
 		attributeMap["type"] = framework.EnumOkToTF(t.GetTypeOk())
 		attributeMap["value"] = framework.StringOkToTF(t.GetValueOk())

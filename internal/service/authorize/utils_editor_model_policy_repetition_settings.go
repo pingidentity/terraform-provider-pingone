@@ -14,7 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/patrickcping/pingone-go-sdk-v2/authorize"
+	"github.com/patrickcping/pingone-go-sdk-v2/authorizeeditor"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 )
@@ -23,7 +23,7 @@ func repetitionSettingsObjectSchemaAttributes() (attributes map[string]schema.At
 
 	repetitionSettingsDecisionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the decision filter.",
-	).AllowedValuesEnum(authorize.AllowedEnumAuthorizeEditorDataPoliciesRepetitionSettingsDTODecisionEnumValues)
+	).AllowedValuesEnum(authorizeeditor.AllowedEnumAuthorizeEditorDataPoliciesRepetitionSettingsDTODecisionEnumValues)
 
 	attributes = map[string]schema.Attribute{
 		"source": schema.SingleNestedAttribute{
@@ -39,7 +39,7 @@ func repetitionSettingsObjectSchemaAttributes() (attributes map[string]schema.At
 			Required:            true,
 
 			Validators: []validator.String{
-				stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorize.AllowedEnumAuthorizeEditorDataPoliciesRepetitionSettingsDTODecisionEnumValues)...),
+				stringvalidator.OneOf(utils.EnumSliceToStringSlice(authorizeeditor.AllowedEnumAuthorizeEditorDataPoliciesRepetitionSettingsDTODecisionEnumValues)...),
 			},
 		},
 	}
@@ -57,7 +57,7 @@ var policyManagementPolicyRepetitionSettingsTFObjectTypes = map[string]attr.Type
 	"decision": types.StringType,
 }
 
-func (p *policyManagementPolicyRepetitionSettingsResourceModel) expand(ctx context.Context) (*authorize.AuthorizeEditorDataPoliciesRepetitionSettingsDTO, diag.Diagnostics) {
+func (p *policyManagementPolicyRepetitionSettingsResourceModel) expand(ctx context.Context) (*authorizeeditor.AuthorizeEditorDataPoliciesRepetitionSettingsDTO, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	source, d := expandEditorReferenceData(ctx, p.Source)
@@ -66,15 +66,15 @@ func (p *policyManagementPolicyRepetitionSettingsResourceModel) expand(ctx conte
 		return nil, diags
 	}
 
-	data := authorize.NewAuthorizeEditorDataPoliciesRepetitionSettingsDTO(
+	data := authorizeeditor.NewAuthorizeEditorDataPoliciesRepetitionSettingsDTO(
 		*source,
-		authorize.EnumAuthorizeEditorDataPoliciesRepetitionSettingsDTODecision(p.Decision.ValueString()),
+		authorizeeditor.EnumAuthorizeEditorDataPoliciesRepetitionSettingsDTODecision(p.Decision.ValueString()),
 	)
 
 	return data, diags
 }
 
-func policyManagementPolicyRepetitionSettingsOkToTF(apiObject *authorize.AuthorizeEditorDataPoliciesRepetitionSettingsDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+func policyManagementPolicyRepetitionSettingsOkToTF(apiObject *authorizeeditor.AuthorizeEditorDataPoliciesRepetitionSettingsDTO, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
