@@ -1,3 +1,0 @@
-```release-note:new-data-source
-pingone_application_role_assignments
-```
