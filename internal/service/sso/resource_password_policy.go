@@ -234,7 +234,7 @@ func (r *PasswordPolicyResource) Schema(ctx context.Context, req resource.Schema
 
 	shiftedNumberRowSequenceRuleMaxLengthDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An integer that specifies the maximum number of allowed sequential symbol row characters in the password.",
-	).AllowedValues(sequenceRuleMaxLengthMin, sequenceRuleMaxLengthMax)
+	).FixedValue(sequenceRuleMaxLengthMax)
 
 	resp.Schema = schema.Schema{
 
@@ -497,7 +497,7 @@ func (r *PasswordPolicyResource) Schema(ctx context.Context, req resource.Schema
 						Optional:            true,
 
 						Validators: []validator.Int32{
-							int32validator.OneOf(sequenceRuleMaxLengthMin, sequenceRuleMaxLengthMax),
+							int32validator.Between(sequenceRuleMaxLengthMax, sequenceRuleMaxLengthMax),
 						},
 					},
 				},

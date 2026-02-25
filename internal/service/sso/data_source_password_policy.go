@@ -157,7 +157,7 @@ func (r *PasswordPolicyDataSource) Schema(ctx context.Context, req datasource.Sc
 
 	shiftedNumberRowSequenceRuleMaxLengthDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An integer that specifies the maximum number of allowed sequential shifted number-row characters in the password.",
-	).AllowedValues(sequenceRuleMaxLengthMin, sequenceRuleMaxLengthMax)
+	).FixedValue(sequenceRuleMaxLengthMax)
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.

@@ -177,7 +177,7 @@ Optional:
 
 Optional:
 
-- `max_length` (Number) An integer that specifies the maximum number of allowed sequential symbol row characters in the password.  Options are `2`, `3`.
+- `max_length` (Number) An integer that specifies the maximum number of allowed sequential symbol row characters in the password.  Fixed value of `3`.
 
 ## Import
 

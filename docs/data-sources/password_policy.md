@@ -127,4 +127,4 @@ Read-Only:
 
 Read-Only:
 
-- `max_length` (Number) An integer that specifies the maximum number of allowed sequential shifted number-row characters in the password.  Options are `2`, `3`.
+- `max_length` (Number) An integer that specifies the maximum number of allowed sequential shifted number-row characters in the password.  Fixed value of `3`.
