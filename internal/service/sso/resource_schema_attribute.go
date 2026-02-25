@@ -52,6 +52,7 @@ type SchemaAttributeResourceModelV1 struct {
 	Multivalued      types.Bool                   `tfsdk:"multivalued"`
 	Name             types.String                 `tfsdk:"name"`
 	RegexValidation  types.Object                 `tfsdk:"regex_validation"`
+	SubAttributes    types.Set                    `tfsdk:"sub_attributes"`
 	Required         types.Bool                   `tfsdk:"required"`
 	SchemaId         pingonetypes.ResourceIDValue `tfsdk:"schema_id"`
 	SchemaType       types.String                 `tfsdk:"schema_type"`
@@ -72,6 +73,18 @@ type SchemaAttributeRegexValidationModel struct {
 	ValuesPatternShouldNotMatch types.Set    `tfsdk:"values_pattern_should_not_match"`
 }
 
+type SchemaAttributeSubAttributesResourceModel struct {
+	Description types.String `tfsdk:"description"`
+	DisplayName types.String `tfsdk:"display_name"`
+	Enabled     types.Bool   `tfsdk:"enabled"`
+	Multivalued types.Bool   `tfsdk:"multivalued"`
+	Name        types.String `tfsdk:"name"`
+	Required    types.Bool   `tfsdk:"required"`
+	SchemaType  types.String `tfsdk:"schema_type"`
+	Type        types.String `tfsdk:"type"`
+	Unique      types.Bool   `tfsdk:"unique"`
+}
+
 var (
 	schemaAttributeEnumeratedValuesTFObjectTypes = map[string]attr.Type{
 		"archived":    types.BoolType,
@@ -85,15 +98,36 @@ var (
 		"values_pattern_should_match":     types.SetType{ElemType: types.StringType},
 		"values_pattern_should_not_match": types.SetType{ElemType: types.StringType},
 	}
+
+	schemaAttributeSubAttributesTFObjectTypes = map[string]attr.Type{
+		"description":  types.StringType,
+		"display_name": types.StringType,
+		"enabled":      types.BoolType,
+		"multivalued":  types.BoolType,
+		"name":         types.StringType,
+		"required":     types.BoolType,
+		"schema_type":  types.StringType,
+		"type":         types.StringType,
+		"unique":       types.BoolType,
+	}
 )
 
-const schemaName = "User"
+const (
+	schemaName = "User"
+
+	immutableAttributeUpdateRejectedSummary = "Immutable Attribute"
+
+	immutableAttributeDescription = "This field is immutable for existing schema attributes and cannot be changed after creation. For CUSTOM schema attributes, use Terraform replacement (for example, with Terraform's plan `-replace` command option https://developer.hashicorp.com/terraform/cli/commands/plan#replace-address)."
+
+	immutableAttributeMarkdownDescription = "This field is immutable for existing schema attributes and cannot be changed after creation. For CUSTOM schema attributes, use Terraform replacement (for example, with Terraform's [plan `-replace` command option](https://developer.hashicorp.com/terraform/cli/commands/plan#replace-address))."
+)
 
 // Framework interfaces
 var (
 	_ resource.Resource                 = &SchemaAttributeResource{}
 	_ resource.ResourceWithConfigure    = &SchemaAttributeResource{}
 	_ resource.ResourceWithImportState  = &SchemaAttributeResource{}
+	_ resource.ResourceWithModifyPlan   = &SchemaAttributeResource{}
 	_ resource.ResourceWithUpgradeState = &SchemaAttributeResource{}
 )
 
@@ -117,7 +151,7 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 	)
 
 	enabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Indicates whether or not the attribute is enabled.",
+		"Indicates whether or not the attribute is enabled. Can be updated for `STANDARD` attributes.",
 	).DefaultValue("true")
 
 	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -127,8 +161,8 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 	).UnmodifiableDataLossProtection().DefaultValue(string(management.ENUMSCHEMAATTRIBUTETYPE_STRING))
 
 	uniqueDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Indicates whether or not the attribute must have a unique value within the PingOne environment.",
-	).UnmodifiableDataLossProtection().DefaultValue("false")
+		"Indicates whether or not the attribute must have a unique value within the PingOne environment. Can only be set where the attribute type is `STRING`. Can be updated for `STANDARD` attributes.",
+	).DefaultValue("false")
 
 	multivaluedDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Indicates whether the attribute has multiple values or a single one. Maximum number of values stored is 1,000.",
@@ -145,7 +179,11 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 	)
 
 	regexValidationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A single object representation of the optional regular expression representation of this attribute.  Can only be set where the attribute type is `STRING` and cannot be set alongside `enumerated_values`.",
+		"A single object representation of the optional regular expression representation of this attribute.  Can only be set where the attribute type is `STRING` and cannot be set alongside `enumerated_values`. Can be updated for `STANDARD` attributes.",
+	)
+
+	subAttributesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The set of sub-attributes of this attribute. Only `COMPLEX` attribute types can have sub-attributes, and only one-level of nesting is allowed. The leaf attribute definition must have a type of `STRING` or `JSON`. A `COMPLEX` attribute definition must have at least one child attribute definition.",
 	)
 
 	resp.Schema = schema.Schema{
@@ -153,7 +191,7 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 		Version: 1,
 
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage PingOne schema attributes.",
+		Description: "Resource to create and manage PingOne schema attributes. Attributes with a `schema_type` of `STANDARD` are supported, but must be imported into Terraform state before they can be managed. Attributes with a `schema_type` of `CORE` are not supported and should be read using the `pingone_schema_attribute` data source.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
@@ -186,11 +224,13 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 			"display_name": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("The display name of the attribute such as 'T-shirt size'. If provided, it must not be an empty string. Valid characters consist of any Unicode letter, mark (for example, accent or umlaut), numeric character, forward slash, dot, apostrophe, underscore, space, or hyphen.").Description,
 				Optional:    true,
+				Computed:    true,
 			},
 
 			"description": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A description of the attribute. If provided, it must not be an empty string. Valid characters consists of any Unicode letter, mark (for example, accent or umlaut), numeric character, punctuation character, or space.").Description,
 				Optional:    true,
+				Computed:    true,
 			},
 
 			"enabled": schema.BoolAttribute{
@@ -209,7 +249,12 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 				Computed:            true,
 
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifierinternal.UnmodifiableDataLossProtection(),
+					stringplanmodifierinternal.UnmodifiableDataLossProtectionIfWithSummary(
+						unmodifiableDataLossProtectionIfStringConfigValueSet,
+						immutableAttributeUpdateRejectedSummary,
+						immutableAttributeDescription,
+						immutableAttributeMarkdownDescription,
+					),
 				},
 
 				Default: stringdefault.StaticString(string(management.ENUMSCHEMAATTRIBUTETYPE_STRING)),
@@ -224,10 +269,6 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 				MarkdownDescription: uniqueDescription.MarkdownDescription,
 				Optional:            true,
 				Computed:            true,
-
-				PlanModifiers: []planmodifier.Bool{
-					boolplanmodifierinternal.UnmodifiableDataLossProtection(),
-				},
 
 				Validators: []validator.Bool{
 					boolvalidatorinternal.MustNotBeTrueIfPathSetToValue(
@@ -254,7 +295,12 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 				Computed:            true,
 
 				PlanModifiers: []planmodifier.Bool{
-					boolplanmodifierinternal.UnmodifiableDataLossProtection(),
+					boolplanmodifierinternal.UnmodifiableDataLossProtectionIfWithSummary(
+						unmodifiableDataLossProtectionIfBoolConfigValueSet,
+						immutableAttributeUpdateRejectedSummary,
+						immutableAttributeDescription,
+						immutableAttributeMarkdownDescription,
+					),
 				},
 
 				Default: booldefault.StaticBool(false),
@@ -288,13 +334,15 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 				},
 
 				PlanModifiers: []planmodifier.Set{
-					setplanmodifierinternal.UnmodifiableDataLossProtectionIf(
+					setplanmodifierinternal.UnmodifiableDataLossProtectionIfWithSummary(
 						setplanmodifierinternal.UnmodifiableDataLossProtectionIfPreviouslyNull(),
+						immutableAttributeUpdateRejectedSummary,
 						"The attribute has been previously created without enumerated values validation.  To add enumerated values validation, the attribute must be replaced.",
 						"The attribute has been previously created without enumerated values validation.  To add enumerated values validation, the attribute must be replaced.",
 					),
-					setplanmodifierinternal.UnmodifiableDataLossProtectionIf(
+					setplanmodifierinternal.UnmodifiableDataLossProtectionIfWithSummary(
 						unmodifiableDataLossProtectionIfElementRemoved,
+						immutableAttributeUpdateRejectedSummary,
 						"Enumerated values cannot be deleted but can be archived.",
 						"Enumerated values cannot be deleted but can be archived.",
 					),
@@ -345,6 +393,53 @@ func (r *SchemaAttributeResource) Schema(ctx context.Context, req resource.Schem
 					objectvalidatorinternal.ConflictsIfMatchesPathValue(types.StringValue(string(management.ENUMSCHEMAATTRIBUTETYPE_JSON)), path.MatchRelative().AtParent().AtName("type")),
 					objectvalidatorinternal.ConflictsIfMatchesPathValue(types.StringValue(string(management.ENUMSCHEMAATTRIBUTETYPE_BOOLEAN)), path.MatchRelative().AtParent().AtName("type")),
 					objectvalidatorinternal.ConflictsIfMatchesPathValue(types.StringValue(string(management.ENUMSCHEMAATTRIBUTETYPE_COMPLEX)), path.MatchRelative().AtParent().AtName("type")),
+				},
+			},
+
+			"sub_attributes": schema.SetNestedAttribute{
+				Description:         subAttributesDescription.Description,
+				MarkdownDescription: subAttributesDescription.MarkdownDescription,
+				Computed:            true,
+
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("The system name of the sub-attribute.").Description,
+							Computed:    true,
+						},
+						"display_name": schema.StringAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("The display name of the sub-attribute.").Description,
+							Computed:    true,
+						},
+						"description": schema.StringAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("A description of the sub-attribute.").Description,
+							Computed:    true,
+						},
+						"enabled": schema.BoolAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("Indicates whether or not the sub-attribute is enabled.").Description,
+							Computed:    true,
+						},
+						"required": schema.BoolAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("Indicates whether or not the sub-attribute is required.").Description,
+							Computed:    true,
+						},
+						"schema_type": schema.StringAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("The schema type of the sub-attribute.").Description,
+							Computed:    true,
+						},
+						"type": schema.StringAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("The type of the sub-attribute.").Description,
+							Computed:    true,
+						},
+						"unique": schema.BoolAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("Indicates whether or not the sub-attribute must have a unique value within the PingOne environment.").Description,
+							Computed:    true,
+						},
+						"multivalued": schema.BoolAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("Indicates whether the sub-attribute has multiple values or a single one.").Description,
+							Computed:    true,
+						},
+					},
 				},
 			},
 
@@ -402,6 +497,75 @@ func (r *SchemaAttributeResource) Configure(ctx context.Context, req resource.Co
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
 		return
+	}
+}
+
+func (r *SchemaAttributeResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	if req.Plan.Raw.IsNull() || req.State.Raw.IsNull() {
+		return
+	}
+
+	var state, config SchemaAttributeResourceModelV1
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if state.SchemaType.ValueString() == string(management.ENUMSCHEMAATTRIBUTESCHEMATYPE_STANDARD) {
+		addStandardImmutableConfigDiagnostics(&resp.Diagnostics, config)
+
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("type"), state.Type)...)
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("multivalued"), state.Multivalued)...)
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("enumerated_values"), state.EnumeratedValues)...)
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("ldap_attribute"), state.LdapAttribute)...)
+
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("sub_attributes"), state.SubAttributes)...)
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("display_name"), state.DisplayName)...)
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("description"), state.Description)...)
+
+		return
+	}
+
+	if state.SchemaType.ValueString() == string(management.ENUMSCHEMAATTRIBUTESCHEMATYPE_CUSTOM) {
+		if config.DisplayName.IsNull() {
+			resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("display_name"), types.StringNull())...)
+		}
+
+		if config.Description.IsNull() {
+			resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("description"), types.StringNull())...)
+		}
+	}
+}
+
+func addStandardImmutableConfigDiagnostics(diags *diag.Diagnostics, config SchemaAttributeResourceModelV1) {
+	type immutableFieldConfig struct {
+		name         string
+		isConfigured bool
+	}
+
+	immutableFields := []immutableFieldConfig{
+		{name: "type", isConfigured: !config.Type.IsNull()},
+		{name: "multivalued", isConfigured: !config.Multivalued.IsNull()},
+		{name: "enumerated_values", isConfigured: !config.EnumeratedValues.IsNull()},
+		{name: "display_name", isConfigured: !config.DisplayName.IsNull()},
+		{name: "description", isConfigured: !config.Description.IsNull()},
+	}
+
+	for _, field := range immutableFields {
+		if !field.isConfigured {
+			continue
+		}
+
+		diags.AddAttributeError(
+			path.Root(field.name),
+			immutableAttributeUpdateRejectedSummary,
+			fmt.Sprintf("`%s` cannot be configured for STANDARD schema attributes. Remove it from configuration and allow the provider to manage this value from state/API.", field.name),
+		)
 	}
 }
 
@@ -502,25 +666,11 @@ func (r *SchemaAttributeResource) Read(ctx context.Context, req resource.ReadReq
 		return
 	}
 
-	var schemaResponse *management.Schema
-	resp.Diagnostics.Append(legacysdk.ParseResponse(
-		ctx,
-
-		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.ManagementAPIClient.SchemasApi.ReadOneSchema(ctx, data.EnvironmentId.ValueString(), data.SchemaId.ValueString()).Execute()
-			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
-		},
-		"ReadOneSchema",
-		legacysdk.CustomErrorResourceNotFoundWarning,
-		sdk.DefaultCreateReadRetryable,
-		&schemaResponse,
-	)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// Remove from state if resource is not found
-	if schemaResponse == nil {
+	if response.GetSchemaType() == management.ENUMSCHEMAATTRIBUTESCHEMATYPE_CORE {
+		resp.Diagnostics.AddError(
+			"Invalid import for CORE schema attribute",
+			"CORE schema attributes are immutable and cannot be managed with the pingone_schema_attribute resource. Use the pingone_schema_attribute data source instead.",
+		)
 		resp.State.RemoveResource(ctx)
 		return
 	}
@@ -544,6 +694,23 @@ func (r *SchemaAttributeResource) Update(ctx context.Context, req resource.Updat
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if state.SchemaType.ValueString() == string(management.ENUMSCHEMAATTRIBUTESCHEMATYPE_STANDARD) {
+		immutableStandardChanges := standardImmutableChanges(plan, state)
+		if len(immutableStandardChanges) > 0 {
+			resp.Diagnostics.AddError(
+				"Invalid update for STANDARD schema attribute",
+				fmt.Sprintf("STANDARD schema attributes can only update 'enabled' (all types) and additionally 'unique' and 'regex_validation' for STRING attributes. Immutable attributes changed: %v", immutableStandardChanges),
+			)
+			return
+		}
+		normalizeStandardImmutableState(&plan, state)
 	}
 
 	// Get the schema ID
@@ -586,6 +753,61 @@ func (r *SchemaAttributeResource) Update(ctx context.Context, req resource.Updat
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
+func standardImmutableChanges(plan, state SchemaAttributeResourceModelV1) []string {
+	immutableStandardChanges := make([]string, 0)
+
+	if !plan.Name.Equal(state.Name) {
+		immutableStandardChanges = append(immutableStandardChanges, "name")
+	}
+
+	if !plan.Type.Equal(state.Type) {
+		immutableStandardChanges = append(immutableStandardChanges, "type")
+	}
+
+	if !plan.Multivalued.Equal(state.Multivalued) {
+		immutableStandardChanges = append(immutableStandardChanges, "multivalued")
+	}
+
+	if !plan.EnumeratedValues.Equal(state.EnumeratedValues) {
+		immutableStandardChanges = append(immutableStandardChanges, "enumerated_values")
+	}
+
+	if !plan.DisplayName.IsNull() && !plan.DisplayName.IsUnknown() && !plan.DisplayName.Equal(state.DisplayName) {
+		immutableStandardChanges = append(immutableStandardChanges, "display_name")
+	}
+
+	if !plan.Description.IsNull() && !plan.Description.IsUnknown() && !plan.Description.Equal(state.Description) {
+		immutableStandardChanges = append(immutableStandardChanges, "description")
+	}
+
+	if !plan.SchemaType.IsNull() && !plan.SchemaType.IsUnknown() && !plan.SchemaType.Equal(state.SchemaType) {
+		immutableStandardChanges = append(immutableStandardChanges, "schema_type")
+	}
+
+	if state.Type.ValueString() != string(management.ENUMSCHEMAATTRIBUTETYPE_STRING) {
+		if !plan.Unique.Equal(state.Unique) {
+			immutableStandardChanges = append(immutableStandardChanges, "unique")
+		}
+
+		if !plan.RegexValidation.Equal(state.RegexValidation) {
+			immutableStandardChanges = append(immutableStandardChanges, "regex_validation")
+		}
+	}
+
+	return immutableStandardChanges
+}
+
+func normalizeStandardImmutableState(plan *SchemaAttributeResourceModelV1, state SchemaAttributeResourceModelV1) {
+	plan.Name = state.Name
+	plan.Type = state.Type
+	plan.SubAttributes = state.SubAttributes
+	plan.Multivalued = state.Multivalued
+	plan.EnumeratedValues = state.EnumeratedValues
+	plan.DisplayName = state.DisplayName
+	plan.Description = state.Description
+	plan.SchemaType = state.SchemaType
+}
+
 func (r *SchemaAttributeResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *SchemaAttributeResourceModelV1
 
@@ -599,6 +821,35 @@ func (r *SchemaAttributeResource) Delete(ctx context.Context, req resource.Delet
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if data.SchemaType.ValueString() == string(management.ENUMSCHEMAATTRIBUTESCHEMATYPE_STANDARD) {
+		// Reset to defaults
+		updateModel := *data
+		updateModel.Enabled = types.BoolValue(true)
+		updateModel.Unique = types.BoolValue(false)
+		updateModel.RegexValidation = types.ObjectNull(schemaAttributeRegexValidationTFObjectTypes)
+
+		updateAttribute, d := updateModel.expand(ctx, "UPDATE")
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
+			ctx,
+
+			func() (any, *http.Response, error) {
+				fO, fR, fErr := r.Client.ManagementAPIClient.SchemasApi.UpdateAttributePut(ctx, data.EnvironmentId.ValueString(), data.SchemaId.ValueString(), data.Id.ValueString()).SchemaAttribute(*updateAttribute).Execute()
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			},
+			"UpdateAttributePut",
+			legacysdk.CustomErrorResourceNotFoundWarning,
+			nil,
+			nil,
+		)...)
+
 		return
 	}
 
@@ -674,7 +925,11 @@ func (p *SchemaAttributeResourceModelV1) expand(ctx context.Context, action stri
 
 	data := *management.NewSchemaAttribute(p.Enabled.ValueBool(), p.Name.ValueString(), management.EnumSchemaAttributeType(attrType))
 
-	data.SetSchemaType(management.ENUMSCHEMAATTRIBUTESCHEMATYPE_CUSTOM)
+	if action == "CREATE" {
+		data.SetSchemaType(management.ENUMSCHEMAATTRIBUTESCHEMATYPE_CUSTOM)
+	} else if !p.SchemaType.IsNull() && !p.SchemaType.IsUnknown() {
+		data.SetSchemaType(management.EnumSchemaAttributeSchemaType(p.SchemaType.ValueString()))
+	}
 
 	if !p.DisplayName.IsNull() && !p.DisplayName.IsUnknown() {
 		data.SetDisplayName(p.DisplayName.ValueString())
@@ -777,6 +1032,47 @@ func (p *SchemaAttributeResourceModelV1) expand(ctx context.Context, action stri
 		data.SetRegexValidation(*regexValidation)
 	}
 
+	if !p.SubAttributes.IsNull() && !p.SubAttributes.IsUnknown() {
+		var plan []SchemaAttributeSubAttributesResourceModel
+		diags.Append(p.SubAttributes.ElementsAs(ctx, &plan, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		subAttributes := make([]management.SchemaAttribute, 0, len(plan))
+		for _, v := range plan {
+			subAttribute := management.NewSchemaAttribute(v.Enabled.ValueBool(), v.Name.ValueString(), management.EnumSchemaAttributeType(v.Type.ValueString()))
+
+			if !v.DisplayName.IsNull() && !v.DisplayName.IsUnknown() {
+				subAttribute.SetDisplayName(v.DisplayName.ValueString())
+			}
+
+			if !v.Description.IsNull() && !v.Description.IsUnknown() {
+				subAttribute.SetDescription(v.Description.ValueString())
+			}
+
+			if !v.Required.IsNull() && !v.Required.IsUnknown() {
+				subAttribute.SetRequired(v.Required.ValueBool())
+			}
+
+			if !v.SchemaType.IsNull() && !v.SchemaType.IsUnknown() {
+				subAttribute.SetSchemaType(management.EnumSchemaAttributeSchemaType(v.SchemaType.ValueString()))
+			}
+
+			if !v.Unique.IsNull() && !v.Unique.IsUnknown() {
+				subAttribute.SetUnique(v.Unique.ValueBool())
+			}
+
+			if !v.Multivalued.IsNull() && !v.Multivalued.IsUnknown() {
+				subAttribute.SetMultiValued(v.Multivalued.ValueBool())
+			}
+
+			subAttributes = append(subAttributes, *subAttribute)
+		}
+
+		data.SetSubAttributes(subAttributes)
+	}
+
 	return &data, diags
 }
 
@@ -805,9 +1101,15 @@ func (p *SchemaAttributeResourceModelV1) toState(apiObject *management.SchemaAtt
 
 	p.LdapAttribute = framework.StringOkToTF(apiObject.GetLdapAttributeOk())
 	p.Multivalued = framework.BoolOkToTF(apiObject.GetMultiValuedOk())
+	if p.Multivalued.IsNull() {
+		p.Multivalued = types.BoolValue(false)
+	}
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 
 	p.RegexValidation, d = schemaAttributeRegexValidationOkToTF(apiObject.GetRegexValidationOk())
+	diags.Append(d...)
+
+	p.SubAttributes, d = schemaAttributeSubAttributesOkToTF(apiObject.GetSubAttributesOk())
 	diags.Append(d...)
 
 	p.Required = framework.BoolOkToTF(apiObject.GetRequiredOk())
@@ -868,6 +1170,40 @@ func schemaAttributeRegexValidationOkToTF(apiObject *management.SchemaAttributeR
 	return flattenedObj, diags
 }
 
+func schemaAttributeSubAttributesOkToTF(apiObject []management.SchemaAttribute, ok bool) (types.Set, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	tfObjType := types.ObjectType{AttrTypes: schemaAttributeSubAttributesTFObjectTypes}
+
+	if !ok || len(apiObject) == 0 {
+		return types.SetNull(tfObjType), diags
+	}
+
+	flattenedList := []attr.Value{}
+	for _, v := range apiObject {
+		objMap := map[string]attr.Value{
+			"description":  framework.StringOkToTF(v.GetDescriptionOk()),
+			"display_name": framework.StringOkToTF(v.GetDisplayNameOk()),
+			"enabled":      framework.BoolOkToTF(v.GetEnabledOk()),
+			"multivalued":  framework.BoolOkToTF(v.GetMultiValuedOk()),
+			"name":         framework.StringOkToTF(v.GetNameOk()),
+			"required":     framework.BoolOkToTF(v.GetRequiredOk()),
+			"schema_type":  framework.EnumOkToTF(v.GetSchemaTypeOk()),
+			"type":         framework.EnumOkToTF(v.GetTypeOk()),
+			"unique":       framework.BoolOkToTF(v.GetUniqueOk()),
+		}
+
+		flattenedObj, d := types.ObjectValue(schemaAttributeSubAttributesTFObjectTypes, objMap)
+		diags.Append(d...)
+
+		flattenedList = append(flattenedList, flattenedObj)
+	}
+
+	returnVar, d := types.SetValue(tfObjType, flattenedList)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
 func unmodifiableDataLossProtectionIfElementRemoved(ctx context.Context, req planmodifier.SetRequest, resp *setplanmodifierinternal.UnmodifiableDataLossProtectionIfFuncResponse) {
 	// If the configuration is unknown, this cannot be sure what to do yet.
 	if req.ConfigValue.IsUnknown() {
@@ -906,4 +1242,32 @@ func unmodifiableDataLossProtectionIfElementRemoved(ctx context.Context, req pla
 	}
 
 	resp.Error = false
+}
+
+func unmodifiableDataLossProtectionIfStringConfigValueSet(ctx context.Context, req planmodifier.StringRequest, resp *stringplanmodifierinternal.UnmodifiableDataLossProtectionIfFuncResponse) {
+	if req.ConfigValue.IsUnknown() {
+		resp.Error = false
+		return
+	}
+
+	if req.ConfigValue.IsNull() {
+		resp.Error = false
+		return
+	}
+
+	resp.Error = true
+}
+
+func unmodifiableDataLossProtectionIfBoolConfigValueSet(ctx context.Context, req planmodifier.BoolRequest, resp *boolplanmodifierinternal.UnmodifiableDataLossProtectionIfFuncResponse) {
+	if req.ConfigValue.IsUnknown() {
+		resp.Error = false
+		return
+	}
+
+	if req.ConfigValue.IsNull() {
+		resp.Error = false
+		return
+	}
+
+	resp.Error = true
 }
