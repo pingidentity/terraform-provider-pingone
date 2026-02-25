@@ -8,9 +8,9 @@
 [3de133af](https://github.com/pingidentity/terraform-provider-pingone/commit/3de133af) `pingone_password_policies` [#1212](https://github.com/pingidentity/terraform-provider-pingone/pull/1212)
 [99a0c28f](https://github.com/pingidentity/terraform-provider-pingone/commit/99a0c28f) `pingone_system_application` [#1214](https://github.com/pingidentity/terraform-provider-pingone/pull/1214)
 [75c45bae](https://github.com/pingidentity/terraform-provider-pingone/commit/75c45bae) `pingone_system_applications` [#1218](https://github.com/pingidentity/terraform-provider-pingone/pull/1218)
-[8a19b47f](https://github.com/pingidentity/terraform-provider-pingone/commit/8a19b47f) pingone_application_role_assignments [#1219](https://github.com/pingidentity/terraform-provider-pingone/pull/1219)
-[f0fce53a](https://github.com/pingidentity/terraform-provider-pingone/commit/f0fce53a) pingone_group_role_assignments [#1222](https://github.com/pingidentity/terraform-provider-pingone/pull/1222)
-[6ed32689](https://github.com/pingidentity/terraform-provider-pingone/commit/6ed32689) pingone_schema_attribute [#1225](https://github.com/pingidentity/terraform-provider-pingone/pull/1225)
+[8a19b47f](https://github.com/pingidentity/terraform-provider-pingone/commit/8a19b47f) `pingone_application_role_assignments` [#1219](https://github.com/pingidentity/terraform-provider-pingone/pull/1219)
+[f0fce53a](https://github.com/pingidentity/terraform-provider-pingone/commit/f0fce53a) `pingone_group_role_assignments` [#1222](https://github.com/pingidentity/terraform-provider-pingone/pull/1222)
+[6ed32689](https://github.com/pingidentity/terraform-provider-pingone/commit/6ed32689) `pingone_schema_attribute` [#1225](https://github.com/pingidentity/terraform-provider-pingone/pull/1225)
 
 ### ENHANCEMENTS
 

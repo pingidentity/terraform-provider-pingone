@@ -13,9 +13,9 @@ Release Date: 2026-02-25
 * link:https://github.com/pingidentity/terraform-provider-pingone/commit/3de133af[3de133af] `pingone_password_policies` link:https://github.com/pingidentity/terraform-provider-pingone/pull/1212[#1212]
 * link:https://github.com/pingidentity/terraform-provider-pingone/commit/99a0c28f[99a0c28f] `pingone_system_application` link:https://github.com/pingidentity/terraform-provider-pingone/pull/1214[#1214]
 * link:https://github.com/pingidentity/terraform-provider-pingone/commit/75c45bae[75c45bae] `pingone_system_applications` link:https://github.com/pingidentity/terraform-provider-pingone/pull/1218[#1218]
-* link:https://github.com/pingidentity/terraform-provider-pingone/commit/8a19b47f[8a19b47f] pingone_application_role_assignments link:https://github.com/pingidentity/terraform-provider-pingone/pull/1219[#1219]
-* link:https://github.com/pingidentity/terraform-provider-pingone/commit/f0fce53a[f0fce53a] pingone_group_role_assignments link:https://github.com/pingidentity/terraform-provider-pingone/pull/1222[#1222]
-* link:https://github.com/pingidentity/terraform-provider-pingone/commit/6ed32689[6ed32689] pingone_schema_attribute link:https://github.com/pingidentity/terraform-provider-pingone/pull/1225[#1225]
+* link:https://github.com/pingidentity/terraform-provider-pingone/commit/8a19b47f[8a19b47f] `pingone_application_role_assignments` link:https://github.com/pingidentity/terraform-provider-pingone/pull/1219[#1219]
+* link:https://github.com/pingidentity/terraform-provider-pingone/commit/f0fce53a[f0fce53a] `pingone_group_role_assignments` link:https://github.com/pingidentity/terraform-provider-pingone/pull/1222[#1222]
+* link:https://github.com/pingidentity/terraform-provider-pingone/commit/6ed32689[6ed32689] `pingone_schema_attribute` link:https://github.com/pingidentity/terraform-provider-pingone/pull/1225[#1225]
 
 == ENHANCEMENTS
 * link:https://github.com/pingidentity/terraform-provider-pingone/commit/6ed32689[6ed32689] `resource/pingone_schema_attribute`: Add support for managing imported `STANDARD` schema attributes link:https://github.com/pingidentity/terraform-provider-pingone/pull/1225[#1225]

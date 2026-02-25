@@ -7,5 +7,5 @@
 ```
 
 ```release-note:new-data-source
-pingone_schema_attribute
+`pingone_schema_attribute`
 ```
