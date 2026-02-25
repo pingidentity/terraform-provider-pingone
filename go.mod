@@ -12,6 +12,8 @@ tool (
 	github.com/terraform-linters/tflint
 )
 
+replace github.com/patrickcping/pingone-go-sdk-v2/authorize => github.com/patrickcping/pingone-go-sdk-v2/authorize v0.8.1-0.20250218183914-e9ec95e476b9
+
 require (
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/terraform-plugin-framework v1.17.0

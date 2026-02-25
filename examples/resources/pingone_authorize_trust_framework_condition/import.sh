@@ -1,0 +1,1 @@
+terraform import pingone_authorize_trust_framework_condition.example <environment_id>/<authorization_condition_id>

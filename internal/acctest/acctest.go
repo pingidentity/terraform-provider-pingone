@@ -13,11 +13,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	clientconfig "github.com/pingidentity/pingone-go-client/config"
 	"github.com/pingidentity/pingone-go-client/oauth2"
 	"github.com/pingidentity/pingone-go-client/pingone"
@@ -81,6 +81,13 @@ type MinMaxChecks struct {
 	Minimal resource.TestCheckFunc
 	Full    resource.TestCheckFunc
 }
+
+type EnumFeatureFlag string
+
+const (
+	ENUMFEATUREFLAG_DAVINCI       EnumFeatureFlag = "DAVINCI"
+	ENUMFEATUREFLAG_AUTHORIZEPMTF EnumFeatureFlag = "AUTHORIZEPMTF"
+)
 
 func PreCheckClient(t *testing.T) {
 	if v := os.Getenv("PINGONE_CLIENT_ID"); v == "" {
@@ -430,13 +437,15 @@ func AgreementSandboxEnvironment() string {
 		}`
 }
 
-func CheckParentEnvironmentDestroy(ctx context.Context, apiClient *pingone.APIClient, environmentID string) (bool, error) {
-	environmentIdUuid, err := uuid.Parse(environmentID)
-	if err != nil {
-		return false, fmt.Errorf("unable to parse environment id '%s' as uuid: %v", environmentID, err)
-	}
+func AuthorizePMTFSandboxEnvironment() string {
+	return `
+		data "pingone_environment" "general_test" {
+			name = "tf-testacc-static-authorize-test"
+		}`
+}
 
-	environment, r, err := apiClient.EnvironmentsApi.GetEnvironmentById(ctx, environmentIdUuid).Execute()
+func CheckParentEnvironmentDestroy(ctx context.Context, apiClient *management.APIClient, environmentID string) (bool, error) {
+	environment, r, err := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, environmentID).Execute()
 
 	destroyed, err := CheckForResourceDestroy(r, err)
 	if err != nil {

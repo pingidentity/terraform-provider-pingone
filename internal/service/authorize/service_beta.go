@@ -10,9 +10,20 @@ import (
 )
 
 func BetaResources() []func() resource.Resource {
-	return []func() resource.Resource{}
+	return []func() resource.Resource{
+		NewPolicyManagementPolicyResource,
+		NewPolicyManagementRootPolicyResource,
+		NewPolicyManagementRuleResource,
+		NewPolicyManagementStatementResource,
+		NewTrustFrameworkAttributeResource,
+		NewTrustFrameworkConditionResource,
+		NewTrustFrameworkProcessorResource,
+		NewTrustFrameworkServiceResource,
+	}
 }
 
 func BetaDataSources() []func() datasource.DataSource {
-	return []func() datasource.DataSource{}
+	return []func() datasource.DataSource{
+		NewTrustFrameworkAttributeDataSource,
+	}
 }
