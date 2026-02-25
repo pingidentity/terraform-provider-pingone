@@ -1,4 +1,4 @@
-// Copyright © 2025 Ping Identity Corporation
+// Copyright © 2026 Ping Identity Corporation
 
 package base
 
@@ -27,6 +27,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -116,15 +117,13 @@ func (r *AgreementLocalizationRevisionResource) Schema(ctx context.Context, req 
 			},
 
 			"effective_at": schema.StringAttribute{
-				Description: "The start date that the revision is presented to users.  The effective date must be unique for each language agreement, and the property value can be the present date or a future date only.  Must be a valid RFC3339 date/time string.  If left undefined, will default to the current date and time (the revision will be effective immediately).",
+				Description: "The start date that the revision is presented to users.  The effective date must be unique for each language agreement, and the property value can be the present date or a future date only.  Must be a valid RFC3339 date/time string.  If left undefined, will default to the current date and time plus a 30 second buffer to allow for processing.",
 				Optional:    true,
 				Computed:    true,
-
-				CustomType: timetypes.RFC3339Type{},
-
+				CustomType:  timetypes.RFC3339Type{},
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.UseNonNullStateForUnknown(),
 				},
 			},
 
@@ -171,7 +170,7 @@ func (r *AgreementLocalizationRevisionResource) Configure(ctx context.Context, r
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -216,15 +215,15 @@ func (r *AgreementLocalizationRevisionResource) Create(ctx context.Context, req 
 
 	// Run the API call
 	var response *management.AgreementLanguageRevision
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.AgreementRevisionsResourcesApi.CreateAgreementLanguageRevision(ctx, plan.EnvironmentId.ValueString(), plan.AgreementId.ValueString(), plan.AgreementLocalizationId.ValueString()).AgreementLanguageRevision(*localizationRevision).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateAgreementLanguageRevision",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
@@ -236,15 +235,15 @@ func (r *AgreementLocalizationRevisionResource) Create(ctx context.Context, req 
 	var agreementTextIntf map[string]interface{}
 	if halLinks, ok := response.GetLinksOk(); ok && halLinks != nil {
 		halObjectLinks := *halLinks
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
 				fO, fR, fErr := r.Client.ManagementAPIClient.HALApi.ReadHALLink(ctx, halObjectLinks[revisionTextHalLink]).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			fmt.Sprintf("ReadHALLink (%s)", revisionTextHalLink),
-			framework.CustomErrorResourceNotFoundWarning,
+			legacysdk.CustomErrorResourceNotFoundWarning,
 			sdk.DefaultCreateReadRetryable,
 			&agreementTextIntf,
 		)...)
@@ -275,20 +274,20 @@ func (r *AgreementLocalizationRevisionResource) Create(ctx context.Context, req 
 
 				var readResponse *management.AgreementLanguageRevision
 				// Run the API call
-				resp.Diagnostics.Append(framework.ParseResponse(
+				resp.Diagnostics.Append(legacysdk.ParseResponse(
 					ctx,
 
 					func() (any, *http.Response, error) {
 						fO, fR, fErr := r.Client.ManagementAPIClient.AgreementRevisionsResourcesApi.ReadOneAgreementLanguageRevision(ctx, plan.EnvironmentId.ValueString(), plan.AgreementId.ValueString(), plan.AgreementLocalizationId.ValueString(), response.GetId()).Execute()
-						return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+						return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 					},
 					"ReadOneAgreementLanguageRevision",
-					framework.DefaultCustomError,
+					legacysdk.DefaultCustomError,
 					sdk.DefaultCreateReadRetryable,
 					&readResponse,
 				)...)
 				if resp.Diagnostics.HasError() {
-					return nil, "err", fmt.Errorf("Error reading agreement revision")
+					return nil, "err", fmt.Errorf("error reading agreement revision")
 				}
 
 				if readResponse.GetEffectiveAt().After(time.Now()) {
@@ -337,15 +336,15 @@ func (r *AgreementLocalizationRevisionResource) Read(ctx context.Context, req re
 
 	// Run the API call
 	var response *management.AgreementLanguageRevision
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.AgreementRevisionsResourcesApi.ReadOneAgreementLanguageRevision(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString(), data.AgreementLocalizationId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneAgreementLanguageRevision",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
@@ -363,15 +362,15 @@ func (r *AgreementLocalizationRevisionResource) Read(ctx context.Context, req re
 	var agreementTextIntf map[string]interface{}
 	if halLinks, ok := response.GetLinksOk(); ok && halLinks != nil {
 		halObjectLinks := *halLinks
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
 				fO, fR, fErr := r.Client.ManagementAPIClient.HALApi.ReadHALLink(ctx, halObjectLinks[revisionTextHalLink]).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			fmt.Sprintf("ReadHALLink (%s)", revisionTextHalLink),
-			framework.CustomErrorResourceNotFoundWarning,
+			legacysdk.CustomErrorResourceNotFoundWarning,
 			sdk.DefaultCreateReadRetryable,
 			&agreementTextIntf,
 		)...)
@@ -414,12 +413,12 @@ func (r *AgreementLocalizationRevisionResource) Delete(ctx context.Context, req 
 	}
 
 	// Run the API call
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fR, fErr := r.Client.ManagementAPIClient.AgreementRevisionsResourcesApi.DeleteAgreementLanguageRevision(ctx, data.EnvironmentId.ValueString(), data.AgreementId.ValueString(), data.AgreementLocalizationId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteAgreementLanguageRevision",
 		agreementLocalizationRevisionDeleteErrorHandler,
@@ -476,17 +475,35 @@ func (r *AgreementLocalizationRevisionResource) ImportState(ctx context.Context,
 func (p *AgreementLocalizationRevisionResourceModel) expand() (*management.AgreementLanguageRevision, diag.Diagnostics) {
 	var diags, d diag.Diagnostics
 
+	// Provide a buffer for the effective_at time to allow for processing in Terraform
+	//     when setting the value in the plan if not provided by the user
+	// Grace period used to prevent the effective_at time from being set in the past by the user in HCL
+	now := time.Now().UTC()
+	buffer := 30 * time.Second
+	grace := 1 * time.Second
+	usedGenerated := false
+
 	var t time.Time
 
 	if !p.EffectiveAt.IsNull() && !p.EffectiveAt.IsUnknown() {
 		t, d = p.EffectiveAt.ValueRFC3339Time()
 		diags.Append(d...)
+
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		if t.Before(now.Add(-grace)) {
+			diags.AddError(
+				"Invalid effective_at value",
+				fmt.Sprintf("The effective_at time must not be in the past. Provided: %s",
+					t.Format(time.RFC3339)),
+			)
+			return nil, diags
+		}
 	} else {
-		bufferTimeMins := 1 * time.Minute
-		t = time.Now().Local().Add(bufferTimeMins)
-	}
-	if diags.HasError() {
-		return nil, diags
+		t = now.Add(buffer)
+		usedGenerated = true
 	}
 
 	data := management.NewAgreementLanguageRevision(
@@ -495,6 +512,14 @@ func (p *AgreementLocalizationRevisionResourceModel) expand() (*management.Agree
 		p.RequireReconsent.ValueBool(),
 		p.Text.ValueString(),
 	)
+
+	if usedGenerated {
+		diags.AddAttributeWarning(
+			path.Root("effective_at"),
+			"Generated effective_at value used",
+			fmt.Sprintf("No effective_at value was provided; defaulted to: %s", t.Format(time.RFC3339)),
+		)
+	}
 
 	return data, diags
 }
@@ -530,7 +555,7 @@ func (p *AgreementLocalizationRevisionResourceModel) toState(apiObject *manageme
 func agreementLocalizationRevisionDeleteErrorHandler(r *http.Response, p1Error *model.P1Error) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	diags.Append(framework.CustomErrorResourceNotFoundWarning(r, p1Error)...)
+	diags.Append(legacysdk.CustomErrorResourceNotFoundWarning(r, p1Error)...)
 
 	if p1Error != nil {
 		// Last action in the policy

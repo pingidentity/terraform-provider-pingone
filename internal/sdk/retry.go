@@ -1,4 +1,4 @@
-// Copyright © 2025 Ping Identity Corporation
+// Copyright © 2026 Ping Identity Corporation
 
 package sdk
 
@@ -19,6 +19,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/patrickcping/pingone-go-sdk-v2/risk"
 	"github.com/patrickcping/pingone-go-sdk-v2/verify"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 )
 
 type Retryable func(context.Context, *http.Response, *model.P1Error) bool
@@ -48,7 +49,7 @@ var (
 	}
 )
 
-func RetryWrapper(ctx context.Context, timeout time.Duration, f SDKInterfaceFunc, isRetryable Retryable) (interface{}, *http.Response, error) {
+func RetryWrapper(ctx context.Context, timeout time.Duration, f framework.SDKInterfaceFunc, isRetryable Retryable) (interface{}, *http.Response, error) {
 
 	var resp interface{}
 	var r *http.Response
@@ -59,7 +60,7 @@ func RetryWrapper(ctx context.Context, timeout time.Duration, f SDKInterfaceFunc
 		// error could be management, mfa, authorize, credentials
 		resp, r, err = f()
 
-		if err != nil || r.StatusCode >= 300 {
+		if err != nil || (r != nil && r.StatusCode >= 300) {
 
 			var errorModel *model.P1Error
 			var err1 error

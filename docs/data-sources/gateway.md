@@ -45,7 +45,7 @@ data "pingone_gateway" "example_by_id" {
 - `id` (String) The ID of this resource.
 - `kerberos` (Attributes) For LDAP gateways only: A single object that specifies Kerberos connection details. (see [below for nested schema](#nestedatt--kerberos))
 - `radius_clients` (Attributes Set) For RADIUS gateways only: A collection of RADIUS clients. (see [below for nested schema](#nestedatt--radius_clients))
-- `radius_davinci_policy_id` (String) For RADIUS gateways only: The ID of the DaVinci flow policy to use.
+- `radius_davinci_policy_id` (String) For RADIUS gateways only: The ID of the PingOne DaVinci flow policy to use.
 - `radius_default_shared_secret` (String, Sensitive) For RADIUS gateways only: Value to use for the shared secret if the shared secret is not provided for one or more of the RADIUS clients specified.
 - `radius_network_policy_server` (Attributes) For RADIUS gateways only: A single object that allows configuration of the RADIUS gateway to authenticate using the MS-CHAP v2 protocol. (see [below for nested schema](#nestedatt--radius_network_policy_server))
 - `servers` (Set of String) For LDAP gateways only: A list of LDAP server host name and port number combinations (for example, [`ds1.bxretail.org:636`, `ds2.bxretail.org:636`]).

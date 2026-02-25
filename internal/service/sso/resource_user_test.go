@@ -1,4 +1,4 @@
-// Copyright © 2025 Ping Identity Corporation
+// Copyright © 2026 Ping Identity Corporation
 
 package sso_test
 
@@ -12,7 +12,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
-	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
+	baselegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/sso"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -37,11 +38,11 @@ func TestAccUser_RemovalDrift(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
-
-			p1Client = acctest.PreCheckTestClient(ctx, t)
+			acctest.PreCheckNoBeta(t)
+			p1Client = acctestlegacysdk.PreCheckTestClient(ctx, t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.User_CheckDestroy,
@@ -66,7 +67,7 @@ func TestAccUser_RemovalDrift(t *testing.T) {
 			},
 			{
 				PreConfig: func() {
-					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
+					baselegacysdk.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -89,9 +90,10 @@ func TestAccUser_NewEnv(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.User_CheckDestroy,
@@ -139,7 +141,7 @@ func TestAccUser_All(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "user_lifecycle.status", "VERIFICATION_REQUIRED"),
 			resource.TestCheckResourceAttr(resourceFullName, "user_lifecycle.suppress_verification_code", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "locale", "es-419"),
-			resource.TestCheckResourceAttr(resourceFullName, "mfa_enabled", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "mfa_enabled", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "mobile_phone", "+1 555-4796"),
 			resource.TestCheckResourceAttr(resourceFullName, "name.family", "Simpson"),
 			resource.TestCheckResourceAttr(resourceFullName, "name.formatted", "Mr. Homer Jay Simpson Jr."),
@@ -185,7 +187,7 @@ func TestAccUser_All(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "user_lifecycle.status", "ACCOUNT_OK"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "user_lifecycle.suppress_verification_code"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "locale"),
-			resource.TestCheckResourceAttr(resourceFullName, "mfa_enabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "mfa_enabled", "true"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "mobile_phone"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "name.family"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "name.formatted"),
@@ -207,8 +209,9 @@ func TestAccUser_All(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.User_CheckDestroy,
@@ -237,7 +240,7 @@ func TestAccUser_All(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -286,7 +289,7 @@ func TestAccUser_AllWithoutReplacement(t *testing.T) {
 			resource.TestCheckNoResourceAttr(resourceFullName, "identity_provider.id"),
 			resource.TestCheckResourceAttr(resourceFullName, "identity_provider.type", "PING_ONE"),
 			resource.TestCheckResourceAttr(resourceFullName, "locale", "es-419"),
-			resource.TestCheckResourceAttr(resourceFullName, "mfa_enabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "mfa_enabled", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "mobile_phone", "+1 555-4796"),
 			resource.TestCheckResourceAttr(resourceFullName, "name.family", "Simpson"),
 			resource.TestCheckResourceAttr(resourceFullName, "name.formatted", "Mr. Homer Jay Simpson Jr."),
@@ -329,7 +332,7 @@ func TestAccUser_AllWithoutReplacement(t *testing.T) {
 			resource.TestCheckNoResourceAttr(resourceFullName, "identity_provider.id"),
 			resource.TestCheckResourceAttr(resourceFullName, "identity_provider.type", "PING_ONE"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "locale"),
-			resource.TestCheckResourceAttr(resourceFullName, "mfa_enabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "mfa_enabled", "true"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "mobile_phone"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "name.family"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "name.formatted"),
@@ -350,8 +353,9 @@ func TestAccUser_AllWithoutReplacement(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.User_CheckDestroy,
@@ -396,8 +400,9 @@ func TestAccUser_AccountLocked(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.User_CheckDestroy,
@@ -427,8 +432,9 @@ func TestAccUser_ChangePopulation(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.User_CheckDestroy,
@@ -484,8 +490,9 @@ func TestAccUser_ChangeMFA(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.User_CheckDestroy,
@@ -526,8 +533,9 @@ func TestAccUser_ChangeUsernameAndEmail(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.User_CheckDestroy,
@@ -551,8 +559,9 @@ func TestAccUser_BadParameters(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.User_CheckDestroy,
@@ -600,7 +609,7 @@ resource "pingone_user" "%[3]s" {
   username      = "%[4]s"
   email         = "%[4]s@pingidentity.com"
   population_id = pingone_population.%[3]s.id
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccUserConfig_Full(resourceName, name string) string {
@@ -656,7 +665,7 @@ resource "pingone_user" "%[2]s" {
   }
 
   locale      = "es-419"
-  mfa_enabled = true
+  mfa_enabled = false
 
   mobile_phone  = "+1 555-4796"
   primary_phone = "555-6832"
@@ -734,7 +743,7 @@ resource "pingone_user" "%[2]s" {
   external_id = "12345678-id"
 
   locale      = "es-419"
-  mfa_enabled = false
+  mfa_enabled = true
 
   mobile_phone  = "+1 555-4796"
   primary_phone = "555-6832"

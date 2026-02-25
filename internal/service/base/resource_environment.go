@@ -1,4 +1,4 @@
-// Copyright © 2025 Ping Identity Corporation
+// Copyright © 2026 Ping Identity Corporation
 
 package base
 
@@ -32,6 +32,7 @@ import (
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	stringdefaultinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringdefaultinternal"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
@@ -60,6 +61,7 @@ type environmentResourceModel struct {
 type environmentServiceModel struct {
 	Type       types.String `tfsdk:"type"`
 	ConsoleUrl types.String `tfsdk:"console_url"`
+	Deployment types.Object `tfsdk:"deployment"`
 	Bookmarks  types.Set    `tfsdk:"bookmarks"`
 	Tags       types.Set    `tfsdk:"tags"`
 }
@@ -73,8 +75,13 @@ var (
 	environmentServiceTFObjectTypes = map[string]attr.Type{
 		"type":        types.StringType,
 		"console_url": types.StringType,
+		"deployment":  types.ObjectType{AttrTypes: environmentServiceDeploymentTFObjectTypes},
 		"bookmarks":   types.SetType{ElemType: types.ObjectType{AttrTypes: environmentServiceBookmarkTFObjectTypes}},
 		"tags":        types.SetType{ElemType: types.StringType},
+	}
+
+	environmentServiceDeploymentTFObjectTypes = map[string]attr.Type{
+		"id": types.StringType,
 	}
 
 	environmentServiceBookmarkTFObjectTypes = map[string]attr.Type{
@@ -222,7 +229,7 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 				}()),
 
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.UseNonNullStateForUnknown(),
 					stringplanmodifier.RequiresReplace(),
 				},
 
@@ -256,7 +263,7 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 				CustomType: pingonetypes.ResourceIDType{},
 
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.UseNonNullStateForUnknown(),
 				},
 			},
 
@@ -299,6 +306,18 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 							MarkdownDescription: serviceConsoleUrlDescription.MarkdownDescription,
 
 							Optional: true,
+						},
+
+						"deployment": schema.SingleNestedAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies the external resource associated with this product, containing state and settings related to the external resource.").Description,
+							Computed:    true,
+
+							Attributes: map[string]schema.Attribute{
+								"id": schema.StringAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of the external resource associated with this product").Description,
+									Computed:    true,
+								},
+							},
 						},
 
 						"tags": schema.SetAttribute{
@@ -416,12 +435,48 @@ func (r *EnvironmentResource) ModifyPlan(ctx context.Context, req resource.Modif
 		return
 	}
 
+	// Copy deployment ID from state to plan to avoid known issues with set attributes
+	if !req.State.Raw.IsNull() && !state.Services.IsNull() {
+		var serviceState []environmentServiceModel
+		resp.Diagnostics.Append(state.Services.ElementsAs(ctx, &serviceState, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		serviceStateMap := make(map[string]environmentServiceModel)
+		for _, v := range serviceState {
+			serviceStateMap[v.Type.ValueString()] = v
+		}
+
+		for i, v := range servicePlan {
+			if v.Deployment.IsUnknown() || v.Deployment.IsNull() {
+				if stateService, ok := serviceStateMap[v.Type.ValueString()]; ok {
+					if !stateService.Deployment.IsNull() {
+						servicePlan[i].Deployment = stateService.Deployment
+					} else {
+						servicePlan[i].Deployment = types.ObjectNull(environmentServiceDeploymentTFObjectTypes)
+					}
+				}
+			}
+		}
+
+		serviceList, d := types.SetValueFrom(ctx, types.ObjectType{AttrTypes: environmentServiceTFObjectTypes}, servicePlan)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("services"), serviceList)...)
+		plan.Services = serviceList
+	}
+
 	if len(servicePlan) == 0 {
 
 		serviceDefaultMap := map[string]attr.Value{
 			"type":        framework.StringToTF("SSO"),
 			"console_url": types.StringNull(),
-			"bookmark":    types.SetNull(types.ObjectType{AttrTypes: environmentServiceBookmarkTFObjectTypes}),
+			"deployment":  types.ObjectNull(environmentServiceDeploymentTFObjectTypes),
+			"bookmarks":   types.SetNull(types.ObjectType{AttrTypes: environmentServiceBookmarkTFObjectTypes}),
 			"tags":        types.SetNull(types.StringType),
 		}
 
@@ -438,9 +493,17 @@ func (r *EnvironmentResource) ModifyPlan(ctx context.Context, req resource.Modif
 			return
 		}
 
-		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("service"), serviceDefault)...)
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("services"), serviceDefault)...)
+		plan.Services = serviceDefault
 	}
 
+	// Validate that PingID services are not being added or removed via Terraform
+	// and that existing PingID services have deployment IDs
+	if req.State.Raw.IsNull() {
+		resp.Diagnostics.Append(r.validateServices(ctx, plan.Services, nil)...)
+	} else {
+		resp.Diagnostics.Append(r.validateServices(ctx, plan.Services, &state.Services)...)
+	}
 }
 
 func (r *EnvironmentResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
@@ -457,7 +520,7 @@ func (r *EnvironmentResource) Configure(ctx context.Context, req resource.Config
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -513,7 +576,7 @@ func (r *EnvironmentResource) Create(ctx context.Context, req resource.CreateReq
 
 	// Run the API call
 	var environmentResponse *management.Environment
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
@@ -559,15 +622,15 @@ func (r *EnvironmentResource) Read(ctx context.Context, req resource.ReadRequest
 
 	// Run the API call
 	var environmentResponse *management.Environment
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.EnvironmentsApi.ReadOneEnvironment(ctx, data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.Id.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.Id.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneEnvironment",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		retryEnvironmentDefault,
 		&environmentResponse,
 	)...)
@@ -583,15 +646,15 @@ func (r *EnvironmentResource) Read(ctx context.Context, req resource.ReadRequest
 
 	// The bill of materials
 	var billOfMaterialsResponse *management.BillOfMaterials
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.BillOfMaterialsBOMApi.ReadOneBillOfMaterials(ctx, data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.Id.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.Id.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneBillOfMaterials",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		retryEnvironmentDefault,
 		&billOfMaterialsResponse,
 	)...)
@@ -638,14 +701,14 @@ func (r *EnvironmentResource) Update(ctx context.Context, req resource.UpdateReq
 		updateEnvironmentTypeRequest := *management.NewUpdateEnvironmentTypeRequest()
 
 		updateEnvironmentTypeRequest.SetType(management.EnumEnvironmentType(plan.Type.ValueString()))
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 			func() (any, *http.Response, error) {
 				fO, fR, fErr := r.Client.ManagementAPIClient.EnvironmentsApi.UpdateEnvironmentType(ctx, plan.Id.ValueString()).UpdateEnvironmentTypeRequest(updateEnvironmentTypeRequest).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.Id.ValueString(), fO, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.Id.ValueString(), fO, fR, fErr)
 			},
 			"UpdateEnvironmentType",
-			framework.DefaultCustomError,
+			legacysdk.DefaultCustomError,
 			nil,
 			nil,
 		)...)
@@ -660,12 +723,12 @@ func (r *EnvironmentResource) Update(ctx context.Context, req resource.UpdateReq
 		!plan.Description.Equal(state.Description) ||
 		!plan.LicenseId.Equal(state.LicenseId) {
 
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
 				fO, fR, fErr := r.Client.ManagementAPIClient.EnvironmentsApi.UpdateEnvironment(ctx, plan.Id.ValueString()).Environment(*environment).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.Id.ValueString(), fO, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.Id.ValueString(), fO, fR, fErr)
 			},
 			"UpdateEnvironment",
 			environmentCreateCustomErrorHandler,
@@ -674,15 +737,15 @@ func (r *EnvironmentResource) Update(ctx context.Context, req resource.UpdateReq
 		)...)
 
 	} else {
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
 				fO, fR, fErr := r.Client.ManagementAPIClient.EnvironmentsApi.ReadOneEnvironment(ctx, plan.Id.ValueString()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.Id.ValueString(), fO, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.Id.ValueString(), fO, fR, fErr)
 			},
 			"ReadOneEnvironment",
-			framework.CustomErrorResourceNotFoundWarning,
+			legacysdk.CustomErrorResourceNotFoundWarning,
 			retryEnvironmentDefault,
 			&environmentResponse,
 		)...)
@@ -694,35 +757,30 @@ func (r *EnvironmentResource) Update(ctx context.Context, req resource.UpdateReq
 	// The bill of materials
 	var billOfMaterialsResponse *management.BillOfMaterials
 	if !plan.Services.Equal(state.Services) {
-
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
 				fO, fR, fErr := r.Client.ManagementAPIClient.BillOfMaterialsBOMApi.UpdateBillOfMaterials(ctx, plan.Id.ValueString()).BillOfMaterials(*environment.BillOfMaterials).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.Id.ValueString(), fO, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.Id.ValueString(), fO, fR, fErr)
 			},
 			"UpdateBillOfMaterials",
-			framework.CustomErrorResourceNotFoundWarning,
+			legacysdk.CustomErrorResourceNotFoundWarning,
 			retryEnvironmentDefault,
 			&billOfMaterialsResponse,
 		)...)
-
 	} else {
-
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
-
 			func() (any, *http.Response, error) {
 				fO, fR, fErr := r.Client.ManagementAPIClient.BillOfMaterialsBOMApi.ReadOneBillOfMaterials(ctx, plan.Id.ValueString()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.Id.ValueString(), fO, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.Id.ValueString(), fO, fR, fErr)
 			},
 			"ReadOneBillOfMaterials",
-			framework.CustomErrorResourceNotFoundWarning,
+			legacysdk.CustomErrorResourceNotFoundWarning,
 			retryEnvironmentDefault,
 			&billOfMaterialsResponse,
 		)...)
-
 	}
 	if resp.Diagnostics.HasError() {
 		return
@@ -823,15 +881,15 @@ func deleteEnvironment(ctx context.Context, apiClient *management.APIClient, env
 	var diags diag.Diagnostics
 
 	var environmentResponse *management.Environment
-	diags.Append(framework.ParseResponse(
+	diags.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := apiClient.EnvironmentsApi.ReadOneEnvironment(ctx, environmentId).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentId, fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentId, fO, fR, fErr)
 		},
 		"ReadOneEnvironment-Delete",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		retryEnvironmentDefault,
 		&environmentResponse,
 	)...)
@@ -848,15 +906,15 @@ func deleteEnvironment(ctx context.Context, apiClient *management.APIClient, env
 		)
 		deletedEnv = false
 	} else {
-		diags.Append(framework.ParseResponse(
+		diags.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
 				fR, fErr := apiClient.EnvironmentsApi.DeleteEnvironment(ctx, environmentId).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentId, nil, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentId, nil, fR, fErr)
 			},
 			"DeleteEnvironment",
-			framework.CustomErrorResourceNotFoundWarning,
+			legacysdk.CustomErrorResourceNotFoundWarning,
 			sdk.DefaultCreateReadRetryable,
 			nil,
 		)...)
@@ -993,6 +1051,24 @@ func (p *environmentServiceModel) expand(ctx context.Context) (*management.BillO
 
 		bomService.SetTags(servicesTagsEnum)
 	}
+	if !p.Deployment.IsNull() && !p.Deployment.IsUnknown() {
+		var deploymentPlan struct {
+			Id types.String `tfsdk:"id"`
+		}
+		diags.Append(p.Deployment.As(ctx, &deploymentPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		if !deploymentPlan.Id.IsNull() && !deploymentPlan.Id.IsUnknown() {
+			deployment := management.NewBillOfMaterialsProductsInnerDeployment()
+			deployment.SetId(deploymentPlan.Id.ValueString())
+			bomService.SetDeployment(*deployment)
+		}
+	}
 
 	return bomService, diags
 }
@@ -1085,6 +1161,18 @@ func toStateEnvironmentServices(services []management.BillOfMaterialsProductsInn
 
 		service["tags"] = framework.EnumSetOkToTF(v.GetTagsOk())
 
+		if c, ok := v.GetDeploymentOk(); ok {
+			deploymentMap := map[string]attr.Value{
+				"id": framework.StringOkToTF(c.GetIdOk()),
+			}
+
+			deployment, d := types.ObjectValue(environmentServiceDeploymentTFObjectTypes, deploymentMap)
+			diags.Append(d...)
+			service["deployment"] = deployment
+		} else {
+			service["deployment"] = types.ObjectNull(environmentServiceDeploymentTFObjectTypes)
+		}
+
 		bookmarks, d := toStateEnvironmentServicesBookmark(v.GetBookmarks())
 		diags.Append(d...)
 		service["bookmarks"] = bookmarks
@@ -1139,7 +1227,7 @@ func environmentCreateCustomErrorHandler(_ *http.Response, p1Error *model.P1Erro
 		if details, ok := p1Error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
 			if target, ok := details[0].GetTargetOk(); ok && *target == "region" {
 				diags.AddError(
-					fmt.Sprintf("Incompatible environment region for the organization tenant.  Allowed regions: %v.", details[0].GetInnerError().AllowedValues),
+					fmt.Sprintf("incompatible environment region for the organization tenant.  Allowed regions: %v.", details[0].GetInnerError().AllowedValues),
 					"Ensure the region parameter is correctly set.  If the region parameter is correctly set in the resource creation, please raise an issue with the provider maintainers.",
 				)
 
@@ -1222,6 +1310,122 @@ func (r *EnvironmentResource) environmentServicesValidateTags(ctx context.Contex
 
 	return diags
 }
+
+func (r *EnvironmentResource) validateServices(ctx context.Context, services basetypes.SetValue, stateServices *basetypes.SetValue) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	if services.IsNull() || services.IsUnknown() {
+		return diags
+	}
+
+	var servicesPlan []environmentServiceModel
+	diags.Append(services.ElementsAs(ctx, &servicesPlan, false)...)
+	if diags.HasError() {
+		return diags
+	}
+
+	restrictedServices := []management.EnumProductType{
+		management.ENUMPRODUCTTYPE_ONE_ID,
+		management.ENUMPRODUCTTYPE_ID,
+	}
+
+	for _, restrictedServiceType := range restrictedServices {
+
+		product, err := model.FindProductByAPICode(restrictedServiceType)
+		if err != nil {
+			diags.AddAttributeError(
+				path.Root("services"),
+				fmt.Sprintf("Cannot find %s product", restrictedServiceType),
+				fmt.Sprintf("In validating the configuration, the %s product could not be found. This is always a bug in the provider. Please report this issue to the provider maintainers.", restrictedServiceType),
+			)
+			return diags
+		}
+
+		// Find restricted service in Plan
+		var servicePlan *environmentServiceModel
+		for _, service := range servicesPlan {
+			if service.Type.Equal(types.StringValue(product.ProductCode)) {
+				s := service
+				servicePlan = &s
+				break
+			}
+		}
+
+		isCreate := stateServices == nil
+		serviceInState := false
+
+		if !isCreate && !stateServices.IsNull() {
+			var servicesState []environmentServiceModel
+			diags.Append(stateServices.ElementsAs(ctx, &servicesState, false)...)
+			if diags.HasError() {
+				return diags
+			}
+			for _, s := range servicesState {
+				if s.Type.Equal(types.StringValue(product.ProductCode)) {
+					serviceInState = true
+					break
+				}
+			}
+		}
+
+		if isCreate {
+			if servicePlan != nil {
+				// Restricted service cannot be included on create
+				diags.AddAttributeError(
+					path.Root("services"),
+					"Invalid service configuration",
+					fmt.Sprintf("New environments created through Terraform cannot include the `%s` service. Please create the environment in the PingOne console first, then import the environment into your Terraform state.", product.ProductCode),
+				)
+			}
+		} else {
+			// Check for removal
+			if serviceInState && servicePlan == nil {
+				diags.AddAttributeError(
+					path.Root("services"),
+					fmt.Sprintf("Cannot remove %s service", restrictedServiceType),
+					fmt.Sprintf("The `%s` service cannot be removed from an environment via Terraform configuration. Please create a new environment without the `%s` service.", product.ProductCode, product.ProductCode),
+				)
+			}
+
+			if servicePlan != nil {
+				// Check for `deployment` and `deployment.id`
+				if !servicePlan.Deployment.IsNull() && !servicePlan.Deployment.IsUnknown() {
+					var deploymentPlan struct {
+						Id types.String `tfsdk:"id"`
+					}
+					diags.Append(servicePlan.Deployment.As(ctx, &deploymentPlan, basetypes.ObjectAsOptions{
+						UnhandledNullAsEmpty:    false,
+						UnhandledUnknownAsEmpty: false,
+					})...)
+					if diags.HasError() {
+						return diags
+					}
+
+					if !deploymentPlan.Id.IsNull() && !deploymentPlan.Id.IsUnknown() {
+						continue
+					}
+				}
+
+				if !serviceInState { // Restricted service is in the plan but not in state
+					diags.AddAttributeError(
+						path.Root("services"),
+						"Invalid service configuration",
+						fmt.Sprintf("The `%s` service cannot be added via Terraform configuration. This service must be enabled/configured in the PingOne Console first, and then imported or refreshed into the Terraform state.", product.ProductCode),
+					)
+				} else { // Restricted service is in the plan and state but missing deployment ID
+					diags.AddAttributeError(
+						path.Root("services"),
+						"Missing deployment ID",
+						fmt.Sprintf("The `%s` service is present in the configuration but missing a deployment ID in the state. Please run `terraform refresh` to update the state with the external configuration.", product.ProductCode),
+					)
+				}
+			}
+		}
+	}
+
+	return diags
+}
+
 func (r *EnvironmentResource) validateSolutionValue(solutionType basetypes.StringValue) diag.Diagnostics {
 	var diags diag.Diagnostics
 

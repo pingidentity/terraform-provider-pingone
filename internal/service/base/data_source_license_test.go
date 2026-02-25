@@ -1,4 +1,4 @@
-// Copyright © 2025 Ping Identity Corporation
+// Copyright © 2026 Ping Identity Corporation
 
 package base_test
 
@@ -24,11 +24,21 @@ func TestAccLicenseDataSource_ByIDFull(t *testing.T) {
 	organizationID := os.Getenv("PINGONE_ORGANIZATION_ID")
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
+	positiveIntegerRegex := regexp.MustCompile(`^[1-9][0-9]*$`)
+
+	terminatesAtCheck := resource.TestCheckNoResourceAttr(dataSourceFullName, "terminates_at")
+	if os.Getenv("PINGONE_REGION_CODE") == "SG" {
+		// The SG license has a terminates_at field
+		terminatesAtCheck = resource.TestMatchResourceAttr(dataSourceFullName, "terminates_at", verify.RFC3339Regexp)
+	}
+
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckOrganisationID(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.License_CheckDestroy,
@@ -46,7 +56,7 @@ func TestAccLicenseDataSource_ByIDFull(t *testing.T) {
 					resource.TestMatchResourceAttr(dataSourceFullName, "replaced_by_license_id", regexp.MustCompile(`^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$|^()$`)),
 					resource.TestMatchResourceAttr(dataSourceFullName, "begins_at", verify.RFC3339Regexp),
 					resource.TestMatchResourceAttr(dataSourceFullName, "expires_at", verify.RFC3339Regexp),
-					resource.TestCheckNoResourceAttr(dataSourceFullName, "terminates_at"),
+					terminatesAtCheck,
 					resource.TestCheckResourceAttrWith(dataSourceFullName, "assigned_environments_count", func(value string) error {
 
 						valueInt, err := strconv.Atoi(value)
@@ -69,12 +79,8 @@ func TestAccLicenseDataSource_ByIDFull(t *testing.T) {
 					resource.TestCheckResourceAttr(dataSourceFullName, "environments.allow_custom_domain", "true"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "environments.allow_custom_schema", "true"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "environments.allow_production", "true"),
-					resource.TestCheckResourceAttr(dataSourceFullName, "environments.max", "50"),
-					resource.TestCheckResourceAttr(dataSourceFullName, "environments.regions.#", "4"),
-					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "environments.regions.*", "EU"),
-					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "environments.regions.*", "NORTH_AMERICA"),
-					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "environments.regions.*", "AP"),
-					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "environments.regions.*", "CA"),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environments.max", positiveIntegerRegex),
+					resource.TestMatchResourceAttr(dataSourceFullName, "environments.regions.#", positiveIntegerRegex),
 					resource.TestCheckResourceAttr(dataSourceFullName, "fraud.allow_bot_malicious_device_detection", "true"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "fraud.allow_account_protection", "true"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "gateways.allow_ldap_gateway", "true"),
@@ -105,9 +111,9 @@ func TestAccLicenseDataSource_ByIDFull(t *testing.T) {
 					resource.TestCheckResourceAttr(dataSourceFullName, "users.allow_verification_flow", "true"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "users.allow_update_self", "true"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "users.entitled_to_support", "true"),
-					resource.TestCheckResourceAttr(dataSourceFullName, "users.max", "10000000"),
-					resource.TestCheckResourceAttr(dataSourceFullName, "users.max_hard_limit", "11000000"),
-					resource.TestCheckResourceAttr(dataSourceFullName, "users.annual_active_included", "10000000"),
+					resource.TestMatchResourceAttr(dataSourceFullName, "users.max", positiveIntegerRegex),
+					resource.TestMatchResourceAttr(dataSourceFullName, "users.max_hard_limit", positiveIntegerRegex),
+					resource.TestMatchResourceAttr(dataSourceFullName, "users.annual_active_included", positiveIntegerRegex),
 					resource.TestCheckNoResourceAttr(dataSourceFullName, "users.monthly_active_included"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "verify.allow_push_notifications", "true"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "verify.allow_document_match", "true"),
@@ -128,8 +134,9 @@ func TestAccLicenseDataSource_NotFound(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		ErrorCheck:               acctest.ErrorCheck(t),

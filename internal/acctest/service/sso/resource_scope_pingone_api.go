@@ -1,4 +1,4 @@
-// Copyright © 2025 Ping Identity Corporation
+// Copyright © 2026 Ping Identity Corporation
 
 package sso
 
@@ -12,12 +12,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 )
 
 func ResourceScopePingOneAPI_CheckDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
-	p1Client, err := acctest.TestClient(ctx)
+	p1Client, err := legacysdk.TestClient(ctx)
 
 	if err != nil {
 		return err
@@ -27,7 +28,7 @@ func ResourceScopePingOneAPI_CheckDestroy(s *terraform.State) error {
 
 	re, err := regexp.Compile(`^p1:(read|update):user$`)
 	if err != nil {
-		return fmt.Errorf("Cannot compile regex check for predefined scopes.")
+		return fmt.Errorf("cannot compile regex check for predefined scopes")
 	}
 
 	for _, rs := range s.RootModule().Resources {
@@ -39,7 +40,7 @@ func ResourceScopePingOneAPI_CheckDestroy(s *terraform.State) error {
 			return nil
 		} else {
 
-			shouldContinue, err := acctest.CheckParentEnvironmentDestroy(ctx, p1Client.API.ManagementAPIClient, rs.Primary.Attributes["environment_id"])
+			shouldContinue, err := legacysdk.CheckParentEnvironmentDestroy(ctx, p1Client.API.ManagementAPIClient, rs.Primary.Attributes["environment_id"])
 			if err != nil {
 				return err
 			}
@@ -71,7 +72,7 @@ func ResourceScopePingOneAPI_GetIDs(resourceName string, environmentID, openidRe
 
 		rs, ok := s.RootModule().Resources[resourceName]
 		if !ok {
-			return fmt.Errorf("Resource Not found: %s", resourceName)
+			return fmt.Errorf("resource not found: %s", resourceName)
 		}
 
 		if resourceID != nil {

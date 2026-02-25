@@ -1,4 +1,4 @@
-// Copyright © 2025 Ping Identity Corporation
+// Copyright © 2026 Ping Identity Corporation
 
 package sso
 
@@ -26,6 +26,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	objectplanmodifierinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectplanmodifier"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service"
@@ -48,6 +49,7 @@ type identityProviderResourceModelV1 struct {
 	Facebook                 types.Object                 `tfsdk:"facebook"`
 	Google                   types.Object                 `tfsdk:"google"`
 	LinkedIn                 types.Object                 `tfsdk:"linkedin"`
+	LinkedInOIDC             types.Object                 `tfsdk:"linkedin_oidc"`
 	Yahoo                    types.Object                 `tfsdk:"yahoo"`
 	Amazon                   types.Object                 `tfsdk:"amazon"`
 	Twitter                  types.Object                 `tfsdk:"twitter"`
@@ -96,7 +98,11 @@ type identityProviderPaypalResourceModelV1 struct {
 	ClientEnvironment types.String `tfsdk:"client_environment"`
 }
 
-type identityProviderMicrosoftResourceModelV1 identityProviderClientIdClientSecretResourceModelV1
+type identityProviderMicrosoftResourceModelV1 struct {
+	ClientId     types.String `tfsdk:"client_id"`
+	ClientSecret types.String `tfsdk:"client_secret"`
+	TenantId     types.String `tfsdk:"tenant_id"`
+}
 
 type identityProviderGithubResourceModelV1 identityProviderClientIdClientSecretResourceModelV1
 
@@ -167,6 +173,12 @@ var (
 		"client_id":          types.StringType,
 		"client_secret":      types.StringType,
 		"client_environment": types.StringType,
+	}
+
+	identityProviderMicrosoftTFObjectTypes = map[string]attr.Type{
+		"client_id":     types.StringType,
+		"client_secret": types.StringType,
+		"tenant_id":     types.StringType,
 	}
 
 	identityProviderOIDCTFObjectTypes = map[string]attr.Type{
@@ -242,7 +254,7 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 	const samlSloWindowMin = 1
 	const samlSloWindowMax = 24
 
-	providerAttributeList := []string{"facebook", "google", "linkedin", "yahoo", "amazon", "twitter", "apple", "paypal", "microsoft", "github", "openid_connect", "saml"}
+	providerAttributeList := []string{"facebook", "google", "linkedin", "linkedin_oidc", "yahoo", "amazon", "twitter", "apple", "paypal", "microsoft", "github", "openid_connect", "saml"}
 
 	enabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether the identity provider is enabled in the environment.",
@@ -311,6 +323,14 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 	samlSLOWindowDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("An integer that defines how long (hours) PingOne can exchange logout messages with the application, specifically a logout request from the application, since the initial request. The minimum value is `%d` hour and the maximum is `%d` hours.", samlSloWindowMin, samlSloWindowMax),
 	)
+
+	linkedInSchemaAttr := identityProviderSchemaAttribute(
+		framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies options for connectivity to the LinkedIn social identity provider. This block is deprecated and will be removed in a future release. Use the `linkedin_oidc` block instead."),
+		identityProviderClientIdClientSecretAttributes("LinkedIn"),
+		providerAttributeList,
+	)
+
+	linkedInSchemaAttr.DeprecationMessage = framework.SchemaAttributeDescriptionFromMarkdown("This block is deprecated and will be removed in a future release. Use the `linkedin_oidc` block instead.").Description
 
 	resp.Schema = schema.Schema{
 
@@ -443,7 +463,9 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 				providerAttributeList,
 			),
 
-			"linkedin": identityProviderSchemaAttribute(
+			"linkedin": linkedInSchemaAttr,
+
+			"linkedin_oidc": identityProviderSchemaAttribute(
 				framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies options for connectivity to the LinkedIn social identity provider."),
 
 				identityProviderClientIdClientSecretAttributes("LinkedIn"),
@@ -560,7 +582,35 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 			"microsoft": identityProviderSchemaAttribute(
 				framework.SchemaAttributeDescriptionFromMarkdown("A single block that specifies options for connectivity to the Microsoft social identity provider."),
 
-				identityProviderClientIdClientSecretAttributes("Microsoft"),
+				map[string]schema.Attribute{
+					"client_id": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the application client ID from Microsoft.").Description,
+						Required:    true,
+
+						Validators: []validator.String{
+							stringvalidator.LengthAtLeast(attrMinLength),
+						},
+					},
+
+					"client_secret": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the application client secret from Microsoft.").Description,
+						Required:    true,
+						Sensitive:   true,
+
+						Validators: []validator.String{
+							stringvalidator.LengthAtLeast(attrMinLength),
+						},
+					},
+
+					"tenant_id": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the tenant ID from Microsoft Entra ID. This property is required if Entra ID is enabled.").Description,
+						Optional:    true,
+
+						Validators: []validator.String{
+							stringvalidator.LengthAtLeast(attrMinLength),
+						},
+					},
+				},
 
 				providerAttributeList,
 			),
@@ -912,7 +962,7 @@ func (r *IdentityProviderResource) Configure(ctx context.Context, req resource.C
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -957,15 +1007,15 @@ func (r *IdentityProviderResource) Create(ctx context.Context, req resource.Crea
 
 	// Run the API call
 	var response *management.IdentityProvider
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.IdentityProvidersApi.CreateIdentityProvider(ctx, plan.EnvironmentId.ValueString()).IdentityProvider(*identityProvider).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateIdentityProvider",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
@@ -999,15 +1049,15 @@ func (r *IdentityProviderResource) Read(ctx context.Context, req resource.ReadRe
 
 	// Run the API call
 	var response *management.IdentityProvider
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.IdentityProvidersApi.ReadOneIdentityProvider(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneIdentityProvider",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
@@ -1051,15 +1101,15 @@ func (r *IdentityProviderResource) Update(ctx context.Context, req resource.Upda
 
 	// Run the API call
 	var response *management.IdentityProvider
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.IdentityProvidersApi.UpdateIdentityProvider(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).IdentityProvider(*identityProvider).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateIdentityProvider",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		nil,
 		&response,
 	)...)
@@ -1092,15 +1142,15 @@ func (r *IdentityProviderResource) Delete(ctx context.Context, req resource.Dele
 	}
 
 	// Run the API call
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fR, fErr := r.Client.ManagementAPIClient.IdentityProvidersApi.DeleteIdentityProvider(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteIdentityProvider",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		nil,
 		nil,
 	)...)
@@ -1284,6 +1334,34 @@ func (p *identityProviderResourceModelV1) expand(ctx context.Context) (*manageme
 		processedCount += 1
 	}
 
+	if !p.LinkedInOIDC.IsNull() && !p.LinkedInOIDC.IsUnknown() {
+		var plan identityProviderLinkedInResourceModelV1
+		d := p.LinkedInOIDC.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		idpData := management.IdentityProviderClientIDClientSecret{
+			Enabled:         common.Enabled,
+			Name:            common.Name,
+			Type:            management.ENUMIDENTITYPROVIDEREXT_LINKEDIN_OIDC,
+			Description:     common.Description,
+			Registration:    common.Registration,
+			LoginButtonIcon: common.LoginButtonIcon,
+			Icon:            common.Icon,
+		}
+
+		idpData.SetClientId(plan.ClientId.ValueString())
+		idpData.SetClientSecret(plan.ClientSecret.ValueString())
+
+		data.IdentityProviderClientIDClientSecret = &idpData
+		processedCount += 1
+	}
+
 	if !p.Yahoo.IsNull() && !p.Yahoo.IsUnknown() {
 		var plan identityProviderYahooResourceModelV1
 		d := p.Yahoo.As(ctx, &plan, basetypes.ObjectAsOptions{
@@ -1438,7 +1516,7 @@ func (p *identityProviderResourceModelV1) expand(ctx context.Context) (*manageme
 			return nil, diags
 		}
 
-		idpData := management.IdentityProviderClientIDClientSecret{
+		idpData := management.IdentityProviderMicrosoft{
 			Enabled:         common.Enabled,
 			Name:            common.Name,
 			Type:            management.ENUMIDENTITYPROVIDEREXT_MICROSOFT,
@@ -1450,8 +1528,11 @@ func (p *identityProviderResourceModelV1) expand(ctx context.Context) (*manageme
 
 		idpData.SetClientId(plan.ClientId.ValueString())
 		idpData.SetClientSecret(plan.ClientSecret.ValueString())
+		if !plan.TenantId.IsNull() && !plan.TenantId.IsUnknown() {
+			idpData.SetTenantId(plan.TenantId.ValueString())
+		}
 
-		data.IdentityProviderClientIDClientSecret = &idpData
+		data.IdentityProviderMicrosoft = &idpData
 		processedCount += 1
 	}
 
@@ -1791,6 +1872,9 @@ func (p *identityProviderResourceModelV1) toState(apiObject *management.Identity
 	p.LinkedIn, d = identityProviderClientIDClientSecretToTF(apiObject.IdentityProviderClientIDClientSecret, management.ENUMIDENTITYPROVIDEREXT_LINKEDIN)
 	diags.Append(d...)
 
+	p.LinkedInOIDC, d = identityProviderClientIDClientSecretToTF(apiObject.IdentityProviderClientIDClientSecret, management.ENUMIDENTITYPROVIDEREXT_LINKEDIN_OIDC)
+	diags.Append(d...)
+
 	p.Yahoo, d = identityProviderClientIDClientSecretToTF(apiObject.IdentityProviderClientIDClientSecret, management.ENUMIDENTITYPROVIDEREXT_YAHOO)
 	diags.Append(d...)
 
@@ -1806,7 +1890,7 @@ func (p *identityProviderResourceModelV1) toState(apiObject *management.Identity
 	p.Paypal, d = identityProviderPaypalToTF(apiObject.IdentityProviderPaypal)
 	diags.Append(d...)
 
-	p.Microsoft, d = identityProviderClientIDClientSecretToTF(apiObject.IdentityProviderClientIDClientSecret, management.ENUMIDENTITYPROVIDEREXT_MICROSOFT)
+	p.Microsoft, d = identityProviderMicrosoftToTF(apiObject.IdentityProviderMicrosoft)
 	diags.Append(d...)
 
 	p.Github, d = identityProviderClientIDClientSecretToTF(apiObject.IdentityProviderClientIDClientSecret, management.ENUMIDENTITYPROVIDEREXT_GITHUB)
@@ -1891,6 +1975,25 @@ func identityProviderPaypalToTF(idpApiObject *management.IdentityProviderPaypal)
 	}
 
 	returnVar, d := types.ObjectValue(identityProviderPaypalTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func identityProviderMicrosoftToTF(idpApiObject *management.IdentityProviderMicrosoft) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if idpApiObject == nil || idpApiObject.GetType() != management.ENUMIDENTITYPROVIDEREXT_MICROSOFT {
+		return types.ObjectNull(identityProviderMicrosoftTFObjectTypes), diags
+	}
+
+	attributesMap := map[string]attr.Value{
+		"client_id":     framework.StringOkToTF(idpApiObject.GetClientIdOk()),
+		"client_secret": framework.StringOkToTF(idpApiObject.GetClientSecretOk()),
+		"tenant_id":     framework.StringOkToTF(idpApiObject.GetTenantIdOk()),
+	}
+
+	returnVar, d := types.ObjectValue(identityProviderMicrosoftTFObjectTypes, attributesMap)
 	diags.Append(d...)
 
 	return returnVar, diags

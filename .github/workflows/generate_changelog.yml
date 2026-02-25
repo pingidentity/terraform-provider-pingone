@@ -8,10 +8,9 @@ jobs:
     if: github.event.pull_request.merged || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - run: cd tools && go install github.com/hashicorp/go-changelog/cmd/changelog-build
       - run: ./scripts/generate-changelog.sh
       - run: |
           if [[ `git status --porcelain` ]]; then

@@ -1,0 +1,27 @@
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2` 0.12.17 => 0.12.18
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` 0.8.0 => 0.8.1
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` 0.11.0 => 0.11.1
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.57.0 => 0.57.1
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` 0.23.0 => 0.23.1
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/risk` 0.19.0 => 0.19.1
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/verify` 0.9.0 => 0.9.1
+```

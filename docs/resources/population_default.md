@@ -36,12 +36,31 @@ resource "pingone_population_default" "my_default_population" {
 
 ### Optional
 
+- `alternative_identifiers` (Set of String) Alternative identifiers that can be used to search for populations besides `name`.
 - `description` (String) A description to apply to the default population.
-- `password_policy_id` (String) The ID of a password policy to assign to the default population.
+- `password_policy` (Attributes) The object reference to the password policy resource. This is an optional property. Conflicts with `password_policy_id`. (see [below for nested schema](#nestedatt--password_policy))
+- `password_policy_id` (String, Deprecated) A string that specifies the ID of a password policy to assign to the population.  Must be a valid PingOne resource ID. The "password_policy.id" attribute should be used instead of this attribute.  Conflicts with "password_policy".
+- `preferred_language` (String) The language locale for the population. If absent, the environment default is used.
+- `theme` (Attributes) The object reference to the theme resource. (see [below for nested schema](#nestedatt--theme))
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+
+<a id="nestedatt--password_policy"></a>
+### Nested Schema for `password_policy`
+
+Required:
+
+- `id` (String) The ID of the password policy that is used for this population. If absent, the environment's default is used. Must be a valid PingOne resource ID.
+
+
+<a id="nestedatt--theme"></a>
+### Nested Schema for `theme`
+
+Required:
+
+- `id` (String) The ID of the theme to use for the population. If absent, the environment's default is used. Must be a valid PingOne resource ID.
 
 ## Import
 

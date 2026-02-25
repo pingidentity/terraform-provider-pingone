@@ -1,0 +1,3 @@
+```release-note:bug
+`resource/ageement_localization`: Improved handling of enable_at parameter when creating or revising localization agreements 
+```

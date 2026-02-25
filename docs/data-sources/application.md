@@ -49,6 +49,7 @@ data "pingone_application" "example_by_id" {
 - `oidc_options` (Attributes) OIDC/OAuth application specific settings. (see [below for nested schema](#nestedatt--oidc_options))
 - `saml_options` (Attributes) SAML application specific settings. (see [below for nested schema](#nestedatt--saml_options))
 - `tags` (Set of String) An array that specifies the list of labels associated with the application.
+- `wsfed_options` (Attributes) A single object that specifies WS-Fed application specific settings. (see [below for nested schema](#nestedatt--wsfed_options))
 
 <a id="nestedatt--access_control_group_options"></a>
 ### Nested Schema for `access_control_group_options`
@@ -92,10 +93,13 @@ Read-Only:
 - `device_timeout` (Number) An integer that specifies the length of time (in seconds) that the `userCode` and `deviceCode` returned by the `/device_authorization` endpoint are valid.
 - `grant_types` (Set of String) A list that specifies the grant type for the authorization request.
 - `home_page_url` (String) The custom home page URL for the application.  The provided URL is expected to use the `https://` schema.  The `http` schema is permitted where the host is `localhost` or `127.0.0.1`.
+- `idp_signoff` (Boolean) A boolean flag to allow signoff without access to the session token cookie.
+- `include_x5t` (Boolean) A boolean that specifies whether tokens signed for this application include the `x5t` signature header in the signed JWT.
 - `initiate_login_uri` (String) A string that specifies the URI to use for third-parties to begin the sign-on process for the application.
 - `jwks` (String) A string that specifies a JWKS string that validates the signature of signed JWTs for applications that use the `PRIVATE_KEY_JWT` option for the `token_endpoint_auth_method`. This property is required when `token_endpoint_auth_method` is `PRIVATE_KEY_JWT` and the `jwks_url` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-private_key_jwt-jwks-string). This property is also required if the optional `request` property JWT on the authorize endpoint is signed using the RS256 (or RS384, RS512) signing algorithm and the `jwks_url` property is empty. For more infornmation about signing the `request` property JWT, see [Create a request property JWT](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-request-property-jwt).
 - `jwks_url` (String) A string that specifies a URL (supports `https://` only) that provides access to a JWKS string that validates the signature of signed JWTs for applications that use the `PRIVATE_KEY_JWT` option for the `token_endpoint_auth_method`. This property is required when `token_endpoint_auth_method` is `PRIVATE_KEY_JWT` and the `jwks` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-private_key_jwt-jwks-string). This property is also required if the optional `request` property JWT on the authorize endpoint is signed using the RS256 (or RS384, RS512) signing algorithm and the `jwks` property is empty. For more infornmation about signing the `request` property JWT, see [Create a request property JWT](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-request-property-jwt).
 - `mobile_app` (Attributes) Mobile application integration settings. (see [below for nested schema](#nestedatt--oidc_options--mobile_app))
+- `op_session_check_enabled` (Boolean) A boolean that specifies whether the `session_state` parameter is included in the authentication response.
 - `par_requirement` (String) A string that specifies whether pushed authorization requests (PAR) are required.
 - `par_timeout` (Number) An integer that specifies the pushed authorization request (PAR) timeout in seconds.
 - `pkce_enforcement` (String) A string that specifies how `PKCE` request parameters are handled on the authorize request.
@@ -104,6 +108,7 @@ Read-Only:
 - `refresh_token_duration` (Number) An integer that specifies the lifetime in seconds of the refresh token.
 - `refresh_token_rolling_duration` (Number) An integer that specifies the number of seconds a refresh token can be exchanged before re-authentication is required.
 - `refresh_token_rolling_grace_period_duration` (Number) The number of seconds that a refresh token may be reused after having been exchanged for a new set of tokens.
+- `request_scopes_for_multiple_resources_enabled` (Boolean) A boolean that specifies whether the application can request scopes from multiple custom resources.
 - `require_signed_request_object` (Boolean) A boolean that indicates that the Java Web Token (JWT) for the [request query](https://openid.net/specs/openid-connect-core-1_0.html#RequestObject) parameter is required to be signed. If `false` or null, a signed request object is not required. Both `support_unsigned_request_object` and this property cannot be set to `true`.  Defaults to `false`.
 - `response_types` (Set of String) A list that specifies the code or token type returned by an authorization request.
 - `support_unsigned_request_object` (Boolean) A boolean that specifies whether the request query parameter JWT is allowed to be unsigned.
@@ -198,6 +203,7 @@ Read-Only:
 - `sp_entity_id` (String) A string that specifies the service provider entity ID used to lookup the application. This is a required property and is unique within the environment.
 - `sp_verification` (Attributes) A single object that specifies SP signature verification settings. (see [below for nested schema](#nestedatt--saml_options--sp_verification))
 - `type` (String) A string that specifies the type associated with the application.
+- `virtual_server_id_settings` (Attributes) A single object that specifies settings for SAML virtual server IDs. (see [below for nested schema](#nestedatt--saml_options--virtual_server_id_settings))
 
 <a id="nestedatt--saml_options--cors_settings"></a>
 ### Nested Schema for `saml_options.cors_settings`
@@ -241,3 +247,79 @@ Read-Only:
 
 - `authn_request_signed` (Boolean) A boolean that specifies whether the Authn Request signing should be enforced.
 - `certificate_ids` (Set of String) A list that specifies the certificate IDs used to verify the service provider signature.
+
+
+<a id="nestedatt--saml_options--virtual_server_id_settings"></a>
+### Nested Schema for `saml_options.virtual_server_id_settings`
+
+Read-Only:
+
+- `enabled` (Boolean) A boolean that specifies whether virtual server IDs are enabled for this SAML application.
+- `virtual_server_ids` (Attributes List) A list of virtual server ID objects. Each object contains a virtual server ID and a flag indicating if it is the default. (see [below for nested schema](#nestedatt--saml_options--virtual_server_id_settings--virtual_server_ids))
+
+<a id="nestedatt--saml_options--virtual_server_id_settings--virtual_server_ids"></a>
+### Nested Schema for `saml_options.virtual_server_id_settings.virtual_server_ids`
+
+Read-Only:
+
+- `default` (Boolean) Whether this virtual server ID is the default.
+- `vs_id` (String) The virtual server ID.
+
+
+
+
+<a id="nestedatt--wsfed_options"></a>
+### Nested Schema for `wsfed_options`
+
+Read-Only:
+
+- `audience_restriction` (String) The service provider ID. The default value is `urn:federation:MicrosoftOnline`.
+- `cors_settings` (Attributes) A single object that allows customization of how the Authorization and Authentication APIs interact with CORS requests that reference the application. If omitted, the application allows CORS requests from any origin except for operations that expose sensitive information (e.g. `/as/authorize` and `/as/token`).  This is legacy behavior, and it is recommended that applications migrate to include specific CORS settings. (see [below for nested schema](#nestedatt--wsfed_options--cors_settings))
+- `domain_name` (String) The federated domain name (for example, the Azure custom domain).
+- `idp_signing_key` (Attributes) Contains the information about the signing of requests by the identity provider (IdP). (see [below for nested schema](#nestedatt--wsfed_options--idp_signing_key))
+- `kerberos` (Attributes) The Kerberos authentication settings. Leave this out of the configuration to disable Kerberos authentication. (see [below for nested schema](#nestedatt--wsfed_options--kerberos))
+- `reply_url` (String) The URL that the replying party (such as, Office365) uses to accept submissions of RequestSecurityTokenResponse messages that are a result of SSO requests.
+- `slo_endpoint` (String) The single logout endpoint URL.
+- `subject_name_identifier_format` (String) The format to use for the SubjectNameIdentifier element. Options are `urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified`, `urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress`.
+- `type` (String) A string that specifies the type associated with the application. This is a required property. Options are `WEB_APP`, `NATIVE_APP`, `SINGLE_PAGE_APP`, `WORKER`, `SERVICE`, `CUSTOM_APP`, `PORTAL_LINK_APP`.
+
+<a id="nestedatt--wsfed_options--cors_settings"></a>
+### Nested Schema for `wsfed_options.cors_settings`
+
+Read-Only:
+
+- `behavior` (String) A string that represents the behavior of how Authorization and Authentication APIs interact with CORS requests that reference the application.  Options are `ALLOW_NO_ORIGINS` (rejects all CORS requests), `ALLOW_SPECIFIC_ORIGINS` (rejects all CORS requests except those listed in `origins`).
+- `origins` (Set of String) A set of strings that represent the origins from which CORS requests to the Authorization and Authentication APIs are allowed.  Each value will be a `http` or `https` URL without a path.  The host may be a domain name (including `localhost`), or an IPv4 address.  Subdomains may use the wildcard (`*`) to match any string.  Is expected to be non-empty when `behavior` is `ALLOW_SPECIFIC_ORIGINS` and is expected to be omitted or empty when `behavior` is `ALLOW_NO_ORIGINS`.  Limited to 20 values.
+
+
+<a id="nestedatt--wsfed_options--idp_signing_key"></a>
+### Nested Schema for `wsfed_options.idp_signing_key`
+
+Read-Only:
+
+- `algorithm` (String) A string that specifies the signature algorithm of the key.
+- `key_id` (String) An ID for the certificate key pair to be used by the identity provider to sign assertions and responses.
+
+
+<a id="nestedatt--wsfed_options--kerberos"></a>
+### Nested Schema for `wsfed_options.kerberos`
+
+Read-Only:
+
+- `gateways` (Attributes Set) The LDAP gateway properties. (see [below for nested schema](#nestedatt--wsfed_options--kerberos--gateways))
+
+<a id="nestedatt--wsfed_options--kerberos--gateways"></a>
+### Nested Schema for `wsfed_options.kerberos.gateways`
+
+Read-Only:
+
+- `id` (String) The UUID of the LDAP gateway. Must be a valid PingOne resource ID.
+- `type` (String) The gateway type. This must be "LDAP".
+- `user_type` (Attributes) The object reference to the user type in the list of "userTypes" for the LDAP gateway. (see [below for nested schema](#nestedatt--wsfed_options--kerberos--gateways--user_type))
+
+<a id="nestedatt--wsfed_options--kerberos--gateways--user_type"></a>
+### Nested Schema for `wsfed_options.kerberos.gateways.user_type`
+
+Read-Only:
+
+- `id` (String) The UUID of a user type in the list of `userTypes` for the LDAP gateway. Must be a valid PingOne resource ID.

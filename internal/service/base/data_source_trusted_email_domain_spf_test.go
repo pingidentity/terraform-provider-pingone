@@ -1,4 +1,4 @@
-// Copyright © 2025 Ping Identity Corporation
+// Copyright © 2026 Ping Identity Corporation
 
 package base_test
 
@@ -10,12 +10,14 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 )
 
 func TestAccTrustedEmailDomainSPFDataSource_Full(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
+	domainPrefix := acctest.DomainNamePrefixWithTimestampGen()
 	resourceFullName := fmt.Sprintf("pingone_trusted_email_domain_spf.%s", resourceName)
 	dataSourceFullName := fmt.Sprintf("data.%s", resourceFullName)
 
@@ -25,15 +27,17 @@ func TestAccTrustedEmailDomainSPFDataSource_Full(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
+			acctest.PreCheckNewTrustedEmailDomain(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccTrustedEmailDomainSPFDataSourceConfig_Full(environmentName, licenseID, resourceName),
+				Config: testAccTrustedEmailDomainSPFDataSourceConfig_Full(environmentName, licenseID, resourceName, domainPrefix),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(dataSourceFullName, "type", "TXT"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "status", "VERIFICATION_REQUIRED"),
@@ -52,8 +56,9 @@ func TestAccTrustedEmailDomainSPFDataSource_NotFound(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -70,21 +75,21 @@ func TestAccTrustedEmailDomainSPFDataSource_NotFound(t *testing.T) {
 	})
 }
 
-func testAccTrustedEmailDomainSPFDataSourceConfig_Full(environmentName, licenseID, resourceName string) string {
+func testAccTrustedEmailDomainSPFDataSourceConfig_Full(environmentName, licenseID, resourceName, domainPrefix string) string {
 	return fmt.Sprintf(`
 %[1]s
 
 resource "pingone_trusted_email_domain" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
-  domain_name = "terraformdev.ping-eng.com"
+  domain_name = "%[4]s.cdi-team-terraform-ted-test.ping-eng.com"
 }
 
 data "pingone_trusted_email_domain_spf" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
   trusted_email_domain_id = pingone_trusted_email_domain.%[3]s.id
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, domainPrefix)
 }
 
 func testAccTrustedEmailDomainSPFDataSourceConfig_NotFoundByID(resourceName string) string {

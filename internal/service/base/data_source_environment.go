@@ -1,4 +1,4 @@
-// Copyright © 2025 Ping Identity Corporation
+// Copyright © 2026 Ping Identity Corporation
 
 package base
 
@@ -19,6 +19,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 )
 
 // Types
@@ -180,6 +181,18 @@ func (r *EnvironmentDataSource) Schema(ctx context.Context, req datasource.Schem
 							Computed:            true,
 						},
 
+						"deployment": schema.SingleNestedAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies the external resource associated with this product, containing state and settings related to the external resource.").Description,
+							Computed:    true,
+
+							Attributes: map[string]schema.Attribute{
+								"id": schema.StringAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of the external resource associated with this product").Description,
+									Computed:    true,
+								},
+							},
+						},
+
 						"tags": schema.SetAttribute{
 							Description:         serviceTagsDescription.Description,
 							MarkdownDescription: serviceTagsDescription.MarkdownDescription,
@@ -221,7 +234,7 @@ func (r *EnvironmentDataSource) Configure(ctx context.Context, req datasource.Co
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -264,7 +277,7 @@ func (r *EnvironmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 		scimFilter := fmt.Sprintf("name sw \"%s\"", data.Name.ValueString())
 
 		// Run the API call
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
@@ -284,7 +297,7 @@ func (r *EnvironmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 					if environments, ok := pageCursor.EntityArray.Embedded.GetEnvironmentsOk(); ok {
 						for _, environmentItem := range environments {
 
-							if environmentItem.GetName() == data.Name.ValueString() {
+							if strings.EqualFold(environmentItem.GetName(), data.Name.ValueString()) {
 								return &environmentItem, pageCursor.HTTPResponse, nil
 							}
 						}
@@ -295,7 +308,7 @@ func (r *EnvironmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 				return nil, initialHttpResponse, nil
 			},
 			"ReadAllEnvironments",
-			framework.DefaultCustomError,
+			legacysdk.DefaultCustomError,
 			retryEnvironmentDefault,
 			&environment,
 		)...)
@@ -314,15 +327,15 @@ func (r *EnvironmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 	} else if !data.EnvironmentId.IsNull() {
 
 		// Run the API call
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
 				fO, fR, fErr := r.Client.ManagementAPIClient.EnvironmentsApi.ReadOneEnvironment(ctx, data.EnvironmentId.ValueString()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"ReadOneEnvironment",
-			framework.DefaultCustomError,
+			legacysdk.DefaultCustomError,
 			retryEnvironmentDefault,
 			&environment,
 		)...)
@@ -340,15 +353,15 @@ func (r *EnvironmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 	// The bill of materials
 	var billOfMaterialsResponse *management.BillOfMaterials
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.BillOfMaterialsBOMApi.ReadOneBillOfMaterials(ctx, environment.GetId()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, environment.GetId(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, environment.GetId(), fO, fR, fErr)
 		},
 		"ReadOneBillOfMaterials",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		retryEnvironmentDefault,
 		&billOfMaterialsResponse,
 	)...)

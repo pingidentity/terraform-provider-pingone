@@ -1,4 +1,4 @@
-// Copyright © 2025 Ping Identity Corporation
+// Copyright © 2026 Ping Identity Corporation
 
 package base
 
@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -17,7 +18,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/davincitypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
@@ -45,7 +48,7 @@ type gatewayDataSourceModel struct {
 
 	// Radius
 	RadiusClients             types.Set                    `tfsdk:"radius_clients"`
-	RadiusDavinciPolicyId     pingonetypes.ResourceIDValue `tfsdk:"radius_davinci_policy_id"`
+	RadiusDavinciPolicyId     davincitypes.ResourceIDValue `tfsdk:"radius_davinci_policy_id"`
 	RadiusDefaultSharedSecret types.String                 `tfsdk:"radius_default_shared_secret"`
 	RadiusNetworkPolicyServer types.Object                 `tfsdk:"radius_network_policy_server"`
 }
@@ -331,10 +334,10 @@ func (r *GatewayDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 
 			// RADIUS
 			"radius_davinci_policy_id": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("For RADIUS gateways only: The ID of the DaVinci flow policy to use.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("For RADIUS gateways only: The ID of the PingOne DaVinci flow policy to use.").Description,
 				Computed:    true,
 
-				CustomType: pingonetypes.ResourceIDType{},
+				CustomType: davincitypes.ResourceIDType{},
 			},
 			"radius_default_shared_secret": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("For RADIUS gateways only: Value to use for the shared secret if the shared secret is not provided for one or more of the RADIUS clients specified.").Description,
@@ -385,7 +388,7 @@ func (r *GatewayDataSource) Configure(ctx context.Context, req datasource.Config
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -427,15 +430,15 @@ func (r *GatewayDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	if !data.GatewayId.IsNull() {
 		// Run the API call
 		var response *management.CreateGateway201Response
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
 				fO, fR, fErr := r.Client.ManagementAPIClient.GatewaysApi.ReadOneGateway(ctx, data.EnvironmentId.ValueString(), data.GatewayId.ValueString()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"ReadOneGateway",
-			framework.DefaultCustomError,
+			legacysdk.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
 			&response,
 		)...)
@@ -448,7 +451,7 @@ func (r *GatewayDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	} else if !data.Name.IsNull() {
 		// Run the API call
 		var response *management.CreateGateway201Response
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
@@ -458,7 +461,7 @@ func (r *GatewayDataSource) Read(ctx context.Context, req datasource.ReadRequest
 
 				for pageCursor, err := range pagedIterator {
 					if err != nil {
-						return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+						return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
 					}
 
 					if initialHttpResponse == nil {
@@ -468,17 +471,17 @@ func (r *GatewayDataSource) Read(ctx context.Context, req datasource.ReadRequest
 					if gateways, ok := pageCursor.EntityArray.Embedded.GetGatewaysOk(); ok {
 
 						for _, gatewayObject := range gateways {
-							if gateway := gatewayObject.Gateway; gateway != nil && gateway.GetId() != "" && gateway.GetName() == data.Name.ValueString() {
+							if gateway := gatewayObject.Gateway; gateway != nil && gateway.GetId() != "" && strings.EqualFold(gateway.GetName(), data.Name.ValueString()) {
 								return &management.CreateGateway201Response{
 									Gateway: gateway,
 								}, pageCursor.HTTPResponse, nil
 
-							} else if gateway := gatewayObject.GatewayTypeLDAP; gateway != nil && gateway.GetId() != "" && gateway.GetName() == data.Name.ValueString() {
+							} else if gateway := gatewayObject.GatewayTypeLDAP; gateway != nil && gateway.GetId() != "" && strings.EqualFold(gateway.GetName(), data.Name.ValueString()) {
 								return &management.CreateGateway201Response{
 									GatewayTypeLDAP: gateway,
 								}, pageCursor.HTTPResponse, nil
 
-							} else if gateway := gatewayObject.GatewayTypeRADIUS; gateway != nil && gateway.GetId() != "" && gateway.GetName() == data.Name.ValueString() {
+							} else if gateway := gatewayObject.GatewayTypeRADIUS; gateway != nil && gateway.GetId() != "" && strings.EqualFold(gateway.GetName(), data.Name.ValueString()) {
 								return &management.CreateGateway201Response{
 									GatewayTypeRADIUS: gateway,
 								}, pageCursor.HTTPResponse, nil
@@ -492,7 +495,7 @@ func (r *GatewayDataSource) Read(ctx context.Context, req datasource.ReadRequest
 				return nil, initialHttpResponse, nil
 			},
 			"ReadAllGateways",
-			framework.DefaultCustomError,
+			legacysdk.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
 			&response,
 		)...)
@@ -555,7 +558,7 @@ func (p *gatewayDataSourceModel) toState(ctx context.Context, apiObject interfac
 		p.UserTypes = types.MapNull(types.ObjectType{AttrTypes: gatewayUserTypesTFObjectTypes})
 
 		// Radius
-		p.RadiusDavinciPolicyId = pingonetypes.NewResourceIDNull()
+		p.RadiusDavinciPolicyId = davincitypes.NewResourceIDNull()
 		p.RadiusDefaultSharedSecret = types.StringNull()
 		p.RadiusClients = types.SetNull(types.ObjectType{AttrTypes: gatewayRadiusClientsTFObjectTypes})
 		p.RadiusNetworkPolicyServer = types.ObjectNull(gatewayRadiusNetworkPolicyServerTFObjectTypes)
@@ -597,7 +600,7 @@ func (p *gatewayDataSourceModel) toState(ctx context.Context, apiObject interfac
 		diags.Append(d...)
 
 		// Radius
-		p.RadiusDavinciPolicyId = pingonetypes.NewResourceIDNull()
+		p.RadiusDavinciPolicyId = davincitypes.NewResourceIDNull()
 		p.RadiusDefaultSharedSecret = types.StringNull()
 		p.RadiusClients = types.SetNull(types.ObjectType{AttrTypes: gatewayRadiusClientsTFObjectTypes})
 		p.RadiusNetworkPolicyServer = types.ObjectNull(gatewayRadiusNetworkPolicyServerTFObjectTypes)
@@ -624,7 +627,7 @@ func (p *gatewayDataSourceModel) toState(ctx context.Context, apiObject interfac
 		// Radius
 		if dv, ok := t.GetDavinciOk(); ok {
 			if policy, ok := dv.GetPolicyOk(); ok {
-				p.RadiusDavinciPolicyId = framework.PingOneResourceIDOkToTF(policy.GetIdOk())
+				p.RadiusDavinciPolicyId = framework.DaVinciResourceIDOkToTF(policy.GetIdOk())
 			}
 		}
 		p.RadiusDefaultSharedSecret = framework.StringOkToTF(t.GetDefaultSharedSecretOk())

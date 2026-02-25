@@ -1,0 +1,3 @@
+```release-note:enhancement
+`resource/pingone_application`: Added validation for `saml_options.type` to disallow `TEMPLATE_APP` used for Catalog Applications. See issue ([#1062](https://github.com/pingidentity/terraform-provider-pingone/issues/1062)) for details.
+```

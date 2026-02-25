@@ -1,4 +1,4 @@
-// Copyright © 2025 Ping Identity Corporation
+// Copyright © 2026 Ping Identity Corporation
 
 package sweep
 
@@ -14,7 +14,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
-	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
@@ -80,7 +80,7 @@ func FetchTaggedEnvironmentsByPrefix(ctx context.Context, apiClient *management.
 
 					for _, environment := range environments {
 						if environment.GetName() == "Administrators" {
-							return nil, nil, fmt.Errorf("Unsafe filter, Administrators environment present: %s", filter)
+							return nil, nil, fmt.Errorf("unsafe filter, Administrators environment present: %s", filter)
 						}
 					}
 
@@ -114,7 +114,7 @@ func FetchTaggedEnvironmentsByPrefix(ctx context.Context, apiClient *management.
 		},
 	)
 	if diags.HasError() {
-		return nil, fmt.Errorf("Error getting environments for sweep")
+		return nil, fmt.Errorf("error getting environments for sweep")
 	}
 
 	respList := resp.([]management.Environment)
@@ -122,7 +122,7 @@ func FetchTaggedEnvironmentsByPrefix(ctx context.Context, apiClient *management.
 	return respList, nil
 }
 
-func CreateTestEnvironment(ctx context.Context, apiClient *management.APIClient, region management.EnvironmentRegion, index string) error {
+func CreateTestEnvironment(ctx context.Context, apiClient *management.APIClient, region management.EnvironmentRegion, index string, davinciBootstrapped bool) error {
 
 	environmentLicense := os.Getenv("PINGONE_LICENSE_ID")
 
@@ -136,7 +136,9 @@ func CreateTestEnvironment(ctx context.Context, apiClient *management.APIClient,
 	productBOMItems := make([]management.BillOfMaterialsProductsInner, 0)
 
 	daVinciService := management.NewBillOfMaterialsProductsInner(management.ENUMPRODUCTTYPE_ONE_DAVINCI)
-	daVinciService.SetTags([]management.EnumBillOfMaterialsProductTags{management.ENUMBILLOFMATERIALSPRODUCTTAGS_DAVINCI_MINIMAL})
+	if !davinciBootstrapped {
+		daVinciService.SetTags([]management.EnumBillOfMaterialsProductTags{management.ENUMBILLOFMATERIALSPRODUCTTAGS_DAVINCI_MINIMAL})
+	}
 
 	productBOMItems = append(productBOMItems, *management.NewBillOfMaterialsProductsInner(management.ENUMPRODUCTTYPE_ONE_AUTHORIZE))
 	productBOMItems = append(productBOMItems, *management.NewBillOfMaterialsProductsInner(management.ENUMPRODUCTTYPE_ONE_BASE))
@@ -160,7 +162,7 @@ func CreateTestEnvironment(ctx context.Context, apiClient *management.APIClient,
 			// Invalid region
 			if details, ok := error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
 				if target, ok := details[0].GetTargetOk(); ok && *target == "region" {
-					diags := diag.FromErr(fmt.Errorf("Incompatible environment region for the organization tenant.  Expecting regions %v, region provided: %+v", details[0].GetInnerError().AllowedValues, region))
+					diags := diag.FromErr(fmt.Errorf("incompatible environment region for the organization tenant.  Expecting regions %v, region provided: %+v", details[0].GetInnerError().AllowedValues, region))
 
 					return diags
 				}
@@ -171,7 +173,7 @@ func CreateTestEnvironment(ctx context.Context, apiClient *management.APIClient,
 		nil,
 	)
 	if diags.HasError() {
-		return fmt.Errorf("Cannot create environment `%s`", environment.GetName())
+		return fmt.Errorf("cannot create environment `%s`", environment.GetName())
 	}
 
 	environmentID := resp.(*management.Environment).GetId()
@@ -185,14 +187,14 @@ func CreateTestEnvironment(ctx context.Context, apiClient *management.APIClient,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := apiClient.PopulationsApi.CreatePopulation(ctx, environmentID).Population(population).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, fO, fR, fErr)
 		},
 		"CreatePopulation",
 		sdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 	)
 	if diags.HasError() {
-		return fmt.Errorf("Cannot create population for environment `%s`", environment.GetName())
+		return fmt.Errorf("cannot create population for environment `%s`", environment.GetName())
 	}
 
 	return nil

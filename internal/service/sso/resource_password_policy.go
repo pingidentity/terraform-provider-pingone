@@ -1,4 +1,4 @@
-// Copyright © 2025 Ping Identity Corporation
+// Copyright © 2026 Ping Identity Corporation
 
 package sso
 
@@ -24,6 +24,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -105,6 +106,18 @@ var (
 	_ resource.ResourceWithImportState = &PasswordPolicyResource{}
 )
 
+const (
+	attrMinLength                   = 1
+	passwordLengthMax               = 255
+	passwordLengthMinMin            = 8
+	passwordLengthMinMax            = 32
+	minCharactersFixedValue         = 0
+	maxCharactersFixedValue         = 1
+	maxRepeatedCharactersFixedValue = 2
+	minComplexityFixedValue         = 7
+	minUniqueCharactersFixedValue   = 5
+)
+
 // New Object
 func NewPasswordPolicyResource() resource.Resource {
 	return &PasswordPolicyResource{}
@@ -117,16 +130,6 @@ func (r *PasswordPolicyResource) Metadata(ctx context.Context, req resource.Meta
 
 // Schema.
 func (r *PasswordPolicyResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
-
-	const attrMinLength = 1
-	const passwordLengthMax = 255
-	const passwordLengthMinMin = 8
-	const passwordLengthMinMax = 32
-	const minCharactersFixedValue = 1
-	const maxRepeatedCharactersFixedValue = 2
-	const minComplexityFixedValue = 7
-	const minUniqueCharactersFixedValue = 5
-
 	defaultDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether this password policy is enforced as the default within the environment. When set to `true`, all other password policies are set to `false`.",
 	).DefaultValue(false)
@@ -152,20 +155,20 @@ func (r *PasswordPolicyResource) Schema(ctx context.Context, req resource.Schema
 	)
 
 	minCharactersAlphabeticalUppercaseDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"An integer that specifies the count of alphabetical uppercase characters (`ABCDEFGHIJKLMNOPQRSTUVWXYZ`) that should feature in the user's password.",
-	).DefaultValue(minCharactersFixedValue).FixedValue(minCharactersFixedValue)
+		"An integer that specifies the count of alphabetical uppercase characters (`ABCDEFGHIJKLMNOPQRSTUVWXYZ`) that should feature in the user's password. Setting to `0` will remove the requirement. The default of `1` will be removed in the next major release.",
+	).DefaultValue(maxCharactersFixedValue)
 
 	minCharactersAlphabeticalLowercaseDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"An integer that specifies the count of alphabetical uppercase characters (`abcdefghijklmnopqrstuvwxyz`) that should feature in the user's password.",
-	).DefaultValue(minCharactersFixedValue).FixedValue(minCharactersFixedValue)
+		"An integer that specifies the count of alphabetical uppercase characters (`abcdefghijklmnopqrstuvwxyz`) that should feature in the user's password. Setting to `0` will remove the requirement. The default of `1` will be removed in the next major release.",
+	).DefaultValue(maxCharactersFixedValue)
 
 	minCharactersNumericDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"An integer that specifies the count of numeric characters (`0123456789`) that should feature in the user's password.",
-	).DefaultValue(minCharactersFixedValue).FixedValue(minCharactersFixedValue)
+		"An integer that specifies the count of numeric characters (`0123456789`) that should feature in the user's password. Setting to `0` will remove the requirement. The default of `1` will be removed in the next major release.",
+	).DefaultValue(maxCharactersFixedValue)
 
 	minCharactersSpecialCharactersDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"An integer that specifies the count of special characters (`~!@#$%^&*()-_=+[]{}\\|;:,.<>/?`) that should feature in the user's password.",
-	).DefaultValue(minCharactersFixedValue).FixedValue(minCharactersFixedValue)
+		"An integer that specifies the count of special characters (`~!@#$%^&*()-_=+[]{}\\|;:,.<>/?`) that should feature in the user's password. Setting to `0` will remove the requirement. The default of `1` will be removed in the next major release.",
+	).DefaultValue(maxCharactersFixedValue)
 
 	passwordAgeMaxDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An integer that specifies the maximum number of days the same password can be used before it must be changed. The value must be a positive, non-zero integer.  The value must be greater than the sum of `min` (if set) + 21 (the expiration warning interval for passwords).",
@@ -334,10 +337,10 @@ func (r *PasswordPolicyResource) Schema(ctx context.Context, req resource.Schema
 						Optional:            true,
 						Computed:            true,
 
-						Default: int32default.StaticInt32(minCharactersFixedValue),
+						Default: int32default.StaticInt32(maxCharactersFixedValue),
 
 						Validators: []validator.Int32{
-							int32validator.Between(minCharactersFixedValue, minCharactersFixedValue),
+							int32validator.Between(minCharactersFixedValue, maxCharactersFixedValue),
 						},
 					},
 
@@ -347,10 +350,10 @@ func (r *PasswordPolicyResource) Schema(ctx context.Context, req resource.Schema
 						Optional:            true,
 						Computed:            true,
 
-						Default: int32default.StaticInt32(minCharactersFixedValue),
+						Default: int32default.StaticInt32(maxCharactersFixedValue),
 
 						Validators: []validator.Int32{
-							int32validator.Between(minCharactersFixedValue, minCharactersFixedValue),
+							int32validator.Between(minCharactersFixedValue, maxCharactersFixedValue),
 						},
 					},
 
@@ -360,10 +363,10 @@ func (r *PasswordPolicyResource) Schema(ctx context.Context, req resource.Schema
 						Optional:            true,
 						Computed:            true,
 
-						Default: int32default.StaticInt32(minCharactersFixedValue),
+						Default: int32default.StaticInt32(maxCharactersFixedValue),
 
 						Validators: []validator.Int32{
-							int32validator.Between(minCharactersFixedValue, minCharactersFixedValue),
+							int32validator.Between(minCharactersFixedValue, maxCharactersFixedValue),
 						},
 					},
 
@@ -373,10 +376,10 @@ func (r *PasswordPolicyResource) Schema(ctx context.Context, req resource.Schema
 						Optional:            true,
 						Computed:            true,
 
-						Default: int32default.StaticInt32(minCharactersFixedValue),
+						Default: int32default.StaticInt32(maxCharactersFixedValue),
 
 						Validators: []validator.Int32{
-							int32validator.Between(minCharactersFixedValue, minCharactersFixedValue),
+							int32validator.Between(minCharactersFixedValue, maxCharactersFixedValue),
 						},
 					},
 				},
@@ -454,7 +457,7 @@ func (r *PasswordPolicyResource) Configure(ctx context.Context, req resource.Con
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -499,15 +502,15 @@ func (r *PasswordPolicyResource) Create(ctx context.Context, req resource.Create
 
 	// Run the API call
 	var response *management.PasswordPolicy
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.PasswordPoliciesApi.CreatePasswordPolicy(ctx, plan.EnvironmentId.ValueString()).PasswordPolicy(*passwordPolicy).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreatePasswordPolicy",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
@@ -541,15 +544,15 @@ func (r *PasswordPolicyResource) Read(ctx context.Context, req resource.ReadRequ
 
 	// Run the API call
 	var response *management.PasswordPolicy
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.PasswordPoliciesApi.ReadOnePasswordPolicy(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOnePasswordPolicy",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
@@ -593,15 +596,15 @@ func (r *PasswordPolicyResource) Update(ctx context.Context, req resource.Update
 
 	// Run the API call
 	var response *management.PasswordPolicy
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.PasswordPoliciesApi.UpdatePasswordPolicy(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).PasswordPolicy(*passwordPolicy).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdatePasswordPolicy",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		nil,
 		&response,
 	)...)
@@ -634,12 +637,12 @@ func (r *PasswordPolicyResource) Delete(ctx context.Context, req resource.Delete
 	}
 
 	// Run the API call
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fR, fErr := r.Client.ManagementAPIClient.PasswordPoliciesApi.DeletePasswordPolicy(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeletePasswordPolicy",
 		passwordPolicyDeleteCustomError,
@@ -669,7 +672,7 @@ var passwordPolicyDeleteCustomError = func(r *http.Response, p1Error *model.P1Er
 		}
 	}
 
-	diags.Append(framework.CustomErrorResourceNotFoundWarning(r, p1Error)...)
+	diags.Append(legacysdk.CustomErrorResourceNotFoundWarning(r, p1Error)...)
 	return diags
 }
 
@@ -808,19 +811,19 @@ func (p *passwordPolicyResourceModelV1) expand(ctx context.Context) (*management
 
 		minCharacters := management.NewPasswordPolicyMinCharacters()
 
-		if !plan.AlphabeticalUppercase.IsNull() && !plan.AlphabeticalUppercase.IsUnknown() {
+		if plan.AlphabeticalUppercase.ValueInt32() == maxCharactersFixedValue {
 			minCharacters.SetABCDEFGHIJKLMNOPQRSTUVWXYZ(plan.AlphabeticalUppercase.ValueInt32())
 		}
 
-		if !plan.AlphabeticalLowercase.IsNull() && !plan.AlphabeticalLowercase.IsUnknown() {
+		if plan.AlphabeticalLowercase.ValueInt32() == maxCharactersFixedValue {
 			minCharacters.SetAbcdefghijklmnopqrstuvwxyz(plan.AlphabeticalLowercase.ValueInt32())
 		}
 
-		if !plan.Numeric.IsNull() && !plan.Numeric.IsUnknown() {
+		if plan.Numeric.ValueInt32() == maxCharactersFixedValue {
 			minCharacters.SetVar0123456789(plan.Numeric.ValueInt32())
 		}
 
-		if !plan.SpecialCharacters.IsNull() && !plan.SpecialCharacters.IsUnknown() {
+		if plan.SpecialCharacters.ValueInt32() == maxCharactersFixedValue {
 			minCharacters.SetSpecialChar(plan.SpecialCharacters.ValueInt32())
 		}
 
@@ -958,11 +961,33 @@ func passwordPolicyMinCharactersOkToTF(apiObject *management.PasswordPolicyMinCh
 		return types.ObjectNull(passwordPolicyMinCharactersTFObjectTypes), diags
 	}
 
+	minCharactersInt32Value := int32(minCharactersFixedValue)
+
+	alphabeticalUppercase, ok := apiObject.GetABCDEFGHIJKLMNOPQRSTUVWXYZOk()
+	if alphabeticalUppercase == nil || !ok {
+		alphabeticalUppercase = &minCharactersInt32Value
+	}
+
+	alphabeticalLowercase, ok := apiObject.GetAbcdefghijklmnopqrstuvwxyzOk()
+	if alphabeticalLowercase == nil || !ok {
+		alphabeticalLowercase = &minCharactersInt32Value
+	}
+
+	numeric, ok := apiObject.GetVar0123456789Ok()
+	if numeric == nil || !ok {
+		numeric = &minCharactersInt32Value
+	}
+
+	specialCharacters, ok := apiObject.GetSpecialCharOk()
+	if specialCharacters == nil || !ok {
+		specialCharacters = &minCharactersInt32Value
+	}
+
 	o := map[string]attr.Value{
-		"alphabetical_uppercase": framework.Int32OkToTF(apiObject.GetABCDEFGHIJKLMNOPQRSTUVWXYZOk()),
-		"alphabetical_lowercase": framework.Int32OkToTF(apiObject.GetAbcdefghijklmnopqrstuvwxyzOk()),
-		"numeric":                framework.Int32OkToTF(apiObject.GetVar0123456789Ok()),
-		"special_characters":     framework.Int32OkToTF(apiObject.GetSpecialCharOk()),
+		"alphabetical_uppercase": types.Int32Value(*alphabeticalUppercase),
+		"alphabetical_lowercase": types.Int32Value(*alphabeticalLowercase),
+		"numeric":                types.Int32Value(*numeric),
+		"special_characters":     types.Int32Value(*specialCharacters),
 	}
 
 	returnVar, d := types.ObjectValue(passwordPolicyMinCharactersTFObjectTypes, o)

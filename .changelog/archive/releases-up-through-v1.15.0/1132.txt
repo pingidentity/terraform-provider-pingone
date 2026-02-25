@@ -1,0 +1,7 @@
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.60.0 => v0.61.0
+```
+
+```release-note:enhancement
+`data_source/pingone_role`: Added support for `Authorize Gateway Policy Evaluator` and `Help Desk Admin` roles.
+```

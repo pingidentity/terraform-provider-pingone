@@ -1,4 +1,4 @@
-// Copyright © 2025 Ping Identity Corporation
+// Copyright © 2026 Ping Identity Corporation
 
 package sso_test
 
@@ -13,7 +13,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
-	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
+	baselegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/sso"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -38,11 +39,11 @@ func TestAccApplication_RemovalDrift(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
-
-			p1Client = acctest.PreCheckTestClient(ctx, t)
+			acctest.PreCheckNoBeta(t)
+			p1Client = acctestlegacysdk.PreCheckTestClient(ctx, t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -67,7 +68,7 @@ func TestAccApplication_RemovalDrift(t *testing.T) {
 			},
 			{
 				PreConfig: func() {
-					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
+					baselegacysdk.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -90,9 +91,10 @@ func TestAccApplication_NewEnv(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -121,8 +123,9 @@ func TestAccApplication_OIDCFullWeb(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -139,13 +142,13 @@ func TestAccApplication_OIDCFullWeb(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
 					resource.TestMatchResourceAttr(resourceFullName, "icon.id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca)|(sg))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.groups.#", "1"),
 					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.type", "ANY_GROUP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "WEB_APP"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.home_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.initiate_login_uri", "https://www.pingidentity.com/initiate"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.target_link_uri", "https://www.pingidentity.com/target"),
@@ -158,6 +161,10 @@ func TestAccApplication_OIDCFullWeb(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "OPTIONAL"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.idp_signoff", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.include_x5t", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.op_session_check_enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.request_scopes_for_multiple_resources_enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.redirect_uris.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://pingidentity.com"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://www.pingidentity.com"),
@@ -184,6 +191,7 @@ func TestAccApplication_OIDCFullWeb(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "external_link_options"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "wsfed_options"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
 				),
 			},
@@ -194,7 +202,7 @@ func TestAccApplication_OIDCFullWeb(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -217,8 +225,9 @@ func TestAccApplication_OIDCMinimalWeb(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -236,7 +245,7 @@ func TestAccApplication_OIDCMinimalWeb(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "login_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "icon"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "WEB_APP"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.home_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initiate_login_uri"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
@@ -263,6 +272,7 @@ func TestAccApplication_OIDCMinimalWeb(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "external_link_options"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "wsfed_options"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "false"),
 				),
 			},
@@ -283,8 +293,9 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -302,7 +313,7 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "login_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "icon"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "WEB_APP"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.home_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initiate_login_uri"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
@@ -329,6 +340,7 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "external_link_options"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "wsfed_options"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "false"),
 				),
 			},
@@ -343,13 +355,13 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
 					resource.TestMatchResourceAttr(resourceFullName, "icon.id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca)|(sg))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.groups.#", "1"),
 					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.type", "ANY_GROUP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "WEB_APP"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.home_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.initiate_login_uri", "https://www.pingidentity.com/initiate"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.target_link_uri", "https://www.pingidentity.com/target"),
@@ -362,6 +374,10 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "OPTIONAL"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.idp_signoff", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.include_x5t", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.op_session_check_enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.request_scopes_for_multiple_resources_enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.redirect_uris.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://pingidentity.com"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://www.pingidentity.com"),
@@ -388,6 +404,7 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.cors_settings.origins.*", "https://192.168.1.1"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "external_link_options"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "wsfed_options"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
 				),
 			},
@@ -403,7 +420,7 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "login_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "icon"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "WEB_APP"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.home_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initiate_login_uri"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
@@ -430,6 +447,7 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "external_link_options"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "wsfed_options"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "false"),
 				),
 			},
@@ -450,8 +468,9 @@ func TestAccApplication_OIDCFullNative(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -468,13 +487,13 @@ func TestAccApplication_OIDCFullNative(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
 					resource.TestMatchResourceAttr(resourceFullName, "icon.id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca)|(sg))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.groups.#", "1"),
 					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.type", "ANY_GROUP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "NATIVE_APP"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.home_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initiate_login_uri"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
@@ -482,6 +501,9 @@ func TestAccApplication_OIDCFullNative(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.grant_types.*", "CLIENT_CREDENTIALS"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.response_types.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.include_x5t", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.op_session_check_enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.request_scopes_for_multiple_resources_enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "OPTIONAL"),
@@ -512,6 +534,7 @@ func TestAccApplication_OIDCFullNative(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.google_play.service_account_credentials_json"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "external_link_options"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "wsfed_options"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
 				),
 			},
@@ -522,7 +545,7 @@ func TestAccApplication_OIDCFullNative(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -550,8 +573,9 @@ func TestAccApplication_OIDCMinimalNative(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -569,7 +593,7 @@ func TestAccApplication_OIDCMinimalNative(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "login_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "icon"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "NATIVE_APP"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.home_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initiate_login_uri"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
@@ -600,6 +624,7 @@ func TestAccApplication_OIDCMinimalNative(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.passcode_refresh_seconds", "30"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "external_link_options"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "wsfed_options"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "false"),
 				),
 			},
@@ -620,8 +645,9 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -638,13 +664,13 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
 					resource.TestMatchResourceAttr(resourceFullName, "icon.id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca)|(sg))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.groups.#", "1"),
 					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.type", "ANY_GROUP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "NATIVE_APP"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.home_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initiate_login_uri"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
@@ -652,6 +678,9 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.grant_types.*", "CLIENT_CREDENTIALS"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.response_types.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.include_x5t", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.op_session_check_enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.request_scopes_for_multiple_resources_enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "OPTIONAL"),
@@ -682,6 +711,7 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.google_play.service_account_credentials_json"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "external_link_options"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "wsfed_options"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
 				),
 			},
@@ -697,7 +727,7 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "login_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "icon"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "NATIVE_APP"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.home_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initiate_login_uri"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
@@ -728,6 +758,7 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.passcode_refresh_seconds", "30"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "external_link_options"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "wsfed_options"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "false"),
 				),
 			},
@@ -742,13 +773,13 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
 					resource.TestMatchResourceAttr(resourceFullName, "icon.id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca)|(sg))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.groups.#", "1"),
 					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.type", "ANY_GROUP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "NATIVE_APP"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.home_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initiate_login_uri"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
@@ -786,6 +817,7 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.google_play.service_account_credentials_json"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "external_link_options"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "wsfed_options"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
 				),
 			},
@@ -801,8 +833,15 @@ func TestAccApplication_NativeKerberos(t *testing.T) {
 
 	name := resourceName
 
-	withKerberosTestStep := resource.TestStep{
-		Config: testAccApplicationConfig_OIDC_NativeKerberos(resourceName, name),
+	withKerberosTestStepV1 := resource.TestStep{
+		Config: testAccApplicationConfig_OIDC_NativeKerberosV1(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestMatchResourceAttr(resourceFullName, "oidc_options.certificate_based_authentication.key_id", verify.P1ResourceIDRegexpFullString),
+		),
+	}
+
+	withKerberosTestStepV2 := resource.TestStep{
+		Config: testAccApplicationConfig_OIDC_NativeKerberosV2(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestMatchResourceAttr(resourceFullName, "oidc_options.certificate_based_authentication.key_id", verify.P1ResourceIDRegexpFullString),
 		),
@@ -817,9 +856,10 @@ func TestAccApplication_NativeKerberos(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
 			acctest.PreCheckRegionSupportsWorkforce(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -827,17 +867,17 @@ func TestAccApplication_NativeKerberos(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Invalid configs
 			{
-				Config:      testAccApplicationConfig_OIDC_NativeKerberosIncorrectKeyType(resourceName, name),
+				Config:      testAccApplicationConfig_OIDC_NativeKerberosIncorrectKeyTypeV1(resourceName, name),
 				ExpectError: regexp.MustCompile("Error when calling `CreateApplication`: Key with ID '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' in Environment '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' is not for ISSUANCE. Usage type should be ISSUANCE."),
 			},
 			{
-				Config:      testAccApplicationConfig_OIDC_NativeKerberosIncorrectApplicationType(resourceName, name),
+				Config:      testAccApplicationConfig_OIDC_NativeKerberosIncorrectApplicationTypeV1(resourceName, name),
 				ExpectError: regexp.MustCompile("Invalid configuration"),
 			},
 			// With
-			withKerberosTestStep,
+			withKerberosTestStepV1,
 			{
-				Config:  testAccApplicationConfig_OIDC_NativeKerberos(resourceName, name),
+				Config:  testAccApplicationConfig_OIDC_NativeKerberosV1(resourceName, name),
 				Destroy: true,
 			},
 			// Without
@@ -847,9 +887,9 @@ func TestAccApplication_NativeKerberos(t *testing.T) {
 				Destroy: true,
 			},
 			// Change
-			withKerberosTestStep,
+			withKerberosTestStepV1,
 			withoutKerberosTestStep,
-			withKerberosTestStep,
+			withKerberosTestStepV1,
 			// Test importing the resource
 			{
 				ResourceName: resourceFullName,
@@ -857,7 +897,53 @@ func TestAccApplication_NativeKerberos(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{
+				Config:  testAccApplicationConfig_OIDC_MinimalNative(resourceName, name),
+				Destroy: true,
+			},
+			// v2
+			// Invalid configs
+			{
+				Config:      testAccApplicationConfig_OIDC_NativeKerberosIncorrectKeyTypeV2(resourceName, name),
+				ExpectError: regexp.MustCompile("Error when calling `CreateApplication`: Key with ID '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' in Environment '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' is not for ISSUANCE. Usage type should be ISSUANCE."),
+			},
+			{
+				Config:      testAccApplicationConfig_OIDC_NativeKerberosIncorrectApplicationTypeV2(resourceName, name),
+				ExpectError: regexp.MustCompile("Invalid configuration"),
+			},
+			// With
+			withKerberosTestStepV2,
+			{
+				Config:  testAccApplicationConfig_OIDC_NativeKerberosV2(resourceName, name),
+				Destroy: true,
+			},
+			// Without
+			withoutKerberosTestStep,
+			{
+				Config:  testAccApplicationConfig_OIDC_MinimalNative(resourceName, name),
+				Destroy: true,
+			},
+			// Change
+			withKerberosTestStepV2,
+			withoutKerberosTestStep,
+			withKerberosTestStepV2,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -931,8 +1017,9 @@ func TestAccApplication_NativeMobile(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -963,7 +1050,7 @@ func TestAccApplication_NativeMobile(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -1056,8 +1143,9 @@ func TestAccApplication_NativeMobile_IntegrityDetection(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 			acctest.PreCheckGoogleJSONKey(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -1117,8 +1205,9 @@ func TestAccApplication_OIDCFullCustom(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -1135,13 +1224,13 @@ func TestAccApplication_OIDCFullCustom(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
 					resource.TestMatchResourceAttr(resourceFullName, "icon.id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca)|(sg))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.groups.#", "1"),
 					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.type", "ANY_GROUP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "CUSTOM_APP"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.home_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.initiate_login_uri", "https://www.pingidentity.com/initiate"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.target_link_uri", "https://www.pingidentity.com/target"),
@@ -1154,6 +1243,10 @@ func TestAccApplication_OIDCFullCustom(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.device_custom_verification_uri"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.device_timeout", "600"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.device_polling_interval", "5"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.idp_signoff", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.include_x5t", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.op_session_check_enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.request_scopes_for_multiple_resources_enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.response_types.#", "3"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "CODE"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "TOKEN"),
@@ -1188,6 +1281,7 @@ func TestAccApplication_OIDCFullCustom(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "external_link_options"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "wsfed_options"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
 				),
 			},
@@ -1198,7 +1292,7 @@ func TestAccApplication_OIDCFullCustom(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -1221,8 +1315,9 @@ func TestAccApplication_OIDCMinimalCustom(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -1240,7 +1335,7 @@ func TestAccApplication_OIDCMinimalCustom(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "login_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "icon"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "CUSTOM_APP"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.home_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initiate_login_uri"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
@@ -1250,6 +1345,7 @@ func TestAccApplication_OIDCMinimalCustom(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.device_custom_verification_uri"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.device_timeout", "600"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.device_polling_interval", "5"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.idp_signoff", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.response_types.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
@@ -1268,6 +1364,7 @@ func TestAccApplication_OIDCMinimalCustom(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "external_link_options"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "wsfed_options"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "false"),
 				),
 			},
@@ -1288,8 +1385,9 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -1306,13 +1404,13 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
 					resource.TestMatchResourceAttr(resourceFullName, "icon.id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca)|(sg))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.groups.#", "1"),
 					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.type", "ANY_GROUP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "CUSTOM_APP"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.home_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.initiate_login_uri", "https://www.pingidentity.com/initiate"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.target_link_uri", "https://www.pingidentity.com/target"),
@@ -1325,6 +1423,10 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.device_custom_verification_uri"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.device_timeout", "600"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.device_polling_interval", "5"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.idp_signoff", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.include_x5t", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.op_session_check_enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.request_scopes_for_multiple_resources_enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.response_types.#", "3"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "CODE"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "TOKEN"),
@@ -1359,6 +1461,7 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "external_link_options"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "wsfed_options"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
 				),
 			},
@@ -1374,7 +1477,7 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "login_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "icon"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "CUSTOM_APP"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.home_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initiate_login_uri"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
@@ -1384,6 +1487,10 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.device_custom_verification_uri"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.device_timeout", "600"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.device_polling_interval", "5"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.idp_signoff", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.include_x5t", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.op_session_check_enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.request_scopes_for_multiple_resources_enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.response_types.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
@@ -1402,6 +1509,7 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "external_link_options"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "wsfed_options"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "false"),
 				),
 			},
@@ -1416,13 +1524,13 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
 					resource.TestMatchResourceAttr(resourceFullName, "icon.id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca)|(sg))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.groups.#", "1"),
 					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.type", "ANY_GROUP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "CUSTOM_APP"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.home_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.initiate_login_uri", "https://www.pingidentity.com/initiate"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.target_link_uri", "https://www.pingidentity.com/target"),
@@ -1435,6 +1543,10 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.device_custom_verification_uri"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.device_timeout", "600"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.device_polling_interval", "5"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.idp_signoff", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.include_x5t", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.op_session_check_enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.request_scopes_for_multiple_resources_enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.response_types.#", "3"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "CODE"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.response_types.*", "TOKEN"),
@@ -1469,6 +1581,7 @@ func TestAccApplication_OIDCCustomUpdate(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "external_link_options"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "wsfed_options"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
 				),
 			},
@@ -1511,8 +1624,9 @@ func TestAccApplication_OIDCCustom_Device(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -1555,8 +1669,9 @@ func TestAccApplication_OIDCFullService(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -1573,13 +1688,13 @@ func TestAccApplication_OIDCFullService(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
 					resource.TestMatchResourceAttr(resourceFullName, "icon.id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca)|(sg))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.groups.#", "1"),
 					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.type", "ANY_GROUP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "SERVICE"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.home_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.initiate_login_uri", "https://www.pingidentity.com/initiate"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.target_link_uri", "https://www.pingidentity.com/target"),
@@ -1622,6 +1737,7 @@ func TestAccApplication_OIDCFullService(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "external_link_options"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "wsfed_options"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
 				),
 			},
@@ -1632,7 +1748,7 @@ func TestAccApplication_OIDCFullService(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -1655,8 +1771,9 @@ func TestAccApplication_OIDCMinimalService(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -1674,7 +1791,7 @@ func TestAccApplication_OIDCMinimalService(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "login_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "icon"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "SERVICE"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.home_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initiate_login_uri"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
@@ -1701,6 +1818,7 @@ func TestAccApplication_OIDCMinimalService(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "external_link_options"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "wsfed_options"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "false"),
 				),
 			},
@@ -1721,8 +1839,9 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -1739,13 +1858,13 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
 					resource.TestMatchResourceAttr(resourceFullName, "icon.id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca)|(sg))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.groups.#", "1"),
 					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.type", "ANY_GROUP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "SERVICE"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.home_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.initiate_login_uri", "https://www.pingidentity.com/initiate"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.target_link_uri", "https://www.pingidentity.com/target"),
@@ -1788,6 +1907,7 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "external_link_options"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "wsfed_options"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
 				),
 			},
@@ -1803,7 +1923,7 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "login_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "icon"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "SERVICE"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.home_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initiate_login_uri"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
@@ -1830,6 +1950,7 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "external_link_options"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "wsfed_options"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "false"),
 				),
 			},
@@ -1844,13 +1965,13 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
 					resource.TestMatchResourceAttr(resourceFullName, "icon.id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca)|(sg))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.groups.#", "1"),
 					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.type", "ANY_GROUP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "SERVICE"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.home_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.initiate_login_uri", "https://www.pingidentity.com/initiate"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.target_link_uri", "https://www.pingidentity.com/target"),
@@ -1893,6 +2014,7 @@ func TestAccApplication_OIDCServiceUpdate(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "external_link_options"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "wsfed_options"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
 				),
 			},
@@ -1913,8 +2035,9 @@ func TestAccApplication_OIDCFullSPA(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -1931,13 +2054,13 @@ func TestAccApplication_OIDCFullSPA(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
 					resource.TestMatchResourceAttr(resourceFullName, "icon.id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca)|(sg))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.groups.#", "1"),
 					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.type", "ANY_GROUP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "SINGLE_PAGE_APP"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.home_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.initiate_login_uri", "https://www.pingidentity.com/initiate"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.target_link_uri", "https://www.pingidentity.com/target"),
@@ -1949,6 +2072,10 @@ func TestAccApplication_OIDCFullSPA(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "S256_REQUIRED"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.idp_signoff", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.include_x5t", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.op_session_check_enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.request_scopes_for_multiple_resources_enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.redirect_uris.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://pingidentity.com"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://www.pingidentity.com"),
@@ -1975,6 +2102,7 @@ func TestAccApplication_OIDCFullSPA(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "external_link_options"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "wsfed_options"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
 				),
 			},
@@ -1985,7 +2113,7 @@ func TestAccApplication_OIDCFullSPA(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -2008,8 +2136,9 @@ func TestAccApplication_OIDCMinimalSPA(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -2027,7 +2156,7 @@ func TestAccApplication_OIDCMinimalSPA(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "login_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "icon"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "SINGLE_PAGE_APP"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.home_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initiate_login_uri"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
@@ -2053,6 +2182,7 @@ func TestAccApplication_OIDCMinimalSPA(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "external_link_options"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "wsfed_options"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "false"),
 				),
 			},
@@ -2073,8 +2203,9 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -2092,7 +2223,7 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "login_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "icon"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "SINGLE_PAGE_APP"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.home_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initiate_login_uri"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
@@ -2118,6 +2249,7 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "external_link_options"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "wsfed_options"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "false"),
 				),
 			},
@@ -2132,13 +2264,13 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
 					resource.TestMatchResourceAttr(resourceFullName, "icon.id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca)|(sg))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.groups.#", "1"),
 					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.type", "ANY_GROUP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "SINGLE_PAGE_APP"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.home_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.initiate_login_uri", "https://www.pingidentity.com/initiate"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.target_link_uri", "https://www.pingidentity.com/target"),
@@ -2150,6 +2282,10 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_requirement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.par_timeout", "60"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "S256_REQUIRED"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.idp_signoff", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.include_x5t", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.op_session_check_enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.request_scopes_for_multiple_resources_enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.redirect_uris.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://pingidentity.com"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://www.pingidentity.com"),
@@ -2176,6 +2312,7 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "external_link_options"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "wsfed_options"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
 				),
 			},
@@ -2191,7 +2328,7 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "login_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "icon"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "SINGLE_PAGE_APP"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.home_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initiate_login_uri"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
@@ -2217,6 +2354,7 @@ func TestAccApplication_OIDCSPAUpdate(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "external_link_options"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "wsfed_options"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "false"),
 				),
 			},
@@ -2237,8 +2375,9 @@ func TestAccApplication_OIDCFullWorker(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -2255,14 +2394,14 @@ func TestAccApplication_OIDCFullWorker(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
 					resource.TestMatchResourceAttr(resourceFullName, "icon.id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca)|(sg))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.groups.#", "2"),
 					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.1", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.type", "ANY_GROUP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "WORKER"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.home_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initiate_login_uri"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
@@ -2295,6 +2434,7 @@ func TestAccApplication_OIDCFullWorker(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "external_link_options"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "wsfed_options"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
 				),
 			},
@@ -2305,7 +2445,7 @@ func TestAccApplication_OIDCFullWorker(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -2328,8 +2468,9 @@ func TestAccApplication_OIDCMinimalWorker(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -2349,7 +2490,7 @@ func TestAccApplication_OIDCMinimalWorker(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "WORKER"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.home_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initiate_login_uri"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
@@ -2373,6 +2514,7 @@ func TestAccApplication_OIDCMinimalWorker(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "external_link_options"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "wsfed_options"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "false"),
 				),
 			},
@@ -2393,8 +2535,9 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -2414,7 +2557,7 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "WORKER"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.home_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initiate_login_uri"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
@@ -2438,6 +2581,7 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "external_link_options"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "wsfed_options"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "false"),
 				),
 			},
@@ -2452,14 +2596,14 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
 					resource.TestMatchResourceAttr(resourceFullName, "icon.id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca)|(sg))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.groups.#", "2"),
 					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.1", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.type", "ANY_GROUP"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "WORKER"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.home_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initiate_login_uri"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
@@ -2492,6 +2636,7 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "external_link_options"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "wsfed_options"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
 				),
 			},
@@ -2509,7 +2654,7 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "WORKER"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString),
+					// resource.TestMatchResourceAttr(resourceFullName, "oidc_options.client_id", verify.P1ResourceIDRegexpFullString), // should be re-enabled on completion of CDI-631
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.home_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.initiate_login_uri"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.target_link_uri"),
@@ -2533,6 +2678,7 @@ func TestAccApplication_OIDCWorkerUpdate(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "external_link_options"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "wsfed_options"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "false"),
 				),
 			},
@@ -2551,8 +2697,9 @@ func TestAccApplication_OIDC_WildcardInRedirectURI(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -2589,8 +2736,9 @@ func TestAccApplication_OIDC_LocalhostAddresses(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -2642,8 +2790,9 @@ func TestAccApplication_OIDC_NativeAppAddresses(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -2708,8 +2857,9 @@ func TestAccApplication_OIDC_JwtTokenAuth(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -2723,7 +2873,7 @@ func TestAccApplication_OIDC_JwtTokenAuth(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -2744,7 +2894,7 @@ func TestAccApplication_OIDC_JwtTokenAuth(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -2765,7 +2915,7 @@ func TestAccApplication_OIDC_JwtTokenAuth(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -2809,9 +2959,10 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 			acctest.PreCheckPKCS7Cert(t)
 			acctest.PreCheckPEMCert(t)
 		},
@@ -2830,13 +2981,14 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
 					resource.TestMatchResourceAttr(resourceFullName, "icon.id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca)|(sg))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.groups.#", "2"),
 					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.1", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.type", "ANY_GROUP"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "wsfed_options"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.home_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.type", "WEB_APP"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.acs_urls.#", "2"),
@@ -2863,6 +3015,16 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "saml_options.sp_verification.certificate_ids.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "saml_options.sp_verification.certificate_ids.1", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.cors_settings.behavior", "ALLOW_SPECIFIC_ORIGINS"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.#", "4"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.0.vs_id", "virtualserver1"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.0.default", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.1.vs_id", "virtualserver2"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.1.default", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.2.vs_id", "virtualserver3"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.2.default", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.3.vs_id", "virtualserver4"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.3.default", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.cors_settings.origins.#", "8"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "saml_options.cors_settings.origins.*", "http://localhost"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "saml_options.cors_settings.origins.*", "https://localhost"),
@@ -2883,7 +3045,7 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -2916,9 +3078,10 @@ func TestAccApplication_SAMLMinimal(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 			acctest.PreCheckPKCS7Cert(t)
 			acctest.PreCheckPEMCert(t)
 		},
@@ -2938,6 +3101,7 @@ func TestAccApplication_SAMLMinimal(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "login_page_url"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "icon"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "wsfed_options"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options.home_page_url"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.type", "WEB_APP"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.acs_urls.#", "1"),
@@ -2955,10 +3119,78 @@ func TestAccApplication_SAMLMinimal(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options.slo_response_endpoint"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options.slo_window"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options.sp_encryption"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.sp_entity_id", fmt.Sprintf("sp:entity:%s", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.sp_verification.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.cors_settings.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "false"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccApplication_SAMLVirtualServerIdSettingsOrdering(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	image := base64.StdEncoding.EncodeToString(data)
+
+	pem_cert := os.Getenv("PINGONE_KEY_PEM_CERT")
+	pkcs7_cert := os.Getenv("PINGONE_KEY_PKCS7_CERT")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoBeta(t)
+			acctest.PreCheckPKCS7Cert(t)
+			acctest.PreCheckPEMCert(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             sso.Application_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Initial configuration
+			{
+				Config: testAccApplicationConfig_SAML_VirtualServerIdSettingsOrdering(environmentName, licenseID, resourceName, name, image, pkcs7_cert, pem_cert),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.#", "4"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.0.vs_id", "virtualserver2"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.0.default", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.1.vs_id", "virtualserver3"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.1.default", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.2.vs_id", "virtualserver1"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.2.default", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.3.vs_id", "virtualserver4"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.3.default", "false"),
+				),
+			},
+			// Change the order of virtual server IDs
+			{
+				Config: testAccApplicationConfig_SAML_VirtualServerIdSettingsReordered(environmentName, licenseID, resourceName, name, image, pkcs7_cert, pem_cert),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.#", "4"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.0.vs_id", "virtualserver1"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.0.default", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.1.vs_id", "virtualserver2"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.1.default", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.2.vs_id", "virtualserver4"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.2.default", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.3.vs_id", "virtualserver3"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.virtual_server_id_settings.virtual_server_ids.3.default", "true"),
 				),
 			},
 		},
@@ -2978,8 +3210,9 @@ func TestAccApplication_ExternalLinkFull(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -2994,13 +3227,14 @@ func TestAccApplication_ExternalLinkFull(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "description", "My test external link app"),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 					resource.TestMatchResourceAttr(resourceFullName, "icon.id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+					resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca)|(sg))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.groups.#", "2"),
 					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.0", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.1", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.type", "ANY_GROUP"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "wsfed_options"),
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.home_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
 				),
@@ -3012,7 +3246,7 @@ func TestAccApplication_ExternalLinkFull(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -3035,8 +3269,9 @@ func TestAccApplication_ExternalLinkMinimal(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -3053,12 +3288,231 @@ func TestAccApplication_ExternalLinkMinimal(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "icon"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "wsfed_options"),
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.home_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "false"),
 				),
 			},
 		},
 	})
+}
+
+// WS-Fed
+func TestAccApplication_WSFedFull(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	image := base64.StdEncoding.EncodeToString(data)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             sso.Application_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccApplicationConfig_WSFed_FullNewEnv(environmentName, licenseID, resourceName, name, image),
+				Check:  testAccApplicationConfig_WSFed_FullCheck(resourceFullName, name),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccApplication_WSFedMinimal(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             sso.Application_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccApplicationConfig_WSFed_MinimalNewEnv(environmentName, licenseID, resourceName, name),
+				Check:  testAccApplicationConfig_WSFed_MinimalCheck(resourceFullName, name),
+			},
+		},
+	})
+}
+
+func TestAccApplication_WSFedMinimalMaximal(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
+
+	name := resourceName
+
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	image := base64.StdEncoding.EncodeToString(data)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             sso.Application_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccApplicationConfig_WSFed_Minimal(resourceName, name),
+				Check:  testAccApplicationConfig_WSFed_MinimalCheck(resourceFullName, name),
+			},
+			{
+				// Delete the minimal model
+				Config:  testAccApplicationConfig_WSFed_Minimal(resourceName, name),
+				Destroy: true,
+			},
+			{
+				// Re-create with a complete model
+				Config: testAccApplicationConfig_WSFed_Full(resourceName, name, image),
+				Check:  testAccApplicationConfig_WSFed_FullCheck(resourceFullName, name),
+			},
+			{
+				// Back to minimal model
+				Config: testAccApplicationConfig_WSFed_Minimal(resourceName, name),
+				Check:  testAccApplicationConfig_WSFed_MinimalCheck(resourceFullName, name),
+			},
+			{
+				// Back to complete model
+				Config: testAccApplicationConfig_WSFed_Full(resourceName, name, image),
+				Check:  testAccApplicationConfig_WSFed_FullCheck(resourceFullName, name),
+			},
+			{
+				// Test importing the resource
+				Config:       testAccApplicationConfig_WSFed_Full(resourceName, name, image),
+				ResourceName: fmt.Sprintf("pingone_application.%s", resourceName),
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["id"]), nil
+					}
+				}(),
+				ImportStateVerifyIdentifierAttribute: "id",
+				ImportState:                          true,
+				ImportStateVerify:                    true,
+			},
+		},
+	})
+}
+
+func testAccApplicationConfig_WSFed_MinimalCheck(resourceFullName, name string) resource.TestCheckFunc {
+	return resource.ComposeTestCheckFunc(
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckResourceAttr(resourceFullName, "name", name),
+		resource.TestCheckNoResourceAttr(resourceFullName, "description"),
+		resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "login_page_url"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "icon"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "external_link_options"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "saml_options"),
+		resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "false"),
+		resource.TestCheckResourceAttr(resourceFullName, "wsfed_options.audience_restriction", "urn:federation:MicrosoftOnline"),
+		resource.TestCheckResourceAttr(resourceFullName, "wsfed_options.domain_name", "my.domain.name.example.com"),
+		resource.TestCheckResourceAttr(resourceFullName, "wsfed_options.idp_signing_key.algorithm", "SHA384withECDSA"),
+		resource.TestMatchResourceAttr(resourceFullName, "wsfed_options.idp_signing_key.key_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckResourceAttr(resourceFullName, "wsfed_options.reply_url", "https://example.com"),
+		resource.TestCheckResourceAttr(resourceFullName, "wsfed_options.type", "WEB_APP"),
+	)
+}
+
+func testAccApplicationConfig_WSFed_FullCheck(resourceFullName, name string) resource.TestCheckFunc {
+	return resource.ComposeTestCheckFunc(
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckResourceAttr(resourceFullName, "name", name),
+		resource.TestCheckResourceAttr(resourceFullName, "description", "My test WS-Fed app"),
+		resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "tags.#", "0"),
+		resource.TestCheckResourceAttr(resourceFullName, "login_page_url", "https://www.pingidentity.com"),
+		resource.TestMatchResourceAttr(resourceFullName, "icon.id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca)|(sg))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+		resource.TestCheckResourceAttr(resourceFullName, "access_control_role_type", "ADMIN_USERS_ONLY"),
+		resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.groups.#", "2"),
+		resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.0", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.1", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.type", "ANY_GROUP"),
+		resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "external_link_options"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "saml_options"),
+		resource.TestCheckResourceAttr(resourceFullName, "wsfed_options.audience_restriction", "urn:federation:Example"),
+		resource.TestCheckResourceAttr(resourceFullName, "wsfed_options.cors_settings.behavior", "ALLOW_SPECIFIC_ORIGINS"),
+		resource.TestCheckResourceAttr(resourceFullName, "wsfed_options.cors_settings.origins.#", "8"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "wsfed_options.cors_settings.origins.*", "http://localhost"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "wsfed_options.cors_settings.origins.*", "https://localhost"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "wsfed_options.cors_settings.origins.*", "http://auth.pingidentity.com"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "wsfed_options.cors_settings.origins.*", "https://auth.pingidentity.com"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "wsfed_options.cors_settings.origins.*", "http://*.pingidentity.com"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "wsfed_options.cors_settings.origins.*", "https://*.pingidentity.com"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "wsfed_options.cors_settings.origins.*", "http://192.168.1.1"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "wsfed_options.cors_settings.origins.*", "https://192.168.1.1"),
+		resource.TestCheckResourceAttr(resourceFullName, "wsfed_options.domain_name", "my.updated.domain.name.example.com"),
+		resource.TestCheckResourceAttr(resourceFullName, "wsfed_options.idp_signing_key.algorithm", "SHA384withECDSA"),
+		resource.TestMatchResourceAttr(resourceFullName, "wsfed_options.idp_signing_key.key_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckResourceAttr(resourceFullName, "wsfed_options.kerberos.gateways.#", "1"),
+		resource.TestMatchResourceAttr(resourceFullName, "wsfed_options.kerberos.gateways.0.id", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckResourceAttr(resourceFullName, "wsfed_options.kerberos.gateways.0.type", "LDAP"),
+		resource.TestMatchResourceAttr(resourceFullName, "wsfed_options.kerberos.gateways.0.user_type.id", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckResourceAttr(resourceFullName, "wsfed_options.reply_url", "https://example.com"),
+		resource.TestCheckResourceAttr(resourceFullName, "wsfed_options.slo_endpoint", "https://example.com/slo"),
+		resource.TestCheckResourceAttr(resourceFullName, "wsfed_options.subject_name_identifier_format", "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"),
+		resource.TestCheckResourceAttr(resourceFullName, "wsfed_options.type", "WEB_APP"),
+	)
 }
 
 func TestAccApplication_Enabled(t *testing.T) {
@@ -3071,8 +3525,9 @@ func TestAccApplication_Enabled(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -3110,8 +3565,9 @@ func TestAccApplication_BadParameters(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.Application_CheckDestroy,
@@ -3160,7 +3616,7 @@ resource "pingone_application" "%[3]s" {
     redirect_uris              = ["https://www.pingidentity.com"]
   }
 }
-`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccApplicationConfig_OIDC_FullWeb(resourceName, name, image string) string {
@@ -3222,6 +3678,12 @@ resource "pingone_application" "%[2]s" {
     initiate_login_uri = "https://www.pingidentity.com/initiate"
     target_link_uri    = "https://www.pingidentity.com/target"
     pkce_enforcement   = "OPTIONAL"
+
+    idp_signoff = true
+
+    include_x5t                                   = true
+    op_session_check_enabled                      = false
+    request_scopes_for_multiple_resources_enabled = true
 
     par_requirement = "OPTIONAL"
     par_timeout     = 60
@@ -3385,6 +3847,10 @@ resource "pingone_application" "%[2]s" {
     grant_types                = ["CLIENT_CREDENTIALS"]
     token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
 
+    include_x5t                                   = false
+    op_session_check_enabled                      = true
+    request_scopes_for_multiple_resources_enabled = false
+
     allow_wildcard_in_redirect_uris = true
 
     cors_settings = {
@@ -3443,23 +3909,21 @@ resource "pingone_application" "%[2]s" {
 
 func testAccApplicationConfig_OIDC_NativeKerberos(resourceName, name string) string {
 	return fmt.Sprintf(`
-		%[1]s
-
-resource "pingone_key" "%[2]s" {
+resource "pingone_key" "%[1]s" {
   environment_id = data.pingone_environment.workforce_test.id
 
-  name                = "%[3]s"
+  name                = "%[2]s"
   algorithm           = "EC"
   key_length          = 256
   signature_algorithm = "SHA384withECDSA"
-  subject_dn          = "CN=%[3]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  subject_dn          = "CN=%[2]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
   usage_type          = "ISSUANCE"
   validity_period     = 365
 }
 
-resource "pingone_application" "%[2]s" {
+resource "pingone_application" "%[1]s" {
   environment_id = data.pingone_environment.workforce_test.id
-  name           = "%[3]s"
+  name           = "%[2]s"
   enabled        = true
 
   oidc_options = {
@@ -3468,32 +3932,46 @@ resource "pingone_application" "%[2]s" {
     token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
 
     certificate_based_authentication = {
-      key_id = pingone_key.%[2]s.id
+      key_id = pingone_key.%[1]s.id
     }
   }
 }
-`, acctest.WorkforceSandboxEnvironment(), resourceName, name)
+`, resourceName, name)
+}
+
+func testAccApplicationConfig_OIDC_NativeKerberosV1(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+%[2]s
+`, acctest.WorkforceV1SandboxEnvironment(), testAccApplicationConfig_OIDC_NativeKerberos(resourceName, name))
+}
+
+func testAccApplicationConfig_OIDC_NativeKerberosV2(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+%[2]s
+`, acctest.WorkforceV2SandboxEnvironment(), testAccApplicationConfig_OIDC_NativeKerberos(resourceName, name))
 }
 
 func testAccApplicationConfig_OIDC_NativeKerberosIncorrectKeyType(resourceName, name string) string {
 	return fmt.Sprintf(`
-		%[1]s
-
-resource "pingone_key" "%[2]s" {
+resource "pingone_key" "%[1]s" {
   environment_id = data.pingone_environment.workforce_test.id
 
-  name                = "%[3]s"
+  name                = "%[2]s"
   algorithm           = "EC"
   key_length          = 256
   signature_algorithm = "SHA384withECDSA"
-  subject_dn          = "CN=%[3]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  subject_dn          = "CN=%[2]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
   usage_type          = "SIGNING"
   validity_period     = 365
 }
 
-resource "pingone_application" "%[2]s" {
+resource "pingone_application" "%[1]s" {
   environment_id = data.pingone_environment.workforce_test.id
-  name           = "%[3]s"
+  name           = "%[2]s"
   enabled        = true
 
   oidc_options = {
@@ -3502,32 +3980,46 @@ resource "pingone_application" "%[2]s" {
     token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
 
     certificate_based_authentication = {
-      key_id = pingone_key.%[2]s.id
+      key_id = pingone_key.%[1]s.id
     }
   }
 }
-`, acctest.WorkforceSandboxEnvironment(), resourceName, name)
+`, resourceName, name)
+}
+
+func testAccApplicationConfig_OIDC_NativeKerberosIncorrectKeyTypeV1(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+%[2]s
+`, acctest.WorkforceV1SandboxEnvironment(), testAccApplicationConfig_OIDC_NativeKerberosIncorrectKeyType(resourceName, name))
+}
+
+func testAccApplicationConfig_OIDC_NativeKerberosIncorrectKeyTypeV2(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+%[2]s
+`, acctest.WorkforceV2SandboxEnvironment(), testAccApplicationConfig_OIDC_NativeKerberosIncorrectKeyType(resourceName, name))
 }
 
 func testAccApplicationConfig_OIDC_NativeKerberosIncorrectApplicationType(resourceName, name string) string {
 	return fmt.Sprintf(`
-		%[1]s
-
-resource "pingone_key" "%[2]s" {
+resource "pingone_key" "%[1]s" {
   environment_id = data.pingone_environment.workforce_test.id
 
-  name                = "%[3]s"
+  name                = "%[2]s"
   algorithm           = "EC"
   key_length          = 256
   signature_algorithm = "SHA384withECDSA"
-  subject_dn          = "CN=%[3]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  subject_dn          = "CN=%[2]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
   usage_type          = "ISSUANCE"
   validity_period     = 365
 }
 
-resource "pingone_application" "%[2]s" {
+resource "pingone_application" "%[1]s" {
   environment_id = data.pingone_environment.workforce_test.id
-  name           = "%[3]s"
+  name           = "%[2]s"
   enabled        = true
 
   oidc_options = {
@@ -3536,11 +4028,27 @@ resource "pingone_application" "%[2]s" {
     token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
 
     certificate_based_authentication = {
-      key_id = pingone_key.%[2]s.id
+      key_id = pingone_key.%[1]s.id
     }
   }
 }
-`, acctest.WorkforceSandboxEnvironment(), resourceName, name)
+`, resourceName, name)
+}
+
+func testAccApplicationConfig_OIDC_NativeKerberosIncorrectApplicationTypeV1(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+%[2]s
+`, acctest.WorkforceV1SandboxEnvironment(), testAccApplicationConfig_OIDC_NativeKerberosIncorrectApplicationType(resourceName, name))
+}
+
+func testAccApplicationConfig_OIDC_NativeKerberosIncorrectApplicationTypeV2(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+%[2]s
+`, acctest.WorkforceV2SandboxEnvironment(), testAccApplicationConfig_OIDC_NativeKerberosIncorrectApplicationType(resourceName, name))
 }
 
 func testAccApplicationConfig_OIDC_NativeMobile_Full(resourceName, name string) string {
@@ -3849,6 +4357,12 @@ resource "pingone_application" "%[2]s" {
     target_link_uri    = "https://www.pingidentity.com/target"
     pkce_enforcement   = "REQUIRED"
 
+    idp_signoff = true
+
+    include_x5t                                   = true
+    op_session_check_enabled                      = false
+    request_scopes_for_multiple_resources_enabled = false
+
     par_requirement = "REQUIRED"
     par_timeout     = 180
 
@@ -3999,6 +4513,10 @@ resource "pingone_application" "%[2]s" {
     target_link_uri    = "https://www.pingidentity.com/target"
     pkce_enforcement   = "REQUIRED"
 
+    include_x5t                                   = false
+    op_session_check_enabled                      = false
+    request_scopes_for_multiple_resources_enabled = true
+
     cors_settings = {
       behavior = "ALLOW_SPECIFIC_ORIGINS"
       origins = [
@@ -4091,6 +4609,12 @@ resource "pingone_application" "%[2]s" {
     target_link_uri                 = "https://www.pingidentity.com/target"
 
     support_unsigned_request_object = true
+
+    idp_signoff = true
+
+    include_x5t                                   = true
+    op_session_check_enabled                      = true
+    request_scopes_for_multiple_resources_enabled = false
 
     cors_settings = {
       behavior = "ALLOW_SPECIFIC_ORIGINS"
@@ -4415,6 +4939,25 @@ resource "pingone_application" "%[3]s" {
       ]
     }
 
+    virtual_server_id_settings = {
+      enabled = true
+      virtual_server_ids = [
+        {
+          vs_id   = "virtualserver1"
+          default = true
+        },
+        {
+          vs_id = "virtualserver2"
+        },
+        {
+          vs_id = "virtualserver3"
+        },
+        {
+          vs_id = "virtualserver4"
+        },
+      ]
+    }
+
     cors_settings = {
       behavior = "ALLOW_SPECIFIC_ORIGINS"
       origins = [
@@ -4429,7 +4972,7 @@ resource "pingone_application" "%[3]s" {
       ]
     }
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, image, pkcs7_cert, pem_cert)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, image, pkcs7_cert, pem_cert)
 }
 
 func testAccApplicationConfig_SAML_Minimal(environmentName, licenseID, resourceName, name, image, pkcs7_cert, pem_cert string) string {
@@ -4507,7 +5050,261 @@ resource "pingone_application" "%[3]s" {
       algorithm = pingone_key.%[3]s.signature_algorithm
     }
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, image, pkcs7_cert, pem_cert)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, image, pkcs7_cert, pem_cert)
+}
+
+func testAccApplicationConfig_SAML_VirtualServerIdSettingsOrdering(environmentName, licenseID, resourceName, name, image, pkcs7_cert, pem_cert string) string {
+	return fmt.Sprintf(`
+			%[1]s
+
+resource "pingone_group" "%[3]s-1" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s-1"
+}
+
+resource "pingone_group" "%[3]s-2" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s-2"
+}
+
+resource "pingone_key" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  name                = "%[4]s"
+  algorithm           = "EC"
+  key_length          = 256
+  signature_algorithm = "SHA384withECDSA"
+  subject_dn          = "CN=%[4]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  usage_type          = "SIGNING"
+  validity_period     = 365
+}
+
+resource "pingone_image" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  image_file_base64 = "%[5]s"
+}
+
+resource "pingone_certificate" "%[3]s-1" {
+  environment_id = pingone_environment.%[2]s.id
+
+  pkcs7_file_base64 = <<EOT
+%[6]s
+EOT
+
+  usage_type = "SIGNING"
+}
+
+resource "pingone_certificate" "%[3]s-2" {
+  environment_id = pingone_environment.%[2]s.id
+
+  pem_file = <<EOT
+%[7]s
+EOT
+
+  usage_type = "SIGNING"
+}
+
+resource "pingone_certificate" "%[3]s-enc" {
+  environment_id = pingone_environment.%[2]s.id
+  pem_file       = <<EOT
+%[7]s
+EOT
+  usage_type     = "ENCRYPTION"
+}
+
+resource "pingone_application" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s"
+  description    = "Test SAML app with virtual server ID settings ordering"
+  enabled        = true
+
+  saml_options = {
+    type               = "WEB_APP"
+    home_page_url      = "https://www.pingidentity.com"
+    acs_urls           = ["https://www.pingidentity.com", "https://pingidentity.com"]
+    assertion_duration = 3600
+    sp_entity_id       = "sp:entity:%[3]s"
+
+    sp_encryption = {
+      algorithm = "AES_256"
+      certificate = {
+        id = pingone_certificate.%[3]s-enc.id
+      }
+    }
+
+    assertion_signed_enabled = false
+    idp_signing_key = {
+      key_id    = pingone_key.%[3]s.id
+      algorithm = pingone_key.%[3]s.signature_algorithm
+    }
+    enable_requested_authn_context   = true
+    nameid_format                    = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+    response_is_signed               = true
+    session_not_on_or_after_duration = 64
+    slo_binding                      = "HTTP_REDIRECT"
+    slo_endpoint                     = "https://www.pingidentity.com/sloendpoint"
+    slo_response_endpoint            = "https://www.pingidentity.com/sloresponseendpoint"
+    slo_window                       = 3
+
+    default_target_url = "https://www.pingidentity.com/relaystate"
+
+    sp_verification = {
+      authn_request_signed = true
+      certificate_ids = [
+        pingone_certificate.%[3]s-2.id,
+        pingone_certificate.%[3]s-1.id,
+      ]
+    }
+
+    virtual_server_id_settings = {
+      enabled = false
+      virtual_server_ids = [
+        {
+          vs_id = "virtualserver2"
+        },
+        {
+          vs_id = "virtualserver3"
+        },
+        {
+          vs_id   = "virtualserver1"
+          default = true
+        },
+        {
+          vs_id   = "virtualserver4"
+          default = false
+        }
+      ]
+    }
+  }
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, image, pkcs7_cert, pem_cert)
+}
+
+func testAccApplicationConfig_SAML_VirtualServerIdSettingsReordered(environmentName, licenseID, resourceName, name, image, pkcs7_cert, pem_cert string) string {
+	return fmt.Sprintf(`
+			%[1]s
+
+resource "pingone_group" "%[3]s-1" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s-1"
+}
+
+resource "pingone_group" "%[3]s-2" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s-2"
+}
+
+resource "pingone_key" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  name                = "%[4]s"
+  algorithm           = "EC"
+  key_length          = 256
+  signature_algorithm = "SHA384withECDSA"
+  subject_dn          = "CN=%[4]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  usage_type          = "SIGNING"
+  validity_period     = 365
+}
+
+resource "pingone_image" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  image_file_base64 = "%[5]s"
+}
+
+resource "pingone_certificate" "%[3]s-1" {
+  environment_id = pingone_environment.%[2]s.id
+
+  pkcs7_file_base64 = <<EOT
+%[6]s
+EOT
+
+  usage_type = "SIGNING"
+}
+
+resource "pingone_certificate" "%[3]s-2" {
+  environment_id = pingone_environment.%[2]s.id
+
+  pem_file = <<EOT
+%[7]s
+EOT
+
+  usage_type = "SIGNING"
+}
+
+resource "pingone_certificate" "%[3]s-enc" {
+  environment_id = pingone_environment.%[2]s.id
+  pem_file       = <<EOT
+%[7]s
+EOT
+  usage_type     = "ENCRYPTION"
+}
+
+resource "pingone_application" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  name           = "%[4]s"
+  description    = "Test SAML app with reordered virtual server ID settings"
+  enabled        = true
+
+  saml_options = {
+    type               = "WEB_APP"
+    home_page_url      = "https://www.pingidentity.com"
+    acs_urls           = ["https://www.pingidentity.com", "https://pingidentity.com"]
+    assertion_duration = 3600
+    sp_entity_id       = "sp:entity:%[3]s"
+
+    sp_encryption = {
+      algorithm = "AES_256"
+      certificate = {
+        id = pingone_certificate.%[3]s-enc.id
+      }
+    }
+
+    assertion_signed_enabled = false
+    idp_signing_key = {
+      key_id    = pingone_key.%[3]s.id
+      algorithm = pingone_key.%[3]s.signature_algorithm
+    }
+    enable_requested_authn_context   = true
+    nameid_format                    = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+    response_is_signed               = true
+    session_not_on_or_after_duration = 64
+    slo_binding                      = "HTTP_REDIRECT"
+    slo_endpoint                     = "https://www.pingidentity.com/sloendpoint"
+    slo_response_endpoint            = "https://www.pingidentity.com/sloresponseendpoint"
+    slo_window                       = 3
+
+    default_target_url = "https://www.pingidentity.com/relaystate"
+
+    sp_verification = {
+      authn_request_signed = true
+      certificate_ids = [
+        pingone_certificate.%[3]s-2.id,
+        pingone_certificate.%[3]s-1.id,
+      ]
+    }
+
+    virtual_server_id_settings = {
+      enabled = true
+      virtual_server_ids = [
+        {
+          vs_id = "virtualserver1"
+        },
+        {
+          vs_id   = "virtualserver2"
+          default = false
+        },
+        {
+          vs_id = "virtualserver4"
+        },
+        {
+          vs_id   = "virtualserver3"
+          default = true
+        }
+      ]
+    }
+  }
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, image, pkcs7_cert, pem_cert)
 }
 
 func testAccApplicationConfig_ExternalLinkFull(resourceName, name, image string) string {
@@ -4593,4 +5390,220 @@ resource "pingone_application" "%[2]s" {
   }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName, name, enabled)
+}
+
+func testAccApplicationConfig_WSFed_Full(resourceName, name, image string) string {
+	return testAccApplicationConfig_WSFed_FullWithEnv(acctest.GenericSandboxEnvironment(), "data.pingone_environment.general_test.id", resourceName, name, image)
+}
+
+func testAccApplicationConfig_WSFed_FullNewEnv(environmentName, licenseID, resourceName, name, image string) string {
+	return testAccApplicationConfig_WSFed_FullWithEnv(acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), fmt.Sprintf("pingone_environment.%s.id", environmentName), resourceName, name, image)
+}
+
+func testAccApplicationConfig_WSFed_FullWithEnv(environmentHcl, environmentIdResourceLink, resourceName, name, image string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_group" "%[3]s-1" {
+  environment_id = %[2]s
+  name           = "%[4]s-1"
+}
+
+resource "pingone_group" "%[3]s-2" {
+  environment_id = %[2]s
+  name           = "%[4]s-2"
+}
+
+resource "pingone_key" "%[3]s" {
+  environment_id = %[2]s
+
+  name                = "%[4]s"
+  algorithm           = "EC"
+  key_length          = 256
+  signature_algorithm = "SHA384withECDSA"
+  subject_dn          = "CN=%[4]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  usage_type          = "SIGNING"
+  validity_period     = 365
+}
+
+resource "pingone_image" "%[3]s" {
+  environment_id = %[2]s
+
+  image_file_base64 = "%[5]s"
+}
+
+resource "pingone_population" "%[3]s" {
+  environment_id = %[2]s
+
+  name = "%[4]s"
+}
+
+resource "pingone_gateway" "%[3]s" {
+  environment_id = %[2]s
+  name           = "%[4]s"
+  enabled        = true
+  type           = "LDAP"
+  description    = "My test gateway"
+
+  bind_dn       = "ou=test1,dc=example,dc=com"
+  bind_password = "dummyPasswordValue1"
+
+  connection_security = "TLS"
+  vendor              = "Microsoft Active Directory"
+
+  kerberos = {
+    service_account_upn              = "username@domainname"
+    service_account_password         = "dummyKerberosPasswordValue"
+    retain_previous_credentials_mins = 20
+  }
+
+  servers = [
+    "ds1.dummyldapservice.com:636",
+    "ds3.dummyldapservice.com:636",
+    "ds2.dummyldapservice.com:636",
+  ]
+
+  validate_tls_certificates = false
+
+  user_types = {
+    "User Set 1" = {
+      password_authority = "LDAP"
+      search_base_dn     = "ou=users1,dc=example,dc=com"
+
+      user_link_attributes = ["objectGUID", "objectSid"]
+    },
+    "User Set 2" = {
+      password_authority = "PING_ONE"
+      search_base_dn     = "ou=users,dc=example,dc=com"
+
+      user_link_attributes = ["objectGUID", "dn", "objectSid"]
+
+      new_user_lookup = {
+        ldap_filter_pattern = "(|(uid=$${identifier})(mail=$${identifier}))"
+
+        population_id = pingone_population.%[3]s.id
+
+        attribute_mappings = [
+          {
+            name  = "username"
+            value = "$${ldapAttributes.uid}"
+          },
+          {
+            name  = "email"
+            value = "$${ldapAttributes.mail}"
+          },
+          {
+            name  = "name.family"
+            value = "$${ldapAttributes.sn}"
+          }
+        ]
+      }
+    }
+  }
+}
+
+resource "pingone_application" "%[3]s" {
+  environment_id = %[2]s
+  name           = "%[4]s"
+  description    = "My test WS-Fed app"
+  login_page_url = "https://www.pingidentity.com"
+
+  icon = {
+    id   = pingone_image.%[3]s.id
+    href = pingone_image.%[3]s.uploaded_image.href
+  }
+
+  access_control_role_type = "ADMIN_USERS_ONLY"
+
+  access_control_group_options = {
+    type = "ANY_GROUP"
+
+    groups = [
+      pingone_group.%[3]s-2.id,
+      pingone_group.%[3]s-1.id
+    ]
+  }
+
+  hidden_from_app_portal = true
+
+  enabled = true
+
+  wsfed_options = {
+    audience_restriction = "urn:federation:Example"
+    cors_settings = {
+      behavior = "ALLOW_SPECIFIC_ORIGINS"
+      origins = [
+        "http://localhost",
+        "https://localhost",
+        "http://auth.pingidentity.com",
+        "https://auth.pingidentity.com",
+        "http://*.pingidentity.com",
+        "https://*.pingidentity.com",
+        "http://192.168.1.1",
+        "https://192.168.1.1",
+      ]
+    }
+    domain_name = "my.updated.domain.name.example.com"
+    idp_signing_key = {
+      key_id    = pingone_key.%[3]s.id
+      algorithm = pingone_key.%[3]s.signature_algorithm
+    }
+    kerberos = {
+      gateways = [
+        {
+          id   = pingone_gateway.%[3]s.id
+          type = "LDAP"
+          user_type = {
+            id = pingone_gateway.%[3]s.user_types["User Set 2"].id
+          }
+        }
+      ]
+    }
+    reply_url                      = "https://example.com"
+    slo_endpoint                   = "https://example.com/slo"
+    subject_name_identifier_format = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+    type                           = "WEB_APP"
+  }
+}`, environmentHcl, environmentIdResourceLink, resourceName, name, image)
+}
+
+func testAccApplicationConfig_WSFed_Minimal(resourceName, name string) string {
+	return testAccApplicationConfig_WSFed_MinimalWithEnv(acctest.GenericSandboxEnvironment(), "data.pingone_environment.general_test.id", resourceName, name)
+}
+
+func testAccApplicationConfig_WSFed_MinimalNewEnv(environmentName, licenseID, resourceName, name string) string {
+	return testAccApplicationConfig_WSFed_MinimalWithEnv(acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), fmt.Sprintf("pingone_environment.%s.id", environmentName), resourceName, name)
+}
+
+func testAccApplicationConfig_WSFed_MinimalWithEnv(environmentHcl, environmentIdResourceLink, resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_key" "%[3]s" {
+  environment_id = %[2]s
+
+  name                = "%[4]s"
+  algorithm           = "EC"
+  key_length          = 256
+  signature_algorithm = "SHA384withECDSA"
+  subject_dn          = "CN=%[4]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  usage_type          = "SIGNING"
+  validity_period     = 365
+}
+
+resource "pingone_application" "%[3]s" {
+  environment_id = %[2]s
+  name           = "%[4]s"
+  enabled        = true
+
+  wsfed_options = {
+    domain_name = "my.domain.name.example.com"
+    idp_signing_key = {
+      key_id    = pingone_key.%[3]s.id
+      algorithm = pingone_key.%[3]s.signature_algorithm
+    }
+    reply_url = "https://example.com"
+    type      = "WEB_APP"
+  }
+}`, environmentHcl, environmentIdResourceLink, resourceName, name)
 }

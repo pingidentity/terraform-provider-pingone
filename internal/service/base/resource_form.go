@@ -1,4 +1,4 @@
-// Copyright © 2025 Ping Identity Corporation
+// Copyright © 2026 Ping Identity Corporation
 
 package base
 
@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int32validator"
-	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -29,6 +29,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
@@ -53,7 +54,7 @@ type formResourceModel struct {
 }
 
 type formComponentsResourceModel struct {
-	Fields types.Set `tfsdk:"fields"`
+	Fields types.List `tfsdk:"fields"`
 }
 
 type formComponentsFieldResourceModel struct {
@@ -136,7 +137,7 @@ type formComponentsFieldsSchemaDef struct {
 var (
 	// Form Components
 	formComponentsTFObjectTypes = map[string]attr.Type{
-		"fields": types.SetType{ElemType: types.ObjectType{
+		"fields": types.ListType{ElemType: types.ObjectType{
 			AttrTypes: formComponentsFieldsTFObjectTypes,
 		}},
 	}
@@ -487,7 +488,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 	)
 
 	componentsFieldsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A set of objects that specifies the form fields that make up the form.",
+		"An ordered list of objects that specifies the form fields that make up the form.",
 	)
 
 	componentsFieldsPositionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -508,7 +509,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 
 	componentsFieldsTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the type of form field.",
-	).AllowedValuesEnum(supportedFormFieldTypes)
+	).AllowedValuesEnum(supportedFormFieldTypes).AppendMarkdownString(fmt.Sprintf("The `%s` form field type has been deprecated and will be removed in a future release.", string(management.ENUMFORMFIELDTYPE_TEXTBLOB)))
 
 	componentsFieldsAttributeDisabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		formFieldValidationDocumentation("attribute_disabled"),
@@ -519,7 +520,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 	componentsFieldsContentDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		formFieldValidationDocumentation("content"),
 	).AppendMarkdownString(
-		fmt.Sprintf("A string that specifies the field's content (for example, HTML when the field type is `%s`.)", string(management.ENUMFORMFIELDTYPE_TEXTBLOB)),
+		fmt.Sprintf("A string that specifies the field's content (for example, escaped JSON string when the field type is `%s` - use `jsonencode` to convert JSON to escaped JSON string.)", string(management.ENUMFORMFIELDTYPE_SLATE_TEXTBLOB)),
 	)
 
 	componentsFieldsKeyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -776,7 +777,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				Required:            true,
 
 				Attributes: map[string]schema.Attribute{
-					"fields": schema.SetNestedAttribute{
+					"fields": schema.ListNestedAttribute{
 						Description:         componentsFieldsDescription.Description,
 						MarkdownDescription: componentsFieldsDescription.MarkdownDescription,
 						Required:            true,
@@ -962,7 +963,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 									Computed:            true,
 
 									PlanModifiers: []planmodifier.String{
-										stringplanmodifier.UseStateForUnknown(),
+										stringplanmodifier.UseNonNullStateForUnknown(),
 									},
 								},
 
@@ -972,7 +973,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 									Computed:            true,
 
 									PlanModifiers: []planmodifier.String{
-										stringplanmodifier.UseStateForUnknown(),
+										stringplanmodifier.UseNonNullStateForUnknown(),
 									},
 								},
 
@@ -982,7 +983,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 									Computed:            true,
 
 									PlanModifiers: []planmodifier.String{
-										stringplanmodifier.UseStateForUnknown(),
+										stringplanmodifier.UseNonNullStateForUnknown(),
 									},
 								},
 
@@ -1034,7 +1035,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 											Computed:            true,
 
 											PlanModifiers: []planmodifier.Bool{
-												boolplanmodifier.UseStateForUnknown(),
+												boolplanmodifier.UseNonNullStateForUnknown(),
 											},
 										},
 
@@ -1129,8 +1130,8 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 							},
 						},
 
-						Validators: []validator.Set{
-							setvalidator.SizeAtLeast(attrMinLength),
+						Validators: []validator.List{
+							listvalidator.SizeAtLeast(attrMinLength),
 						},
 					},
 				},
@@ -1399,7 +1400,7 @@ func (r *FormResource) Configure(ctx context.Context, req resource.ConfigureRequ
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -1444,15 +1445,15 @@ func (r *FormResource) Create(ctx context.Context, req resource.CreateRequest, r
 
 	// Run the API call
 	var response *management.Form
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.FormManagementApi.CreateForm(ctx, plan.EnvironmentId.ValueString()).Form(*form).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateForm",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
@@ -1486,15 +1487,15 @@ func (r *FormResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 
 	// Run the API call
 	var response *management.Form
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.FormManagementApi.ReadForm(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Include(management.ENUMFORMSINCLUDEPARAMETER_COMPONENTS).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadForm",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
@@ -1538,15 +1539,15 @@ func (r *FormResource) Update(ctx context.Context, req resource.UpdateRequest, r
 
 	// Run the API call
 	var response *management.Form
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.FormManagementApi.UpdateForm(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).Form(*form).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateForm",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
@@ -1579,15 +1580,15 @@ func (r *FormResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 	}
 
 	// Run the API call
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fR, fErr := r.Client.ManagementAPIClient.FormManagementApi.DeleteForm(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteForm",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		nil,
 		nil,
 	)...)
@@ -1667,8 +1668,17 @@ func (p *formResourceModel) validate(ctx context.Context, allowUnknowns bool) di
 					continue
 				}
 
-				if !field.Type.IsNull() && !field.Type.IsUnknown() && field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_SUBMIT_BUTTON))) {
-					hasSubmitButton = true
+				if !field.Type.IsNull() && !field.Type.IsUnknown() {
+					if field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_SUBMIT_BUTTON))) {
+						hasSubmitButton = true
+					}
+					if field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_TEXTBLOB))) {
+						diags.AddAttributeWarning(
+							path.Root("components").AtName("fields"),
+							"Deprecated form field type",
+							fmt.Sprintf("The %s form field type has been deprecated and will be removed in a future release.", field.Type.ValueString()),
+						)
+					}
 				}
 
 				// Validate Position conflicts
@@ -2688,13 +2698,13 @@ func formComponentsOkToTF(apiObject *management.FormComponents, ok bool) (basety
 	return objValue, diags
 }
 
-func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (basetypes.SetValue, diag.Diagnostics) {
+func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (basetypes.ListValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	tfObjType := types.ObjectType{AttrTypes: formComponentsFieldsTFObjectTypes}
 
 	if !ok || apiObject == nil {
-		return types.SetNull(tfObjType), diags
+		return types.ListNull(tfObjType), diags
 	}
 
 	objectList := []attr.Value{}
@@ -3029,7 +3039,7 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 		objectList = append(objectList, objValue)
 	}
 
-	returnVar, d := types.SetValue(tfObjType, objectList)
+	returnVar, d := types.ListValue(tfObjType, objectList)
 	diags.Append(d...)
 
 	return returnVar, diags

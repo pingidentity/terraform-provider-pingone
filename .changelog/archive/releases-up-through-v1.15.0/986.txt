@@ -1,0 +1,3 @@
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.47.0 => 0.49.0
+```

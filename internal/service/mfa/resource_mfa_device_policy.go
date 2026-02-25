@@ -1,4 +1,4 @@
-// Copyright © 2025 Ping Identity Corporation
+// Copyright © 2026 Ping Identity Corporation
 
 package mfa
 
@@ -29,6 +29,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -434,7 +435,7 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 				Computed:            true,
 
 				PlanModifiers: []planmodifier.Bool{
-					boolplanmodifier.UseStateForUnknown(),
+					boolplanmodifier.UseNonNullStateForUnknown(),
 				},
 			},
 
@@ -560,7 +561,6 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 										},
 									},
 								},
-
 								"push_limit": schema.SingleNestedAttribute{
 									Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies push limit settings for the application in the policy.").Description,
 									Optional:    true,
@@ -1028,7 +1028,6 @@ func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttribute(descr
 							},
 						},
 					},
-
 					"otp_length": schema.Int32Attribute{
 						Description:         otpOtpLengthDescription.Description,
 						MarkdownDescription: otpOtpLengthDescription.MarkdownDescription,
@@ -1062,7 +1061,7 @@ func (r *MFADevicePolicyResource) Configure(ctx context.Context, req resource.Co
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -1107,15 +1106,16 @@ func (r *MFADevicePolicyResource) Create(ctx context.Context, req resource.Creat
 
 	// Run the API call
 	var response *mfa.DeviceAuthenticationPolicyPostResponse
-	resp.Diagnostics.Append(framework.ParseResponse(
+
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.MFAAPIClient.DeviceAuthenticationPolicyApi.CreateDeviceAuthenticationPolicies(ctx, plan.EnvironmentId.ValueString()).DeviceAuthenticationPolicyPost(*mFADevicePolicy).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateDeviceAuthenticationPolicies",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
@@ -1149,15 +1149,15 @@ func (r *MFADevicePolicyResource) Read(ctx context.Context, req resource.ReadReq
 
 	// Run the API call
 	var response *mfa.DeviceAuthenticationPolicy
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.MFAAPIClient.DeviceAuthenticationPolicyApi.ReadOneDeviceAuthenticationPolicy(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneDeviceAuthenticationPolicy",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
@@ -1201,15 +1201,15 @@ func (r *MFADevicePolicyResource) Update(ctx context.Context, req resource.Updat
 
 	// Run the API call
 	var response *mfa.DeviceAuthenticationPolicy
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.MFAAPIClient.DeviceAuthenticationPolicyApi.UpdateDeviceAuthenticationPolicy(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).DeviceAuthenticationPolicy(*mFADevicePolicy).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateDeviceAuthenticationPolicy",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		nil,
 		&response,
 	)...)
@@ -1242,12 +1242,12 @@ func (r *MFADevicePolicyResource) Delete(ctx context.Context, req resource.Delet
 	}
 
 	// Run the API call
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fR, fErr := r.Client.MFAAPIClient.DeviceAuthenticationPolicyApi.DeleteDeviceAuthenticationPolicy(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteDeviceAuthenticationPolicy",
 		mfaDevicePolicyDeleteCustomError,
@@ -1276,7 +1276,7 @@ var mfaDevicePolicyDeleteCustomError = func(r *http.Response, p1Error *model.P1E
 		}
 	}
 
-	diags.Append(framework.CustomErrorResourceNotFoundWarning(r, p1Error)...)
+	diags.Append(legacysdk.CustomErrorResourceNotFoundWarning(r, p1Error)...)
 	return diags
 }
 
@@ -1393,15 +1393,15 @@ func (p *MFADevicePolicyResourceModel) expand(ctx context.Context, apiClient *ma
 	}
 
 	// Main object
-	data := mfa.NewDeviceAuthenticationPolicy(
+	policy := mfa.NewDeviceAuthenticationPolicy(
 		p.Name.ValueString(),
 		*sms,
 		*voice,
 		*email,
 		*mobile,
 		*totp,
-		false,
-		false,
+		false, // default
+		false, // forSignOnPolicy
 	)
 
 	// FIDO2
@@ -1417,7 +1417,7 @@ func (p *MFADevicePolicyResourceModel) expand(ctx context.Context, apiClient *ma
 
 		fido2 := fido2Plan.expand()
 
-		data.SetFido2(*fido2)
+		policy.SetFido2(*fido2)
 	}
 
 	// Authentication
@@ -1431,8 +1431,8 @@ func (p *MFADevicePolicyResourceModel) expand(ctx context.Context, apiClient *ma
 			return nil, diags
 		}
 
-		data.SetAuthentication(
-			*mfa.NewDeviceAuthenticationPolicyAuthentication(
+		policy.SetAuthentication(
+			*mfa.NewDeviceAuthenticationPolicyCommonAuthentication(
 				mfa.EnumMFADevicePolicySelection(authenticationPlan.DeviceSelection.ValueString()),
 			),
 		)
@@ -1440,28 +1440,31 @@ func (p *MFADevicePolicyResourceModel) expand(ctx context.Context, apiClient *ma
 
 	// New Device Notification
 	if !p.NewDeviceNotification.IsNull() && !p.NewDeviceNotification.IsUnknown() {
-		data.SetNewDeviceNotification(
+		policy.SetNewDeviceNotification(
 			mfa.EnumMFADevicePolicyNewDeviceNotification(p.NewDeviceNotification.ValueString()),
 		)
 	}
 
 	if !p.Default.IsNull() && !p.Default.IsUnknown() {
-		data.SetDefault(p.Default.ValueBool())
+		policy.SetDefault(p.Default.ValueBool())
 	} else {
-		data.SetDefault(false)
+		policy.SetDefault(false)
 	}
 
-	return data, diags
+	return policy, diags
 }
 
 func (p *MFADevicePolicyResourceModel) expandCreate(ctx context.Context, apiClient *management.APIClient) (*mfa.DeviceAuthenticationPolicyPost, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	data, diags := p.expand(ctx, apiClient)
+	if diags.HasError() {
+		return nil, diags
+	}
 
-	return &mfa.DeviceAuthenticationPolicyPost{
-		DeviceAuthenticationPolicy: data,
-	}, diags
+	result := mfa.DeviceAuthenticationPolicyAsDeviceAuthenticationPolicyPost(data)
+
+	return &result, diags
 }
 
 func (p *MFADevicePolicySmsResourceModel) expand(ctx context.Context) (*mfa.DeviceAuthenticationPolicyOfflineDevice, diag.Diagnostics) {
@@ -1571,7 +1574,7 @@ func (p *MFADevicePolicyOfflineDeviceOtpResourceModel) expand(ctx context.Contex
 	return data, diags
 }
 
-func (p *MFADevicePolicyMobileResourceModel) expand(ctx context.Context, apiClient *management.APIClient, environmentId string) (*mfa.DeviceAuthenticationPolicyMobile, diag.Diagnostics) {
+func (p *MFADevicePolicyMobileResourceModel) expand(ctx context.Context, apiClient *management.APIClient, environmentId string) (*mfa.DeviceAuthenticationPolicyCommonMobile, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	// Otp
@@ -1600,12 +1603,12 @@ func (p *MFADevicePolicyMobileResourceModel) expand(ctx context.Context, apiClie
 		return nil, diags
 	}
 
-	otp := mfa.NewDeviceAuthenticationPolicyMobileOtp(
+	otp := mfa.NewDeviceAuthenticationPolicyCommonMobileOtp(
 		*failure,
 	)
 
 	// Main object
-	data := mfa.NewDeviceAuthenticationPolicyMobile(
+	data := mfa.NewDeviceAuthenticationPolicyCommonMobile(
 		p.Enabled.ValueBool(),
 		*otp,
 	)
@@ -1618,7 +1621,7 @@ func (p *MFADevicePolicyMobileResourceModel) expand(ctx context.Context, apiClie
 			return nil, diags
 		}
 
-		applications := make([]mfa.DeviceAuthenticationPolicyMobileApplicationsInner, 0)
+		applications := make([]mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInner, 0)
 
 		for applicationId, applicationPlan := range applicationsPlan {
 			application, d := applicationPlan.expand(ctx, apiClient, environmentId, applicationId)
@@ -1666,7 +1669,7 @@ func (p *MFADevicePolicyFailureResourceModel) expand(ctx context.Context) (*mfa.
 	return data, diags
 }
 
-func (p *MFADevicePolicyMobileApplicationResourceModel) expand(ctx context.Context, apiClient *management.APIClient, environmentId, applicationId string) (*mfa.DeviceAuthenticationPolicyMobileApplicationsInner, diag.Diagnostics) {
+func (p *MFADevicePolicyMobileApplicationResourceModel) expand(ctx context.Context, apiClient *management.APIClient, environmentId, applicationId string) (*mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInner, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	application, d := checkApplicationForMobileApp(ctx, apiClient, environmentId, applicationId)
@@ -1675,7 +1678,7 @@ func (p *MFADevicePolicyMobileApplicationResourceModel) expand(ctx context.Conte
 		return nil, diags
 	}
 
-	data := mfa.NewDeviceAuthenticationPolicyMobileApplicationsInner(
+	data := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInner(
 		applicationId,
 	)
 
@@ -1691,13 +1694,13 @@ func (p *MFADevicePolicyMobileApplicationResourceModel) expand(ctx context.Conte
 		}
 
 		data.SetAutoEnrollment(
-			*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerAutoEnrollment(
+			*mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerAutoEnrollment(
 				plan.Enabled.ValueBool(),
 			),
 		)
 	}
 
-	// Device authorisation
+	// Device authorization
 	if !p.DeviceAuthorization.IsNull() && !p.DeviceAuthorization.IsUnknown() {
 		var plan MFADevicePolicyMobileApplicationDeviceAuthorizationResourceModel
 		diags.Append(p.DeviceAuthorization.As(ctx, &plan, basetypes.ObjectAsOptions{
@@ -1708,7 +1711,7 @@ func (p *MFADevicePolicyMobileApplicationResourceModel) expand(ctx context.Conte
 			return nil, diags
 		}
 
-		deviceAuthorization := *mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerDeviceAuthorization(
+		deviceAuthorization := *mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerDeviceAuthorization(
 			plan.Enabled.ValueBool(),
 		)
 
@@ -1753,7 +1756,7 @@ func (p *MFADevicePolicyMobileApplicationResourceModel) expand(ctx context.Conte
 			return nil, diags
 		}
 
-		data.SetOtp(*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerOtp(
+		data.SetOtp(*mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerOtp(
 			plan.Enabled.ValueBool(),
 		))
 	}
@@ -1775,7 +1778,7 @@ func (p *MFADevicePolicyMobileApplicationResourceModel) expand(ctx context.Conte
 		}
 
 		data.SetPairingKeyLifetime(
-			*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPairingKeyLifetime(
+			*mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerPairingKeyLifetime(
 				plan.Duration.ValueInt32(),
 				mfa.EnumTimeUnitPairingKeyLifetime(plan.TimeUnit.ValueString()),
 			),
@@ -1794,7 +1797,7 @@ func (p *MFADevicePolicyMobileApplicationResourceModel) expand(ctx context.Conte
 		}
 
 		data.SetPush(
-			*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPush(
+			*mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerPush(
 				plan.Enabled.ValueBool(),
 			),
 		)
@@ -1832,7 +1835,7 @@ func (p *MFADevicePolicyMobileApplicationResourceModel) expand(ctx context.Conte
 		}
 
 		data.SetPushTimeout(
-			*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPushTimeout(
+			*mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerPushTimeout(
 				plan.Duration.ValueInt32(),
 				mfa.EnumTimeUnitPushTimeout(plan.TimeUnit.ValueString()),
 			),
@@ -1842,10 +1845,10 @@ func (p *MFADevicePolicyMobileApplicationResourceModel) expand(ctx context.Conte
 	return data, diags
 }
 
-func (p *MFADevicePolicyPushLimitResourceModel) expand(ctx context.Context) (*mfa.DeviceAuthenticationPolicyMobileApplicationsInnerPushLimit, diag.Diagnostics) {
+func (p *MFADevicePolicyPushLimitResourceModel) expand(ctx context.Context) (*mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInnerPushLimit, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	data := mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPushLimit()
+	data := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerPushLimit()
 
 	if !p.Count.IsNull() && !p.Count.IsUnknown() {
 		data.SetCount(p.Count.ValueInt32())
@@ -1862,7 +1865,7 @@ func (p *MFADevicePolicyPushLimitResourceModel) expand(ctx context.Context) (*mf
 		}
 
 		data.SetLockDuration(
-			*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPushLimitLockDuration(
+			*mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerPushLimitLockDuration(
 				plan.Duration.ValueInt32(),
 				mfa.EnumTimeUnit(plan.TimeUnit.ValueString()),
 			),
@@ -1880,7 +1883,7 @@ func (p *MFADevicePolicyPushLimitResourceModel) expand(ctx context.Context) (*mf
 		}
 
 		data.SetTimePeriod(
-			*mfa.NewDeviceAuthenticationPolicyMobileApplicationsInnerPushLimitTimePeriod(
+			*mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerPushLimitTimePeriod(
 				plan.Duration.ValueInt32(),
 				mfa.EnumTimeUnit(plan.TimeUnit.ValueString()),
 			),
@@ -1890,7 +1893,7 @@ func (p *MFADevicePolicyPushLimitResourceModel) expand(ctx context.Context) (*mf
 	return data, diags
 }
 
-func (p *MFADevicePolicyTotpResourceModel) expand(ctx context.Context) (*mfa.DeviceAuthenticationPolicyTotp, diag.Diagnostics) {
+func (p *MFADevicePolicyTotpResourceModel) expand(ctx context.Context) (*mfa.DeviceAuthenticationPolicyCommonTotp, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	// Otp
@@ -1919,11 +1922,11 @@ func (p *MFADevicePolicyTotpResourceModel) expand(ctx context.Context) (*mfa.Dev
 		return nil, diags
 	}
 
-	otp := mfa.NewDeviceAuthenticationPolicyTotpOtp(
+	otp := mfa.NewDeviceAuthenticationPolicyPingIDDeviceOtp(
 		*failure,
 	)
 
-	data := mfa.NewDeviceAuthenticationPolicyTotp(
+	data := mfa.NewDeviceAuthenticationPolicyCommonTotp(
 		p.Enabled.ValueBool(),
 		*otp,
 	)
@@ -1952,9 +1955,9 @@ func (p *MFADevicePolicyTotpResourceModel) expand(ctx context.Context) (*mfa.Dev
 	return data, diags
 }
 
-func (p *MFADevicePolicyFido2ResourceModel) expand() *mfa.DeviceAuthenticationPolicyFido2 {
+func (p *MFADevicePolicyFido2ResourceModel) expand() *mfa.DeviceAuthenticationPolicyCommonFido2 {
 
-	data := mfa.NewDeviceAuthenticationPolicyFido2(
+	data := mfa.NewDeviceAuthenticationPolicyCommonFido2(
 		p.Enabled.ValueBool(),
 	)
 
@@ -2029,10 +2032,18 @@ func (p *MFADevicePolicyResourceModel) toStateCreate(apiObject *mfa.DeviceAuthen
 		return diags
 	}
 
+	if apiObject.DeviceAuthenticationPolicy == nil {
+		diags.AddError(
+			"Unexpected response type",
+			"Expected a DeviceAuthenticationPolicy in the response but received a different type. Please report this to the provider maintainers.",
+		)
+		return diags
+	}
+
 	return p.toState(apiObject.DeviceAuthenticationPolicy)
 }
 
-func toStateMfaDevicePolicyAuthentication(apiObject *mfa.DeviceAuthenticationPolicyAuthentication, ok bool) (types.Object, diag.Diagnostics) {
+func toStateMfaDevicePolicyAuthentication(apiObject *mfa.DeviceAuthenticationPolicyCommonAuthentication, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -2178,7 +2189,7 @@ func toStateMfaDevicePolicyEmail(apiObject *mfa.DeviceAuthenticationPolicyOfflin
 	return toStateMfaDevicePolicyOfflineDevice(apiObject, ok)
 }
 
-func toStateMfaDevicePolicyMobile(apiObject *mfa.DeviceAuthenticationPolicyMobile, ok bool) (types.Object, diag.Diagnostics) {
+func toStateMfaDevicePolicyMobile(apiObject *mfa.DeviceAuthenticationPolicyCommonMobile, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -2210,7 +2221,7 @@ func toStateMfaDevicePolicyMobile(apiObject *mfa.DeviceAuthenticationPolicyMobil
 	return objValue, diags
 }
 
-func toStateMfaDevicePolicyMobileApplications(apiObject []mfa.DeviceAuthenticationPolicyMobileApplicationsInner, ok bool) (types.Map, diag.Diagnostics) {
+func toStateMfaDevicePolicyMobileApplications(apiObject []mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInner, ok bool) (types.Map, diag.Diagnostics) {
 	var diags, d diag.Diagnostics
 
 	tfObjType := types.ObjectType{AttrTypes: MFADevicePolicyMobileApplicationTFObjectTypes}
@@ -2288,7 +2299,7 @@ func toStateMfaDevicePolicyMobileApplications(apiObject []mfa.DeviceAuthenticati
 	return returnVar, diags
 }
 
-func toStateMfaDevicePolicyMobileApplicationsAutoEnrolment(apiObject *mfa.DeviceAuthenticationPolicyMobileApplicationsInnerAutoEnrollment, ok bool) (types.Object, diag.Diagnostics) {
+func toStateMfaDevicePolicyMobileApplicationsAutoEnrolment(apiObject *mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInnerAutoEnrollment, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -2305,7 +2316,7 @@ func toStateMfaDevicePolicyMobileApplicationsAutoEnrolment(apiObject *mfa.Device
 	return objValue, diags
 }
 
-func toStateMfaDevicePolicyMobileApplicationsDeviceAuthorization(apiObject *mfa.DeviceAuthenticationPolicyMobileApplicationsInnerDeviceAuthorization, ok bool) (types.Object, diag.Diagnostics) {
+func toStateMfaDevicePolicyMobileApplicationsDeviceAuthorization(apiObject *mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInnerDeviceAuthorization, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -2323,7 +2334,7 @@ func toStateMfaDevicePolicyMobileApplicationsDeviceAuthorization(apiObject *mfa.
 	return objValue, diags
 }
 
-func toStateMfaDevicePolicyMobileApplicationsOtp(apiObject *mfa.DeviceAuthenticationPolicyMobileApplicationsInnerOtp, ok bool) (types.Object, diag.Diagnostics) {
+func toStateMfaDevicePolicyMobileApplicationsOtp(apiObject *mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInnerOtp, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -2340,7 +2351,7 @@ func toStateMfaDevicePolicyMobileApplicationsOtp(apiObject *mfa.DeviceAuthentica
 	return objValue, diags
 }
 
-func toStateMfaDevicePolicyMobileApplicationsPush(apiObject *mfa.DeviceAuthenticationPolicyMobileApplicationsInnerPush, ok bool) (types.Object, diag.Diagnostics) {
+func toStateMfaDevicePolicyMobileApplicationsPush(apiObject *mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInnerPush, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -2357,7 +2368,7 @@ func toStateMfaDevicePolicyMobileApplicationsPush(apiObject *mfa.DeviceAuthentic
 	return objValue, diags
 }
 
-func toStateMfaDevicePolicyMobileApplicationsPushLimit(apiObject *mfa.DeviceAuthenticationPolicyMobileApplicationsInnerPushLimit, ok bool) (types.Object, diag.Diagnostics) {
+func toStateMfaDevicePolicyMobileApplicationsPushLimit(apiObject *mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInnerPushLimit, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -2388,7 +2399,7 @@ func toStateMfaDevicePolicyMobileApplicationsPushLimit(apiObject *mfa.DeviceAuth
 	return objValue, diags
 }
 
-func toStateMfaDevicePolicyMobileApplicationsPushLimitLockDuration(apiObject *mfa.DeviceAuthenticationPolicyMobileApplicationsInnerPushLimitLockDuration, ok bool) (types.Object, diag.Diagnostics) {
+func toStateMfaDevicePolicyMobileApplicationsPushLimitLockDuration(apiObject *mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInnerPushLimitLockDuration, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -2406,7 +2417,7 @@ func toStateMfaDevicePolicyMobileApplicationsPushLimitLockDuration(apiObject *mf
 	return objValue, diags
 }
 
-func toStateMfaDevicePolicyMobileApplicationsPushLimitTimePeriod(apiObject *mfa.DeviceAuthenticationPolicyMobileApplicationsInnerPushLimitTimePeriod, ok bool) (types.Object, diag.Diagnostics) {
+func toStateMfaDevicePolicyMobileApplicationsPushLimitTimePeriod(apiObject *mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInnerPushLimitTimePeriod, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -2424,7 +2435,7 @@ func toStateMfaDevicePolicyMobileApplicationsPushLimitTimePeriod(apiObject *mfa.
 	return objValue, diags
 }
 
-func toStateMfaDevicePolicyMobileApplicationsPairingKeyLifetime(apiObject *mfa.DeviceAuthenticationPolicyMobileApplicationsInnerPairingKeyLifetime, ok bool) (types.Object, diag.Diagnostics) {
+func toStateMfaDevicePolicyMobileApplicationsPairingKeyLifetime(apiObject *mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInnerPairingKeyLifetime, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -2442,7 +2453,7 @@ func toStateMfaDevicePolicyMobileApplicationsPairingKeyLifetime(apiObject *mfa.D
 	return objValue, diags
 }
 
-func toStateMfaDevicePolicyMobileApplicationsPushTimeout(apiObject *mfa.DeviceAuthenticationPolicyMobileApplicationsInnerPushTimeout, ok bool) (types.Object, diag.Diagnostics) {
+func toStateMfaDevicePolicyMobileApplicationsPushTimeout(apiObject *mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInnerPushTimeout, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -2460,7 +2471,7 @@ func toStateMfaDevicePolicyMobileApplicationsPushTimeout(apiObject *mfa.DeviceAu
 	return objValue, diags
 }
 
-func toStateMfaDevicePolicyMobileOtp(apiObject *mfa.DeviceAuthenticationPolicyMobileOtp, ok bool) (types.Object, diag.Diagnostics) {
+func toStateMfaDevicePolicyMobileOtp(apiObject *mfa.DeviceAuthenticationPolicyCommonMobileOtp, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -2525,7 +2536,7 @@ func toStateMfaDevicePolicyMobileOtpFailureCooldown(apiObject *mfa.DeviceAuthent
 	return objValue, diags
 }
 
-func toStateMfaDevicePolicyTotp(apiObject *mfa.DeviceAuthenticationPolicyTotp, ok bool) (types.Object, diag.Diagnostics) {
+func toStateMfaDevicePolicyTotp(apiObject *mfa.DeviceAuthenticationPolicyCommonTotp, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -2552,7 +2563,7 @@ func toStateMfaDevicePolicyTotp(apiObject *mfa.DeviceAuthenticationPolicyTotp, o
 	return objValue, diags
 }
 
-func toStateMfaDevicePolicyTotpOtp(apiObject *mfa.DeviceAuthenticationPolicyTotpOtp, ok bool) (types.Object, diag.Diagnostics) {
+func toStateMfaDevicePolicyTotpOtp(apiObject *mfa.DeviceAuthenticationPolicyPingIDDeviceOtp, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -2617,7 +2628,7 @@ func toStateMfaDevicePolicyTotpOtpFailureCooldown(apiObject *mfa.DeviceAuthentic
 	return objValue, diags
 }
 
-func toStateMfaDevicePolicyFido2(apiObject *mfa.DeviceAuthenticationPolicyFido2, ok bool) (types.Object, diag.Diagnostics) {
+func toStateMfaDevicePolicyFido2(apiObject *mfa.DeviceAuthenticationPolicyCommonFido2, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -2641,15 +2652,15 @@ func checkApplicationForMobileApp(ctx context.Context, apiClient *management.API
 	var diags diag.Diagnostics
 
 	var response *management.ReadOneApplication200Response
-	diags.Append(framework.ParseResponse(
+	diags.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := apiClient.ApplicationsApi.ReadOneApplication(ctx, environmentId, applicationId).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentId, fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentId, fO, fR, fErr)
 		},
 		"ReadOneApplication",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)

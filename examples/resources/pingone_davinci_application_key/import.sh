@@ -1,0 +1,1 @@
+terraform import pingone_davinci_application_key.example <environment_id>/<application_id>

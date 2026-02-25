@@ -1,0 +1,3 @@
+```release-note:bug
+`resource/pingone_identity_provider_attribute`: Fixed `Invalid parameter value - Unmappable identity provider type` error when deleting a `microsoft` identity provider type.
+```

@@ -1,0 +1,1 @@
+terraform import pingone_administrator_security.example <environment_id>

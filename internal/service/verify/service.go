@@ -1,4 +1,4 @@
-// Copyright © 2025 Ping Identity Corporation
+// Copyright © 2026 Ping Identity Corporation
 
 package verify
 
@@ -13,19 +13,25 @@ type serviceClientType struct {
 }
 
 func Resources() []func() resource.Resource {
-	return []func() resource.Resource{
+	resources := []func() resource.Resource{
 		NewVerifyPolicyResource,
 		NewVoicePhraseResource,
 		NewVoicePhraseContentResource,
 	}
+	resources = append(resources, BetaResources()...)
+
+	return resources
 }
 
 func DataSources() []func() datasource.DataSource {
-	return []func() datasource.DataSource{
+	dataSources := []func() datasource.DataSource{
 		NewVerifyPolicyDataSource,
 		NewVerifyPoliciesDataSource,
 		NewVoicePhraseDataSource,
 		NewVoicePhraseContentDataSource,
 		NewVoicePhraseContentsDataSource,
 	}
+	dataSources = append(dataSources, BetaDataSources()...)
+
+	return dataSources
 }

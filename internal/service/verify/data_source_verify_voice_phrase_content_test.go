@@ -1,4 +1,4 @@
-// Copyright © 2025 Ping Identity Corporation
+// Copyright © 2026 Ping Identity Corporation
 
 package verify_test
 
@@ -10,6 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/verify"
 	validation "github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -39,9 +40,10 @@ func TestAccVerifyVoicePhraseContentDataSource_All(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             verify.VerifyVoicePhraseContents_CheckDestroy,
@@ -71,9 +73,10 @@ func TestAccVerifyVoicePhraseContentDataSource_FailureChecks(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             verify.VerifyVoicePhraseContents_CheckDestroy,
@@ -107,7 +110,7 @@ data "pingone_verify_voice_phrase_content" "%[3]s" {
   environment_id          = pingone_environment.%[2]s.id
   voice_phrase_id         = pingone_verify_voice_phrase.%[3]s.id
   voice_phrase_content_id = pingone_verify_voice_phrase_content.%[3]s.id
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, locale, phrase)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, locale, phrase)
 }
 
 func testAccVerifyVoicePhraseContent_FindByIDFail(environmentName, licenseID, resourceName, name string) string {
@@ -123,5 +126,5 @@ data "pingone_verify_voice_phrase_content" "%[3]s" {
   environment_id          = pingone_environment.%[2]s.id
   voice_phrase_id         = pingone_verify_voice_phrase.%[3]s.id
   voice_phrase_content_id = "9c052a8a-14be-44e4-8f07-2662569994ce" // dummy ID that conforms to UUID v4
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }

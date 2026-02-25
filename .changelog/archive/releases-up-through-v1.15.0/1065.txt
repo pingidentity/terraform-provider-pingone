@@ -1,0 +1,3 @@
+```release-note:bug
+`resource/pingone_phone_delivery_settings`: Fixed `UNIQUENESS_VIOLATION:A resource with the specified name already exists.` error when updating mutable attributes
+```

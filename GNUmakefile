@@ -3,13 +3,19 @@ SWEEP_DIR=./internal/sweep
 NAMESPACE=pingidentity
 PKG_NAME=pingone
 BINARY=terraform-provider-${NAME}
-VERSION=1.4.0
+VERSION=1.15.1
 OS_ARCH=linux_amd64
+BETA?=false
+
+ifeq ($(BETA),true)
+	BUILD_TAGS=-tags=beta
+	VERSION_SUFFIX=-beta
+else
+	BUILD_TAGS=
+	VERSION_SUFFIX=
+endif
 
 default: install
-
-tools:
-	go generate -tags tools tools/tools.go
 
 fmtcheck:
 	@echo "==> Formatting Terraform documentation examples with terraform fmt..."
@@ -17,25 +23,24 @@ fmtcheck:
 
 build:
 	go mod tidy
-	go work vendor
-	go build -v .
+	go build $(BUILD_TAGS) -v .
 
 install: build
-	go install -ldflags="-X main.version=$(VERSION)"
+	go install $(BUILD_TAGS) -ldflags="-X main.version=$(VERSION)$(VERSION_SUFFIX)"
 
 generate: build fmt
-	tfplugindocs generate
+	GOFLAGS="$(BUILD_TAGS)" go tool tfplugindocs generate --provider-name terraform-provider-pingone
 
 test: build
 	go test $(TEST_PATH) $(TESTARGS) -timeout=5m
 
 testacc: build
-	TF_ACC=1 go test $$(go list ./internal/client/...) -v $(TESTARGS) -timeout 120m
-	TF_ACC=1 go test $$(go list ./internal/service/...) -v $(TESTARGS) -timeout 120m
+	TF_ACC=1 go test $(BUILD_TAGS) $$(go list ./internal/client/...) -v $(TESTARGS) -timeout 120m
+	TF_ACC=1 go test $(BUILD_TAGS) $$(go list ./internal/service/...) -v $(TESTARGS) -timeout 120m
 
 sweep: build
 	@echo "WARNING: This will destroy infrastructure. Use only in development accounts."
-	go test $(SWEEP_DIR) -v -sweep=all $(SWEEPARGS) -timeout 10m
+	go test $(BUILD_TAGS) $(SWEEP_DIR) -v -sweep=all $(SWEEPARGS) -timeout 10m
 
 vet:
 	@echo "==> Running go vet..."
@@ -60,19 +65,19 @@ depscheck:
 	@git diff --exit-code -- go.mod go.sum || \
 		(echo; echo "Unexpected difference in go.mod/go.sum files. Run 'go mod tidy' command or revert any go.mod/go.sum changes and commit."; exit 1)
 
-lint: golangci-lint providerlint importlint tflint terrafmtcheck
+lint: golangci-lint providerlint importlint tflint terrafmtcheck betatagscheck
 
 golangci-lint:
 	@echo "==> Checking source code with golangci-lint..."
-	@golangci-lint run ./...
+	@go tool golangci-lint run ./...
 
 importlint:
 	@echo "==> Checking source code with importlint..."
-	@impi --local . --scheme stdThirdPartyLocal ./...
+	@go tool impi --local . --scheme stdThirdPartyLocal ./...
 
 providerlint:
 	@echo "==> Checking source code with tfproviderlintx..."
-	@tfproviderlintx \
+	@go tool tfproviderlintx \
 		-c 1 \
 		-AT001.ignored-filename-suffixes=_data_source_test.go \
 		-XR004=false \
@@ -81,27 +86,33 @@ providerlint:
 
 tflint:
 	@echo "==> Checking Terraform code with tflint..."
-	@tflint --init
+	@go tool tflint --init
 
 terrafmt:
 	@echo "==> Formatting embedded Terraform code with terrafmt..."
 	@find ./internal/service -type f -name '*_test.go' \
     | sort -u \
-    | xargs -I {} terrafmt -f fmt {}
+    | xargs -I {} go tool terrafmt -f fmt {}
 
 terrafmtcheck:
 	@echo "==> Checking embedded Terraform code with terrafmt..."
 	@find ./internal/service -type f -name '*_test.go' \
     | sort -u \
-    | xargs -I {} terrafmt diff -f --check --fmtcompat {} ; if [ $$? -ne 0 ]; then \
+    | xargs -I {} go tool terrafmt diff -f --check --fmtcompat {} ; if [ $$? -ne 0 ]; then \
 		echo ""; \
 		echo "terrafmt found bad formatting of HCL embedded in the test scripts. Please run "; \
 		echo "\"make terrafmt\" before submitting the code for review."; \
 		exit 1; \
 	fi
 
+betatagscheck:
+	@echo "==> Checking beta resources and data sources for correct build tags..."
+	@go run scripts/check_beta_build_tags.go
+
 fmt: terrafmt fmtcheck
 
-devcheck: build vet tools fmt generate docscategorycheck lint test sweep testacc
+devcheck: build vet fmt generate docscategorycheck lint test sweep testacc
 
-.PHONY: tools build install generate docscategorycheck test testacc sweep vet fmtcheck depscheck lint golangci-lint importlint providerlint tflint terrafmt terrafmtcheck
+devchecknotest: build vet fmt generate docscategorycheck lint
+
+.PHONY: build install generate docscategorycheck test testacc sweep vet fmtcheck depscheck lint golangci-lint importlint providerlint tflint terrafmt terrafmtcheck betatagscheck devcheck devchecknotest

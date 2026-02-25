@@ -1,4 +1,4 @@
-// Copyright © 2025 Ping Identity Corporation
+// Copyright © 2026 Ping Identity Corporation
 
 package base
 
@@ -13,7 +13,7 @@ type serviceClientType struct {
 }
 
 func Resources() []func() resource.Resource {
-	return []func() resource.Resource{
+	resources := []func() resource.Resource{
 		NewAgreementEnableResource,
 		NewAgreementLocalizationEnableResource,
 		NewAgreementLocalizationResource,
@@ -35,11 +35,13 @@ func Resources() []func() resource.Resource {
 		NewImageResource,
 		NewKeyResource,
 		NewKeyRotationPolicyResource,
+		NewLanguageTranslationResource,
 		NewNotificationPolicyResource,
 		NewNotificationSettingsEmailResource,
 		NewNotificationSettingsResource,
 		NewNotificationTemplateContentResource,
 		NewPhoneDeliverySettingsResource,
+		NewRateLimitConfigurationResource,
 		NewRoleAssignmentUserResource,
 		NewSystemApplicationResource,
 		NewTrustedEmailAddressResource,
@@ -47,10 +49,13 @@ func Resources() []func() resource.Resource {
 		NewUserRoleAssignmentResource,
 		NewWebhookResource,
 	}
+	resources = append(resources, BetaResources()...)
+
+	return resources
 }
 
 func DataSources() []func() datasource.DataSource {
-	return []func() datasource.DataSource{
+	dataSources := []func() datasource.DataSource{
 		NewAgreementDataSource,
 		NewAgreementLocalizationDataSource,
 		NewEnvironmentDataSource,
@@ -58,13 +63,19 @@ func DataSources() []func() datasource.DataSource {
 		NewGatewayDataSource,
 		NewLicenseDataSource,
 		NewLicensesDataSource,
+		NewNotificationPolicyDataSource,
 		NewOrganizationDataSource,
 		NewPhoneDeliverySettingsListDataSource,
 		NewRoleDataSource,
 		NewRolesDataSource,
+		NewSystemApplicationDataSource,
+		NewSystemApplicationsDataSource,
 		NewTrustedEmailDomainDataSource,
 		NewTrustedEmailDomainDKIMDataSource,
 		NewTrustedEmailDomainOwnershipDataSource,
 		NewUserRoleAssignmentsDataSource,
 	}
+	dataSources = append(dataSources, BetaDataSources()...)
+
+	return dataSources
 }

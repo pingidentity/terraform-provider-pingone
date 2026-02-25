@@ -1,4 +1,4 @@
-// Copyright © 2025 Ping Identity Corporation
+// Copyright © 2026 Ping Identity Corporation
 
 package base_test
 
@@ -12,7 +12,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	baselegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base/legacysdk"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -36,11 +38,11 @@ func TestAccGateway_RemovalDrift(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
-
-			p1Client = acctest.PreCheckTestClient(ctx, t)
+			acctest.PreCheckNoBeta(t)
+			p1Client = acctestlegacysdk.PreCheckTestClient(ctx, t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.Gateway_CheckDestroy,
@@ -65,7 +67,7 @@ func TestAccGateway_RemovalDrift(t *testing.T) {
 			},
 			{
 				PreConfig: func() {
-					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
+					baselegacysdk.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -88,9 +90,10 @@ func TestAccGateway_NewEnv(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.Gateway_CheckDestroy,
@@ -116,8 +119,9 @@ func TestAccGateway_Full(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.Gateway_CheckDestroy,
@@ -148,8 +152,9 @@ func TestAccGateway_Minimal(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.Gateway_CheckDestroy,
@@ -180,8 +185,9 @@ func TestAccGateway_Change(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.Gateway_CheckDestroy,
@@ -245,8 +251,9 @@ func TestAccGateway_PF(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.Gateway_CheckDestroy,
@@ -265,7 +272,7 @@ func TestAccGateway_PF(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -288,8 +295,9 @@ func TestAccGateway_APIG(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.Gateway_CheckDestroy,
@@ -308,7 +316,7 @@ func TestAccGateway_APIG(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -331,8 +339,9 @@ func TestAccGateway_Intelligence(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.Gateway_CheckDestroy,
@@ -351,7 +360,7 @@ func TestAccGateway_Intelligence(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -378,7 +387,7 @@ func TestAccGateway_LDAP(t *testing.T) {
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-			resource.TestCheckNoResourceAttr(resourceFullName, "description"),
+			resource.TestCheckResourceAttr(resourceFullName, "description", "My test gateway"),
 			resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "type", "LDAP"),
 			resource.TestCheckResourceAttr(resourceFullName, "bind_dn", "ou=test1,dc=example,dc=com"),
@@ -424,7 +433,7 @@ func TestAccGateway_LDAP(t *testing.T) {
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-			resource.TestCheckNoResourceAttr(resourceFullName, "description"),
+			resource.TestCheckResourceAttr(resourceFullName, "description", "My test gateway"),
 			resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "type", "LDAP"),
 			resource.TestCheckResourceAttr(resourceFullName, "bind_dn", "ou=test1,dc=example,dc=com"),
@@ -490,8 +499,9 @@ func TestAccGateway_LDAP(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.Gateway_CheckDestroy,
@@ -524,7 +534,7 @@ func TestAccGateway_LDAP(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -555,10 +565,10 @@ func TestAccGateway_RADIUS(t *testing.T) {
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "name", name),
-			resource.TestCheckNoResourceAttr(resourceFullName, "description"),
+			resource.TestCheckResourceAttr(resourceFullName, "description", "My test gateway"),
 			resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "type", "RADIUS"),
-			resource.TestMatchResourceAttr(resourceFullName, "radius_davinci_policy_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "radius_davinci_policy_id", verify.P1DVResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "radius_default_shared_secret", "sharedsecret123"),
 			resource.TestCheckResourceAttr(resourceFullName, "radius_clients.#", "2"),
 			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "radius_clients.*", map[string]string{
@@ -583,7 +593,7 @@ func TestAccGateway_RADIUS(t *testing.T) {
 			resource.TestCheckNoResourceAttr(resourceFullName, "description"),
 			resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "type", "RADIUS"),
-			resource.TestMatchResourceAttr(resourceFullName, "radius_davinci_policy_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "radius_davinci_policy_id", verify.P1DVResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "radius_default_shared_secret", "sharedsecret123"),
 			resource.TestCheckResourceAttr(resourceFullName, "radius_clients.#", "1"),
 
@@ -598,8 +608,9 @@ func TestAccGateway_RADIUS(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.Gateway_CheckDestroy,
@@ -628,7 +639,7 @@ func TestAccGateway_RADIUS(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -676,8 +687,9 @@ func TestAccGateway_RADIUSSharedSecrets(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.Gateway_CheckDestroy,
@@ -718,8 +730,9 @@ func TestAccGateway_BadParameter(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.Gateway_CheckDestroy,
@@ -765,7 +778,7 @@ resource "pingone_gateway" "%[3]s" {
   enabled        = false
 
   type = "PING_FEDERATE"
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccGatewayConfig_Full(resourceName, name string) string {
@@ -849,6 +862,8 @@ resource "pingone_gateway" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
   type           = "LDAP"
+
+  description = "My test gateway"
 
   bind_dn       = "ou=test1,dc=example,dc=com"
   bind_password = "dummyPasswordValue1"
@@ -946,6 +961,7 @@ resource "pingone_gateway" "%[2]s" {
   name           = "%[3]s"
   enabled        = true
   type           = "LDAP"
+  description    = "My test gateway"
 
   bind_dn       = "ou=test1,dc=example,dc=com"
   bind_password = "dummyPasswordValue1"
@@ -1039,10 +1055,11 @@ resource "pingone_gateway" "%[2]s" {
   name           = "%[3]s"
   enabled        = false
   type           = "RADIUS"
+  description    = "My test gateway"
 
   radius_default_shared_secret = "sharedsecret123"
 
-  radius_davinci_policy_id = "ee8470a2-8161-4d76-a7af-a8505a2da084" // dummy ID
+  radius_davinci_policy_id = "ee8470a281614d76a7afa8505a2da084" // dummy ID
 
   radius_clients = [
     {
@@ -1075,7 +1092,7 @@ resource "pingone_gateway" "%[2]s" {
 
   radius_default_shared_secret = "sharedsecret123"
 
-  radius_davinci_policy_id = "ee8470a2-8161-4d76-a7af-a8505a2da085" // dummy ID
+  radius_davinci_policy_id = "ee8470a281614d76a7afa8505a2da084" // dummy ID
 
   radius_clients = [
     {
@@ -1096,7 +1113,7 @@ resource "pingone_gateway" "%[2]s" {
   enabled        = false
   type           = "RADIUS"
 
-  radius_davinci_policy_id = "ee8470a2-8161-4d76-a7af-a8505a2da085" // dummy ID
+  radius_davinci_policy_id = "ee8470a281614d76a7afa8505a2da084" // dummy ID
 
   radius_clients = [
     {
@@ -1118,7 +1135,7 @@ resource "pingone_gateway" "%[2]s" {
   enabled        = false
   type           = "RADIUS"
 
-  radius_davinci_policy_id = "ee8470a2-8161-4d76-a7af-a8505a2da085" // dummy ID
+  radius_davinci_policy_id = "ee8470a281614d76a7afa8505a2da084" // dummy ID
 
   radius_clients = [
     {

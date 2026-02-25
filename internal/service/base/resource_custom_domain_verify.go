@@ -1,4 +1,4 @@
-// Copyright © 2025 Ping Identity Corporation
+// Copyright © 2026 Ping Identity Corporation
 
 package base
 
@@ -14,10 +14,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
@@ -98,7 +100,7 @@ func (r *CustomDomainVerifyResource) Configure(ctx context.Context, req resource
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -120,6 +122,7 @@ func (r *CustomDomainVerifyResource) Configure(ctx context.Context, req resource
 
 func (r *CustomDomainVerifyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state CustomDomainVerifyResourceModel
+	existingDomain := false
 
 	if r.Client == nil || r.Client.ManagementAPIClient == nil {
 		resp.Diagnostics.AddError(
@@ -144,12 +147,12 @@ func (r *CustomDomainVerifyResource) Create(ctx context.Context, req resource.Cr
 
 	// Run the API call
 	var response *management.CustomDomain
-	resp.Diagnostics.Append(framework.ParseResponseWithCustomTimeout(
+	resp.Diagnostics.Append(legacysdk.ParseResponseWithCustomTimeout(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.CustomDomainsApi.UpdateDomain(ctx, plan.EnvironmentId.ValueString(), plan.CustomDomainId.ValueString()).ContentType(management.ENUMCUSTOMDOMAINPOSTHEADER_DOMAIN_NAME_VERIFYJSON).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateDomain",
 		func(_ *http.Response, p1Error *model.P1Error) diag.Diagnostics {
@@ -177,15 +180,44 @@ func (r *CustomDomainVerifyResource) Create(ctx context.Context, req resource.Cr
 
 						return diags
 					}
+
+					m, _ = regexp.MatchString("^custom domain does not need to be verified", details[0].GetMessage())
+					if m {
+						diags.AddWarning(
+							details[0].GetMessage(),
+							"This is expected if the custom domain was verified previously.  The verification step has been skipped and the resource now tracks the domain's verified status.",
+						)
+
+						existingDomain = true
+					}
 				}
 			}
 
 			return diags
 		},
-		sdk.DefaultCreateReadRetryable,
+		customDomainRetryConditions,
 		&response,
 		timeout,
 	)...)
+
+	if existingDomain {
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
+			ctx,
+
+			func() (any, *http.Response, error) {
+				fO, fR, fErr := r.Client.ManagementAPIClient.CustomDomainsApi.ReadOneDomain(ctx, plan.EnvironmentId.ValueString(), plan.CustomDomainId.ValueString()).Execute()
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			},
+			"ReadOneDomain",
+			legacysdk.DefaultCustomError,
+			sdk.DefaultCreateReadRetryable,
+			&response,
+		)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+	}
+
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -216,15 +248,15 @@ func (r *CustomDomainVerifyResource) Read(ctx context.Context, req resource.Read
 
 	// Run the API call
 	var response *management.CustomDomain
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.CustomDomainsApi.ReadOneDomain(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneDomain",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
@@ -267,4 +299,49 @@ func (p *CustomDomainVerifyResourceModel) toState(apiObject *management.CustomDo
 	p.Status = framework.EnumOkToTF(apiObject.GetStatusOk())
 
 	return diags
+}
+
+func customDomainRetryConditions(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {
+
+	var err error
+
+	if p1error != nil {
+
+		// Permissions may not have propagated by this point
+		if m, _ := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage()); err == nil && m {
+			tflog.Warn(ctx, "Insufficient PingOne privileges detected")
+			return true
+		}
+		if err != nil {
+			tflog.Warn(ctx, "Cannot match error string for retry")
+			return false
+		}
+
+		// add retry time for DNS propegating
+		if details, ok := p1error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
+
+			// perhaps it's the DNS authority
+			if m, err := regexp.MatchString("^Error response from authoritative name servers: NXDOMAIN", details[0].GetMessage()); err == nil && m {
+				tflog.Warn(ctx, fmt.Sprintf("Cannot verify the domain - %s.  Retrying...", details[0].GetMessage()))
+				return true
+			}
+			if err != nil {
+				tflog.Warn(ctx, "Cannot match error string for retry")
+				return false
+			}
+
+			// perhaps it's the CNAME
+			if m, err := regexp.MatchString("^No CNAME records found", details[0].GetMessage()); err == nil && m {
+				tflog.Warn(ctx, fmt.Sprintf("Cannot verify the domain - %s.  Retrying...", details[0].GetMessage()))
+				return true
+			}
+			if err != nil {
+				tflog.Warn(ctx, "Cannot match error string for retry")
+				return false
+			}
+		}
+
+	}
+
+	return false
 }

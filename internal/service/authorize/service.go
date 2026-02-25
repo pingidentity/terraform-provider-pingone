@@ -1,4 +1,4 @@
-// Copyright © 2025 Ping Identity Corporation
+// Copyright © 2026 Ping Identity Corporation
 
 package authorize
 
@@ -13,26 +13,22 @@ type serviceClientType struct {
 }
 
 func Resources() []func() resource.Resource {
-	return []func() resource.Resource{
+	resources := []func() resource.Resource{
 		NewAPIServiceDeploymentResource,
 		NewAPIServiceOperationResource,
 		NewAPIServiceResource,
 		NewApplicationResourcePermissionResource,
 		NewApplicationRolePermissionResource,
 		NewApplicationRoleResource,
-		NewTrustFrameworkAttributeResource,
-		NewTrustFrameworkConditionResource,
-		NewPolicyManagementPolicyResource,
-		NewPolicyManagementRootPolicyResource,
-		NewTrustFrameworkProcessorResource,
-		NewPolicyManagementRuleResource,
-		NewTrustFrameworkServiceResource,
-		NewPolicyManagementStatementResource,
 	}
+	resources = append(resources, BetaResources()...)
+
+	return resources
 }
 
 func DataSources() []func() datasource.DataSource {
-	return []func() datasource.DataSource{
-		NewTrustFrameworkAttributeDataSource,
-	}
+	dataSources := []func() datasource.DataSource{}
+	dataSources = append(dataSources, BetaDataSources()...)
+
+	return dataSources
 }

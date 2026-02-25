@@ -95,7 +95,7 @@ Read-Only:
 - `allow_custom_schema` (Boolean) A boolean that specifies whether the license supports using custom schema attributes in the specified environment.
 - `allow_production` (Boolean) A boolean that specifies whether production environments are allowed.
 - `max` (Number) An integer that specifies the maximum number of environments allowed.
-- `regions` (Set of String) A string that specifies the allowed regions associated with environments.  Options are `AP`, `AU`, `CA`, `EU`, `NA`.
+- `regions` (Set of String) A string that specifies the allowed regions associated with environments.  Options are `AP`, `AU`, `CA`, `EU`, `NA`, `SG`.
 
 
 <a id="nestedatt--fraud"></a>

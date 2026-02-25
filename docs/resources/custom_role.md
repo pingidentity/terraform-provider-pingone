@@ -54,7 +54,7 @@ resource "pingone_custom_role" "my_custom_role" {
 
 ### Required
 
-- `applicable_to` (Set of String) The scope types to which the role can be applied. Options are `ENVIRONMENT`, `ORGANIZATION`, `POPULATION`. At least one value must be set.
+- `applicable_to` (Set of String) The scope types to which the role can be applied. Options are `ORGANIZATION`, `ENVIRONMENT`, `POPULATION`, `APPLICATION`. At least one value must be set.
 - `can_be_assigned_by` (Attributes Set) A relationship that determines whether a user assigned to one of this set of roles for a jurisdiction can assign the current custom role to another user for the same jurisdiction or sub-jurisdiction. (see [below for nested schema](#nestedatt--can_be_assigned_by))
 - `environment_id` (String) The ID of the environment to create and manage the custom role in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `name` (String) The role name.

@@ -1,4 +1,4 @@
-// Copyright © 2025 Ping Identity Corporation
+// Copyright © 2026 Ping Identity Corporation
 
 package sso_test
 
@@ -13,7 +13,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
-	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
+	baselegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/sso"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -38,11 +39,11 @@ func TestAccIdentityProvider_RemovalDrift(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
-
-			p1Client = acctest.PreCheckTestClient(ctx, t)
+			acctest.PreCheckNoBeta(t)
+			p1Client = acctestlegacysdk.PreCheckTestClient(ctx, t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.IdentityProvider_CheckDestroy,
@@ -67,7 +68,7 @@ func TestAccIdentityProvider_RemovalDrift(t *testing.T) {
 			},
 			{
 				PreConfig: func() {
-					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
+					baselegacysdk.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -90,9 +91,10 @@ func TestAccIdentityProvider_NewEnv(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.IdentityProvider_CheckDestroy,
@@ -129,9 +131,9 @@ func TestAccIdentityProvider_Change(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 			resource.TestMatchResourceAttr(resourceFullName, "registration_population_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "login_button_icon.id", verify.P1ResourceIDRegexpFullString),
-			resource.TestMatchResourceAttr(resourceFullName, "login_button_icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+			resource.TestMatchResourceAttr(resourceFullName, "login_button_icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca)|(sg))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 			resource.TestMatchResourceAttr(resourceFullName, "icon.id", verify.P1ResourceIDRegexpFullString),
-			resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+			resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca)|(sg))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 		),
 	}
 
@@ -151,8 +153,9 @@ func TestAccIdentityProvider_Change(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.IdentityProvider_CheckDestroy,
@@ -188,8 +191,9 @@ func TestAccIdentityProvider_Facebook(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.IdentityProvider_CheckDestroy,
@@ -203,6 +207,7 @@ func TestAccIdentityProvider_Facebook(t *testing.T) {
 					// resource.TestMatchResourceAttr(resourceFullName, "facebook.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/facebook$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
@@ -222,6 +227,7 @@ func TestAccIdentityProvider_Facebook(t *testing.T) {
 					// resource.TestMatchResourceAttr(resourceFullName, "facebook.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/facebook$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
@@ -240,7 +246,7 @@ func TestAccIdentityProvider_Facebook(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -263,8 +269,9 @@ func TestAccIdentityProvider_Google(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.IdentityProvider_CheckDestroy,
@@ -278,6 +285,7 @@ func TestAccIdentityProvider_Google(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "google.client_secret", "dummyclientsecret1"),
 					// resource.TestMatchResourceAttr(resourceFullName, "google.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/google$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
@@ -297,6 +305,7 @@ func TestAccIdentityProvider_Google(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "google.client_secret", "dummyclientsecret2"),
 					// resource.TestMatchResourceAttr(resourceFullName, "google.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/google$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
@@ -315,7 +324,7 @@ func TestAccIdentityProvider_Google(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -338,20 +347,22 @@ func TestAccIdentityProvider_LinkedIn(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.IdentityProvider_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccIdentityProviderConfig_LinkedIn1(resourceName, name),
+				Config: testAccIdentityProviderConfig_LinkedIn1(resourceName, name, "linkedin"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.client_id", "dummyclientid1"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.client_secret", "dummyclientsecret1"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					// resource.TestMatchResourceAttr(resourceFullName, "linkedin.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/linkedin$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
@@ -365,12 +376,13 @@ func TestAccIdentityProvider_LinkedIn(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccIdentityProviderConfig_LinkedIn2(resourceName, name),
+				Config: testAccIdentityProviderConfig_LinkedIn2(resourceName, name, "linkedin"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.client_id", "dummyclientid2"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.client_secret", "dummyclientsecret2"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					// resource.TestMatchResourceAttr(resourceFullName, "linkedin.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/linkedin$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
@@ -390,7 +402,85 @@ func TestAccIdentityProvider_LinkedIn(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccIdentityProvider_LinkedInOIDC(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_identity_provider.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             sso.IdentityProvider_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccIdentityProviderConfig_LinkedIn1(resourceName, name, "linkedin_oidc"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.client_id", "dummyclientid1"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.client_secret", "dummyclientsecret1"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					// resource.TestMatchResourceAttr(resourceFullName, "linkedin.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/linkedin$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "apple.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "paypal.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "microsoft.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "github.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.%", "0"),
+				),
+			},
+			{
+				Config: testAccIdentityProviderConfig_LinkedIn2(resourceName, name, "linkedin_oidc"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.client_id", "dummyclientid2"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.client_secret", "dummyclientsecret2"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					// resource.TestMatchResourceAttr(resourceFullName, "linkedin.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/linkedin$`)),
+					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "apple.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "paypal.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "microsoft.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "github.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "saml.%", "0"),
+				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -413,8 +503,9 @@ func TestAccIdentityProvider_Yahoo(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.IdentityProvider_CheckDestroy,
@@ -426,6 +517,7 @@ func TestAccIdentityProvider_Yahoo(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.client_id", "dummyclientid1"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.client_secret", "dummyclientsecret1"),
 					// resource.TestMatchResourceAttr(resourceFullName, "yahoo.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/yahoo$`)),
@@ -445,6 +537,7 @@ func TestAccIdentityProvider_Yahoo(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.client_id", "dummyclientid2"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.client_secret", "dummyclientsecret2"),
 					// resource.TestMatchResourceAttr(resourceFullName, "yahoo.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/yahoo$`)),
@@ -465,7 +558,7 @@ func TestAccIdentityProvider_Yahoo(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -488,8 +581,9 @@ func TestAccIdentityProvider_Amazon(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.IdentityProvider_CheckDestroy,
@@ -501,6 +595,7 @@ func TestAccIdentityProvider_Amazon(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.client_id", "dummyclientid1"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.client_secret", "dummyclientsecret1"),
@@ -520,6 +615,7 @@ func TestAccIdentityProvider_Amazon(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.client_id", "dummyclientid2"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.client_secret", "dummyclientsecret2"),
@@ -540,7 +636,7 @@ func TestAccIdentityProvider_Amazon(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -563,8 +659,9 @@ func TestAccIdentityProvider_Twitter(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.IdentityProvider_CheckDestroy,
@@ -576,6 +673,7 @@ func TestAccIdentityProvider_Twitter(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "twitter.client_id", "dummyclientid1"),
@@ -595,6 +693,7 @@ func TestAccIdentityProvider_Twitter(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "twitter.client_id", "dummyclientid2"),
@@ -615,7 +714,7 @@ func TestAccIdentityProvider_Twitter(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -638,8 +737,9 @@ func TestAccIdentityProvider_Apple(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.IdentityProvider_CheckDestroy,
@@ -651,6 +751,7 @@ func TestAccIdentityProvider_Apple(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
@@ -672,6 +773,7 @@ func TestAccIdentityProvider_Apple(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
@@ -694,7 +796,7 @@ func TestAccIdentityProvider_Apple(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -717,8 +819,9 @@ func TestAccIdentityProvider_Paypal(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.IdentityProvider_CheckDestroy,
@@ -730,6 +833,7 @@ func TestAccIdentityProvider_Paypal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
@@ -750,6 +854,7 @@ func TestAccIdentityProvider_Paypal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
@@ -771,7 +876,7 @@ func TestAccIdentityProvider_Paypal(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -794,8 +899,9 @@ func TestAccIdentityProvider_Microsoft(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.IdentityProvider_CheckDestroy,
@@ -807,6 +913,7 @@ func TestAccIdentityProvider_Microsoft(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
@@ -814,6 +921,7 @@ func TestAccIdentityProvider_Microsoft(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "paypal.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "microsoft.client_id", "dummyclientid1"),
 					resource.TestCheckResourceAttr(resourceFullName, "microsoft.client_secret", "dummyclientsecret1"),
+					resource.TestCheckResourceAttr(resourceFullName, "microsoft.tenant_id", "dummytenantid1"),
 					// resource.TestMatchResourceAttr(resourceFullName, "microsoft.callback_url", regexp.MustCompile(`^https:\/\/auth\.pingone\.(?:eu|com|asia|ca)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/rp\/callback\/microsoft$`)),
 					resource.TestCheckResourceAttr(resourceFullName, "github.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "openid_connect.%", "0"),
@@ -826,6 +934,7 @@ func TestAccIdentityProvider_Microsoft(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
@@ -846,7 +955,7 @@ func TestAccIdentityProvider_Microsoft(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -869,8 +978,9 @@ func TestAccIdentityProvider_Github(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.IdentityProvider_CheckDestroy,
@@ -882,6 +992,7 @@ func TestAccIdentityProvider_Github(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
@@ -901,6 +1012,7 @@ func TestAccIdentityProvider_Github(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
@@ -921,7 +1033,7 @@ func TestAccIdentityProvider_Github(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -949,12 +1061,13 @@ func TestAccIdentityProvider_OIDC(t *testing.T) {
 		Config: testAccIdentityProviderConfig_OIDCFull(resourceName, name, image),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestMatchResourceAttr(resourceFullName, "login_button_icon.id", verify.P1ResourceIDRegexpFullString),
-			resource.TestMatchResourceAttr(resourceFullName, "login_button_icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+			resource.TestMatchResourceAttr(resourceFullName, "login_button_icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca)|(sg))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 			resource.TestMatchResourceAttr(resourceFullName, "icon.id", verify.P1ResourceIDRegexpFullString),
-			resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
+			resource.TestMatchResourceAttr(resourceFullName, "icon.href", regexp.MustCompile(`^https:\/\/uploads\.pingone\.((eu)|(com)|(asia)|(ca)|(sg))\/environments\/[a-zA-Z0-9-]*\/images\/[a-zA-Z0-9-]*_[a-zA-Z0-9-]*_original\.png$`)),
 			resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
@@ -986,6 +1099,7 @@ func TestAccIdentityProvider_OIDC(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
@@ -1013,8 +1127,9 @@ func TestAccIdentityProvider_OIDC(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.IdentityProvider_CheckDestroy,
@@ -1043,7 +1158,7 @@ func TestAccIdentityProvider_OIDC(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -1072,6 +1187,7 @@ func TestAccIdentityProvider_SAML(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
@@ -1102,6 +1218,7 @@ func TestAccIdentityProvider_SAML(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
@@ -1127,8 +1244,9 @@ func TestAccIdentityProvider_SAML(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 			acctest.PreCheckPEMCert(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -1158,7 +1276,7 @@ func TestAccIdentityProvider_SAML(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -1181,8 +1299,9 @@ func TestAccIdentityProvider_ChangeProvider(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.IdentityProvider_CheckDestroy,
@@ -1194,6 +1313,7 @@ func TestAccIdentityProvider_ChangeProvider(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
@@ -1215,6 +1335,7 @@ func TestAccIdentityProvider_ChangeProvider(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "facebook.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "google.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "linkedin.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "linkedin_oidc.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "yahoo.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "amazon.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "twitter.%", "0"),
@@ -1242,8 +1363,9 @@ func TestAccIdentityProvider_BadParameters(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             sso.IdentityProvider_CheckDestroy,
@@ -1287,7 +1409,7 @@ resource "pingone_identity_provider" "%[3]s" {
     client_secret = "testclientsecret"
   }
 }
-		`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+		`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccIdentityProviderConfig_Full(resourceName, name, image string) string {
@@ -1406,34 +1528,34 @@ resource "pingone_identity_provider" "%[2]s" {
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccIdentityProviderConfig_LinkedIn1(resourceName, name string) string {
+func testAccIdentityProviderConfig_LinkedIn1(resourceName, name, linkedInType string) string {
 	return fmt.Sprintf(`
 		%[1]s
 resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  linkedin = {
+  %[4]s = {
     client_id     = "dummyclientid1"
     client_secret = "dummyclientsecret1"
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name, linkedInType)
 }
 
-func testAccIdentityProviderConfig_LinkedIn2(resourceName, name string) string {
+func testAccIdentityProviderConfig_LinkedIn2(resourceName, name, linkedInType string) string {
 	return fmt.Sprintf(`
 		%[1]s
 resource "pingone_identity_provider" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
-  linkedin = {
+  %[4]s = {
     client_id     = "dummyclientid2"
     client_secret = "dummyclientsecret2"
   }
 }
-		`, acctest.GenericSandboxEnvironment(), resourceName, name)
+		`, acctest.GenericSandboxEnvironment(), resourceName, name, linkedInType)
 }
 
 func testAccIdentityProviderConfig_Yahoo1(resourceName, name string) string {
@@ -1602,6 +1724,7 @@ resource "pingone_identity_provider" "%[2]s" {
   microsoft = {
     client_id     = "dummyclientid1"
     client_secret = "dummyclientsecret1"
+    tenant_id     = "dummytenantid1"
   }
 }
 		`, acctest.GenericSandboxEnvironment(), resourceName, name)

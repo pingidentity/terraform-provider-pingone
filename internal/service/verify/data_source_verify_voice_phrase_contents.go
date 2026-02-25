@@ -1,4 +1,4 @@
-// Copyright © 2025 Ping Identity Corporation
+// Copyright © 2026 Ping Identity Corporation
 
 package verify
 
@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
@@ -52,6 +53,8 @@ func (r *VoicePhraseContentsDataSource) Schema(ctx context.Context, req datasour
 		// This description is used by the documentation generator and the language server.
 		Description: "Data source to retrieve a list of PingOne Verify Voice Phrase Contents. Filtering the list by SCIM or data filter currently is not supported.",
 
+		DeprecationMessage: "Deprecation notice: This data source is deprecated and will be removed in a future release. Please use alternative verification methods.",
+
 		Attributes: map[string]schema.Attribute{
 			"id": framework.Attr_ID(),
 
@@ -80,7 +83,7 @@ func (r *VoicePhraseContentsDataSource) Configure(ctx context.Context, req datas
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -118,7 +121,7 @@ func (r *VoicePhraseContentsDataSource) Read(ctx context.Context, req datasource
 
 	// Run the API call
 	var voicePhraseContentsIDs []string
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
@@ -130,7 +133,7 @@ func (r *VoicePhraseContentsDataSource) Read(ctx context.Context, req datasource
 
 			for pageCursor, err := range pagedIterator {
 				if err != nil {
-					return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+					return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
 				}
 
 				if initialHttpResponse == nil {
@@ -147,7 +150,7 @@ func (r *VoicePhraseContentsDataSource) Read(ctx context.Context, req datasource
 			return foundIDs, initialHttpResponse, nil
 		},
 		"ReadAllVoicePhraseContents",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&voicePhraseContentsIDs,
 	)...)

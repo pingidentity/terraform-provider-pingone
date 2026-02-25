@@ -1,0 +1,3 @@
+```release-note:enhancement
+`resource/pingone_risk_predictor`: Verified support of `startsWith` and `endsWith` composite predictor conditions.
+```

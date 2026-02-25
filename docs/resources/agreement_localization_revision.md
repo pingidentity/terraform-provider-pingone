@@ -97,7 +97,7 @@ resource "pingone_agreement_localization_enable" "my_agreement_fr_enable" {
 
 ### Optional
 
-- `effective_at` (String) The start date that the revision is presented to users.  The effective date must be unique for each language agreement, and the property value can be the present date or a future date only.  Must be a valid RFC3339 date/time string.  If left undefined, will default to the current date and time (the revision will be effective immediately).
+- `effective_at` (String) The start date that the revision is presented to users.  The effective date must be unique for each language agreement, and the property value can be the present date or a future date only.  Must be a valid RFC3339 date/time string.  If left undefined, will default to the current date and time plus a 30 second buffer to allow for processing.
 
 ### Read-Only
 

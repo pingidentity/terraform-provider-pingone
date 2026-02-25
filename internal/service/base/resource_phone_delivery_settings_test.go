@@ -1,4 +1,4 @@
-// Copyright © 2025 Ping Identity Corporation
+// Copyright © 2026 Ping Identity Corporation
 
 package base_test
 
@@ -12,7 +12,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	baselegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base/legacysdk"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -36,11 +38,11 @@ func TestAccPhoneDeliverySettings_RemovalDrift(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
-
-			p1Client = acctest.PreCheckTestClient(ctx, t)
+			acctest.PreCheckNoBeta(t)
+			p1Client = acctestlegacysdk.PreCheckTestClient(ctx, t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.PhoneDeliverySettings_CheckDestroy,
@@ -65,7 +67,7 @@ func TestAccPhoneDeliverySettings_RemovalDrift(t *testing.T) {
 			},
 			{
 				PreConfig: func() {
-					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
+					baselegacysdk.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -88,9 +90,10 @@ func TestAccPhoneDeliverySettings_NewEnv(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.PhoneDeliverySettings_CheckDestroy,
@@ -148,8 +151,9 @@ func TestAccPhoneDeliverySettings_Custom_Twilio(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckTwilio(t)
 		},
@@ -167,7 +171,7 @@ func TestAccPhoneDeliverySettings_Custom_Twilio(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -241,8 +245,9 @@ func TestAccPhoneDeliverySettings_Custom_Syniverse(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckSyniverse(t)
 		},
@@ -260,7 +265,7 @@ func TestAccPhoneDeliverySettings_Custom_Syniverse(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -302,98 +307,100 @@ func TestAccPhoneDeliverySettings_Custom(t *testing.T) {
 
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-	fullCheck := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-		resource.TestCheckResourceAttr(resourceFullName, "provider_type", "CUSTOM_PROVIDER"),
-		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.name", name),
+	fullCheck := func(username, password string) resource.TestCheckFunc {
+		return resource.ComposeTestCheckFunc(
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestCheckResourceAttr(resourceFullName, "provider_type", "CUSTOM_PROVIDER"),
+			resource.TestCheckResourceAttr(resourceFullName, "provider_custom.name", name),
 
-		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.method", "BASIC"),
-		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.username", "testusername"),
-		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.password", "testpassword"),
-		resource.TestCheckNoResourceAttr(resourceFullName, "provider_custom.authentication.auth_token"),
+			resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.method", "BASIC"),
+			resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.username", username),
+			resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.password", password),
+			resource.TestCheckNoResourceAttr(resourceFullName, "provider_custom.authentication.auth_token"),
 
-		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.numbers.#", "3"),
-		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "provider_custom.numbers.*", map[string]string{
-			"available":             "true",
-			"capabilities.#":        "2",
-			"capabilities.0":        "SMS",
-			"capabilities.1":        "VOICE",
-			"number":                "+441234567890",
-			"selected":              "true",
-			"supported_countries.#": "4",
-			"supported_countries.0": "DE",
-			"supported_countries.1": "FR",
-			"supported_countries.2": "GB",
-			"supported_countries.3": "US",
-			"type":                  "TOLL_FREE",
-		}),
-		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "provider_custom.numbers.*", map[string]string{
-			"available":             "false",
-			"capabilities.#":        "1",
-			"capabilities.0":        "VOICE",
-			"number":                "+441234567891",
-			"supported_countries.#": "1",
-			"supported_countries.0": "US",
-			"selected":              "false",
-			"type":                  "SHORT_CODE",
-		}),
-		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "provider_custom.numbers.*", map[string]string{
-			"available":      "false",
-			"capabilities.#": "1",
-			"capabilities.0": "SMS",
-			"number":         "+441234567892",
-			"selected":       "false",
-			"type":           "PHONE_NUMBER",
-		}),
+			resource.TestCheckResourceAttr(resourceFullName, "provider_custom.numbers.#", "3"),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "provider_custom.numbers.*", map[string]string{
+				"available":             "true",
+				"capabilities.#":        "2",
+				"capabilities.0":        "SMS",
+				"capabilities.1":        "VOICE",
+				"number":                "+441234567890",
+				"selected":              "true",
+				"supported_countries.#": "4",
+				"supported_countries.0": "DE",
+				"supported_countries.1": "FR",
+				"supported_countries.2": "GB",
+				"supported_countries.3": "US",
+				"type":                  "TOLL_FREE",
+			}),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "provider_custom.numbers.*", map[string]string{
+				"available":             "false",
+				"capabilities.#":        "1",
+				"capabilities.0":        "VOICE",
+				"number":                "+441234567891",
+				"supported_countries.#": "1",
+				"supported_countries.0": "US",
+				"selected":              "false",
+				"type":                  "SHORT_CODE",
+			}),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "provider_custom.numbers.*", map[string]string{
+				"available":      "false",
+				"capabilities.#": "1",
+				"capabilities.0": "SMS",
+				"number":         "+441234567892",
+				"selected":       "false",
+				"type":           "PHONE_NUMBER",
+			}),
 
-		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.requests.#", "4"),
-		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "provider_custom.requests.*", map[string]string{
-			"body":                 "{\"from\":\"${from}\",\"message\":\"${message}\",\"to\":\"${to}\"}",
-			"delivery_method":      "SMS",
-			"headers.%":            "2",
-			"headers.content-type": "application/json",
-			"headers.testheader":   "testvalue1",
-			"method":               "POST",
-			"phone_number_format":  "FULL",
-			"url":                  "https://pingdevops.com/fake-send-to-test",
-		}),
-		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "provider_custom.requests.*", map[string]string{
-			"delivery_method":     "SMS",
-			"method":              "GET",
-			"headers.%":           "1",
-			"headers.testheader":  "testvalue2",
-			"phone_number_format": "NUMBER_ONLY",
-			"url":                 "https://pingdevops.com/fake-send-to-test?to=${to}&from=${from}&message=${message}",
-		}),
-		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "provider_custom.requests.*", map[string]string{
-			"after_tag":            "</Say> <Pause length=\"1\"/>",
-			"before_tag":           "<Say>",
-			"body":                 "{\"from\":\"${from}\",\"message\":\"${message}\",\"to\":\"${to}\"}",
-			"delivery_method":      "VOICE",
-			"headers.%":            "2",
-			"headers.content-type": "application/json",
-			"headers.testheader":   "testvalue3",
-			"method":               "POST",
-			"phone_number_format":  "FULL",
-			"url":                  "https://pingdevops.com/fake-send-to-test",
-		}),
-		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "provider_custom.requests.*", map[string]string{
-			"after_tag":           "</Say> <Pause length=\"1\"/>",
-			"before_tag":          "<Say>",
-			"delivery_method":     "VOICE",
-			"headers.%":           "1",
-			"headers.testheader":  "testvalue4",
-			"method":              "GET",
-			"phone_number_format": "NUMBER_ONLY",
-			"url":                 "https://pingdevops.com/fake-send-to-test?to=${to}&from=${from}&message=${message}",
-		}),
+			resource.TestCheckResourceAttr(resourceFullName, "provider_custom.requests.#", "4"),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "provider_custom.requests.*", map[string]string{
+				"body":                 "{\"from\":\"${from}\",\"message\":\"${message}\",\"to\":\"${to}\"}",
+				"delivery_method":      "SMS",
+				"headers.%":            "2",
+				"headers.content-type": "application/json",
+				"headers.testheader":   "testvalue1",
+				"method":               "POST",
+				"phone_number_format":  "FULL",
+				"url":                  "https://pingdevops.com/fake-send-to-test",
+			}),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "provider_custom.requests.*", map[string]string{
+				"delivery_method":     "SMS",
+				"method":              "GET",
+				"headers.%":           "1",
+				"headers.testheader":  "testvalue2",
+				"phone_number_format": "NUMBER_ONLY",
+				"url":                 "https://pingdevops.com/fake-send-to-test?to=${to}&from=${from}&message=${message}",
+			}),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "provider_custom.requests.*", map[string]string{
+				"after_tag":            "</Say> <Pause length=\"1\"/>",
+				"before_tag":           "<Say>",
+				"body":                 "{\"from\":\"${from}\",\"message\":\"${message}\",\"to\":\"${to}\"}",
+				"delivery_method":      "VOICE",
+				"headers.%":            "2",
+				"headers.content-type": "application/json",
+				"headers.testheader":   "testvalue3",
+				"method":               "POST",
+				"phone_number_format":  "FULL",
+				"url":                  "https://pingdevops.com/fake-send-to-test",
+			}),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "provider_custom.requests.*", map[string]string{
+				"after_tag":           "</Say> <Pause length=\"1\"/>",
+				"before_tag":          "<Say>",
+				"delivery_method":     "VOICE",
+				"headers.%":           "1",
+				"headers.testheader":  "testvalue4",
+				"method":              "GET",
+				"phone_number_format": "NUMBER_ONLY",
+				"url":                 "https://pingdevops.com/fake-send-to-test?to=${to}&from=${from}&message=${message}",
+			}),
 
-		resource.TestCheckNoResourceAttr(resourceFullName, "provider_custom_twilio"),
-		resource.TestCheckNoResourceAttr(resourceFullName, "provider_custom_syniverse"),
-		resource.TestMatchResourceAttr(resourceFullName, "created_at", verify.RFC3339Regexp),
-		resource.TestMatchResourceAttr(resourceFullName, "updated_at", verify.RFC3339Regexp),
-	)
+			resource.TestCheckNoResourceAttr(resourceFullName, "provider_custom_twilio"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "provider_custom_syniverse"),
+			resource.TestMatchResourceAttr(resourceFullName, "created_at", verify.RFC3339Regexp),
+			resource.TestMatchResourceAttr(resourceFullName, "updated_at", verify.RFC3339Regexp),
+		)
+	}
 
 	minimalCheck := resource.ComposeTestCheckFunc(
 		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
@@ -425,19 +432,24 @@ func TestAccPhoneDeliverySettings_Custom(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckTestAccFlaky(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.PhoneDeliverySettings_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
-			// Full
+			// Full + update
 			{
-				Config: testAccPhoneDeliverySettingsConfig_Custom_Full(environmentName, licenseID, resourceName, name),
-				Check:  fullCheck,
+				Config: testAccPhoneDeliverySettingsConfig_Custom_Full(environmentName, licenseID, resourceName, name, "initialusername", "initialpassword"),
+				Check:  fullCheck("initialusername", "initialpassword"),
 			},
 			{
-				Config:  testAccPhoneDeliverySettingsConfig_Custom_Full(environmentName, licenseID, resourceName, name),
+				Config: testAccPhoneDeliverySettingsConfig_Custom_Full(environmentName, licenseID, resourceName, name, "updatedusername", "updatedpassword"),
+				Check:  fullCheck("updatedusername", "updatedpassword"),
+			},
+			{
+				Config:  testAccPhoneDeliverySettingsConfig_Custom_Full(environmentName, licenseID, resourceName, name, "updatedusername", "updatedpassword"),
 				Destroy: true,
 			},
 			// Minimal
@@ -451,16 +463,16 @@ func TestAccPhoneDeliverySettings_Custom(t *testing.T) {
 			},
 			// update
 			{
-				Config: testAccPhoneDeliverySettingsConfig_Custom_Full(environmentName, licenseID, resourceName, name),
-				Check:  fullCheck,
+				Config: testAccPhoneDeliverySettingsConfig_Custom_Full(environmentName, licenseID, resourceName, name, "testusername", "testpassword"),
+				Check:  fullCheck("testusername", "testpassword"),
 			},
 			{
 				Config: testAccPhoneDeliverySettingsConfig_Custom_Minimal(environmentName, licenseID, resourceName, name),
 				Check:  minimalCheck,
 			},
 			{
-				Config: testAccPhoneDeliverySettingsConfig_Custom_Full(environmentName, licenseID, resourceName, name),
-				Check:  fullCheck,
+				Config: testAccPhoneDeliverySettingsConfig_Custom_Full(environmentName, licenseID, resourceName, name, "testusername", "testpassword"),
+				Check:  fullCheck("testusername", "testpassword"),
 			},
 			{
 				ResourceName: resourceFullName,
@@ -468,7 +480,7 @@ func TestAccPhoneDeliverySettings_Custom(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
@@ -498,9 +510,10 @@ func TestAccPhoneDeliverySettings_BadParameters(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.PhoneDeliverySettings_CheckDestroy,
@@ -556,7 +569,7 @@ resource "pingone_phone_delivery_settings" "%[3]s" {
       }
     ]
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccPhoneDeliverySettingsConfig_Custom_Twilio(environmentName, licenseID, resourceName, twilioSID, twilioAuthToken, number string) string {
@@ -577,7 +590,7 @@ resource "pingone_phone_delivery_settings" "%[3]s" {
       }
     ]
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, twilioSID, twilioAuthToken, number)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, twilioSID, twilioAuthToken, number)
 }
 
 func testAccPhoneDeliverySettingsConfig_Custom_Syniverse(environmentName, licenseID, resourceName, syniverseAuthToken, number string) string {
@@ -590,17 +603,17 @@ resource "pingone_phone_delivery_settings" "%[3]s" {
   provider_custom_syniverse = {
     auth_token = "%[4]s"
 
-    numbers = [
+    selected_numbers = [
       {
-        number   = "%[5]s"
-        selected = true
+        number = "%[5]s"
+        type   = "PHONE_NUMBER"
       }
     ]
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, syniverseAuthToken, number)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, syniverseAuthToken, number)
 }
 
-func testAccPhoneDeliverySettingsConfig_Custom_Full(environmentName, licenseID, resourceName, name string) string {
+func testAccPhoneDeliverySettingsConfig_Custom_Full(environmentName, licenseID, resourceName, name string, username string, password string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -612,8 +625,8 @@ resource "pingone_phone_delivery_settings" "%[3]s" {
 
     authentication = {
       method   = "BASIC"
-      username = "testusername"
-      password = "testpassword"
+      username = "%[5]s"
+      password = "%[6]s"
     }
 
     numbers = [
@@ -700,7 +713,7 @@ resource "pingone_phone_delivery_settings" "%[3]s" {
       }
     ]
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, username, password)
 }
 
 func testAccPhoneDeliverySettingsConfig_Custom_Minimal(environmentName, licenseID, resourceName, name string) string {
@@ -727,5 +740,5 @@ resource "pingone_phone_delivery_settings" "%[3]s" {
       }
     ]
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }

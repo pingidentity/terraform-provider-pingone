@@ -94,6 +94,7 @@ resource "pingone_mfa_fido2_policy" "my_awesome_fido2_policy" {
 ### Optional
 
 - `description` (String) A string that specifies the description of the FIDO2 policy.
+- `user_presence_timeout` (Attributes) A single nested object that specifies the user presence timeout settings, used to control the amount of time a user has to perform a user presence gesture with their FIDO device. If not provided, defaults to 2 minutes. (see [below for nested schema](#nestedatt--user_presence_timeout))
 
 ### Read-Only
 
@@ -162,6 +163,15 @@ Required:
 
 - `enforce_during_authentication` (Boolean) A boolean that specifies whether device characteristics related to user verification are to be checked again at each authentication attempt. Set to `true` if you want the device characteristics related to user verification to be checked again at each authentication attempt and not just once during registration. Set to `false` to have them checked only at registration.
 - `option` (String) A string that specifies the type of user verification to perform.  Options are `DISCOURAGED`, `PREFERRED`, `REQUIRED`.  Options are `DISCOURAGED` (user verification is not required, even when supported by the FIDO device. In cases where user verification is required by the FIDO device itself, this setting does not override the device setting), `PREFERRED` (user verification is required if the user's FIDO device supports it, but is not required if the user's device does not support it), `REQUIRED` (only FIDO devices supporting user verification can be used).  For usernameless flows, only FIDO devices supporting user verification can be used, regardless of the value configured in this parameter.
+
+
+<a id="nestedatt--user_presence_timeout"></a>
+### Nested Schema for `user_presence_timeout`
+
+Optional:
+
+- `duration` (Number) The amount of time (minutes or seconds) a user presence gesture will be accepted for the authentication request. Minimum is one minute (60 seconds); maxiumum is ten minutes (600 seconds).  Defaults to `2`.
+- `time_unit` (String) The units for specifying the amount of time a user presence gesture will be accepted for the authentication request.  Options are `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
 
 ## Import
 

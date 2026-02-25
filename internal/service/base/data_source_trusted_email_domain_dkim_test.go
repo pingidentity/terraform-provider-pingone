@@ -1,4 +1,4 @@
-// Copyright © 2025 Ping Identity Corporation
+// Copyright © 2026 Ping Identity Corporation
 
 package base_test
 
@@ -10,12 +10,14 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 )
 
 func TestAccTrustedEmailDomainDKIMDataSource_Full(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
+	domainPrefix := acctest.DomainNamePrefixWithTimestampGen()
 	resourceFullName := fmt.Sprintf("pingone_trusted_email_domain_dkim.%s", resourceName)
 	dataSourceFullName := fmt.Sprintf("data.%s", resourceFullName)
 
@@ -25,15 +27,17 @@ func TestAccTrustedEmailDomainDKIMDataSource_Full(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
+			acctest.PreCheckNewTrustedEmailDomain(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccTrustedEmailDomainDKIMDataSourceConfig_Full(environmentName, licenseID, resourceName),
+				Config: testAccTrustedEmailDomainDKIMDataSourceConfig_Full(environmentName, licenseID, resourceName, domainPrefix),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(dataSourceFullName, "type", "CNAME"),
 					resource.TestCheckResourceAttrWith(dataSourceFullName, "regions.#", validateRegionCardinality),
@@ -55,8 +59,9 @@ func TestAccTrustedEmailDomainDKIMDataSource_NotFound(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -73,21 +78,21 @@ func TestAccTrustedEmailDomainDKIMDataSource_NotFound(t *testing.T) {
 	})
 }
 
-func testAccTrustedEmailDomainDKIMDataSourceConfig_Full(environmentName, licenseID, resourceName string) string {
+func testAccTrustedEmailDomainDKIMDataSourceConfig_Full(environmentName, licenseID, resourceName, domainPrefix string) string {
 	return fmt.Sprintf(`
 %[1]s
 
 resource "pingone_trusted_email_domain" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
-  domain_name = "terraformdev.ping-eng.com"
+  domain_name = "%[4]s.cdi-team-terraform-ted-test.ping-eng.com"
 }
 
 data "pingone_trusted_email_domain_dkim" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
   trusted_email_domain_id = pingone_trusted_email_domain.%[3]s.id
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, domainPrefix)
 }
 
 func testAccTrustedEmailDomainDKIMDataSourceConfig_NotFoundByID(resourceName string) string {

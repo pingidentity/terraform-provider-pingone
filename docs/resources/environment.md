@@ -11,7 +11,7 @@ Resource to create and manage PingOne environments.
 
 ~> PingOne environments are created with a default population and at least one service added.  Default populations can be managed with the `pingone_population_default` resource.
 
-~> This `pingone_environment` resource does not yet support creation of WORKFORCE enabled environments.
+~> This `pingone_environment` resource does not yet support creation of `WORKFORCE` enabled environments or the addition of `PingID-v2` services to new or existing environments.
 
 ## Example Usage
 
@@ -53,7 +53,7 @@ resource "pingone_environment" "my_environment" {
 ### Optional
 
 - `description` (String) A string that specifies the description to apply to the environment.
-- `region` (String) A string that specifies the region to create the environment in.  Should be consistent with the PingOne organisation region.  Options are `AP`, `AU`, `CA`, `EU`, `NA`.  Will default to the region specified in the provider configuration if not specified, or can be set with the `PINGONE_REGION_CODE` environment variable.
+- `region` (String) A string that specifies the region to create the environment in.  Should be consistent with the PingOne organisation region.  Options are `AP`, `AU`, `CA`, `EU`, `NA`, `SG`.  Will default to the region specified in the provider configuration if not specified, or can be set with the `PINGONE_REGION_CODE` environment variable.
 - `solution` (String) A string that specifies the solution context of the environment.  Leave undefined for a custom, non-workforce solution context.  Options are `CIAM_TRIAL`, `CUSTOMER`.  This field is immutable and will trigger a replace plan if changed.
 - `type` (String) A string that specifies the type of the environment to create.  Options are `PRODUCTION` (for environments that require protection from deletion), `SANDBOX` (for a development/testing environment).  Once an environment has been set as `PRODUCTION` type, it cannot be reset back to `SANDBOX` within Terraform.  Administrators must log in to the web admin console to override the data protection features of `PRODUCTION` environments.  Defaults to `SANDBOX`.
 
@@ -67,13 +67,17 @@ resource "pingone_environment" "my_environment" {
 
 Required:
 
-- `type` (String) A string that specifies the service type to enable in the environment.  Options are `APIIntelligence`, `Authorize`, `Credentials`, `DaVinci`, `MFA`, `PingAccess`, `PingAuthorize`, `PingCentral`, `PingDirectory`, `PingFederate`, `PingID`, `Risk`, `SSO`, `Verify`.
+- `type` (String) A string that specifies the service type to enable in the environment.  Options are `APIIntelligence`, `Authorize`, `Credentials`, `DaVinci`, `MFA`, `PingAccess`, `PingAuthorize`, `PingCentral`, `PingDirectory`, `PingFederate`, `PingID`, `PingID-v2`, `Risk`, `SSO`, `Verify`.
 
 Optional:
 
 - `bookmarks` (Attributes Set) A set of objects that specify custom bookmark links for the service. (see [below for nested schema](#nestedatt--services--bookmarks))
 - `console_url` (String) A string that specifies the custom console URL to set.  Generally used with services that are deployed separately to the PingOne SaaS service, such as `PingFederate`, `PingAccess`, `PingDirectory`, `PingAuthorize` and `PingCentral`.
 - `tags` (Set of String) A set of string tags to apply upon environment creation.  Only configurable when the service `type` is `DaVinci`.  Options are `DAVINCI_MINIMAL` (allows for a creation of an environment without example/demo configuration in the DaVinci service).  This field is immutable and will trigger a replace plan if changed.
+
+Read-Only:
+
+- `deployment` (Attributes) A single object that specifies the external resource associated with this product, containing state and settings related to the external resource. (see [below for nested schema](#nestedatt--services--deployment))
 
 <a id="nestedatt--services--bookmarks"></a>
 ### Nested Schema for `services.bookmarks`
@@ -82,6 +86,14 @@ Required:
 
 - `name` (String) A string that specifies the bookmark name.
 - `url` (String) A string that represents the bookmark URL.
+
+
+<a id="nestedatt--services--deployment"></a>
+### Nested Schema for `services.deployment`
+
+Read-Only:
+
+- `id` (String) A string that specifies the ID of the external resource associated with this product
 
 ## Import
 

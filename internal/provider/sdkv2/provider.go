@@ -1,4 +1,4 @@
-// Copyright © 2025 Ping Identity Corporation
+// Copyright © 2026 Ping Identity Corporation
 
 package sdkv2
 
@@ -14,7 +14,6 @@ import (
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/authorize"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/base"
-	"github.com/pingidentity/terraform-provider-pingone/internal/service/mfa"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/sso"
 )
 
@@ -63,7 +62,7 @@ func New(version string) func() *schema.Provider {
 				"region_code": {
 					Type:        schema.TypeString,
 					Optional:    true,
-					Description: "The PingOne region to use, which selects the appropriate service endpoints.  Options are `AP` (for Asia-Pacific `.asia` tenants), `AU` (for Asia-Pacific `.com.au` tenants), `CA` (for Canada `.ca` tenants), `EU` (for Europe `.eu` tenants) and `NA` (for North America `.com` tenants).  Default value can be set with the `PINGONE_REGION_CODE` environment variable.",
+					Description: "The PingOne region to use, which selects the appropriate service endpoints.  Options are `AP` (for Asia-Pacific `.asia` tenants), `AU` (for Asia-Pacific `.com.au` tenants), `CA` (for Canada `.ca` tenants), `EU` (for Europe `.eu` tenants), `NA` (for North America `.com` tenants) and `SG` (for Singapore `.sg` tenants).  Default value can be set with the `PINGONE_REGION_CODE` environment variable.",
 				},
 				"http_proxy": {
 					Type:        schema.TypeString,
@@ -141,8 +140,6 @@ func New(version string) func() *schema.Provider {
 				"pingone_language":                     base.ResourceLanguage(),
 				"pingone_language_update":              base.ResourceLanguageUpdate(),
 
-				"pingone_mfa_policy": mfa.ResourceMFAPolicy(),
-
 				"pingone_application_sign_on_policy_assignment": sso.ResourceApplicationSignOnPolicyAssignment(),
 				"pingone_sign_on_policy_action":                 sso.ResourceSignOnPolicyAction(),
 			},
@@ -192,19 +189,34 @@ func configure(version string) func(context.Context, *schema.ResourceData) (inte
 		}
 
 		if v, ok := d.Get("service_endpoints").([]interface{}); ok && len(v) > 0 && v[0] != nil {
-			if v, ok := d.Get("auth_hostname").(string); ok && v != "" {
+			vp, ok := v[0].(map[string]interface{})
+			if !ok {
+				return nil, diag.Errorf("service_endpoints must be a map.  This is always an error in the provider code, please raise an issue with the provider maintainers.")
+			}
+
+			if v, ok := vp["auth_hostname"].(string); ok && v != "" {
 				config.AuthHostnameOverride = &v
 			}
 
-			if v, ok := d.Get("api_hostname").(string); ok && v != "" {
+			if v, ok := vp["api_hostname"].(string); ok && v != "" {
 				config.APIHostnameOverride = &v
 			}
 		}
 
 		if v, ok := d.Get("global_options").([]interface{}); ok && len(v) > 0 && v[0] != nil {
-			if v, ok := d.Get("population").([]interface{}); ok && len(v) > 0 && v[0] != nil {
-				if v, ok := d.Get("contains_users_force_delete").(bool); ok {
-					config.GlobalOptions.Population.ContainsUsersForceDelete = v
+			vp, ok := v[0].(map[string]interface{})
+			if !ok {
+				return nil, diag.Errorf("global_options must be a map.  This is always an error in the provider code, please raise an issue with the provider maintainers.")
+			}
+
+			if v1, ok := vp["population"].([]interface{}); ok && len(v1) > 0 && v1[0] != nil {
+				v1p, ok := v1[0].(map[string]interface{})
+				if !ok {
+					return nil, diag.Errorf("global_options.population must be a map.  This is always an error in the provider code, please raise an issue with the provider maintainers.")
+				}
+
+				if v2, ok := v1p["contains_users_force_delete"].(bool); ok {
+					config.GlobalOptions.Population.ContainsUsersForceDelete = v2
 				}
 			}
 		}

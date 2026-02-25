@@ -1,4 +1,4 @@
-// Copyright © 2025 Ping Identity Corporation
+// Copyright © 2026 Ping Identity Corporation
 
 package base_test
 
@@ -10,6 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 )
 
 func TestAccCertificateSigningRequestDataSource_ByIDFull(t *testing.T) {
@@ -30,8 +31,9 @@ func TestAccCertificateSigningRequestDataSource_ByIDFull(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckPKCS12Key(t)
 			acctest.PreCheckPKCS12WithCSR(t)
@@ -57,10 +59,12 @@ func TestAccCertificateSigningRequestDataSource_NotFound(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		// PreCheck:                 func() {
+		// acctest.PreCheckNoTestAccFlaky(t)
 		// 			acctest.PreCheckClient(t)
 		// 			acctest.PreCheckNewEnvironment(t)
 		// 			acctest.PreCheckPKCS12Key(t)
 		//                         acctest.PreCheckPKCS12WithCSR(t)
+		//                         acctest.PreCheckNoBeta(t)
 		// },
 		PreCheck:                 func() { t.Skipf("https://github.com/pingidentity/terraform-provider-pingone/issues/259") },
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
@@ -94,7 +98,7 @@ data "pingone_certificate_signing_request" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
   key_id = pingone_key.%[3]s.id
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, pkcs12, keystorePassword)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, pkcs12, keystorePassword)
 }
 
 func testAccCertificateSigningRequestDataSourceConfig_NotFoundByID(resourceName string) string {

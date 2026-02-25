@@ -1,4 +1,4 @@
-// Copyright © 2025 Ping Identity Corporation
+// Copyright © 2026 Ping Identity Corporation
 
 package credentials_test
 
@@ -12,8 +12,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
-	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
+	baselegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/credentials"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/sso"
 	"github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -30,18 +32,18 @@ func TestAccCredentialIssuanceRule_RemovalDrift(t *testing.T) {
 
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-	var credentialIssuanceRuleID, digitalWalletApplicationID, credentialTypeID, environmentID string
+	var credentialIssuanceRuleID, applicationID, digitalWalletApplicationID, credentialTypeID, environmentID string
 
 	var p1Client *client.Client
 	var ctx = context.Background()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
-
-			p1Client = acctest.PreCheckTestClient(ctx, t)
+			acctest.PreCheckNoBeta(t)
+			p1Client = acctestlegacysdk.PreCheckTestClient(ctx, t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             credentials.CredentialIssuanceRule_CheckDestroy,
@@ -50,7 +52,7 @@ func TestAccCredentialIssuanceRule_RemovalDrift(t *testing.T) {
 			// Test removal of the resource
 			{
 				Config: testAccCredentialIssuanceRuleConfig_Full(resourceName, name),
-				Check:  credentials.CredentialIssuanceRule_GetIDs(resourceFullName, &environmentID, &credentialTypeID, &digitalWalletApplicationID, &credentialIssuanceRuleID),
+				Check:  credentials.CredentialIssuanceRule_GetIDs(resourceFullName, &environmentID, &credentialTypeID, &applicationID, &digitalWalletApplicationID, &credentialIssuanceRuleID),
 			},
 			{
 				PreConfig: func() {
@@ -62,7 +64,7 @@ func TestAccCredentialIssuanceRule_RemovalDrift(t *testing.T) {
 			// Test removal of the credential type
 			{
 				Config: testAccCredentialIssuanceRuleConfig_Full(resourceName, name),
-				Check:  credentials.CredentialIssuanceRule_GetIDs(resourceFullName, &environmentID, &credentialTypeID, &digitalWalletApplicationID, &credentialIssuanceRuleID),
+				Check:  credentials.CredentialIssuanceRule_GetIDs(resourceFullName, &environmentID, &credentialTypeID, &applicationID, &digitalWalletApplicationID, &credentialIssuanceRuleID),
 			},
 			{
 				PreConfig: func() {
@@ -71,10 +73,22 @@ func TestAccCredentialIssuanceRule_RemovalDrift(t *testing.T) {
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
 			},
+			// Test removal of the parent application of the digital wallet application
+			{
+				Config: testAccCredentialIssuanceRuleConfig_Full(resourceName, name),
+				Check:  credentials.CredentialIssuanceRule_GetIDs(resourceFullName, &environmentID, &credentialTypeID, &applicationID, &digitalWalletApplicationID, &credentialIssuanceRuleID),
+			},
+			{
+				PreConfig: func() {
+					sso.Application_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, applicationID)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
 			// Test removal of the digital wallet application
 			{
 				Config: testAccCredentialIssuanceRuleConfig_Full(resourceName, name),
-				Check:  credentials.CredentialIssuanceRule_GetIDs(resourceFullName, &environmentID, &credentialTypeID, &digitalWalletApplicationID, &credentialIssuanceRuleID),
+				Check:  credentials.CredentialIssuanceRule_GetIDs(resourceFullName, &environmentID, &credentialTypeID, &applicationID, &digitalWalletApplicationID, &credentialIssuanceRuleID),
 			},
 			{
 				PreConfig: func() {
@@ -86,11 +100,11 @@ func TestAccCredentialIssuanceRule_RemovalDrift(t *testing.T) {
 			// Test removal of the environment
 			{
 				Config: testAccCredentialIssuanceRuleConfig_NewEnv(environmentName, licenseID, resourceName, name),
-				Check:  credentials.CredentialIssuanceRule_GetIDs(resourceFullName, &environmentID, &credentialTypeID, &digitalWalletApplicationID, &credentialIssuanceRuleID),
+				Check:  credentials.CredentialIssuanceRule_GetIDs(resourceFullName, &environmentID, &credentialTypeID, &applicationID, &digitalWalletApplicationID, &credentialIssuanceRuleID),
 			},
 			{
 				PreConfig: func() {
-					base.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
+					baselegacysdk.Environment_RemovalDrift_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
@@ -106,6 +120,7 @@ func TestAccCredentialIssuanceRule_Full(t *testing.T) {
 	resourceFullName := fmt.Sprintf("pingone_credential_issuance_rule.%s", resourceName)
 
 	name := acctest.ResourceNameGen()
+	updatedName := acctest.ResourceNameGen()
 
 	fullStep := resource.TestStep{
 		Config: testAccCredentialIssuanceRuleConfig_Full(resourceName, name),
@@ -125,6 +140,11 @@ func TestAccCredentialIssuanceRule_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "notification.template.variant", "template_B"),
 			resource.TestCheckResourceAttr(resourceFullName, "status", "ACTIVE"),
 		),
+	}
+
+	updatedNameStep := resource.TestStep{
+		Config: testAccCredentialIssuanceRuleConfig_Full(resourceName, updatedName),
+		Check:  fullStep.Check,
 	}
 
 	minimalStep := resource.TestStep{
@@ -163,8 +183,9 @@ func TestAccCredentialIssuanceRule_Full(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             credentials.CredentialIssuanceRule_CheckDestroy,
@@ -191,6 +212,9 @@ func TestAccCredentialIssuanceRule_Full(t *testing.T) {
 			fullStep,
 			disabledStep,
 			fullStep,
+			// Ensure changing the name of the application and therefore forcing replacement of the
+			// digital wallet application is handled correctly
+			updatedNameStep,
 			// Test importing the resource
 			{
 				ResourceName: resourceFullName,
@@ -198,7 +222,7 @@ func TestAccCredentialIssuanceRule_Full(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["credential_type_id"], rs.Primary.ID), nil
@@ -220,8 +244,9 @@ func TestAccCredentialIssuanceRule_InvalidConfigs(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             credentials.CredentialIssuanceRule_CheckDestroy,
@@ -285,8 +310,9 @@ func TestAccCredentialIssuanceRule_BadParameters(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             credentials.CredentialIssuanceRule_CheckDestroy,
@@ -402,7 +428,7 @@ resource "pingone_credential_issuance_rule" "%[3]s" {
       variant = "template_B"
     }
   }
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
 }
 
 func testAccCredentialIssuanceRuleConfig_Full(resourceName, name string) string {

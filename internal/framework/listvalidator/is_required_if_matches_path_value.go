@@ -1,4 +1,6 @@
-package setvalidator
+// Copyright © 2026 Ping Identity Corporation
+
+package listvalidator
 
 import (
 	"github.com/hashicorp/terraform-plugin-framework/path"

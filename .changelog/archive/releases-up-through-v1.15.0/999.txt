@@ -1,0 +1,11 @@
+```release-note:enhancement
+`resource/identity_provider`: Added support for the `microsoft.tenant_id` field.
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2` 0.12.9 => 0.12.11
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.49 => 0.51.0
+```

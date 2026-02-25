@@ -1,4 +1,4 @@
-// Copyright © 2025 Ping Identity Corporation
+// Copyright © 2026 Ping Identity Corporation
 
 package sso_test
 
@@ -21,14 +21,15 @@ func TestAccResourceAttributeDataSource_ByNameFull(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccResourceAttributeDataSourceConfig_ByNameFull(resourceName, "address.region"),
+				Config: testAccResourceAttributeDataSourceConfig_ByNameFull(resourceName, "address.region", false),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -38,6 +39,13 @@ func TestAccResourceAttributeDataSource_ByNameFull(t *testing.T) {
 					resource.TestCheckResourceAttr(dataSourceFullName, "value", "${user.address.region}"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "id_token_enabled", "true"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "userinfo_enabled", "true"),
+				),
+			},
+			{
+				Config: testAccResourceAttributeDataSourceConfig_ByNameFull(resourceName, "address.region", true),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(dataSourceFullName, "name", "address.region"),
 				),
 			},
 		},
@@ -53,8 +61,9 @@ func TestAccResourceAttributeDataSource_ByIDFull(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -83,8 +92,9 @@ func TestAccResourceAttributeDataSource_NotFound(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		ErrorCheck:               acctest.ErrorCheck(t),
@@ -101,7 +111,14 @@ func TestAccResourceAttributeDataSource_NotFound(t *testing.T) {
 	})
 }
 
-func testAccResourceAttributeDataSourceConfig_ByNameFull(resourceName, name string) string {
+func testAccResourceAttributeDataSourceConfig_ByNameFull(resourceName, name string, insensitivityCheck bool) string {
+
+	// If insensitivityCheck is true, alter the case of the name
+	nameComparator := name
+	if insensitivityCheck {
+		nameComparator = acctest.AlterStringCasing(nameComparator)
+	}
+
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -115,8 +132,8 @@ data "pingone_resource_attribute" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   resource_id    = data.pingone_resource.%[2]s.id
 
-  name = "%[3]s"
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+  name = "%[4]s"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, nameComparator)
 }
 
 func testAccResourceAttributeDataSourceConfig_ByIDFull(resourceName, name string) string {

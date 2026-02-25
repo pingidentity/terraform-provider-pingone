@@ -1,22 +1,24 @@
-// Copyright © 2025 Ping Identity Corporation
+// Copyright © 2026 Ping Identity Corporation
 
 package credentials
 
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/patrickcping/pingone-go-sdk-v2/credentials"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 )
 
 func CredentialIssuanceRule_CheckDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 
-	p1Client, err := acctest.TestClient(ctx)
+	p1Client, err := legacysdk.TestClient(ctx)
 
 	if err != nil {
 		return err
@@ -29,7 +31,7 @@ func CredentialIssuanceRule_CheckDestroy(s *terraform.State) error {
 			continue
 		}
 
-		shouldContinue, err := acctest.CheckParentEnvironmentDestroy(ctx, p1Client.API.ManagementAPIClient, rs.Primary.Attributes["environment_id"])
+		shouldContinue, err := legacysdk.CheckParentEnvironmentDestroy(ctx, p1Client.API.ManagementAPIClient, rs.Primary.Attributes["environment_id"])
 		if err != nil {
 			return err
 		}
@@ -55,12 +57,12 @@ func CredentialIssuanceRule_CheckDestroy(s *terraform.State) error {
 	return nil
 }
 
-func CredentialIssuanceRule_GetIDs(resourceName string, environmentID, credentialTypeID, digitalWalletApplicationID, resourceID *string) resource.TestCheckFunc {
+func CredentialIssuanceRule_GetIDs(resourceName string, environmentID, credentialTypeID, applicationID, digitalWalletApplicationID, resourceID *string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		rs, ok := s.RootModule().Resources[resourceName]
 		if !ok {
-			return fmt.Errorf("Resource Not found: %s", resourceName)
+			return fmt.Errorf("resource not found: %s", resourceName)
 		}
 
 		if resourceID != nil {
@@ -69,6 +71,14 @@ func CredentialIssuanceRule_GetIDs(resourceName string, environmentID, credentia
 
 		if credentialTypeID != nil {
 			*credentialTypeID = rs.Primary.Attributes["credential_type_id"]
+		}
+
+		if applicationID != nil {
+			app, ok := s.RootModule().Resources[strings.Replace(resourceName, "_credential_issuance_rule.", "_application.", 1)]
+			if !ok {
+				return fmt.Errorf("resource not found: %s", resourceName)
+			}
+			*applicationID = app.Primary.ID
 		}
 
 		if digitalWalletApplicationID != nil {

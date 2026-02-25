@@ -29,5 +29,24 @@ resource "pingone_application" "my_awesome_saml_app" {
       certificate_ids      = [var.sp_verification_certificate_id]
       authn_request_signed = true
     }
+
+    virtual_server_id_settings = {
+      enabled = true
+      virtual_server_ids = [
+        {
+          vs_id = "virtual-server-1"
+        },
+        {
+          vs_id   = "virtual-server-2"
+          default = true
+        },
+        {
+          vs_id = "virtual-server-3"
+        },
+        {
+          vs_id = "virtual-server-4"
+        },
+      ]
+    }
   }
 }

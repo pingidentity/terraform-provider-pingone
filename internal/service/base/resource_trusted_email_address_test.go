@@ -1,4 +1,4 @@
-// Copyright © 2025 Ping Identity Corporation
+// Copyright © 2026 Ping Identity Corporation
 
 package base_test
 
@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
+	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -33,12 +34,13 @@ func TestAccTrustedEmailAddress_RemovalDrift(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
-			acctest.PreCheckDomainVerification(t)
+			acctest.PreCheckNoBeta(t)
+			acctest.PreCheckTrustedEmailDomainVerification(t)
 
-			p1Client = acctest.PreCheckTestClient(ctx, t)
+			p1Client = acctestlegacysdk.PreCheckTestClient(ctx, t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.TrustedEmailAddress_CheckDestroy,
@@ -104,9 +106,10 @@ func TestAccTrustedEmailAddress_Full(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
-			acctest.PreCheckDomainVerification(t)
+			acctest.PreCheckNoBeta(t)
+			acctest.PreCheckTrustedEmailDomainVerification(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.TrustedEmailAddress_CheckDestroy,
@@ -131,7 +134,7 @@ func TestAccTrustedEmailAddress_Full(t *testing.T) {
 					return func(s *terraform.State) (string, error) {
 						rs, ok := s.RootModule().Resources[resourceFullName]
 						if !ok {
-							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
 						}
 
 						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["email_domain_id"], rs.Primary.ID), nil
@@ -152,14 +155,17 @@ func TestAccTrustedEmailAddress_NotVerified(t *testing.T) {
 	environmentName := acctest.ResourceNameGenEnvironment()
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-	unverifiedDomain := "terraformdev.ping-eng.com"
+	domainPrefix := acctest.DomainNamePrefixWithTimestampGen()
+	unverifiedDomain := fmt.Sprintf("%s.cdi-team-terraform-ted-test.ping-eng.com", domainPrefix)
 	unverifiedEmailAddress := fmt.Sprintf("noreply@%s", unverifiedDomain)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoFeatureFlag(t)
+			acctest.PreCheckNoBeta(t)
+			acctest.PreCheckNewTrustedEmailDomain(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.TrustedEmailAddress_CheckDestroy,
@@ -184,9 +190,10 @@ func TestAccTrustedEmailAddress_BadParameters(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
-			acctest.PreCheckNoFeatureFlag(t)
-			acctest.PreCheckDomainVerification(t)
+			acctest.PreCheckNoBeta(t)
+			acctest.PreCheckTrustedEmailDomainVerification(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             base.TrustedEmailAddress_CheckDestroy,
@@ -200,19 +207,19 @@ func TestAccTrustedEmailAddress_BadParameters(t *testing.T) {
 			{
 				ResourceName: resourceFullName,
 				ImportState:  true,
-				ExpectError:  regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/email_domain_id/trusted_email_address_id" and must match regex: .*`),
+				ExpectError:  regexp.MustCompile(`invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/email_domain_id/trusted_email_address_id" and must match regex: .*`),
 			},
 			{
 				ResourceName:  resourceFullName,
 				ImportStateId: "/",
 				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/email_domain_id/trusted_email_address_id" and must match regex: .*`),
+				ExpectError:   regexp.MustCompile(`invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/email_domain_id/trusted_email_address_id" and must match regex: .*`),
 			},
 			{
 				ResourceName:  resourceFullName,
 				ImportStateId: "badformat/badformat/badformat",
 				ImportState:   true,
-				ExpectError:   regexp.MustCompile(`Invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/email_domain_id/trusted_email_address_id" and must match regex: .*`),
+				ExpectError:   regexp.MustCompile(`invalid import ID specified \(".*"\).  The ID should be in the format "environment_id/email_domain_id/trusted_email_address_id" and must match regex: .*`),
 			},
 		},
 	})
@@ -233,7 +240,7 @@ resource "pingone_trusted_email_address" "%[3]s" {
   email_domain_id = pingone_trusted_email_domain.%[3]s.id
 
   email_address = "%[5]s"
-}`, acctest.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, domain, emailAddress)
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, domain, emailAddress)
 }
 
 func testAccTrustedEmailAddressConfig_New_DomainVerified(resourceName, verifiedDomain, emailAddress string) string {

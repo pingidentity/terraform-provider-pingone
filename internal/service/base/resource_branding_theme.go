@@ -1,4 +1,4 @@
-// Copyright © 2025 Ping Identity Corporation
+// Copyright © 2026 Ping Identity Corporation
 
 package base
 
@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -22,6 +22,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
@@ -71,28 +72,23 @@ func (r *BrandingThemeResource) Metadata(ctx context.Context, req resource.Metad
 func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 
 	const attrMinLength = 1
+	const defaultBoolFalse = false
 
 	templateDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The template name of the branding theme associated with the environment.",
 	).AllowedValuesEnum(management.AllowedEnumBrandingThemeTemplateEnumValues)
 
-	backgroundExactlyOneOfRelativePaths := []string{
-		"background_image",
-		"background_color",
-		"use_default_background",
-	}
-
 	backgroundColorDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The background color for the theme. It must be a valid hexadecimal color code.",
-	).ExactlyOneOf(backgroundExactlyOneOfRelativePaths)
+	).ConflictsWith([]string{"background_image"})
 
 	useDefaultBackgroundDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean to specify that the background should be set to the theme template's default.",
-	).ExactlyOneOf(backgroundExactlyOneOfRelativePaths)
+	).DefaultValue(bool(defaultBoolFalse))
 
 	backgroundImageDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A single object that specifies the HREF and ID for the background image.",
-	).ExactlyOneOf(backgroundExactlyOneOfRelativePaths)
+	).ConflictsWith([]string{"background_color"})
 
 	logoDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A single object that specifies the HREF and ID for the company logo, for this branding template.  If not set, the environment's default logo (set with the `pingone_branding_settings` resource) will be applied.",
@@ -150,7 +146,7 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 				Computed:    true,
 
 				PlanModifiers: []planmodifier.Bool{
-					boolplanmodifier.UseStateForUnknown(),
+					boolplanmodifier.UseNonNullStateForUnknown(),
 				},
 			},
 
@@ -184,6 +180,12 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 				MarkdownDescription: backgroundImageDescription.MarkdownDescription,
 				Optional:            true,
 
+				Validators: []validator.Object{
+					objectvalidator.ConflictsWith(
+						path.MatchRelative().AtParent().AtName("background_color"),
+					),
+				},
+
 				Attributes: map[string]schema.Attribute{
 					"id": schema.StringAttribute{
 						Description:         backgroundImageIdDescription.Description,
@@ -208,13 +210,6 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 				Description:         backgroundColorDescription.Description,
 				MarkdownDescription: backgroundColorDescription.MarkdownDescription,
 				Optional:            true,
-				Validators: []validator.String{
-					stringvalidator.ExactlyOneOf(
-						path.MatchRelative().AtParent().AtName("background_color"),
-						path.MatchRelative().AtParent().AtName("use_default_background"),
-						path.MatchRelative().AtParent().AtName("background_image"),
-					),
-				},
 			},
 
 			"use_default_background": schema.BoolAttribute{
@@ -224,14 +219,6 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 				Computed:            true,
 
 				Default: booldefault.StaticBool(false),
-
-				Validators: []validator.Bool{
-					boolvalidator.ExactlyOneOf(
-						path.MatchRelative().AtParent().AtName("background_color"),
-						path.MatchRelative().AtParent().AtName("use_default_background"),
-						path.MatchRelative().AtParent().AtName("background_image"),
-					),
-				},
 			},
 
 			"body_text_color": schema.StringAttribute{
@@ -296,7 +283,7 @@ func (r *BrandingThemeResource) Configure(ctx context.Context, req resource.Conf
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -341,15 +328,15 @@ func (r *BrandingThemeResource) Create(ctx context.Context, req resource.CreateR
 
 	// Run the API call
 	var response *management.BrandingTheme
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.BrandingThemesApi.CreateBrandingTheme(ctx, plan.EnvironmentId.ValueString()).BrandingTheme(*brandingTheme).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"CreateBrandingTheme",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
@@ -383,15 +370,15 @@ func (r *BrandingThemeResource) Read(ctx context.Context, req resource.ReadReque
 
 	// Run the API call
 	var response *management.BrandingTheme
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.BrandingThemesApi.ReadOneBrandingTheme(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"ReadOneBrandingTheme",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
@@ -435,15 +422,15 @@ func (r *BrandingThemeResource) Update(ctx context.Context, req resource.UpdateR
 
 	// Run the API call
 	var response *management.BrandingTheme
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.BrandingThemesApi.UpdateBrandingTheme(ctx, plan.EnvironmentId.ValueString(), plan.Id.ValueString()).BrandingTheme(*brandingTheme).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdateBrandingTheme",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
@@ -476,15 +463,15 @@ func (r *BrandingThemeResource) Delete(ctx context.Context, req resource.DeleteR
 	}
 
 	// Run the API call
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fR, fErr := r.Client.ManagementAPIClient.BrandingThemesApi.DeleteBrandingTheme(ctx, data.EnvironmentId.ValueString(), data.Id.ValueString()).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, fR, fErr)
 		},
 		"DeleteBrandingTheme",
-		framework.CustomErrorResourceNotFoundWarning,
+		legacysdk.CustomErrorResourceNotFoundWarning,
 		sdk.DefaultCreateReadRetryable,
 		nil,
 	)...)
@@ -590,11 +577,11 @@ func (p *brandingThemeResourceModelV1) expand(ctx context.Context) (*management.
 		configuration.SetLogo(*management.NewBrandingThemeConfigurationLogo(logo.Href.ValueString(), logo.Id.ValueString()))
 	}
 
-	if backgroundType == management.ENUMBRANDINGTHEMEBACKGROUNDTYPE_IMAGE {
+	if !background.Href.IsNull() && !background.Href.IsUnknown() && !background.Id.IsNull() && !background.Id.IsUnknown() {
 		configuration.SetBackgroundImage(*management.NewBrandingThemeConfigurationBackgroundImage(background.Href.ValueString(), background.Id.ValueString()))
 	}
 
-	if backgroundType == management.ENUMBRANDINGTHEMEBACKGROUNDTYPE_COLOR {
+	if backgroundColour != "" {
 		configuration.SetBackgroundColor(backgroundColour)
 	}
 

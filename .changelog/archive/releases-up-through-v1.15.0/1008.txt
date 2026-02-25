@@ -1,0 +1,15 @@
+```release-note:enhancement
+`resource/pingone_application`: Added support for the `oidc_options.idp_signoff` field.
+```
+
+```release-note:enhancement
+`data-source/pingone_application`: Added support for the `oidc_options.idp_signoff` field.
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2` 0.12.12 => 0.12.13
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/management` 0.52.0 => 0.53.0
+```

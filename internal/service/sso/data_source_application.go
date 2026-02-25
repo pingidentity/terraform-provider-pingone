@@ -1,4 +1,4 @@
-// Copyright © 2025 Ping Identity Corporation
+// Copyright © 2026 Ping Identity Corporation
 
 package sso
 
@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -19,6 +20,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service"
 )
@@ -42,6 +44,7 @@ type applicationDataSourceModel struct {
 	ExternalLinkOptions       types.Object                 `tfsdk:"external_link_options"`
 	OIDCOptions               types.Object                 `tfsdk:"oidc_options"`
 	SAMLOptions               types.Object                 `tfsdk:"saml_options"`
+	WSFedOptions              types.Object                 `tfsdk:"wsfed_options"`
 }
 
 // Framework interfaces
@@ -117,6 +120,18 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 
 	oidcPostLogoutRedirectUrisDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A list of strings that specifies the URLs that the browser can be redirected to after logout.  The provided URLs are expected to use the `https://`, `http://` schema, or a custom mobile native schema (e.g., `org.bxretail.app://logout`).",
+	)
+
+	oidcOptionsRequestScopesForMultipleResourcesEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether the application can request scopes from multiple custom resources.",
+	)
+
+	oidcOptionsOpSessionCheckEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether the `session_state` parameter is included in the authentication response.",
+	)
+
+	oidcOptionsIncludeX5tDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether tokens signed for this application include the `x5t` signature header in the signed JWT.",
 	)
 
 	oidcAdditionalRefreshTokenReplayProtectionEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -287,9 +302,23 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 						MarkdownDescription: oidcOptionsDevicePollingIntervalDescription.MarkdownDescription,
 						Computed:            true,
 					},
+					"idp_signoff": schema.BoolAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean flag to allow signoff without access to the session token cookie.").Description,
+						Computed:    true,
+					},
+					"include_x5t": schema.BoolAttribute{
+						Description:         oidcOptionsIncludeX5tDescription.Description,
+						MarkdownDescription: oidcOptionsIncludeX5tDescription.MarkdownDescription,
+						Computed:            true,
+					},
 					"initiate_login_uri": schema.StringAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the URI to use for third-parties to begin the sign-on process for the application.").Description,
 						Computed:    true,
+					},
+					"op_session_check_enabled": schema.BoolAttribute{
+						Description:         oidcOptionsOpSessionCheckEnabledDescription.Description,
+						MarkdownDescription: oidcOptionsOpSessionCheckEnabledDescription.MarkdownDescription,
+						Computed:            true,
 					},
 					"jwks": schema.StringAttribute{
 						Description:         oidcJwksDescription.Description,
@@ -359,6 +388,11 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 					"refresh_token_rolling_grace_period_duration": schema.Int32Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("The number of seconds that a refresh token may be reused after having been exchanged for a new set of tokens.").Description,
 						Computed:    true,
+					},
+					"request_scopes_for_multiple_resources_enabled": schema.BoolAttribute{
+						Description:         oidcOptionsRequestScopesForMultipleResourcesEnabledDescription.Description,
+						MarkdownDescription: oidcOptionsRequestScopesForMultipleResourcesEnabledDescription.MarkdownDescription,
+						Computed:            true,
 					},
 					"additional_refresh_token_replay_protection_enabled": schema.BoolAttribute{
 						Description:         oidcAdditionalRefreshTokenReplayProtectionEnabledDescription.Description,
@@ -603,6 +637,118 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 						},
 					},
 					"cors_settings": datasourceApplicationSchemaCorsSettings(),
+					"virtual_server_id_settings": schema.SingleNestedAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies settings for SAML virtual server IDs.").Description,
+						Computed:    true,
+						Attributes: map[string]schema.Attribute{
+							"enabled": schema.BoolAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether virtual server IDs are enabled for this SAML application.").Description,
+								Computed:    true,
+							},
+							"virtual_server_ids": schema.ListNestedAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("A list of virtual server ID objects. Each object contains a virtual server ID and a flag indicating if it is the default.").Description,
+								Computed:    true,
+								NestedObject: schema.NestedAttributeObject{
+									Attributes: map[string]schema.Attribute{
+										"vs_id": schema.StringAttribute{
+											Description: framework.SchemaAttributeDescriptionFromMarkdown("The virtual server ID.").Description,
+											Computed:    true,
+										},
+										"default": schema.BoolAttribute{
+											Description: framework.SchemaAttributeDescriptionFromMarkdown("Whether this virtual server ID is the default.").Description,
+											Computed:    true,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			"wsfed_options": schema.SingleNestedAttribute{
+				Description: "A single object that specifies WS-Fed application specific settings.",
+				Computed:    true,
+
+				Attributes: map[string]schema.Attribute{ //
+					"audience_restriction": schema.StringAttribute{
+						Computed:            true,
+						Description:         "The service provider ID. The default value is \"urn:federation:MicrosoftOnline\".",
+						MarkdownDescription: "The service provider ID. The default value is `urn:federation:MicrosoftOnline`.",
+					},
+					"cors_settings": datasourceApplicationSchemaCorsSettings(),
+					"domain_name": schema.StringAttribute{
+						Computed:    true,
+						Description: "The federated domain name (for example, the Azure custom domain).",
+					},
+					"idp_signing_key": schema.SingleNestedAttribute{
+						Description: "Contains the information about the signing of requests by the identity provider (IdP).",
+						Computed:    true,
+
+						Attributes: map[string]schema.Attribute{
+							"algorithm": schema.StringAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the signature algorithm of the key.").Description,
+								Computed:    true,
+							},
+							"key_id": schema.StringAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("An ID for the certificate key pair to be used by the identity provider to sign assertions and responses.").Description,
+								Computed:    true,
+								CustomType:  pingonetypes.ResourceIDType{},
+							},
+						},
+					},
+					"kerberos": schema.SingleNestedAttribute{
+						Attributes: map[string]schema.Attribute{
+							"gateways": schema.SetNestedAttribute{
+								NestedObject: schema.NestedAttributeObject{
+									Attributes: map[string]schema.Attribute{
+										"id": schema.StringAttribute{
+											Computed:    true,
+											Description: "The UUID of the LDAP gateway. Must be a valid PingOne resource ID.",
+											CustomType:  pingonetypes.ResourceIDType{},
+										},
+										"type": schema.StringAttribute{
+											Computed:    true,
+											Description: "The gateway type. This must be \"LDAP\".",
+										},
+										"user_type": schema.SingleNestedAttribute{
+											Attributes: map[string]schema.Attribute{
+												"id": schema.StringAttribute{
+													Computed:            true,
+													Description:         "The UUID of a user type in the list of \"userTypes\" for the LDAP gateway. Must be a valid PingOne resource ID.",
+													MarkdownDescription: "The UUID of a user type in the list of `userTypes` for the LDAP gateway. Must be a valid PingOne resource ID.",
+													CustomType:          pingonetypes.ResourceIDType{},
+												},
+											},
+											Computed:    true,
+											Description: "The object reference to the user type in the list of \"userTypes\" for the LDAP gateway.",
+										},
+									},
+								},
+								Computed:    true,
+								Description: "The LDAP gateway properties.",
+							},
+						},
+						Computed:    true,
+						Description: "The Kerberos authentication settings. Leave this out of the configuration to disable Kerberos authentication.",
+					},
+					"reply_url": schema.StringAttribute{
+						Computed:    true,
+						Description: "The URL that the replying party (such as, Office365) uses to accept submissions of RequestSecurityTokenResponse messages that are a result of SSO requests.",
+					},
+					"slo_endpoint": schema.StringAttribute{
+						Computed:    true,
+						Description: "The single logout endpoint URL.",
+					},
+					"subject_name_identifier_format": schema.StringAttribute{
+						Computed:            true,
+						Description:         "The format to use for the SubjectNameIdentifier element. Options are \"urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified\", \"urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress\".",
+						MarkdownDescription: "The format to use for the SubjectNameIdentifier element. Options are `urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified`, `urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress`.",
+					},
+					"type": schema.StringAttribute{
+						Computed:            true,
+						Description:         "A string that specifies the type associated with the application. This is a required property. Options are \"WEB_APP\", \"NATIVE_APP\", \"SINGLE_PAGE_APP\", \"WORKER\", \"SERVICE\", \"CUSTOM_APP\", \"PORTAL_LINK_APP\".",
+						MarkdownDescription: "A string that specifies the type associated with the application. This is a required property. Options are `WEB_APP`, `NATIVE_APP`, `SINGLE_PAGE_APP`, `WORKER`, `SERVICE`, `CUSTOM_APP`, `PORTAL_LINK_APP`.",
+					},
 				},
 			},
 		},
@@ -654,7 +800,7 @@ func (r *ApplicationDataSource) Configure(ctx context.Context, req datasource.Co
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -695,15 +841,15 @@ func (r *ApplicationDataSource) Read(ctx context.Context, req datasource.ReadReq
 	// Application API does not support SCIM filtering
 	if !data.ApplicationId.IsNull() {
 		// Run the API call
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
 				fO, fR, fErr := r.Client.ManagementAPIClient.ApplicationsApi.ReadOneApplication(ctx, data.EnvironmentId.ValueString(), data.ApplicationId.ValueString()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"ReadOneApplication",
-			framework.DefaultCustomError,
+			legacysdk.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
 			&application,
 		)...)
@@ -713,7 +859,7 @@ func (r *ApplicationDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 	} else if !data.Name.IsNull() {
 		// Run the API call
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
@@ -723,7 +869,7 @@ func (r *ApplicationDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 				for pageCursor, err := range pagedIterator {
 					if err != nil {
-						return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+						return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
 					}
 
 					if initialHttpResponse == nil {
@@ -747,9 +893,12 @@ func (r *ApplicationDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 							case *management.ApplicationSAML:
 								applicationName = v.GetName()
+
+							case *management.ApplicationWSFED:
+								applicationName = v.GetName()
 							}
 
-							if applicationName == data.Name.ValueString() {
+							if strings.EqualFold(applicationName, data.Name.ValueString()) {
 								return &applicationObj, pageCursor.HTTPResponse, nil
 							}
 						}
@@ -759,7 +908,7 @@ func (r *ApplicationDataSource) Read(ctx context.Context, req datasource.ReadReq
 				return nil, initialHttpResponse, nil
 			},
 			"ReadAllApplications",
-			framework.DefaultCustomError,
+			legacysdk.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
 			&application,
 		)...)
@@ -830,7 +979,7 @@ func (p *applicationDataSourceModel) toState(ctx context.Context, apiObject *man
 
 		// Service specific attributes
 		p.Tags = types.SetNull(types.StringType)
-		p.OIDCOptions = types.ObjectNull(applicationOidcOptionsTFObjectTypes)
+		p.OIDCOptions = types.ObjectNull(applicationOidcOptionsDataSourceTFObjectTypes)
 		p.SAMLOptions = types.ObjectNull(applicationSamlOptionsTFObjectTypes)
 
 		p.ExternalLinkOptions, d = applicationExternalLinkOptionsToTF(v)
@@ -865,7 +1014,7 @@ func (p *applicationDataSourceModel) toState(ctx context.Context, apiObject *man
 		// Service specific attributes
 		p.Tags = framework.EnumSetOkToTF(v.GetTagsOk())
 
-		var oidcOptionsState applicationOIDCOptionsResourceModelV1
+		var oidcOptionsState applicationOIDCOptionsDataSourceModelV1
 		if !p.OIDCOptions.IsNull() && !p.OIDCOptions.IsUnknown() {
 			d := p.OIDCOptions.As(ctx, &oidcOptionsState, basetypes.ObjectAsOptions{
 				UnhandledNullAsEmpty:    false,
@@ -876,7 +1025,7 @@ func (p *applicationDataSourceModel) toState(ctx context.Context, apiObject *man
 				return diags
 			}
 		}
-		p.OIDCOptions, d = applicationOidcOptionsToTF(ctx, v, oidcOptionsState)
+		p.OIDCOptions, d = applicationOidcOptionsDataSourceToTF(ctx, v, oidcOptionsState)
 		diags = append(diags, d...)
 
 		p.SAMLOptions = types.ObjectNull(applicationSamlOptionsTFObjectTypes)
@@ -910,12 +1059,52 @@ func (p *applicationDataSourceModel) toState(ctx context.Context, apiObject *man
 
 		// Service specific attributes
 		p.Tags = types.SetNull(types.StringType)
-		p.OIDCOptions = types.ObjectNull(applicationOidcOptionsTFObjectTypes)
+		p.OIDCOptions = types.ObjectNull(applicationOidcOptionsDataSourceTFObjectTypes)
 
 		p.SAMLOptions, d = applicationSamlOptionsToTF(v)
 		diags = append(diags, d...)
 
 		p.ExternalLinkOptions = types.ObjectNull(applicationExternalLinkOptionsTFObjectTypes)
+
+	case *management.ApplicationWSFED:
+		p.Id = framework.PingOneResourceIDOkToTF(v.GetIdOk())
+		p.EnvironmentId = framework.PingOneResourceIDOkToTF(v.Environment.GetIdOk())
+		p.Name = framework.StringOkToTF(v.GetNameOk())
+		p.Description = framework.StringOkToTF(v.GetDescriptionOk())
+		p.Enabled = framework.BoolOkToTF(v.GetEnabledOk())
+		p.LoginPageUrl = framework.StringOkToTF(v.GetLoginPageUrlOk())
+
+		p.AccessControlRoleType = types.StringNull()
+		p.AccessControlGroupOptions = types.ObjectNull(applicationAccessControlGroupOptionsTFObjectTypes)
+		if vA, ok := v.GetAccessControlOk(); ok {
+			if vR, ok := vA.GetRoleOk(); ok {
+				p.AccessControlRoleType = framework.EnumOkToTF(vR.GetTypeOk())
+			}
+
+			p.AccessControlGroupOptions, d = applicationAccessControlGroupOptionsToTF(vA.GetGroupOk())
+			diags = append(diags, d...)
+		}
+
+		p.HiddenFromAppPortal = framework.BoolOkToTF(v.GetHiddenFromAppPortalOk())
+
+		p.Icon, d = service.ImageOkToTF(v.GetIconOk())
+		diags = append(diags, d...)
+
+		p.LoginPageUrl = framework.StringOkToTF(v.GetLoginPageUrlOk())
+
+		// Service specific attributes
+		p.Tags = types.SetNull(types.StringType)
+		p.OIDCOptions = types.ObjectNull(applicationOidcOptionsDataSourceTFObjectTypes)
+		p.SAMLOptions = types.ObjectNull(applicationSamlOptionsTFObjectTypes)
+		p.ExternalLinkOptions = types.ObjectNull(applicationExternalLinkOptionsTFObjectTypes)
+
+		p.WSFedOptions, d = applicationWsfedOptionsToTF(v)
+		diags = append(diags, d...)
+	default:
+		diags.AddError(
+			"Invalid application type",
+			"Only OIDC, SAML, WSFED, and External Link application types are retrievable by this data source.",
+		)
 	}
 
 	return diags

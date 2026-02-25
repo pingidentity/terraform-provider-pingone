@@ -1,4 +1,4 @@
-// Copyright © 2025 Ping Identity Corporation
+// Copyright © 2026 Ping Identity Corporation
 
 package framework
 
@@ -17,14 +17,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	pingone "github.com/pingidentity/terraform-provider-pingone/internal/client"
+	"github.com/pingidentity/pingone-go-client/pingone"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/davincitypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 )
 
 type ResourceType struct {
-	Client *pingone.Client
+	Client *pingone.APIClient
 }
 
 func PingOneResourceIDToTF(v string) pingonetypes.ResourceIDValue {
@@ -478,6 +478,9 @@ func ParseImportID(id string, components ...ImportComponent) (map[string]string,
 
 	i := 0
 	for _, v := range components {
+		if v.Regexp == nil {
+			return nil, fmt.Errorf("cannot parse import ID as component %d has no Regexp", i)
+		}
 		keys[i] = v.Label
 		regexpList[i] = v.Regexp.String()
 		i++
@@ -487,17 +490,17 @@ func ParseImportID(id string, components ...ImportComponent) (map[string]string,
 
 	m, err := regexp.MatchString(compiledRegexpString, id)
 	if err != nil {
-		return nil, fmt.Errorf("Cannot verify import ID regex: %s", err)
+		return nil, fmt.Errorf("cannot verify import ID regex: %s", err)
 	}
 
 	if !m {
-		return nil, fmt.Errorf("Invalid import ID specified (\"%s\").  The ID should be in the format \"%s\" and must match regex: %s", id, strings.Join(keys, "/"), compiledRegexpString)
+		return nil, fmt.Errorf("invalid import ID specified (\"%s\").  The ID should be in the format \"%s\" and must match regex: %s", id, strings.Join(keys, "/"), compiledRegexpString)
 	}
 
 	attributeValues := strings.SplitN(id, "/", len(components))
 
 	if len(attributeValues) != len(components) {
-		return nil, fmt.Errorf("Invalid import ID specified (\"%s\").  The ID should be in the format \"%s\".", id, strings.Join(keys, "/"))
+		return nil, fmt.Errorf("invalid import ID specified (\"%s\").  The ID should be in the format \"%s\"", id, strings.Join(keys, "/"))
 	}
 
 	attributes := make(map[string]string)

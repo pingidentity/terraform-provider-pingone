@@ -1,4 +1,4 @@
-// Copyright © 2025 Ping Identity Corporation
+// Copyright © 2026 Ping Identity Corporation
 
 package sso
 
@@ -10,11 +10,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -22,6 +27,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
@@ -30,11 +36,15 @@ import (
 type PopulationDefaultResource serviceClientType
 
 type PopulationDefaultResourceModel struct {
-	Id               pingonetypes.ResourceIDValue `tfsdk:"id"`
-	EnvironmentId    pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
-	Name             types.String                 `tfsdk:"name"`
-	Description      types.String                 `tfsdk:"description"`
-	PasswordPolicyId pingonetypes.ResourceIDValue `tfsdk:"password_policy_id"`
+	Id                     pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId          pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Name                   types.String                 `tfsdk:"name"`
+	Description            types.String                 `tfsdk:"description"`
+	PasswordPolicyId       pingonetypes.ResourceIDValue `tfsdk:"password_policy_id"`
+	PasswordPolicy         types.Object                 `tfsdk:"password_policy"`
+	AlternativeIdentifiers types.Set                    `tfsdk:"alternative_identifiers"`
+	PreferredLanguage      types.String                 `tfsdk:"preferred_language"`
+	Theme                  types.Object                 `tfsdk:"theme"`
 }
 
 // Framework interfaces
@@ -85,11 +95,59 @@ func (r *PopulationDefaultResource) Schema(ctx context.Context, req resource.Sch
 				Optional:    true,
 			},
 
-			"password_policy_id": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("The ID of a password policy to assign to the default population.").Description,
+			"password_policy": schema.SingleNestedAttribute{
+				Attributes: map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Required:    true,
+						CustomType:  pingonetypes.ResourceIDType{},
+						Description: "The ID of the password policy that is used for this population. If absent, the environment's default is used. Must be a valid PingOne resource ID.",
+					},
+				},
 				Optional:    true,
+				Description: "The object reference to the password policy resource. This is an optional property. Conflicts with `password_policy_id`.",
+				Validators: []validator.Object{
+					objectvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("password_policy_id")),
+				},
+			},
 
-				CustomType: pingonetypes.ResourceIDType{},
+			"password_policy_id": schema.StringAttribute{
+				Description:        framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the ID of a password policy to assign to the population.  Must be a valid PingOne resource ID. The `password_policy.id` attribute should be used instead of this attribute.").ConflictsWith([]string{"password_policy"}).Description,
+				DeprecationMessage: "This attribute is deprecated and will be removed in a future release. Please use the `password_policy.id` attribute instead.",
+				Optional:           true,
+				CustomType:         pingonetypes.ResourceIDType{},
+				Validators: []validator.String{
+					stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("password_policy")),
+				},
+			},
+
+			"alternative_identifiers": schema.SetAttribute{
+				ElementType:         types.StringType,
+				Optional:            true,
+				Description:         "Alternative identifiers that can be used to search for populations besides \"name\".",
+				MarkdownDescription: "Alternative identifiers that can be used to search for populations besides `name`.",
+			},
+			"preferred_language": schema.StringAttribute{
+				Optional: true,
+				Computed: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseNonNullStateForUnknown(),
+				},
+				Description: "The language locale for the population. If absent, the environment default is used.",
+			},
+			"theme": schema.SingleNestedAttribute{
+				Attributes: map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Required:    true,
+						CustomType:  pingonetypes.ResourceIDType{},
+						Description: "The ID of the theme to use for the population. If absent, the environment's default is used. Must be a valid PingOne resource ID.",
+					},
+				},
+				Optional:    true,
+				Computed:    true,
+				Description: "The object reference to the theme resource.",
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.UseNonNullStateForUnknown(),
+				},
 			},
 		},
 	}
@@ -111,7 +169,7 @@ func (r *PopulationDefaultResource) Configure(ctx context.Context, req resource.
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -159,28 +217,42 @@ func (r *PopulationDefaultResource) Create(ctx context.Context, req resource.Cre
 
 	var response *management.Population
 	if readResponse == nil {
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
 				fO, fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.CreatePopulation(ctx, plan.EnvironmentId.ValueString()).Population(*population).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"CreatePopulation-Default",
-			framework.DefaultCustomError,
+			legacysdk.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
 			&response,
 		)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		if response.Theme == nil || response.Theme.Id == nil {
+			responseWithTheme, diags := populationWaitForAssignedThemeId(ctx, r.Client, plan.EnvironmentId.ValueString(), *response.Id)
+			resp.Diagnostics.Append(diags...)
+			if resp.Diagnostics.HasError() {
+				return
+			}
+			if responseWithTheme != nil {
+				response = responseWithTheme
+			}
+		}
 	} else {
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
 				fO, fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.UpdatePopulation(ctx, plan.EnvironmentId.ValueString(), readResponse.GetId()).Population(*population).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"UpdatePopulation-Default",
-			framework.DefaultCustomError,
+			legacysdk.DefaultCustomError,
 			nil,
 			&response,
 		)...)
@@ -258,15 +330,15 @@ func (r *PopulationDefaultResource) Update(ctx context.Context, req resource.Upd
 	}
 
 	var response *management.Population
-	resp.Diagnostics.Append(framework.ParseResponse(
+	resp.Diagnostics.Append(legacysdk.ParseResponse(
 		ctx,
 
 		func() (any, *http.Response, error) {
 			fO, fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.UpdatePopulation(ctx, plan.EnvironmentId.ValueString(), readResponse.GetId()).Population(*population).Execute()
-			return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
 		"UpdatePopulation-Default",
-		framework.DefaultCustomError,
+		legacysdk.DefaultCustomError,
 		nil,
 		&response,
 	)...)
@@ -312,15 +384,15 @@ func (r *PopulationDefaultResource) Delete(ctx context.Context, req resource.Del
 
 	var response *management.Population
 	if readResponse != nil {
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
 				fO, fR, fErr := r.Client.ManagementAPIClient.PopulationsApi.UpdatePopulation(ctx, data.EnvironmentId.ValueString(), readResponse.GetId()).Population(*population).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"UpdatePopulation-DeleteDefault",
-			framework.CustomErrorResourceNotFoundWarning,
+			legacysdk.CustomErrorResourceNotFoundWarning,
 			nil,
 			&response,
 		)...)
@@ -367,33 +439,59 @@ func (r *PopulationDefaultResource) ImportState(ctx context.Context, req resourc
 }
 
 func (p *PopulationDefaultResourceModel) expand() *management.Population {
-
 	data := management.NewPopulation(p.Name.ValueString())
-
 	data.SetDefault(true)
 
 	if !p.Description.IsNull() && !p.Description.IsUnknown() {
 		data.SetDescription(p.Description.ValueString())
 	}
 
-	if !p.PasswordPolicyId.IsNull() && !p.PasswordPolicyId.IsUnknown() {
-		data.SetPasswordPolicy(
-			*management.NewPopulationPasswordPolicy(p.PasswordPolicyId.ValueString()),
-		)
+	// password_policy
+	if !p.PasswordPolicy.IsNull() && !p.PasswordPolicy.IsUnknown() {
+		passwordPolicyValue := &management.PopulationPasswordPolicy{}
+		passwordPolicyAttrs := p.PasswordPolicy.Attributes()
+		passwordPolicyValue.Id = passwordPolicyAttrs["id"].(pingonetypes.ResourceIDValue).ValueString()
+		data.PasswordPolicy = passwordPolicyValue
+	} else if !p.PasswordPolicyId.IsNull() && !p.PasswordPolicyId.IsUnknown() {
+		// password_policy_id
+		data.PasswordPolicy = &management.PopulationPasswordPolicy{
+			Id: p.PasswordPolicyId.ValueString(),
+		}
+	}
+
+	// alternative_identifiers
+	if !p.AlternativeIdentifiers.IsNull() && !p.AlternativeIdentifiers.IsUnknown() {
+		altIds := []string{}
+		for _, elem := range p.AlternativeIdentifiers.Elements() {
+			altIds = append(altIds, elem.(types.String).ValueString())
+		}
+		data.SetAlternativeIdentifiers(altIds)
+	}
+
+	// preferred_language
+	if !p.PreferredLanguage.IsNull() && !p.PreferredLanguage.IsUnknown() {
+		data.PreferredLanguage = p.PreferredLanguage.ValueStringPointer()
+	}
+
+	// theme
+	if !p.Theme.IsNull() && !p.Theme.IsUnknown() {
+		themeValue := &management.PopulationTheme{}
+		themeAttrs := p.Theme.Attributes()
+		themeValue.Id = themeAttrs["id"].(pingonetypes.ResourceIDValue).ValueStringPointer()
+		data.Theme = themeValue
 	}
 
 	return data
 }
 
 func (p *PopulationDefaultResourceModel) toState(apiObject *management.Population) diag.Diagnostics {
-	var diags diag.Diagnostics
+	var diags, buildDiags diag.Diagnostics
 
 	if apiObject == nil {
 		diags.AddError(
 			"Data object missing",
 			"Cannot convert the data object to state as the data object is nil.  Please report this to the provider maintainers.",
 		)
-
 		return diags
 	}
 
@@ -402,11 +500,54 @@ func (p *PopulationDefaultResourceModel) toState(apiObject *management.Populatio
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 
-	if v, ok := apiObject.GetPasswordPolicyOk(); ok {
-		p.PasswordPolicyId = framework.PingOneResourceIDOkToTF(v.GetIdOk())
+	// password_policy_id
+	if !p.PasswordPolicyId.IsNull() {
+		var passwordPolicyIdValue pingonetypes.ResourceIDValue
+		if apiObject.PasswordPolicy == nil {
+			passwordPolicyIdValue = pingonetypes.NewResourceIDNull()
+		} else {
+			passwordPolicyIdValue = framework.PingOneResourceIDToTF(apiObject.PasswordPolicy.Id)
+		}
+		p.PasswordPolicyId = passwordPolicyIdValue
 	} else {
-		p.PasswordPolicyId = pingonetypes.NewResourceIDNull()
+		// password_policy
+		passwordPolicyAttrTypes := map[string]attr.Type{
+			"id": pingonetypes.ResourceIDType{},
+		}
+		var passwordPolicyValue types.Object
+		if apiObject.PasswordPolicy == nil {
+			passwordPolicyValue = types.ObjectNull(passwordPolicyAttrTypes)
+		} else {
+			passwordPolicyValue, buildDiags = types.ObjectValue(passwordPolicyAttrTypes, map[string]attr.Value{
+				"id": framework.PingOneResourceIDToTF(apiObject.PasswordPolicy.Id),
+			})
+			diags.Append(buildDiags...)
+		}
+		p.PasswordPolicy = passwordPolicyValue
 	}
+
+	// alternative_identifiers
+	p.AlternativeIdentifiers, buildDiags = types.SetValueFrom(context.Background(), types.StringType, apiObject.AlternativeIdentifiers)
+	diags.Append(buildDiags...)
+
+	// preferred_language
+	p.PreferredLanguage = framework.StringOkToTF(apiObject.GetPreferredLanguageOk())
+
+	// theme
+	themeAttrTypes := map[string]attr.Type{
+		"id": pingonetypes.ResourceIDType{},
+	}
+	var themeValue types.Object
+	if apiObject.Theme == nil {
+		themeValue = types.ObjectNull(themeAttrTypes)
+	} else {
+		var themeDiags diag.Diagnostics
+		themeValue, themeDiags = types.ObjectValue(themeAttrTypes, map[string]attr.Value{
+			"id": framework.PingOneResourceIDOkToTF(apiObject.Theme.GetIdOk()),
+		})
+		diags.Append(themeDiags...)
+	}
+	p.Theme = themeValue
 
 	return diags
 }
@@ -419,9 +560,9 @@ func FetchDefaultPopulation(ctx context.Context, apiClient *management.APIClient
 func FetchDefaultPopulationWithTimeout(ctx context.Context, apiClient *management.APIClient, environmentID string, warnOnNotFound bool, timeout time.Duration) (*management.Population, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	errorFunction := framework.DefaultCustomError
+	errorFunction := legacysdk.DefaultCustomError
 	if warnOnNotFound {
-		errorFunction = framework.CustomErrorResourceNotFoundWarning
+		errorFunction = legacysdk.CustomErrorResourceNotFoundWarning
 	}
 
 	stateConf := &retry.StateChangeConf{
@@ -436,7 +577,7 @@ func FetchDefaultPopulationWithTimeout(ctx context.Context, apiClient *managemen
 
 			// Run the API call
 			var defaultPopulation *management.Population
-			diags.Append(framework.ParseResponse(
+			diags.Append(legacysdk.ParseResponse(
 				ctx,
 
 				func() (any, *http.Response, error) {
@@ -446,7 +587,7 @@ func FetchDefaultPopulationWithTimeout(ctx context.Context, apiClient *managemen
 
 					for pageCursor, err := range pagedIterator {
 						if err != nil {
-							return framework.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, nil, pageCursor.HTTPResponse, err)
+							return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, environmentID, nil, pageCursor.HTTPResponse, err)
 						}
 
 						if initialHttpResponse == nil {
@@ -472,7 +613,7 @@ func FetchDefaultPopulationWithTimeout(ctx context.Context, apiClient *managemen
 				&defaultPopulation,
 			)...)
 			if diags.HasError() {
-				return nil, "err", fmt.Errorf("Error reading populations")
+				return nil, "err", fmt.Errorf("error reading populations")
 			}
 
 			tflog.Debug(ctx, "Find default population attempt", map[string]interface{}{

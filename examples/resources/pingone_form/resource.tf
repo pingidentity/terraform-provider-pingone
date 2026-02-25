@@ -16,14 +16,41 @@ resource "pingone_form" "my_awesome_form" {
   components = {
     fields = [
       {
-        type = "TEXTBLOB"
+        type = "SLATE_TEXTBLOB"
 
         position = {
           row = 0
           col = 0
         }
 
-        content = "<h2>Sign On</h2><hr>"
+        content = jsonencode(
+          [
+            {
+              "children" : [
+                {
+                  "text" : "Sign On"
+                }
+              ],
+              "type" : "heading-1"
+            },
+            {
+              "type" : "divider",
+              "children" : [
+                {
+                  "text" : ""
+                }
+              ]
+            },
+            {
+              "type" : "paragraph",
+              "children" : [
+                {
+                  "text" : ""
+                }
+              ]
+            }
+          ]
+        )
       },
       {
         type = "ERROR_DISPLAY"

@@ -1,4 +1,4 @@
-// Copyright © 2025 Ping Identity Corporation
+// Copyright © 2026 Ping Identity Corporation
 
 package risk
 
@@ -13,12 +13,21 @@ type serviceClientType struct {
 }
 
 func Resources() []func() resource.Resource {
-	return []func() resource.Resource{
+	resources := []func() resource.Resource{
 		NewRiskPolicyResource,
 		NewRiskPredictorResource,
 	}
+	resources = append(resources, BetaResources()...)
+
+	return resources
 }
 
 func DataSources() []func() datasource.DataSource {
-	return []func() datasource.DataSource{}
+	dataSources := []func() datasource.DataSource{
+		NewRiskPredictorDataSource,
+		NewRiskPredictorsDataSource,
+	}
+	dataSources = append(dataSources, BetaDataSources()...)
+
+	return dataSources
 }

@@ -1,0 +1,3 @@
+```release-note:bug
+`resource/pingone_risk_predictor`: Fixed auto-capitalization of composite predictor "equals" value
+```

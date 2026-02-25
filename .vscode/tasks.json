@@ -1,0 +1,435 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build Provider",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "build"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": "$go"
+    },
+    {
+      "label": "Install Provider",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "install"
+      ],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": "$go"
+    },
+    {
+      "label": "Run Unit Tests",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "test"
+      ],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": true,
+        "clear": true
+      },
+      "problemMatcher": "$go"
+    },
+    {
+      "label": "Run Acceptance Tests",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "testacc"
+      ],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": true,
+        "clear": true
+      },
+      "problemMatcher": "$go"
+    },
+    {
+      "label": "Run Acceptance Tests - SSO Service",
+      "type": "shell",
+      "command": "go",
+      "args": [
+        "test",
+        "./internal/service/sso/...",
+        "-v",
+        "-timeout=120m"
+      ],
+      "options": {
+        "env": {
+          "TF_ACC": "1",
+          "TF_LOG": "DEBUG",
+          "TF_LOG_PATH": "${workspaceFolder}/debug.log"
+        }
+      },
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": true,
+        "clear": true
+      },
+      "problemMatcher": "$go"
+    },
+    {
+      "label": "Run Acceptance Tests - Base Service",
+      "type": "shell",
+      "command": "go",
+      "args": [
+        "test",
+        "./internal/service/base/...",
+        "-v",
+        "-timeout=120m"
+      ],
+      "options": {
+        "env": {
+          "TF_ACC": "1",
+          "TF_LOG": "DEBUG",
+          "TF_LOG_PATH": "${workspaceFolder}/debug.log"
+        }
+      },
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": true,
+        "clear": true
+      },
+      "problemMatcher": "$go"
+    },
+    {
+      "label": "Generate Documentation",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "generate"
+      ],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": "$go"
+    },
+    {
+      "label": "Format Code",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "fmt"
+      ],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Lint Code",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "lint"
+      ],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": true,
+        "clear": true
+      },
+      "problemMatcher": [
+        "$go",
+        {
+          "owner": "golangci-lint",
+          "fileLocation": [
+            "relative",
+            "${workspaceFolder}"
+          ],
+          "pattern": {
+            "regexp": "^(.+?):(\\d+):(\\d+): (.+) \\((.+)\\)$",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "message": 4,
+            "code": 5
+          }
+        }
+      ]
+    },
+    {
+      "label": "Vet Code",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "vet"
+      ],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": "$go"
+    },
+    {
+      "label": "Check Dependencies",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "depscheck"
+      ],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": "$go"
+    },
+    {
+      "label": "Check Documentation Categories",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "docscategorycheck"
+      ],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Sweep Test Resources",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "sweep"
+      ],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "dedicated",
+        "showReuseMessage": true,
+        "clear": true
+      },
+      "problemMatcher": "$go",
+      "options": {
+        "env": {
+          "TF_LOG": "DEBUG"
+        }
+      }
+    },
+    {
+      "label": "Development Check (No Tests)",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "devchecknotest"
+      ],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": true,
+        "clear": true
+      },
+      "problemMatcher": [
+        "$go",
+        {
+          "owner": "golangci-lint",
+          "fileLocation": [
+            "relative",
+            "${workspaceFolder}"
+          ],
+          "pattern": {
+            "regexp": "^(.+?):(\\d+):(\\d+): (.+) \\((.+)\\)$",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "message": 4,
+            "code": 5
+          }
+        }
+      ]
+    },
+    {
+      "label": "Full Development Check",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "devcheck"
+      ],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": true,
+        "clear": true
+      },
+      "problemMatcher": [
+        "$go",
+        {
+          "owner": "golangci-lint",
+          "fileLocation": [
+            "relative",
+            "${workspaceFolder}"
+          ],
+          "pattern": {
+            "regexp": "^(.+?):(\\d+):(\\d+): (.+) \\((.+)\\)$",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "message": 4,
+            "code": 5
+          }
+        }
+      ]
+    },
+    {
+      "label": "Clean Build Artifacts",
+      "type": "shell",
+      "command": "go",
+      "args": [
+        "clean",
+        "-cache",
+        "-modcache",
+        "-i",
+        "-r"
+      ],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Tidy Go Modules",
+      "type": "shell",
+      "command": "go",
+      "args": [
+        "mod",
+        "tidy"
+      ],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "problemMatcher": "$go"
+    },
+    {
+      "label": "Run Specific Test",
+      "type": "shell",
+      "command": "go",
+      "args": [
+        "test",
+        "-v",
+        "-run=${input:testPattern}",
+        "-timeout=120m",
+        "./..."
+      ],
+      "options": {
+        "env": {
+          "TF_ACC": "1",
+          "TF_LOG": "DEBUG",
+          "TF_LOG_PATH": "${workspaceFolder}/debug.log"
+        }
+      },
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": true,
+        "clear": true
+      },
+      "problemMatcher": "$go"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "testPattern",
+      "description": "Enter test pattern (e.g., TestAccUserDataSource_ByName)",
+      "default": "TestAcc",
+      "type": "promptString"
+    }
+  ]
+}

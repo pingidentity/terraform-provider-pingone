@@ -1,0 +1,3 @@
+```release-note:bug
+`data-source/pingone_gateway`: Corrected the type of `radius_davinci_policy_id`, resulting in format validation that no longer incorrectly enforces dash characters.
+```

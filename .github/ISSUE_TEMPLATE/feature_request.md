@@ -15,6 +15,8 @@ labels: type/enhancement,status/needs-triage
 
 <!--- Thank you for keeping this note for the community --->
 
+Thank you for opening an issue. Please note that we try to keep the issue tracker reserved for bug reports and feature requests. For general usage questions about terraform, please see: https://discuss.hashicorp.com/c/terraform-core/27. For general usage questions about this provider, please see: https://support.pingidentity.com/s/topic/0TODo0000001MSAOA2/terraform.
+
 ### Description
 <!--- Please provide a helpful description of the feature request here. --->
 

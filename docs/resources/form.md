@@ -30,14 +30,41 @@ resource "pingone_form" "my_awesome_form" {
   components = {
     fields = [
       {
-        type = "TEXTBLOB"
+        type = "SLATE_TEXTBLOB"
 
         position = {
           row = 0
           col = 0
         }
 
-        content = "<h2>Sign On</h2><hr>"
+        content = jsonencode(
+          [
+            {
+              "children" : [
+                {
+                  "text" : "Sign On"
+                }
+              ],
+              "type" : "heading-1"
+            },
+            {
+              "type" : "divider",
+              "children" : [
+                {
+                  "text" : ""
+                }
+              ]
+            },
+            {
+              "type" : "paragraph",
+              "children" : [
+                {
+                  "text" : ""
+                }
+              ]
+            }
+          ]
+        )
       },
       {
         type = "ERROR_DISPLAY"
@@ -195,7 +222,7 @@ resource "pingone_form" "my_awesome_form" {
 
 Required:
 
-- `fields` (Attributes Set) A set of objects that specifies the form fields that make up the form. (see [below for nested schema](#nestedatt--components--fields))
+- `fields` (Attributes List) An ordered list of objects that specifies the form fields that make up the form. (see [below for nested schema](#nestedatt--components--fields))
 
 <a id="nestedatt--components--fields"></a>
 ### Nested Schema for `components.fields`
@@ -203,13 +230,13 @@ Required:
 Required:
 
 - `position` (Attributes) A single object that specifies the position of the form field in the form.  The combination of `col` and `row` must be unique between form fields. (see [below for nested schema](#nestedatt--components--fields--position))
-- `type` (String) A string that specifies the type of form field.  Options are `CHECKBOX`, `COMBOBOX`, `DIVIDER`, `DROPDOWN`, `EMPTY_FIELD`, `ERROR_DISPLAY`, `FLOW_BUTTON`, `FLOW_LINK`, `PASSWORD`, `PASSWORD_VERIFY`, `QR_CODE`, `RADIO`, `RECAPTCHA_V2`, `SLATE_TEXTBLOB`, `SUBMIT_BUTTON`, `TEXT`, `TEXTBLOB`.
+- `type` (String) A string that specifies the type of form field.  Options are `CHECKBOX`, `COMBOBOX`, `DIVIDER`, `DROPDOWN`, `EMPTY_FIELD`, `ERROR_DISPLAY`, `FLOW_BUTTON`, `FLOW_LINK`, `PASSWORD`, `PASSWORD_VERIFY`, `QR_CODE`, `RADIO`, `RECAPTCHA_V2`, `SLATE_TEXTBLOB`, `SUBMIT_BUTTON`, `TEXT`, `TEXTBLOB`.  The `TEXTBLOB` form field type has been deprecated and will be removed in a future release.
 
 Optional:
 
 - `alignment` (String) **Required** when the `type` is one of `QR_CODE`, `RECAPTCHA_V2`.  A string that specifies the reCAPTCHA alignment.  Options are `CENTER`, `LEFT`, `RIGHT`.
 - `attribute_disabled` (Boolean) Optional when the `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `PASSWORD`, `PASSWORD_VERIFY`, `RADIO`, `TEXT`.  A boolean that specifies whether the linked directory attribute is disabled.
-- `content` (String) Optional when the `type` is one of `SLATE_TEXTBLOB`, `TEXTBLOB`.  A string that specifies the field's content (for example, HTML when the field type is `TEXTBLOB`.)
+- `content` (String) Optional when the `type` is one of `SLATE_TEXTBLOB`, `TEXTBLOB`.  A string that specifies the field's content (for example, escaped JSON string when the field type is `SLATE_TEXTBLOB` - use `jsonencode` to convert JSON to escaped JSON string.)
 - `key` (String) **Required** when the `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `FLOW_BUTTON`, `FLOW_LINK`, `PASSWORD`, `PASSWORD_VERIFY`, `QR_CODE`, `RADIO`, `TEXT`.  A string that specifies an identifier for the field component.
 - `label` (String) **Required** when the `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `FLOW_BUTTON`, `FLOW_LINK`, `PASSWORD`, `PASSWORD_VERIFY`, `RADIO`, `SUBMIT_BUTTON`, `TEXT`.  A string that specifies the field label.
 - `label_mode` (String) Optional when the `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `PASSWORD`, `PASSWORD_VERIFY`, `RADIO`, `TEXT`.  A string that specifies how the field is rendered.  Options are `DEFAULT`, `FLOAT`.

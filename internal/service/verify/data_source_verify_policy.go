@@ -1,4 +1,4 @@
-// Copyright © 2025 Ping Identity Corporation
+// Copyright © 2026 Ping Identity Corporation
 
 package verify
 
@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
@@ -21,6 +22,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/verify"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )
 
@@ -28,27 +30,32 @@ import (
 type VerifyPolicyDataSource serviceClientType
 
 type verifyPolicyDataSourceModel struct {
-	Id               pingonetypes.ResourceIDValue `tfsdk:"id"`
-	EnvironmentId    pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
-	VerifyPolicyId   pingonetypes.ResourceIDValue `tfsdk:"verify_policy_id"`
-	Name             types.String                 `tfsdk:"name"`
-	Default          types.Bool                   `tfsdk:"default"`
-	Description      types.String                 `tfsdk:"description"`
-	GovernmentId     types.Object                 `tfsdk:"government_id"`
-	FacialComparison types.Object                 `tfsdk:"facial_comparison"`
-	Liveness         types.Object                 `tfsdk:"liveness"`
-	Email            types.Object                 `tfsdk:"email"`
-	Phone            types.Object                 `tfsdk:"phone"`
-	Transaction      types.Object                 `tfsdk:"transaction"`
-	Voice            types.Object                 `tfsdk:"voice"`
-	CreatedAt        timetypes.RFC3339            `tfsdk:"created_at"`
-	UpdatedAt        timetypes.RFC3339            `tfsdk:"updated_at"`
+	Id                     pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId          pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	VerifyPolicyId         pingonetypes.ResourceIDValue `tfsdk:"verify_policy_id"`
+	Name                   types.String                 `tfsdk:"name"`
+	Default                types.Bool                   `tfsdk:"default"`
+	Description            types.String                 `tfsdk:"description"`
+	GovernmentId           types.Object                 `tfsdk:"government_id"`
+	FacialComparison       types.Object                 `tfsdk:"facial_comparison"`
+	Liveness               types.Object                 `tfsdk:"liveness"`
+	Email                  types.Object                 `tfsdk:"email"`
+	Phone                  types.Object                 `tfsdk:"phone"`
+	Transaction            types.Object                 `tfsdk:"transaction"`
+	Voice                  types.Object                 `tfsdk:"voice"`
+	IdentityRecordMatching types.Object                 `tfsdk:"identity_record_matching"`
+	CreatedAt              timetypes.RFC3339            `tfsdk:"created_at"`
+	UpdatedAt              timetypes.RFC3339            `tfsdk:"updated_at"`
 }
 
 var (
 	genericTimeoutDataSourceServiceTFObjectTypes = map[string]attr.Type{
 		"duration":  types.Int32Type,
 		"time_unit": types.StringType,
+	}
+
+	aadhaarDataSourceServiceTFObjectTypes = map[string]attr.Type{
+		"enabled": types.BoolType,
 	}
 
 	governmentIdDataSourceServiceTFObjectTypes = map[string]attr.Type{
@@ -58,6 +65,8 @@ var (
 		"provider_auto":   types.StringType,
 		"provider_manual": types.StringType,
 		"retry_attempts":  types.Int32Type,
+		"verify_aamva":    types.BoolType,
+		"aadhaar":         types.ObjectType{AttrTypes: aadhaarDataSourceServiceTFObjectTypes},
 	}
 
 	facialComparisonDataSourceServiceTFObjectTypes = map[string]attr.Type{
@@ -127,6 +136,19 @@ var (
 		"update_on_reenrollment":     types.BoolType,
 		"update_on_verification":     types.BoolType,
 	}
+
+	identityRecordMatchingDataSourceServiceTFObjectTypes = map[string]attr.Type{
+		"address":     types.ObjectType{AttrTypes: identityRecordMatchingFieldDataSourceServiceTFObjectTypes},
+		"birth_date":  types.ObjectType{AttrTypes: identityRecordMatchingFieldDataSourceServiceTFObjectTypes},
+		"family_name": types.ObjectType{AttrTypes: identityRecordMatchingFieldDataSourceServiceTFObjectTypes},
+		"given_name":  types.ObjectType{AttrTypes: identityRecordMatchingFieldDataSourceServiceTFObjectTypes},
+		"name":        types.ObjectType{AttrTypes: identityRecordMatchingFieldDataSourceServiceTFObjectTypes},
+	}
+
+	identityRecordMatchingFieldDataSourceServiceTFObjectTypes = map[string]attr.Type{
+		"field_required": types.BoolType,
+		"threshold":      types.StringType,
+	}
 )
 
 // Framework interfaces
@@ -184,6 +206,8 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 
 	const defaultProviderAuto = verify.ENUMPROVIDERAUTO_MITEK
 	const defaultProviderManual = verify.ENUMPROVIDERAUTO_MITEK
+
+	const defaultAadhaarEnabled = false
 
 	dataSourceExactlyOneOfRelativePaths := []string{
 		"verify_policy_id",
@@ -335,6 +359,18 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 		"Provider to use for the manual verification service.",
 	).AllowedValuesEnum(verify.AllowedEnumProviderManualEnumValues).DefaultValue(string(defaultProviderManual))
 
+	identityRecordMatchingThresholdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Threshold for successful comparison.",
+	).AllowedValuesEnum(verify.AllowedEnumThresholdEnumValues)
+
+	aadhaarDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Aadhaar configuration for India-based government Aadhaar documents;`facial_comparison.verify` must be `REQUIRED` to enable.",
+	)
+
+	aadhaarEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Whether Aadhaar verification is enabled.",
+	).DefaultValue(defaultAadhaarEnabled)
+
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		Description: "Data source to retrieve the default PingOne Verify Policy or to find a PingOne Verify Policy by its Verify Policy Id or Name.",
@@ -424,6 +460,23 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 						Description:         retryAttemptsDescription.Description,
 						MarkdownDescription: retryAttemptsDescription.MarkdownDescription,
 						Computed:            true,
+					},
+					"verify_aamva": schema.BoolAttribute{
+						Description: "When enabled, the AAMVA DLDV system is used to validate identity documents issued by participating states.",
+						Computed:    true,
+					},
+					"aadhaar": schema.SingleNestedAttribute{
+						Description:         aadhaarDescription.Description,
+						MarkdownDescription: aadhaarDescription.MarkdownDescription,
+						Computed:            true,
+
+						Attributes: map[string]schema.Attribute{
+							"enabled": schema.BoolAttribute{
+								Description:         aadhaarEnabledDescription.Description,
+								MarkdownDescription: aadhaarEnabledDescription.MarkdownDescription,
+								Computed:            true,
+							},
+						},
 					},
 				},
 			},
@@ -704,10 +757,9 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 			},
 
 			"voice": schema.SingleNestedAttribute{
-				Description: "Defines the requirements for transactions invoked by the policy.",
-				Computed:    true,
-
-				Attributes: map[string]schema.Attribute{
+				Description:        "**[Deprecation notice: This field is deprecated and will be removed in a future release. Please use alternative verification methods.]** Defines the requirements for transactions invoked by the policy.",
+				DeprecationMessage: "Deprecation notice: This field is deprecated and will be removed in a future release. Please use alternative verification methods.",
+				Computed:           true, Attributes: map[string]schema.Attribute{
 					"verify": schema.StringAttribute{
 						Description:         voiceVerifyDescription.Description,
 						MarkdownDescription: voiceVerifyDescription.MarkdownDescription,
@@ -770,6 +822,89 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 				},
 			},
 
+			"identity_record_matching": schema.SingleNestedAttribute{
+				Description: "Defines the verification requirements for identity record matching.",
+				Computed:    true,
+
+				Attributes: map[string]schema.Attribute{
+					"address": schema.SingleNestedAttribute{
+						Description: "Configuration for address verification.",
+						Computed:    true,
+						Attributes: map[string]schema.Attribute{
+							"field_required": schema.BoolAttribute{
+								Description: "Whether the field is required.",
+								Computed:    true,
+							},
+							"threshold": schema.StringAttribute{
+								Description:         identityRecordMatchingThresholdDescription.Description,
+								MarkdownDescription: identityRecordMatchingThresholdDescription.MarkdownDescription,
+								Computed:            true,
+							},
+						},
+					},
+					"birth_date": schema.SingleNestedAttribute{
+						Description: "Configuration for birth date verification.",
+						Computed:    true,
+						Attributes: map[string]schema.Attribute{
+							"field_required": schema.BoolAttribute{
+								Description: "Whether the field is required.",
+								Computed:    true,
+							},
+							"threshold": schema.StringAttribute{
+								Description:         identityRecordMatchingThresholdDescription.Description,
+								MarkdownDescription: identityRecordMatchingThresholdDescription.MarkdownDescription,
+								Computed:            true,
+							},
+						},
+					},
+					"family_name": schema.SingleNestedAttribute{
+						Description: "Configuration for family name verification.",
+						Computed:    true,
+						Attributes: map[string]schema.Attribute{
+							"field_required": schema.BoolAttribute{
+								Description: "Whether the field is required.",
+								Computed:    true,
+							},
+							"threshold": schema.StringAttribute{
+								Description:         identityRecordMatchingThresholdDescription.Description,
+								MarkdownDescription: identityRecordMatchingThresholdDescription.MarkdownDescription,
+								Computed:            true,
+							},
+						},
+					},
+					"given_name": schema.SingleNestedAttribute{
+						Description: "Configuration for given name verification.",
+						Computed:    true,
+						Attributes: map[string]schema.Attribute{
+							"field_required": schema.BoolAttribute{
+								Description: "Whether the field is required.",
+								Computed:    true,
+							},
+							"threshold": schema.StringAttribute{
+								Description:         identityRecordMatchingThresholdDescription.Description,
+								MarkdownDescription: identityRecordMatchingThresholdDescription.MarkdownDescription,
+								Computed:            true,
+							},
+						},
+					},
+					"name": schema.SingleNestedAttribute{
+						Description: "Configuration for full name verification.",
+						Computed:    true,
+						Attributes: map[string]schema.Attribute{
+							"field_required": schema.BoolAttribute{
+								Description: "Whether the field is required.",
+								Computed:    true,
+							},
+							"threshold": schema.StringAttribute{
+								Description:         identityRecordMatchingThresholdDescription.Description,
+								MarkdownDescription: identityRecordMatchingThresholdDescription.MarkdownDescription,
+								Computed:            true,
+							},
+						},
+					},
+				},
+			},
+
 			"created_at": schema.StringAttribute{
 				Description: "Date and time the verify policy was created.",
 				Computed:    true,
@@ -793,7 +928,7 @@ func (r *VerifyPolicyDataSource) Configure(ctx context.Context, req datasource.C
 		return
 	}
 
-	resourceConfig, ok := req.ProviderData.(framework.ResourceType)
+	resourceConfig, ok := req.ProviderData.(legacysdk.ResourceType)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Resource Configure Type",
@@ -833,15 +968,15 @@ func (r *VerifyPolicyDataSource) Read(ctx context.Context, req datasource.ReadRe
 
 	if !data.VerifyPolicyId.IsNull() {
 		// Run the API call
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
 				fO, fR, fErr := r.Client.VerifyAPIClient.VerifyPoliciesApi.ReadOneVerifyPolicy(ctx, data.EnvironmentId.ValueString(), data.VerifyPolicyId.ValueString()).Execute()
-				return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
+				return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), fO, fR, fErr)
 			},
 			"ReadOneVerifyPolicy",
-			framework.DefaultCustomError,
+			legacysdk.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
 			&verifyPolicy,
 		)...)
@@ -851,7 +986,7 @@ func (r *VerifyPolicyDataSource) Read(ctx context.Context, req datasource.ReadRe
 
 	} else if !data.Name.IsNull() {
 		// Run the API call
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
@@ -861,7 +996,7 @@ func (r *VerifyPolicyDataSource) Read(ctx context.Context, req datasource.ReadRe
 
 				for pageCursor, err := range pagedIterator {
 					if err != nil {
-						return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+						return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
 					}
 
 					if initialHttpResponse == nil {
@@ -872,7 +1007,7 @@ func (r *VerifyPolicyDataSource) Read(ctx context.Context, req datasource.ReadRe
 
 						for _, verifyPolicyItem := range verifyPolicies {
 
-							if verifyPolicyItem.GetName() == data.Name.ValueString() {
+							if strings.EqualFold(verifyPolicyItem.GetName(), data.Name.ValueString()) {
 								return &verifyPolicyItem, pageCursor.HTTPResponse, nil
 							}
 						}
@@ -882,7 +1017,7 @@ func (r *VerifyPolicyDataSource) Read(ctx context.Context, req datasource.ReadRe
 				return nil, initialHttpResponse, nil
 			},
 			"ReadAllVerifyPolicies",
-			framework.DefaultCustomError,
+			legacysdk.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
 			&verifyPolicy,
 		)...)
@@ -900,7 +1035,7 @@ func (r *VerifyPolicyDataSource) Read(ctx context.Context, req datasource.ReadRe
 
 	} else if data.Default.ValueBool() {
 		// Run the API call
-		resp.Diagnostics.Append(framework.ParseResponse(
+		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
 
 			func() (any, *http.Response, error) {
@@ -910,7 +1045,7 @@ func (r *VerifyPolicyDataSource) Read(ctx context.Context, req datasource.ReadRe
 
 				for pageCursor, err := range pagedIterator {
 					if err != nil {
-						return framework.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
+						return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), nil, pageCursor.HTTPResponse, err)
 					}
 
 					if initialHttpResponse == nil {
@@ -932,7 +1067,7 @@ func (r *VerifyPolicyDataSource) Read(ctx context.Context, req datasource.ReadRe
 				return nil, initialHttpResponse, nil
 			},
 			"ReadAllVerifyPolicies",
-			framework.DefaultCustomError,
+			legacysdk.DefaultCustomError,
 			sdk.DefaultCreateReadRetryable,
 			&verifyPolicy,
 		)...)
@@ -1004,6 +1139,9 @@ func (p *verifyPolicyDataSourceModel) toState(apiObject *verify.VerifyPolicy) di
 	p.Voice, d = p.toStateVoice(apiObject.GetVoiceOk())
 	diags.Append(d...)
 
+	p.IdentityRecordMatching, d = p.toStateIdentityRecordMatching(apiObject.GetIdentityRecordMatchingOk())
+	diags.Append(d...)
+
 	return diags
 }
 
@@ -1028,6 +1166,20 @@ func (p *verifyPolicyDataSourceModel) toStateGovernmentId(apiObject *verify.Gove
 			"GovernmentId data object contained unexpected null value for the `provider` data object.  Please report this issue to the provider maintainers.")
 	}
 
+	aadhaarObject := types.ObjectNull(aadhaarDataSourceServiceTFObjectTypes)
+	if v, ok := apiObject.GetAadhaarOk(); ok {
+		var d diag.Diagnostics
+
+		aadhaarAttrs := map[string]attr.Value{
+			"enabled": framework.BoolOkToTF(v.GetEnabledOk()),
+		}
+
+		objValue, d := types.ObjectValue(aadhaarDataSourceServiceTFObjectTypes, aadhaarAttrs)
+		diags.Append(d...)
+
+		aadhaarObject = objValue
+	}
+
 	objValue, d := types.ObjectValue(governmentIdDataSourceServiceTFObjectTypes, map[string]attr.Value{
 		"verify":          framework.EnumOkToTF(apiObject.GetVerifyOk()),
 		"inspection_type": framework.EnumOkToTF(apiObject.GetInspectionTypeOk()),
@@ -1035,6 +1187,8 @@ func (p *verifyPolicyDataSourceModel) toStateGovernmentId(apiObject *verify.Gove
 		"provider_auto":   framework.EnumOkToTF(provider.GetAutoOk()),
 		"provider_manual": framework.EnumOkToTF(provider.GetManualOk()),
 		"retry_attempts":  retryAttempts,
+		"verify_aamva":    framework.BoolOkToTF(apiObject.GetVerifyAamvaOk()),
+		"aadhaar":         aadhaarObject,
 	})
 	diags.Append(d...)
 
@@ -1280,6 +1434,60 @@ func (p *verifyPolicyDataSourceModel) toStateVoice(apiObject *verify.VoiceConfig
 		"liveness_threshold":   framework.EnumOkToTF(apiObject.GetLiveness().Threshold, ok),
 		"text_dependent":       textDependent,
 		"reference_data":       referenceData,
+	})
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func (p *verifyPolicyDataSourceModel) toStateIdentityRecordMatching(apiObject *verify.IdentityRecordMatching, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(identityRecordMatchingDataSourceServiceTFObjectTypes), diags
+	}
+
+	address, d := p.toStateIdentityRecordMatchingField(apiObject.GetAddressOk())
+	diags.Append(d...)
+
+	birthDate, d := p.toStateIdentityRecordMatchingField(apiObject.GetBirthDateOk())
+	diags.Append(d...)
+
+	familyName, d := p.toStateIdentityRecordMatchingField(apiObject.GetFamilyNameOk())
+	diags.Append(d...)
+
+	givenName, d := p.toStateIdentityRecordMatchingField(apiObject.GetGivenNameOk())
+	diags.Append(d...)
+
+	name, d := p.toStateIdentityRecordMatchingField(apiObject.GetNameOk())
+	diags.Append(d...)
+
+	objValue, d := types.ObjectValue(identityRecordMatchingDataSourceServiceTFObjectTypes, map[string]attr.Value{
+		"address":     address,
+		"birth_date":  birthDate,
+		"family_name": familyName,
+		"given_name":  givenName,
+		"name":        name,
+	})
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+// toStateIdentityRecordMatchingField converts any identity record matching field type to TF state for data source
+func (p *verifyPolicyDataSourceModel) toStateIdentityRecordMatchingField(apiObject IdentityRecordMatchingField, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(identityRecordMatchingFieldDataSourceServiceTFObjectTypes), diags
+	}
+
+	fieldRequired, fieldRequiredOk := apiObject.GetFieldRequiredOk()
+	threshold, thresholdOk := apiObject.GetThresholdOk()
+
+	objValue, d := types.ObjectValue(identityRecordMatchingFieldDataSourceServiceTFObjectTypes, map[string]attr.Value{
+		"field_required": framework.BoolOkToTF(fieldRequired, fieldRequiredOk),
+		"threshold":      framework.EnumOkToTF(threshold, thresholdOk),
 	})
 	diags.Append(d...)
 

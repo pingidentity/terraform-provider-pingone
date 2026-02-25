@@ -1,0 +1,7 @@
+```release-note:note
+`resource/pingone_sign_on_policy_action`: Corrected the documented MFA example HCL to use the `last_sign_on_older_than_seconds_mfa` condition.
+```
+
+```release-note:note
+`resource/pingone_sign_on_policy`: Corrected the documented MFA action example HCL to use the `last_sign_on_older_than_seconds_mfa` condition.
+```

@@ -1,4 +1,4 @@
-// Copyright © 2025 Ping Identity Corporation
+// Copyright © 2026 Ping Identity Corporation
 
 package sso
 
@@ -13,7 +13,8 @@ type serviceClientType struct {
 }
 
 func Resources() []func() resource.Resource {
-	return []func() resource.Resource{
+	resources := []func() resource.Resource{
+		NewAdministratorSecurityResource,
 		NewApplicationAttributeMappingResource,
 		NewApplicationFlowPolicyAssignmentResource,
 		NewApplicationResource,
@@ -43,12 +44,17 @@ func Resources() []func() resource.Resource {
 		NewUserGroupAssignmentResource,
 		NewUserResource,
 	}
+	resources = append(resources, BetaResources()...)
+
+	return resources
 }
 
 func DataSources() []func() datasource.DataSource {
-	return []func() datasource.DataSource{
+	dataSources := []func() datasource.DataSource{
+		NewAdministratorSecurityDataSource,
 		NewApplicationDataSource,
 		NewApplicationFlowPolicyAssignmentsDataSource,
+		NewApplicationRoleAssignmentsDataSource,
 		NewApplicationSecretDataSource,
 		NewApplicationSignOnPolicyAssignmentsDataSource,
 		NewCustomRoleDataSource,
@@ -56,15 +62,22 @@ func DataSources() []func() datasource.DataSource {
 		NewFlowPoliciesDataSource,
 		NewFlowPolicyDataSource,
 		NewGroupDataSource,
+		NewGroupRoleAssignmentsDataSource,
 		NewGroupsDataSource,
+		NewPasswordPoliciesDataSource,
 		NewPasswordPolicyDataSource,
 		NewPopulationDataSource,
 		NewPopulationsDataSource,
 		NewResourceDataSource,
 		NewResourceScopeDataSource,
+		NewResourceScopesDataSource,
 		NewResourceSecretDataSource,
 		NewSchemaDataSource,
+		NewSchemaAttributeDataSource,
 		NewUserDataSource,
 		NewUsersDataSource,
 	}
+	dataSources = append(dataSources, BetaDataSources()...)
+
+	return dataSources
 }

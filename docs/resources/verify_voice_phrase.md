@@ -8,6 +8,8 @@ description: |-
 
 # pingone_verify_voice_phrase (Resource)
 
+!> **Deprecation Notice** This resource is deprecated and will be removed in a future release. Please use alternative verification methods.
+
 Resource to configure the requirements to manage the named container for `voice_phrase_contents`. The named container is a prerequisite to manage specific voice phrase contents.
 
 A `voice_phrase` is a container with a name. The actual phrases to speak are in contents, where the content has a locale and the phrase to speak written in the language required by the locale.

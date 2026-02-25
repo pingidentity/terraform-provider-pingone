@@ -1,4 +1,4 @@
-// Copyright © 2025 Ping Identity Corporation
+// Copyright © 2026 Ping Identity Corporation
 
 package mfa
 
@@ -13,16 +13,23 @@ type serviceClientType struct {
 }
 
 func Resources() []func() resource.Resource {
-	return []func() resource.Resource{
+	resources := []func() resource.Resource{
 		NewApplicationPushCredentialResource,
 		NewFIDO2PolicyResource,
 		NewMFADevicePolicyResource,
+		NewMFADevicePolicyDefaultResource,
 		NewMFASettingsResource,
 	}
+	resources = append(resources, BetaResources()...)
+
+	return resources
 }
 
 func DataSources() []func() datasource.DataSource {
-	return []func() datasource.DataSource{
+	dataSources := []func() datasource.DataSource{
 		NewMFADevicePoliciesDataSource,
 	}
+	dataSources = append(dataSources, BetaDataSources()...)
+
+	return dataSources
 }
