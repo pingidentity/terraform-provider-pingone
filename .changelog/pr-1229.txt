@@ -1,0 +1,7 @@
+```release-note:enhancement
+`resource/pingone_password_policy`: Add support for sequence-rule attributes `alphabet_sequence_rule`, `number_sequence_rule`, `qwerty_sequence_rule`, and `shifted_number_row_sequence_rule`.
+```
+
+```release-note:enhancement
+`data-source/pingone_password_policy`: Add support for sequence-rule attributes `alphabet_sequence_rule`, `number_sequence_rule`, `qwerty_sequence_rule`, and `shifted_number_row_sequence_rule`.
+```
