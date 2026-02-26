@@ -144,11 +144,11 @@ func (r *PasswordPolicyDataSource) Schema(ctx context.Context, req datasource.Sc
 	).AllowedValues(sequenceRuleMaxLengthMin, sequenceRuleMaxLengthMax)
 
 	qwertySequenceRuleDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A single object that specifies options to control sequential qwerty keyboard checks for passwords.",
+		"A single object that specifies options to control sequential QWERTY keyboard checks for passwords.",
 	)
 
 	qwertySequenceRuleMaxLengthDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"An integer that specifies the maximum number of allowed sequential qwerty keyboard characters in the password.",
+		"An integer that specifies the maximum number of allowed sequential QWERTY keyboard characters in the password.",
 	).FixedValue(sequenceRuleMaxLengthMax)
 
 	shiftedNumberRowSequenceRuleDescription := framework.SchemaAttributeDescriptionFromMarkdown(

@@ -57,7 +57,7 @@ data "pingone_password_policy" "example_by_id" {
 - `password_age_max` (Number) An integer that specifies the maximum number of days the same password can be used before it must be changed. The value must be a positive, non-zero integer.  The value must be greater than the sum of `min` (if set) + 21 (the expiration warning interval for passwords).
 - `password_age_min` (Number) An integer that specifies the minimum number of days a password must be used before changing. The value must be a positive, non-zero integer. This property is not enforced when not present.
 - `population_count` (Number) An integer that specifies the number of populations associated with the password policy.
-- `qwerty_sequence_rule` (Attributes) A single object that specifies options to control sequential qwerty keyboard checks for passwords. (see [below for nested schema](#nestedatt--qwerty_sequence_rule))
+- `qwerty_sequence_rule` (Attributes) A single object that specifies options to control sequential QWERTY keyboard checks for passwords. (see [below for nested schema](#nestedatt--qwerty_sequence_rule))
 - `shifted_number_row_sequence_rule` (Attributes) A single object that specifies options to control sequential shifted number-row character checks for passwords. (see [below for nested schema](#nestedatt--shifted_number_row_sequence_rule))
 
 <a id="nestedatt--alphabet_sequence_rule"></a>
@@ -119,7 +119,7 @@ Read-Only:
 
 Read-Only:
 
-- `max_length` (Number) An integer that specifies the maximum number of allowed sequential qwerty keyboard characters in the password.  Fixed value of `3`.
+- `max_length` (Number) An integer that specifies the maximum number of allowed sequential QWERTY keyboard characters in the password.  Fixed value of `3`.
 
 
 <a id="nestedatt--shifted_number_row_sequence_rule"></a>
