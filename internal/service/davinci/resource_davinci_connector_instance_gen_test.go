@@ -378,6 +378,55 @@ func TestAccDavinciConnectorInstance_ComplexProperties(t *testing.T) {
 	})
 }
 
+func TestAccDavinciConnectorInstance_DefaultUserPool(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_davinci_connector_instance.%s", resourceName)
+	dataSourceFullName := fmt.Sprintf("data.%s", resourceFullName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				// Retrieve the defaultUserPool connector instance
+				Config: davinciConnectorInstance_NewEnvDefaultUserPoolDataSourceHCL(environmentName, licenseID, resourceName),
+			},
+			{
+				// Import the connector instance
+				Config:       davinciConnectorInstance_NewEnvDefaultUserPoolHCL(environmentName, licenseID, resourceName),
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[dataSourceFullName]
+						if !ok {
+							return "", fmt.Errorf("resource not found: %s", dataSourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["id"]), nil
+					}
+				}(),
+				ImportState:        true,
+				ImportStatePersist: true,
+				// No prior state to compare to
+				ImportStateVerify: false,
+			},
+			{
+				// Apply change
+				Config: davinciConnectorInstance_NewEnvDefaultUserPoolHCL(environmentName, licenseID, resourceName),
+			},
+		},
+	})
+}
+
 func TestAccDavinciConnectorInstance_BadParameters(t *testing.T) {
 	t.Parallel()
 
@@ -412,6 +461,13 @@ func TestAccDavinciConnectorInstance_BadParameters(t *testing.T) {
 			{
 				ResourceName:  resourceFullName,
 				ImportStateId: "badformat/badformat",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName: resourceFullName,
+				// dummy env id, invalid resource id
+				ImportStateId: "9c052a8a-14be-44e4-8f07-2662569994ce/badformat",
 				ImportState:   true,
 				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
@@ -1083,6 +1139,37 @@ resource "pingone_davinci_connector_instance" "%[2]s" {
   })
 }
 `, acctest.DaVinciSandboxEnvironment(false), resourceName)
+}
+
+func davinciConnectorInstance_NewEnvDefaultUserPoolDataSourceHCL(environmentName, licenseID, resourceName string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+data "pingone_davinci_connector_instance" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  instance_id    = "defaultUserPool"
+}
+`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+}
+
+// Configuring the name of the bootstrapped 'defaultUserPool' connector instance
+func davinciConnectorInstance_NewEnvDefaultUserPoolHCL(environmentName, licenseID, resourceName string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+data "pingone_davinci_connector_instance" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  instance_id    = "defaultUserPool"
+}
+
+resource "pingone_davinci_connector_instance" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  connector = {
+    id = "skUserPool"
+  }
+  name = "%[3]s"
+}
+`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
 // Validate any computed values when applying minimal HCL
