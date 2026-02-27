@@ -117,7 +117,7 @@ devchecknotest: build vet fmt generate docscategorycheck lint
 
 generateconnectorref: build
 	@echo "==> Generating connector docs & examples..."
-	rm -rf examples/davinci-connector-instances/*.tf || true
+	rm examples/davinci-connector-instances/*.tf || true
 	mkdir -p examples/davinci-connector-instances
 	cd tools/dvgenerate && go run ./cmd/generate
 

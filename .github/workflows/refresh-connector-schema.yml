@@ -30,6 +30,9 @@ jobs:
           PINGCLI_DAVINCI_ENVIRONMENTID: ${{ secrets.PINGCLI_DAVINCI_ENVIRONMENT_ID }}
           PINGCLI_DAVINCI_REGION: ${{ secrets.PINGCLI_DAVINCI_REGION }}
 
+      - name: Generate Terraform Docs & Examples
+        run: make generate
+
       - name: Check for changes
         id: check_changes
         run: |
@@ -61,33 +64,9 @@ jobs:
           git commit -m "Update connector schema"
           git push
 
-      - name: Get dependencies
-        if: steps.check_changes.outputs.CONTENT_CHANGED == 'true'
-        run: |
-          go mod download
-      
-      - name: Check dependencies
-        if: steps.check_changes.outputs.CONTENT_CHANGED == 'true'
-        run: |
-          make depscheck
-      
-      - name: Vet
-        if: steps.check_changes.outputs.CONTENT_CHANGED == 'true'
-        run: |
-          make vet
-      
-      - name: Build
-        if: steps.check_changes.outputs.CONTENT_CHANGED == 'true'
-        run: |
-          make build
-
       - uses: hashicorp/setup-terraform@v3
         if: steps.check_changes.outputs.CONTENT_CHANGED == 'true'
       
-      - run: go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
-        if: steps.check_changes.outputs.CONTENT_CHANGED == 'true'
-      - run: go install github.com/katbyte/terrafmt
-        if: steps.check_changes.outputs.CONTENT_CHANGED == 'true'
       - run: make generate
         if: steps.check_changes.outputs.CONTENT_CHANGED == 'true'
 

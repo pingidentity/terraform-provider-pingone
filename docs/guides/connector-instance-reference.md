@@ -17,7 +17,7 @@ Connector ID (`connector.id` in the resource): `connector1Kosmos`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `customAuth` (json):  Console display name: "Custom Parameters".
+* `customAuth` (json): Console display name: "Custom Parameters".
 
 
 Example:
@@ -71,7 +71,7 @@ Connector ID (`connector.id` in the resource): `awsIdpConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `openId` (json):  Console display name: "OpenId Parameters".
+* `openId` (json): Console display name: "OpenId Parameters".
 
 
 Example:
@@ -179,7 +179,7 @@ Connector ID (`connector.id` in the resource): `connectorAcuant`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `customAuth` (json):  Console display name: "Custom Parameters".
+* `customAuth` (json): Console display name: "Custom Parameters".
 
 
 Example:
@@ -233,7 +233,7 @@ Connector ID (`connector.id` in the resource): `akamaiConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `customAuth` (json):  Console display name: "Custom Parameters".
+* `customAuth` (json): Console display name: "Custom Parameters".
 
 
 Example:
@@ -258,7 +258,7 @@ Connector ID (`connector.id` in the resource): `connectorAllthenticate`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `customAuth` (json):  Console display name: "Custom Parameters".
+* `customAuth` (json): Console display name: "Custom Parameters".
 
 
 Example:
@@ -312,9 +312,9 @@ Connector ID (`connector.id` in the resource): `amazonSimpleEmailConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `awsAccessKey` (string):  Console display name: "AWS Access Key".
-* `awsAccessSecret` (string):  Console display name: "AWS Access Secret".
-* `awsRegion` (string):  Console display name: "AWS Region".
+* `awsAccessKey` (string): Console display name: "AWS Access Key".
+* `awsAccessSecret` (string): Console display name: "AWS Access Secret".
+* `awsRegion` (string): Console display name: "AWS Region".
 * `from` (string): The email address that the message appears to originate from, as registered with your AWS account, such as "support@mycompany.com". Console display name: "From (Default) *".
 
 
@@ -363,7 +363,7 @@ Connector ID (`connector.id` in the resource): `appleConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `customAuth` (json):  Console display name: "Custom Parameters".
+* `customAuth` (json): Console display name: "Custom Parameters".
 
 
 Example:
@@ -523,11 +523,11 @@ Connector ID (`connector.id` in the resource): `argyleConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `apiUrl` (string):  Console display name: "API Server URL".
-* `clientId` (string):  Console display name: "Client ID".
-* `clientSecret` (string):  Console display name: "Client Secret".
+* `apiUrl` (string): Console display name: "API Server URL".
+* `clientId` (string): Console display name: "Client ID".
+* `clientSecret` (string): Console display name: "Client Secret".
 * `javascriptWebUrl` (string): Argyle loader javascript web URL. Console display name: "Argyle Loader Javascript Web URL".
-* `pluginKey` (string):  Console display name: "Plugin Key".
+* `pluginKey` (string): Console display name: "Plugin Key".
 
 
 Example:
@@ -556,7 +556,7 @@ Connector ID (`connector.id` in the resource): `connectorAsignio`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `customAuth` (json):  Console display name: "Custom Parameters".
+* `customAuth` (json): Console display name: "Custom Parameters".
 
 
 Example:
@@ -581,7 +581,7 @@ Connector ID (`connector.id` in the resource): `connectorAuthid`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `customAuth` (json):  Console display name: "Custom Parameters".
+* `customAuth` (json): Console display name: "Custom Parameters".
 
 
 Example:
@@ -701,7 +701,7 @@ Properties (used under the `properties` block in the resource as a key in the JS
 
 * `baseUrl` (string): The Microsoft API URL to target. For a custom value, select Use Custom API URL and enter a value in the Custom API URL field. Console display name: "API URL".
 * `customApiUrl` (string): The URL for the Microsoft Graph API, such as "https://graph.microsoft.com/v1.0". Console display name: "Custom API URL".
-* `customAuth` (json):  Console display name: "Custom Parameters".
+* `customAuth` (json): Console display name: "Custom Parameters".
 
 
 Example:
@@ -728,7 +728,7 @@ Connector ID (`connector.id` in the resource): `connectorBadge`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `customAuth` (json):  Console display name: "Custom Parameters".
+* `customAuth` (json): Console display name: "Custom Parameters".
 
 
 Example:
@@ -753,7 +753,7 @@ Connector ID (`connector.id` in the resource): `bambooConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `apiKey` (string):  Console display name: "API Key".
+* `apiKey` (string): Console display name: "API Key".
 * `baseUrl` (string):  BambooHR Base URL. Console display name: "Base URL".
 * `companySubDomain` (string):  Your BambooHR subdomain. Console display name: "Company Sub Domain".
 * `flowId` (string): Select ID of the flow to execute when BambooHR sends a webhook. Console display name: "Flow ID".
@@ -817,7 +817,7 @@ Connector ID (`connector.id` in the resource): `connectorBeyondIdentity`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `openId` (json):  Console display name: "OpenId Parameters".
+* `openId` (json): Console display name: "OpenId Parameters".
 
 
 Example:
@@ -929,10 +929,10 @@ Connector ID (`connector.id` in the resource): `biocatchConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `apiUrl` (string):  Console display name: "API Server URL".
-* `customerId` (string):  Console display name: "Customer ID".
-* `javascriptCdnUrl` (string):  Console display name: "Javascript CDN URL".
-* `sdkToken` (string):  Console display name: "SDK Token".
+* `apiUrl` (string): Console display name: "API Server URL".
+* `customerId` (string): Console display name: "Customer ID".
+* `javascriptCdnUrl` (string): Console display name: "Javascript CDN URL".
+* `sdkToken` (string): Console display name: "SDK Token".
 * `truthApiKey` (string): Fraudulent/Genuine Session Reporting API Key. Console display name: "Truth-mapping API Key".
 * `truthApiUrl` (string): Fraudulent/Genuine Session Reporting. Console display name: "Truth-mapping API URL".
 
@@ -964,7 +964,7 @@ Connector ID (`connector.id` in the resource): `bitbucketIdpConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `oauth2` (json):  Console display name: "Oauth2 Parameters".
+* `oauth2` (json): Console display name: "Oauth2 Parameters".
 
 
 Example:
@@ -1014,7 +1014,7 @@ Connector ID (`connector.id` in the resource): `connectorClear`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `customAuth` (json):  Console display name: "Custom Parameters".
+* `customAuth` (json): Console display name: "Custom Parameters".
 
 
 Example:
@@ -1060,7 +1060,7 @@ Connector ID (`connector.id` in the resource): `connectorCircleAccess`
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
 * `appKey` (string): App Key. Console display name: "App Key".
-* `customAuth` (json):  Console display name: "Custom Parameters".
+* `customAuth` (json): Console display name: "Custom Parameters".
 * `loginUrl` (string): The URL of your Circle Access login. Console display name: "Login Url".
 * `readKey` (string): Read Key. Console display name: "Read Key".
 * `returnToUrl` (string): When using the embedded flow player widget and an IDP/Social Login connector, provide a callback URL to return back to the application. Console display name: "Application Return To URL".
@@ -1206,7 +1206,7 @@ Connector ID (`connector.id` in the resource): `connectIdConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `customAuth` (json):  Console display name: "Custom Parameters".
+* `customAuth` (json): Console display name: "Custom Parameters".
 
 
 Example:
@@ -1347,7 +1347,7 @@ Connector ID (`connector.id` in the resource): `connectorDaonidv`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `openId` (json):  Console display name: "OpenId Parameters".
+* `openId` (json): Console display name: "OpenId Parameters".
 
 
 Example:
@@ -1401,8 +1401,8 @@ Connector ID (`connector.id` in the resource): `dataZooConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `password` (string):  Console display name: "Data Zoo Password".
-* `username` (string):  Console display name: "Data Zoo Username".
+* `password` (string): Console display name: "Data Zoo Password".
+* `username` (string): Console display name: "Data Zoo Username".
 
 
 Example:
@@ -1502,7 +1502,7 @@ Connector ID (`connector.id` in the resource): `digilockerConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `oauth2` (json):  Console display name: "Oauth2 Parameters".
+* `oauth2` (json): Console display name: "Oauth2 Parameters".
 
 
 Example:
@@ -1527,7 +1527,7 @@ Connector ID (`connector.id` in the resource): `digidentityConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `oauth2` (json):  Console display name: "Oauth2 Parameters".
+* `oauth2` (json): Console display name: "Oauth2 Parameters".
 
 
 Example:
@@ -1583,7 +1583,7 @@ Connector ID (`connector.id` in the resource): `duoConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `customAuth` (json):  Console display name: "Custom Parameters".
+* `customAuth` (json): Console display name: "Custom Parameters".
 
 
 Example:
@@ -1692,7 +1692,7 @@ Connector ID (`connector.id` in the resource): `facebookIdpConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `oauth2` (json):  Console display name: "Oauth2 Parameters".
+* `oauth2` (json): Console display name: "Oauth2 Parameters".
 
 
 Example:
@@ -1842,9 +1842,9 @@ Connector ID (`connector.id` in the resource): `fingerprintjsConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `apiToken` (string):  Console display name: "Fingerprint Subscription API Token".
-* `javascriptCdnUrl` (string):  Console display name: "Javascript CDN URL".
-* `token` (string):  Console display name: "Fingerprint Subscription Browser Token".
+* `apiToken` (string): Console display name: "Fingerprint Subscription API Token".
+* `javascriptCdnUrl` (string): Console display name: "Javascript CDN URL".
+* `token` (string): Console display name: "Fingerprint Subscription Browser Token".
 
 
 Example:
@@ -1922,7 +1922,7 @@ Connector ID (`connector.id` in the resource): `flowConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `enforcedSignedToken` (boolean):  Console display name: "Enforce Signed Token".
+* `enforcedSignedToken` (boolean): Console display name: "Enforce Signed Token".
 * `inputSchema` (string): Follow example for JSON schema. Console display name: "Input Schema".
 * `pemPublicKey` (string): pem public key. Console display name: "Public Key".
 
@@ -2056,10 +2056,10 @@ Connector ID (`connector.id` in the resource): `gbgConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `password` (string):  Console display name: "GBG Password".
-* `requestUrl` (string):  Console display name: "Request URL".
+* `password` (string): Console display name: "GBG Password".
+* `requestUrl` (string): Console display name: "Request URL".
 * `soapAction` (string): SOAP Action is a header required for the soap request. Console display name: "Soap Action URL".
-* `username` (string):  Console display name: "GBG Username".
+* `username` (string): Console display name: "GBG Username".
 
 
 Example:
@@ -2116,7 +2116,7 @@ Connector ID (`connector.id` in the resource): `githubIdpConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `oauth2` (json):  Console display name: "Oauth2 Parameters".
+* `oauth2` (json): Console display name: "Oauth2 Parameters".
 
 
 Example:
@@ -2168,7 +2168,7 @@ Connector ID (`connector.id` in the resource): `connectorGoogleChromeEnterprise`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `customAuth` (json):  Console display name: "Custom Parameters".
+* `customAuth` (json): Console display name: "Custom Parameters".
 
 
 Example:
@@ -2193,7 +2193,7 @@ Connector ID (`connector.id` in the resource): `googleConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `openId` (json):  Console display name: "OpenId Parameters".
+* `openId` (json): Console display name: "OpenId Parameters".
 
 
 Example:
@@ -2247,7 +2247,7 @@ Connector ID (`connector.id` in the resource): `httpConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `connectionId` (string):  Console display name: "Select an OpenID token management connection for signed HTTP responses.".
+* `connectionId` (string): Console display name: "Select an OpenID token management connection for signed HTTP responses.".
 * `recaptchaSecretKey` (string): The Secret Key from reCAPTCHA Admin dashboard. Console display name: "reCAPTCHA v2 Secret Key".
 * `recaptchaSiteKey` (string): The Site Key from reCAPTCHA Admin dashboard. Console display name: "reCAPTCHA v2 Site Key".
 * `whiteList` (string): Enter the hostname for the trusted sites that host your HTML. Note: Ensure that the content hosted on these sites can be trusted and that publishing safeguards are in place to prevent unexpected issues. Console display name: "Trusted Sites".
@@ -2334,7 +2334,7 @@ Connector ID (`connector.id` in the resource): `hyprConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `customAuth` (json):  Console display name: "Custom Parameters".
+* `customAuth` (json): Console display name: "Custom Parameters".
 
 
 Example:
@@ -2384,9 +2384,9 @@ Connector ID (`connector.id` in the resource): `haveIBeenPwnedConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `apiKey` (string):  Console display name: "Have I Been Pwned API Key".
-* `apiUrl` (string):  Console display name: "API Server URL".
-* `userAgent` (string):  
+* `apiKey` (string): Console display name: "Have I Been Pwned API Key".
+* `apiUrl` (string): Console display name: "API Server URL".
+* `userAgent` (string): Console display name: "".
 
 
 Example:
@@ -2413,7 +2413,7 @@ Connector ID (`connector.id` in the resource): `connectorHello`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `customAuth` (json):  Console display name: "Custom Parameters".
+* `customAuth` (json): Console display name: "Custom Parameters".
 
 
 Example:
@@ -2490,7 +2490,7 @@ Connector ID (`connector.id` in the resource): `idDatawebConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `customAuth` (json):  Console display name: "Custom Parameters".
+* `customAuth` (json): Console display name: "Custom Parameters".
 
 
 Example:
@@ -2515,8 +2515,8 @@ Connector ID (`connector.id` in the resource): `idranddConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `apiKey` (string):  Console display name: "API Key".
-* `apiUrl` (string):  Console display name: "API Server URL".
+* `apiKey` (string): Console display name: "API Key".
+* `apiUrl` (string): Console display name: "API Server URL".
 
 
 Example:
@@ -2542,7 +2542,7 @@ Connector ID (`connector.id` in the resource): `idMeConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `oauth2` (json):  Console display name: "Oauth2 Parameters".
+* `oauth2` (json): Console display name: "Oauth2 Parameters".
 
 
 Example:
@@ -2567,7 +2567,7 @@ Connector ID (`connector.id` in the resource): `idmecommunityConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `openId` (json):  Console display name: "OpenId Parameters".
+* `openId` (json): Console display name: "OpenId Parameters".
 
 
 Example:
@@ -2592,7 +2592,7 @@ Connector ID (`connector.id` in the resource): `connectorIdMeIdentity`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `openId` (json):  Console display name: "OpenId Parameters".
+* `openId` (json): Console display name: "OpenId Parameters".
 
 
 Example:
@@ -2617,7 +2617,7 @@ Connector ID (`connector.id` in the resource): `idemiaConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `apikey` (string):  Console display name: "API Key".
+* `apikey` (string): Console display name: "API Key".
 * `baseUrl` (string): Base Url for IDEMIA API. Can be found in the dashboard documents. Console display name: "IDEMIA API base URL".
 
 
@@ -2644,12 +2644,12 @@ Connector ID (`connector.id` in the resource): `skPeopleIntelligenceConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `authUrl` (string):  Console display name: "Authorization URL".
-* `clientId` (string):  Console display name: "Client ID".
-* `clientSecret` (string):  Console display name: "Client Secret".
-* `dppa` (string):  Console display name: "DPPA".
-* `glba` (string):  Console display name: "GLBA".
-* `searchUrl` (string):  Console display name: "Search URL".
+* `authUrl` (string): Console display name: "Authorization URL".
+* `clientId` (string): Console display name: "Client ID".
+* `clientSecret` (string): Console display name: "Client Secret".
+* `dppa` (string): Console display name: "DPPA".
+* `glba` (string): Console display name: "GLBA".
+* `searchUrl` (string): Console display name: "Search URL".
 
 
 Example:
@@ -2712,7 +2712,7 @@ Connector ID (`connector.id` in the resource): `connectorIdmelon`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `customAuth` (json):  Console display name: "Custom Parameters".
+* `customAuth` (json): Console display name: "Custom Parameters".
 
 
 Example:
@@ -2737,23 +2737,23 @@ Connector ID (`connector.id` in the resource): `idmissionConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `authDescription` (string):  Console display name: "Authentication Description".
-* `connectorName` (string):  Console display name: "Connector Name".
-* `description` (string):  Console display name: "Description".
-* `details1` (string):  Console display name: "Credentials Details 1".
-* `details2` (string):  Console display name: "Credentials Details 2".
-* `iconUrl` (string):  Console display name: "Icon URL".
-* `iconUrlPng` (string):  Console display name: "Icon URL in PNG".
-* `loginId` (string):  Console display name: "Sign On ID".
-* `merchantId` (string):  Console display name: "Merchant ID".
-* `password` (string):  Console display name: "Password".
-* `productId` (string):  Console display name: "Product ID".
-* `productName` (string):  Console display name: "Product Name".
-* `showCredAddedOn` (boolean):  Console display name: "Show Credentials Added On?".
-* `showCredAddedVia` (boolean):  Console display name: "Show Credentials Added through ?".
-* `title` (string):  Console display name: "Title".
-* `toolTip` (string):  Console display name: "Tooltip".
-* `url` (string):  Console display name: "IDmission Server URL".
+* `authDescription` (string): Console display name: "Authentication Description".
+* `connectorName` (string): Console display name: "Connector Name".
+* `description` (string): Console display name: "Description".
+* `details1` (string): Console display name: "Credentials Details 1".
+* `details2` (string): Console display name: "Credentials Details 2".
+* `iconUrl` (string): Console display name: "Icon URL".
+* `iconUrlPng` (string): Console display name: "Icon URL in PNG".
+* `loginId` (string): Console display name: "Sign On ID".
+* `merchantId` (string): Console display name: "Merchant ID".
+* `password` (string): Console display name: "Password".
+* `productId` (string): Console display name: "Product ID".
+* `productName` (string): Console display name: "Product Name".
+* `showCredAddedOn` (boolean): Console display name: "Show Credentials Added On?".
+* `showCredAddedVia` (boolean): Console display name: "Show Credentials Added through ?".
+* `title` (string): Console display name: "Title".
+* `toolTip` (string): Console display name: "Tooltip".
+* `url` (string): Console display name: "IDmission Server URL".
 
 
 Example:
@@ -2794,7 +2794,7 @@ Connector ID (`connector.id` in the resource): `idmissionOidcConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `customAuth` (json):  Console display name: "Custom Parameters".
+* `customAuth` (json): Console display name: "Custom Parameters".
 
 
 Example:
@@ -2819,7 +2819,7 @@ Connector ID (`connector.id` in the resource): `idrampOidcConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `customAuth` (json):  Console display name: "Custom Parameters".
+* `customAuth` (json): Console display name: "Custom Parameters".
 
 
 Example:
@@ -2864,7 +2864,7 @@ Connector ID (`connector.id` in the resource): `incodeConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `customAuth` (json):  Console display name: "Custom Parameters".
+* `customAuth` (json): Console display name: "Custom Parameters".
 
 
 Example:
@@ -2889,7 +2889,7 @@ Connector ID (`connector.id` in the resource): `connectorInfinipoint`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `customAuth` (json):  Console display name: "Custom Parameters".
+* `customAuth` (json): Console display name: "Custom Parameters".
 
 
 Example:
@@ -3034,28 +3034,28 @@ Connector ID (`connector.id` in the resource): `jumioConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `apiKey` (string):  Console display name: "API Key".
-* `authDescription` (string):  Console display name: "Authentication Description".
-* `authUrl` (string):  Console display name: "Base URL for Authentication".
+* `apiKey` (string): Console display name: "API Key".
+* `authDescription` (string): Console display name: "Authentication Description".
+* `authUrl` (string): Console display name: "Base URL for Authentication".
 * `authorizationTokenLifetime` (number): default: 1800 (30 minutes). maximum: 5184000 (60 days). Console display name: "Time Transaction URL Valid (seconds)".
 * `baseColor` (string): Must be passed with bgColor. Console display name: "HEX Main Color".
 * `bgColor` (string): Must be passed with baseColor. Console display name: "HEX Background Color.".
-* `callbackUrl` (string):  Console display name: "Callback URL".
-* `clientSecret` (string):  Console display name: "API Secret".
-* `connectorName` (string):  Console display name: "Connector Name".
-* `description` (string):  Console display name: "Description".
-* `details1` (string):  Console display name: "Credentials Details 1".
-* `details2` (string):  Console display name: "Credentials Details 2".
+* `callbackUrl` (string): Console display name: "Callback URL".
+* `clientSecret` (string): Console display name: "API Secret".
+* `connectorName` (string): Console display name: "Connector Name".
+* `description` (string): Console display name: "Description".
+* `details1` (string): Console display name: "Credentials Details 1".
+* `details2` (string): Console display name: "Credentials Details 2".
 * `doNotShowInIframe` (boolean): If this is true, user will be redirected to the verification url and then redirected back when complete. Console display name: "Do not show in iFrame".
-* `docVerificationUrl` (string):  Console display name: "Document Verification Url".
+* `docVerificationUrl` (string): Console display name: "Document Verification Url".
 * `headerImageUrl` (string): Logo must be: landscape (16:9 or 4:3), min. height of 192 pixels, size 8-64 KB. Console display name: "Custom Header Logo URL".
-* `iconUrl` (string):  Console display name: "Icon URL".
-* `iconUrlPng` (string):  Console display name: "Icon URL in PNG".
+* `iconUrl` (string): Console display name: "Icon URL".
+* `iconUrlPng` (string): Console display name: "Icon URL in PNG".
 * `locale` (string): Renders content in the specified language. Console display name: "Locale".
-* `showCredAddedOn` (boolean):  Console display name: "Show Credentials Added On?".
-* `showCredAddedVia` (boolean):  Console display name: "Show Credentials Added through ?".
-* `title` (string):  Console display name: "Title".
-* `toolTip` (string):  Console display name: "Tooltip".
+* `showCredAddedOn` (boolean): Console display name: "Show Credentials Added On?".
+* `showCredAddedVia` (boolean): Console display name: "Show Credentials Added through ?".
+* `title` (string): Console display name: "Title".
+* `toolTip` (string): Console display name: "Tooltip".
 
 
 Example:
@@ -3101,18 +3101,18 @@ Connector ID (`connector.id` in the resource): `kbaConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `authDescription` (string):  Console display name: "Authentication Description".
-* `connectorName` (string):  Console display name: "Connector Name".
-* `description` (string):  Console display name: "Description".
-* `details1` (string):  Console display name: "Credentials Details 1".
-* `details2` (string):  Console display name: "Credentials Details 2".
-* `formFieldsList` (json):  Console display name: "Fields List".
-* `iconUrl` (string):  Console display name: "Icon URL".
-* `iconUrlPng` (string):  Console display name: "Icon URL in PNG".
-* `showCredAddedOn` (boolean):  Console display name: "Show Credentials Added On?".
-* `showCredAddedVia` (boolean):  Console display name: "Show Credentials Added through ?".
-* `title` (string):  Console display name: "Title".
-* `toolTip` (string):  Console display name: "Tooltip".
+* `authDescription` (string): Console display name: "Authentication Description".
+* `connectorName` (string): Console display name: "Connector Name".
+* `description` (string): Console display name: "Description".
+* `details1` (string): Console display name: "Credentials Details 1".
+* `details2` (string): Console display name: "Credentials Details 2".
+* `formFieldsList` (json): Console display name: "Fields List".
+* `iconUrl` (string): Console display name: "Icon URL".
+* `iconUrlPng` (string): Console display name: "Icon URL in PNG".
+* `showCredAddedOn` (boolean): Console display name: "Show Credentials Added On?".
+* `showCredAddedVia` (boolean): Console display name: "Show Credentials Added through ?".
+* `title` (string): Console display name: "Title".
+* `toolTip` (string): Console display name: "Tooltip".
 
 
 Example:
@@ -3178,18 +3178,18 @@ Connector ID (`connector.id` in the resource): `kaizenVoizConnector`
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
 * `apiUrl` (string): example: http://<server_root>/ksvvoiceservice/rest/service. Console display name: "API Server URL".
-* `applicationName` (string):  Console display name: "Application Name".
-* `authDescription` (string):  Console display name: "Authentication Description".
-* `connectorName` (string):  Console display name: "Connector Name".
-* `description` (string):  Console display name: "Description".
-* `details1` (string):  Console display name: "Credentials Details 1".
-* `details2` (string):  Console display name: "Credentials Details 2".
-* `iconUrl` (string):  Console display name: "Icon URL".
-* `iconUrlPng` (string):  Console display name: "Icon URL in PNG".
-* `showCredAddedOn` (boolean):  Console display name: "Show Credentials Added On?".
-* `showCredAddedVia` (boolean):  Console display name: "Show Credentials Added through ?".
-* `title` (string):  Console display name: "Title".
-* `toolTip` (string):  Console display name: "Tooltip".
+* `applicationName` (string): Console display name: "Application Name".
+* `authDescription` (string): Console display name: "Authentication Description".
+* `connectorName` (string): Console display name: "Connector Name".
+* `description` (string): Console display name: "Description".
+* `details1` (string): Console display name: "Credentials Details 1".
+* `details2` (string): Console display name: "Credentials Details 2".
+* `iconUrl` (string): Console display name: "Icon URL".
+* `iconUrlPng` (string): Console display name: "Icon URL in PNG".
+* `showCredAddedOn` (boolean): Console display name: "Show Credentials Added On?".
+* `showCredAddedVia` (boolean): Console display name: "Show Credentials Added through ?".
+* `title` (string): Console display name: "Title".
+* `toolTip` (string): Console display name: "Tooltip".
 
 
 Example:
@@ -3226,7 +3226,7 @@ Connector ID (`connector.id` in the resource): `connectorKeyless`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `customAuth` (json):  Console display name: "Custom Parameters".
+* `customAuth` (json): Console display name: "Custom Parameters".
 
 
 Example:
@@ -3362,7 +3362,7 @@ Connector ID (`connector.id` in the resource): `linkedInConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `oauth2` (json):  Console display name: "Oauth2 Parameters".
+* `oauth2` (json): Console display name: "Oauth2 Parameters".
 
 
 Example:
@@ -3554,7 +3554,7 @@ Connector ID (`connector.id` in the resource): `connectorMicrosoftEdge`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `customAuth` (json):  Console display name: "Custom Parameters".
+* `customAuth` (json): Console display name: "Custom Parameters".
 
 
 Example:
@@ -3612,7 +3612,7 @@ Connector ID (`connector.id` in the resource): `microsoftIdpConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `openId` (json):  Console display name: "OpenId Parameters".
+* `openId` (json): Console display name: "OpenId Parameters".
 
 
 Example:
@@ -3637,7 +3637,7 @@ Connector ID (`connector.id` in the resource): `microsoftTeamsConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `customAuth` (json):  Console display name: "Custom Parameters".
+* `customAuth` (json): Console display name: "Custom Parameters".
 
 
 Example:
@@ -3682,23 +3682,23 @@ Connector ID (`connector.id` in the resource): `nuanceConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `authDescription` (string):  Console display name: "Authentication Description".
+* `authDescription` (string): Console display name: "Authentication Description".
 * `configSetName` (string): The Config Set Name for accessing Nuance API. Console display name: "Config Set Name".
-* `connectorName` (string):  Console display name: "Connector Name".
-* `description` (string):  Console display name: "Description".
-* `details1` (string):  Console display name: "Credentials Details 1".
-* `details2` (string):  Console display name: "Credentials Details 2".
-* `iconUrl` (string):  Console display name: "Icon URL".
-* `iconUrlPng` (string):  Console display name: "Icon URL in PNG".
+* `connectorName` (string): Console display name: "Connector Name".
+* `description` (string): Console display name: "Description".
+* `details1` (string): Console display name: "Credentials Details 1".
+* `details2` (string): Console display name: "Credentials Details 2".
+* `iconUrl` (string): Console display name: "Icon URL".
+* `iconUrlPng` (string): Console display name: "Icon URL in PNG".
 * `passphrase1` (string): Passphrase that the user will need to speak for voice sample. Console display name: "Passphrase One".
 * `passphrase2` (string): Passphrase that the user will need to speak for voice sample. Console display name: "Passphrase Two".
 * `passphrase3` (string): Passphrase that the user will need to speak for voice sample. Console display name: "Passphrase Three".
 * `passphrase4` (string): Passphrase that the user will need to speak for voice sample. Console display name: "Passphrase Four".
 * `passphrase5` (string): Passphrase that the user will need to speak for voice sample. Console display name: "Passphrase Five".
-* `showCredAddedOn` (boolean):  Console display name: "Show Credentials Added On?".
-* `showCredAddedVia` (boolean):  Console display name: "Show Credentials Added through ?".
-* `title` (string):  Console display name: "Title".
-* `toolTip` (string):  Console display name: "Tooltip".
+* `showCredAddedOn` (boolean): Console display name: "Show Credentials Added On?".
+* `showCredAddedVia` (boolean): Console display name: "Show Credentials Added through ?".
+* `title` (string): Console display name: "Title".
+* `toolTip` (string): Console display name: "Tooltip".
 
 
 Example:
@@ -3739,7 +3739,7 @@ Connector ID (`connector.id` in the resource): `genericConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `customAuth` (json):  Console display name: "Custom Parameters".
+* `customAuth` (json): Console display name: "Custom Parameters".
 
 
 Example:
@@ -3823,33 +3823,33 @@ Connector ID (`connector.id` in the resource): `onfidoConnector`
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
 * `androidPackageName` (string): Your Android Application's Package Name. Console display name: "Android Application Package Name".
-* `apiKey` (string):  Console display name: "API Key".
-* `authDescription` (string):  Console display name: "Authentication Description".
-* `baseUrl` (string):  Console display name: "Base URL".
-* `connectorName` (string):  Console display name: "Connector Name".
-* `customizeSteps` (boolean):  Console display name: "Customize Steps".
-* `description` (string):  Console display name: "Description".
-* `details1` (string):  Console display name: "Credentials Details 1".
-* `details2` (string):  Console display name: "Credentials Details 2".
+* `apiKey` (string): Console display name: "API Key".
+* `authDescription` (string): Console display name: "Authentication Description".
+* `baseUrl` (string): Console display name: "Base URL".
+* `connectorName` (string): Console display name: "Connector Name".
+* `customizeSteps` (boolean): Console display name: "Customize Steps".
+* `description` (string): Console display name: "Description".
+* `details1` (string): Console display name: "Credentials Details 1".
+* `details2` (string): Console display name: "Credentials Details 2".
 * `iOSBundleId` (string): Your iOS Application's Bundle ID. Console display name: "iOS Application Bundle ID".
-* `iconUrl` (string):  Console display name: "Icon URL".
-* `iconUrlPng` (string):  Console display name: "Icon URL in PNG".
-* `javascriptCSSUrl` (string):  Console display name: "CSS URL".
-* `javascriptCdnUrl` (string):  Console display name: "Javascript CDN URL".
-* `language` (string):  Console display name: "Language".
-* `referenceStepsList` (json):  
-* `referrerUrl` (string):  Console display name: "Referrer URL".
-* `retrieveReports` (boolean):  Console display name: "Retrieve Reports".
-* `shouldCloseOnOverlayClick` (boolean):  Console display name: "Close on Overlay Click".
-* `showCredAddedOn` (boolean):  Console display name: "Show Credentials Added On?".
-* `showCredAddedVia` (boolean):  Console display name: "Show Credentials Added through ?".
+* `iconUrl` (string): Console display name: "Icon URL".
+* `iconUrlPng` (string): Console display name: "Icon URL in PNG".
+* `javascriptCSSUrl` (string): Console display name: "CSS URL".
+* `javascriptCdnUrl` (string): Console display name: "Javascript CDN URL".
+* `language` (string): Console display name: "Language".
+* `referenceStepsList` (json): Console display name: "".
+* `referrerUrl` (string): Console display name: "Referrer URL".
+* `retrieveReports` (boolean): Console display name: "Retrieve Reports".
+* `shouldCloseOnOverlayClick` (boolean): Console display name: "Close on Overlay Click".
+* `showCredAddedOn` (boolean): Console display name: "Show Credentials Added On?".
+* `showCredAddedVia` (boolean): Console display name: "Show Credentials Added through ?".
 * `stepsList` (boolean): The Proof of Address document capture is currently a BETA feature, and it cannot be used in conjunction with the document and face steps as part of a single SDK flow. Console display name: "ID Verification Steps".
-* `title` (string):  Console display name: "Title".
-* `toolTip` (string):  Console display name: "Tooltip".
-* `useLanguage` (boolean):  Console display name: "Customize Language".
-* `useModal` (boolean):  Console display name: "Modal".
-* `viewDescriptions` (string):  Console display name: "OnFido Description".
-* `viewTitle` (string):  Console display name: "OnFido Title".
+* `title` (string): Console display name: "Title".
+* `toolTip` (string): Console display name: "Tooltip".
+* `useLanguage` (boolean): Console display name: "Customize Language".
+* `useModal` (boolean): Console display name: "Modal".
+* `viewDescriptions` (string): Console display name: "OnFido Description".
+* `viewTitle` (string): Console display name: "OnFido Title".
 
 
 Example:
@@ -3961,7 +3961,7 @@ Connector ID (`connector.id` in the resource): `pingFederateConnectorV2`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `openId` (json):  Console display name: "OpenId Parameters".
+* `openId` (json): Console display name: "OpenId Parameters".
 
 
 Example:
@@ -4066,7 +4066,7 @@ Connector ID (`connector.id` in the resource): `pingIdConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `customAuth` (json):  Console display name: "Custom Parameters".
+* `customAuth` (json): Console display name: "Custom Parameters".
 
 
 Example:
@@ -4175,7 +4175,7 @@ Connector ID (`connector.id` in the resource): `pingoneAdvancedIdentityCloudLogi
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `openId` (json):  Console display name: "OpenId Parameters".
+* `openId` (json): Console display name: "OpenId Parameters".
 
 
 Example:
@@ -4501,7 +4501,7 @@ Connector ID (`connector.id` in the resource): `privateidConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `customAuth` (json):  Console display name: "Custom Parameters".
+* `customAuth` (json): Console display name: "Custom Parameters".
 
 
 Example:
@@ -4526,14 +4526,14 @@ Connector ID (`connector.id` in the resource): `payfoneConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `appClientId` (string):  Console display name: "App Client ID".
-* `baseUrl` (string):  Console display name: "Prove Base URL".
-* `clientId` (string):  Console display name: "Client ID".
-* `password` (string):  Console display name: "Password".
-* `simulatorMode` (boolean):  Console display name: "Simulator Mode?".
-* `simulatorPhoneNumber` (string):  Console display name: "Simulator Phone Number".
+* `appClientId` (string): Console display name: "App Client ID".
+* `baseUrl` (string): Console display name: "Prove Base URL".
+* `clientId` (string): Console display name: "Client ID".
+* `password` (string): Console display name: "Password".
+* `simulatorMode` (boolean): Console display name: "Simulator Mode?".
+* `simulatorPhoneNumber` (string): Console display name: "Simulator Phone Number".
 * `skCallbackBaseUrl` (string): Use this url as the callback base URL. Console display name: "Callback Base URL".
-* `username` (string):  Console display name: "Username".
+* `username` (string): Console display name: "Username".
 
 
 Example:
@@ -4565,11 +4565,11 @@ Connector ID (`connector.id` in the resource): `proveConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `baseUrl` (string):  Console display name: "Prove Base URL".
-* `clientId` (string):  Console display name: "Prove Client ID".
-* `grantType` (string):  Console display name: "Prove Grant Type".
-* `password` (string):  Console display name: "Prove Password".
-* `username` (string):  Console display name: "Prove Username".
+* `baseUrl` (string): Console display name: "Prove Base URL".
+* `clientId` (string): Console display name: "Prove Client ID".
+* `grantType` (string): Console display name: "Prove Grant Type".
+* `password` (string): Console display name: "Prove Password".
+* `username` (string): Console display name: "Prove Username".
 
 
 Example:
@@ -4680,7 +4680,7 @@ Connector ID (`connector.id` in the resource): `samlIdpConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `saml` (json):  Console display name: "SAML Parameters".
+* `saml` (json): Console display name: "SAML Parameters".
 
 
 Example:
@@ -4761,10 +4761,10 @@ Properties (used under the `properties` block in the resource as a key in the JS
 
 * `hostname` (string): Example: smtp-relay.gmail.com. Console display name: "SMTP Server/Host".
 * `name` (string): Optional hostname of the client, used for identifying to the server, defaults to hostname of the machine. Console display name: "Client Name".
-* `password` (string):  Console display name: "Password".
+* `password` (string): Console display name: "Password".
 * `port` (number): Example: 25. Console display name: "SMTP Port".
-* `secureFlag` (boolean):  Console display name: "Secure Flag?".
-* `username` (string):  Console display name: "Username".
+* `secureFlag` (boolean): Console display name: "Secure Flag?".
+* `username` (string): Console display name: "Username".
 
 
 Example:
@@ -5022,8 +5022,8 @@ Connector ID (`connector.id` in the resource): `sentilinkConnector`
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
 * `account` (string): Account ID of SentiLink. Console display name: "Account ID".
-* `apiUrl` (string):  Console display name: "API URL".
-* `javascriptCdnUrl` (string):  Console display name: "Javascript CDN URL".
+* `apiUrl` (string): Console display name: "API URL".
+* `javascriptCdnUrl` (string): Console display name: "Javascript CDN URL".
 * `token` (string): Token ID for SentiLink account. Console display name: "Token ID".
 
 
@@ -5139,7 +5139,7 @@ Connector ID (`connector.id` in the resource): `connectorSignicat`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `customAuth` (json):  Console display name: "Custom Parameters".
+* `customAuth` (json): Console display name: "Custom Parameters".
 
 
 Example:
@@ -5222,7 +5222,7 @@ Connector ID (`connector.id` in the resource): `singpassLoginConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `customAuth` (json):  Console display name: "Custom Parameters".
+* `customAuth` (json): Console display name: "Custom Parameters".
 
 
 Example:
@@ -5247,7 +5247,7 @@ Connector ID (`connector.id` in the resource): `slackConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `oauth2` (json):  Console display name: "Oauth2 Parameters".
+* `oauth2` (json): Console display name: "Oauth2 Parameters".
 
 
 Example:
@@ -5363,7 +5363,7 @@ Connector ID (`connector.id` in the resource): `connectorSpotify`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `oauth2` (json):  Console display name: "Oauth2 Parameters".
+* `oauth2` (json): Console display name: "Oauth2 Parameters".
 
 
 Example:
@@ -5593,20 +5593,20 @@ Connector ID (`connector.id` in the resource): `telesignConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `authDescription` (string):  Console display name: "Authentication Description".
-* `connectorName` (string):  Console display name: "Connector Name".
-* `description` (string):  Console display name: "Description".
-* `details1` (string):  Console display name: "Credentials Details 1".
-* `details2` (string):  Console display name: "Credentials Details 2".
-* `iconUrl` (string):  Console display name: "Icon URL".
-* `iconUrlPng` (string):  Console display name: "Icon URL in PNG".
-* `password` (string):  Console display name: "Password".
-* `providerName` (string):  Console display name: "Provider Name".
-* `showCredAddedOn` (boolean):  Console display name: "Show Credentials Added On?".
-* `showCredAddedVia` (boolean):  Console display name: "Show Credentials Added through ?".
-* `title` (string):  Console display name: "Title".
-* `toolTip` (string):  Console display name: "Tooltip".
-* `username` (string):  Console display name: "Username".
+* `authDescription` (string): Console display name: "Authentication Description".
+* `connectorName` (string): Console display name: "Connector Name".
+* `description` (string): Console display name: "Description".
+* `details1` (string): Console display name: "Credentials Details 1".
+* `details2` (string): Console display name: "Credentials Details 2".
+* `iconUrl` (string): Console display name: "Icon URL".
+* `iconUrlPng` (string): Console display name: "Icon URL in PNG".
+* `password` (string): Console display name: "Password".
+* `providerName` (string): Console display name: "Provider Name".
+* `showCredAddedOn` (boolean): Console display name: "Show Credentials Added On?".
+* `showCredAddedVia` (boolean): Console display name: "Show Credentials Added through ?".
+* `title` (string): Console display name: "Title".
+* `toolTip` (string): Console display name: "Tooltip".
+* `username` (string): Console display name: "Username".
 
 
 Example:
@@ -5814,22 +5814,22 @@ Connector ID (`connector.id` in the resource): `twilioConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `accountSid` (string):  Console display name: "Account Sid".
-* `authDescription` (string):  Console display name: "Authentication Description".
-* `authMessageTemplate` (string):  Console display name: "Text Message Template (Authentication)".
-* `authToken` (string):  Console display name: "Auth Token".
-* `connectorName` (string):  Console display name: "Connector Name".
-* `description` (string):  Console display name: "Description".
-* `details1` (string):  Console display name: "Credentials Details 1".
-* `details2` (string):  Console display name: "Credentials Details 2".
-* `iconUrl` (string):  Console display name: "Icon URL".
-* `iconUrlPng` (string):  Console display name: "Icon URL in PNG".
-* `registerMessageTemplate` (string):  Console display name: "Text Message Template (Registration)".
-* `senderPhoneNumber` (string):  Console display name: "Sender Phone Number".
-* `showCredAddedOn` (boolean):  Console display name: "Show Credentials Added On?".
-* `showCredAddedVia` (boolean):  Console display name: "Show Credentials Added through ?".
-* `title` (string):  Console display name: "Title".
-* `toolTip` (string):  Console display name: "Tooltip".
+* `accountSid` (string): Console display name: "Account Sid".
+* `authDescription` (string): Console display name: "Authentication Description".
+* `authMessageTemplate` (string): Console display name: "Text Message Template (Authentication)".
+* `authToken` (string): Console display name: "Auth Token".
+* `connectorName` (string): Console display name: "Connector Name".
+* `description` (string): Console display name: "Description".
+* `details1` (string): Console display name: "Credentials Details 1".
+* `details2` (string): Console display name: "Credentials Details 2".
+* `iconUrl` (string): Console display name: "Icon URL".
+* `iconUrlPng` (string): Console display name: "Icon URL in PNG".
+* `registerMessageTemplate` (string): Console display name: "Text Message Template (Registration)".
+* `senderPhoneNumber` (string): Console display name: "Sender Phone Number".
+* `showCredAddedOn` (boolean): Console display name: "Show Credentials Added On?".
+* `showCredAddedVia` (boolean): Console display name: "Show Credentials Added through ?".
+* `title` (string): Console display name: "Title".
+* `toolTip` (string): Console display name: "Tooltip".
 
 
 Example:
@@ -5869,7 +5869,7 @@ Connector ID (`connector.id` in the resource): `typingdnaConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `customAuth` (json):  Console display name: "Custom Parameters".
+* `customAuth` (json): Console display name: "Custom Parameters".
 
 
 Example:
@@ -5894,17 +5894,17 @@ Connector ID (`connector.id` in the resource): `unifyIdConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `accountId` (string):  Console display name: "Account ID".
-* `apiKey` (string):  Console display name: "API Key".
-* `connectorName` (string):  Console display name: "Connector Name".
-* `details1` (string):  Console display name: "Credentials Details 1".
-* `details2` (string):  Console display name: "Credentials Details 2".
-* `iconUrl` (string):  Console display name: "Icon URL".
-* `iconUrlPng` (string):  Console display name: "Icon URL in PNG".
-* `sdkToken` (string):  Console display name: "SDK Token".
-* `showCredAddedOn` (boolean):  Console display name: "Show Credentials Added On?".
-* `showCredAddedVia` (boolean):  Console display name: "Show Credentials Added through ?".
-* `toolTip` (string):  Console display name: "Tooltip".
+* `accountId` (string): Console display name: "Account ID".
+* `apiKey` (string): Console display name: "API Key".
+* `connectorName` (string): Console display name: "Connector Name".
+* `details1` (string): Console display name: "Credentials Details 1".
+* `details2` (string): Console display name: "Credentials Details 2".
+* `iconUrl` (string): Console display name: "Icon URL".
+* `iconUrlPng` (string): Console display name: "Icon URL in PNG".
+* `sdkToken` (string): Console display name: "SDK Token".
+* `showCredAddedOn` (boolean): Console display name: "Show Credentials Added On?".
+* `showCredAddedVia` (boolean): Console display name: "Show Credentials Added through ?".
+* `toolTip` (string): Console display name: "Tooltip".
 
 
 Example:
@@ -5940,17 +5940,17 @@ Connector ID (`connector.id` in the resource): `userPolicyConnector`
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
 * `passwordExpiryInDays` (number): Choose 0 for never expire. Console display name: "Expires in the specified number of days".
-* `passwordExpiryNotification` (boolean):  Console display name: "Notify user before password expires".
-* `passwordLengthMax` (number):  Console display name: "Maximum Password Length".
-* `passwordLengthMin` (number):  Console display name: "Minimum Password Length".
-* `passwordLockoutAttempts` (number):  Console display name: "Number of failed login attempts before account is locked".
+* `passwordExpiryNotification` (boolean): Console display name: "Notify user before password expires".
+* `passwordLengthMax` (number): Console display name: "Maximum Password Length".
+* `passwordLengthMin` (number): Console display name: "Minimum Password Length".
+* `passwordLockoutAttempts` (number): Console display name: "Number of failed login attempts before account is locked".
 * `passwordPreviousXPasswords` (number): Choose 0 if any previous passwords are allowed. This is not recommended. Console display name: "Number of unique user passwords associated with a user".
 * `passwordRequireLowercase` (boolean): Should the password contain lowercase characters?. Console display name: "Require Lowercase Characters".
 * `passwordRequireNumbers` (boolean): Should the password contain numbers?. Console display name: "Require Numbers".
 * `passwordRequireSpecial` (boolean): Should the password contain special character?. Console display name: "Require Special Characters".
 * `passwordRequireUppercase` (boolean): Should the password contain uppercase characters?. Console display name: "Require Uppercase Characters".
 * `passwordSpacesOk` (boolean): Are spaces allowed in the password?. Console display name: "Spaces Accepted".
-* `passwordsEnabled` (boolean):  Console display name: "Passwords Feature Enabled?".
+* `passwordsEnabled` (boolean): Console display name: "Passwords Feature Enabled?".
 * `temporaryPasswordExpiryInDays` (number): If an administrator sets a temporary password, choose how long before it expires. Console display name: "Temporary password expires in the specified number of days".
 
 
@@ -5988,7 +5988,7 @@ Connector ID (`connector.id` in the resource): `skUserPool`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `customAttributes` (json):  
+* `customAttributes` (json): Console display name: "".
 
 
 Example:
@@ -6071,7 +6071,7 @@ Connector ID (`connector.id` in the resource): `connectorValidsoft`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `customAuth` (json):  Console display name: "Custom Parameters".
+* `customAuth` (json): Console display name: "Custom Parameters".
 
 
 Example:
@@ -6309,7 +6309,7 @@ Connector ID (`connector.id` in the resource): `connectorWinmagic`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `openId` (json):  Console display name: "OpenId Parameters".
+* `openId` (json): Console display name: "OpenId Parameters".
 
 
 Example:
@@ -6365,7 +6365,7 @@ Connector ID (`connector.id` in the resource): `twitterIdpConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `customAuth` (json):  Console display name: "Custom Parameters".
+* `customAuth` (json): Console display name: "Custom Parameters".
 
 
 Example:
@@ -6390,7 +6390,7 @@ Connector ID (`connector.id` in the resource): `yotiConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `customAuth` (json):  Console display name: "Custom Parameters".
+* `customAuth` (json): Console display name: "Custom Parameters".
 
 
 Example:
@@ -6444,9 +6444,9 @@ Connector ID (`connector.id` in the resource): `zoopConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `agencyId` (string):  Console display name: "Zoop Agency ID".
-* `apiKey` (string):  Console display name: "Zoop API Key".
-* `apiUrl` (string):  Console display name: "Zoop API URL".
+* `agencyId` (string): Console display name: "Zoop Agency ID".
+* `apiKey` (string): Console display name: "Zoop API Key".
+* `apiUrl` (string): Console display name: "Zoop API URL".
 
 
 Example:
@@ -6506,35 +6506,35 @@ Connector ID (`connector.id` in the resource): `iproovConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `allowLandscape` (boolean):  Console display name: "Allow Landscape".
-* `apiKey` (string):  Console display name: "API Key".
-* `authDescription` (string):  Console display name: "Authentication Description".
-* `baseUrl` (string):  Console display name: "Base URL".
+* `allowLandscape` (boolean): Console display name: "Allow Landscape".
+* `apiKey` (string): Console display name: "API Key".
+* `authDescription` (string): Console display name: "Authentication Description".
+* `baseUrl` (string): Console display name: "Base URL".
 * `color1` (string): Ex. #000000. Console display name: "Loading Tint Color".
 * `color2` (string): Ex. #000000. Console display name: "Not Ready Tint Color".
 * `color3` (string): Ex. #000000. Console display name: "Ready Tint Color".
 * `color4` (string): Ex. #000000. Console display name: "Liveness Tint Color".
-* `connectorName` (string):  Console display name: "Connector Name".
+* `connectorName` (string): Console display name: "Connector Name".
 * `customTitle` (string): Specify a custom title to be shown. Defaults to show an iProov-generated message. Set to empty string "" to hide the message entirely.  Console display name: "Custom Title".
-* `description` (string):  Console display name: "Description".
-* `details1` (string):  Console display name: "Credentials Details 1".
-* `details2` (string):  Console display name: "Credentials Details 2".
-* `enableCameraSelector` (boolean):  Console display name: "Enable Camera Selector".
-* `iconUrl` (string):  Console display name: "Icon URL".
-* `iconUrlPng` (string):  Console display name: "Icon URL in PNG".
-* `javascriptCSSUrl` (string):  Console display name: "CSS URL".
-* `javascriptCdnUrl` (string):  Console display name: "Javascript CDN URL".
-* `kioskMode` (boolean):  Console display name: "Kiosk Mode".
+* `description` (string): Console display name: "Description".
+* `details1` (string): Console display name: "Credentials Details 1".
+* `details2` (string): Console display name: "Credentials Details 2".
+* `enableCameraSelector` (boolean): Console display name: "Enable Camera Selector".
+* `iconUrl` (string): Console display name: "Icon URL".
+* `iconUrlPng` (string): Console display name: "Icon URL in PNG".
+* `javascriptCSSUrl` (string): Console display name: "CSS URL".
+* `javascriptCdnUrl` (string): Console display name: "Javascript CDN URL".
+* `kioskMode` (boolean): Console display name: "Kiosk Mode".
 * `logo` (string): You can use a custom logo by simply passing a relative link, absolute path or data URI to your logo. If you do not want a logo to show pass the logo attribute as null. Console display name: "Logo".
-* `password` (string):  Console display name: "Password".
-* `secret` (string):  Console display name: "Secret".
-* `showCountdown` (boolean):  Console display name: "Show Countdown".
-* `showCredAddedOn` (boolean):  Console display name: "Show Credentials Added On?".
-* `showCredAddedVia` (boolean):  Console display name: "Show Credentials Added through ?".
-* `startScreenTitle` (string):  Console display name: "Start Screen Title".
-* `title` (string):  Console display name: "Title".
-* `toolTip` (string):  Console display name: "Tooltip".
-* `username` (string):  Console display name: "Username".
+* `password` (string): Console display name: "Password".
+* `secret` (string): Console display name: "Secret".
+* `showCountdown` (boolean): Console display name: "Show Countdown".
+* `showCredAddedOn` (boolean): Console display name: "Show Credentials Added On?".
+* `showCredAddedVia` (boolean): Console display name: "Show Credentials Added through ?".
+* `startScreenTitle` (string): Console display name: "Start Screen Title".
+* `title` (string): Console display name: "Title".
+* `toolTip` (string): Console display name: "Tooltip".
+* `username` (string): Console display name: "Username".
 
 
 Example:
@@ -6616,7 +6616,7 @@ Connector ID (`connector.id` in the resource): `connectorSvipe`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `customAuth` (json):  Console display name: "Custom Parameters".
+* `customAuth` (json): Console display name: "Custom Parameters".
 
 
 Example:
@@ -6641,12 +6641,12 @@ Connector ID (`connector.id` in the resource): `iovationConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `apiUrl` (string):  Console display name: "API Server URL".
+* `apiUrl` (string): Console display name: "API Server URL".
 * `javascriptCdnUrl` (string): iovation loader javascript CDN. Console display name: "iovation loader Javascript CDN URL".
 * `subKey` (string): This will be an iovation assigned value that tracks requests from your site. This is primarily used for debugging and troubleshooting purposes. Console display name: "Sub Key".
-* `subscriberAccount` (string):  Console display name: "Subscriber Account".
-* `subscriberId` (string):  Console display name: "Subscriber ID".
-* `subscriberPasscode` (string):  Console display name: "Subscriber Passcode".
+* `subscriberAccount` (string): Console display name: "Subscriber Account".
+* `subscriberId` (string): Console display name: "Subscriber ID".
+* `subscriberPasscode` (string): Console display name: "Subscriber Passcode".
 * `version` (string): This is the version of the script to load. The value should either correspond to a specific version you wish to use, or one of the following aliases to get the latest version of the code: general5 - the latest stable version of the javascript, early5 - the latest available version of the javascript. Console display name: "Version".
 
 
@@ -6831,7 +6831,7 @@ Connector ID (`connector.id` in the resource): `connectorTruid`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `customAuth` (json):  Console display name: "Custom Parameters".
+* `customAuth` (json): Console display name: "Custom Parameters".
 
 
 Example:
