@@ -29,6 +29,8 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
+const bootstrappedDefaultUserPoolId = "defaultUserPool"
+
 var (
 	_ resource.Resource                = &davinciConnectorInstanceResource{}
 	_ resource.ResourceWithConfigure   = &davinciConnectorInstanceResource{}
@@ -113,7 +115,10 @@ func (r *davinciConnectorInstanceResource) Schema(ctx context.Context, req resou
 					stringplanmodifier.UseNonNullStateForUnknown(),
 				},
 				Validators: []validator.String{
-					stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), "Must be a valid UUID"),
+					stringvalidator.Any(
+						stringvalidator.RegexMatches(regexp.MustCompile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"), "Must be a valid UUID"),
+						stringvalidator.OneOf(bootstrappedDefaultUserPoolId),
+					),
 				},
 			},
 			"name": schema.StringAttribute{
@@ -447,7 +452,7 @@ func (r *davinciConnectorInstanceResource) ImportState(ctx context.Context, req 
 		},
 		{
 			Label:     "instance_id",
-			Regexp:    verify.P1DVResourceIDRegexp,
+			Regexp:    regexp.MustCompile(fmt.Sprintf("%s|%s", verify.P1DVResourceIDRegexp.String(), bootstrappedDefaultUserPoolId)),
 			PrimaryID: true,
 		},
 	}
