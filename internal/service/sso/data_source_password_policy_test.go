@@ -37,16 +37,32 @@ func TestAccPasswordPolicyDataSource_ByNameFull(t *testing.T) {
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "environment_id"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "password_policy_id"),
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "excludes_commonly_used_passwords"),
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "excludes_profile_data"),
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "history.count"),
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "length.min"),
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "lockout.failure_count"),
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "password_age_max"),
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "password_age_min"),
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "alphabet_sequence_rule.max_length"),
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "number_sequence_rule.max_length"),
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "qwerty_sequence_rule.max_length"),
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "shifted_number_row_sequence_rule.max_length"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "name", resourceFullName, "name"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "description", resourceFullName, "description"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "default", resourceFullName, "default"),
-					resource.TestCheckResourceAttrPair(dataSourceFullName, "exclude_commonly_used_passwords", resourceFullName, "exclude_commonly_used_passwords"),
-					resource.TestCheckResourceAttrPair(dataSourceFullName, "exclude_profile_data", resourceFullName, "exclude_profile_data"),
-					resource.TestCheckResourceAttrPair(dataSourceFullName, "password_history.%", resourceFullName, "password_history.%"),
-					resource.TestCheckResourceAttrPair(dataSourceFullName, "password_length.%", resourceFullName, "password_length.%"),
-					resource.TestCheckResourceAttrPair(dataSourceFullName, "account_lockout.%", resourceFullName, "account_lockout.%"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "excludes_commonly_used_passwords", resourceFullName, "excludes_commonly_used_passwords"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "excludes_profile_data", resourceFullName, "excludes_profile_data"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "history.count", resourceFullName, "history.count"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "length.min", resourceFullName, "length.min"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "lockout.failure_count", resourceFullName, "lockout.failure_count"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "min_characters.%", resourceFullName, "min_characters.%"),
-					resource.TestCheckResourceAttrPair(dataSourceFullName, "password_age.%", resourceFullName, "password_age.%"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "password_age_max", resourceFullName, "password_age_max"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "password_age_min", resourceFullName, "password_age_min"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "alphabet_sequence_rule.max_length", resourceFullName, "alphabet_sequence_rule.max_length"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "number_sequence_rule.max_length", resourceFullName, "number_sequence_rule.max_length"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "qwerty_sequence_rule.max_length", resourceFullName, "qwerty_sequence_rule.max_length"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "shifted_number_row_sequence_rule.max_length", resourceFullName, "shifted_number_row_sequence_rule.max_length"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "max_repeated_characters", resourceFullName, "max_repeated_characters"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "min_complexity", resourceFullName, "min_complexity"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "min_unique_characters", resourceFullName, "min_unique_characters"),
@@ -90,16 +106,32 @@ func TestAccPasswordPolicyDataSource_ByIDFull(t *testing.T) {
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "id"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "environment_id"),
 					resource.TestCheckResourceAttrSet(dataSourceFullName, "password_policy_id"),
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "excludes_commonly_used_passwords"),
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "excludes_profile_data"),
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "history.count"),
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "length.min"),
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "lockout.failure_count"),
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "password_age_max"),
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "password_age_min"),
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "alphabet_sequence_rule.max_length"),
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "number_sequence_rule.max_length"),
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "qwerty_sequence_rule.max_length"),
+					resource.TestCheckResourceAttrSet(dataSourceFullName, "shifted_number_row_sequence_rule.max_length"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "name", resourceFullName, "name"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "description", resourceFullName, "description"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "default", resourceFullName, "default"),
-					resource.TestCheckResourceAttrPair(dataSourceFullName, "exclude_commonly_used_passwords", resourceFullName, "exclude_commonly_used_passwords"),
-					resource.TestCheckResourceAttrPair(dataSourceFullName, "exclude_profile_data", resourceFullName, "exclude_profile_data"),
-					resource.TestCheckResourceAttrPair(dataSourceFullName, "password_history.%", resourceFullName, "password_history.%"),
-					resource.TestCheckResourceAttrPair(dataSourceFullName, "password_length.%", resourceFullName, "password_length.%"),
-					resource.TestCheckResourceAttrPair(dataSourceFullName, "account_lockout.%", resourceFullName, "account_lockout.%"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "excludes_commonly_used_passwords", resourceFullName, "excludes_commonly_used_passwords"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "excludes_profile_data", resourceFullName, "excludes_profile_data"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "history.count", resourceFullName, "history.count"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "length.min", resourceFullName, "length.min"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "lockout.failure_count", resourceFullName, "lockout.failure_count"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "min_characters.%", resourceFullName, "min_characters.%"),
-					resource.TestCheckResourceAttrPair(dataSourceFullName, "password_age.%", resourceFullName, "password_age.%"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "password_age_max", resourceFullName, "password_age_max"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "password_age_min", resourceFullName, "password_age_min"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "alphabet_sequence_rule.max_length", resourceFullName, "alphabet_sequence_rule.max_length"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "number_sequence_rule.max_length", resourceFullName, "number_sequence_rule.max_length"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "qwerty_sequence_rule.max_length", resourceFullName, "qwerty_sequence_rule.max_length"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "shifted_number_row_sequence_rule.max_length", resourceFullName, "shifted_number_row_sequence_rule.max_length"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "max_repeated_characters", resourceFullName, "max_repeated_characters"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "min_complexity", resourceFullName, "min_complexity"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "min_unique_characters", resourceFullName, "min_unique_characters"),
@@ -184,6 +216,22 @@ resource "pingone_password_policy" "%[2]s" {
     special_characters     = 1
   }
 
+  alphabet_sequence_rule = {
+    max_length = 3
+  }
+
+  number_sequence_rule = {
+    max_length = 3
+  }
+
+  qwerty_sequence_rule = {
+    max_length = 3
+  }
+
+  shifted_number_row_sequence_rule = {
+    max_length = 3
+  }
+
   max_repeated_characters = 2
   min_complexity          = 7
   min_unique_characters   = 5
@@ -237,6 +285,22 @@ resource "pingone_password_policy" "%[2]s" {
     alphabetical_lowercase = 1
     numeric                = 1
     special_characters     = 1
+  }
+
+  alphabet_sequence_rule = {
+    max_length = 3
+  }
+
+  number_sequence_rule = {
+    max_length = 3
+  }
+
+  qwerty_sequence_rule = {
+    max_length = 3
+  }
+
+  shifted_number_row_sequence_rule = {
+    max_length = 3
   }
 
   max_repeated_characters = 2
