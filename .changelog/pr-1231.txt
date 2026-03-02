@@ -1,0 +1,11 @@
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2` v0.14.5 => v0.14.8
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.63.0 => v0.64.0
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/verify` v0.10.0 => v0.11.1
+```
