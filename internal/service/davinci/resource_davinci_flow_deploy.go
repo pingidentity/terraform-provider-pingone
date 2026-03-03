@@ -261,12 +261,22 @@ func (r *davinciFlowDeployResource) Read(ctx context.Context, req resource.ReadR
 
 	// Remove from state if the flow is not found, or if it has no published version,
 	// which would indicate that it has never been deployed
+	if responseData != nil && responseData.PublishedVersion == nil {
+		resp.Diagnostics.AddError("Flow is undeployed", fmt.Sprintf("Flow with id %s has never been deployed", data.Id.ValueString()))
+	}
 	if responseData == nil || responseData.PublishedVersion == nil {
 		resp.State.RemoveResource(ctx)
 		return
 	}
 
-	// If the flow still exists, just maintain existing state values
+	// Read response into the model
+	resp.Diagnostics.Append(data.readClientResponse(responseData)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 

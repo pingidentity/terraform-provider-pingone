@@ -89,6 +89,7 @@ func testAccDavinciFlowDeploy(t *testing.T, withBootstrap bool) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_davinci_flow_deploy.%s", resourceName)
 	var lastDeployTime string
 
 	resource.Test(t, resource.TestCase{
@@ -112,6 +113,24 @@ func testAccDavinciFlowDeploy(t *testing.T, withBootstrap bool) {
 					davinciFlowDeploy_CheckComputedValues(resourceName),
 					davinciFlowDeploy_GetDeployedTimestamp(&lastDeployTime),
 				),
+			},
+			{
+				// Test importing the resource
+				Config:       davinciFlowDeploy_FirstDeployHCL(t, resourceName, withBootstrap),
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["id"]), nil
+					}
+				}(),
+				ImportStateVerifyIdentifierAttribute: "id",
+				ImportState:                          true,
+				ImportStateVerify:                    true,
 			},
 			{
 				// Expect no additional deploy
@@ -140,7 +159,6 @@ func testAccDavinciFlowDeploy(t *testing.T, withBootstrap bool) {
 					davinciFlowDeploy_GetDeployedTimestamp(&lastDeployTime),
 				),
 			},
-			// Import is not supported in this resource
 		},
 	})
 }
