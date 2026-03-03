@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
@@ -414,6 +416,46 @@ func WorkforceV2SandboxEnvironment() string {
 		data "pingone_environment" "workforce_test" {
 			name = "%s"
 		}`, WorkforceV2SandboxEnvironmentName)
+}
+
+// Use to manually remove resource from state to prevent destruction of static resource after test
+func TerraformStateRm(t *testing.T, baseWorkingDir, resourceAddress string) {
+	t.Helper()
+
+	terraformPath, err := exec.LookPath("terraform")
+	if err != nil {
+		t.Fatalf("Error locating terraform binary for state cleanup: %s", err)
+	}
+
+	workingDirs, err := filepath.Glob(filepath.Join(baseWorkingDir, "work*"))
+	if err != nil {
+		t.Fatalf("Error finding terraform working directory for state cleanup: %s", err)
+	}
+
+	if len(workingDirs) != 1 {
+		t.Fatalf("Expected exactly one terraform working directory in %s, found %d: %v", baseWorkingDir, len(workingDirs), workingDirs)
+	}
+
+	workingDir := workingDirs[0]
+
+	stateListCmd := exec.Command(terraformPath, fmt.Sprintf("-chdir=%s", workingDir), "state", "list")
+	stateListOutput, err := stateListCmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("Error listing terraform state for cleanup: %s\nOutput: %s", err, string(stateListOutput))
+	}
+
+	stateAddresses := strings.Fields(string(stateListOutput))
+	resourceInState := slices.Contains(stateAddresses, resourceAddress)
+
+	if !resourceInState {
+		return
+	}
+
+	cmd := exec.Command(terraformPath, fmt.Sprintf("-chdir=%s", workingDir), "state", "rm", resourceAddress)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("Error removing imported workforce resource from terraform state: %s\nOutput: %s", err, string(output))
+	}
 }
 
 func DomainVerifiedSandboxEnvironment() string {
