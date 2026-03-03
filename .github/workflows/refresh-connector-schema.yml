@@ -20,15 +20,8 @@ jobs:
       
       - name: Generate Connector Schema
         run: |
-          davinci-pingcli connectors schema --json | jq '[.[] | .accountConfigView.items as $items | {"name": .name, "connectorId": .connectorId, "connectorCategories": .connectorCategories, "properties": (.properties // {} | with_entries(select(.key as $k | ($items // [] | map(.propertyName)) | index($k))))}] | sort_by(.connectorId)' > tools/dvgenerate/internal/connector_schema/connector-schema.json
+          davinci-pingcli connectors schema --json | jq '[.[] | .accountConfigView.items as $items | {"name": .name, "connectorId": .connectorId, "connectorCategories": .connectorCategories, "properties": (.properties // {} | with_entries(select(.key as $k | ($items // [] | map(.propertyName)) | index($k))))}] | sort_by(.connectorId)' > bin/connector-schema.json
         continue-on-error: false
-
-        env:
-          PINGCLI_DAVINCI_USERNAME: ${{ secrets.PINGCLI_DAVINCI_USERNAME }}
-          PINGCLI_DAVINCI_PASSWORD: ${{ secrets.PINGCLI_DAVINCI_PASSWORD }}
-          PINGCLI_DAVINCI_ADMINENVIRONMENTID: ${{ secrets.PINGCLI_DAVINCI_ADMIN_ENVIRONMENT_ID }}
-          PINGCLI_DAVINCI_ENVIRONMENTID: ${{ secrets.PINGCLI_DAVINCI_ENVIRONMENT_ID }}
-          PINGCLI_DAVINCI_REGION: ${{ secrets.PINGCLI_DAVINCI_REGION }}
 
       - name: Generate Terraform Docs & Examples
         run: make generate

@@ -13,14 +13,14 @@ import (
 	"text/template"
 	"unicode"
 
-	"github.com/pingidentity/pingone-go-client/pingone"
 	"github.com/pingidentity/terraform-provider-pingone/dvgenerate/internal"
 )
 
 type connectorDocData struct {
-	ConnectorName string
-	ConnectorId   string
-	Properties    []connectorDocPropertyData
+	ConnectorName string                     `json:"name,omitempty"`
+	ConnectorId   string                     `json:"connectorId,omitempty"`
+	RawProperties map[string]any             `json:"properties,omitempty"`
+	Properties    []connectorDocPropertyData `json:"-"`
 }
 
 type connectorDocPropertyData struct {
@@ -47,7 +47,7 @@ func Generate() {
 		baseDirectory = filepath.Dir(filepath.Dir(baseDirectory))
 	}
 
-	conns, err := readConnectors()
+	conns, err := readConnectors(baseDirectory)
 	if err != nil {
 		panic(err)
 	}
@@ -124,59 +124,31 @@ func writeTemplateFile(t *template.Template, fileName string, overwrite bool, da
 	return nil
 }
 
-type connectorSchemaWrapper struct {
-	pingone.DaVinciConnectorDetailsResponse
-	ConnectorID *string `json:"connectorId,omitempty"`
-	Name        *string `json:"name,omitempty"`
-}
+func readConnectors(baseDirectory string) ([]connectorDocData, error) {
 
-func (c *connectorSchemaWrapper) UnmarshalJSON(data []byte) error {
-	type localConnectorSchema struct {
-		ConnectorID *string                `json:"connectorId,omitempty"`
-		Name        *string                `json:"name,omitempty"`
-		Properties  map[string]interface{} `json:"properties,omitempty"`
-	}
-
-	var aux localConnectorSchema
-	if err := json.Unmarshal(data, &aux); err != nil {
-		return err
-	}
-
-	c.ConnectorID = aux.ConnectorID
-	c.Name = aux.Name
-	c.Properties = aux.Properties
-
-	return nil
-}
-
-func readConnectors() ([]connectorDocData, error) {
-
-	connectorSchema := []connectorSchemaWrapper{}
-	err := json.Unmarshal(internal.ConnectorSchemaBytes, &connectorSchema)
+	connectorSchemaBytes, err := os.ReadFile(fmt.Sprintf("%s/bin/connector-schema.json", baseDirectory))
 	if err != nil {
 		return nil, err
 	}
 
-	connectorList := make([]connectorDocData, 0)
-	for _, connectorSchemaItem := range connectorSchema {
+	connectorList := []connectorDocData{}
+	err = json.Unmarshal(connectorSchemaBytes, &connectorList)
+	if err != nil {
+		return nil, err
+	}
 
-		connectorDocData := connectorDocData{}
-
-		if v := connectorSchemaItem.ConnectorID; v != nil && *v != "" {
-			connectorDocData.ConnectorId = *v
-		} else {
-			connectorDocData.ConnectorId = "No value"
+	for i := range connectorList {
+		if connectorList[i].ConnectorId == "" {
+			connectorList[i].ConnectorId = "No value"
 		}
 
-		if v := connectorSchemaItem.Name; v != nil && *v != "" {
-			connectorDocData.ConnectorName = *v
-		} else {
-			connectorDocData.ConnectorName = "No name"
+		if connectorList[i].ConnectorName == "" {
+			connectorList[i].ConnectorName = "No name"
 		}
 
-		if connectorSchemaItem.Properties != nil {
+		if connectorList[i].RawProperties != nil {
 			connectorProperties := make([]connectorDocPropertyData, 0)
-			for propertyName, property := range connectorSchemaItem.Properties {
+			for propertyName, property := range connectorList[i].RawProperties {
 
 				propertyMap, ok := property.(map[string]interface{})
 				if !ok {
@@ -217,7 +189,7 @@ func readConnectors() ([]connectorDocData, error) {
 				}
 
 				exampleFound := false
-				if v, ok := internal.ExampleValues[connectorDocData.ConnectorId][propertyName]; ok {
+				if v, ok := internal.ExampleValues[connectorList[i].ConnectorId][propertyName]; ok {
 					connectorProperty.Value = &v.Value
 
 					if v.OverridingType != nil {
@@ -228,7 +200,7 @@ func readConnectors() ([]connectorDocData, error) {
 				}
 
 				if !exampleFound {
-					defaultValue := fmt.Sprintf("var.%s_property_%s", strings.ToLower(connectorDocData.ConnectorId), camelToSnake(propertyName))
+					defaultValue := fmt.Sprintf("var.%s_property_%s", strings.ToLower(connectorList[i].ConnectorId), camelToSnake(propertyName))
 					connectorProperty.Value = &defaultValue
 				}
 
@@ -238,10 +210,8 @@ func readConnectors() ([]connectorDocData, error) {
 			slices.SortFunc(connectorProperties, func(i, j connectorDocPropertyData) int {
 				return strings.Compare(i.Name, j.Name)
 			})
-			connectorDocData.Properties = connectorProperties
+			connectorList[i].Properties = connectorProperties
 		}
-
-		connectorList = append(connectorList, connectorDocData)
 	}
 
 	slices.SortFunc(connectorList, func(i, j connectorDocData) int {
