@@ -11,7 +11,8 @@ Resource to create and manage PingOne environments.
 
 ~> PingOne environments are created with a default population and at least one service added.  Default populations can be managed with the `pingone_population_default` resource.
 
-~> This `pingone_environment` resource does not yet support creation of `WORKFORCE` enabled environments or the addition of `PingID-v2` services to new or existing environments.
+~> This `pingone_environment` resource does not yet support creation of `WORKFORCE` enabled environments or the addition/removal of `PingID-v2` services in new or existing environments.
+
 
 ## Example Usage
 
