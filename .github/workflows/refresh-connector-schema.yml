@@ -20,7 +20,7 @@ jobs:
       
       - name: Generate Connector Schema
         run: |
-          davinci-pingcli connectors schema --json | jq '[.[] | .accountConfigView.items as $items | {"name": .name, "connectorId": .connectorId, "connectorCategories": .connectorCategories, "properties": (.properties // {} | with_entries(select(.key as $k | ($items // [] | map(.propertyName)) | index($k))))}] | sort_by(.connectorId)' > bin/connector-schema.json
+          davinci-pingcli connectors schema --json | jq '[.[] | .accountConfigView.items as $items | {"name": .name, "connectorId": .connectorId, "connectorCategories": .connectorCategories, "properties": (.properties // {} | with_entries(select(.key as $k | ($items // [] | map(.propertyName)) | index($k))))}] | sort_by(.connectorId)' > tools/dvgenerate/internal/connector-schema.json
         continue-on-error: false
 
       - name: Generate Terraform Docs & Examples
