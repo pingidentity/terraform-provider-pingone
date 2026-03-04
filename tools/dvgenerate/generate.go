@@ -47,7 +47,7 @@ func Generate() {
 		baseDirectory = filepath.Dir(filepath.Dir(baseDirectory))
 	}
 
-	conns, err := readConnectors(baseDirectory)
+	conns, err := readConnectors()
 	if err != nil {
 		panic(err)
 	}
@@ -124,15 +124,10 @@ func writeTemplateFile(t *template.Template, fileName string, overwrite bool, da
 	return nil
 }
 
-func readConnectors(baseDirectory string) ([]connectorDocData, error) {
-
-	connectorSchemaBytes, err := os.ReadFile(fmt.Sprintf("%s/bin/connector-schema.json", baseDirectory))
-	if err != nil {
-		return nil, err
-	}
+func readConnectors() ([]connectorDocData, error) {
 
 	connectorList := []connectorDocData{}
-	err = json.Unmarshal(connectorSchemaBytes, &connectorList)
+	err := json.Unmarshal(internal.ConnectorSchemaBytes, &connectorList)
 	if err != nil {
 		return nil, err
 	}
