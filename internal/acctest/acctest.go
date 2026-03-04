@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/hashicorp/terraform-exec/tfexec"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -421,11 +422,7 @@ func WorkforceV2SandboxEnvironment() string {
 // Use to manually remove resource from state to prevent destruction of static resource after test
 func TerraformStateRm(t *testing.T, baseWorkingDir, resourceAddress string) {
 	t.Helper()
-
-	terraformPath, err := exec.LookPath("terraform")
-	if err != nil {
-		t.Fatalf("Error locating terraform binary for state cleanup: %s", err)
-	}
+	ctx := context.Background()
 
 	workingDirs, err := filepath.Glob(filepath.Join(baseWorkingDir, "work*"))
 	if err != nil {
@@ -437,24 +434,22 @@ func TerraformStateRm(t *testing.T, baseWorkingDir, resourceAddress string) {
 	}
 
 	workingDir := workingDirs[0]
-
-	stateListCmd := exec.Command(terraformPath, fmt.Sprintf("-chdir=%s", workingDir), "state", "list")
-	stateListOutput, err := stateListCmd.CombinedOutput()
+	terraformPath, err := exec.LookPath("terraform")
 	if err != nil {
-		t.Fatalf("Error listing terraform state for cleanup: %s\nOutput: %s", err, string(stateListOutput))
+		t.Fatalf("Error locating terraform binary for state cleanup: %s", err)
 	}
 
-	stateAddresses := strings.Fields(string(stateListOutput))
-	resourceInState := slices.Contains(stateAddresses, resourceAddress)
-
-	if !resourceInState {
-		return
+	tf, err := tfexec.NewTerraform(workingDir, terraformPath)
+	if err != nil {
+		t.Fatalf("Error initializing terraform for state cleanup: %s", err)
 	}
 
-	cmd := exec.Command(terraformPath, fmt.Sprintf("-chdir=%s", workingDir), "state", "rm", resourceAddress)
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		t.Fatalf("Error removing imported workforce resource from terraform state: %s\nOutput: %s", err, string(output))
+	if err := tf.StateRm(ctx, resourceAddress); err != nil {
+		if strings.Contains(err.Error(), "No matching objects found") {
+			return
+		}
+
+		t.Fatalf("Error removing imported workforce resource from terraform state: %s", err)
 	}
 }
 
