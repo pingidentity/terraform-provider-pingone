@@ -14,17 +14,25 @@ jobs:
         with:
           go-version-file: 'go.mod'
       
-      - name: Install DaVinci CLI
-        run: go install github.com/patrickcping/davinci-pingcli@latest
+      - name: Install Ping CLI
+        run: go install github.com/pingidentity/pingcli@latest
         continue-on-error: false
       
       - name: Generate Connector Schema
+        env:
+          PINGCLI_PINGONE_CLIENT_CREDENTIALS_CLIENT_ID: ${{ secrets.PINGONE_PROD_NA_FF_CLIENT_ID_CLIENT_SECRET_BASIC }}
+          PINGCLI_PINGONE_CLIENT_CREDENTIALS_CLIENT_SECRET: ${{ secrets.PINGONE_PROD_NA_FF_CLIENT_SECRET_CLIENT_SECRET_BASIC }}
+          PINGCLI_PINGONE_ENVIRONMENT_ID: ${{ secrets.PINGONE_PROD_NA_FF_ENVIRONMENT_ID }}
+          PINGCLI_PINGONE_REGION_CODE: ${{ secrets.PINGONE_REGION }}
         run: |
-          davinci-pingcli connectors schema --json | jq '[.[] | .accountConfigView.items as $items | {"name": .name, "connectorId": .connectorId, "connectorCategories": .connectorCategories, "properties": (.properties // {} | with_entries(select(.key as $k | ($items // [] | map(.propertyName)) | index($k))))}] | sort_by(.connectorId)' > tools/dvgenerate/internal/connector-schema.json
+          .github/workflows/scripts/generate_schema.sh
         continue-on-error: false
 
-      - name: Generate Terraform Docs & Examples
-        run: make generate
+      - uses: hashicorp/setup-terraform@v3
+
+      - name: Generate Terraform Provider Documentation
+        run: |
+          make generateconnectorref
 
       - name: Check for changes
         id: check_changes
@@ -56,9 +64,6 @@ jobs:
           git add .
           git commit -m "Update connector schema"
           git push
-
-      - uses: hashicorp/setup-terraform@v3
-        if: steps.check_changes.outputs.CONTENT_CHANGED == 'true'
       
       - run: make generate
         if: steps.check_changes.outputs.CONTENT_CHANGED == 'true'

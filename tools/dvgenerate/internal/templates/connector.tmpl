@@ -7,10 +7,12 @@ resource "pingone_davinci_connector_instance" "{{ .ConnectorId }}" {
   name = "My awesome {{ .ConnectorId }}"
 
 {{- if .Properties }}
-  properties = jsonencode({
 {{- range .Properties }}
-    "{{ .Name }}" = {{ .Value }}
+  property {
+    name  = "{{ .Name }}"
+    type  = "{{ .Type }}"
+    value = {{ .Value }}
+  }
 {{- end }}
-  })
 {{- end }}
 }

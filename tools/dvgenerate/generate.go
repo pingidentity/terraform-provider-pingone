@@ -31,7 +31,13 @@ type connectorDocPropertyData struct {
 	Value              *string
 }
 
-func Generate() {
+func Generate(input []byte) {
+	conns, err := readConnectors(input)
+	if err != nil {
+		fmt.Printf("Warning: %s\n", err)
+		return
+	}
+
 	dir, err := os.Getwd()
 	if err != nil {
 		panic(err)
@@ -45,11 +51,6 @@ func Generate() {
 	baseDirectory := absDir
 	if strings.HasSuffix(baseDirectory, "tools/dvgenerate") {
 		baseDirectory = filepath.Dir(filepath.Dir(baseDirectory))
-	}
-
-	conns, err := readConnectors()
-	if err != nil {
-		panic(err)
 	}
 
 	GenerateReferenceTemplate(baseDirectory, conns)
@@ -70,7 +71,7 @@ func GenerateConnectorHCLExamples(baseDirectory string, conns []connectorDocData
 
 	fileNameDirectory := fmt.Sprintf("%s/examples/davinci-connector-instances", baseDirectory)
 	for _, conn := range conns {
-		err := writeConnector(fileNameDirectory, internal.ConnectorTmpl, conn, false)
+		err := writeConnector(fileNameDirectory, internal.ConnectorTmpl, conn, true)
 		if err != nil {
 			panic(err)
 		}
@@ -124,10 +125,15 @@ func writeTemplateFile(t *template.Template, fileName string, overwrite bool, da
 	return nil
 }
 
-func readConnectors() ([]connectorDocData, error) {
+func readConnectors(input []byte) ([]connectorDocData, error) {
 
 	connectorList := []connectorDocData{}
-	err := json.Unmarshal(internal.ConnectorSchemaBytes, &connectorList)
+
+	if len(input) == 0 {
+		return nil, fmt.Errorf("no connector schema input provided. Please provide schema via -file flag or stdin.  Skipping generation")
+	}
+
+	err := json.Unmarshal(input, &connectorList)
 	if err != nil {
 		return nil, err
 	}
@@ -141,11 +147,13 @@ func readConnectors() ([]connectorDocData, error) {
 			connectorList[i].ConnectorName = "No name"
 		}
 
+		connectorList[i].ConnectorName = sanitizeForTemplate(connectorList[i].ConnectorName)
+
 		if connectorList[i].RawProperties != nil {
 			connectorProperties := make([]connectorDocPropertyData, 0)
 			for propertyName, property := range connectorList[i].RawProperties {
 
-				propertyMap, ok := property.(map[string]interface{})
+				propertyMap, ok := property.(map[string]any)
 				if !ok {
 					continue
 				}
@@ -162,6 +170,8 @@ func readConnectors() ([]connectorDocData, error) {
 					description = v
 				}
 
+				description = sanitizeForTemplate(description)
+
 				if strings.TrimSpace(description) != "" && !strings.HasSuffix(strings.TrimSpace(description), ".") {
 					description = fmt.Sprintf("%s.", description)
 				}
@@ -175,6 +185,8 @@ func readConnectors() ([]connectorDocData, error) {
 				if v, ok := propertyMap["displayName"].(string); ok {
 					displayName = v
 				}
+
+				displayName = sanitizeForTemplate(displayName)
 
 				connectorProperty := connectorDocPropertyData{
 					Name:               propertyName,
@@ -235,13 +247,29 @@ func camelToSnake(camel string) string {
 	for i, r := range camel {
 		// If the rune is an uppercase letter and it's not the first character,
 		// write an underscore to the buffer
-		if unicode.IsUpper(r) && i > 0 {
+		if unicode.IsUpper(r) {
+			if i > 0 && camel[i-1] != '_' && !unicode.IsUpper(rune(camel[i-1])) {
+				buf.WriteRune('_')
+			}
+			buf.WriteRune(unicode.ToLower(r))
+		} else if unicode.IsLetter(r) || unicode.IsDigit(r) {
+			buf.WriteRune(r)
+		} else {
 			buf.WriteRune('_')
 		}
-		// Write the lowercase version of the current rune to the buffer
-		buf.WriteRune(unicode.ToLower(r))
 	}
 
 	// Return the contents of the buffer as a string
 	return buf.String()
+}
+
+func sanitizeForTemplate(input string) string {
+	// Replaces "{{" with "{{ "{{" }}" and "}}" with "{{ "}}" }}"
+	// Use placeholders to avoid double replacement
+	output := strings.ReplaceAll(input, "{{", "___OPEN_BRACE___")
+	output = strings.ReplaceAll(output, "}}", "___CLOSE_BRACE___")
+
+	output = strings.ReplaceAll(output, "___OPEN_BRACE___", "{{ \"{{\" }}")
+	output = strings.ReplaceAll(output, "___CLOSE_BRACE___", "{{ \"}}\" }}")
+	return output
 }
