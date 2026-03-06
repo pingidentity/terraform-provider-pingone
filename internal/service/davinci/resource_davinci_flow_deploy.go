@@ -24,12 +24,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/pingidentity/pingone-go-client/pingone"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
 var (
-	_ resource.Resource               = &davinciFlowDeployResource{}
-	_ resource.ResourceWithConfigure  = &davinciFlowDeployResource{}
-	_ resource.ResourceWithModifyPlan = &davinciFlowDeployResource{}
+	_ resource.Resource                = &davinciFlowDeployResource{}
+	_ resource.ResourceWithConfigure   = &davinciFlowDeployResource{}
+	_ resource.ResourceWithImportState = &davinciFlowDeployResource{}
+	_ resource.ResourceWithModifyPlan  = &davinciFlowDeployResource{}
 )
 
 func NewDavinciFlowDeployResource() resource.Resource {
@@ -260,17 +262,61 @@ func (r *davinciFlowDeployResource) Read(ctx context.Context, req resource.ReadR
 	// Remove from state if the flow is not found, or if it has no published version,
 	// which would indicate that it has never been deployed
 	if responseData == nil || responseData.PublishedVersion == nil {
+		if responseData != nil && responseData.PublishedVersion == nil {
+			resp.Diagnostics.AddError("Flow is undeployed", fmt.Sprintf("Flow with id %s has never been deployed", data.Id.ValueString()))
+		}
 		resp.State.RemoveResource(ctx)
 		return
 	}
 
-	// If the flow still exists, just maintain existing state values
+	// Read response into the model
+	resp.Diagnostics.Append(data.readClientResponse(responseData)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func (r *davinciFlowDeployResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	// This will only happen when adding or removing deploy trigger values. Just copy the plan into state.
 	resp.State.Raw = req.Plan.Raw
+}
+
+func (r *davinciFlowDeployResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+
+	idComponents := []framework.ImportComponent{
+		{
+			Label:  "environment_id",
+			Regexp: verify.P1ResourceIDRegexp,
+		},
+		{
+			Label:     "flow_id",
+			Regexp:    verify.P1DVResourceIDRegexp,
+			PrimaryID: true,
+		},
+	}
+
+	attributes, err := framework.ParseImportID(req.ID, idComponents...)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Unexpected Import Identifier",
+			err.Error(),
+		)
+		return
+	}
+
+	for _, idComponent := range idComponents {
+		pathKey := idComponent.Label
+
+		if idComponent.PrimaryID {
+			pathKey = "id"
+		}
+
+		resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root(pathKey), attributes[idComponent.Label])...)
+	}
 }
 
 // This config object is edit-only, so Terraform can't delete it.
