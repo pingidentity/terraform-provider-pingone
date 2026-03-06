@@ -553,12 +553,14 @@ func TestAccEnvironment_ServiceInvalidAddPingIDV2(t *testing.T) {
 func TestAccEnvironment_ServiceInvalidRemovePingIDV1(t *testing.T) {
 	resourceName := acctest.ResourceNameGenEnvironment()
 	resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
+	workingDir := t.TempDir()
 
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	var environmentID string
 
 	resource.Test(t, resource.TestCase{
+		WorkingDir: workingDir,
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
@@ -592,7 +594,10 @@ func TestAccEnvironment_ServiceInvalidRemovePingIDV1(t *testing.T) {
 			},
 			// Step 4: Prevent destroy of Workforce environment
 			{
-				Config: testAccEnvironmentConfig_RemoveWorkforcePreventDestroy(resourceName, acctest.WorkforceV1SandboxEnvironmentName, licenseID),
+				PreConfig: func() {
+					acctest.TerraformStateRm(t, workingDir, resourceFullName)
+				},
+				Config: acctest.WorkforceV1SandboxEnvironment(),
 			},
 		},
 	})
@@ -601,12 +606,14 @@ func TestAccEnvironment_ServiceInvalidRemovePingIDV1(t *testing.T) {
 func TestAccEnvironment_ServiceInvalidRemovePingIDV2(t *testing.T) {
 	resourceName := acctest.ResourceNameGenEnvironment()
 	resourceFullName := fmt.Sprintf("pingone_environment.%s", resourceName)
+	workingDir := t.TempDir()
 
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	var environmentID string
 
 	resource.Test(t, resource.TestCase{
+		WorkingDir: workingDir,
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
@@ -640,7 +647,10 @@ func TestAccEnvironment_ServiceInvalidRemovePingIDV2(t *testing.T) {
 			},
 			// Step 4: Prevent destroy of Workforce environment
 			{
-				Config: testAccEnvironmentConfig_RemoveWorkforcePreventDestroy(resourceName, acctest.WorkforceV2SandboxEnvironmentName, licenseID),
+				PreConfig: func() {
+					acctest.TerraformStateRm(t, workingDir, resourceFullName)
+				},
+				Config: acctest.WorkforceV2SandboxEnvironment(),
 			},
 		},
 	})
@@ -792,17 +802,6 @@ resource "pingone_environment" "%[1]s" {
   lifecycle {
     prevent_destroy = true
   }
-}`, resourceName, name, licenseID)
-}
-
-func testAccEnvironmentConfig_RemoveWorkforcePreventDestroy(resourceName, name, licenseID string) string {
-	return fmt.Sprintf(`
-removed {
-	from = pingone_environment.%[1]s
-
-	lifecycle {
-		destroy = false
-	}
 }`, resourceName, name, licenseID)
 }
 

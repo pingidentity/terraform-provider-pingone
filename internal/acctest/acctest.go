@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
@@ -14,6 +16,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/hashicorp/terraform-exec/tfexec"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -414,6 +417,40 @@ func WorkforceV2SandboxEnvironment() string {
 		data "pingone_environment" "workforce_test" {
 			name = "%s"
 		}`, WorkforceV2SandboxEnvironmentName)
+}
+
+// Use to manually remove resource from state to prevent destruction of static resource after test
+func TerraformStateRm(t *testing.T, baseWorkingDir, resourceAddress string) {
+	t.Helper()
+	ctx := context.Background()
+
+	workingDirs, err := filepath.Glob(filepath.Join(baseWorkingDir, "work*"))
+	if err != nil {
+		t.Fatalf("Error finding terraform working directory for state cleanup: %s", err)
+	}
+
+	if len(workingDirs) != 1 {
+		t.Fatalf("Expected exactly one terraform working directory in %s, found %d: %v", baseWorkingDir, len(workingDirs), workingDirs)
+	}
+
+	workingDir := workingDirs[0]
+	terraformPath, err := exec.LookPath("terraform")
+	if err != nil {
+		t.Fatalf("Error locating terraform binary for state cleanup: %s", err)
+	}
+
+	tf, err := tfexec.NewTerraform(workingDir, terraformPath)
+	if err != nil {
+		t.Fatalf("Error initializing terraform for state cleanup: %s", err)
+	}
+
+	if err := tf.StateRm(ctx, resourceAddress); err != nil {
+		if strings.Contains(err.Error(), "No matching objects found") {
+			return
+		}
+
+		t.Fatalf("Error removing imported workforce resource from terraform state: %s", err)
+	}
 }
 
 func DomainVerifiedSandboxEnvironment() string {
