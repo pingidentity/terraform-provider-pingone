@@ -24,6 +24,7 @@ website/node_modules
 *.iml
 *.test
 *.iml
+tools/dvgenerate/internal/connector-schema.json
 
 website/vendor
 

@@ -1,0 +1,114 @@
+name: Refresh Connector Schema
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 13 1 * *'
+
+jobs:
+  generate:
+    name: generate schema
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+      
+      - name: Install Ping CLI
+        run: go install github.com/pingidentity/pingcli@latest
+        continue-on-error: false
+      
+      - name: Generate Connector Schema
+        env:
+          PINGCLI_PINGONE_CLIENT_CREDENTIALS_CLIENT_ID: ${{ secrets.PINGONE_PROD_NA_FF_CLIENT_ID_CLIENT_SECRET_BASIC }}
+          PINGCLI_PINGONE_CLIENT_CREDENTIALS_CLIENT_SECRET: ${{ secrets.PINGONE_PROD_NA_FF_CLIENT_SECRET_CLIENT_SECRET_BASIC }}
+          PINGCLI_PINGONE_ENVIRONMENT_ID: ${{ secrets.PINGONE_PROD_NA_FF_ENVIRONMENT_ID }}
+          PINGCLI_PINGONE_REGION_CODE: ${{ secrets.PINGONE_REGION }}
+        run: |
+          .github/workflows/scripts/generate_schema.sh
+        continue-on-error: false
+
+      - uses: hashicorp/setup-terraform@v3
+
+      - name: Generate Terraform Provider Documentation
+        run: |
+          make generateconnectorref
+
+      - name: Check for changes
+        id: check_changes
+        run: |
+          git add -N .
+          if git diff --compact-summary --exit-code; then
+            echo "No changes detected"
+          else
+            echo "Changes detected"
+            echo "CONTENT_CHANGED=true" >> $GITHUB_OUTPUT
+          fi
+        continue-on-error: false
+
+      - name: Create new branch
+        id: create_branch
+        if: steps.check_changes.outputs.CONTENT_CHANGED == 'true'
+        run: |
+          branch_name="update-connector-schema-$(date +'%Y%m%d%H%M%S')"
+          echo "BRANCH_NAME=$branch_name" >> $GITHUB_ENV
+          git checkout -b $branch_name
+  
+      - name: Commit changes
+        id: commit_changes
+        if: steps.check_changes.outputs.CONTENT_CHANGED == 'true'
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "action@github.com"
+          git config --global push.autoSetupRemote true
+          git add .
+          git commit -m "Update connector schema"
+          git push
+      
+      - run: make generate
+        if: steps.check_changes.outputs.CONTENT_CHANGED == 'true'
+
+      - name: Commit changes
+        id: commit_generated_doc_changes
+        if: steps.check_changes.outputs.CONTENT_CHANGED == 'true'
+        run: |
+          git add .
+          git commit -m "Update generated documentation/code"
+          git push
+
+      - name: Create PR
+        id: create_pr
+        if: steps.check_changes.outputs.CONTENT_CHANGED == 'true'
+        uses: actions/github-script@v7
+        env:
+          BRANCH_NAME: ${{ env.BRANCH_NAME }}
+        with:
+          script: |
+            const { BRANCH_NAME } = process.env
+            const { repo, owner } = context.repo;
+            const date = new Date();
+            const formattedDate = `${String(date.getDate()).padStart(2, '0')}-${date.toLocaleString('default', { month: 'short' })}-${date.getFullYear()}`;
+            const pr = await github.rest.pulls.create({
+              owner,
+              repo,
+              title: `Update Connector Schema (${formattedDate})`,
+              body: 'Connector Schema has changed.  Please review.',
+              head: BRANCH_NAME,
+              base: 'main',
+              labels: ['Documentation']
+            });
+            core.setOutput('PR_NUMBER', pr.data.number);
+              
+      - name: Add changelog entry
+        id: create_changelog_entry
+        if: steps.check_changes.outputs.CONTENT_CHANGED == 'true'
+        run: |
+          echo -e "\`\`\`release-note:note\nUpdate Connector Reference Guide ($(date +'%d %B %Y')).\n\`\`\`" > .changelog/pr-${{ steps.create_pr.outputs.PR_NUMBER }}.txt
+
+      - name: Commit changes
+        id: commit_changelog
+        if: steps.check_changes.outputs.CONTENT_CHANGED == 'true'
+        run: |
+          git add .
+          git commit -m "Update changelog"
+          git push
