@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"regexp"
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
@@ -18,9 +19,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/pingidentity/pingone-go-client/pingone"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 )
+
+const maxDeleteRetryAttemptsOnFlowPolicyConstraintViolation = 3
 
 var (
 	_ resource.ResourceWithValidateConfig = &davinciFlowResource{}
@@ -436,4 +440,26 @@ func buildJsonNormalizedValueFromMap(nodeId string, jsonMap map[string]interface
 		normalizedProperties = jsontypes.NewNormalizedValue(string(graphDataElementsNodesDataPropertiesBytes))
 	}
 	return normalizedProperties, diags
+}
+
+func deleteFlowRetryOnFlowPolicyConstraintViolationWrapper() framework.Retryable {
+	constraintViolationRetryCount := 0
+	return func(ctx context.Context, r *http.Response, p1error *pingone.GeneralError) bool {
+		if p1error != nil && len(p1error.Details) > 0 &&
+			constraintViolationRetryCount < maxDeleteRetryAttemptsOnFlowPolicyConstraintViolation {
+			// When deleting a flow just after deleting a flow policy that was using it,
+			// intermittent errors can occur.
+			m, err := regexp.MatchString("This Flow is in a Application Flow Policy", p1error.Details[0].GetMessage())
+			if err == nil && m {
+				tflog.Warn(ctx, "Flow deletion retrying due to flow policy constraint violation", map[string]interface{}{
+					"error": p1error.Error(),
+				})
+
+				constraintViolationRetryCount++
+				return true
+			}
+		}
+
+		return framework.DefaultCreateReadRetryable(ctx, r, p1error)
+	}
 }
