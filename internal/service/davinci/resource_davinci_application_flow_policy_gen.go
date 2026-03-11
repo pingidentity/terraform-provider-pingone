@@ -569,7 +569,7 @@ func (r *davinciApplicationFlowPolicyResource) Create(ctx context.Context, req r
 		return
 	}
 
-	// Prevent simultaneous modifying of flow policies
+	// Prevent simultaneous modifying of flow policies - TRIAGE-33086
 	davinciApplicationFlowPolicyModifyMutex.Lock()
 	defer davinciApplicationFlowPolicyModifyMutex.Unlock()
 
@@ -698,7 +698,7 @@ func (r *davinciApplicationFlowPolicyResource) Update(ctx context.Context, req r
 		return
 	}
 
-	// Prevent simultaneous modifying of flow policies
+	// Prevent simultaneous modifying of flow policies - TRIAGE-33086
 	davinciApplicationFlowPolicyModifyMutex.Lock()
 	defer davinciApplicationFlowPolicyModifyMutex.Unlock()
 
@@ -759,7 +759,7 @@ func (r *davinciApplicationFlowPolicyResource) Delete(ctx context.Context, req r
 		return
 	}
 
-	// Prevent simultaneous modifying of flow policies
+	// Prevent simultaneous modifying of flow policies - TRIAGE-33086
 	davinciApplicationFlowPolicyModifyMutex.Lock()
 	defer davinciApplicationFlowPolicyModifyMutex.Unlock()
 
