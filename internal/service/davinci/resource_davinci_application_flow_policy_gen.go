@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"sync"
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
@@ -34,6 +35,9 @@ var (
 	_ resource.Resource                = &davinciApplicationFlowPolicyResource{}
 	_ resource.ResourceWithConfigure   = &davinciApplicationFlowPolicyResource{}
 	_ resource.ResourceWithImportState = &davinciApplicationFlowPolicyResource{}
+
+	// Required due to TRIAGE-33086
+	davinciApplicationFlowPolicyModifyMutex sync.Mutex
 )
 
 func NewDavinciApplicationFlowPolicyResource() resource.Resource {
@@ -564,6 +568,11 @@ func (r *davinciApplicationFlowPolicyResource) Create(ctx context.Context, req r
 		)
 		return
 	}
+
+	// Prevent simultaneous modifying of flow policies - TRIAGE-33086
+	davinciApplicationFlowPolicyModifyMutex.Lock()
+	defer davinciApplicationFlowPolicyModifyMutex.Unlock()
+
 	var responseData *pingone.DaVinciFlowPolicyResponse
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
@@ -688,6 +697,11 @@ func (r *davinciApplicationFlowPolicyResource) Update(ctx context.Context, req r
 		)
 		return
 	}
+
+	// Prevent simultaneous modifying of flow policies - TRIAGE-33086
+	davinciApplicationFlowPolicyModifyMutex.Lock()
+	defer davinciApplicationFlowPolicyModifyMutex.Unlock()
+
 	var responseData *pingone.DaVinciFlowPolicyResponse
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
@@ -744,6 +758,11 @@ func (r *davinciApplicationFlowPolicyResource) Delete(ctx context.Context, req r
 		)
 		return
 	}
+
+	// Prevent simultaneous modifying of flow policies - TRIAGE-33086
+	davinciApplicationFlowPolicyModifyMutex.Lock()
+	defer davinciApplicationFlowPolicyModifyMutex.Unlock()
+
 	resp.Diagnostics.Append(framework.ParseResponse(
 		ctx,
 
