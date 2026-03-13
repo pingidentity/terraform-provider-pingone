@@ -352,7 +352,7 @@ resource "pingone_davinci_application" "%[2]s" {
 
 resource "pingone_davinci_flow" "%[2]s-first" {
   environment_id = data.pingone_environment.general_test.id
-  name           = "%[2]s"
+  name           = "%[2]s-first"
   description    = "This is a first demo flow"
   color          = "#00FF00"
 
@@ -441,7 +441,7 @@ resource "pingone_davinci_flow" "%[2]s-first" {
 
 resource "pingone_davinci_flow" "%[2]s-second" {
   environment_id = data.pingone_environment.general_test.id
-  name           = "%[2]s"
+  name           = "%[2]s-second"
   description    = "This is a second demo flow"
   color          = "#00FF00"
 
@@ -653,7 +653,7 @@ resource "pingone_davinci_application" "%[2]s" {
 
 resource "pingone_davinci_flow" "%[2]s-first" {
   environment_id = data.pingone_environment.general_test.id
-  name           = "%[2]s"
+  name           = "%[2]s-first"
   description    = "This is a first demo flow"
   color          = "#00FF00"
 
@@ -742,7 +742,7 @@ resource "pingone_davinci_flow" "%[2]s-first" {
 
 resource "pingone_davinci_flow" "%[2]s-second" {
   environment_id = data.pingone_environment.general_test.id
-  name           = "%[2]s"
+  name           = "%[2]s-second"
   description    = "This is a second demo flow"
   color          = "#00FF00"
 
