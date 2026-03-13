@@ -25,20 +25,22 @@ jobs:
           PINGCLI_PINGONE_ENVIRONMENT_ID: ${{ secrets.PINGONE_PROD_NA_FF_ENVIRONMENT_ID }}
           PINGCLI_PINGONE_REGION_CODE: ${{ secrets.PINGONE_REGION }}
         run: |
-          .github/workflows/scripts/generate_schema.sh
+          .github/workflows/connector_schema/generate_schema.sh
         continue-on-error: false
 
-      - uses: hashicorp/setup-terraform@v3
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v3
 
       - name: Generate Terraform Provider Documentation
         run: |
           make generateconnectorref
+          make fmtcheck
 
       - name: Check for changes
         id: check_changes
         run: |
-          git add -N .
-          if git diff --compact-summary --exit-code; then
+          git add .
+          if git diff --staged --compact-summary --exit-code; then
             echo "No changes detected"
           else
             echo "Changes detected"
@@ -65,6 +67,10 @@ jobs:
           git commit -m "Update connector schema"
           git push
       
+      - run: cd tools && go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
+        if: steps.check_changes.outputs.CONTENT_CHANGED == 'true'
+      - run: cd tools && go install github.com/katbyte/terrafmt
+        if: steps.check_changes.outputs.CONTENT_CHANGED == 'true'
       - run: make generate
         if: steps.check_changes.outputs.CONTENT_CHANGED == 'true'
 
