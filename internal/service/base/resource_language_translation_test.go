@@ -151,6 +151,50 @@ func TestAccLanguageTranslation_NewEnv(t *testing.T) {
 	})
 }
 
+// Validates that customMessages translation keys are properly handled by this resource
+func TestAccLanguageTranslation_CustomMessagesKeys(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	expectedKeys := []string{
+		"forms.button.text",
+		"forms.button.text.save",
+		"forms.button.text.signOn",
+		"forms.fields.recoveryCode",
+		"forms.fields.user.email.label",
+		"forms.fields.user.password.label",
+		"forms.fields.user.password.labelPasswordVerify",
+		"forms.fields.user.password.labelPasswordVerifyNew",
+		"forms.fields.user.password.new",
+		"forms.fields.user.username.label",
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: languageTranslation_GenericSandboxHCL(resourceName, expectedKeys),
+				Check: resource.ComposeTestCheckFunc(
+					languageTranslation_ValidateKeys(resourceName, expectedKeys),
+				),
+			},
+			{
+				RefreshState: true,
+				Check: resource.ComposeTestCheckFunc(
+					languageTranslation_ValidateKeys(resourceName, expectedKeys),
+				),
+			},
+		},
+	})
+}
+
 func TestAccLanguageTranslation_RemoveMiddleEntry(t *testing.T) {
 	t.Parallel()
 
@@ -266,14 +310,7 @@ func TestAccLanguageTranslation_ValidateKeys(t *testing.T) {
 }
 
 func languageTranslation_ReorderHCL(environmentName, licenseID, resourceName string, keys []string) string {
-	translations := ""
-	for _, key := range keys {
-		translations += fmt.Sprintf(`
-	{
-		key             = "%s"
-		translated_text = "Translated text for %s"
-	},`, key, key)
-	}
+	translations := languageTranslation_HCLTranslations(keys)
 
 	return fmt.Sprintf(`
 %[1]s
@@ -286,6 +323,35 @@ resource "pingone_language_translation" "%[3]s" {
   ]
 }
 `, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, translations)
+}
+
+func languageTranslation_GenericSandboxHCL(resourceName string, keys []string) string {
+	translations := languageTranslation_HCLTranslations(keys)
+
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_language_translation" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  locale         = "en"
+  translations = [
+		%[3]s
+  ]
+}
+`, acctest.GenericSandboxEnvironment(), resourceName, translations)
+}
+
+func languageTranslation_HCLTranslations(keys []string) string {
+	translations := ""
+	for _, key := range keys {
+		translations += fmt.Sprintf(`
+	{
+		key             = "%s"
+		translated_text = "Translated text for %s"
+	},`, key, key)
+	}
+
+	return translations
 }
 
 // Helper function to validate the presence of keys
