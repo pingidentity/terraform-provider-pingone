@@ -182,12 +182,12 @@ func FormatPingOneError(sdkMethod string, v pingone.GeneralError) (summaryText, 
 	var detailTextBuilder strings.Builder
 	detailTextBuilder.WriteString("PingOne Error Details:\n")
 	if v.Id != nil {
-		detailTextBuilder.WriteString(fmt.Sprintf("ID:\t\t%s\n", v.GetId()))
+		fmt.Fprintf(&detailTextBuilder, "ID:\t\t%s\n", v.GetId())
 	}
 	if v.Code != nil {
-		detailTextBuilder.WriteString(fmt.Sprintf("Code:\t\t%s\n", v.GetCode()))
+		fmt.Fprintf(&detailTextBuilder, "Code:\t\t%s\n", v.GetCode())
 	}
-	detailTextBuilder.WriteString(fmt.Sprintf("Message:\t%s\n", v.GetMessage()))
+	fmt.Fprintf(&detailTextBuilder, "Message:\t%s\n", v.GetMessage())
 
 	if details, ok := v.GetDetailsOk(); ok {
 
@@ -222,7 +222,7 @@ func FormatPingOneError(sdkMethod string, v pingone.GeneralError) (summaryText, 
 			detailsStrList = append(detailsStrList, detailsStr)
 		}
 
-		detailTextBuilder.WriteString(fmt.Sprintf("\nDetails:\n%s", strings.Join(detailsStrList, "\n")))
+		fmt.Fprintf(&detailTextBuilder, "\nDetails:\n%s", strings.Join(detailsStrList, "\n"))
 	}
 
 	detailText = detailTextBuilder.String()
