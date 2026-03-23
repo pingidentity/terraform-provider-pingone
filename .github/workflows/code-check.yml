@@ -69,7 +69,7 @@ jobs:
         with:
           go-version-file: 'go.mod'
 
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@v4
       
       - run: make generate
 
@@ -87,7 +87,7 @@ jobs:
         with:
           go-version-file: 'go.mod'
       
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@v4
       
       - run: make generate
 
