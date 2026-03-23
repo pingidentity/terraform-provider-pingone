@@ -1,0 +1,3 @@
+```release-note:note
+bump `google.golang.org/grpc` v1.78.0 => v1.79.3
+```
