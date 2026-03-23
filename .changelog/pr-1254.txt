@@ -1,0 +1,3 @@
+```release-note:bug
+Fixed a failure in client initialization when authenticating with an access token in beta resources
+```
