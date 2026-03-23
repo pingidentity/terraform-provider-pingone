@@ -1,5 +1,5 @@
 ```release-note:note
-bump `github.com/patrickcping/pingone-go-sdk-v2` v0.14.8 => v0.14.9
+bump `github.com/patrickcping/pingone-go-sdk-v2` v0.14.8 => v0.14.10
 ```
 
 ```release-note:note
