@@ -1,0 +1,19 @@
+```release-note:note
+bump `github.com/hashicorp/terraform-plugin-framework` v1.17.0 => v1.19.0
+```
+
+```release-note:note
+bump `github.com/hashicorp/terraform-plugin-go` v0.29.0 => v0.31.0
+```
+
+```release-note:note
+bump `github.com/hashicorp/terraform-plugin-mux` v0.21.0 => v0.23.0
+```
+
+```release-note:note
+bump `github.com/hashicorp/terraform-plugin-sdk/v2` v2.38.2 => v2.40.0
+```
+
+```release-note:note
+bump `github.com/hashicorp/terraform-plugin-testing` v1.14.0 => v1.15.0
+```
