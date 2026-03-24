@@ -10,7 +10,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
@@ -64,48 +63,5 @@ func davinciVariableAccessToken_CheckDestroy(s *terraform.State) error {
 		return err
 	}
 
-	for _, rs := range s.RootModule().Resources {
-		switch rs.Type {
-		case "pingone_davinci_variable":
-			shouldContinue, err := acctest.CheckParentEnvironmentDestroy(ctx, p1Client, rs.Primary.Attributes["environment_id"])
-			if err != nil {
-				return err
-			}
-
-			if shouldContinue {
-				continue
-			}
-
-			_, r, err := p1Client.DaVinciVariablesApi.GetVariableById(ctx, uuid.MustParse(rs.Primary.Attributes["environment_id"]), uuid.MustParse(rs.Primary.Attributes["id"])).Execute()
-			shouldContinue, err = acctest.CheckForResourceDestroy(r, err)
-			if err != nil {
-				return err
-			}
-
-			if shouldContinue {
-				continue
-			}
-
-			return fmt.Errorf("PingOne davinci_variable Instance %s still exists", rs.Primary.ID)
-		case "pingone_environment":
-			environmentID, err := uuid.Parse(rs.Primary.ID)
-			if err != nil {
-				return fmt.Errorf("unable to parse environment id '%s' as uuid: %v", rs.Primary.ID, err)
-			}
-
-			_, r, err := p1Client.EnvironmentsApi.GetEnvironmentById(ctx, environmentID).Execute()
-			shouldContinue, err := acctest.CheckForResourceDestroy(r, err)
-			if err != nil {
-				return err
-			}
-
-			if shouldContinue {
-				continue
-			}
-
-			return fmt.Errorf("PingOne environment instance %s still exists", rs.Primary.ID)
-		}
-	}
-
-	return nil
+	return davinciVariable_CheckDestroyWithClient(ctx, s, p1Client)
 }

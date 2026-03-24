@@ -1044,6 +1044,10 @@ func davinciVariable_CheckDestroy(s *terraform.State) error {
 		return err
 	}
 
+	return davinciVariable_CheckDestroyWithClient(ctx, s, p1Client)
+}
+
+func davinciVariable_CheckDestroyWithClient(ctx context.Context, s *terraform.State, p1Client *pingone.APIClient) error {
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "pingone_davinci_variable" {
 			continue

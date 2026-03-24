@@ -394,8 +394,8 @@ func TestClientAccessToken(ctx context.Context) (*pingone.APIClient, error) {
 		return nil, fmt.Errorf("invalid PINGONE_REGION_CODE: %s", os.Getenv("PINGONE_REGION_CODE"))
 	}
 
+	// Allow client to parse the access token from the environment variable
 	config := clientconfig.NewConfiguration().
-		WithAccessToken(strings.TrimSpace(os.Getenv("PINGONE_API_ACCESS_TOKEN"))).
 		WithTopLevelDomain(regionTopLevelDomain).
 		WithStorageType(clientconfig.StorageTypeNone)
 
