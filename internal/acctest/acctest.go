@@ -103,6 +103,35 @@ func PreCheckClient(t *testing.T) {
 	}
 }
 
+func PreCheckAccessTokenClient(t *testing.T) {
+	if v := strings.TrimSpace(os.Getenv("PINGONE_API_ACCESS_TOKEN")); v == "" {
+		t.Fatal("PINGONE_API_ACCESS_TOKEN is missing and must be set")
+	}
+
+	if v := strings.TrimSpace(os.Getenv("PINGONE_REGION_CODE")); v == "" {
+		t.Fatal("PINGONE_REGION_CODE is missing and must be set")
+	}
+
+	if v := strings.TrimSpace(os.Getenv("PINGONE_CLIENT_ID")); v != "" {
+		t.Fatal("PINGONE_CLIENT_ID must be unset when running access-token-only acceptance tests")
+	}
+
+	if v := strings.TrimSpace(os.Getenv("PINGONE_CLIENT_SECRET")); v != "" {
+		t.Fatal("PINGONE_CLIENT_SECRET must be unset when running access-token-only acceptance tests")
+	}
+
+	if v := strings.TrimSpace(os.Getenv("PINGONE_ENVIRONMENT_ID")); v != "" {
+		t.Fatal("PINGONE_ENVIRONMENT_ID must be unset when running access-token-only acceptance tests")
+	}
+}
+
+func PreCheckAccessTokenOnly(t *testing.T) {
+	if v := os.Getenv("TESTACC_ACCESS_TOKEN_AUTH"); v != "true" {
+		t.Skip("Skipping test because TESTACC_ACCESS_TOKEN_AUTH is not set to true")
+		return
+	}
+}
+
 func PreCheckNoBeta(t *testing.T) {
 	if v := os.Getenv("TESTACC_BETA"); v == "true" {
 		t.Skip("Skipping test because TESTACC_BETA is set to true")
@@ -357,6 +386,23 @@ func TestClient(ctx context.Context) (*pingone.APIClient, error) {
 
 	return pingone.NewAPIClient(pingOneConfig)
 
+}
+
+func TestClientAccessToken(ctx context.Context) (*pingone.APIClient, error) {
+	regionTopLevelDomain, ok := framework.RegionTopLevelDomainFromCode(strings.ToLower(os.Getenv("PINGONE_REGION_CODE")))
+	if !ok {
+		return nil, fmt.Errorf("invalid PINGONE_REGION_CODE: %s", os.Getenv("PINGONE_REGION_CODE"))
+	}
+
+	config := clientconfig.NewConfiguration().
+		WithAccessToken(strings.TrimSpace(os.Getenv("PINGONE_API_ACCESS_TOKEN"))).
+		WithTopLevelDomain(regionTopLevelDomain).
+		WithStorageType(clientconfig.StorageTypeNone)
+
+	pingOneConfig := pingone.NewConfiguration(config)
+	pingOneConfig.UserAgent = framework.UserAgent("", GetProviderTestingVersion())
+
+	return pingone.NewAPIClient(pingOneConfig)
 }
 
 func PreCheckTestClient(ctx context.Context, t *testing.T) *pingone.APIClient {
