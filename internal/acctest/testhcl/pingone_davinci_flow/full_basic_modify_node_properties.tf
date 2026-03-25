@@ -42,7 +42,7 @@ resource "pingone_davinci_connector_instance" "%[2]s-variables" {
 
 resource "pingone_davinci_flow" "%[2]s-subflow1" {
   environment_id = data.pingone_environment.general_test.id
-  name = "subflow 1"
+  name = "%[2]s-subflow-1"
   description = "subflow 1 desc"
   color = "#AFD5FF"
   
@@ -187,7 +187,7 @@ resource "pingone_davinci_flow" "%[2]s-subflow1" {
 
 resource "pingone_davinci_flow" "%[2]s-subflow2" {
   environment_id = data.pingone_environment.general_test.id
-  name = "subflow 2"
+  name = "%[2]s-subflow-2"
   description = "Cloned on Wed Jan 31 2024 13:43:43 GMT+0000 (Coordinated Universal Time). \n"
   color = "#AFD5FF"
   
@@ -331,7 +331,7 @@ resource "pingone_davinci_flow" "%[2]s-subflow2" {
 
 resource "pingone_davinci_flow" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  name = "full-basic"
+  name = "%[2]s-full-basic"
   color = "#E3F0FF"
   
   graph_data = {
