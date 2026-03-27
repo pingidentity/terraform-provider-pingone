@@ -88,6 +88,8 @@ func Agreement_RemovalDrift_PreConfig(ctx context.Context, apiClient *management
 
 	if agreement == nil {
 		t.Fatalf("Agreement not found.  Cannot disable before delete")
+		// Prevent linter complaining about nil pointer risk by returning
+		return
 	}
 
 	agreement.SetEnabled(false)

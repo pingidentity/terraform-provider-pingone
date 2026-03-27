@@ -16,6 +16,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 )
 
 type CustomError func(*http.Response, *model.P1Error) diag.Diagnostics
@@ -96,7 +97,7 @@ func ParseResponseWithCustomTimeout(ctx context.Context, f framework.SDKInterfac
 		customRetryConditions,
 	)
 
-	if err != nil || r.StatusCode >= 300 {
+	if err != nil || (r != nil && r.StatusCode >= 300) {
 
 		switch t := err.(type) {
 		case *model.GenericOpenAPIError:
@@ -118,12 +119,12 @@ func ParseResponseWithCustomTimeout(ctx context.Context, f framework.SDKInterfac
 
 			diags.AddError(fmt.Sprintf("Error when calling `%s`: %v", requestID, t.Error()), "")
 
-			tflog.Error(ctx, fmt.Sprintf("Error when calling `%s`: %v\n\nResponse code: %d\nResponse content-type: %s\nFull response body: %+v", requestID, t.Error(), r.StatusCode, r.Header.Get("Content-Type"), r.Body))
+			tflog.Error(ctx, fmt.Sprintf("Error when calling `%s`: %v\n\n%s", requestID, t.Error(), utils.ResponseErrorDetails(r)))
 
 			return diags
 
 		case *url.Error:
-			tflog.Warn(ctx, fmt.Sprintf("Detected HTTP error %s\n\nResponse code: %d\nResponse content-type: %s", t.Err.Error(), r.StatusCode, r.Header.Get("Content-Type")))
+			tflog.Warn(ctx, fmt.Sprintf("Detected HTTP error %s\n\n%s", t.Err.Error(), utils.ResponseErrorDetails(r)))
 
 			diags.AddError(fmt.Sprintf("Error when calling `%s`: %v", requestID, t.Error()), "")
 

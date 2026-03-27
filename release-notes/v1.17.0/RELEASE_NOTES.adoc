@@ -1,0 +1,30 @@
+= Release Notes for v1.17.0
+:toc:
+:toclevels: 3
+:sectnums:
+
+Release Date: 2026-03-25
+
+== ENHANCEMENTS
+* link:https://github.com/pingidentity/terraform-provider-pingone/commit/d16b3593[d16b3593] `resource/pingone_password_policy`: Add support for sequence-rule attributes `alphabet_sequence_rule`, `number_sequence_rule`, `qwerty_sequence_rule`, and `shifted_number_row_sequence_rule`. link:https://github.com/pingidentity/terraform-provider-pingone/pull/1229[#1229]
+* link:https://github.com/pingidentity/terraform-provider-pingone/commit/d16b3593[d16b3593] `data-source/pingone_password_policy`: Add support for sequence-rule attributes `alphabet_sequence_rule`, `number_sequence_rule`, `qwerty_sequence_rule`, and `shifted_number_row_sequence_rule`. link:https://github.com/pingidentity/terraform-provider-pingone/pull/1229[#1229]
+
+== NOTES
+* link:https://github.com/pingidentity/terraform-provider-pingone/commit/36880c95[36880c95] bump `github.com/cloudflare/circl` v1.6.1 => v1.6.3 link:https://github.com/pingidentity/terraform-provider-pingone/pull/1228[#1228]
+* link:https://github.com/pingidentity/terraform-provider-pingone/commit/177e798e[177e798e] bump `github.com/patrickcping/pingone-go-sdk-v2` v0.14.5 => v0.14.8 link:https://github.com/pingidentity/terraform-provider-pingone/pull/1231[#1231]
+* link:https://github.com/pingidentity/terraform-provider-pingone/commit/177e798e[177e798e] bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.63.0 => v0.64.0 link:https://github.com/pingidentity/terraform-provider-pingone/pull/1231[#1231]
+* link:https://github.com/pingidentity/terraform-provider-pingone/commit/177e798e[177e798e] bump `github.com/patrickcping/pingone-go-sdk-v2/verify` v0.10.0 => v0.11.1 link:https://github.com/pingidentity/terraform-provider-pingone/pull/1231[#1231]
+* link:https://github.com/pingidentity/terraform-provider-pingone/commit/3c8316dd[3c8316dd] bump `github.com/patrickcping/pingone-go-sdk-v2` v0.14.8 => v0.14.10 link:https://github.com/pingidentity/terraform-provider-pingone/pull/1251[#1251]
+* link:https://github.com/pingidentity/terraform-provider-pingone/commit/3c8316dd[3c8316dd] bump `github.com/patrickcping/pingone-go-sdk-v2/authorize` v0.8.2 => v0.8.3 link:https://github.com/pingidentity/terraform-provider-pingone/pull/1251[#1251]
+* link:https://github.com/pingidentity/terraform-provider-pingone/commit/3c8316dd[3c8316dd] bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` v0.12.0 => v0.12.1 link:https://github.com/pingidentity/terraform-provider-pingone/pull/1251[#1251]
+* link:https://github.com/pingidentity/terraform-provider-pingone/commit/3c8316dd[3c8316dd] bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.64.0 => v0.66.0 link:https://github.com/pingidentity/terraform-provider-pingone/pull/1251[#1251]
+* link:https://github.com/pingidentity/terraform-provider-pingone/commit/3c8316dd[3c8316dd] bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.24.1 => v0.25.0 link:https://github.com/pingidentity/terraform-provider-pingone/pull/1251[#1251]
+* link:https://github.com/pingidentity/terraform-provider-pingone/commit/3c8316dd[3c8316dd] bump `github.com/patrickcping/pingone-go-sdk-v2/risk` v0.21.0 => v0.21.1 link:https://github.com/pingidentity/terraform-provider-pingone/pull/1251[#1251]
+* link:https://github.com/pingidentity/terraform-provider-pingone/commit/3c8316dd[3c8316dd] bump `github.com/patrickcping/pingone-go-sdk-v2/verify` v0.11.1 => v0.11.2 link:https://github.com/pingidentity/terraform-provider-pingone/pull/1251[#1251]
+* link:https://github.com/pingidentity/terraform-provider-pingone/commit/0065b3a3[0065b3a3] bump `github.com/hashicorp/terraform-plugin-framework` v1.17.0 => v1.19.0 link:https://github.com/pingidentity/terraform-provider-pingone/pull/1252[#1252]
+* link:https://github.com/pingidentity/terraform-provider-pingone/commit/0065b3a3[0065b3a3] bump `github.com/hashicorp/terraform-plugin-go` v0.29.0 => v0.31.0 link:https://github.com/pingidentity/terraform-provider-pingone/pull/1252[#1252]
+* link:https://github.com/pingidentity/terraform-provider-pingone/commit/0065b3a3[0065b3a3] bump `github.com/hashicorp/terraform-plugin-mux` v0.21.0 => v0.23.0 link:https://github.com/pingidentity/terraform-provider-pingone/pull/1252[#1252]
+* link:https://github.com/pingidentity/terraform-provider-pingone/commit/0065b3a3[0065b3a3] bump `github.com/hashicorp/terraform-plugin-sdk/v2` v2.38.2 => v2.40.0 link:https://github.com/pingidentity/terraform-provider-pingone/pull/1252[#1252]
+* link:https://github.com/pingidentity/terraform-provider-pingone/commit/0065b3a3[0065b3a3] bump `github.com/hashicorp/terraform-plugin-testing` v1.14.0 => v1.15.0 link:https://github.com/pingidentity/terraform-provider-pingone/pull/1252[#1252]
+* link:https://github.com/pingidentity/terraform-provider-pingone/commit/0065b3a3[0065b3a3] bump `google.golang.org/grpc` v1.78.0 => v1.79.3 link:https://github.com/pingidentity/terraform-provider-pingone/pull/1253[#1253]
+

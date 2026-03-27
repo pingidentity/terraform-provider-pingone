@@ -897,7 +897,6 @@ func TestAccMFADevicePolicyDefault_BOMValidation_CrossTypes(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	environmentNamePingID := acctest.ResourceNameGenEnvironment() + "-pingid"
 	environmentNameMFA := acctest.ResourceNameGenEnvironment() + "-mfa"
 
 	name := resourceName
@@ -911,6 +910,7 @@ func TestAccMFADevicePolicyDefault_BOMValidation_CrossTypes(t *testing.T) {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoBeta(t)
+			acctest.PreCheckRegionSupportsWorkforce(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             mfa.MFADevicePolicyDefault_CheckDestroy,
@@ -918,7 +918,7 @@ func TestAccMFADevicePolicyDefault_BOMValidation_CrossTypes(t *testing.T) {
 		Steps: []resource.TestStep{
 			// 1. Environment with PingID (no MFA) -> Try to create PING_ONE_MFA policy
 			{
-				Config:      testAccMFADevicePolicyDefaultConfig_BOMValidation_PingIDEnv(environmentNamePingID, licenseID, region, resourceName, name),
+				Config:      testAccMFADevicePolicyDefaultConfig_BOMValidation_PingIDEnv(resourceName, name),
 				ExpectError: regexp.MustCompile("Unsupported Policy Type"),
 			},
 			// 2. Environment with MFA (no PingID) -> Try to create PING_ONE_ID policy
@@ -2651,34 +2651,21 @@ resource "pingone_mfa_device_policy_default" "%[4]s" {
 }`, environmentName, licenseID, region, resourceName, name)
 }
 
-func testAccMFADevicePolicyDefaultConfig_BOMValidation_PingIDEnv(environmentName, licenseID, region, resourceName, name string) string {
+func testAccMFADevicePolicyDefaultConfig_BOMValidation_PingIDEnv(resourceName, name string) string {
 	return fmt.Sprintf(`
-resource "pingone_environment" "%[1]s" {
-  name       = "%[1]s"
-  type       = "SANDBOX"
-  region     = "%[3]s"
-  license_id = "%[2]s"
-  services = [
-    {
-      type = "SSO"
-    },
-    {
-      type = "PingID"
-    }
-  ]
-}
+%[1]s
 
-resource "pingone_mfa_device_policy_default" "%[4]s" {
-  environment_id = pingone_environment.%[1]s.id
+resource "pingone_mfa_device_policy_default" "%[2]s" {
+  environment_id = data.pingone_environment.workforce_test.id
   policy_type    = "PING_ONE_MFA"
-  name           = "%[5]s"
+  name           = "%[3]s"
 
   mobile = { enabled = true }
   sms    = { enabled = false }
   voice  = { enabled = false }
   email  = { enabled = false }
   totp   = { enabled = false }
-}`, environmentName, licenseID, region, resourceName, name)
+}`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name)
 }
 
 func testAccMFADevicePolicyDefaultConfig_BOMValidation_MFAEnv(environmentName, licenseID, region, resourceName, name string) string {

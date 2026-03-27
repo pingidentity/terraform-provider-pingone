@@ -12,7 +12,7 @@ resource "pingone_davinci_connector_instance" "%[2]s-errors" {
 resource "pingone_davinci_flow" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   description = "empty objects in settings test"
-  name = "simple"
+  name = "%[2]s-simple"
   settings = {
     csp = "worker-src 'self' blob:; script-src 'self' https://cdn.jsdelivr.net https://code.jquery.com https://devsdk.singularkey.com http://cdnjs.cloudflare.com 'unsafe-inline' 'unsafe-eval';"
     intermediate_loading_screen_css = "{}"

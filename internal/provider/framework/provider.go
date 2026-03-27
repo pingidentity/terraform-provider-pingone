@@ -264,7 +264,6 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 	}
 
 	config := clientconfig.NewConfiguration().
-		WithGrantType(oauth2.GrantTypeClientCredentials).
 		WithEnvironmentID(data.EnvironmentID.ValueString()).
 		WithAccessToken(data.APIAccessToken.ValueString()).
 		WithStorageType(clientconfig.StorageTypeNone)
@@ -286,6 +285,10 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 		clientSecret = strings.TrimSpace(os.Getenv("PINGONE_CLIENT_SECRET"))
 	}
 	config = config.WithClientSecret(clientSecret)
+
+	if clientId != "" && clientSecret != "" {
+		config = config.WithGrantType(oauth2.GrantTypeClientCredentials)
+	}
 
 	var regionCode string
 	if !data.RegionCode.IsNull() && !data.RegionCode.IsUnknown() {

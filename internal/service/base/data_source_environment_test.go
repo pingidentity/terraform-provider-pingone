@@ -239,6 +239,7 @@ func TestAccEnvironmentDataSource_Workforce(t *testing.T) {
 					resource.TestCheckTypeSetElemNestedAttrs(dataSourceFullName, "services.*", map[string]string{
 						"type": "PingID",
 					}),
+					testCheckEnvironmentServiceHasDeploymentID(dataSourceFullName, "PingID"),
 				),
 			},
 			{
@@ -251,6 +252,7 @@ func TestAccEnvironmentDataSource_Workforce(t *testing.T) {
 					resource.TestCheckTypeSetElemNestedAttrs(dataSourceFullName, "services.*", map[string]string{
 						"type": "PingID-v2",
 					}),
+					testCheckEnvironmentServiceHasDeploymentID(dataSourceFullName, "PingID-v2"),
 				),
 			},
 		},

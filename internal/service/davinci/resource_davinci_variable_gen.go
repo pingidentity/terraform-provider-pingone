@@ -221,6 +221,7 @@ func (r *davinciVariableResource) Schema(ctx context.Context, req resource.Schem
 						Optional:  true,
 						Sensitive: true,
 						Validators: []validator.String{
+							stringvalidator.LengthAtLeast(1),
 							stringvalidator.ExactlyOneOf(
 								path.MatchRelative().AtParent().AtName("bool"),
 								path.MatchRelative().AtParent().AtName("float32"),
@@ -232,6 +233,7 @@ func (r *davinciVariableResource) Schema(ctx context.Context, req resource.Schem
 					"string": schema.StringAttribute{
 						Optional: true,
 						Validators: []validator.String{
+							stringvalidator.LengthAtLeast(1),
 							stringvalidator.ExactlyOneOf(
 								path.MatchRelative().AtParent().AtName("bool"),
 								path.MatchRelative().AtParent().AtName("float32"),
@@ -310,6 +312,12 @@ func (model *davinciVariableResourceModel) buildClientStructPost() (*pingone.DaV
 			valueValue.Bool = nil
 		}
 		valueValue.Float32 = valueAttrs["float32"].(types.Float32).ValueFloat32Pointer()
+		// Workaround TRIAGE-27920 - unable to set 0 number value
+		if valueValue.Float32 != nil && *valueValue.Float32 == 0 {
+			floatStr := strconv.FormatFloat(float64(*valueValue.Float32), 'f', -1, 32)
+			valueValue.String = &floatStr
+			valueValue.Float32 = nil
+		}
 		if !valueAttrs["json_object"].IsNull() && !valueAttrs["json_object"].IsUnknown() {
 			var jsonValueMap map[string]interface{}
 			err := json.Unmarshal([]byte(valueAttrs["json_object"].(jsontypes.Normalized).ValueString()), &jsonValueMap)
@@ -396,6 +404,12 @@ func (model *davinciVariableResourceModel) buildClientStructPut() (*pingone.DaVi
 			valueValue.Bool = nil
 		}
 		valueValue.Float32 = valueAttrs["float32"].(types.Float32).ValueFloat32Pointer()
+		// Workaround TRIAGE-27920 - unable to set 0 number value
+		if valueValue.Float32 != nil && *valueValue.Float32 == 0 {
+			floatStr := strconv.FormatFloat(float64(*valueValue.Float32), 'f', -1, 32)
+			valueValue.String = &floatStr
+			valueValue.Float32 = nil
+		}
 		if !valueAttrs["json_object"].IsNull() && !valueAttrs["json_object"].IsUnknown() {
 			var jsonValueMap map[string]interface{}
 			err := json.Unmarshal([]byte(valueAttrs["json_object"].(jsontypes.Normalized).ValueString()), &jsonValueMap)
@@ -506,6 +520,15 @@ func (state *davinciVariableResourceModel) readClientResponse(response *pingone.
 			// The API has returned a string "false" instead of a boolean false
 			boolValue := false
 			response.Value.Bool = &boolValue
+			response.Value.String = nil
+		}
+		// Workaround TRIAGE-27920 - unable to set 0 number value
+		if stateValueAttrs != nil &&
+			!stateValueAttrs["float32"].IsNull() && !stateValueAttrs["float32"].IsUnknown() &&
+			response.Value.String != nil && *response.Value.String == "0" {
+			// The API has returned a string "0" instead of a number 0
+			floatValue := float32(0)
+			response.Value.Float32 = &floatValue
 			response.Value.String = nil
 		}
 		// For secret types, the API always returns a series of asterisks for the string value

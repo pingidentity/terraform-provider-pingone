@@ -92,6 +92,8 @@ func AgreementLocalization_RemovalDrift_PreConfig(ctx context.Context, apiClient
 
 	if agreementLanguage == nil {
 		t.Fatalf("Agreement language not found.  Cannot disable before delete")
+		// Prevent linter complaining about nil pointer risk by returning
+		return
 	}
 
 	agreementLanguage.SetEnabled(false)

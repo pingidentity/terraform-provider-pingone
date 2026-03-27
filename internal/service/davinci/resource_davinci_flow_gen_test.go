@@ -7,10 +7,12 @@ package davinci_test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -73,6 +75,64 @@ func TestAccDavinciFlow_RemovalDrift(t *testing.T) {
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
+func TestAccDavinciFlow_NodePropertiesDrift(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_davinci_flow.%s", resourceName)
+	newKeyName := fmt.Sprintf("newKey-%s", uuid.NewString())
+
+	var environmentId string
+	var id string
+	var lastUpdatedAt time.Time
+
+	var p1Client pingone.APIClient
+	var ctx = context.Background()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckBeta(t)
+
+			p1Client = *acctest.PreCheckTestClient(ctx, t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             davinciFlow_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Create flow
+			{
+				Config: davinciFlow_FullBasicHCL(t, resourceName, false),
+				Check:  davinciFlow_GetIDs(resourceFullName, &environmentId, &id),
+			},
+			// Add a new JSON key to node properties via API (should generate warning but no plan).
+			// Simulates a data migration for flows on the backend.
+			{
+				PreConfig: func() {
+					davinciFlow_ModifyNodeProperties_AddKey(ctx, &p1Client, t, environmentId, id, newKeyName)
+					// Get the updated timestamp after the API modification
+					davinciFlow_CheckUpdatedTimestamp(ctx, &p1Client, &environmentId, &id, &lastUpdatedAt, true)(nil)
+				},
+				Config: davinciFlow_FullBasicHCL(t, resourceName, false),
+				// Expect no update to the flow from terraform, so no change to the update timestamp
+				Check: davinciFlow_CheckUpdatedTimestamp(ctx, &p1Client, &environmentId, &id, &lastUpdatedAt, false),
+			},
+			// Modify an existing JSON key in node properties via API (should cause a plan).
+			// Simulates a UI config change or similar.
+			{
+				PreConfig: func() {
+					davinciFlow_ModifyNodeProperties_ChangeValue(ctx, &p1Client, t, environmentId, id, newKeyName)
+					// Get the updated timestamp after the API modification
+					davinciFlow_CheckUpdatedTimestamp(ctx, &p1Client, &environmentId, &id, &lastUpdatedAt, true)(nil)
+				},
+				Config: davinciFlow_FullBasicHCL(t, resourceName, false),
+				// Expect an update to the flow from terraform, so we should see a change to the update timestamp
+				Check: davinciFlow_CheckUpdatedTimestamp(ctx, &p1Client, &environmentId, &id, &lastUpdatedAt, true),
 			},
 		},
 	})
@@ -1128,6 +1188,126 @@ func davinciFlow_Delete(ctx context.Context, apiClient *pingone.APIClient, t *te
 	_, err := apiClient.DaVinciFlowsApi.DeleteFlowById(ctx, uuid.MustParse(environmentId), id).Execute()
 	if err != nil {
 		t.Fatalf("Failed to delete davinci_flow: %v", err)
+	}
+}
+
+// Assert that the lastUpdatedAt timestamp has or has not changed, and update the value of lastUpdatedAt from the API response after the check
+func davinciFlow_CheckUpdatedTimestamp(ctx context.Context, apiClient *pingone.APIClient, environmentId, id *string, lastUpdatedAt *time.Time, expectUpdate bool) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		if environmentId == nil || *environmentId == "" || id == nil || *id == "" {
+			return fmt.Errorf("One of the identifier attributes can't be determined. environmentId: '%s' id: '%s'", *environmentId, *id)
+		}
+
+		// Get the current flow
+		flow, _, err := apiClient.DaVinciFlowsApi.GetFlowById(ctx, uuid.MustParse(*environmentId), *id).Execute()
+		if err != nil {
+			return fmt.Errorf("Failed to get davinci_flow: %v", err)
+		}
+
+		if expectUpdate {
+			if !flow.UpdatedAt.After(*lastUpdatedAt) {
+				return fmt.Errorf("Expected davinci_flow to have been updated. Last updated at: %v, Current updated at: %v", *lastUpdatedAt, *flow.UpdatedAt)
+			}
+		} else {
+			if !flow.UpdatedAt.Equal(*lastUpdatedAt) {
+				return fmt.Errorf("Expected davinci_flow to NOT have been updated. Last updated at: %v, Current updated at: %v", *lastUpdatedAt, *flow.UpdatedAt)
+			}
+		}
+
+		// Otherwise update the timestamp to the current value
+		*lastUpdatedAt = *flow.UpdatedAt
+
+		return nil
+	}
+}
+
+// Modify node properties by adding a new JSON key
+func davinciFlow_ModifyNodeProperties_AddKey(ctx context.Context, apiClient *pingone.APIClient, t *testing.T, environmentId, id, newKey string) {
+	if environmentId == "" || id == "" {
+		t.Fatalf("One of the identifier attributes can't be determined. environmentId: '%s' id: '%s'", environmentId, id)
+	}
+
+	// Get the current flow
+	flow, _, err := apiClient.DaVinciFlowsApi.GetFlowById(ctx, uuid.MustParse(environmentId), id).Execute()
+	if err != nil {
+		t.Fatalf("Failed to get davinci_flow: %v", err)
+	}
+
+	// Modify the first node's properties by adding a new key
+	if flow.GraphData != nil && len(flow.GraphData.Elements.Nodes) > 0 {
+		for i := range flow.GraphData.Elements.Nodes {
+			if flow.GraphData.Elements.Nodes[i].Data.Properties != nil {
+				// Add a new key to the properties
+				properties := flow.GraphData.Elements.Nodes[i].Data.Properties
+				properties[newKey] = map[string]interface{}{
+					"value": "additionalValue",
+				}
+				flow.GraphData.Elements.Nodes[i].Data.Properties = properties
+				break // Only modify the first node
+			}
+		}
+	}
+
+	// Convert response to request - using JSON marshaling/unmarshaling
+	flowJSON, err := json.Marshal(flow)
+	if err != nil {
+		t.Fatalf("Failed to marshal flow: %v", err)
+	}
+
+	var replaceRequest pingone.DaVinciFlowReplaceRequest
+	if err := json.Unmarshal(flowJSON, &replaceRequest); err != nil {
+		t.Fatalf("Failed to unmarshal replace request: %v", err)
+	}
+
+	_, _, err = apiClient.DaVinciFlowsApi.ReplaceFlowById(ctx, uuid.MustParse(environmentId), id).DaVinciFlowReplaceRequest(replaceRequest).Execute()
+	if err != nil {
+		t.Fatalf("Failed to update davinci_flow with added key: %v", err)
+	}
+}
+
+// Modify node properties by changing an existing JSON key value
+func davinciFlow_ModifyNodeProperties_ChangeValue(ctx context.Context, apiClient *pingone.APIClient, t *testing.T, environmentId, id, newKey string) {
+	if environmentId == "" || id == "" {
+		t.Fatalf("One of the identifier attributes can't be determined. environmentId: '%s' id: '%s'", environmentId, id)
+	}
+
+	// Get the current flow
+	flow, _, err := apiClient.DaVinciFlowsApi.GetFlowById(ctx, uuid.MustParse(environmentId), id).Execute()
+	if err != nil {
+		t.Fatalf("Failed to get davinci_flow: %v", err)
+	}
+
+	// Modify the first node's properties by changing an existing key value
+	if flow.GraphData != nil && len(flow.GraphData.Elements.Nodes) > 0 {
+		for i := range flow.GraphData.Elements.Nodes {
+			if flow.GraphData.Elements.Nodes[i].Data.Properties != nil {
+				properties := flow.GraphData.Elements.Nodes[i].Data.Properties
+				// Modify the first existing key
+				for key := range properties {
+					if key != newKey {
+						properties[key] = "modifiedValue" + id
+						break
+					}
+				}
+				break
+			}
+		}
+	}
+
+	// Convert response to request - using JSON marshaling/unmarshaling
+	flowJSON, err := json.Marshal(flow)
+	if err != nil {
+		t.Fatalf("Failed to marshal flow: %v", err)
+	}
+
+	var replaceRequest pingone.DaVinciFlowReplaceRequest
+	if err := json.Unmarshal(flowJSON, &replaceRequest); err != nil {
+		t.Fatalf("Failed to unmarshal replace request: %v", err)
+	}
+
+	_, _, err = apiClient.DaVinciFlowsApi.ReplaceFlowById(ctx, uuid.MustParse(environmentId), id).DaVinciFlowReplaceRequest(replaceRequest).Execute()
+	if err != nil {
+		t.Fatalf("Failed to update davinci_flow with changed value: %v", err)
 	}
 }
 

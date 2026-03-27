@@ -41,3 +41,5 @@ env*.sh
 
 # VSCode files
 .vscode/
+
+scratch/

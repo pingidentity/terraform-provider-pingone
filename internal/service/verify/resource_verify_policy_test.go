@@ -133,9 +133,6 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "government_id.retry_attempts", "2"),
 		resource.TestCheckResourceAttr(resourceFullName, "government_id.verify_aamva", "false"),
 		resource.TestCheckResourceAttr(resourceFullName, "government_id.aadhaar.enabled", "true"),
-		resource.TestCheckResourceAttr(resourceFullName, "government_id.aadhaar.otp.deliveries.count", "3"),
-		resource.TestCheckResourceAttr(resourceFullName, "government_id.aadhaar.otp.deliveries.cooldown.duration", "120"),
-		resource.TestCheckResourceAttr(resourceFullName, "government_id.aadhaar.otp.deliveries.cooldown.time_unit", "SECONDS"),
 
 		resource.TestCheckResourceAttr(resourceFullName, "facial_comparison.verify", "REQUIRED"),
 		resource.TestCheckResourceAttr(resourceFullName, "facial_comparison.threshold", "HIGH"),
@@ -302,7 +299,7 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "transaction.data_collection.timeout.time_unit", "SECONDS"),
 		resource.TestCheckResourceAttr(resourceFullName, "transaction.data_collection_only", "true"),
 
-		resource.TestCheckResourceAttr(resourceFullName, "voice.verify", "OPTIONAL"),
+		resource.TestCheckResourceAttr(resourceFullName, "voice.verify", "REQUIRED"),
 		resource.TestCheckResourceAttr(resourceFullName, "voice.enrollment", "false"),
 		resource.TestCheckResourceAttr(resourceFullName, "voice.comparison_threshold", "LOW"),
 		resource.TestCheckResourceAttr(resourceFullName, "voice.liveness_threshold", "LOW"),
@@ -553,15 +550,6 @@ resource "pingone_verify_policy" "%[2]s" {
     verify_aamva    = false
     aadhaar = {
       enabled = true
-      otp = {
-        deliveries = {
-          count = 3
-          cooldown = {
-            duration  = "120"
-            time_unit = "SECONDS"
-          }
-        }
-      }
     }
   }
 
@@ -806,7 +794,7 @@ resource "pingone_verify_policy" "%[2]s" {
   }
 
   voice = {
-    verify               = "OPTIONAL"
+    verify               = "REQUIRED"
     enrollment           = false
     comparison_threshold = "LOW"
     liveness_threshold   = "LOW"
@@ -1056,15 +1044,6 @@ resource "pingone_verify_policy" "%[2]s" {
     verify = "REQUIRED"
     aadhaar = {
       enabled = true
-      otp = {
-        deliveries = {
-          count = 2
-          cooldown = {
-            duration  = 90
-            time_unit = "SECONDS"
-          }
-        }
-      }
     }
   }
 

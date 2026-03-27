@@ -340,7 +340,7 @@ Required:
 
 Required:
 
-- `grant_types` (Set of String) A list that specifies the grant type for the authorization request.  Options are `AUTHORIZATION_CODE`, `CLIENT_CREDENTIALS`, `DEVICE_CODE`, `IMPLICIT`, `REFRESH_TOKEN`.
+- `grant_types` (Set of String) A list that specifies the grant type for the authorization request.  Options are `AUTHORIZATION_CODE`, `CIBA`, `CLIENT_CREDENTIALS`, `DEVICE_CODE`, `IMPLICIT`, `REFRESH_TOKEN`, `TOKEN_EXCHANGE`.
 - `token_endpoint_auth_method` (String) A string that specifies the client authentication methods supported by the token endpoint.  Options are `CLIENT_SECRET_BASIC`, `CLIENT_SECRET_JWT`, `CLIENT_SECRET_POST`, `NONE`, `PRIVATE_KEY_JWT`.  When `PRIVATE_KEY_JWT` is configured, either `jwks` or `jwks_url` must also be configured.
 - `type` (String) A string that specifies the type associated with the application.  Options are `CUSTOM_APP`, `NATIVE_APP`, `SERVICE`, `SINGLE_PAGE_APP`, `WEB_APP`, `WORKER`.  This field is immutable and will trigger a replace plan if changed.
 

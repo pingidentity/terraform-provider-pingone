@@ -47,6 +47,7 @@ Read-Only:
 
 - `bookmarks` (Attributes Set) A set of objects that specify custom bookmark links for the service. (see [below for nested schema](#nestedatt--services--bookmarks))
 - `console_url` (String) A custom console URL set for the service.  Generally used with services that are deployed separately to the PingOne SaaS service, such as `PingFederate`, `PingAccess`, `PingDirectory`, `PingAuthorize` and `PingCentral`.
+- `deployment` (Attributes) A single object that specifies the external resource associated with this product, containing state and settings related to the external resource. (see [below for nested schema](#nestedatt--services--deployment))
 - `tags` (Set of String) A set of tags applied upon environment creation.  Only configurable when the service `type` is `DaVinci`.  Options are `DAVINCI_MINIMAL`.
 - `type` (String) The service type applied to the environment.  Valid options are `APIIntelligence`, `Authorize`, `Credentials`, `DaVinci`, `MFA`, `PingAccess`, `PingAuthorize`, `PingCentral`, `PingDirectory`, `PingFederate`, `PingID`, `PingID-v2`, `Risk`, `SSO`, `Verify`.
 
@@ -57,3 +58,11 @@ Read-Only:
 
 - `name` (String) A string that specifies the bookmark name.
 - `url` (String) A string that specifies the bookmark URL.
+
+
+<a id="nestedatt--services--deployment"></a>
+### Nested Schema for `services.deployment`
+
+Read-Only:
+
+- `id` (String) A string that specifies the ID of the external resource associated with this product

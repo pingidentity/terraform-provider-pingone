@@ -147,6 +147,10 @@ func TestAccPasswordPolicy_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "min_characters.alphabetical_lowercase", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "min_characters.numeric", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "min_characters.special_characters", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "alphabet_sequence_rule.max_length", "3"),
+					resource.TestCheckResourceAttr(resourceFullName, "number_sequence_rule.max_length", "3"),
+					resource.TestCheckResourceAttr(resourceFullName, "qwerty_sequence_rule.max_length", "3"),
+					resource.TestCheckResourceAttr(resourceFullName, "shifted_number_row_sequence_rule.max_length", "3"),
 					resource.TestCheckResourceAttr(resourceFullName, "password_age_max", "35"),
 					resource.TestCheckResourceAttr(resourceFullName, "password_age_min", "2"),
 					resource.TestCheckResourceAttr(resourceFullName, "max_repeated_characters", "2"),
@@ -211,6 +215,10 @@ func TestAccPasswordPolicy_Minimal(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "length"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "lockout"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "min_characters"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "alphabet_sequence_rule"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "number_sequence_rule"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "qwerty_sequence_rule"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "shifted_number_row_sequence_rule"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "password_age_max"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "password_age_min"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "max_repeated_characters"),
@@ -268,6 +276,168 @@ func TestAccPasswordPolicy_BadParameters(t *testing.T) {
 	})
 }
 
+func TestAccPasswordPolicy_Validation(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             sso.PasswordPolicy_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccPasswordPolicyConfig_WithBody(resourceName, "", ""),
+				ExpectError: regexp.MustCompile(`Attribute name string length must be at least 1`),
+			},
+			{
+				Config: testAccPasswordPolicyConfig_WithBody(resourceName, name, `
+  alphabet_sequence_rule = {
+    max_length = 4
+  }
+`),
+				ExpectError: regexp.MustCompile(`Attribute alphabet_sequence_rule\.max_length value must be one of:`),
+			},
+			{
+				Config: testAccPasswordPolicyConfig_WithBody(resourceName, name, `
+  history = {
+    count          = 0
+    retention_days = 1
+  }
+`),
+				ExpectError: regexp.MustCompile(`Attribute history\.count value must be at least 1`),
+			},
+			{
+				Config: testAccPasswordPolicyConfig_WithBody(resourceName, name, `
+  history = {
+    count          = 1
+    retention_days = 0
+  }
+`),
+				ExpectError: regexp.MustCompile(`Attribute history\.retention_days value must be at least 1`),
+			},
+			{
+				Config: testAccPasswordPolicyConfig_WithBody(resourceName, name, `
+  length = {
+    min = 8
+    max = 254
+  }
+`),
+				ExpectError: regexp.MustCompile(`Attribute length\.max value must be between 255[\s\n]+and[\s\n]+255`),
+			},
+			{
+				Config: testAccPasswordPolicyConfig_WithBody(resourceName, name, `
+  length = {
+    min = 7
+    max = 255
+  }
+`),
+				ExpectError: regexp.MustCompile(`Attribute length\.min value must be between 8[\s\n]+and[\s\n]+32`),
+			},
+			{
+				Config: testAccPasswordPolicyConfig_WithBody(resourceName, name, `
+  lockout = {
+    duration_seconds = 0
+    failure_count    = 1
+  }
+`),
+				ExpectError: regexp.MustCompile(`Attribute lockout\.duration_seconds value must be at least 1`),
+			},
+			{
+				Config: testAccPasswordPolicyConfig_WithBody(resourceName, name, `
+  lockout = {
+    duration_seconds = 1
+    failure_count    = 0
+  }
+`),
+				ExpectError: regexp.MustCompile(`Attribute lockout\.failure_count value must be at least 1`),
+			},
+			{
+				Config: testAccPasswordPolicyConfig_WithBody(resourceName, name, `
+  min_characters = {
+    alphabetical_uppercase = 2
+  }
+`),
+				ExpectError: regexp.MustCompile(`Attribute min_characters\.alphabetical_uppercase value must be between 0[\s\n]+and[\s\n]+1`),
+			},
+			{
+				Config: testAccPasswordPolicyConfig_WithBody(resourceName, name, `
+  min_characters = {
+    alphabetical_lowercase = 2
+  }
+`),
+				ExpectError: regexp.MustCompile(`Attribute min_characters\.alphabetical_lowercase value must be between 0[\s\n]+and[\s\n]+1`),
+			},
+			{
+				Config: testAccPasswordPolicyConfig_WithBody(resourceName, name, `
+  min_characters = {
+    numeric = 2
+  }
+`),
+				ExpectError: regexp.MustCompile(`Attribute min_characters\.numeric value must be between 0[\s\n]+and[\s\n]+1`),
+			},
+			{
+				Config: testAccPasswordPolicyConfig_WithBody(resourceName, name, `
+  min_characters = {
+    special_characters = 2
+  }
+`),
+				ExpectError: regexp.MustCompile(`Attribute min_characters\.special_characters value must be between 0[\s\n]+and[\s\n]+1`),
+			},
+			{
+				Config: testAccPasswordPolicyConfig_WithBody(resourceName, name, `
+  number_sequence_rule = {
+    max_length = 4
+  }
+`),
+				ExpectError: regexp.MustCompile(`Attribute number_sequence_rule\.max_length value must be one of:`),
+			},
+			{
+				Config: testAccPasswordPolicyConfig_WithBody(resourceName, name, `
+  qwerty_sequence_rule = {
+    max_length = 2
+  }
+`),
+				ExpectError: regexp.MustCompile(`Attribute qwerty_sequence_rule\.max_length value must be between 3[\s\n]+and[\s\n]+3`),
+			},
+			{
+				Config: testAccPasswordPolicyConfig_WithBody(resourceName, name, `
+  shifted_number_row_sequence_rule = {
+    max_length = 2
+  }
+`),
+				ExpectError: regexp.MustCompile(`Attribute shifted_number_row_sequence_rule\.max_length value must be between 3[\s\n]+and[\s\n]+3`),
+			},
+			{
+				Config:      testAccPasswordPolicyConfig_WithBody(resourceName, name, "\n  password_age_max = 0\n"),
+				ExpectError: regexp.MustCompile(`Attribute password_age_max value must be at least 1`),
+			},
+			{
+				Config:      testAccPasswordPolicyConfig_WithBody(resourceName, name, "\n  password_age_min = 0\n"),
+				ExpectError: regexp.MustCompile(`Attribute password_age_min value must be at least 1`),
+			},
+			{
+				Config:      testAccPasswordPolicyConfig_WithBody(resourceName, name, "\n  max_repeated_characters = 1\n"),
+				ExpectError: regexp.MustCompile(`Attribute max_repeated_characters value must be between 2[\s\n]+and[\s\n]+2`),
+			},
+			{
+				Config:      testAccPasswordPolicyConfig_WithBody(resourceName, name, "\n  min_complexity = 6\n"),
+				ExpectError: regexp.MustCompile(`Attribute min_complexity value must be between 7[\s\n]+and[\s\n]+7`),
+			},
+			{
+				Config:      testAccPasswordPolicyConfig_WithBody(resourceName, name, "\n  min_unique_characters = 4\n"),
+				ExpectError: regexp.MustCompile(`Attribute min_unique_characters value must be between 5[\s\n]+and[\s\n]+5`),
+			},
+		},
+	})
+}
+
 func testAccPasswordPolicyConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
@@ -317,6 +487,22 @@ resource "pingone_password_policy" "%[2]s" {
     special_characters     = 1
   }
 
+  alphabet_sequence_rule = {
+    max_length = 3
+  }
+
+  number_sequence_rule = {
+    max_length = 3
+  }
+
+  qwerty_sequence_rule = {
+    max_length = 3
+  }
+
+  shifted_number_row_sequence_rule = {
+    max_length = 3
+  }
+
   max_repeated_characters = 2
   min_complexity          = 7
   min_unique_characters   = 5
@@ -338,4 +524,15 @@ resource "pingone_password_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccPasswordPolicyConfig_WithBody(resourceName, name, body string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_password_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+%[4]s
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, body)
 }

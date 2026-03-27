@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
@@ -14,6 +16,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/hashicorp/terraform-exec/tfexec"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -97,6 +100,35 @@ func PreCheckClient(t *testing.T) {
 
 	if v := os.Getenv("PINGONE_REGION_CODE"); v == "" {
 		t.Fatal("PINGONE_REGION_CODE is missing and must be set")
+	}
+}
+
+func PreCheckAccessTokenClient(t *testing.T) {
+	if v := strings.TrimSpace(os.Getenv("PINGONE_API_ACCESS_TOKEN")); v == "" {
+		t.Fatal("PINGONE_API_ACCESS_TOKEN is missing and must be set")
+	}
+
+	if v := strings.TrimSpace(os.Getenv("PINGONE_REGION_CODE")); v == "" {
+		t.Fatal("PINGONE_REGION_CODE is missing and must be set")
+	}
+
+	if v := strings.TrimSpace(os.Getenv("PINGONE_CLIENT_ID")); v != "" {
+		t.Fatal("PINGONE_CLIENT_ID must be unset when running access-token-only acceptance tests")
+	}
+
+	if v := strings.TrimSpace(os.Getenv("PINGONE_CLIENT_SECRET")); v != "" {
+		t.Fatal("PINGONE_CLIENT_SECRET must be unset when running access-token-only acceptance tests")
+	}
+
+	if v := strings.TrimSpace(os.Getenv("PINGONE_ENVIRONMENT_ID")); v != "" {
+		t.Fatal("PINGONE_ENVIRONMENT_ID must be unset when running access-token-only acceptance tests")
+	}
+}
+
+func PreCheckAccessTokenOnly(t *testing.T) {
+	if v := os.Getenv("TESTACC_ACCESS_TOKEN_AUTH"); v != "true" {
+		t.Skip("Skipping test because TESTACC_ACCESS_TOKEN_AUTH is not set to true")
+		return
 	}
 }
 
@@ -356,6 +388,23 @@ func TestClient(ctx context.Context) (*pingone.APIClient, error) {
 
 }
 
+func TestClientAccessToken(ctx context.Context) (*pingone.APIClient, error) {
+	regionTopLevelDomain, ok := framework.RegionTopLevelDomainFromCode(strings.ToLower(os.Getenv("PINGONE_REGION_CODE")))
+	if !ok {
+		return nil, fmt.Errorf("invalid PINGONE_REGION_CODE: %s", os.Getenv("PINGONE_REGION_CODE"))
+	}
+
+	// Allow client to parse the access token from the environment variable
+	config := clientconfig.NewConfiguration().
+		WithTopLevelDomain(regionTopLevelDomain).
+		WithStorageType(clientconfig.StorageTypeNone)
+
+	pingOneConfig := pingone.NewConfiguration(config)
+	pingOneConfig.UserAgent = framework.UserAgent("", GetProviderTestingVersion())
+
+	return pingone.NewAPIClient(pingOneConfig)
+}
+
 func PreCheckTestClient(ctx context.Context, t *testing.T) *pingone.APIClient {
 	p1Client, err := TestClient(ctx)
 
@@ -414,6 +463,40 @@ func WorkforceV2SandboxEnvironment() string {
 		data "pingone_environment" "workforce_test" {
 			name = "%s"
 		}`, WorkforceV2SandboxEnvironmentName)
+}
+
+// Use to manually remove resource from state to prevent destruction of static resource after test
+func TerraformStateRm(t *testing.T, baseWorkingDir, resourceAddress string) {
+	t.Helper()
+	ctx := context.Background()
+
+	workingDirs, err := filepath.Glob(filepath.Join(baseWorkingDir, "work*"))
+	if err != nil {
+		t.Fatalf("Error finding terraform working directory for state cleanup: %s", err)
+	}
+
+	if len(workingDirs) != 1 {
+		t.Fatalf("Expected exactly one terraform working directory in %s, found %d: %v", baseWorkingDir, len(workingDirs), workingDirs)
+	}
+
+	workingDir := workingDirs[0]
+	terraformPath, err := exec.LookPath("terraform")
+	if err != nil {
+		t.Fatalf("Error locating terraform binary for state cleanup: %s", err)
+	}
+
+	tf, err := tfexec.NewTerraform(workingDir, terraformPath)
+	if err != nil {
+		t.Fatalf("Error initializing terraform for state cleanup: %s", err)
+	}
+
+	if err := tf.StateRm(ctx, resourceAddress); err != nil {
+		if strings.Contains(err.Error(), "No matching objects found") {
+			return
+		}
+
+		t.Fatalf("Error removing imported workforce resource from terraform state: %s", err)
+	}
 }
 
 func DomainVerifiedSandboxEnvironment() string {

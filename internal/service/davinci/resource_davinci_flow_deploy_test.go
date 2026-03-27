@@ -89,6 +89,7 @@ func testAccDavinciFlowDeploy(t *testing.T, withBootstrap bool) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_davinci_flow_deploy.%s", resourceName)
 	var lastDeployTime string
 
 	resource.Test(t, resource.TestCase{
@@ -112,6 +113,23 @@ func testAccDavinciFlowDeploy(t *testing.T, withBootstrap bool) {
 					davinciFlowDeploy_CheckComputedValues(resourceName),
 					davinciFlowDeploy_GetDeployedTimestamp(&lastDeployTime),
 				),
+			},
+			{
+				// Test importing the resource
+				Config:       davinciFlowDeploy_FirstDeployHCL(t, resourceName, withBootstrap),
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["id"]), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 			{
 				// Expect no additional deploy
@@ -140,7 +158,6 @@ func testAccDavinciFlowDeploy(t *testing.T, withBootstrap bool) {
 					davinciFlowDeploy_GetDeployedTimestamp(&lastDeployTime),
 				),
 			},
-			// Import is not supported in this resource
 		},
 	})
 }
@@ -172,6 +189,69 @@ func testAccDavinciFlowDeploy_BrokenFlow(t *testing.T, withBootstrap bool) {
 				Config: davinciFlowDeploy_BrokenFlowHCL(t, resourceName, withBootstrap),
 				// TRIAGE-31546: Right now attempting to deploy this broken flow returns a 500 error from the API
 				ExpectError: regexp.MustCompile(`There was an unexpected error with the service`),
+			},
+		},
+	})
+}
+
+func TestAccDavinciFlowDeploy_BadParameters(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	flowResourceFullName := fmt.Sprintf("pingone_davinci_flow.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_davinci_flow_deploy.%s", resourceName)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             davinciFlow_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				// Create the flow
+				Config: davinciFlowDeploy_FlowOnlyHCL(t, resourceName, false),
+			},
+			{
+				// Verify importing deploy resource fails if flow hasn't been deployed
+				Config:       davinciFlowDeploy_FirstDeployHCL(t, resourceName, false),
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[flowResourceFullName]
+						if !ok {
+							return "", fmt.Errorf("Resource Not found: %s", flowResourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["id"]), nil
+					}
+				}(),
+				ExpectError: regexp.MustCompile(`has never been deployed`),
+				ImportState: true,
+			},
+			{
+				// Deploy the flow
+				Config: davinciFlowDeploy_FirstDeployHCL(t, resourceName, false),
+			},
+			// Errors
+			{
+				ResourceName: resourceFullName,
+				ImportState:  true,
+				ExpectError:  regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "/",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
+			},
+			{
+				ResourceName:  resourceFullName,
+				ImportStateId: "badformat/badformat",
+				ImportState:   true,
+				ExpectError:   regexp.MustCompile(`Unexpected Import Identifier`),
 			},
 		},
 	})
@@ -411,7 +491,7 @@ resource "pingone_davinci_flow_deploy" "%[3]s" {
 `, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
-func davinciFlowDeploy_BrokenFlowHCL(t *testing.T, resourceName string, withBootstrap bool) string {
+func davinciFlowDeploy_BrokenFlowHCL(_ *testing.T, resourceName string, withBootstrap bool) string {
 	return fmt.Sprintf(`
 		%[1]s
 
