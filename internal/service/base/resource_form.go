@@ -1884,11 +1884,11 @@ func (p *formResourceModel) expand(ctx context.Context) (*management.Form, diag.
 	}
 
 	data := management.NewForm(
-		p.Name.ValueString(),
 		management.EnumFormCategory(p.Category.ValueString()),
 		*management.NewFormComponents(componentFields),
 		p.MarkOptional.ValueBool(),
 		p.MarkRequired.ValueBool(),
+		p.Name.ValueString(),
 	)
 
 	if !p.Description.IsNull() && !p.Description.IsUnknown() {
