@@ -1,0 +1,29 @@
+---
+layout: ""
+page_title: "Connector Instance Parameter Reference"
+description: |-
+  The guide describes the connection parameters for all connectors in the DaVinci platform, with examples of how to define within Terraform using the `pingone_davinci_connector_instance` resource.
+---
+
+# DaVinci Connection Instance Definitions
+
+Below is a list of all available DaVinci Connections available for use in the `pingone_davinci_connector_instance` resource. 
+If the `value` type of a property is not defined it must be inferred.
+
+{{ range . }}
+## {{ .ConnectorName }}
+
+Connector ID (`connector.id` in the resource): `{{ .ConnectorId }}`
+{{with .Properties}}
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+{{ range . }}
+* `{{ .Name }}` ({{with .Type}}{{.}}{{else}}string; *Type inferred from the provided string value*{{end}}): {{with .Description}}{{.}} {{end}}{{ with .ConsoleDisplayName }}Console display name: "{{.}}".{{end}}
+{{- end }}
+{{ else }}
+*No properties*
+{{ end }}
+
+Example:
+{{"{{"}} tffile (printf "%s" "examples/davinci-connector-instances/{{ .ConnectorId }}.tf") {{"}}"}}
+
+{{ end }}
