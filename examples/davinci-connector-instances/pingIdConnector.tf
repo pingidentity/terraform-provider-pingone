@@ -31,25 +31,25 @@ resource "pingone_davinci_connector_instance" "pingIdConnector" {
     value = var.pingidconnector_property_claims_name_value_pairs
   }
   property {
-    name = "customAuth"
-    type = "string"
+    name  = "customAuth"
+    type  = "string"
     value = jsonencode({
-      "properties" : {
-        "pingIdProperties" : {
-          "displayName" : "PingID properties file",
-          "preferredControlType" : "secureTextArea",
-          "hashedVisibility" : true,
-          "required" : true,
-          "info" : "Paste the contents of the PingID properties file into this field.",
-          "value" : "${file(var.pingidconnector_property_pingid_properties_file_path)}"
-        },
-        "returnToUrl" : {
-          "displayName" : "Application Return To URL",
-          "preferredControlType" : "textField",
-          "info" : "When using the embedded flow player widget and an IDP/Social Login connector, provide a callback URL to return back to the application."
-        }
-      }
-    })
+				"properties": {
+				  "pingIdProperties": {
+					"displayName": "PingID properties file",
+					"preferredControlType": "secureTextArea",
+					"hashedVisibility": true,
+					"required": true,
+					"info": "Paste the contents of the PingID properties file into this field.",
+					"value": "${file(var.pingidconnector_property_pingid_properties_file_path)}"
+				  },
+				  "returnToUrl": {
+					"displayName": "Application Return To URL",
+					"preferredControlType": "textField",
+					"info": "When using the embedded flow player widget and an IDP/Social Login connector, provide a callback URL to return back to the application."
+				  }
+				}
+			  })
   }
   property {
     name  = "fname"
