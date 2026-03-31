@@ -8,13 +8,13 @@ The following guide shows how to include descriptions of your changes into the c
 
 ## Adding change descriptions
 
-In order to add change descriptions to a PR, you add a new file into the `.changelog/` directory.  The name of the file will be `<PR/Issue number>.txt`
+In order to add change descriptions to a PR, you add a new file into the `.changelog/` directory.  The name of the file will be `pr-<PR/Issue number>.txt`
 
 For example, if I raise a PR with ID `1234`, the file to create and include in the PR commit will be:
 
 ```
 ├── .changelog
-│   ├── 1234.txt
+│   ├── pr-1234.txt
 ```
 
 The contents of the changelog text file will be one or more change descriptions, described below.
