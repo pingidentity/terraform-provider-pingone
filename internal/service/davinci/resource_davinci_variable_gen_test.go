@@ -38,7 +38,7 @@ func TestAccDavinciVariable_RemovalDrift(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckBeta(t)
+			acctest.PreCheckNoBeta(t)
 
 			p1Client = acctest.PreCheckTestClient(ctx, t)
 		},
@@ -83,7 +83,7 @@ func TestAccDavinciVariable_MinimalMaximal(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckBeta(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             davinciVariable_CheckDestroy,
@@ -144,7 +144,7 @@ func TestAccDavinciVariable_Boolean(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckBeta(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             davinciVariable_CheckDestroy,
@@ -187,7 +187,7 @@ func TestAccDavinciVariable_Number(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckBeta(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             davinciVariable_CheckDestroy,
@@ -225,7 +225,7 @@ func TestAccDavinciVariable_Secret(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckBeta(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             davinciVariable_CheckDestroy,
@@ -249,7 +249,7 @@ func TestAccDavinciVariable_ChangeDataType(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckBeta(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             davinciVariable_CheckDestroy,
@@ -297,7 +297,7 @@ func testAccDavinciVariable_UserContext(t *testing.T, withBootstrapConfig bool) 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckBeta(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             davinciVariable_CheckDestroy,
@@ -350,7 +350,7 @@ func testAccDavinciVariable_FlowContext(t *testing.T, withBootstrapConfig bool) 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckBeta(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             davinciVariable_CheckDestroy,
@@ -388,7 +388,7 @@ func testAccDavinciVariable_SecretValueTypes(t *testing.T, withBootstrapConfig b
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckBeta(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             davinciVariable_CheckDestroy,
@@ -435,7 +435,7 @@ func TestAccDavinciVariable_NewEnv(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckBeta(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             davinciVariable_CheckDestroy,
@@ -458,7 +458,7 @@ func TestAccDavinciVariable_BadParameters(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckBeta(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             davinciVariable_CheckDestroy,
@@ -498,7 +498,7 @@ func TestAccDavinciVariable_InvalidConfig(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckBeta(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             davinciVariable_CheckDestroy,

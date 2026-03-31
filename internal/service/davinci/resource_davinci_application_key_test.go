@@ -41,7 +41,7 @@ func TestAccDavinciApplicationKey_RemovalDrift(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckBeta(t)
+			acctest.PreCheckNoBeta(t)
 
 			p1Client = acctest.PreCheckTestClient(ctx, t)
 		},
@@ -86,7 +86,7 @@ func TestAccDavinciApplicationKey_Rotate(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckBeta(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             davinciApplication_CheckDestroy,
@@ -169,7 +169,7 @@ func TestAccDavinciApplicationKey_NewEnv(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckBeta(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             davinciApplication_CheckDestroy,
@@ -192,7 +192,7 @@ func TestAccDavinciApplicationKey_BadParameters(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckBeta(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             davinciApplication_CheckDestroy,

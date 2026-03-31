@@ -42,7 +42,7 @@ func TestAccDavinciFlow_RemovalDrift(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckBeta(t)
+			acctest.PreCheckNoBeta(t)
 
 			p1Client = acctest.PreCheckTestClient(ctx, t)
 		},
@@ -95,7 +95,7 @@ func TestAccDavinciFlow_NodePropertiesDrift(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckBeta(t)
+			acctest.PreCheckNoBeta(t)
 
 			p1Client = *acctest.PreCheckTestClient(ctx, t)
 		},
@@ -153,7 +153,7 @@ func testAccDavinciFlow_MinimalMaximal(t *testing.T, withBootstrap bool) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckBeta(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             davinciFlow_CheckDestroy,
@@ -264,7 +264,7 @@ func testAccDavinciFlow_Basic(t *testing.T, withBootstrapConfig bool) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckBeta(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             davinciFlow_CheckDestroy,
@@ -328,7 +328,7 @@ func TestAccDavinciFlow_EmptyObjectsInSettings(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckBeta(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             davinciFlow_CheckDestroy,
@@ -350,7 +350,7 @@ func TestAccDavinciFlow_ComplexObjectsInSettings(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckBeta(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             davinciFlow_CheckDestroy,
@@ -392,7 +392,7 @@ func testAccDavinciFlow_VariableRefs(t *testing.T, withBootstrap bool) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckBeta(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             davinciFlow_CheckDestroy,
@@ -429,7 +429,7 @@ func TestAccDavinciFlow_NewEnv(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckBeta(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             davinciFlow_CheckDestroy,
@@ -452,7 +452,7 @@ func TestAccDavinciFlow_BadParameters(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckBeta(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             davinciFlow_CheckDestroy,
@@ -493,7 +493,7 @@ func TestAccDavinciFlow_FloatsDoNotCausePlans(t *testing.T) {
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckBeta(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             davinciFlow_CheckDestroy,

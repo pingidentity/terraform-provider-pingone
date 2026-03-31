@@ -26,7 +26,7 @@ func TestAccDavinciVariable_AccessTokenAuth_WithEnvironment(t *testing.T) {
 			acctest.PreCheckAccessTokenOnly(t)
 			acctest.PreCheckAccessTokenClient(t)
 			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckBeta(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             davinciVariableAccessToken_CheckDestroy,

@@ -29,7 +29,7 @@ func testAccDavinciConnectorInstanceDataSource_ByIDFull(t *testing.T, withBootst
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckBeta(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             davinciConnectorInstance_CheckDestroy,
@@ -59,7 +59,7 @@ func testAccDavinciConnectorInstanceDataSource_NotFound(t *testing.T, withBootst
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckBeta(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             davinciConnectorInstance_CheckDestroy,
@@ -98,7 +98,7 @@ func testAccDavinciConnectorInstanceDataSource_BootstrapConnectionByID(t *testin
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckBeta(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		ErrorCheck:               acctest.ErrorCheck(t),

@@ -37,7 +37,7 @@ func testAccDavinciConnectorInstancesDataSource_Get(t *testing.T, withBootstrapC
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckClient(t)
-			acctest.PreCheckBeta(t)
+			acctest.PreCheckNoBeta(t)
 		},
 		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
 		CheckDestroy:             davinciConnectorInstance_CheckDestroy,
