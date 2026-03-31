@@ -28,7 +28,7 @@ build:
 install: build
 	go install $(BUILD_TAGS) -ldflags="-X main.version=$(VERSION)$(VERSION_SUFFIX)"
 
-generate: build fmt generateconnectorref
+generate: build fmt
 	GOFLAGS="$(BUILD_TAGS)" go tool tfplugindocs generate --provider-name terraform-provider-pingone
 
 test: build
