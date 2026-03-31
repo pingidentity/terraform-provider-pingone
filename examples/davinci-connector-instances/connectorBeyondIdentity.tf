@@ -1,0 +1,33 @@
+resource "pingone_davinci_connector_instance" "connectorBeyondIdentity" {
+  environment_id = var.pingone_environment_id
+
+  connector = {
+    id = "connectorBeyondIdentity"
+  }
+  name = "My awesome connectorBeyondIdentity"
+  property {
+    name  = "authType"
+    type  = "string"
+    value = var.connectorbeyondidentity_property_auth_type
+  }
+  property {
+    name  = "button"
+    type  = "string"
+    value = var.connectorbeyondidentity_property_button
+  }
+  property {
+    name  = "openId"
+    type  = "string"
+    value = jsonencode({})
+  }
+  property {
+    name  = "showPoweredBy"
+    type  = "string"
+    value = var.connectorbeyondidentity_property_show_powered_by
+  }
+  property {
+    name  = "skipButtonPress"
+    type  = "string"
+    value = var.connectorbeyondidentity_property_skip_button_press
+  }
+}

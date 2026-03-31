@@ -101,6 +101,72 @@ Example:
 {{ tffile (printf "%s" "examples/davinci-connector-instances/connectorAbuseipdb.tf") }}
 
 
+## Accertify
+
+Connector ID (`connector.id` in the resource): `AccertifyConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `accountCreateFailureCode` (string): Failure code for account create attempts. Console display name: "Account Create Failure Code".
+* `accountID` (string): User's unique identifier assigned by your system. Console display name: "Account ID".
+* `authenticationMethod` (string): How the user authenticated. Console display name: "Authentication Method".
+* `baseUrl` (string): Accertify API base URL (include https://). Console display name: "Base URL".
+* `basicAuthPassword` (string): Password used to build the Authorization Basic header for Accertify API requests. Console display name: "Password".
+* `basicAuthUsername` (string): Username used to build the Authorization Basic header for Accertify API requests. Console display name: "Username ".
+* `devicePayload` (string): Accertify Device payload from the collector script (recommended over Device Transaction ID). Console display name: "Device Payload".
+* `deviceTransactionID` (string): Accertify Device transaction ID from collector JS/SDK (backward compatibility). Console display name: "Device Transaction ID".
+* `emailAddress` (string): Email address associated with the account or event. Console display name: "Email Address".
+* `eventSource` (string): Where or how the event originated. Console display name: "Event Source".
+* `firstName` (string): User's first name. Console display name: "First Name".
+* `hashedPassword` (string): Hashed password (do not provide a plaintext password). Console display name: "Hashed Password".
+* `ipAddress` (string): User's IP address. Console display name: "IP Address".
+* `isMobileAppInstalled` (string): Whether the account has the mobile application installed somewhere. Console display name: "Is Mobile App Installed".
+* `lastName` (string): User's last name. Console display name: "Last Name".
+* `loginEventFailureCode` (string): Login Event failure code. Console display name: "Failure Code".
+* `middleName` (string): User's middle name. Console display name: "Middle Name".
+* `pageID` (string): UBA unique page ID defined from the collector script. Console display name: "Page ID".
+* `previousAvsResult` (string): Previous AVS result. Console display name: "Previous AVS Result".
+* `previousCardBin` (string): Previous leading digits (BIN). Console display name: "Previous Card BIN".
+* `previousCardLastFour` (string): Previous last four digits. Console display name: "Previous Card Last Four".
+* `previousCardNumber` (string): Previous credit card number (hashed or tokenized). Console display name: "Previous Card Number".
+* `previousCvvResult` (string): Previous CVV result. Console display name: "Previous CVV Result".
+* `previousEmailAddress` (string): Email address before the account update. Console display name: "Previous Email Address".
+* `previousExpirationDay` (string): Previous expiration day (DD). Console display name: "Previous Expiration Day".
+* `previousExpirationMonth` (string): Previous expiration month (MM). Console display name: "Previous Expiration Month".
+* `previousExpirationYear` (string): Previous expiration year (YYYY). Console display name: "Previous Expiration Year".
+* `previousNameOnCreditCard` (string): Previous cardholder name. Console display name: "Previous Name on Card".
+* `previousPaymentType` (string): Previous payment method type. Console display name: "Previous Payment Type".
+* `success` (string): Whether the event was successful or not. Console display name: "Success".
+* `ubaEvents` (string): UBA recent events payload. Console display name: "UBA Events".
+* `ubaID` (string): Accertify UBA ID used to reference behavior data. Console display name: "UBA ID".
+* `ubaSessionID` (string): The user's Session ID defined by Accertify for the user's web browsing activity. Console display name: "UBA Session ID".
+* `updateEventID` (string): eventID that triggered the verification. Console display name: "Update Event ID".
+* `updateEventRecommendationDetail` (string): The recommendationDetail returned by Accertify for the original event. Console display name: "Update Event Recommendation Detail".
+* `updateEventType` (string): Event type that triggered the verification. Console display name: "Update Event Type".
+* `updateTrigger` (string): Trigger that caused the password to be updated. Console display name: "Update Trigger".
+* `updatedAvsResult` (string): Updated AVS result. Console display name: "Updated AVS Result".
+* `updatedCardBin` (string): Updated leading digits (BIN). Console display name: "Updated Card BIN".
+* `updatedCardLastFour` (string): Updated last four digits. Console display name: "Updated Card Last Four".
+* `updatedCardNumber` (string): Updated credit card number (hashed or tokenized). Console display name: "Updated Card Number".
+* `updatedCvvResult` (string): Updated CVV result. Console display name: "Updated CVV Result".
+* `updatedEmailAddress` (string): Email address after the account update. Console display name: "Updated Email Address".
+* `updatedExpirationDay` (string): Updated expiration day (DD). Console display name: "Updated Expiration Day".
+* `updatedExpirationMonth` (string): Updated expiration month (MM). Console display name: "Updated Expiration Month".
+* `updatedExpirationYear` (string): Updated expiration year (YYYY). Console display name: "Updated Expiration Year".
+* `updatedNameOnCreditCard` (string): Updated cardholder name. Console display name: "Updated Name on Card".
+* `updatedPaymentType` (string): Updated payment method type. Console display name: "Updated Payment Type".
+* `userAgent` (string): User agent of the user's browser/OS. Console display name: "User Agent".
+* `username` (string): User's username (if applicable). Console display name: "Username".
+* `verificationAttempts` (string): Number of attempts the user tried to verify. Console display name: "Verification Attempts".
+* `verificationFailureCode` (string): Verification Event failure code. Console display name: "Failure Code".
+* `verificationStatus` (string): Status of the verification (mapped to failureCode in the doc). Console display name: "Verification Status".
+* `verificationType` (string): Kind of verification the user attempted. Console display name: "Verification Type".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/AccertifyConnector.tf") }}
+
+
 ## ActiveCampaign API
 
 Connector ID (`connector.id` in the resource): `connector-oai-activecampaignapi`
@@ -12603,6 +12669,10 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `agreementPresentationId` (string): The unique identifier for the agreement information to ensure the correct agreement revision and language is being accepted. Console display name: "Agreement Presentation ID".
 * `alternativeIdentifier` (string): Enter an Alternative Identifier to look for populations. Console display name: "Alternative Identifier".
 * `bypassPolicy` (string): Indicate whether the password policy used to authenticate the user's population should be ignored. Console display name: "Bypass PingOne Password Policy".
+* `changePasswordUserCustomTemplateVariant` (string): You can enter a custom template name, or leave blank to use the default template. You can also enter a parameter from a previous connector, or any text. Console display name: "Custom Value".
+* `changePasswordUserTemplateLocale` (string): Add a locale to allow localized notifications for end-users. ISO Language Codes are supported. Console display name: "Notification Locale".
+* `changePasswordUserTemplateVariables` (string): If Custom variables are defined in the notification body, map them here. Console display name: "Notification Variables".
+* `changePasswordUserTemplateVariant` (string): The name of a custom notification defined in PingOne. If the form you want is not listed, select Enter Custom Value. Console display name: "Notification Name (Password Change End User)".
 * `clearUserAttributes` (string): Type the PingOne user attributes you want to clear for a user, such as name or primaryPhone, and hit enter after each one. Console display name: "User Attributes to Clear".
 * `clearUserAttributesLink` (string): Console display name: "PingOne User Attributes".
 * `clientId` (string): The Client ID of your PingOne Worker application. Console display name: "Client ID".
@@ -12624,12 +12694,14 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `escapeIdentifier` (string): Make usernames with special characters more searchable. Console display name: "Search Special-Character Usernames".
 * `externalId` (string): ID of a user at an identity provider. Console display name: "External ID".
 * `family` (string): Console display name: "Family Name".
+* `filterCondition` (string): Console display name: "Filter Condition".
 * `forceChange` (string):  Indicate whether the user must change their password the next time they sign on. Console display name: "Force Change Password".
 * `gatewayId` (string): Select the gateway that connects to the Active Directory servers where the users are located. Console display name: "Gateway".
 * `gatewayUserTypeList` (string): The gateway and user type to target when validating the user's credentials. These values are based on the gateways configured in your PingOne environment. Console display name: "Gateway User Type List".
 * `given` (string): Console display name: "Given Name".
 * `group` (string): The name of the group. Console display name: "Group".
 * `groupId` (string): The unique identifier for the group. Console display name: "Group ID".
+* `groupIds` (string): The IDs of the groups to stream users from. Leave blank to include users from all groups. Console display name: "Group IDs".
 * `groupName` (string): The name of the group. Console display name: "Group Name".
 * `identifier` (string): Enter the User ID, Username, or Email address of the user that you want to find. Console display name: "Identifier".
 * `identityProvider` (string): The name of the PingOne Identity Provider. Console display name: "Identity Provider".
@@ -12650,15 +12722,22 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `passwordValue` (string): The user's new password, which can be in a cleartext or pre-encoded format. Console display name: "Password Value".
 * `population` (string): The name of the population. Console display name: "Population".
 * `populationId` (string): The unique identifier for the population. Console display name: "Population ID".
+* `populationIds` (string): The IDs of the populations to stream users from. Leave blank to include users from all populations. Console display name: "Population IDs".
 * `preferredLanguage` (string): Console display name: "Preferred Language".
 * `primaryPhone` (string): Console display name: "Primary Phone".
 * `recoveryCode` (string): The code to validate. Console display name: "Recovery Code".
 * `region` (string): The region in which your PingOne environment exists. Console display name: "Region".
 * `returnUserPasswordStatus` (string): The output will include a property named 'passwordStatus' which correlates to the user's password state status in PingOne. Console display name: "Return User Password Status".
 * `scimFilter` (string): Console display name: "SCIM Filter".
+* `setPasswordAdminCustomTemplateVariant` (string): You can enter a custom template name, or leave blank to use the default template. You can also enter a parameter from a previous connector, or any text. Console display name: "Custom Value".
+* `setPasswordAdminTemplateLocale` (string): Add a locale to allow localized notifications for end-users. ISO Language Codes are supported. Console display name: "Notification Locale".
+* `setPasswordAdminTemplateVariables` (string): If Custom variables are defined in the notification body, map them here. Console display name: "Notification Variables".
+* `setPasswordAdminTemplateVariant` (string): The name of a custom notification defined in PingOne. If the form you want is not listed, select Enter Custom Value. Console display name: "Notification Name (Password Change Admin)".
 * `showPoweredBy` (string): Console display name: "".
 * `singleFactorSignOnFormId` (string): Select the sign on form for single-factor authentication. Console display name: "Sign On Form".
 * `skipButtonPress` (string): Console display name: "".
+* `subFlowVersion` (string): The version ID of the subflow to run. Leave blank to use the latest version. Console display name: "Version ID".
+* `subflow` (string): The subflow to run for each user. Console display name: "Subflow".
 * `templateLocale` (string): Add a locale to allow localized notifications for end-users. ISO Language Codes are supported. Console display name: "Notification Locale".
 * `templateVariables` (string): If Custom variables are defined in the notification body, map them here. Console display name: "Notification Variables".
 * `templateVariant` (string): The name of a custom notification defined in PingOne. If the form you want is not listed, select Enter Custom Value. Console display name: "Notification Name".
