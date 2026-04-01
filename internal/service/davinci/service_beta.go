@@ -10,26 +10,9 @@ import (
 )
 
 func BetaResources() []func() resource.Resource {
-	return []func() resource.Resource{
-		NewDavinciApplicationFlowPolicyResource,
-		NewDavinciApplicationKeyResource,
-		NewDavinciApplicationResource,
-		NewDavinciApplicationSecretResource,
-		NewDavinciConnectorInstanceResource,
-		NewDavinciFlowDeployResource,
-		NewDavinciFlowEnableResource,
-		NewDavinciFlowResource,
-		NewDavinciVariableResource,
-	}
+	return []func() resource.Resource{}
 }
 
 func BetaDataSources() []func() datasource.DataSource {
-	return []func() datasource.DataSource{
-		NewDavinciApplicationDataSource,
-		NewDavinciApplicationsDataSource,
-		NewDavinciConnectorDataSource,
-		NewDavinciConnectorsDataSource,
-		NewDavinciConnectorInstanceDataSource,
-		NewDavinciConnectorInstancesDataSource,
-	}
+	return []func() datasource.DataSource{}
 }
