@@ -2,12 +2,12 @@
 page_title: "pingone_davinci_flow Resource - terraform-provider-pingone"
 subcategory: "DaVinci"
 description: |-
-  Resource to create and manage a davinci flow.
+  Resource to create and manage a DaVinci flow.
 ---
 
 # pingone_davinci_flow (Resource)
 
-Resource to create and manage a davinci flow.
+Resource to create and manage a DaVinci flow.
 
 ## Example Usage
 

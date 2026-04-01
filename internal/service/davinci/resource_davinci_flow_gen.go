@@ -153,7 +153,7 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 		"validate_on_save":                   types.BoolType,
 	}
 	resp.Schema = schema.Schema{
-		Description: "Resource to create and manage a davinci flow.",
+		Description: "Resource to create and manage a DaVinci flow.",
 		Attributes: map[string]schema.Attribute{
 			"color": schema.StringAttribute{
 				Optional: true,
