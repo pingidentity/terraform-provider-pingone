@@ -13383,41 +13383,6 @@ Example:
 {{ tffile (printf "%s" "examples/davinci-connector-instances/inveridConnector.tf") }}
 
 
-## SAML
-
-Connector ID (`connector.id` in the resource): `samlConnector`
-
-Properties (used under the `properties` block in the resource as a key in the JSON object):
-
-* `assertionLifeTimeInSeconds` (string): Console display name: "".
-* `authnContextClassRef` (string): Console display name: "".
-* `claimsMapping` (string): Console display name: "".
-* `claimsNameValuePairs` (string): Console display name: "".
-* `connectionId` (string): Console display name: "".
-* `digestAlgorithm` (string): Console display name: "".
-* `encryptAssertion` (string): Console display name: "".
-* `encryptionAlgorithm` (string): Console display name: "".
-* `includeAttributeNameFormat` (string): Console display name: "".
-* `keyEncryptionAlgorithm` (string): Console display name: "".
-* `nameId` (string): Console display name: "".
-* `nameIdFormat` (string): Console display name: "".
-* `nameIdNameQualifier` (string): Console display name: "".
-* `nameIdSPNameQualifier` (string): Console display name: "".
-* `nameIdSPProvidedID` (string): Console display name: "".
-* `samlResponseStatus` (string): Console display name: "".
-* `samlResponseStatusMessage` (string): Console display name: "".
-* `sessionIndex` (string): Console display name: "".
-* `signResponse` (string): Console display name: "".
-* `signatureAlgorithm` (string): Console display name: "".
-* `signatureNamespacePrefix` (string): Console display name: "".
-* `spCertForEncryption` (string): Console display name: "".
-* `typedAttributes` (string): Console display name: "".
-
-
-Example:
-{{ tffile (printf "%s" "examples/davinci-connector-instances/samlConnector.tf") }}
-
-
 ## SAML IdP
 
 Connector ID (`connector.id` in the resource): `samlIdpConnector`
