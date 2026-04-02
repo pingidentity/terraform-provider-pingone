@@ -34,6 +34,7 @@ func testAccDavinciApplicationsDataSource_Get(t *testing.T, withBootstrapConfig 
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoBeta(t)
 		},

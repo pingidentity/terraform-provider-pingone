@@ -28,6 +28,7 @@ func testAccDavinciApplicationDataSource_ByIDFull(t *testing.T, withBootstrapCon
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoBeta(t)
 		},
@@ -50,6 +51,7 @@ func TestAccDavinciApplicationDataSource_BootstrapApplicationByIDFull(t *testing
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoBeta(t)
 		},
@@ -79,6 +81,7 @@ func testAccDavinciApplicationDataSource_NotFound(t *testing.T, withBootstrapCon
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoBeta(t)
 		},

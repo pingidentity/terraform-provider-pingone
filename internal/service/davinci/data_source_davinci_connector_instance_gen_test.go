@@ -28,6 +28,7 @@ func testAccDavinciConnectorInstanceDataSource_ByIDFull(t *testing.T, withBootst
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoBeta(t)
 		},
@@ -58,6 +59,7 @@ func testAccDavinciConnectorInstanceDataSource_NotFound(t *testing.T, withBootst
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoBeta(t)
 		},
@@ -97,6 +99,7 @@ func testAccDavinciConnectorInstanceDataSource_BootstrapConnectionByID(t *testin
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoBeta(t)
 		},
