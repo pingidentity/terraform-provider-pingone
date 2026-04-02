@@ -599,7 +599,7 @@ resource "pingone_davinci_application_flow_policy" "%[2]s" {
       weight  = 55
     }
   ]
-  name   = "Updated policy"
+  name   = "%[2]s-updated-policy"
   status = "disabled"
   trigger = {
     configuration = {
@@ -900,7 +900,7 @@ resource "pingone_davinci_application_flow_policy" "%[2]s" {
       weight  = 45
     }
   ]
-  name   = "Updated policy"
+  name   = "%[2]s-updated-policy"
   status = "disabled"
   trigger = {
     configuration = {
