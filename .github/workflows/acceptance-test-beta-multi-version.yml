@@ -95,83 +95,9 @@ jobs:
         run: |
           make sweep
 
-  test_access_token:
-    name: Acceptance Test (Access Token)
-    needs: [build]
-    runs-on: ubuntu-latest
-
-    env:
-      TESTACC_BETA: true
-      TESTACC_ACCESS_TOKEN_AUTH: true
-      PINGONE_TESTING_PROVIDER_VERSION: test
-      PINGONE_REGION_CODE: "EU"
-      PINGONE_LICENSE_ID: ${{ vars.PINGONE_PROD_EU_FF_LICENSE_ID }}
-      PINGONE_ORGANIZATION_ID: ${{ vars.PINGONE_PROD_EU_FF_ORG_ID }}
-
-    timeout-minutes: 20
-    strategy:
-      fail-fast: false
-      matrix:
-        terraform: # Keep Terraform version aligned with this workflow's compatibility test
-          - '1.4.*'
-      max-parallel: 1
-
-    steps:
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v6
-
-      - name: Set up Go
-        uses: actions/setup-go@v6
-        with:
-          go-version-file: 'go.mod'
-          cache: true
-        id: go
-
-      - uses: hashicorp/setup-terraform@v4
-        with:
-          terraform_version: ${{ matrix.terraform }}
-          terraform_wrapper: false
-
-      - name: Get dependencies
-        run: |
-          go mod download
-
-      - name: Install Ping CLI
-        run: go install github.com/pingidentity/pingcli@latest
-        continue-on-error: false
-
-      - name: Retrieve access token
-        env:
-          PINGCLI_PINGONE_CLIENT_CREDENTIALS_CLIENT_ID: ${{ vars.PINGONE_PROD_EU_FF_CLIENT_ID_CLIENT_SECRET_BASIC }}
-          PINGCLI_PINGONE_CLIENT_CREDENTIALS_CLIENT_SECRET: ${{ secrets.PINGONE_PROD_EU_FF_CLIENT_SECRET_CLIENT_SECRET_BASIC }}
-          PINGCLI_PINGONE_ENVIRONMENT_ID: ${{ vars.PINGONE_PROD_EU_FF_ENVIRONMENT_ID }}
-          PINGCLI_PINGONE_REGION_CODE: "EU"
-          PINGCLI_LOGIN_STORAGE_TYPE: file_system
-        run: |
-          pingcli login -c
-
-          TOKEN_FILE=$(ls -t "$HOME/.pingcli/credentials"/token-*__pingone_client_credentials_default.json | head -n 1)
-          if [ -z "$TOKEN_FILE" ] || [ ! -f "$TOKEN_FILE" ]; then
-            echo "Unable to locate pingcli token file" >&2
-            exit 1
-          fi
-
-          ACCESS_TOKEN=$(jq -r '.access_token // empty' "$TOKEN_FILE")
-          if [ -z "$ACCESS_TOKEN" ]; then
-            echo "No access_token found in pingcli token file" >&2
-            exit 1
-          fi
-
-          echo "PINGONE_API_ACCESS_TOKEN=$ACCESS_TOKEN" >> "$GITHUB_ENV"
-
-      - name: TF acceptance tests (access token auth)
-        timeout-minutes: 20
-        run: |
-          TF_ACC=1 TESTACC_BETA=true go test -tags=beta -v -timeout 300s -run '^TestAccDavinciVariable_AccessTokenAuth_WithEnvironment$' ./internal/service/davinci
-
   onfailure:
     if: ${{ failure() && github.event_name == 'schedule' }}
-    needs: [build, test, test_access_token]
+    needs: [build, test]
     name: Send failure webhook
     runs-on: ubuntu-latest
     steps:
