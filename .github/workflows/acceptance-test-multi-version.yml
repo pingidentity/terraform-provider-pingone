@@ -219,9 +219,9 @@ jobs:
            echo "Flaky acceptance tests failed: Continuing..."
          fi
 
-  test_access_token:
+  test-access-token:
     name: Acceptance Test (Access Token)
-    needs: [build]
+    needs: [build, prepare]
     runs-on: ubuntu-latest
 
     env:
@@ -294,7 +294,7 @@ jobs:
 
   cleanup:
     name: Acceptance Test
-    needs: [test, test-flaky]
+    needs: [test, test-flaky, test-access-token]
     runs-on: ubuntu-latest
 
     env:
@@ -329,7 +329,7 @@ jobs:
 
   onfailure:
     if: ${{ failure() && github.event_name == 'schedule' }}
-    needs: [build, prepare, test, test-flaky, test_access_token, cleanup]
+    needs: [build, prepare, test, test-flaky, test-access-token, cleanup]
     name: Send failure webhook
     runs-on: ubuntu-latest
     steps:

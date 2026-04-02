@@ -226,9 +226,9 @@ jobs:
             echo "Flaky acceptance tests in ${{ matrix.region }} failed: Continuing..."
           fi
 
-  test_access_token:
+  test-access-token:
     name: Acceptance Test (Access Token) ${{ matrix.region }}
-    needs: [build]
+    needs: [prepare]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -301,7 +301,7 @@ jobs:
 
   cleanup:
     name: Clean up ${{ matrix.region }}
-    needs: [test, test-flaky]
+    needs: [test, test-flaky, test-access-token]
     runs-on: ubuntu-latest
     if: always()
     strategy:
@@ -341,7 +341,7 @@ jobs:
 
   onfailure:
     if: ${{ failure() && github.event_name == 'schedule' }}
-    needs: [build, prepare, test, test-flaky, test_access_token, cleanup]
+    needs: [build, prepare, test, test-flaky, test-access-token, cleanup]
     name: Send failure webhook
     runs-on: ubuntu-latest
     steps:
