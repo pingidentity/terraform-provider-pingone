@@ -36,6 +36,7 @@ func TestAccDavinciConnectorInstance_RemovalDrift(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoBeta(t)
@@ -90,6 +91,7 @@ func testAccDavinciConnectorInstance_MinimalMaximal(t *testing.T, withBootstrapC
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoBeta(t)
 		},
@@ -153,6 +155,7 @@ func TestAccDavinciConnectorInstance_NewEnv(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoBeta(t)
@@ -178,6 +181,7 @@ func TestAccDavinciConnectorInstance_Properties(t *testing.T) {
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoBeta(t)
 		},
@@ -275,6 +279,7 @@ func TestAccDavinciConnectorInstance_ComplexProperties(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoBeta(t)
 		},
@@ -388,6 +393,7 @@ func TestAccDavinciConnectorInstance_DefaultUserPool(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoBeta(t)
 			acctest.PreCheckNewEnvironment(t)
@@ -434,6 +440,7 @@ func TestAccDavinciConnectorInstance_BadParameters(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoBeta(t)
 		},

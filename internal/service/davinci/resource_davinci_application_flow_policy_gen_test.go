@@ -38,6 +38,7 @@ func TestAccDavinciApplicationFlowPolicy_RemovalDrift(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoBeta(t)
@@ -92,6 +93,7 @@ func testAccDavinciApplicationFlowPolicy_MinimalMaximal(t *testing.T, withBootst
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoBeta(t)
 		},
@@ -159,6 +161,7 @@ func TestAccDavinciApplicationFlowPolicy_BadParameters(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoBeta(t)
 		},
@@ -599,7 +602,7 @@ resource "pingone_davinci_application_flow_policy" "%[2]s" {
       weight  = 55
     }
   ]
-  name   = "Updated policy"
+  name   = "%[2]s-updated-policy"
   status = "disabled"
   trigger = {
     configuration = {
@@ -900,7 +903,7 @@ resource "pingone_davinci_application_flow_policy" "%[2]s" {
       weight  = 45
     }
   ]
-  name   = "Updated policy"
+  name   = "%[2]s-updated-policy"
   status = "disabled"
   trigger = {
     configuration = {

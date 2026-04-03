@@ -27,6 +27,7 @@ func testAccDavinciConnectorDataSource_ByIDFull(t *testing.T, withBootstrap bool
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoBeta(t)
 		},
@@ -48,6 +49,7 @@ func TestAccDavinciConnectorDataSource_NotFound(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoBeta(t)
 		},

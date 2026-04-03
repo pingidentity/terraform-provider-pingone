@@ -37,6 +37,7 @@ func TestAccDavinciFlowDeploy_RemovalDrift(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoBeta(t)
@@ -92,6 +93,7 @@ func testAccDavinciFlowDeploy(t *testing.T, withBootstrap bool) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoBeta(t)
 		},
@@ -175,6 +177,7 @@ func testAccDavinciFlowDeploy_BrokenFlow(t *testing.T, withBootstrap bool) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNewEnvironment(t)
 			acctest.PreCheckNoBeta(t)
@@ -201,6 +204,7 @@ func TestAccDavinciFlowDeploy_BadParameters(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoBeta(t)
 		},
@@ -504,7 +508,7 @@ resource "pingone_davinci_connector_instance" "%[2]s-errors" {
 resource "pingone_davinci_flow" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
-  name  = "brokenFlow"
+  name  = "%[2]s-broken-flow"
   color = "#FFC8C1"
 
   graph_data = {

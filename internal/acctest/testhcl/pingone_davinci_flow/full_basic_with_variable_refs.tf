@@ -42,7 +42,7 @@ resource "pingone_davinci_connector_instance" "%[2]s-variables" {
 
 resource "pingone_davinci_variable" "%[2]s-variable1" {
   environment_id = data.pingone_environment.general_test.id
-  name = "testVariable"
+  name = "%[2]s-testVariable"
   context = "company"
   display_name = "Test Variable"
   data_type = "string"
@@ -51,7 +51,7 @@ resource "pingone_davinci_variable" "%[2]s-variable1" {
 
 resource "pingone_davinci_variable" "%[2]s-variable2" {
   environment_id = data.pingone_environment.general_test.id
-  name = "testVariable2"
+  name = "%[2]s-testVariable2"
   context = "company"
   display_name = "Test Variable"
   data_type = "string"
@@ -60,7 +60,7 @@ resource "pingone_davinci_variable" "%[2]s-variable2" {
 
 resource "pingone_davinci_variable" "%[2]s-flowInstanceVariable1" {
   environment_id = data.pingone_environment.general_test.id
-  name = "flowInstanceVariable1"
+  name = "%[2]s-flowInstanceVariable1"
   context = "flowInstance"
   data_type = "string"
   mutable = true
@@ -68,7 +68,7 @@ resource "pingone_davinci_variable" "%[2]s-flowInstanceVariable1" {
 
 resource "pingone_davinci_variable" "%[2]s-flowVariable" {
   environment_id = data.pingone_environment.general_test.id
-  name = "testuser"
+  name = "%[2]s-testuser"
   context = "flow"
   flow = {
     id = pingone_davinci_flow.%[2]s.id
