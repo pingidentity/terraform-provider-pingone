@@ -296,6 +296,7 @@ jobs:
     name: Acceptance Test
     needs: [test, test-flaky, test-access-token]
     runs-on: ubuntu-latest
+    if: always()
 
     env:
       PINGONE_TESTING_PROVIDER_VERSION: test
