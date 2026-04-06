@@ -2331,7 +2331,7 @@ func (p *formComponentsFieldResourceModel) expandItemFlowButton(ctx context.Cont
 		stylesData, d := plan.expand(ctx, "BUTTON")
 		diags.Append(d...)
 
-		if v, ok := stylesData.(*management.FormStyles); ok {
+		if v, ok := stylesData.(*management.FormFlowButtonStyles); ok {
 			data.SetStyles(*v)
 		}
 	}
@@ -2372,7 +2372,7 @@ func (p *formComponentsFieldResourceModel) expandItemFlowLink(ctx context.Contex
 		stylesData, d := plan.expand(ctx, "FLOW_LINK")
 		diags.Append(d...)
 
-		if v, ok := stylesData.(*management.FormFlowLinkStyles); ok {
+		if v, ok := stylesData.(*management.FormLinkCustomAllOfStyles); ok {
 			data.SetStyles(*v)
 		}
 	}
@@ -2661,7 +2661,7 @@ func (p *formComponentsFieldResourceModel) expandFieldSubmitButton(ctx context.C
 		stylesData, d := plan.expand(ctx, "BUTTON")
 		diags.Append(d...)
 
-		if v, ok := stylesData.(*management.FormStyles); ok {
+		if v, ok := stylesData.(*management.FormFlowButtonStyles); ok {
 			data.SetStyles(*v)
 		}
 	}
@@ -2766,6 +2766,7 @@ func (p *formComponentsFieldResourceModel) expandItemQRCode(ctx context.Context,
 	data := management.NewFormFieldQrCode(
 		management.ENUMFORMFIELDTYPE_QR_CODE,
 		*positionData,
+		p.Key.ValueString(),
 		management.EnumFormItemAlignment(p.Alignment.ValueString()),
 		management.EnumFormItemSize(p.Size.ValueString()),
 	)
@@ -2988,7 +2989,7 @@ func (p *formComponentsFieldFlowButtonResourceModel) expand(ctx context.Context,
 		stylesData, d := plan.expand(ctx, "BUTTON")
 		diags.Append(d...)
 
-		if v, ok := stylesData.(*management.FormStyles); ok {
+		if v, ok := stylesData.(*management.FormFlowButtonStyles); ok {
 			data.SetStyles(*v)
 		}
 	}
@@ -3204,7 +3205,7 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
 			diags.Append(d...)
 
-			styles, d := formComponentsFieldsStylesOkToTF(t.GetStylesOk())
+			styles, d := formComponentsFieldsFlowButtonStylesOkToTF(t.GetStylesOk())
 			diags.Append(d...)
 
 			visibility, d := formComponentsFieldsVisibilityOkToTF(t.GetVisibilityOk())
@@ -3223,7 +3224,7 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
 			diags.Append(d...)
 
-			styles, d := formComponentsFieldsFlowLinkStylesOkToTF(t.GetStylesOk())
+			styles, d := formComponentsFieldsLinkStylesOkToTF(t.GetStylesOk())
 			diags.Append(d...)
 
 			visibility, d := formComponentsFieldsVisibilityOkToTF(t.GetVisibilityOk())
@@ -3387,14 +3388,13 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
 			diags.Append(d...)
 
-			styles, d := formComponentsFieldsStylesOkToTF(t.GetStylesOk())
+			styles, d := formComponentsFieldsFlowButtonStylesOkToTF(t.GetStylesOk())
 			diags.Append(d...)
 
 			visibility, d := formComponentsFieldsVisibilityOkToTF(t.GetVisibilityOk())
 			diags.Append(d...)
 
 			attributeMap = map[string]attr.Value{
-				"key":        framework.StringOkToTF(t.GetKeyOk()),
 				"label":      framework.StringOkToTF(t.GetLabelOk()),
 				"position":   position,
 				"styles":     styles,
@@ -3544,7 +3544,7 @@ func formComponentsFieldsElementOptionsOkToTF(apiObject []management.FormElement
 	return returnVar, diags
 }
 
-func formComponentsFieldsStylesOkToTF(apiObject *management.FormStyles, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+func formComponentsFieldsFlowButtonStylesOkToTF(apiObject *management.FormFlowButtonStyles, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
@@ -3573,7 +3573,7 @@ func formComponentsFieldsStylesOkToTF(apiObject *management.FormStyles, ok bool)
 	return objValue, diags
 }
 
-func formComponentsFieldsFlowLinkStylesOkToTF(apiObject *management.FormFlowLinkStyles, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+func formComponentsFieldsLinkStylesOkToTF(apiObject *management.FormLinkCustomAllOfStyles, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
