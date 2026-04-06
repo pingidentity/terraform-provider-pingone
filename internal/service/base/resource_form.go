@@ -117,6 +117,7 @@ type formComponentsFieldStylesResourceModel struct {
 	DisplayDefaultThemeButtonBackgroundColor types.Bool   `tfsdk:"display_default_theme_button_background_color"`
 	DisplayDefaultThemeButtonBorderColor     types.Bool   `tfsdk:"display_default_theme_button_border_color"`
 	DisplayDefaultThemeButtonTextColor       types.Bool   `tfsdk:"display_default_theme_button_text_color"`
+	DisplayDefaultThemeLinkColor             types.Bool   `tfsdk:"display_default_theme_link_color"`
 	Enabled                                  types.Bool   `tfsdk:"enabled"`
 	Height                                   types.Int32  `tfsdk:"height"`
 	Padding                                  types.Object `tfsdk:"padding"`
@@ -206,12 +207,13 @@ var (
 		"display_default_theme_button_background_color": types.BoolType,
 		"display_default_theme_button_border_color":     types.BoolType,
 		"display_default_theme_button_text_color":       types.BoolType,
-		"enabled":    types.BoolType,
-		"height":     types.Int32Type,
-		"padding":    types.ObjectType{AttrTypes: formComponentsFieldsFieldStylesPaddingTFObjectTypes},
-		"text_color": types.StringType,
-		"width":      types.Int32Type,
-		"width_unit": types.StringType,
+		"display_default_theme_link_color":              types.BoolType,
+		"enabled":                                       types.BoolType,
+		"height":                                        types.Int32Type,
+		"padding":                                       types.ObjectType{AttrTypes: formComponentsFieldsFieldStylesPaddingTFObjectTypes},
+		"text_color":                                    types.StringType,
+		"width":                                         types.Int32Type,
+		"width_unit":                                    types.StringType,
 	}
 
 	formComponentsFieldsFieldStylesPaddingTFObjectTypes = map[string]attr.Type{
@@ -678,6 +680,10 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 		"A boolean that specifies whether the button uses the default theme text color.",
 	)
 
+	componentsFieldsStylesDisplayDefaultThemeLinkColorDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether the default theme link color is enabled.",
+	)
+
 	componentsFieldsStylesEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether the button is enabled.",
 	)
@@ -1092,6 +1098,12 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 										"display_default_theme_button_text_color": schema.BoolAttribute{
 											Description:         componentsFieldsStylesDisplayDefaultThemeButtonTextColorDescription.Description,
 											MarkdownDescription: componentsFieldsStylesDisplayDefaultThemeButtonTextColorDescription.MarkdownDescription,
+											Optional:            true,
+										},
+
+										"display_default_theme_link_color": schema.BoolAttribute{
+											Description:         componentsFieldsStylesDisplayDefaultThemeLinkColorDescription.Description,
+											MarkdownDescription: componentsFieldsStylesDisplayDefaultThemeLinkColorDescription.MarkdownDescription,
 											Optional:            true,
 										},
 
@@ -2964,7 +2976,7 @@ func (p *formComponentsFieldStylesResourceModel) expand(ctx context.Context, sty
 	}
 
 	if styleType == "FLOW_LINK" {
-		data := management.NewFormFlowLinkStyles()
+		data := management.NewFormLinkCustomAllOfStyles()
 
 		if !p.Alignment.IsNull() && !p.Alignment.IsUnknown() {
 			data.SetAlignment(management.EnumFormItemAlignment(p.Alignment.ValueString()))
@@ -2972,6 +2984,10 @@ func (p *formComponentsFieldStylesResourceModel) expand(ctx context.Context, sty
 
 		if !p.Enabled.IsNull() && !p.Enabled.IsUnknown() {
 			data.SetEnabled(p.Enabled.ValueBool())
+		}
+
+		if !p.DisplayDefaultThemeLinkColor.IsNull() && !p.DisplayDefaultThemeLinkColor.IsUnknown() {
+			data.SetDisplayDefaultThemeLinkColor(p.DisplayDefaultThemeLinkColor.ValueBool())
 		}
 
 		if !p.Padding.IsNull() && !p.Padding.IsUnknown() {
@@ -3620,12 +3636,13 @@ func formComponentsFieldsFlowButtonStylesOkToTF(apiObject *management.FormFlowBu
 		"display_default_theme_button_background_color": framework.BoolOkToTF(apiObject.GetDisplayDefaultThemeButtonBackgroundColorOk()),
 		"display_default_theme_button_border_color":     framework.BoolOkToTF(apiObject.GetDisplayDefaultThemeButtonBorderColorOk()),
 		"display_default_theme_button_text_color":       framework.BoolOkToTF(apiObject.GetDisplayDefaultThemeButtonTextColorOk()),
-		"enabled":    framework.BoolOkToTF(apiObject.GetEnabledOk()),
-		"height":     framework.Int32OkToTF(apiObject.GetHeightOk()),
-		"padding":    padding,
-		"text_color": framework.StringOkToTF(apiObject.GetTextColorOk()),
-		"width":      framework.Int32OkToTF(apiObject.GetWidthOk()),
-		"width_unit": framework.EnumOkToTF(apiObject.GetWidthUnitOk()),
+		"display_default_theme_link_color":              types.BoolNull(),
+		"enabled":                                       framework.BoolOkToTF(apiObject.GetEnabledOk()),
+		"height":                                        framework.Int32OkToTF(apiObject.GetHeightOk()),
+		"padding":                                       padding,
+		"text_color":                                    framework.StringOkToTF(apiObject.GetTextColorOk()),
+		"width":                                         framework.Int32OkToTF(apiObject.GetWidthOk()),
+		"width_unit":                                    framework.EnumOkToTF(apiObject.GetWidthUnitOk()),
 	})
 	diags.Append(d...)
 
@@ -3649,12 +3666,16 @@ func formComponentsFieldsLinkStylesOkToTF(apiObject *management.FormLinkCustomAl
 		"alignment":        framework.EnumOkToTF(apiObject.GetAlignmentOk()),
 		"background_color": types.StringNull(),
 		"border_color":     types.StringNull(),
-		"enabled":          framework.BoolOkToTF(apiObject.GetEnabledOk()),
-		"height":           types.Int32Null(),
-		"padding":          padding,
-		"text_color":       framework.StringOkToTF(apiObject.GetTextColorOk()),
-		"width":            types.Int32Null(),
-		"width_unit":       types.StringNull(),
+		"display_default_theme_button_background_color": types.BoolNull(),
+		"display_default_theme_button_border_color":     types.BoolNull(),
+		"display_default_theme_button_text_color":       types.BoolNull(),
+		"display_default_theme_link_color":              framework.BoolOkToTF(apiObject.GetDisplayDefaultThemeLinkColorOk()),
+		"enabled":                                       framework.BoolOkToTF(apiObject.GetEnabledOk()),
+		"height":                                        types.Int32Null(),
+		"padding":                                       padding,
+		"text_color":                                    framework.StringOkToTF(apiObject.GetTextColorOk()),
+		"width":                                         types.Int32Null(),
+		"width_unit":                                    types.StringNull(),
 	})
 	diags.Append(d...)
 
