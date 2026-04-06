@@ -105,15 +105,6 @@ type formComponentsFieldElementValidationResourceModel struct {
 	ErrorMessage types.String `tfsdk:"error_message"`
 }
 
-// SUBMIT_BUTTON, FLOW_BUTTON
-type formComponentsFieldButtonResourceModel struct {
-	Key    types.String `tfsdk:"key"`
-	Label  types.String `tfsdk:"label"`
-	Styles types.Object `tfsdk:"styles"`
-}
-
-type formComponentsFieldFlowButtonResourceModel formComponentsFieldButtonResourceModel
-
 type formComponentsFieldStylesResourceModel struct {
 	Alignment                                types.String `tfsdk:"alignment"`
 	BackgroundColor                          types.String `tfsdk:"background_color"`
@@ -3157,37 +3148,6 @@ func (p *formComponentsFieldStylesResourceModel) expand(ctx context.Context, sty
 	)
 
 	return nil, diags
-}
-
-func (p *formComponentsFieldFlowButtonResourceModel) expand(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldFlowButton, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	data := management.NewFormFieldFlowButton(
-		management.ENUMFORMFIELDTYPE_FLOW_BUTTON,
-		*positionData,
-		p.Key.ValueString(),
-		p.Label.ValueString(),
-	)
-
-	if !p.Styles.IsNull() && !p.Styles.IsUnknown() {
-		var plan formComponentsFieldStylesResourceModel
-		diags.Append(p.Styles.As(ctx, &plan, basetypes.ObjectAsOptions{
-			UnhandledNullAsEmpty:    false,
-			UnhandledUnknownAsEmpty: false,
-		})...)
-		if diags.HasError() {
-			return nil, diags
-		}
-
-		stylesData, d := plan.expand(ctx, "BUTTON")
-		diags.Append(d...)
-
-		if v, ok := stylesData.(*management.FormFlowButtonStyles); ok {
-			data.SetStyles(*v)
-		}
-	}
-
-	return data, diags
 }
 
 func (p *formResourceModel) toState(apiObject *management.Form) diag.Diagnostics {
