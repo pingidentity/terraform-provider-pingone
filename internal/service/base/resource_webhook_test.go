@@ -157,6 +157,10 @@ func TestAccWebhook_Full(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.included_tags.*", "adminIdentityEvent"),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.ip_address_exposed", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.useragent_exposed", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "payload_options.maximum_payload_limit.type", "EVENTS_PER_PAYLOAD"),
+					resource.TestCheckResourceAttr(resourceFullName, "payload_options.maximum_payload_limit.size", "250"),
+					resource.TestCheckResourceAttr(resourceFullName, "payload_options.payload_format.format.https.format", "JSON_ARRAY"),
+					resource.TestCheckResourceAttr(resourceFullName, "payload_options.payload_format.format.https.pretty_print", "true"),
 				),
 			},
 			{
@@ -269,6 +273,10 @@ func TestAccWebhook_Change(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.included_tags.*", "adminIdentityEvent"),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.ip_address_exposed", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.useragent_exposed", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "payload_options.maximum_payload_limit.type", "EVENTS_PER_PAYLOAD"),
+					resource.TestCheckResourceAttr(resourceFullName, "payload_options.maximum_payload_limit.size", "250"),
+					resource.TestCheckResourceAttr(resourceFullName, "payload_options.payload_format.format.https.format", "JSON_ARRAY"),
+					resource.TestCheckResourceAttr(resourceFullName, "payload_options.payload_format.format.https.pretty_print", "true"),
 				),
 			},
 			{
@@ -291,6 +299,10 @@ func TestAccWebhook_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.included_tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.ip_address_exposed", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.useragent_exposed", "false"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "payload_options.maximum_payload_limit.type"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "payload_options.maximum_payload_limit.size"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "payload_options.payload_format.format.https.format"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "payload_options.payload_format.format.https.pretty_print"),
 				),
 			},
 			{
@@ -322,6 +334,10 @@ func TestAccWebhook_Change(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.included_tags.*", "adminIdentityEvent"),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.ip_address_exposed", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.useragent_exposed", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "payload_options.maximum_payload_limit.type", "EVENTS_PER_PAYLOAD"),
+					resource.TestCheckResourceAttr(resourceFullName, "payload_options.maximum_payload_limit.size", "250"),
+					resource.TestCheckResourceAttr(resourceFullName, "payload_options.payload_format.format.https.format", "JSON_ARRAY"),
+					resource.TestCheckResourceAttr(resourceFullName, "payload_options.payload_format.format.https.pretty_print", "true"),
 				),
 			},
 		},
@@ -622,6 +638,21 @@ resource "pingone_webhook" "%[2]s" {
     included_tags            = ["adminIdentityEvent"]
     ip_address_exposed       = true
     useragent_exposed        = true
+  }
+
+  payload_options = {
+    maximum_payload_limit = {
+      type = "EVENTS_PER_PAYLOAD"
+      size = 250
+    }
+    payload_format = {
+      format = {
+        https = {
+          format       = "JSON_ARRAY"
+          pretty_print = true
+        }
+      }
+    }
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

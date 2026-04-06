@@ -5,6 +5,7 @@ package base
 import (
 	"context"
 	"fmt"
+	"math"
 	"net/http"
 	"regexp"
 
@@ -42,6 +43,7 @@ type webhookResourceModelV1 struct {
 	TLSClientAuthKeyPairId pingonetypes.ResourceIDValue `tfsdk:"tls_client_auth_key_pair_id"`
 	Format                 types.String                 `tfsdk:"format"`
 	FilterOptions          types.Object                 `tfsdk:"filter_options"`
+	PayloadOptions         types.Object                 `tfsdk:"payload_options"`
 }
 
 type webhookFilterOptionsResourceModelV1 struct {
@@ -53,6 +55,29 @@ type webhookFilterOptionsResourceModelV1 struct {
 	UseragentExposed       types.Bool `tfsdk:"useragent_exposed"`
 }
 
+type webhookPayloadOptionsResourceModelV1 struct {
+	MaximumPayloadLimit types.Object `tfsdk:"maximum_payload_limit"`
+	PayloadFormat       types.Object `tfsdk:"payload_format"`
+}
+
+type webhookMaximumPayloadLimitResourceModelV1 struct {
+	Type types.String `tfsdk:"type"`
+	Size types.Int64  `tfsdk:"size"`
+}
+
+type webhookPayloadFormatResourceModelV1 struct {
+	Format types.Object `tfsdk:"format"`
+}
+
+type webhookPayloadFormatFormatResourceModelV1 struct {
+	Https types.Object `tfsdk:"https"`
+}
+
+type webhookPayloadFormatHttpsResourceModelV1 struct {
+	Format      types.String `tfsdk:"format"`
+	PrettyPrint types.Bool   `tfsdk:"pretty_print"`
+}
+
 var (
 	webhookFilterOptionsTFObjectTypes = map[string]attr.Type{
 		"included_action_types":    types.SetType{ElemType: types.StringType},
@@ -61,6 +86,29 @@ var (
 		"included_tags":            types.SetType{ElemType: types.StringType},
 		"ip_address_exposed":       types.BoolType,
 		"useragent_exposed":        types.BoolType,
+	}
+
+	webhookPayloadOptionsTFObjectTypes = map[string]attr.Type{
+		"maximum_payload_limit": types.ObjectType{AttrTypes: webhookMaximumPayloadLimitTFObjectTypes},
+		"payload_format":        types.ObjectType{AttrTypes: webhookPayloadFormatTFObjectTypes},
+	}
+
+	webhookMaximumPayloadLimitTFObjectTypes = map[string]attr.Type{
+		"type": types.StringType,
+		"size": types.Int64Type,
+	}
+
+	webhookPayloadFormatTFObjectTypes = map[string]attr.Type{
+		"format": types.ObjectType{AttrTypes: webhookPayloadFormatFormatTFObjectTypes},
+	}
+
+	webhookPayloadFormatFormatTFObjectTypes = map[string]attr.Type{
+		"https": types.ObjectType{AttrTypes: webhookPayloadFormatHTTPSObjectTypes},
+	}
+
+	webhookPayloadFormatHTTPSObjectTypes = map[string]attr.Type{
+		"format":       types.StringType,
+		"pretty_print": types.BoolType,
 	}
 )
 
@@ -129,6 +177,22 @@ func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest
 	filterOptionsUseragentExposedDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether the User-Agent HTTP header of an event should be present in the source section of the event.",
 	).DefaultValue("false")
+
+	payloadOptionsMaximumPayloadLimitTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The type of payload to use for limiting subscriptions. You can limit by `EVENTS_PER_PAYLOAD` or `KB_PER_PAYLOAD`.",
+	)
+
+	payloadOptionsMaximumPayloadLimitSizeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The maximum size of the payload based on `payloadOptions.maximumPayloadLimit.type`. For `EVENTS_PER_PAYLOAD` this can be from 1 to 500 events (defaults to 500). For `KB_PER_PAYLOAD` this can be from 1 to 4096 kilobytes.",
+	)
+
+	payloadOptionsPayloadFormatFormatHTTPSFormatDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The payload format. This can be: `JSON_ARRAY` or `ND_JSON`.",
+	)
+
+	payloadOptionsPayloadFormatFormatHTTPSPrettyPrintDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Only applicable when `payloadOptions.payloadFormat.format` is `JSON_ARRAY`. Pretty-print is enabled when `true`.",
+	)
 
 	const attrMinLength = 1
 	const attrFilterOptionsIncludedIDsMaxLength = 10
@@ -283,6 +347,73 @@ func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest
 						Computed:            true,
 
 						Default: booldefault.StaticBool(false),
+					},
+				},
+			},
+
+			"payload_options": schema.SingleNestedAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies payload limits and formatting options.").Description,
+				Optional:    true,
+
+				Attributes: map[string]schema.Attribute{
+					"maximum_payload_limit": schema.SingleNestedAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies payload size limits.").Description,
+						Optional:    true,
+
+						Attributes: map[string]schema.Attribute{
+							"type": schema.StringAttribute{
+								Description:         payloadOptionsMaximumPayloadLimitTypeDescription.Description,
+								MarkdownDescription: payloadOptionsMaximumPayloadLimitTypeDescription.MarkdownDescription,
+								Optional:            true,
+
+								Validators: []validator.String{
+									stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumSubscriptionPayloadOptionsMaximumPayloadLimitTypeEnumValues)...),
+								},
+							},
+
+							"size": schema.Int64Attribute{
+								Description:         payloadOptionsMaximumPayloadLimitSizeDescription.Description,
+								MarkdownDescription: payloadOptionsMaximumPayloadLimitSizeDescription.MarkdownDescription,
+								Optional:            true,
+							},
+						},
+					},
+
+					"payload_format": schema.SingleNestedAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies payload format options.").Description,
+						Optional:    true,
+
+						Attributes: map[string]schema.Attribute{
+							"format": schema.SingleNestedAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies protocol-specific payload format settings.").Description,
+								Optional:    true,
+
+								Attributes: map[string]schema.Attribute{
+									"https": schema.SingleNestedAttribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies HTTPS payload formatting settings.").Description,
+										Optional:    true,
+
+										Attributes: map[string]schema.Attribute{
+											"format": schema.StringAttribute{
+												Description:         payloadOptionsPayloadFormatFormatHTTPSFormatDescription.Description,
+												MarkdownDescription: payloadOptionsPayloadFormatFormatHTTPSFormatDescription.MarkdownDescription,
+												Optional:            true,
+
+												Validators: []validator.String{
+													stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumSubscriptionPayloadFormatHttpsFormatEnumValues)...),
+												},
+											},
+
+											"pretty_print": schema.BoolAttribute{
+												Description:         payloadOptionsPayloadFormatFormatHTTPSPrettyPrintDescription.Description,
+												MarkdownDescription: payloadOptionsPayloadFormatFormatHTTPSPrettyPrintDescription.MarkdownDescription,
+												Optional:            true,
+											},
+										},
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -576,6 +707,120 @@ func (p *webhookResourceModelV1) expand(ctx context.Context) (*management.Subscr
 		data.SetTlsClientAuthKeyPair(*keyPair)
 	}
 
+	if !p.PayloadOptions.IsNull() && !p.PayloadOptions.IsUnknown() {
+		var payloadOptionsPlan webhookPayloadOptionsResourceModelV1
+		diags.Append(p.PayloadOptions.As(ctx, &payloadOptionsPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    true,
+			UnhandledUnknownAsEmpty: true,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		payloadOptions, d := payloadOptionsPlan.expand(ctx)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		if payloadOptions != nil {
+			data.SetPayloadOptions(*payloadOptions)
+		}
+	}
+
+	return data, diags
+}
+
+func (p *webhookPayloadOptionsResourceModelV1) expand(ctx context.Context) (*management.SubscriptionPayloadOptions, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := management.NewSubscriptionPayloadOptions()
+
+	if !p.MaximumPayloadLimit.IsNull() && !p.MaximumPayloadLimit.IsUnknown() {
+		var maximumPayloadLimitPlan webhookMaximumPayloadLimitResourceModelV1
+		diags.Append(p.MaximumPayloadLimit.As(ctx, &maximumPayloadLimitPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    true,
+			UnhandledUnknownAsEmpty: true,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		maximumPayloadLimit := management.NewSubscriptionPayloadOptionsMaximumPayloadLimit()
+
+		if !maximumPayloadLimitPlan.Type.IsNull() && !maximumPayloadLimitPlan.Type.IsUnknown() {
+			maximumPayloadLimit.SetType(management.EnumSubscriptionPayloadOptionsMaximumPayloadLimitType(maximumPayloadLimitPlan.Type.ValueString()))
+		}
+
+		if !maximumPayloadLimitPlan.Size.IsNull() && !maximumPayloadLimitPlan.Size.IsUnknown() {
+			size := maximumPayloadLimitPlan.Size.ValueInt64()
+			if size > math.MaxInt32 || size < math.MinInt32 {
+				diags.AddError(
+					"Invalid payload_options.maximum_payload_limit.size",
+					fmt.Sprintf("Cannot convert %d to SDK int32 for payload options size.", size),
+				)
+				return nil, diags
+			}
+
+			maximumPayloadLimit.SetSize(int32(size))
+		}
+
+		data.SetMaximumPayloadLimit(*maximumPayloadLimit)
+	}
+
+	if !p.PayloadFormat.IsNull() && !p.PayloadFormat.IsUnknown() {
+		var payloadFormatPlan webhookPayloadFormatResourceModelV1
+		diags.Append(p.PayloadFormat.As(ctx, &payloadFormatPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    true,
+			UnhandledUnknownAsEmpty: true,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		payloadFormat := management.NewSubscriptionPayloadOptionsPayloadFormat()
+
+		if !payloadFormatPlan.Format.IsNull() && !payloadFormatPlan.Format.IsUnknown() {
+			var payloadFormatFormatPlan webhookPayloadFormatFormatResourceModelV1
+			diags.Append(payloadFormatPlan.Format.As(ctx, &payloadFormatFormatPlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    true,
+				UnhandledUnknownAsEmpty: true,
+			})...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			payloadFormatFormat := management.NewSubscriptionPayloadOptionsPayloadFormatFormat()
+
+			if !payloadFormatFormatPlan.Https.IsNull() && !payloadFormatFormatPlan.Https.IsUnknown() {
+				var payloadFormatHTTPSPlan webhookPayloadFormatHttpsResourceModelV1
+				diags.Append(payloadFormatFormatPlan.Https.As(ctx, &payloadFormatHTTPSPlan, basetypes.ObjectAsOptions{
+					UnhandledNullAsEmpty:    true,
+					UnhandledUnknownAsEmpty: true,
+				})...)
+				if diags.HasError() {
+					return nil, diags
+				}
+
+				https := management.NewSubscriptionPayloadOptionsPayloadFormatFormatHttps()
+
+				if !payloadFormatHTTPSPlan.Format.IsNull() && !payloadFormatHTTPSPlan.Format.IsUnknown() {
+					https.SetFormat(management.EnumSubscriptionPayloadFormatHttpsFormat(payloadFormatHTTPSPlan.Format.ValueString()))
+				}
+
+				if !payloadFormatHTTPSPlan.PrettyPrint.IsNull() && !payloadFormatHTTPSPlan.PrettyPrint.IsUnknown() {
+					https.SetPrettyPrint(payloadFormatHTTPSPlan.PrettyPrint.ValueBool())
+				}
+
+				payloadFormatFormat.SetHttps(*https)
+			}
+
+			payloadFormat.SetFormat(*payloadFormatFormat)
+		}
+
+		data.SetPayloadFormat(*payloadFormat)
+	}
+
 	return data, diags
 }
 
@@ -708,6 +953,9 @@ func (p *webhookResourceModelV1) toState(apiObject *management.Subscription) dia
 	p.FilterOptions, d = toStateWebhookFilterOptions(apiObject.GetFilterOptionsOk())
 	diags.Append(d...)
 
+	p.PayloadOptions, d = toStateWebhookPayloadOptions(apiObject.GetPayloadOptionsOk())
+	diags.Append(d...)
+
 	return diags
 }
 
@@ -756,4 +1004,104 @@ func toStateWebhookFilterOptions(v *management.SubscriptionFilterOptions, ok boo
 
 	return returnVar, diags
 
+}
+
+func toStateWebhookPayloadOptions(v *management.SubscriptionPayloadOptions, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || v == nil {
+		return types.ObjectNull(webhookPayloadOptionsTFObjectTypes), diags
+	}
+
+	maximumPayloadLimit, d := toStateWebhookMaximumPayloadLimit(v.GetMaximumPayloadLimitOk())
+	diags.Append(d...)
+
+	payloadFormat, d := toStateWebhookPayloadFormat(v.GetPayloadFormatOk())
+	diags.Append(d...)
+
+	objMap := map[string]attr.Value{
+		"maximum_payload_limit": maximumPayloadLimit,
+		"payload_format":        payloadFormat,
+	}
+
+	returnVar, d := types.ObjectValue(webhookPayloadOptionsTFObjectTypes, objMap)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func toStateWebhookMaximumPayloadLimit(v *management.SubscriptionPayloadOptionsMaximumPayloadLimit, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || v == nil {
+		return types.ObjectNull(webhookMaximumPayloadLimitTFObjectTypes), diags
+	}
+
+	objMap := map[string]attr.Value{
+		"type": framework.EnumOkToTF(v.GetTypeOk()),
+		"size": framework.Int32OkToTF(v.GetSizeOk()),
+	}
+
+	returnVar, d := types.ObjectValue(webhookMaximumPayloadLimitTFObjectTypes, objMap)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func toStateWebhookPayloadFormat(v *management.SubscriptionPayloadOptionsPayloadFormat, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || v == nil {
+		return types.ObjectNull(webhookPayloadFormatTFObjectTypes), diags
+	}
+
+	format, d := toStateWebhookPayloadFormatFormat(v.GetFormatOk())
+	diags.Append(d...)
+
+	objMap := map[string]attr.Value{
+		"format": format,
+	}
+
+	returnVar, d := types.ObjectValue(webhookPayloadFormatTFObjectTypes, objMap)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func toStateWebhookPayloadFormatFormat(v *management.SubscriptionPayloadOptionsPayloadFormatFormat, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || v == nil {
+		return types.ObjectNull(webhookPayloadFormatFormatTFObjectTypes), diags
+	}
+
+	https, d := toStateWebhookPayloadFormatHTTPS(v.GetHttpsOk())
+	diags.Append(d...)
+
+	objMap := map[string]attr.Value{
+		"https": https,
+	}
+
+	returnVar, d := types.ObjectValue(webhookPayloadFormatFormatTFObjectTypes, objMap)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func toStateWebhookPayloadFormatHTTPS(v *management.SubscriptionPayloadOptionsPayloadFormatFormatHttps, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || v == nil {
+		return types.ObjectNull(webhookPayloadFormatHTTPSObjectTypes), diags
+	}
+
+	objMap := map[string]attr.Value{
+		"format":       framework.EnumOkToTF(v.GetFormatOk()),
+		"pretty_print": framework.BoolOkToTF(v.GetPrettyPrintOk()),
+	}
+
+	returnVar, d := types.ObjectValue(webhookPayloadFormatHTTPSObjectTypes, objMap)
+	diags.Append(d...)
+
+	return returnVar, diags
 }

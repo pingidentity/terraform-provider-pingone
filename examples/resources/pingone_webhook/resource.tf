@@ -18,4 +18,19 @@ resource "pingone_webhook" "my_webhook" {
   filter_options = {
     included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
   }
+
+  payload_options = {
+    maximum_payload_limit = {
+      type = "EVENTS_PER_PAYLOAD"
+      size = 100
+    }
+    payload_format = {
+      format = {
+        https = {
+          format       = "JSON_ARRAY"
+          pretty_print = true
+        }
+      }
+    }
+  }
 }
