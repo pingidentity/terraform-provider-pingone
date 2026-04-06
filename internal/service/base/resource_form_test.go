@@ -1968,7 +1968,7 @@ resource "pingone_form" "%[2]s" {
 
         visibility = {
           type = "SHOW_BY_DEFAULT"
-          key = "mykey"
+          key  = "mykey"
         }
       },
       {
@@ -2448,14 +2448,14 @@ resource "pingone_form" "%[2]s" {
         ]
 
         other_option_attribute_disabled = false
-        other_option_enabled = true
-        other_option_input_label = "OtherInput"
-        other_option_key = "otherkey"
-        other_option_label = "Other"
+        other_option_enabled            = true
+        other_option_input_label        = "OtherInput"
+        other_option_key                = "otherkey"
+        other_option_label              = "Other"
 
-                  visibility = {
+        visibility = {
           type = "SHOW_BY_DEFAULT"
-          key = "mykey"
+          key  = "mykey"
         }
       },
       {
@@ -2649,14 +2649,14 @@ resource "pingone_form" "%[2]s" {
         ]
 
         other_option_attribute_disabled = false
-        other_option_enabled = true
-        other_option_input_label = "OtherInput"
-        other_option_key = "otherkey"
-        other_option_label = "Other"
+        other_option_enabled            = true
+        other_option_input_label        = "OtherInput"
+        other_option_key                = "otherkey"
+        other_option_label              = "Other"
 
-                  visibility = {
+        visibility = {
           type = "HIDE_BY_DEFAULT"
-          key = "mykey2"
+          key  = "mykey2"
         }
       },
       {
@@ -2837,14 +2837,14 @@ resource "pingone_form" "%[2]s" {
         ]
 
         other_option_attribute_disabled = false
-        other_option_enabled = true
-        other_option_input_label = "OtherInput"
-        other_option_key = "otherkey"
-        other_option_label = "Other"
+        other_option_enabled            = true
+        other_option_input_label        = "OtherInput"
+        other_option_key                = "otherkey"
+        other_option_label              = "Other"
 
-         visibility = {
+        visibility = {
           type = "SHOW_BY_DEFAULT"
-          key = "mykey"
+          key  = "mykey"
         }
       },
       {
@@ -3000,10 +3000,10 @@ resource "pingone_form" "%[2]s" {
         show_password_requirements = true
 
         other_option_attribute_disabled = false
-        other_option_enabled = true
-        other_option_input_label = "OtherInput"
-        other_option_key = "otherkey"
-        other_option_label = "Other"
+        other_option_enabled            = true
+        other_option_input_label        = "OtherInput"
+        other_option_key                = "otherkey"
+        other_option_label              = "Other"
 
         validation = {
           type = "NONE"
@@ -3190,18 +3190,18 @@ resource "pingone_form" "%[2]s" {
         show_password_requirements = true
 
         other_option_attribute_disabled = false
-        other_option_enabled = true
-        other_option_input_label = "OtherInput"
-        other_option_key = "otherkey"
-        other_option_label = "Other"
+        other_option_enabled            = true
+        other_option_input_label        = "OtherInput"
+        other_option_key                = "otherkey"
+        other_option_label              = "Other"
 
         validation = {
           type = "NONE"
         }
 
-         visibility = {
+        visibility = {
           type = "SHOW_BY_DEFAULT"
-          key = "mykey"
+          key  = "mykey"
         }
       },
       {
@@ -3394,14 +3394,14 @@ resource "pingone_form" "%[2]s" {
         ]
 
         other_option_attribute_disabled = false
-        other_option_enabled = true
-        other_option_input_label = "OtherInput"
-        other_option_key = "otherkey"
-        other_option_label = "Other"
+        other_option_enabled            = true
+        other_option_input_label        = "OtherInput"
+        other_option_key                = "otherkey"
+        other_option_label              = "Other"
 
-                visibility = {
+        visibility = {
           type = "HIDE_BY_DEFAULT"
-          key = "mykey2"
+          key  = "mykey2"
         }
       },
       {
@@ -3673,9 +3673,9 @@ resource "pingone_form" "%[2]s" {
         attribute_disabled = false
 
         other_option_attribute_disabled = false
-        other_option_enabled = true
-        other_option_input_label = "OtherInput"
-        other_option_label = "Other"
+        other_option_enabled            = true
+        other_option_input_label        = "OtherInput"
+        other_option_label              = "Other"
 
         validation = {
           type          = "CUSTOM"
@@ -3817,9 +3817,9 @@ resource "pingone_form" "%[2]s" {
           width = 50
         }
 
-         visibility = {
+        visibility = {
           type = "SHOW_BY_DEFAULT"
-          key = "mykey"
+          key  = "mykey"
         }
       },
       {
@@ -3918,9 +3918,9 @@ resource "pingone_form" "%[2]s" {
           width = 50
         }
 
-         visibility = {
+        visibility = {
           type = "HIDE_BY_DEFAULT"
-          key = "mykey2"
+          key  = "mykey2"
         }
       },
       {
@@ -4125,9 +4125,9 @@ resource "pingone_form" "%[2]s" {
           enabled          = true
         }
 
-                visibility = {
+        visibility = {
           type = "SHOW_BY_DEFAULT"
-          key = "mykey"
+          key  = "mykey"
         }
       },
       {
@@ -4271,9 +4271,9 @@ resource "pingone_form" "%[2]s" {
           enabled    = true
         }
 
-                visibility = {
+        visibility = {
           type = "HIDE_BY_DEFAULT"
-          key = "mykey2"
+          key  = "mykey2"
         }
       },
       {
@@ -4400,13 +4400,13 @@ resource "pingone_form" "%[2]s" {
           width = 50
         }
 
-        alignment    = "RIGHT"
-        key = "myqrcode"
-        size = "MEDIUM"
+        alignment     = "RIGHT"
+        key           = "myqrcode"
+        size          = "MEDIUM"
         fallback_text = "fallback"
         visibility = {
           type = "SHOW_BY_DEFAULT"
-          key = "mykey"
+          key  = "mykey"
         }
       },
       {
@@ -4448,9 +4448,9 @@ resource "pingone_form" "%[2]s" {
           col = 0
         }
 
-        alignment    = "LEFT"
-        key = "myqrcode"
-        size = "LARGE"
+        alignment = "LEFT"
+        key       = "myqrcode"
+        size      = "LARGE"
       },
       {
         type = "SUBMIT_BUTTON"
@@ -4535,7 +4535,7 @@ resource "pingone_form" "%[2]s" {
         size      = "NORMAL"
         alignment = "RIGHT"
 
-                visibility = {
+        visibility = {
           type = "ALWAYS_VISIBLE"
         }
       },
@@ -4663,9 +4663,9 @@ resource "pingone_form" "%[2]s" {
 
         content = "[{\"children\":[{\"text\":\"Two baguettes in a zoo cage, the sign says 'Bread in captivity'.\"}]}]"
 
-                visibility = {
+        visibility = {
           type = "SHOW_BY_DEFAULT"
-          key = "mykey"
+          key  = "mykey"
         }
       },
       {

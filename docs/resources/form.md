@@ -210,6 +210,9 @@ resource "pingone_form" "my_awesome_form" {
 - `description` (String) A string that specifies the description of the form.
 - `mark_optional` (Boolean) A boolean that specifies whether optional fields are highlighted in the rendered form.
 - `mark_required` (Boolean) A boolean that specifies whether required fields are highlighted in the rendered form.
+- `password_auto_complete_enabled` (Boolean) A boolean that specifies whether the password auto-complete feature is enabled.
+- `show_password_requirements` (Boolean) A boolean that specifies whether to return the password requirements during a DaVinci flow. A form with a new password field does not show the password policy information automatically in the response. To return the password policy information, the value of this property must be set to `true`.
+- `text_auto_complete_enabled` (Boolean) A boolean that specifies whether the text auto-complete feature is enabled.
 - `translation_method` (String) A string that specifies how to translate the text strings in the form.  Options are `DEFAULT_VALUE`, `KEY`, `TRANSLATE`.
 
 ### Read-Only
@@ -239,7 +242,8 @@ Optional:
 - `attribute_disabled` (Boolean) Optional when the `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `PASSWORD`, `PASSWORD_VERIFY`, `RADIO`, `TEXT`.  A boolean that specifies whether the linked directory attribute is disabled.
 - `content` (String) Optional when the `type` is one of `SLATE_TEXTBLOB`.  A string that specifies the field's content (for example, escaped JSON string when the field type is `SLATE_TEXTBLOB` - use `jsonencode` to convert JSON to escaped JSON string.)
 - `fallback_text` (String) Optional when the `type` is one of `QR_CODE`.  A string that specifies the text label for fallback under the QR code.
-- `key` (String) **Required** when the `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `FLOW_BUTTON`, `FLOW_LINK`, `PASSWORD`, `PASSWORD_VERIFY`, `RADIO`, `TEXT`.  A string that specifies an identifier for the field component.
+- `icon` (Attributes) Optional when the `type` is one of `SLATE_TEXTBLOB`.  An object that specifies the icon. (see [below for nested schema](#nestedatt--components--fields--icon))
+- `key` (String) **Required** when the `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `FLOW_BUTTON`, `FLOW_LINK`, `PASSWORD`, `PASSWORD_VERIFY`, `QR_CODE`, `RADIO`, `TEXT`, optional when the `type` is one of `SLATE_TEXTBLOB`.  A string that specifies an identifier for the field component.
 - `label` (String) **Required** when the `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `FLOW_BUTTON`, `FLOW_LINK`, `PASSWORD`, `PASSWORD_VERIFY`, `RADIO`, `SUBMIT_BUTTON`, `TEXT`.  A string that specifies the field label.
 - `label_mode` (String) Optional when the `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `PASSWORD`, `PASSWORD_VERIFY`, `RADIO`, `TEXT`.  A string that specifies how the field is rendered.  Options are `DEFAULT`, `FLOAT`.
 - `label_password_verify` (String) Optional when the `type` is one of `PASSWORD_VERIFY`.  A string that when a second field for verifies password is used, this property specifies the field label for that verify field.
@@ -271,6 +275,15 @@ Optional:
 - `width` (Number) An integer that specifies the width of the form field in the form (in percentage).
 
 
+<a id="nestedatt--components--fields--icon"></a>
+### Nested Schema for `components.fields.icon`
+
+Required:
+
+- `size` (String) A string that specifies the icon size.  Options are `LARGE`, `MEDIUM`, `SMALL`.
+- `type` (String) A string that specifies the icon type.  Options are `AGREEMENT`, `ALERT`, `CALL`, `FAILURE`, `FINGERPRINT`, `LINK`, `MAIL`, `MOBILE_PHONE`, `NONE`, `PASSKEY`, `QR_CODE`, `SUCCESS`, `TEXT_MESSAGE`, `USB_KEY`.
+
+
 <a id="nestedatt--components--fields--options"></a>
 ### Nested Schema for `components.fields.options`
 
@@ -288,6 +301,10 @@ Optional:
 - `alignment` (String) A string that specifies the button alignment.  Options are `CENTER`, `LEFT`, `RIGHT`.
 - `background_color` (String) A string that specifies the button background color. The value must be a valid hexadecimal color.
 - `border_color` (String) A string that specifies the button border color. The value must be a valid hexadecimal color.
+- `display_default_theme_button_background_color` (Boolean) A boolean that specifies whether the button uses the default theme background color.
+- `display_default_theme_button_border_color` (Boolean) A boolean that specifies whether the button uses the default theme border color.
+- `display_default_theme_button_text_color` (Boolean) A boolean that specifies whether the button uses the default theme text color.
+- `display_default_theme_link_color` (Boolean) A boolean that specifies whether the default theme link color is enabled.
 - `enabled` (Boolean) A boolean that specifies whether the button is enabled.
 - `height` (Number) An integer that specifies a custom height of the field (in pixels) when displayed in the form.
 - `padding` (Attributes) A single object that specifies custom padding styles for the field. (see [below for nested schema](#nestedatt--components--fields--styles--padding))
