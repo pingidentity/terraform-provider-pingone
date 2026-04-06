@@ -179,19 +179,19 @@ func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest
 	).DefaultValue("false")
 
 	payloadOptionsMaximumPayloadLimitTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The type of payload to use for limiting subscriptions. You can limit by `EVENTS_PER_PAYLOAD` or `KB_PER_PAYLOAD`.",
-	)
+		"The type of payload to use for limiting subscriptions.",
+	).AllowedValuesEnum(management.AllowedEnumSubscriptionPayloadOptionsMaximumPayloadLimitTypeEnumValues)
 
 	payloadOptionsMaximumPayloadLimitSizeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The maximum size of the payload based on `payloadOptions.maximumPayloadLimit.type`. For `EVENTS_PER_PAYLOAD` this can be from 1 to 500 events (defaults to 500). For `KB_PER_PAYLOAD` this can be from 1 to 4096 kilobytes.",
+		"The maximum size of the payload based on `payload_options.maximum_payload_limit.type`. For `EVENTS_PER_PAYLOAD` this can be from 1 to 500 events (defaults to 500). For `KB_PER_PAYLOAD` this can be from 1 to 4096 kilobytes.",
 	)
 
 	payloadOptionsPayloadFormatFormatHTTPSFormatDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The payload format. This can be: `JSON_ARRAY` or `ND_JSON`.",
-	)
+		"The payload format.",
+	).AllowedValuesEnum(management.AllowedEnumSubscriptionPayloadFormatHttpsFormatEnumValues)
 
 	payloadOptionsPayloadFormatFormatHTTPSPrettyPrintDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Only applicable when `payloadOptions.payloadFormat.format` is `JSON_ARRAY`. Pretty-print is enabled when `true`.",
+		"Only applicable when `payload_options.payload_format.format.https.format` is `JSON_ARRAY`. Pretty-print is enabled when `true`.",
 	)
 
 	const attrMinLength = 1
@@ -374,7 +374,7 @@ func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest
 							"size": schema.Int64Attribute{
 								Description:         payloadOptionsMaximumPayloadLimitSizeDescription.Description,
 								MarkdownDescription: payloadOptionsMaximumPayloadLimitSizeDescription.MarkdownDescription,
-								Optional:            true,
+								Optional:            true, //TODO handle default
 							},
 						},
 					},

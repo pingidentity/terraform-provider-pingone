@@ -104,8 +104,8 @@ Optional:
 
 Optional:
 
-- `size` (Number) The maximum size of the payload based on `payloadOptions.maximumPayloadLimit.type`. For `EVENTS_PER_PAYLOAD` this can be from 1 to 500 events (defaults to 500). For `KB_PER_PAYLOAD` this can be from 1 to 4096 kilobytes.
-- `type` (String) The type of payload to use for limiting subscriptions. You can limit by `EVENTS_PER_PAYLOAD` or `KB_PER_PAYLOAD`.
+- `size` (Number) The maximum size of the payload based on `payload_options.maximum_payload_limit.type`. For `EVENTS_PER_PAYLOAD` this can be from 1 to 500 events (defaults to 500). For `KB_PER_PAYLOAD` this can be from 1 to 4096 kilobytes.
+- `type` (String) The type of payload to use for limiting subscriptions.  Options are `EVENTS_PER_PAYLOAD`, `KB_PER_PAYLOAD`.
 
 
 <a id="nestedatt--payload_options--payload_format"></a>
@@ -127,8 +127,8 @@ Optional:
 
 Optional:
 
-- `format` (String) The payload format. This can be: `JSON_ARRAY` or `ND_JSON`.
-- `pretty_print` (Boolean) Only applicable when `payloadOptions.payloadFormat.format` is `JSON_ARRAY`. Pretty-print is enabled when `true`.
+- `format` (String) The payload format.  Options are `JSON_ARRAY`, `ND_JSON`.
+- `pretty_print` (Boolean) Only applicable when `payload_options.payload_format.format.https.format` is `JSON_ARRAY`. Pretty-print is enabled when `true`.
 
 ## Import
 
