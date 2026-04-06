@@ -85,7 +85,7 @@ jobs:
       - name: Create PR
         id: create_pr
         if: steps.check_changes.outputs.CONTENT_CHANGED == 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           BRANCH_NAME: ${{ env.BRANCH_NAME }}
         with:
