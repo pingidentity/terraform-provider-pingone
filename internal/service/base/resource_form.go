@@ -39,18 +39,21 @@ import (
 type FormResource serviceClientType
 
 type formResourceModel struct {
-	Id                pingonetypes.ResourceIDValue `tfsdk:"id"`
-	EnvironmentId     pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
-	Name              types.String                 `tfsdk:"name"`
-	Description       types.String                 `tfsdk:"description"`
-	Category          types.String                 `tfsdk:"category"`
-	Cols              types.Int32                  `tfsdk:"cols"`
-	Components        types.Object                 `tfsdk:"components"`
-	FieldTypes        types.Set                    `tfsdk:"field_types"`
-	LanguageBundle    types.Map                    `tfsdk:"language_bundle"`
-	MarkOptional      types.Bool                   `tfsdk:"mark_optional"`
-	MarkRequired      types.Bool                   `tfsdk:"mark_required"`
-	TranslationMethod types.String                 `tfsdk:"translation_method"`
+	Id                          pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId               pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Name                        types.String                 `tfsdk:"name"`
+	Description                 types.String                 `tfsdk:"description"`
+	Category                    types.String                 `tfsdk:"category"`
+	Cols                        types.Int32                  `tfsdk:"cols"`
+	Components                  types.Object                 `tfsdk:"components"`
+	FieldTypes                  types.Set                    `tfsdk:"field_types"`
+	LanguageBundle              types.Map                    `tfsdk:"language_bundle"`
+	MarkOptional                types.Bool                   `tfsdk:"mark_optional"`
+	MarkRequired                types.Bool                   `tfsdk:"mark_required"`
+	PasswordAutoCompleteEnabled types.Bool                   `tfsdk:"password_auto_complete_enabled"`
+	ShowPasswordRequirements    types.Bool                   `tfsdk:"show_password_requirements"`
+	TextAutoCompleteEnabled     types.Bool                   `tfsdk:"text_auto_complete_enabled"`
+	TranslationMethod           types.String                 `tfsdk:"translation_method"`
 }
 
 type formComponentsResourceModel struct {
@@ -803,6 +806,18 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 		"A boolean that specifies whether required fields are highlighted in the rendered form.",
 	)
 
+	passwordAutoCompleteEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether the password auto-complete feature is enabled.",
+	)
+
+	showPasswordRequirementsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether to return the password requirements during a DaVinci flow. A form with a new password field does not show the password policy information automatically in the response. To return the password policy information, the value of this property must be set to `true`.",
+	)
+
+	textAutoCompleteEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether the text auto-complete feature is enabled.",
+	)
+
 	translationMethodDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies how to translate the text strings in the form.",
 	).AllowedValuesEnum(management.AllowedEnumFormTranslationMethodEnumValues)
@@ -1319,6 +1334,27 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 			"mark_required": schema.BoolAttribute{
 				Description:         markRequiredDescription.Description,
 				MarkdownDescription: markRequiredDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+			},
+
+			"password_auto_complete_enabled": schema.BoolAttribute{
+				Description:         passwordAutoCompleteEnabledDescription.Description,
+				MarkdownDescription: passwordAutoCompleteEnabledDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+			},
+
+			"show_password_requirements": schema.BoolAttribute{
+				Description:         showPasswordRequirementsDescription.Description,
+				MarkdownDescription: showPasswordRequirementsDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+			},
+
+			"text_auto_complete_enabled": schema.BoolAttribute{
+				Description:         textAutoCompleteEnabledDescription.Description,
+				MarkdownDescription: textAutoCompleteEnabledDescription.MarkdownDescription,
 				Optional:            true,
 				Computed:            true,
 			},
@@ -2029,6 +2065,18 @@ func (p *formResourceModel) expand(ctx context.Context) (*management.Form, diag.
 
 	if !p.TranslationMethod.IsNull() && !p.TranslationMethod.IsUnknown() {
 		data.SetTranslationMethod(management.EnumFormTranslationMethod(p.TranslationMethod.ValueString()))
+	}
+
+	if !p.PasswordAutoCompleteEnabled.IsNull() && !p.PasswordAutoCompleteEnabled.IsUnknown() {
+		data.SetPasswordAutoCompleteEnabled(p.PasswordAutoCompleteEnabled.ValueBool())
+	}
+
+	if !p.ShowPasswordRequirements.IsNull() && !p.ShowPasswordRequirements.IsUnknown() {
+		data.SetShowPasswordRequirements(p.ShowPasswordRequirements.ValueBool())
+	}
+
+	if !p.TextAutoCompleteEnabled.IsNull() && !p.TextAutoCompleteEnabled.IsUnknown() {
+		data.SetTextAutoCompleteEnabled(p.TextAutoCompleteEnabled.ValueBool())
 	}
 
 	return data, diags
@@ -3164,6 +3212,9 @@ func (p *formResourceModel) toState(apiObject *management.Form) diag.Diagnostics
 	p.LanguageBundle = framework.StringMapOkToTF(apiObject.GetLanguageBundleOk())
 	p.MarkOptional = framework.BoolOkToTF(apiObject.GetMarkOptionalOk())
 	p.MarkRequired = framework.BoolOkToTF(apiObject.GetMarkRequiredOk())
+	p.PasswordAutoCompleteEnabled = framework.BoolOkToTF(apiObject.GetPasswordAutoCompleteEnabledOk())
+	p.ShowPasswordRequirements = framework.BoolOkToTF(apiObject.GetShowPasswordRequirementsOk())
+	p.TextAutoCompleteEnabled = framework.BoolOkToTF(apiObject.GetTextAutoCompleteEnabledOk())
 	p.TranslationMethod = framework.EnumOkToTF(apiObject.GetTranslationMethodOk())
 
 	var d diag.Diagnostics
