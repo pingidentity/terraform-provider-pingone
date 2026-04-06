@@ -5,7 +5,6 @@ package base
 import (
 	"context"
 	"fmt"
-	"math"
 	"net/http"
 	"regexp"
 
@@ -62,7 +61,7 @@ type webhookPayloadOptionsResourceModelV1 struct {
 
 type webhookMaximumPayloadLimitResourceModelV1 struct {
 	Type types.String `tfsdk:"type"`
-	Size types.Int64  `tfsdk:"size"`
+	Size types.Int32  `tfsdk:"size"`
 }
 
 type webhookPayloadFormatResourceModelV1 struct {
@@ -95,7 +94,7 @@ var (
 
 	webhookMaximumPayloadLimitTFObjectTypes = map[string]attr.Type{
 		"type": types.StringType,
-		"size": types.Int64Type,
+		"size": types.Int32Type,
 	}
 
 	webhookPayloadFormatTFObjectTypes = map[string]attr.Type{
@@ -371,7 +370,7 @@ func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest
 								},
 							},
 
-							"size": schema.Int64Attribute{
+							"size": schema.Int32Attribute{
 								Description:         payloadOptionsMaximumPayloadLimitSizeDescription.Description,
 								MarkdownDescription: payloadOptionsMaximumPayloadLimitSizeDescription.MarkdownDescription,
 								Optional:            true, //TODO handle default
@@ -753,16 +752,7 @@ func (p *webhookPayloadOptionsResourceModelV1) expand(ctx context.Context) (*man
 		}
 
 		if !maximumPayloadLimitPlan.Size.IsNull() && !maximumPayloadLimitPlan.Size.IsUnknown() {
-			size := maximumPayloadLimitPlan.Size.ValueInt64()
-			if size > math.MaxInt32 || size < math.MinInt32 {
-				diags.AddError(
-					"Invalid payload_options.maximum_payload_limit.size",
-					fmt.Sprintf("Cannot convert %d to SDK int32 for payload options size.", size),
-				)
-				return nil, diags
-			}
-
-			maximumPayloadLimit.SetSize(int32(size))
+			maximumPayloadLimit.SetSize(maximumPayloadLimitPlan.Size.ValueInt32())
 		}
 
 		data.SetMaximumPayloadLimit(*maximumPayloadLimit)
