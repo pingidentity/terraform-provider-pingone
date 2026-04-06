@@ -13,14 +13,31 @@ type serviceClientType struct {
 }
 
 func Resources() []func() resource.Resource {
-	resources := []func() resource.Resource{}
+	resources := []func() resource.Resource{
+		NewDavinciApplicationFlowPolicyResource,
+		NewDavinciApplicationKeyResource,
+		NewDavinciApplicationResource,
+		NewDavinciApplicationSecretResource,
+		NewDavinciConnectorInstanceResource,
+		NewDavinciFlowDeployResource,
+		NewDavinciFlowEnableResource,
+		NewDavinciFlowResource,
+		NewDavinciVariableResource,
+	}
 	resources = append(resources, BetaResources()...)
 
 	return resources
 }
 
 func DataSources() []func() datasource.DataSource {
-	dataSources := []func() datasource.DataSource{}
+	dataSources := []func() datasource.DataSource{
+		NewDavinciApplicationDataSource,
+		NewDavinciApplicationsDataSource,
+		NewDavinciConnectorDataSource,
+		NewDavinciConnectorsDataSource,
+		NewDavinciConnectorInstanceDataSource,
+		NewDavinciConnectorInstancesDataSource,
+	}
 	dataSources = append(dataSources, BetaDataSources()...)
 
 	return dataSources

@@ -3,7 +3,7 @@ SWEEP_DIR=./internal/sweep
 NAMESPACE=pingidentity
 PKG_NAME=pingone
 BINARY=terraform-provider-${NAME}
-VERSION=1.17.0
+VERSION=1.18.0
 OS_ARCH=linux_amd64
 BETA?=false
 
@@ -115,4 +115,10 @@ devcheck: build vet fmt generate docscategorycheck lint test sweep testacc
 
 devchecknotest: build vet fmt generate docscategorycheck lint
 
-.PHONY: build install generate docscategorycheck test testacc sweep vet fmtcheck depscheck lint golangci-lint importlint providerlint tflint terrafmt terrafmtcheck betatagscheck devcheck devchecknotest
+generateconnectorref: build
+	@echo "==> Generating connector docs & examples..."
+	rm -rf examples/davinci-connector-instances/*.tf || true
+	mkdir -p examples/davinci-connector-instances
+	cd tools/dvgenerate && go run ./cmd/generate -file="$(if $(CONNECTOR_SCHEMA_FILE),$(abspath $(CONNECTOR_SCHEMA_FILE)),$(abspath ./tools/dvgenerate/internal/connector-schema.json))"
+
+.PHONY: build install generate docscategorycheck test testacc sweep vet fmtcheck depscheck lint golangci-lint importlint providerlint tflint terrafmt terrafmtcheck betatagscheck devcheck devchecknotest generateconnectorref

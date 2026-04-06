@@ -528,6 +528,7 @@ func TestAccMFADevicePolicyDefault_Validation(t *testing.T) {
 
 			resource.Test(t, resource.TestCase{
 				PreCheck: func() {
+					acctest.PreCheckNoBeta(t)
 					acctest.PreCheckClient(t)
 					acctest.PreCheckNewEnvironment(t)
 				},
