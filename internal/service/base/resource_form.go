@@ -62,6 +62,7 @@ type formComponentsFieldResourceModel struct {
 	AttributeDisabled            types.Bool   `tfsdk:"attribute_disabled"`
 	Content                      types.String `tfsdk:"content"`
 	FallbackText                 types.String `tfsdk:"fallback_text"`
+	Icon                         types.Object `tfsdk:"icon"`
 	Key                          types.String `tfsdk:"key"`
 	Label                        types.String `tfsdk:"label"`
 	LabelMode                    types.String `tfsdk:"label_mode"`
@@ -138,6 +139,11 @@ type formComponentsFieldVisibilityResourceModel struct {
 	Key  types.String `tfsdk:"key"`
 }
 
+type formComponentsFieldIconResourceModel struct {
+	Type types.String `tfsdk:"type"`
+	Size types.String `tfsdk:"size"`
+}
+
 type formComponentsFieldsSchemaDef struct {
 	Required []string
 	Optional []string
@@ -157,6 +163,7 @@ var (
 		"attribute_disabled":              types.BoolType,
 		"content":                         types.StringType,
 		"fallback_text":                   types.StringType,
+		"icon":                            types.ObjectType{AttrTypes: formComponentsFieldsIconTFObjectTypes},
 		"key":                             types.StringType,
 		"label_mode":                      types.StringType,
 		"label_password_verify":           types.StringType,
@@ -226,6 +233,11 @@ var (
 	formComponentsFieldsVisibilityTFObjectTypes = map[string]attr.Type{
 		"type": types.StringType,
 		"key":  types.StringType,
+	}
+
+	formComponentsFieldsIconTFObjectTypes = map[string]attr.Type{
+		"type": types.StringType,
+		"size": types.StringType,
 	}
 
 	formComponentsFieldsSchemaDefMap = map[management.EnumFormFieldType]formComponentsFieldsSchemaDef{
@@ -410,6 +422,7 @@ var (
 				"position",
 			},
 			Optional: []string{
+				"icon",
 				"key",
 				"content",
 				"visibility",
@@ -551,6 +564,20 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 	).AppendMarkdownString(
 		fmt.Sprintf("A string that specifies the field's content (for example, escaped JSON string when the field type is `%s` - use `jsonencode` to convert JSON to escaped JSON string.)", string(management.ENUMFORMFIELDTYPE_SLATE_TEXTBLOB)),
 	)
+
+	componentsFieldsIconDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		formFieldValidationDocumentation("icon"),
+	).AppendMarkdownString(
+		"An object that specifies the icon.",
+	)
+
+	componentsFieldsIconTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the icon type.",
+	).AllowedValuesEnum(management.AllowedEnumFormItemIconTypeEnumValues)
+
+	componentsFieldsIconSizeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the icon size.",
+	).AllowedValuesEnum(management.AllowedEnumFormItemIconSizeEnumValues)
 
 	componentsFieldsKeyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		formFieldValidationDocumentation("key"),
@@ -904,6 +931,34 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 									Description:         componentsFieldsFallbackTextDescription.Description,
 									MarkdownDescription: componentsFieldsFallbackTextDescription.MarkdownDescription,
 									Optional:            true,
+								},
+
+								"icon": schema.SingleNestedAttribute{
+									Description:         componentsFieldsIconDescription.Description,
+									MarkdownDescription: componentsFieldsIconDescription.MarkdownDescription,
+									Optional:            true,
+
+									Attributes: map[string]schema.Attribute{
+										"type": schema.StringAttribute{
+											Description:         componentsFieldsIconTypeDescription.Description,
+											MarkdownDescription: componentsFieldsIconTypeDescription.MarkdownDescription,
+											Required:            true,
+
+											Validators: []validator.String{
+												stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumFormItemIconTypeEnumValues)...),
+											},
+										},
+
+										"size": schema.StringAttribute{
+											Description:         componentsFieldsIconSizeDescription.Description,
+											MarkdownDescription: componentsFieldsIconSizeDescription.MarkdownDescription,
+											Required:            true,
+
+											Validators: []validator.String{
+												stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumFormItemIconSizeEnumValues)...),
+											},
+										},
+									},
 								},
 
 								"key": schema.StringAttribute{
@@ -1344,6 +1399,8 @@ func (r *formComponentsFieldResourceModel) validateFieldSet(field string) bool {
 		return !r.Content.IsNull()
 	case "fallback_text":
 		return !r.FallbackText.IsNull()
+	case "icon":
+		return !r.Icon.IsNull()
 	case "key":
 		return !r.Key.IsNull()
 	case "label":
@@ -2878,6 +2935,24 @@ func (p *formComponentsFieldResourceModel) expandItemSlateTextblob(ctx context.C
 		data.SetContent(p.Content.ValueString())
 	}
 
+	if !p.Icon.IsNull() && !p.Icon.IsUnknown() {
+		var iconPlan formComponentsFieldIconResourceModel
+		diags.Append(p.Icon.As(ctx, &iconPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		icon := management.NewFormItemWithIconAllOfIcon(
+			management.EnumFormItemIconType(iconPlan.Type.ValueString()),
+			management.EnumFormItemIconSize(iconPlan.Size.ValueString()),
+		)
+
+		data.SetIcon(*icon)
+	}
+
 	if !p.Visibility.IsNull() && !p.Visibility.IsUnknown() {
 		var plan formComponentsFieldVisibilityResourceModel
 		diags.Append(p.Visibility.As(ctx, &plan, basetypes.ObjectAsOptions{})...)
@@ -3445,11 +3520,15 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
 			diags.Append(d...)
 
+			icon, d := formComponentsFieldsIconOkToTF(t.GetIconOk())
+			diags.Append(d...)
+
 			visibility, d := formComponentsFieldsVisibilityOkToTF(t.GetVisibilityOk())
 			diags.Append(d...)
 
 			attributeMap = map[string]attr.Value{
 				"content":    framework.StringOkToTF(t.GetContentOk()),
+				"icon":       icon,
 				"key":        framework.StringOkToTF(t.GetKeyOk()),
 				"position":   position,
 				"type":       framework.EnumOkToTF(t.GetTypeOk()),
@@ -3526,6 +3605,7 @@ func formComponentsFieldsConvertEmptyValuesToTFNulls(attributeMap map[string]att
 		"attribute_disabled":              types.BoolNull(),
 		"content":                         types.StringNull(),
 		"fallback_text":                   types.StringNull(),
+		"icon":                            types.ObjectNull(formComponentsFieldsIconTFObjectTypes),
 		"key":                             types.StringNull(),
 		"label_mode":                      types.StringNull(),
 		"label_password_verify":           types.StringNull(),
@@ -3710,6 +3790,22 @@ func formComponentsFieldsVisibilityOkToTF(apiObject *management.FormFieldCommonV
 	objValue, d := types.ObjectValue(formComponentsFieldsVisibilityTFObjectTypes, map[string]attr.Value{
 		"type": framework.EnumOkToTF(apiObject.GetTypeOk()),
 		"key":  framework.StringOkToTF(apiObject.GetKeyOk()),
+	})
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func formComponentsFieldsIconOkToTF(apiObject *management.FormItemWithIconAllOfIcon, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(formComponentsFieldsIconTFObjectTypes), diags
+	}
+
+	objValue, d := types.ObjectValue(formComponentsFieldsIconTFObjectTypes, map[string]attr.Value{
+		"type": framework.EnumOkToTF(apiObject.GetTypeOk()),
+		"size": framework.EnumOkToTF(apiObject.GetSizeOk()),
 	})
 	diags.Append(d...)
 
