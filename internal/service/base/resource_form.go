@@ -359,6 +359,7 @@ var (
 			Required: []string{
 				"type",
 				"position",
+				"key",
 				"alignment",
 				"size",
 			},
@@ -401,6 +402,7 @@ var (
 				"position",
 			},
 			Optional: []string{
+				"key",
 				"content",
 				"visibility",
 			},
@@ -2820,6 +2822,10 @@ func (p *formComponentsFieldResourceModel) expandItemSlateTextblob(ctx context.C
 		*positionData,
 	)
 
+	if !p.Key.IsNull() && !p.Key.IsUnknown() {
+		data.SetKey(p.Key.ValueString())
+	}
+
 	if !p.Content.IsNull() && !p.Content.IsUnknown() {
 		data.SetContent(p.Content.ValueString())
 	}
@@ -3316,6 +3322,7 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 			attributeMap = map[string]attr.Value{
 				"alignment":     framework.EnumOkToTF(t.GetAlignmentOk()),
 				"fallback_text": framework.StringOkToTF(t.GetFallbackTextOk()),
+				"key":           framework.StringOkToTF(t.GetKeyOk()),
 				"position":      position,
 				"size":          framework.EnumOkToTF(t.GetSizeOk()),
 				"type":          framework.EnumOkToTF(t.GetTypeOk()),
@@ -3379,6 +3386,7 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 
 			attributeMap = map[string]attr.Value{
 				"content":    framework.StringOkToTF(t.GetContentOk()),
+				"key":        framework.StringOkToTF(t.GetKeyOk()),
 				"position":   position,
 				"type":       framework.EnumOkToTF(t.GetTypeOk()),
 				"visibility": visibility,
