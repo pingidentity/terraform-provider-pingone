@@ -1859,10 +1859,6 @@ func (p *formResourceModel) validate(ctx context.Context, allowUnknowns bool) di
 		}
 
 		if len(fieldsPlan) > 0 {
-
-			hasSubmitButton := false
-			submitButtonUnknown := false
-
 			for i, field := range fieldsPlan {
 
 				if field.Type.IsUnknown() && !allowUnknowns {
@@ -1871,14 +1867,7 @@ func (p *formResourceModel) validate(ctx context.Context, allowUnknowns bool) di
 						"Invalid DaVinci form configuration",
 						"The `type` parameter is unknown and cannot be validated.",
 					)
-					submitButtonUnknown = true
 					continue
-				}
-
-				if !field.Type.IsNull() && !field.Type.IsUnknown() {
-					if field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_SUBMIT_BUTTON))) {
-						hasSubmitButton = true
-					}
 				}
 
 				// Validate Position conflicts
@@ -2016,15 +2005,6 @@ func (p *formResourceModel) validate(ctx context.Context, allowUnknowns bool) di
 						)
 					}
 				}
-			}
-
-			// Validate has submit button
-			if !hasSubmitButton && !submitButtonUnknown {
-				diags.AddAttributeError(
-					path.Root("components").AtName("fields"),
-					"Invalid DaVinci form configuration",
-					"The DaVinci form is expected to contain a submit button field (`type` parameter value of `SUBMIT_BUTTON`).",
-				)
 			}
 		}
 	}
