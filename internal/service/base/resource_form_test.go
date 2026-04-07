@@ -128,7 +128,6 @@ func TestAccForm_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "password_auto_complete_enabled", "true"),
-			resource.TestCheckResourceAttr(resourceFullName, "show_password_requirements", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "text_auto_complete_enabled", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "cols", "4"),
 			resource.TestCheckResourceAttr(resourceFullName, "translation_method", "DEFAULT_VALUE"),
@@ -148,9 +147,8 @@ func TestAccForm_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "category", "CUSTOM"),
 			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "false"),
-			resource.TestCheckNoResourceAttr(resourceFullName, "password_auto_complete_enabled"),
-			resource.TestCheckNoResourceAttr(resourceFullName, "show_password_requirements"),
-			resource.TestCheckNoResourceAttr(resourceFullName, "text_auto_complete_enabled"),
+			resource.TestCheckResourceAttr(resourceFullName, "password_auto_complete_enabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "text_auto_complete_enabled", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "cols", "4"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "translation_method"),
 			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
@@ -1979,7 +1977,6 @@ resource "pingone_form" "%[2]s" {
   mark_optional = true
 
   password_auto_complete_enabled = true
-  show_password_requirements     = true
   text_auto_complete_enabled     = true
 
   cols = 4
@@ -3602,14 +3599,14 @@ resource "pingone_form" "%[2]s" {
             left   = 16
           }
 
-          alignment        = "RIGHT"
-          background_color = "#FF0000"
-          text_color       = "#00FF00"
-          border_color     = "#0000FF"
+          alignment                                     = "RIGHT"
+          background_color                              = "#FF0000"
+          text_color                                    = "#00FF00"
+          border_color                                  = "#0000FF"
           display_default_theme_button_background_color = false
           display_default_theme_button_border_color     = false
           display_default_theme_button_text_color       = false
-          enabled          = true
+          enabled                                       = true
         }
 
         visibility = {

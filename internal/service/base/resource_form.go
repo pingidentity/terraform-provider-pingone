@@ -18,6 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -51,7 +52,6 @@ type formResourceModel struct {
 	MarkOptional                types.Bool                   `tfsdk:"mark_optional"`
 	MarkRequired                types.Bool                   `tfsdk:"mark_required"`
 	PasswordAutoCompleteEnabled types.Bool                   `tfsdk:"password_auto_complete_enabled"`
-	ShowPasswordRequirements    types.Bool                   `tfsdk:"show_password_requirements"`
 	TextAutoCompleteEnabled     types.Bool                   `tfsdk:"text_auto_complete_enabled"`
 	TranslationMethod           types.String                 `tfsdk:"translation_method"`
 }
@@ -791,23 +791,19 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 
 	markOptionalDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether optional fields are highlighted in the rendered form.",
-	)
+	).DefaultValue(false)
 
 	markRequiredDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether required fields are highlighted in the rendered form.",
-	)
+	).DefaultValue(false)
 
 	passwordAutoCompleteEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether the password auto-complete feature is enabled.",
-	)
-
-	showPasswordRequirementsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A boolean that specifies whether to return the password requirements during a DaVinci flow. A form with a new password field does not show the password policy information automatically in the response. To return the password policy information, the value of this property must be set to `true`.",
-	)
+	).DefaultValue(false)
 
 	textAutoCompleteEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether the text auto-complete feature is enabled.",
-	)
+	).DefaultValue(false)
 
 	translationMethodDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies how to translate the text strings in the form.",
@@ -1324,6 +1320,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				MarkdownDescription: markOptionalDescription.MarkdownDescription,
 				Optional:            true,
 				Computed:            true,
+				Default:             booldefault.StaticBool(false),
 			},
 
 			"mark_required": schema.BoolAttribute{
@@ -1331,6 +1328,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				MarkdownDescription: markRequiredDescription.MarkdownDescription,
 				Optional:            true,
 				Computed:            true,
+				Default:             booldefault.StaticBool(false),
 			},
 
 			"password_auto_complete_enabled": schema.BoolAttribute{
@@ -1338,13 +1336,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				MarkdownDescription: passwordAutoCompleteEnabledDescription.MarkdownDescription,
 				Optional:            true,
 				Computed:            true,
-			},
-
-			"show_password_requirements": schema.BoolAttribute{
-				Description:         showPasswordRequirementsDescription.Description,
-				MarkdownDescription: showPasswordRequirementsDescription.MarkdownDescription,
-				Optional:            true,
-				Computed:            true,
+				Default:             booldefault.StaticBool(false),
 			},
 
 			"text_auto_complete_enabled": schema.BoolAttribute{
@@ -1352,6 +1344,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 				MarkdownDescription: textAutoCompleteEnabledDescription.MarkdownDescription,
 				Optional:            true,
 				Computed:            true,
+				Default:             booldefault.StaticBool(false),
 			},
 
 			"translation_method": schema.StringAttribute{
@@ -2110,10 +2103,6 @@ func (p *formResourceModel) expand(ctx context.Context) (*management.Form, diag.
 
 	if !p.PasswordAutoCompleteEnabled.IsNull() && !p.PasswordAutoCompleteEnabled.IsUnknown() {
 		data.SetPasswordAutoCompleteEnabled(p.PasswordAutoCompleteEnabled.ValueBool())
-	}
-
-	if !p.ShowPasswordRequirements.IsNull() && !p.ShowPasswordRequirements.IsUnknown() {
-		data.SetShowPasswordRequirements(p.ShowPasswordRequirements.ValueBool())
 	}
 
 	if !p.TextAutoCompleteEnabled.IsNull() && !p.TextAutoCompleteEnabled.IsUnknown() {
@@ -3223,7 +3212,6 @@ func (p *formResourceModel) toState(apiObject *management.Form) diag.Diagnostics
 	p.MarkOptional = framework.BoolOkToTF(apiObject.GetMarkOptionalOk())
 	p.MarkRequired = framework.BoolOkToTF(apiObject.GetMarkRequiredOk())
 	p.PasswordAutoCompleteEnabled = framework.BoolOkToTF(apiObject.GetPasswordAutoCompleteEnabledOk())
-	p.ShowPasswordRequirements = framework.BoolOkToTF(apiObject.GetShowPasswordRequirementsOk())
 	p.TextAutoCompleteEnabled = framework.BoolOkToTF(apiObject.GetTextAutoCompleteEnabledOk())
 	p.TranslationMethod = framework.EnumOkToTF(apiObject.GetTranslationMethodOk())
 

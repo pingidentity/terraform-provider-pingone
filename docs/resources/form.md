@@ -208,11 +208,10 @@ resource "pingone_form" "my_awesome_form" {
 
 - `category` (String) A string that specifies the type of form.  Options are `CUSTOM` (allows the form to be built with fields that do not map specifically to the PingOne directory attributes).  Defaults to `CUSTOM`.
 - `description` (String) A string that specifies the description of the form.
-- `mark_optional` (Boolean) A boolean that specifies whether optional fields are highlighted in the rendered form.
-- `mark_required` (Boolean) A boolean that specifies whether required fields are highlighted in the rendered form.
-- `password_auto_complete_enabled` (Boolean) A boolean that specifies whether the password auto-complete feature is enabled.
-- `show_password_requirements` (Boolean) A boolean that specifies whether to return the password requirements during a DaVinci flow. A form with a new password field does not show the password policy information automatically in the response. To return the password policy information, the value of this property must be set to `true`.
-- `text_auto_complete_enabled` (Boolean) A boolean that specifies whether the text auto-complete feature is enabled.
+- `mark_optional` (Boolean) A boolean that specifies whether optional fields are highlighted in the rendered form.  Defaults to `false`.
+- `mark_required` (Boolean) A boolean that specifies whether required fields are highlighted in the rendered form.  Defaults to `false`.
+- `password_auto_complete_enabled` (Boolean) A boolean that specifies whether the password auto-complete feature is enabled.  Defaults to `false`.
+- `text_auto_complete_enabled` (Boolean) A boolean that specifies whether the text auto-complete feature is enabled.  Defaults to `false`.
 - `translation_method` (String) A string that specifies how to translate the text strings in the form.  Options are `DEFAULT_VALUE`, `KEY`, `TRANSLATE`.
 
 ### Read-Only
@@ -301,9 +300,9 @@ Optional:
 - `alignment` (String) A string that specifies the button alignment.  Options are `CENTER`, `LEFT`, `RIGHT`.
 - `background_color` (String) A string that specifies the button background color. The value must be a valid hexadecimal color.
 - `border_color` (String) A string that specifies the button border color. The value must be a valid hexadecimal color.
-- `display_default_theme_button_background_color` (Boolean) A boolean that specifies whether the button uses the default theme background color.
-- `display_default_theme_button_border_color` (Boolean) A boolean that specifies whether the button uses the default theme border color.
-- `display_default_theme_button_text_color` (Boolean) A boolean that specifies whether the button uses the default theme text color.
+- `display_default_theme_button_background_color` (Boolean) A boolean that specifies whether the button uses the default theme background color.  Defaults to `false`.
+- `display_default_theme_button_border_color` (Boolean) A boolean that specifies whether the button uses the default theme border color.  Defaults to `false`.
+- `display_default_theme_button_text_color` (Boolean) A boolean that specifies whether the button uses the default theme text color.  Defaults to `false`.
 - `display_default_theme_link_color` (Boolean) A boolean that specifies whether the default theme link color is enabled.
 - `enabled` (Boolean) A boolean that specifies whether the button is enabled.
 - `height` (Number) An integer that specifies a custom height of the field (in pixels) when displayed in the form.
