@@ -1885,8 +1885,8 @@ func TestAccForm_BadParameters(t *testing.T) {
 				ExpectError: regexp.MustCompile(`Invalid DaVinci form configuration`),
 			},
 			{
-				Config:      testAccFormConfig_NoSubmitButton(resourceName, name),
-				ExpectError: regexp.MustCompile(`Invalid DaVinci form configuration`),
+				Config: testAccFormConfig_NoSubmitButton(resourceName, name),
+				// No longer expect error here, forms are not required to have a submit button
 			},
 			// Configure
 			{
