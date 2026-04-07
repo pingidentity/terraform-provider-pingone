@@ -127,8 +127,13 @@ func TestAccForm_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "category", "CUSTOM"),
 			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "password_auto_complete_enabled", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "show_password_requirements", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "text_auto_complete_enabled", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "cols", "4"),
 			resource.TestCheckResourceAttr(resourceFullName, "translation_method", "DEFAULT_VALUE"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.visibility.type", "SHOW_BY_DEFAULT"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.visibility.key", "mykey"),
 			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
 	}
@@ -143,6 +148,9 @@ func TestAccForm_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "category", "CUSTOM"),
 			resource.TestCheckResourceAttr(resourceFullName, "mark_required", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "mark_optional", "false"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "password_auto_complete_enabled"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "show_password_requirements"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "text_auto_complete_enabled"),
 			resource.TestCheckResourceAttr(resourceFullName, "cols", "4"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "translation_method"),
 			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
@@ -666,6 +674,11 @@ func TestAccForm_FieldPassword(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "user.password"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.required", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.attribute_disabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_attribute_disabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_enabled", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_input_label", "OtherInput"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_key", "otherkey"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_label", "Other"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.show_password_requirements", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.validation.type", "NONE"),
 			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "2"),
@@ -768,7 +781,14 @@ func TestAccForm_FieldPasswordVerify(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "user.password"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.required", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.attribute_disabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_attribute_disabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_enabled", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_input_label", "OtherInput"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_key", "otherkey"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.other_option_label", "Other"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.show_password_requirements", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.visibility.type", "SHOW_BY_DEFAULT"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.visibility.key", "mykey"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.validation.type", "NONE"),
 			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "3"),
 		),
@@ -1409,7 +1429,12 @@ func TestAccForm_ItemFlowButton(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.background_color", "#FF0000"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.text_color", "#00FF00"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.border_color", "#0000FF"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.display_default_theme_button_background_color", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.display_default_theme_button_border_color", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.display_default_theme_button_text_color", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.enabled", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.visibility.type", "SHOW_BY_DEFAULT"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.visibility.key", "mykey"),
 			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
 	}
@@ -1502,7 +1527,10 @@ func TestAccForm_ItemFlowLink(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.padding.left", "16"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.alignment", "RIGHT"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.text_color", "#00FF00"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.display_default_theme_link_color", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.enabled", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.visibility.type", "HIDE_BY_DEFAULT"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.visibility.key", "mykey2"),
 			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
 	}
@@ -1587,10 +1615,12 @@ func TestAccForm_ItemQRCode(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.width", "50"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "QR_CODE"),
-			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "qr-code-field-full"),
-			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.qr_code_type", "MFA_AUTH"),
-			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.show_border", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "myqrcode"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.alignment", "RIGHT"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.size", "MEDIUM"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.fallback_text", "fallback"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.visibility.type", "SHOW_BY_DEFAULT"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.visibility.key", "mykey"),
 			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
 	}
@@ -1602,10 +1632,9 @@ func TestAccForm_ItemQRCode(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "QR_CODE"),
-			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "qr-code-field"),
-			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.qr_code_type", "MFA_AUTH"),
-			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.show_border", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "myqrcode"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.alignment", "LEFT"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.size", "LARGE"),
 			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
 	}
@@ -1765,7 +1794,12 @@ func TestAccForm_ItemSlateTextblob(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.width", "50"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "SLATE_TEXTBLOB"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "slate-textblob-field-full"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.content", "[{\"children\":[{\"text\":\"Two baguettes in a zoo cage, the sign says 'Bread in captivity'.\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.icon.type", "ALERT"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.icon.size", "MEDIUM"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.visibility.type", "SHOW_BY_DEFAULT"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.visibility.key", "mykey"),
 			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
 	}
@@ -1943,6 +1977,10 @@ resource "pingone_form" "%[2]s" {
 
   mark_required = true
   mark_optional = true
+
+  password_auto_complete_enabled = true
+  show_password_requirements     = true
+  text_auto_complete_enabled     = true
 
   cols = 4
 
@@ -3568,6 +3606,9 @@ resource "pingone_form" "%[2]s" {
           background_color = "#FF0000"
           text_color       = "#00FF00"
           border_color     = "#0000FF"
+          display_default_theme_button_background_color = false
+          display_default_theme_button_border_color     = false
+          display_default_theme_button_text_color       = false
           enabled          = true
         }
 
@@ -4266,9 +4307,10 @@ resource "pingone_form" "%[2]s" {
             left   = 16
           }
 
-          alignment  = "RIGHT"
-          text_color = "#00FF00"
-          enabled    = true
+          alignment                        = "RIGHT"
+          text_color                       = "#00FF00"
+          display_default_theme_link_color = true
+          enabled                          = true
         }
 
         visibility = {
@@ -4655,6 +4697,8 @@ resource "pingone_form" "%[2]s" {
       {
         type = "SLATE_TEXTBLOB"
 
+        key = "slate-textblob-field-full"
+
         position = {
           row   = 0
           col   = 0
@@ -4662,6 +4706,11 @@ resource "pingone_form" "%[2]s" {
         }
 
         content = "[{\"children\":[{\"text\":\"Two baguettes in a zoo cage, the sign says 'Bread in captivity'.\"}]}]"
+
+        icon = {
+          type = "ALERT"
+          size = "MEDIUM"
+        }
 
         visibility = {
           type = "SHOW_BY_DEFAULT"

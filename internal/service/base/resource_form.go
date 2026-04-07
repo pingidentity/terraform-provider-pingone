@@ -691,15 +691,15 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 
 	componentsFieldsStylesDisplayDefaultThemeButtonBackgroundColorDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether the button uses the default theme background color.",
-	)
+	).DefaultValue(false)
 
 	componentsFieldsStylesDisplayDefaultThemeButtonBorderColorDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether the button uses the default theme border color.",
-	)
+	).DefaultValue(false)
 
 	componentsFieldsStylesDisplayDefaultThemeButtonTextColorDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether the button uses the default theme text color.",
-	)
+	).DefaultValue(false)
 
 	componentsFieldsStylesDisplayDefaultThemeLinkColorDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether the default theme link color is enabled.",
@@ -971,6 +971,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 									Description:         componentsFieldsKeyDescription.Description,
 									MarkdownDescription: componentsFieldsKeyDescription.MarkdownDescription,
 									Optional:            true,
+									Computed:            true,
 								},
 
 								"label": schema.StringAttribute{
@@ -1148,18 +1149,21 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 											Description:         componentsFieldsStylesDisplayDefaultThemeButtonBackgroundColorDescription.Description,
 											MarkdownDescription: componentsFieldsStylesDisplayDefaultThemeButtonBackgroundColorDescription.MarkdownDescription,
 											Optional:            true,
+											Computed:            true,
 										},
 
 										"display_default_theme_button_border_color": schema.BoolAttribute{
 											Description:         componentsFieldsStylesDisplayDefaultThemeButtonBorderColorDescription.Description,
 											MarkdownDescription: componentsFieldsStylesDisplayDefaultThemeButtonBorderColorDescription.MarkdownDescription,
 											Optional:            true,
+											Computed:            true,
 										},
 
 										"display_default_theme_button_text_color": schema.BoolAttribute{
 											Description:         componentsFieldsStylesDisplayDefaultThemeButtonTextColorDescription.Description,
 											MarkdownDescription: componentsFieldsStylesDisplayDefaultThemeButtonTextColorDescription.MarkdownDescription,
 											Optional:            true,
+											Computed:            true,
 										},
 
 										"display_default_theme_link_color": schema.BoolAttribute{
@@ -1540,6 +1544,52 @@ func (r *FormResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRe
 				field.OtherOptionEnabled = types.BoolValue(false)
 			default:
 				field.OtherOptionEnabled = types.BoolNull()
+			}
+			modifiedPlan = true
+		}
+
+		// styles defaults
+		if !field.Styles.IsNull() && !field.Styles.IsUnknown() {
+			stylesAttrs := field.Styles.Attributes()
+
+			// Button style defaults
+			if stylesAttrs["display_default_theme_button_background_color"].IsUnknown() {
+				switch field.Type.ValueString() {
+				case string(management.ENUMFORMFIELDTYPE_FLOW_BUTTON), string(management.ENUMFORMFIELDTYPE_SUBMIT_BUTTON):
+					stylesAttrs["display_default_theme_button_background_color"] = types.BoolValue(false)
+				default:
+					stylesAttrs["display_default_theme_button_background_color"] = types.BoolNull()
+				}
+				modifiedPlan = true
+			}
+			if stylesAttrs["display_default_theme_button_border_color"].IsUnknown() {
+				switch field.Type.ValueString() {
+				case string(management.ENUMFORMFIELDTYPE_FLOW_BUTTON), string(management.ENUMFORMFIELDTYPE_SUBMIT_BUTTON):
+					stylesAttrs["display_default_theme_button_border_color"] = types.BoolValue(false)
+				default:
+					stylesAttrs["display_default_theme_button_border_color"] = types.BoolNull()
+				}
+				modifiedPlan = true
+			}
+			if stylesAttrs["display_default_theme_button_text_color"].IsUnknown() {
+				switch field.Type.ValueString() {
+				case string(management.ENUMFORMFIELDTYPE_FLOW_BUTTON), string(management.ENUMFORMFIELDTYPE_SUBMIT_BUTTON):
+					stylesAttrs["display_default_theme_button_text_color"] = types.BoolValue(false)
+				default:
+					stylesAttrs["display_default_theme_button_text_color"] = types.BoolNull()
+				}
+				modifiedPlan = true
+			}
+			field.Styles = types.ObjectValueMust(field.Styles.AttributeTypes(ctx), stylesAttrs)
+		}
+
+		// key default for slate_textblob type
+		if field.Key.IsUnknown() {
+			switch field.Type.ValueString() {
+			case string(management.ENUMFORMFIELDTYPE_SLATE_TEXTBLOB):
+				field.Key = types.StringValue("rich-text")
+			default:
+				field.Key = types.StringNull()
 			}
 			modifiedPlan = true
 		}
