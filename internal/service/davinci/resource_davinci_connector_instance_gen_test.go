@@ -102,7 +102,10 @@ func testAccDavinciConnectorInstance_MinimalMaximal(t *testing.T, withBootstrapC
 			{
 				// Create the resource with a minimal model
 				Config: davinciConnectorInstance_MinimalHCL(resourceName, withBootstrapConfig),
-				Check:  davinciConnectorInstance_CheckComputedValuesMinimal(resourceName),
+				Check: resource.ComposeTestCheckFunc(
+					davinciConnectorInstance_CheckComputedValuesMinimal(resourceName),
+					davinciConnectorInstance_CheckComputedMetadataValues(resourceName),
+				),
 			},
 			{
 				// Delete the minimal model
@@ -112,15 +115,20 @@ func testAccDavinciConnectorInstance_MinimalMaximal(t *testing.T, withBootstrapC
 			{
 				// Re-create with a complete model
 				Config: davinciConnectorInstance_CompleteHCL(resourceName, withBootstrapConfig),
+				Check:  davinciConnectorInstance_CheckComputedMetadataValues(resourceName),
 			},
 			{
 				// Back to minimal model
 				Config: davinciConnectorInstance_MinimalHCL(resourceName, withBootstrapConfig),
-				Check:  davinciConnectorInstance_CheckComputedValuesMinimal(resourceName),
+				Check: resource.ComposeTestCheckFunc(
+					davinciConnectorInstance_CheckComputedValuesMinimal(resourceName),
+					davinciConnectorInstance_CheckComputedMetadataValues(resourceName),
+				),
 			},
 			{
 				// Back to complete model
 				Config: davinciConnectorInstance_CompleteHCL(resourceName, withBootstrapConfig),
+				Check:  davinciConnectorInstance_CheckComputedMetadataValues(resourceName),
 			},
 			{
 				// Test importing the resource
@@ -1182,6 +1190,16 @@ resource "pingone_davinci_connector_instance" "%[3]s" {
 func davinciConnectorInstance_CheckComputedValuesMinimal(resourceName string) resource.TestCheckFunc {
 	return resource.ComposeTestCheckFunc(
 		resource.TestCheckNoResourceAttr(fmt.Sprintf("pingone_davinci_connector_instance.%s", resourceName), "properties"),
+	)
+}
+
+func davinciConnectorInstance_CheckComputedMetadataValues(resourceName string) resource.TestCheckFunc {
+	return resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttrSet(fmt.Sprintf("pingone_davinci_connector_instance.%s", resourceName), "metadata.colors.canvas"),
+		resource.TestCheckResourceAttrSet(fmt.Sprintf("pingone_davinci_connector_instance.%s", resourceName), "metadata.colors.canvas_text"),
+		resource.TestCheckResourceAttrSet(fmt.Sprintf("pingone_davinci_connector_instance.%s", resourceName), "metadata.colors.dark"),
+		resource.TestCheckResourceAttrSet(fmt.Sprintf("pingone_davinci_connector_instance.%s", resourceName), "metadata.logos.canvas.image_file_name"),
+		resource.TestCheckResourceAttrSet(fmt.Sprintf("pingone_davinci_connector_instance.%s", resourceName), "metadata.type"),
 	)
 }
 
