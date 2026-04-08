@@ -303,7 +303,7 @@ Optional:
 - `display_default_theme_button_background_color` (Boolean) A boolean that specifies whether the button uses the default theme background color.  Defaults to `false`.
 - `display_default_theme_button_border_color` (Boolean) A boolean that specifies whether the button uses the default theme border color.  Defaults to `false`.
 - `display_default_theme_button_text_color` (Boolean) A boolean that specifies whether the button uses the default theme text color.  Defaults to `false`.
-- `display_default_theme_link_color` (Boolean) A boolean that specifies whether the default theme link color is enabled.
+- `display_default_theme_link_color` (Boolean) A boolean that specifies whether the default theme link color is enabled.  Defaults to `false`.
 - `enabled` (Boolean) A boolean that specifies whether the button is enabled.
 - `height` (Number) An integer that specifies a custom height of the field (in pixels) when displayed in the form.
 - `padding` (Attributes) A single object that specifies custom padding styles for the field. (see [below for nested schema](#nestedatt--components--fields--styles--padding))

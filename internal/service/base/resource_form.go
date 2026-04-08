@@ -703,7 +703,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 
 	componentsFieldsStylesDisplayDefaultThemeLinkColorDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether the default theme link color is enabled.",
-	)
+	).DefaultValue(false)
 
 	componentsFieldsStylesEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether the button is enabled.",
@@ -1166,6 +1166,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 											Description:         componentsFieldsStylesDisplayDefaultThemeLinkColorDescription.Description,
 											MarkdownDescription: componentsFieldsStylesDisplayDefaultThemeLinkColorDescription.MarkdownDescription,
 											Optional:            true,
+											Computed:            true,
 										},
 
 										"enabled": schema.BoolAttribute{
@@ -1573,6 +1574,18 @@ func (r *FormResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRe
 				}
 				modifiedPlan = true
 			}
+
+			// Link style default
+			if stylesAttrs["display_default_theme_link_color"].IsUnknown() {
+				switch field.Type.ValueString() {
+				case string(management.ENUMFORMFIELDTYPE_FLOW_LINK):
+					stylesAttrs["display_default_theme_link_color"] = types.BoolValue(false)
+				default:
+					stylesAttrs["display_default_theme_link_color"] = types.BoolNull()
+				}
+				modifiedPlan = true
+			}
+
 			field.Styles = types.ObjectValueMust(field.Styles.AttributeTypes(ctx), stylesAttrs)
 		}
 

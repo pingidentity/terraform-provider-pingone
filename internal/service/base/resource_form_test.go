@@ -1536,12 +1536,18 @@ func TestAccForm_ItemFlowLink(t *testing.T) {
 	minimalStep := resource.TestStep{
 		Config: testAccFormConfig_ItemFlowLinkMinimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
-			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "3"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "FLOW_LINK"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "link-field"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.1.position.row", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.1.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.1.type", "FLOW_LINK"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.1.key", "link-field-with-styles"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.1.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.1.styles.display_default_theme_link_color", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
 	}
@@ -4359,10 +4365,24 @@ resource "pingone_form" "%[2]s" {
         label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"
       },
       {
-        type = "SUBMIT_BUTTON"
+        type = "FLOW_LINK"
+
+        key = "link-field-with-styles"
 
         position = {
           row = 1
+          col = 0
+        }
+
+        styles = {}
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"
+      },
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 2
           col = 0
         }
 
