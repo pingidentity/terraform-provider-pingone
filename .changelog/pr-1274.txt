@@ -1,0 +1,15 @@
+```release-note:enhancement
+`resource/pingone_form`: Added top-level `password_auto_complete_enabled`, `text_auto_complete_enabled`, and computed `language_bundle` fields. Added form component fields under `components.fields`: `fallback_text`, `icon`, `other_option_enabled`, `other_option_key`, `other_option_label`, `other_option_input_label`, `other_option_attribute_disabled`, `visibility`, `styles`, `display_default_theme_button_background_color`, `display_default_theme_button_border_color`, `display_default_theme_button_text_color`, `display_default_theme_link_color`.
+```
+
+```release-note:deprecation
+`resource/pingone_form`: Removed support for deprecated `TEXTBLOB` field type, and removed unsupported QR code fields `qr_code_type` and `show_border`.
+```
+
+```release-note:enhancement
+`resource/pingone_form`: Made previously implicit `false` defaults for top-level boolean `mark_optional` and `mark_required` fields explicit, and overloaded `size` enum options for both QR code and reCAPTCHA form components.
+```
+
+```release-note:bug
+`resource/pingone_form`: Removed invalid validation that prevented creation of `pingone_form` resources with no submit button.
+```
