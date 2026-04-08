@@ -1894,6 +1894,16 @@ func TestAccForm_BadParameters(t *testing.T) {
 				Config: testAccFormConfig_NoSubmitButton(resourceName, name),
 				// No longer expect error here, forms are not required to have a submit button
 			},
+			// visibility.key is required when visibility.type is SHOW_BY_DEFAULT
+			{
+				Config:      testAccFormConfig_VisibilityMissingKey(resourceName, name, "SHOW_BY_DEFAULT"),
+				ExpectError: regexp.MustCompile(`Missing required argument`),
+			},
+			// visibility.key is required when visibility.type is HIDE_BY_DEFAULT
+			{
+				Config:      testAccFormConfig_VisibilityMissingKey(resourceName, name, "HIDE_BY_DEFAULT"),
+				ExpectError: regexp.MustCompile(`Missing required argument`),
+			},
 			// Configure
 			{
 				Config: testAccFormConfig_Minimal(resourceName, name),
@@ -4823,4 +4833,51 @@ resource "pingone_form" "%[2]s" {
     ]
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccFormConfig_VisibilityMissingKey(resourceName, name, visibilityType string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = true
+  mark_optional = false
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "FLOW_LINK"
+
+        key = "link-field"
+
+        position = {
+          row = 0
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"
+
+        visibility = {
+          type = "%[4]s"
+        }
+      },
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 1
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, visibilityType)
 }
