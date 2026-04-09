@@ -1,0 +1,11 @@
+```release-note:enhancement
+`resource/pingone_davinci_flow`: Added support for the `trigger.subtype`, `settings.preview_form_rendering_updates`, `graphData.elements.edges[].data.multi_value_source_id`, and `graphData.elements.nodes[].data.capability_class` attribute.
+```
+
+```release-note:enhancement
+`resource/pingone_connector_instance`: Added support for the computed `metadata` attribute.
+```
+
+```release-note:enhancement
+`data-source/pingone_connector_instance`: Added support for the computed `metadata` attribute.
+```
