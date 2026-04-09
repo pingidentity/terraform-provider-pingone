@@ -208,14 +208,17 @@ resource "pingone_form" "my_awesome_form" {
 
 - `category` (String) A string that specifies the type of form.  Options are `CUSTOM` (allows the form to be built with fields that do not map specifically to the PingOne directory attributes).  Defaults to `CUSTOM`.
 - `description` (String) A string that specifies the description of the form.
-- `mark_optional` (Boolean) A boolean that specifies whether optional fields are highlighted in the rendered form.
-- `mark_required` (Boolean) A boolean that specifies whether required fields are highlighted in the rendered form.
+- `mark_optional` (Boolean) A boolean that specifies whether optional fields are highlighted in the rendered form.  Defaults to `false`.
+- `mark_required` (Boolean) A boolean that specifies whether required fields are highlighted in the rendered form.  Defaults to `false`.
+- `password_auto_complete_enabled` (Boolean) A boolean that specifies whether the password auto-complete feature is enabled.  Defaults to `false`.
+- `text_auto_complete_enabled` (Boolean) A boolean that specifies whether the text auto-complete feature is enabled.  Defaults to `false`.
 - `translation_method` (String) A string that specifies how to translate the text strings in the form.  Options are `DEFAULT_VALUE`, `KEY`, `TRANSLATE`.
 
 ### Read-Only
 
-- `field_types` (Set of String) A set of strings that specifies the field types in the form.  Options are `CHECKBOX`, `COMBOBOX`, `DIVIDER`, `DROPDOWN`, `EMPTY_FIELD`, `ERROR_DISPLAY`, `FLOW_BUTTON`, `FLOW_LINK`, `PASSWORD`, `PASSWORD_VERIFY`, `QR_CODE`, `RADIO`, `RECAPTCHA_V2`, `SLATE_TEXTBLOB`, `SUBMIT_BUTTON`, `TEXT`, `TEXTBLOB`.
+- `field_types` (Set of String) A set of strings that specifies the field types in the form.  Options are `CHECKBOX`, `COMBOBOX`, `DIVIDER`, `DROPDOWN`, `EMPTY_FIELD`, `ERROR_DISPLAY`, `FLOW_BUTTON`, `FLOW_LINK`, `PASSWORD`, `PASSWORD_VERIFY`, `QR_CODE`, `RADIO`, `RECAPTCHA_V2`, `SLATE_TEXTBLOB`, `SUBMIT_BUTTON`, `TEXT`.
 - `id` (String) The ID of this resource.
+- `language_bundle` (Map of String) An object that provides a map of i18n keys to their translations. This object includes both the keys and their default translations. The PingOne language management service finds this object, and creates the new keys for translation for this form.
 
 <a id="nestedatt--components"></a>
 ### Nested Schema for `components`
@@ -230,35 +233,33 @@ Required:
 Required:
 
 - `position` (Attributes) A single object that specifies the position of the form field in the form.  The combination of `col` and `row` must be unique between form fields. (see [below for nested schema](#nestedatt--components--fields--position))
-- `type` (String) A string that specifies the type of form field.  Options are `CHECKBOX`, `COMBOBOX`, `DIVIDER`, `DROPDOWN`, `EMPTY_FIELD`, `ERROR_DISPLAY`, `FLOW_BUTTON`, `FLOW_LINK`, `PASSWORD`, `PASSWORD_VERIFY`, `QR_CODE`, `RADIO`, `RECAPTCHA_V2`, `SLATE_TEXTBLOB`, `SUBMIT_BUTTON`, `TEXT`, `TEXTBLOB`.  The `TEXTBLOB` form field type has been deprecated and will be removed in a future release.
+- `type` (String) A string that specifies the type of form field.  Options are `CHECKBOX`, `COMBOBOX`, `DIVIDER`, `DROPDOWN`, `EMPTY_FIELD`, `ERROR_DISPLAY`, `FLOW_BUTTON`, `FLOW_LINK`, `PASSWORD`, `PASSWORD_VERIFY`, `QR_CODE`, `RADIO`, `RECAPTCHA_V2`, `SLATE_TEXTBLOB`, `SUBMIT_BUTTON`, `TEXT`.
 
 Optional:
 
 - `alignment` (String) **Required** when the `type` is one of `QR_CODE`, `RECAPTCHA_V2`.  A string that specifies the reCAPTCHA alignment.  Options are `CENTER`, `LEFT`, `RIGHT`.
 - `attribute_disabled` (Boolean) Optional when the `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `PASSWORD`, `PASSWORD_VERIFY`, `RADIO`, `TEXT`.  A boolean that specifies whether the linked directory attribute is disabled.
-- `content` (String) Optional when the `type` is one of `SLATE_TEXTBLOB`, `TEXTBLOB`.  A string that specifies the field's content (for example, escaped JSON string when the field type is `SLATE_TEXTBLOB` - use `jsonencode` to convert JSON to escaped JSON string.)
-- `key` (String) **Required** when the `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `FLOW_BUTTON`, `FLOW_LINK`, `PASSWORD`, `PASSWORD_VERIFY`, `QR_CODE`, `RADIO`, `TEXT`.  A string that specifies an identifier for the field component.
+- `content` (String) Optional when the `type` is one of `SLATE_TEXTBLOB`.  A string that specifies the field's content (for example, escaped JSON string when the field type is `SLATE_TEXTBLOB` - use `jsonencode` to convert JSON to escaped JSON string.)
+- `fallback_text` (String) Optional when the `type` is one of `QR_CODE`.  A string that specifies the text label for fallback under the QR code.
+- `icon` (Attributes) Optional when the `type` is one of `SLATE_TEXTBLOB`.  An object that specifies the icon. (see [below for nested schema](#nestedatt--components--fields--icon))
+- `key` (String) **Required** when the `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `FLOW_BUTTON`, `FLOW_LINK`, `PASSWORD`, `PASSWORD_VERIFY`, `QR_CODE`, `RADIO`, `TEXT`, optional when the `type` is one of `SLATE_TEXTBLOB`.  A string that specifies an identifier for the field component.
 - `label` (String) **Required** when the `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `FLOW_BUTTON`, `FLOW_LINK`, `PASSWORD`, `PASSWORD_VERIFY`, `RADIO`, `SUBMIT_BUTTON`, `TEXT`.  A string that specifies the field label.
 - `label_mode` (String) Optional when the `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `PASSWORD`, `PASSWORD_VERIFY`, `RADIO`, `TEXT`.  A string that specifies how the field is rendered.  Options are `DEFAULT`, `FLOAT`.
 - `label_password_verify` (String) Optional when the `type` is one of `PASSWORD_VERIFY`.  A string that when a second field for verifies password is used, this property specifies the field label for that verify field.
 - `layout` (String) **Required** when the `type` is one of `CHECKBOX`, `RADIO`, optional when the `type` is one of `COMBOBOX`, `DROPDOWN`, `PASSWORD`, `PASSWORD_VERIFY`, `TEXT`.  A string that specifies layout attributes for radio button and checkbox fields.  Options are `HORIZONTAL`, `VERTICAL`.
 - `options` (Attributes Set) **Required** when the `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `RADIO`.  An array of objects that specifies the unique list of options. (see [below for nested schema](#nestedatt--components--fields--options))
-- `qr_code_type` (String) **Required** when the `type` is one of `QR_CODE`.  A string that specifies the QR Code type.
+- `other_option_attribute_disabled` (Boolean) A boolean that specifies whether the other option is disabled.
+- `other_option_enabled` (Boolean) A boolean that specifies whether the end user can type an entry that is not in a predefined list.
+- `other_option_input_label` (String) A string that specifies the label placeholder text for the other option in drop-down controls.
+- `other_option_key` (String) A string that specifies the key associated with the other option.
+- `other_option_label` (String) A string that specifies the label for a custom or "other" choice in a list.
 - `required` (Boolean) Optional when the `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `PASSWORD`, `PASSWORD_VERIFY`, `RADIO`, `TEXT`.  A boolean that specifies whether the field is required.
-- `show_border` (Boolean) Optional when the `type` is one of `QR_CODE`.  A boolean that specifies the border visibility.
 - `show_password_requirements` (Boolean) Optional when the `type` is one of `PASSWORD`, `PASSWORD_VERIFY`.  A boolean that specifies whether to display password requirements to the user.
-- `size` (String) **Required** when the `type` is one of `RECAPTCHA_V2`.  A string that specifies the reCAPTCHA size.  Options are `COMPACT`, `NORMAL`.
+- `size` (String) **Required** when the `type` is one of `QR_CODE`, `RECAPTCHA_V2`.  A string that specifies the reCAPTCHA size or the QR code size. For reCAPTCHA fields, options are `NORMAL`, `COMPACT`. For QR code fields, options are `SMALL`, `MEDIUM`, `LARGE`.
 - `styles` (Attributes) Optional when the `type` is one of `FLOW_BUTTON`, `FLOW_LINK`, `SUBMIT_BUTTON`.  A single object that describes style settings for the field. (see [below for nested schema](#nestedatt--components--fields--styles))
 - `theme` (String) **Required** when the `type` is one of `RECAPTCHA_V2`.  A string that specifies the reCAPTCHA theme.  Options are `DARK`, `LIGHT`.
 - `validation` (Attributes) **Required** when the `type` is one of `TEXT`, optional when the `type` is one of `PASSWORD`, `PASSWORD_VERIFY`.  An object containing validation data for the field. (see [below for nested schema](#nestedatt--components--fields--validation))
-
-Read-Only:
-
-- `other_option_attribute_disabled` (Boolean) A boolean that specifies whether the directory attribute option is disabled. Set to `true` if it references a PingOne directory attribute.
-- `other_option_enabled` (Boolean) A boolean that specifies whether the end user can type an entry that is not in a predefined list.
-- `other_option_input_label` (String) A string that specifies the label for the other option in drop-down controls.
-- `other_option_key` (String) A string that specifies whether the form identifies that the choice is a custom choice not from a predefined list.
-- `other_option_label` (String) A string that specifies the label for a custom or "other" choice in a list.
+- `visibility` (Attributes) An object that specifies the visibility settings for a form field. (see [below for nested schema](#nestedatt--components--fields--visibility))
 
 <a id="nestedatt--components--fields--position"></a>
 ### Nested Schema for `components.fields.position`
@@ -271,6 +272,15 @@ Required:
 Optional:
 
 - `width` (Number) An integer that specifies the width of the form field in the form (in percentage).
+
+
+<a id="nestedatt--components--fields--icon"></a>
+### Nested Schema for `components.fields.icon`
+
+Required:
+
+- `size` (String) A string that specifies the icon size.  Options are `LARGE`, `MEDIUM`, `SMALL`.
+- `type` (String) A string that specifies the icon type.  Options are `AGREEMENT`, `ALERT`, `CALL`, `FAILURE`, `FINGERPRINT`, `LINK`, `MAIL`, `MOBILE_PHONE`, `NONE`, `PASSKEY`, `QR_CODE`, `SUCCESS`, `TEXT_MESSAGE`, `USB_KEY`.
 
 
 <a id="nestedatt--components--fields--options"></a>
@@ -290,6 +300,10 @@ Optional:
 - `alignment` (String) A string that specifies the button alignment.  Options are `CENTER`, `LEFT`, `RIGHT`.
 - `background_color` (String) A string that specifies the button background color. The value must be a valid hexadecimal color.
 - `border_color` (String) A string that specifies the button border color. The value must be a valid hexadecimal color.
+- `display_default_theme_button_background_color` (Boolean) A boolean that specifies whether the button uses the default theme background color.  Defaults to `false`.
+- `display_default_theme_button_border_color` (Boolean) A boolean that specifies whether the button uses the default theme border color.  Defaults to `false`.
+- `display_default_theme_button_text_color` (Boolean) A boolean that specifies whether the button uses the default theme text color.  Defaults to `false`.
+- `display_default_theme_link_color` (Boolean) A boolean that specifies whether the default theme link color is enabled.  Defaults to `false`.
 - `enabled` (Boolean) A boolean that specifies whether the button is enabled.
 - `height` (Number) An integer that specifies a custom height of the field (in pixels) when displayed in the form.
 - `padding` (Attributes) A single object that specifies custom padding styles for the field. (see [below for nested schema](#nestedatt--components--fields--styles--padding))
@@ -320,6 +334,18 @@ Optional:
 
 - `error_message` (String) A string that specifies the error message to be displayed when the field validation fails.  When configuring this parameter, the `regex` parameter is required.
 - `regex` (String) A string that specifies a validation regular expression. The expression must be a valid regular expression string. This is a required property when the validation type is `CUSTOM`.
+
+
+<a id="nestedatt--components--fields--visibility"></a>
+### Nested Schema for `components.fields.visibility`
+
+Required:
+
+- `type` (String) A string that specifies the visibility behavior for the field.  Options are `ALWAYS_VISIBLE`, `HIDE_BY_DEFAULT`, `SHOW_BY_DEFAULT`.
+
+Optional:
+
+- `key` (String) A non-unique string associated with the field when visibility is evaluated by DaVinci at runtime. If the `visibility.type` property is set to `SHOW_BY_DEFAULT` or `HIDE_BY_DEFAULT`, then this property is required.
 
 ## Import
 
