@@ -13,3 +13,11 @@
 ```release-note:bug
 `resource/pingone_form`: Removed invalid validation that prevented creation of `pingone_form` resources with no submit button.
 ```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2` v0.14.10 => v0.14.11
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.66.0 => v0.67.0
+```

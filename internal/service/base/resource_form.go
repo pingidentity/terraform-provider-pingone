@@ -1272,6 +1272,10 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 											Description:         componentsFieldsVisibilityTypeDescription.Description,
 											MarkdownDescription: componentsFieldsVisibilityTypeDescription.MarkdownDescription,
 											Required:            true,
+
+											Validators: []validator.String{
+												stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumFormFieldVisibilityEnumValues)...),
+											},
 										},
 
 										"key": schema.StringAttribute{
