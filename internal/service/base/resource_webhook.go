@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"regexp"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/mapvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -230,7 +231,7 @@ func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest
 
 			"http_endpoint_url": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a valid HTTPS URL to which event messages are sent.").Description,
-				Required:    true,
+				Optional:    true,
 
 				Validators: []validator.String{
 					stringvalidator.RegexMatches(regexp.MustCompile(`^https:\/\/.*`), "Must be a valid HTTPS URL"),
@@ -243,6 +244,10 @@ func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Optional:            true,
 
 				ElementType: types.StringType,
+
+				Validators: []validator.Map{
+					mapvalidator.AlsoRequires(path.MatchRoot("http_endpoint_url")),
+				},
 			},
 
 			"verify_tls_certificates": schema.BoolAttribute{
@@ -265,7 +270,7 @@ func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest
 			"format": schema.StringAttribute{
 				Description:         formatDescription.Description,
 				MarkdownDescription: formatDescription.MarkdownDescription,
-				Required:            true,
+				Optional:            true,
 
 				Validators: []validator.String{
 					stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumSubscriptionFormatEnumValues)...),
@@ -660,18 +665,6 @@ func (r *WebhookResource) ImportState(ctx context.Context, req resource.ImportSt
 func (p *webhookResourceModelV1) expand(ctx context.Context) (*management.Subscription, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	httpEndpoint := *management.NewSubscriptionHttpEndpoint(p.HttpEndpointUrl.ValueString())
-
-	if !p.HttpEndpointHeaders.IsNull() && !p.HttpEndpointHeaders.IsUnknown() {
-		var headersPlan map[string]string
-		diags.Append(p.HttpEndpointHeaders.ElementsAs(ctx, &headersPlan, false)...)
-		if diags.HasError() {
-			return nil, diags
-		}
-
-		httpEndpoint.SetHeaders(headersPlan)
-	}
-
 	var filterOptionsPlan webhookFilterOptionsResourceModelV1
 	diags.Append(p.FilterOptions.As(ctx, &filterOptionsPlan, basetypes.ObjectAsOptions{
 		UnhandledNullAsEmpty:    true,
@@ -693,11 +686,30 @@ func (p *webhookResourceModelV1) expand(ctx context.Context) (*management.Subscr
 	data := management.NewSubscription(
 		p.Enabled.ValueBool(),
 		*filterOptions,
-		management.EnumSubscriptionFormat(p.Format.ValueString()),
-		httpEndpoint,
 		p.Name.ValueString(),
 		p.VerifyTLSCertificates.ValueBool(),
 	)
+
+	if !p.HttpEndpointUrl.IsNull() && !p.HttpEndpointUrl.IsUnknown() {
+		httpEndpoint := *management.NewSubscriptionHttpEndpoint(p.HttpEndpointUrl.ValueString())
+
+		// HTTP headers require HTTP url to be set
+		if !p.HttpEndpointHeaders.IsNull() && !p.HttpEndpointHeaders.IsUnknown() {
+			var headersPlan map[string]string
+			diags.Append(p.HttpEndpointHeaders.ElementsAs(ctx, &headersPlan, false)...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			httpEndpoint.SetHeaders(headersPlan)
+		}
+
+		data.SetHttpEndpoint(httpEndpoint)
+	}
+
+	if !p.Format.IsNull() && !p.Format.IsUnknown() {
+		data.SetFormat(management.EnumSubscriptionFormat(p.Format.ValueString()))
+	}
 
 	if !p.TLSClientAuthKeyPairId.IsNull() && !p.TLSClientAuthKeyPairId.IsUnknown() {
 		keyPair := management.NewSubscriptionTlsClientAuthKeyPair()
