@@ -66,6 +66,11 @@ type formComponentsFieldResourceModel struct {
 	Content                      types.String `tfsdk:"content"`
 	FallbackText                 types.String `tfsdk:"fallback_text"`
 	Icon                         types.Object `tfsdk:"icon"`
+	IdpEnabled                   types.Bool   `tfsdk:"idp_enabled"`
+	IdpId                        types.String `tfsdk:"idp_id"`
+	IdpName                      types.String `tfsdk:"idp_name"`
+	IdpType                      types.String `tfsdk:"idp_type"`
+	IconSrc                      types.String `tfsdk:"icon_src"`
 	Key                          types.String `tfsdk:"key"`
 	Label                        types.String `tfsdk:"label"`
 	LabelMode                    types.String `tfsdk:"label_mode"`
@@ -78,6 +83,7 @@ type formComponentsFieldResourceModel struct {
 	OtherOptionKey               types.String `tfsdk:"other_option_key"`
 	OtherOptionLabel             types.String `tfsdk:"other_option_label"`
 	Position                     types.Object `tfsdk:"position"`
+	PollingAppearance            types.String `tfsdk:"polling_appearance"`
 	Required                     types.Bool   `tfsdk:"required"`
 	ShowPasswordRequirements     types.Bool   `tfsdk:"show_password_requirements"`
 	Size                         types.String `tfsdk:"size"`
@@ -158,6 +164,11 @@ var (
 		"content":                         types.StringType,
 		"fallback_text":                   types.StringType,
 		"icon":                            types.ObjectType{AttrTypes: formComponentsFieldsIconTFObjectTypes},
+		"idp_enabled":                     types.BoolType,
+		"idp_id":                          types.StringType,
+		"idp_name":                        types.StringType,
+		"idp_type":                        types.StringType,
+		"icon_src":                        types.StringType,
 		"key":                             types.StringType,
 		"label_mode":                      types.StringType,
 		"label_password_verify":           types.StringType,
@@ -170,6 +181,7 @@ var (
 		"other_option_key":                types.StringType,
 		"other_option_label":              types.StringType,
 		"position":                        types.ObjectType{AttrTypes: formComponentsFieldsPositionTFObjectTypes},
+		"polling_appearance":              types.StringType,
 		"required":                        types.BoolType,
 		"show_password_requirements":      types.BoolType,
 		"size":                            types.StringType,
@@ -369,6 +381,18 @@ var (
 				"visibility",
 			},
 		},
+		management.ENUMFORMFIELDTYPE_POLLING: {
+			Required: []string{
+				"type",
+				"position",
+				"key",
+				"polling_appearance",
+				"size",
+			},
+			Optional: []string{
+				"visibility",
+			},
+		},
 		management.ENUMFORMFIELDTYPE_QR_CODE: {
 			Required: []string{
 				"type",
@@ -419,6 +443,23 @@ var (
 				"icon",
 				"key",
 				"content",
+				"visibility",
+			},
+		},
+		management.ENUMFORMFIELDTYPE_SOCIAL_LOGIN_BUTTON: {
+			Required: []string{
+				"type",
+				"position",
+				"key",
+				"idp_name",
+				"idp_type",
+				"idp_id",
+				"idp_enabled",
+				"label",
+			},
+			Optional: []string{
+				"icon_src",
+				"styles",
 				"visibility",
 			},
 		},
@@ -485,6 +526,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 		management.ENUMFORMFIELDTYPE_TEXT,
 		management.ENUMFORMFIELDTYPE_PASSWORD,
 		management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY,
+		management.ENUMFORMFIELDTYPE_POLLING,
 		management.ENUMFORMFIELDTYPE_RADIO,
 		management.ENUMFORMFIELDTYPE_CHECKBOX,
 		management.ENUMFORMFIELDTYPE_DROPDOWN,
@@ -492,6 +534,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 		management.ENUMFORMFIELDTYPE_DIVIDER,
 		management.ENUMFORMFIELDTYPE_EMPTY_FIELD,
 		management.ENUMFORMFIELDTYPE_SLATE_TEXTBLOB,
+		management.ENUMFORMFIELDTYPE_SOCIAL_LOGIN_BUTTON,
 		management.ENUMFORMFIELDTYPE_SUBMIT_BUTTON,
 		management.ENUMFORMFIELDTYPE_ERROR_DISPLAY,
 		management.ENUMFORMFIELDTYPE_FLOW_LINK,
@@ -563,6 +606,36 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 		formFieldValidationDocumentation("icon"),
 	).AppendMarkdownString(
 		"An object that specifies the icon.",
+	)
+
+	componentsFieldsIdpNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		formFieldValidationDocumentation("idp_name"),
+	).AppendMarkdownString(
+		"A string that specifies the external identity provider name.",
+	)
+
+	componentsFieldsIdpTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		formFieldValidationDocumentation("idp_type"),
+	).AppendMarkdownString(
+		"A string that specifies the external identity provider type.",
+	).AllowedValuesEnum(management.AllowedEnumFormSocialLoginIdpTypeEnumValues)
+
+	componentsFieldsIdpIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		formFieldValidationDocumentation("idp_id"),
+	).AppendMarkdownString(
+		"A string that specifies the external identity provider's ID.",
+	)
+
+	componentsFieldsIdpEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		formFieldValidationDocumentation("idp_enabled"),
+	).AppendMarkdownString(
+		"A boolean that specifies whether the external identity provider is enabled.",
+	)
+
+	componentsFieldsIconSrcDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		formFieldValidationDocumentation("icon_src"),
+	).AppendMarkdownString(
+		"A string that specifies the external edentity provider’s image icon URL.",
 	)
 
 	componentsFieldsIconTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -741,12 +814,18 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 		"A string that specifies the unit to apply to the `width` parameter.",
 	).AllowedValuesEnum(management.AllowedEnumFormStylesWidthUnitEnumValues)
 
+	componentsFieldsPollingAppearanceDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		formFieldValidationDocumentation("polling_appearance"),
+	).AppendMarkdownString(
+		"A string that specifies the polling activity indicator appearance.",
+	).AllowedValuesEnum(management.AllowedEnumFormPollingAppearanceEnumValues)
+
 	reCaptchaSizeAllowedValues := utils.EnumSliceToStringSlice(management.AllowedEnumFormRecaptchaV2SizeEnumValues)
 	genericSizeAllowedValues := utils.EnumSliceToStringSlice(management.AllowedEnumFormItemSizeEnumValues)
 	componentsFieldsSizeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		formFieldValidationDocumentation("size"),
 	).AppendMarkdownString(
-		fmt.Sprintf("A string that specifies the reCAPTCHA size or the QR code size. For reCAPTCHA fields, options are `%s`. For QR code fields, options are `%s`.",
+		fmt.Sprintf("A string that specifies the reCAPTCHA size or the QR code/polling size. For reCAPTCHA fields, options are `%s`. For QR code and polling fields, options are `%s`.",
 			strings.Join(reCaptchaSizeAllowedValues, "`, `"),
 			strings.Join(genericSizeAllowedValues, "`, `")),
 	)
@@ -963,6 +1042,40 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 									},
 								},
 
+								"idp_name": schema.StringAttribute{
+									Description:         componentsFieldsIdpNameDescription.Description,
+									MarkdownDescription: componentsFieldsIdpNameDescription.MarkdownDescription,
+									Optional:            true,
+								},
+
+								"idp_type": schema.StringAttribute{
+									Description:         componentsFieldsIdpTypeDescription.Description,
+									MarkdownDescription: componentsFieldsIdpTypeDescription.MarkdownDescription,
+									Optional:            true,
+
+									Validators: []validator.String{
+										stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumFormSocialLoginIdpTypeEnumValues)...),
+									},
+								},
+
+								"idp_id": schema.StringAttribute{
+									Description:         componentsFieldsIdpIdDescription.Description,
+									MarkdownDescription: componentsFieldsIdpIdDescription.MarkdownDescription,
+									Optional:            true,
+								},
+
+								"idp_enabled": schema.BoolAttribute{
+									Description:         componentsFieldsIdpEnabledDescription.Description,
+									MarkdownDescription: componentsFieldsIdpEnabledDescription.MarkdownDescription,
+									Optional:            true,
+								},
+
+								"icon_src": schema.StringAttribute{
+									Description:         componentsFieldsIconSrcDescription.Description,
+									MarkdownDescription: componentsFieldsIconSrcDescription.MarkdownDescription,
+									Optional:            true,
+								},
+
 								"key": schema.StringAttribute{
 									Description:         componentsFieldsKeyDescription.Description,
 									MarkdownDescription: componentsFieldsKeyDescription.MarkdownDescription,
@@ -1091,6 +1204,16 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 									Description:         componentsFieldsOtherOptionLabelDescription.Description,
 									MarkdownDescription: componentsFieldsOtherOptionLabelDescription.MarkdownDescription,
 									Optional:            true,
+								},
+
+								"polling_appearance": schema.StringAttribute{
+									Description:         componentsFieldsPollingAppearanceDescription.Description,
+									MarkdownDescription: componentsFieldsPollingAppearanceDescription.MarkdownDescription,
+									Optional:            true,
+
+									Validators: []validator.String{
+										stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumFormPollingAppearanceEnumValues)...),
+									},
 								},
 
 								"other_option_input_label": schema.StringAttribute{
@@ -1430,6 +1553,16 @@ func (r *formComponentsFieldResourceModel) validateFieldSet(field string) bool {
 		return !r.FallbackText.IsNull()
 	case "icon":
 		return !r.Icon.IsNull()
+	case "idp_enabled":
+		return !r.IdpEnabled.IsNull()
+	case "idp_id":
+		return !r.IdpId.IsNull()
+	case "idp_name":
+		return !r.IdpName.IsNull()
+	case "idp_type":
+		return !r.IdpType.IsNull()
+	case "icon_src":
+		return !r.IconSrc.IsNull()
 	case "key":
 		return !r.Key.IsNull()
 	case "label":
@@ -1454,6 +1587,8 @@ func (r *formComponentsFieldResourceModel) validateFieldSet(field string) bool {
 		return !r.OtherOptionLabel.IsNull()
 	case "position":
 		return !r.Position.IsNull()
+	case "polling_appearance":
+		return !r.PollingAppearance.IsNull()
 	case "required":
 		return !r.Required.IsNull()
 	case "show_password_requirements":
@@ -1999,8 +2134,8 @@ func (p *formResourceModel) validate(ctx context.Context, allowUnknowns bool) di
 					}
 				}
 
-				// Validate size value for QR_CODE and RECAPTCHA_V2
-				if field.Type.ValueString() == string(management.ENUMFORMFIELDTYPE_QR_CODE) {
+				// Validate size value for QR_CODE, POLLING and RECAPTCHA_V2
+				if field.Type.ValueString() == string(management.ENUMFORMFIELDTYPE_QR_CODE) || field.Type.ValueString() == string(management.ENUMFORMFIELDTYPE_POLLING) {
 					sizeValue := field.Size.ValueString()
 					validSizes := utils.EnumSliceToStringSlice(management.AllowedEnumFormItemSizeEnumValues)
 					if !slices.Contains(validSizes, sizeValue) {
@@ -2146,6 +2281,8 @@ func (p *formComponentsFieldResourceModel) expand(ctx context.Context) (*managem
 		data.FormFieldPassword, d = p.expandFieldPassword(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY):
 		data.FormFieldPasswordVerify, d = p.expandFieldPasswordVerify(ctx, positionData)
+	case string(management.ENUMFORMFIELDTYPE_POLLING):
+		data.FormFieldPolling, d = p.expandFieldPolling(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_QR_CODE):
 		data.FormFieldQrCode, d = p.expandItemQRCode(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_RADIO):
@@ -2154,6 +2291,8 @@ func (p *formComponentsFieldResourceModel) expand(ctx context.Context) (*managem
 		data.FormFieldRecaptchaV2, d = p.expandItemRecaptchaV2(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_SLATE_TEXTBLOB):
 		data.FormFieldSlateTextblob, d = p.expandItemSlateTextblob(ctx, positionData)
+	case string(management.ENUMFORMFIELDTYPE_SOCIAL_LOGIN_BUTTON):
+		data.FormFieldSocialLoginButton, d = p.expandFieldSocialLoginButton(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_SUBMIT_BUTTON):
 		data.FormFieldSubmitButton, d = p.expandFieldSubmitButton(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_TEXT):
@@ -2748,6 +2887,79 @@ func (p *formComponentsFieldResourceModel) expandFieldPasswordVerify(ctx context
 	return data, diags
 }
 
+func (p *formComponentsFieldResourceModel) expandFieldPolling(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldPolling, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := management.NewFormFieldPolling(
+		management.ENUMFORMFIELDTYPE_POLLING,
+		*positionData,
+		p.Key.ValueString(),
+		management.EnumFormPollingAppearance(p.PollingAppearance.ValueString()),
+		management.EnumFormItemSize(p.Size.ValueString()),
+	)
+
+	if !p.Visibility.IsNull() && !p.Visibility.IsUnknown() {
+		var plan formComponentsFieldVisibilityResourceModel
+		diags.Append(p.Visibility.As(ctx, &plan, basetypes.ObjectAsOptions{})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetVisibility(*plan.expand())
+	}
+
+	return data, diags
+}
+
+func (p *formComponentsFieldResourceModel) expandFieldSocialLoginButton(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldSocialLoginButton, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := management.NewFormFieldSocialLoginButton(
+		management.ENUMFORMFIELDTYPE_SOCIAL_LOGIN_BUTTON,
+		*positionData,
+		p.Key.ValueString(),
+		p.IdpName.ValueString(),
+		management.EnumFormSocialLoginIdpType(p.IdpType.ValueString()),
+		p.IdpId.ValueString(),
+		p.IdpEnabled.ValueBool(),
+		p.Label.ValueString(),
+	)
+
+	if !p.IconSrc.IsNull() && !p.IconSrc.IsUnknown() {
+		data.SetIconSrc(p.IconSrc.ValueString())
+	}
+
+	if !p.Styles.IsNull() && !p.Styles.IsUnknown() {
+		var plan formComponentsFieldStylesResourceModel
+		diags.Append(p.Styles.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		stylesData, d := plan.expand(ctx, "SOCIAL_LOGIN_BUTTON")
+		diags.Append(d...)
+
+		if v, ok := stylesData.(*management.FormSocialLoginButtonAllOfStyles); ok {
+			data.SetStyles(*v)
+		}
+	}
+
+	if !p.Visibility.IsNull() && !p.Visibility.IsUnknown() {
+		var plan formComponentsFieldVisibilityResourceModel
+		diags.Append(p.Visibility.As(ctx, &plan, basetypes.ObjectAsOptions{})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetVisibility(*plan.expand())
+	}
+
+	return data, diags
+}
+
 func (p *formComponentsFieldResourceModel) expandFieldRadio(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldRadio, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -3178,6 +3390,87 @@ func (p *formComponentsFieldStylesResourceModel) expand(ctx context.Context, sty
 		return data, diags
 	}
 
+	if styleType == "SOCIAL_LOGIN_BUTTON" {
+		data := management.NewFormSocialLoginButtonAllOfStyles()
+
+		if !p.Alignment.IsNull() && !p.Alignment.IsUnknown() {
+			data.SetAlignment(management.EnumFormItemAlignment(p.Alignment.ValueString()))
+		}
+
+		// NOTE: SOCIAL_LOGIN_BUTTON styles SHOULD align with button styles.
+		// SDK bug: management.FormSocialLoginButtonAllOfStyles does not expose
+		// backgroundColor, so do not map `background_color` until SDK support exists.
+
+		if !p.BorderColor.IsNull() && !p.BorderColor.IsUnknown() {
+			data.SetBorderColor(p.BorderColor.ValueString())
+		}
+
+		if !p.DisplayDefaultThemeButtonBackgroundColor.IsNull() && !p.DisplayDefaultThemeButtonBackgroundColor.IsUnknown() {
+			data.SetDisplayDefaultThemeButtonBackgroundColor(p.DisplayDefaultThemeButtonBackgroundColor.ValueBool())
+		}
+
+		if !p.DisplayDefaultThemeButtonBorderColor.IsNull() && !p.DisplayDefaultThemeButtonBorderColor.IsUnknown() {
+			data.SetDisplayDefaultThemeButtonBorderColor(p.DisplayDefaultThemeButtonBorderColor.ValueBool())
+		}
+
+		if !p.DisplayDefaultThemeButtonTextColor.IsNull() && !p.DisplayDefaultThemeButtonTextColor.IsUnknown() {
+			data.SetDisplayDefaultThemeButtonTextColor(p.DisplayDefaultThemeButtonTextColor.ValueBool())
+		}
+
+		if !p.Enabled.IsNull() && !p.Enabled.IsUnknown() {
+			data.SetEnabled(p.Enabled.ValueBool())
+		}
+
+		if !p.Height.IsNull() && !p.Height.IsUnknown() {
+			data.SetHeight(p.Height.ValueInt32())
+		}
+
+		if !p.Padding.IsNull() && !p.Padding.IsUnknown() {
+			var plan formComponentsFieldButtonStylesPaddingResourceModel
+			diags.Append(p.Padding.As(ctx, &plan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			padding := management.NewFormStylesPadding()
+
+			if !plan.Bottom.IsNull() && !plan.Bottom.IsUnknown() {
+				padding.SetBottom(plan.Bottom.ValueInt32())
+			}
+
+			if !plan.Left.IsNull() && !plan.Left.IsUnknown() {
+				padding.SetLeft(plan.Left.ValueInt32())
+			}
+
+			if !plan.Right.IsNull() && !plan.Right.IsUnknown() {
+				padding.SetRight(plan.Right.ValueInt32())
+			}
+
+			if !plan.Top.IsNull() && !plan.Top.IsUnknown() {
+				padding.SetTop(plan.Top.ValueInt32())
+			}
+
+			data.SetPadding(*padding)
+		}
+
+		if !p.TextColor.IsNull() && !p.TextColor.IsUnknown() {
+			data.SetTextColor(p.TextColor.ValueString())
+		}
+
+		if !p.Width.IsNull() && !p.Width.IsUnknown() {
+			data.SetWidth(p.Width.ValueInt32())
+		}
+
+		if !p.WidthUnit.IsNull() && !p.WidthUnit.IsUnknown() {
+			data.SetWidthUnit(management.EnumFormStylesWidthUnit(p.WidthUnit.ValueString()))
+		}
+
+		return data, diags
+	}
+
 	diags.AddError(
 		"Unhandled style type",
 		fmt.Sprintf("Unhandled style type %s.  This is a bug in the provider and must be reported to the provider maintainers.", styleType),
@@ -3497,6 +3790,22 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 				"visibility":                      visibility,
 			}
 
+		case *management.FormFieldPolling:
+			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
+			diags.Append(d...)
+
+			visibility, d := formComponentsFieldsVisibilityOkToTF(t.GetVisibilityOk())
+			diags.Append(d...)
+
+			attributeMap = map[string]attr.Value{
+				"key":                framework.StringOkToTF(t.GetKeyOk()),
+				"polling_appearance": framework.EnumOkToTF(t.GetPollingAppearanceOk()),
+				"position":           position,
+				"size":               framework.EnumOkToTF(t.GetSizeOk()),
+				"type":               framework.EnumOkToTF(t.GetTypeOk()),
+				"visibility":         visibility,
+			}
+
 		case *management.FormFieldQrCode:
 			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
 			diags.Append(d...)
@@ -3581,6 +3890,33 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 				"visibility": visibility,
 			}
 
+		case *management.FormFieldSocialLoginButton:
+			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
+			diags.Append(d...)
+
+			// NOTE: SOCIAL_LOGIN_BUTTON styles SHOULD align with button styles.
+			// SDK bug: FormSocialLoginButtonAllOfStyles is missing backgroundColor,
+			// so flattened `styles.background_color` must remain null.
+			styles, d := formComponentsFieldsSocialLoginButtonStylesOkToTF(t.GetStylesOk())
+			diags.Append(d...)
+
+			visibility, d := formComponentsFieldsVisibilityOkToTF(t.GetVisibilityOk())
+			diags.Append(d...)
+
+			attributeMap = map[string]attr.Value{
+				"idp_enabled": framework.BoolOkToTF(t.GetIdpEnabledOk()),
+				"idp_id":      framework.StringOkToTF(t.GetIdpIdOk()),
+				"idp_name":    framework.StringOkToTF(t.GetIdpNameOk()),
+				"idp_type":    framework.EnumOkToTF(t.GetIdpTypeOk()),
+				"icon_src":    framework.StringOkToTF(t.GetIconSrcOk()),
+				"key":         framework.StringOkToTF(t.GetKeyOk()),
+				"label":       framework.StringOkToTF(t.GetLabelOk()),
+				"position":    position,
+				"styles":      styles,
+				"type":        framework.EnumOkToTF(t.GetTypeOk()),
+				"visibility":  visibility,
+			}
+
 		case *management.FormFieldSubmitButton:
 			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
 			diags.Append(d...)
@@ -3652,6 +3988,11 @@ func formComponentsFieldsConvertEmptyValuesToTFNulls(attributeMap map[string]att
 		"content":                         types.StringNull(),
 		"fallback_text":                   types.StringNull(),
 		"icon":                            types.ObjectNull(formComponentsFieldsIconTFObjectTypes),
+		"idp_enabled":                     types.BoolNull(),
+		"idp_id":                          types.StringNull(),
+		"idp_name":                        types.StringNull(),
+		"idp_type":                        types.StringNull(),
+		"icon_src":                        types.StringNull(),
 		"key":                             types.StringNull(),
 		"label_mode":                      types.StringNull(),
 		"label_password_verify":           types.StringNull(),
@@ -3664,6 +4005,7 @@ func formComponentsFieldsConvertEmptyValuesToTFNulls(attributeMap map[string]att
 		"other_option_key":                types.StringNull(),
 		"other_option_label":              types.StringNull(),
 		"position":                        types.ObjectNull(formComponentsFieldsPositionTFObjectTypes),
+		"polling_appearance":              types.StringNull(),
 		"required":                        types.BoolNull(),
 		"show_password_requirements":      types.BoolNull(),
 		"size":                            types.StringNull(),
@@ -3802,6 +4144,42 @@ func formComponentsFieldsLinkStylesOkToTF(apiObject *management.FormLinkCustomAl
 		"text_color":                                    framework.StringOkToTF(apiObject.GetTextColorOk()),
 		"width":                                         types.Int32Null(),
 		"width_unit":                                    types.StringNull(),
+	})
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func formComponentsFieldsSocialLoginButtonStylesOkToTF(apiObject *management.FormSocialLoginButtonAllOfStyles, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes), diags
+	}
+
+	padding, d := formComponentsFieldsPaddingOkToTF(apiObject.GetPaddingOk())
+	diags.Append(d...)
+	if diags.HasError() {
+		return types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes), diags
+	}
+
+	objValue, d := types.ObjectValue(formComponentsFieldsFieldStylesTFObjectTypes, map[string]attr.Value{
+		"alignment": framework.EnumOkToTF(apiObject.GetAlignmentOk()),
+		// NOTE: SOCIAL_LOGIN_BUTTON styles SHOULD align with button styles.
+		// SDK bug: FormSocialLoginButtonAllOfStyles is missing backgroundColor,
+		// so flattened `styles.background_color` must remain null.
+		"background_color": types.StringNull(),
+		"border_color":     framework.StringOkToTF(apiObject.GetBorderColorOk()),
+		"display_default_theme_button_background_color": framework.BoolOkToTF(apiObject.GetDisplayDefaultThemeButtonBackgroundColorOk()),
+		"display_default_theme_button_border_color":     framework.BoolOkToTF(apiObject.GetDisplayDefaultThemeButtonBorderColorOk()),
+		"display_default_theme_button_text_color":       framework.BoolOkToTF(apiObject.GetDisplayDefaultThemeButtonTextColorOk()),
+		"display_default_theme_link_color":              types.BoolNull(),
+		"enabled":                                       framework.BoolOkToTF(apiObject.GetEnabledOk()),
+		"height":                                        framework.Int32OkToTF(apiObject.GetHeightOk()),
+		"padding":                                       padding,
+		"text_color":                                    framework.StringOkToTF(apiObject.GetTextColorOk()),
+		"width":                                         framework.Int32OkToTF(apiObject.GetWidthOk()),
+		"width_unit":                                    framework.EnumOkToTF(apiObject.GetWidthUnitOk()),
 	})
 	diags.Append(d...)
 

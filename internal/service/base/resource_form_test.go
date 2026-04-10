@@ -133,6 +133,19 @@ func TestAccForm_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "translation_method", "DEFAULT_VALUE"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.visibility.type", "SHOW_BY_DEFAULT"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.visibility.key", "mykey"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.2.type", "POLLING"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.2.polling_appearance", "DOTS"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.2.size", "SMALL"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.3.type", "SOCIAL_LOGIN_BUTTON"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.3.idp_name", "Google"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.3.idp_type", "GOOGLE"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.3.idp_id", "google-idp-id"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.3.idp_enabled", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "field_types.#", "4"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "field_types.*", "TEXT"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "field_types.*", "SUBMIT_BUTTON"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "field_types.*", "POLLING"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "field_types.*", "SOCIAL_LOGIN_BUTTON"),
 			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
 	}
@@ -151,6 +164,19 @@ func TestAccForm_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "text_auto_complete_enabled", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "cols", "4"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "translation_method"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.2.type", "POLLING"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.2.polling_appearance", "SPINNER"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.2.size", "MEDIUM"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.3.type", "SOCIAL_LOGIN_BUTTON"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.3.idp_name", "LinkedIn"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.3.idp_type", "LINKEDIN_OIDC"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.3.idp_id", "linkedin-idp-id"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.3.idp_enabled", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "field_types.#", "4"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "field_types.*", "TEXT"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "field_types.*", "SUBMIT_BUTTON"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "field_types.*", "POLLING"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "field_types.*", "SOCIAL_LOGIN_BUTTON"),
 			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
 	}
@@ -2104,6 +2130,53 @@ resource "pingone_form" "%[2]s" {
 
         label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
       },
+      {
+        type = "POLLING"
+
+        position = {
+          row = 2
+          col = 0
+        }
+
+        key                = "polling-field"
+        polling_appearance = "DOTS"
+        size               = "SMALL"
+      },
+      {
+        type = "SOCIAL_LOGIN_BUTTON"
+
+        position = {
+          row = 3
+          col = 0
+        }
+
+        key         = "social-login-google"
+        idp_name    = "Google"
+        idp_type    = "GOOGLE"
+        idp_id      = "google-idp-id"
+        idp_enabled = true
+        icon_src    = "https://example.com/google.svg"
+        label       = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Continue with Google\"}]}]"
+
+        styles = {
+          alignment                                     = "CENTER"
+          border_color                                  = "#4462ED"
+          display_default_theme_button_background_color = false
+          display_default_theme_button_border_color     = false
+          display_default_theme_button_text_color       = false
+          enabled                                       = true
+          height                                        = 36
+          padding = {
+            bottom = 5
+            left   = 0
+            right  = 0
+            top    = 5
+          }
+          text_color = "#4462ED"
+          width      = 100
+          width_unit = "PERCENT"
+        }
+      },
     ]
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
@@ -2147,6 +2220,33 @@ resource "pingone_form" "%[2]s" {
         }
 
         label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+      },
+      {
+        type = "POLLING"
+
+        position = {
+          row = 2
+          col = 0
+        }
+
+        key                = "polling-field"
+        polling_appearance = "SPINNER"
+        size               = "MEDIUM"
+      },
+      {
+        type = "SOCIAL_LOGIN_BUTTON"
+
+        position = {
+          row = 3
+          col = 0
+        }
+
+        key         = "social-login-linkedin"
+        idp_name    = "LinkedIn"
+        idp_type    = "LINKEDIN_OIDC"
+        idp_id      = "linkedin-idp-id"
+        idp_enabled = true
+        label       = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Continue with LinkedIn\"}]}]"
       }
     ]
   }
