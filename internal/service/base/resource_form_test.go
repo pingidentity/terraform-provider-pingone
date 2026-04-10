@@ -196,6 +196,10 @@ func TestAccForm_Full(t *testing.T) {
 				}(),
 				ImportState:       true,
 				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					// This computed attribute may be affected by other tests. Just ignore it here since it's fully computed.
+					"language_bundle",
+				},
 			},
 		},
 	})
@@ -332,6 +336,10 @@ func TestAccForm_Multiple(t *testing.T) {
 				}(),
 				ImportState:       true,
 				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					// This computed attribute may be affected by other tests. Just ignore it here since it's fully computed.
+					"language_bundle",
+				},
 			},
 		},
 	})
@@ -437,6 +445,10 @@ func TestAccForm_FieldCheckbox(t *testing.T) {
 				}(),
 				ImportState:       true,
 				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					// This computed attribute may be affected by other tests. Just ignore it here since it's fully computed.
+					"language_bundle",
+				},
 			},
 		},
 	})
@@ -541,6 +553,10 @@ func TestAccForm_FieldCombobox(t *testing.T) {
 				}(),
 				ImportState:       true,
 				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					// This computed attribute may be affected by other tests. Just ignore it here since it's fully computed.
+					"language_bundle",
+				},
 			},
 		},
 	})
@@ -645,6 +661,10 @@ func TestAccForm_FieldDropdown(t *testing.T) {
 				}(),
 				ImportState:       true,
 				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					// This computed attribute may be affected by other tests. Just ignore it here since it's fully computed.
+					"language_bundle",
+				},
 			},
 		},
 	})
@@ -751,6 +771,10 @@ func TestAccForm_FieldPassword(t *testing.T) {
 				}(),
 				ImportState:       true,
 				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					// This computed attribute may be affected by other tests. Just ignore it here since it's fully computed.
+					"language_bundle",
+				},
 			},
 		},
 	})
@@ -860,6 +884,10 @@ func TestAccForm_FieldPasswordVerify(t *testing.T) {
 				}(),
 				ImportState:       true,
 				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					// This computed attribute may be affected by other tests. Just ignore it here since it's fully computed.
+					"language_bundle",
+				},
 			},
 		},
 	})
@@ -965,6 +993,10 @@ func TestAccForm_FieldRadio(t *testing.T) {
 				}(),
 				ImportState:       true,
 				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					// This computed attribute may be affected by other tests. Just ignore it here since it's fully computed.
+					"language_bundle",
+				},
 			},
 		},
 	})
@@ -1061,6 +1093,10 @@ func TestAccForm_FieldSubmitButton(t *testing.T) {
 				}(),
 				ImportState:       true,
 				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					// This computed attribute may be affected by other tests. Just ignore it here since it's fully computed.
+					"language_bundle",
+				},
 			},
 		},
 	})
@@ -1159,6 +1195,10 @@ func TestAccForm_FieldText(t *testing.T) {
 				}(),
 				ImportState:       true,
 				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					// This computed attribute may be affected by other tests. Just ignore it here since it's fully computed.
+					"language_bundle",
+				},
 			},
 		},
 	})
@@ -1237,6 +1277,10 @@ func TestAccForm_ItemDivider(t *testing.T) {
 				}(),
 				ImportState:       true,
 				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					// This computed attribute may be affected by other tests. Just ignore it here since it's fully computed.
+					"language_bundle",
+				},
 			},
 		},
 	})
@@ -1315,6 +1359,10 @@ func TestAccForm_ItemEmptyField(t *testing.T) {
 				}(),
 				ImportState:       true,
 				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					// This computed attribute may be affected by other tests. Just ignore it here since it's fully computed.
+					"language_bundle",
+				},
 			},
 		},
 	})
@@ -1393,6 +1441,10 @@ func TestAccForm_ItemErrorDisplay(t *testing.T) {
 				}(),
 				ImportState:       true,
 				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					// This computed attribute may be affected by other tests. Just ignore it here since it's fully computed.
+					"language_bundle",
+				},
 			},
 		},
 	})
@@ -1496,6 +1548,10 @@ func TestAccForm_ItemFlowButton(t *testing.T) {
 				}(),
 				ImportState:       true,
 				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					// This computed attribute may be affected by other tests. Just ignore it here since it's fully computed.
+					"language_bundle",
+				},
 			},
 		},
 	})
@@ -1598,6 +1654,10 @@ func TestAccForm_ItemFlowLink(t *testing.T) {
 				}(),
 				ImportState:       true,
 				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					// This computed attribute may be affected by other tests. Just ignore it here since it's fully computed.
+					"language_bundle",
+				},
 			},
 		},
 	})
@@ -1689,6 +1749,10 @@ func TestAccForm_ItemQRCode(t *testing.T) {
 				}(),
 				ImportState:       true,
 				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					// This computed attribute may be affected by other tests. Just ignore it here since it's fully computed.
+					"language_bundle",
+				},
 			},
 		},
 	})
@@ -1777,6 +1841,10 @@ func TestAccForm_ItemRecaptchaV2(t *testing.T) {
 				}(),
 				ImportState:       true,
 				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					// This computed attribute may be affected by other tests. Just ignore it here since it's fully computed.
+					"language_bundle",
+				},
 			},
 		},
 	})
@@ -1861,6 +1929,10 @@ func TestAccForm_ItemSlateTextblob(t *testing.T) {
 				}(),
 				ImportState:       true,
 				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					// This computed attribute may be affected by other tests. Just ignore it here since it's fully computed.
+					"language_bundle",
+				},
 			},
 		},
 	})
