@@ -98,6 +98,7 @@ type applicationOIDCOptionsCommonModelV1 struct {
 	RefreshTokenDuration                          types.Int32  `tfsdk:"refresh_token_duration"`
 	RefreshTokenRollingDuration                   types.Int32  `tfsdk:"refresh_token_rolling_duration"`
 	RefreshTokenRollingGracePeriodDuration        types.Int32  `tfsdk:"refresh_token_rolling_grace_period_duration"`
+	RefreshTokenType                              types.String `tfsdk:"refresh_token_type"`
 	RequestScopesForMultipleResourcesEnabled      types.Bool   `tfsdk:"request_scopes_for_multiple_resources_enabled"`
 	RequireSignedRequestObject                    types.Bool   `tfsdk:"require_signed_request_object"`
 	ResponseTypes                                 types.Set    `tfsdk:"response_types"`
@@ -271,6 +272,7 @@ var (
 		"refresh_token_duration":                             types.Int32Type,
 		"refresh_token_rolling_duration":                     types.Int32Type,
 		"refresh_token_rolling_grace_period_duration":        types.Int32Type,
+		"refresh_token_type":                                 types.StringType,
 		"request_scopes_for_multiple_resources_enabled":      types.BoolType,
 		"require_signed_request_object":                      types.BoolType,
 		"response_types":                                     types.SetType{ElemType: types.StringType},
@@ -607,6 +609,10 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 	oidcOptionsRefreshTokenRollingGracePeriodDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("The number of seconds that a refresh token may be reused after having been exchanged for a new set of tokens. This is useful in the case of network errors on the client. Valid values are between `%d` and `%d` seconds. `Null` is treated the same as `0`.", oidcOptionsRefreshTokenRollingGracePeriodDurationMin, oidcOptionsRefreshTokenRollingGracePeriodDurationMax),
 	)
+
+	oidcOptionsRefreshTokenTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the format of the refresh token. Opaque tokens are more secure and are the recommended format. Ping Identity is shifting towards deprecating JWT tokens.",
+	).AllowedValuesEnum(management.AllowedEnumApplicationOIDCRefreshTokenTypeEnumValues)
 
 	oidcOptionsRequestScopesForMultipleResourcesEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether the application can request scopes from multiple custom resources.",
@@ -1248,6 +1254,17 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 
 							Validators: []validator.Int32{
 								int32validator.Between(oidcOptionsRefreshTokenRollingGracePeriodDurationMin, oidcOptionsRefreshTokenRollingGracePeriodDurationMax),
+							},
+						},
+
+						"refresh_token_type": schema.StringAttribute{
+							Description:         oidcOptionsRefreshTokenTypeDescription.Description,
+							MarkdownDescription: oidcOptionsRefreshTokenTypeDescription.MarkdownDescription,
+							Optional:            true,
+							Computed:            true,
+
+							Validators: []validator.String{
+								stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationOIDCRefreshTokenTypeEnumValues)...),
 							},
 						},
 
@@ -2760,6 +2777,10 @@ func (p *applicationResourceModelV1) expandApplicationOIDC(ctx context.Context) 
 
 		if !plan.RefreshTokenRollingGracePeriodDuration.IsNull() && !plan.RefreshTokenRollingGracePeriodDuration.IsUnknown() {
 			data.SetRefreshTokenRollingGracePeriodDuration(plan.RefreshTokenRollingGracePeriodDuration.ValueInt32())
+		}
+
+		if !plan.RefreshTokenType.IsNull() && !plan.RefreshTokenType.IsUnknown() {
+			data.SetRefreshTokenType(management.EnumApplicationOIDCRefreshTokenType(plan.RefreshTokenType.ValueString()))
 		}
 
 		if !plan.RequestScopesForMultipleResourcesEnabled.IsNull() && !plan.RequestScopesForMultipleResourcesEnabled.IsUnknown() {

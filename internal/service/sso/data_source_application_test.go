@@ -453,6 +453,7 @@ resource "pingone_application" "%[2]s" {
     refresh_token_duration                             = 3000000
     refresh_token_rolling_duration                     = 30000000
     refresh_token_rolling_grace_period_duration        = 80000
+    refresh_token_type                                 = "JSON_WEB_TOKEN"
     additional_refresh_token_replay_protection_enabled = false
     idp_signoff                                        = true
 
