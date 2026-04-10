@@ -141,10 +141,21 @@ resource "pingone_form" "my_awesome_form" {
         required = true
       },
       {
-        type = "SUBMIT_BUTTON"
+        type = "SINGLE_CHECKBOX"
 
         position = {
           row = 4
+          col = 0
+        }
+
+        appearance = "CHECKBOX"
+        input_type = "BOOLEAN"
+      },
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 5
           col = 0
         }
 

@@ -141,11 +141,26 @@ func TestAccForm_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.3.idp_type", "GOOGLE"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.3.idp_id", "google-idp-id"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.3.idp_enabled", "true"),
-			resource.TestCheckResourceAttr(resourceFullName, "field_types.#", "4"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.4.type", "FIDO2"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.4.trigger", "BUTTON"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.4.action", "AUTHENTICATE"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.5.type", "SINGLE_CHECKBOX"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.5.appearance", "CHECKBOX"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.5.input_type", "BOOLEAN"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.5.error_message", "Please accept this checkbox"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.6.type", "AGREEMENT"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.6.input_type", "READ_ONLY_TEXT"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.6.title_enabled", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.6.agreement.id", "00000000-0000-4000-8000-000000000001"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.6.agreement.use_dynamic_agreement", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "field_types.#", "7"),
 			resource.TestCheckTypeSetElemAttr(resourceFullName, "field_types.*", "TEXT"),
 			resource.TestCheckTypeSetElemAttr(resourceFullName, "field_types.*", "SUBMIT_BUTTON"),
 			resource.TestCheckTypeSetElemAttr(resourceFullName, "field_types.*", "POLLING"),
 			resource.TestCheckTypeSetElemAttr(resourceFullName, "field_types.*", "SOCIAL_LOGIN_BUTTON"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "field_types.*", "FIDO2"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "field_types.*", "SINGLE_CHECKBOX"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "field_types.*", "AGREEMENT"),
 			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
 	}
@@ -172,11 +187,26 @@ func TestAccForm_Full(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.3.idp_type", "LINKEDIN_OIDC"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.3.idp_id", "linkedin-idp-id"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.3.idp_enabled", "true"),
-			resource.TestCheckResourceAttr(resourceFullName, "field_types.#", "4"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.4.type", "FIDO2"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.4.trigger", "AUTOMATIC"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.4.action", "REGISTER"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.5.type", "SINGLE_CHECKBOX"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.5.appearance", "SWITCH"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.5.input_type", "BOOLEAN"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "components.fields.5.error_message"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.6.type", "AGREEMENT"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.6.input_type", "READ_ONLY_TEXT"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.6.title_enabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.6.agreement.id", "00000000-0000-4000-8000-000000000002"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.6.agreement.use_dynamic_agreement", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "field_types.#", "7"),
 			resource.TestCheckTypeSetElemAttr(resourceFullName, "field_types.*", "TEXT"),
 			resource.TestCheckTypeSetElemAttr(resourceFullName, "field_types.*", "SUBMIT_BUTTON"),
 			resource.TestCheckTypeSetElemAttr(resourceFullName, "field_types.*", "POLLING"),
 			resource.TestCheckTypeSetElemAttr(resourceFullName, "field_types.*", "SOCIAL_LOGIN_BUTTON"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "field_types.*", "FIDO2"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "field_types.*", "SINGLE_CHECKBOX"),
+			resource.TestCheckTypeSetElemAttr(resourceFullName, "field_types.*", "AGREEMENT"),
 			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
 	}
@@ -2177,6 +2207,48 @@ resource "pingone_form" "%[2]s" {
           width_unit = "PERCENT"
         }
       },
+      {
+        type = "FIDO2"
+
+        position = {
+          row = 4
+          col = 0
+        }
+
+        key     = "fido2-authenticate"
+        trigger = "BUTTON"
+        action  = "AUTHENTICATE"
+        label   = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Use your passkey\"}]}]"
+      },
+      {
+        type = "SINGLE_CHECKBOX"
+
+        position = {
+          row = 5
+          col = 0
+        }
+
+        appearance    = "CHECKBOX"
+        input_type    = "BOOLEAN"
+        error_message = "Please accept this checkbox"
+      },
+      {
+        type = "AGREEMENT"
+
+        position = {
+          row = 6
+          col = 0
+        }
+
+        key           = "agreement-field"
+        input_type    = "READ_ONLY_TEXT"
+        title_enabled = true
+
+        agreement = {
+          id                    = "00000000-0000-4000-8000-000000000001"
+          use_dynamic_agreement = true
+        }
+      },
     ]
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
@@ -2247,6 +2319,47 @@ resource "pingone_form" "%[2]s" {
         idp_id      = "linkedin-idp-id"
         idp_enabled = true
         label       = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Continue with LinkedIn\"}]}]"
+      },
+      {
+        type = "FIDO2"
+
+        position = {
+          row = 4
+          col = 0
+        }
+
+        key     = "fido2-register"
+        trigger = "AUTOMATIC"
+        action  = "REGISTER"
+        label   = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Register your passkey\"}]}]"
+      },
+      {
+        type = "SINGLE_CHECKBOX"
+
+        position = {
+          row = 5
+          col = 0
+        }
+
+        appearance = "SWITCH"
+        input_type = "BOOLEAN"
+      },
+      {
+        type = "AGREEMENT"
+
+        position = {
+          row = 6
+          col = 0
+        }
+
+        key           = "agreement-field"
+        input_type    = "READ_ONLY_TEXT"
+        title_enabled = false
+
+        agreement = {
+          id                    = "00000000-0000-4000-8000-000000000002"
+          use_dynamic_agreement = false
+        }
       }
     ]
   }
