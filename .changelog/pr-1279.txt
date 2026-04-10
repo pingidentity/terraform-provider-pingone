@@ -1,0 +1,11 @@
+```release-note:enhancement
+`resource/pingone_webhook`: The `format` and `http_endpoint_url` attributes are now optional instead of required.
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2` v0.14.11 => v0.14.12
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.67.0 => v0.68.0
+```
