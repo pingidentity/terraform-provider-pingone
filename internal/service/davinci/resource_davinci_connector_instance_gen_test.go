@@ -148,6 +148,11 @@ func testAccDavinciConnectorInstance_MinimalMaximal(t *testing.T, withBootstrapC
 				ImportState:                          true,
 				ImportStateVerify:                    true,
 			},
+      {
+        // Connector metadata for this connector includes a vendor value
+        Config: davinciConnectorInstance_MetadataVendorHCL(resourceName, withBootstrapConfig),
+        Check:  davinciConnectorInstance_CheckComputedMetadataValuesWithVendor(resourceName),
+      },
 		},
 	})
 }
@@ -535,6 +540,21 @@ resource "pingone_davinci_connector_instance" "%[2]s" {
       ]
     }
   })
+}
+`, acctest.DaVinciSandboxEnvironment(withBootstrapConfig), resourceName)
+}
+
+// Minimal HCL for a connector whose computed metadata includes vendor
+func davinciConnectorInstance_MetadataVendorHCL(resourceName string, withBootstrapConfig bool) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_davinci_connector_instance" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  connector = {
+    id = "amazonSimpleEmailConnector"
+  }
+  name = "%[2]s"
 }
 `, acctest.DaVinciSandboxEnvironment(withBootstrapConfig), resourceName)
 }
@@ -1200,6 +1220,13 @@ func davinciConnectorInstance_CheckComputedMetadataValues(resourceName string) r
 		resource.TestCheckResourceAttrSet(fmt.Sprintf("pingone_davinci_connector_instance.%s", resourceName), "metadata.colors.dark"),
 		resource.TestCheckResourceAttrSet(fmt.Sprintf("pingone_davinci_connector_instance.%s", resourceName), "metadata.logos.canvas.image_file_name"),
 		resource.TestCheckResourceAttrSet(fmt.Sprintf("pingone_davinci_connector_instance.%s", resourceName), "metadata.type"),
+  )
+}
+
+func davinciConnectorInstance_CheckComputedMetadataValuesWithVendor(resourceName string) resource.TestCheckFunc {
+  return resource.ComposeTestCheckFunc(
+    davinciConnectorInstance_CheckComputedMetadataValues(resourceName),
+		resource.TestCheckResourceAttrSet(fmt.Sprintf("pingone_davinci_connector_instance.%s", resourceName), "metadata.vendor"),
 	)
 }
 

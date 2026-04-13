@@ -1525,9 +1525,9 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 		triggerTypeValue, err := pingone.NewDaVinciFlowTriggerRequestTypeFromValue(triggerAttrs["type"].(types.String).ValueString())
 		if err != nil {
 			respDiags.AddAttributeError(
-				path.Root("type"),
+				path.Root("trigger").AtName("type"),
 				"Provided value is not valid",
-				fmt.Sprintf("The value provided for type is not valid: %s", err.Error()),
+				fmt.Sprintf("The value provided for trigger.type is not valid: %s", err.Error()),
 			)
 		} else {
 			triggerValue.Type = *triggerTypeValue
@@ -1536,9 +1536,9 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 			triggerSubtypeValue, err := pingone.NewDaVinciFlowTriggerRequestSubtypeFromValue(triggerAttrs["subtype"].(types.String).ValueString())
 			if err != nil {
 				respDiags.AddAttributeError(
-					path.Root("subtype"),
+					path.Root("trigger").AtName("subtype"),
 					"Provided value is not valid",
-					fmt.Sprintf("The value provided for subtype is not valid: %s", err.Error()),
+					fmt.Sprintf("The value provided for trigger.subtype is not valid: %s", err.Error()),
 				)
 			} else {
 				triggerValue.Subtype = triggerSubtypeValue
