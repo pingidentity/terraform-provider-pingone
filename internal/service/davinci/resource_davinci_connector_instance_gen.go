@@ -74,6 +74,7 @@ type davinciConnectorInstanceResourceModel struct {
 	Connector     types.Object                     `tfsdk:"connector"`
 	EnvironmentId types.String                     `tfsdk:"environment_id"`
 	Id            types.String                     `tfsdk:"id"`
+	Metadata      types.Object                     `tfsdk:"metadata"`
 	Name          types.String                     `tfsdk:"name"`
 	Properties    jsontypes.NormalizedObfuscatable `tfsdk:"properties"`
 }
@@ -123,6 +124,44 @@ func (r *davinciConnectorInstanceResource) Schema(ctx context.Context, req resou
 				Required: true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtMost(256),
+				},
+			},
+			"metadata": schema.SingleNestedAttribute{
+				Computed: true,
+				Attributes: map[string]schema.Attribute{
+					"colors": schema.SingleNestedAttribute{
+						Computed: true,
+						Attributes: map[string]schema.Attribute{
+							"canvas": schema.StringAttribute{
+								Computed: true,
+							},
+							"canvas_text": schema.StringAttribute{
+								Computed: true,
+							},
+							"dark": schema.StringAttribute{
+								Computed: true,
+							},
+						},
+					},
+					"logos": schema.SingleNestedAttribute{
+						Computed: true,
+						Attributes: map[string]schema.Attribute{
+							"canvas": schema.SingleNestedAttribute{
+								Computed: true,
+								Attributes: map[string]schema.Attribute{
+									"image_file_name": schema.StringAttribute{
+										Computed: true,
+									},
+								},
+							},
+						},
+					},
+					"type": schema.StringAttribute{
+						Computed: true,
+					},
+					"vendor": schema.StringAttribute{
+						Computed: true,
+					},
 				},
 			},
 			"properties": schema.StringAttribute{
@@ -184,6 +223,23 @@ func (model *davinciConnectorInstanceResourceModel) buildClientStructPut() (*pin
 
 func (state *davinciConnectorInstanceResourceModel) readClientResponse(response *pingone.DaVinciConnectorInstanceResponse) diag.Diagnostics {
 	var respDiags, diags diag.Diagnostics
+	metadataColorsAttrTypes := map[string]attr.Type{
+		"canvas":      types.StringType,
+		"canvas_text": types.StringType,
+		"dark":        types.StringType,
+	}
+	metadataLogosCanvasAttrTypes := map[string]attr.Type{
+		"image_file_name": types.StringType,
+	}
+	metadataLogosAttrTypes := map[string]attr.Type{
+		"canvas": types.ObjectType{AttrTypes: metadataLogosCanvasAttrTypes},
+	}
+	metadataAttrTypes := map[string]attr.Type{
+		"colors": types.ObjectType{AttrTypes: metadataColorsAttrTypes},
+		"logos":  types.ObjectType{AttrTypes: metadataLogosAttrTypes},
+		"type":   types.StringType,
+		"vendor": types.StringType,
+	}
 	// connector
 	connectorAttrTypes := map[string]attr.Type{
 		"id": types.StringType,
@@ -195,6 +251,52 @@ func (state *davinciConnectorInstanceResourceModel) readClientResponse(response 
 	state.Connector = connectorValue
 	// id
 	state.Id = types.StringValue(response.Id)
+	// metadata
+	var metadataValue types.Object
+	if response.Metadata == nil {
+		metadataValue = types.ObjectNull(metadataAttrTypes)
+	} else {
+		var metadataColorsValue types.Object
+		if response.Metadata.Colors == nil {
+			metadataColorsValue = types.ObjectNull(metadataColorsAttrTypes)
+		} else {
+			metadataColorsValue, diags = types.ObjectValue(metadataColorsAttrTypes, map[string]attr.Value{
+				"canvas":      types.StringPointerValue(response.Metadata.Colors.Canvas),
+				"canvas_text": types.StringPointerValue(response.Metadata.Colors.CanvasText),
+				"dark":        types.StringPointerValue(response.Metadata.Colors.Dark),
+			})
+			respDiags.Append(diags...)
+		}
+
+		var metadataLogosValue types.Object
+		if response.Metadata.Logos == nil {
+			metadataLogosValue = types.ObjectNull(metadataLogosAttrTypes)
+		} else {
+			var metadataLogosCanvasValue types.Object
+			if response.Metadata.Logos.Canvas == nil {
+				metadataLogosCanvasValue = types.ObjectNull(metadataLogosCanvasAttrTypes)
+			} else {
+				metadataLogosCanvasValue, diags = types.ObjectValue(metadataLogosCanvasAttrTypes, map[string]attr.Value{
+					"image_file_name": types.StringPointerValue(response.Metadata.Logos.Canvas.ImageFileName),
+				})
+				respDiags.Append(diags...)
+			}
+
+			metadataLogosValue, diags = types.ObjectValue(metadataLogosAttrTypes, map[string]attr.Value{
+				"canvas": metadataLogosCanvasValue,
+			})
+			respDiags.Append(diags...)
+		}
+
+		metadataValue, diags = types.ObjectValue(metadataAttrTypes, map[string]attr.Value{
+			"colors": metadataColorsValue,
+			"logos":  metadataLogosValue,
+			"type":   types.StringPointerValue(response.Metadata.Type),
+			"vendor": types.StringPointerValue(response.Metadata.Vendor),
+		})
+		respDiags.Append(diags...)
+	}
+	state.Metadata = metadataValue
 	// name
 	state.Name = types.StringValue(response.Name)
 	// properties

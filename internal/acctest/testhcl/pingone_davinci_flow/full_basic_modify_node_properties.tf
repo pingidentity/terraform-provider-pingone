@@ -389,6 +389,7 @@ resource "pingone_davinci_flow" "%[2]s" {
             node_type = "CONNECTION"
             connection_id = pingone_davinci_connector_instance.%[2]s-functions.id
             connector_id = "functionsConnector"
+            capability_class = "connector"
             name = "%[2]s-functions"
             label = "Functions"
             status = "configured"
@@ -664,6 +665,7 @@ resource "pingone_davinci_flow" "%[2]s" {
         "hseww5vtf0" = {
 
           data = {
+            multi_value_source_id = "1u2m5vzr49"
             source = "1u2m5vzr49"
             target = "8fvg7tfr8j"
           }

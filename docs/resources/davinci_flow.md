@@ -1302,6 +1302,10 @@ Required:
 - `source` (String)
 - `target` (String)
 
+Optional:
+
+- `multi_value_source_id` (String)
+
 
 <a id="nestedatt--graph_data--elements--edges--position"></a>
 ### Nested Schema for `graph_data.elements.edges.position`
@@ -1341,6 +1345,7 @@ Required:
 
 Optional:
 
+- `capability_class` (String)
 - `capability_name` (String)
 - `connection_id` (String)
 - `connector_id` (String)
@@ -1428,6 +1433,7 @@ Optional:
 - `js_custom_flow_player` (String)
 - `js_links` (Attributes Set) (see [below for nested schema](#nestedatt--settings--js_links))
 - `log_level` (Number)
+- `preview_form_rendering_updates` (Boolean)
 - `require_authentication_to_initiate` (Boolean)
 - `scrub_sensitive_info` (Boolean)
 - `sensitive_info_fields` (Set of String)
@@ -1463,6 +1469,7 @@ Required:
 Optional:
 
 - `configuration` (Attributes) (see [below for nested schema](#nestedatt--trigger--configuration))
+- `subtype` (String)
 
 <a id="nestedatt--trigger--configuration"></a>
 ### Nested Schema for `trigger.configuration`

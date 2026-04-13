@@ -14,6 +14,7 @@ resource "pingone_davinci_flow" "%[2]s" {
   description = "empty objects in settings test"
   name = "%[2]s-simple"
   settings = {
+    preview_form_rendering_updates = true
     csp = "worker-src 'self' blob:; script-src 'self' https://cdn.jsdelivr.net https://code.jquery.com https://devsdk.singularkey.com http://cdnjs.cloudflare.com 'unsafe-inline' 'unsafe-eval';"
     flow_http_timeout_in_seconds = 180
     log_level = 3

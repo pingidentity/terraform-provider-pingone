@@ -182,6 +182,7 @@ func davinciConnectorInstanceDataSource_CheckComputedValuesComplete(resourceName
 	return resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_connector_instance.%s", resourceName), "connector.id", "webhookConnector"),
 		resource.TestMatchResourceAttr(fmt.Sprintf("data.pingone_davinci_connector_instance.%s", resourceName), "id", verify.P1DVResourceIDRegexp),
+		davinciConnectorInstanceDataSource_CheckComputedMetadataValues(resourceName),
 		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_connector_instance.%s", resourceName), "name", resourceName),
 		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_connector_instance.%s", resourceName), "properties",
 			"{\"urls\":{\"companyId\":\"singularkey\",\"createdDate\":12345,\"customerId\":\"12345\",\"displayName\":\"Register URLs\",\"info\":\"POST requests will be made to these registered url as selected later.\",\"preferredControlType\":\"urlsTableView\",\"required\":true,\"type\":\"string\",\"value\":[{\"name\":\"example\",\"token\":\"mytoken\",\"url\":\"https://pingidentity.com\",\"value\":\"https://pingidentity.com\"}]}}"),
@@ -191,7 +192,18 @@ func davinciConnectorInstanceDataSource_CheckComputedValuesBootstrapConnection(r
 	return resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_connector_instance.%s", resourceName), "connector.id", "pingOneSSOConnector"),
 		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_connector_instance.%s", resourceName), "id", "94141bf2f1b9b59a5f5365ff135e02bb"),
+		davinciConnectorInstanceDataSource_CheckComputedMetadataValues(resourceName),
 		resource.TestCheckResourceAttr(fmt.Sprintf("data.pingone_davinci_connector_instance.%s", resourceName), "name", "PingOne"),
 		resource.TestCheckResourceAttrSet(fmt.Sprintf("data.pingone_davinci_connector_instance.%s", resourceName), "properties"),
+	)
+}
+
+func davinciConnectorInstanceDataSource_CheckComputedMetadataValues(resourceName string) resource.TestCheckFunc {
+	return resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttrSet(fmt.Sprintf("data.pingone_davinci_connector_instance.%s", resourceName), "metadata.colors.canvas"),
+		resource.TestCheckResourceAttrSet(fmt.Sprintf("data.pingone_davinci_connector_instance.%s", resourceName), "metadata.colors.canvas_text"),
+		resource.TestCheckResourceAttrSet(fmt.Sprintf("data.pingone_davinci_connector_instance.%s", resourceName), "metadata.colors.dark"),
+		resource.TestCheckResourceAttrSet(fmt.Sprintf("data.pingone_davinci_connector_instance.%s", resourceName), "metadata.logos.canvas.image_file_name"),
+		resource.TestCheckResourceAttrSet(fmt.Sprintf("data.pingone_davinci_connector_instance.%s", resourceName), "metadata.type"),
 	)
 }

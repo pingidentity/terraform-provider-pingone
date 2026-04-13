@@ -100,6 +100,7 @@ resource "pingone_davinci_connector_instance" "pingfederate_connector_example" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+- `metadata` (Attributes) (see [below for nested schema](#nestedatt--metadata))
 
 <a id="nestedatt--connector"></a>
 ### Nested Schema for `connector`
@@ -107,6 +108,41 @@ resource "pingone_davinci_connector_instance" "pingfederate_connector_example" {
 Required:
 
 - `id` (String)
+
+
+<a id="nestedatt--metadata"></a>
+### Nested Schema for `metadata`
+
+Read-Only:
+
+- `colors` (Attributes) (see [below for nested schema](#nestedatt--metadata--colors))
+- `logos` (Attributes) (see [below for nested schema](#nestedatt--metadata--logos))
+- `type` (String)
+- `vendor` (String)
+
+<a id="nestedatt--metadata--colors"></a>
+### Nested Schema for `metadata.colors`
+
+Read-Only:
+
+- `canvas` (String)
+- `canvas_text` (String)
+- `dark` (String)
+
+
+<a id="nestedatt--metadata--logos"></a>
+### Nested Schema for `metadata.logos`
+
+Read-Only:
+
+- `canvas` (Attributes) (see [below for nested schema](#nestedatt--metadata--logos--canvas))
+
+<a id="nestedatt--metadata--logos--canvas"></a>
+### Nested Schema for `metadata.logos.canvas`
+
+Read-Only:
+
+- `image_file_name` (String)
 
 ## Import
 
