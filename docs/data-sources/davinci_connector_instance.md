@@ -30,6 +30,7 @@ data "pingone_davinci_connector_instance" "example" {
 
 - `connector` (Attributes) (see [below for nested schema](#nestedatt--connector))
 - `id` (String) The ID of this data source.
+- `metadata` (Attributes) (see [below for nested schema](#nestedatt--metadata))
 - `name` (String)
 - `properties` (String)
 
@@ -39,3 +40,38 @@ data "pingone_davinci_connector_instance" "example" {
 Read-Only:
 
 - `id` (String)
+
+
+<a id="nestedatt--metadata"></a>
+### Nested Schema for `metadata`
+
+Read-Only:
+
+- `colors` (Attributes) (see [below for nested schema](#nestedatt--metadata--colors))
+- `logos` (Attributes) (see [below for nested schema](#nestedatt--metadata--logos))
+- `type` (String)
+- `vendor` (String)
+
+<a id="nestedatt--metadata--colors"></a>
+### Nested Schema for `metadata.colors`
+
+Read-Only:
+
+- `canvas` (String)
+- `canvas_text` (String)
+- `dark` (String)
+
+
+<a id="nestedatt--metadata--logos"></a>
+### Nested Schema for `metadata.logos`
+
+Read-Only:
+
+- `canvas` (Attributes) (see [below for nested schema](#nestedatt--metadata--logos--canvas))
+
+<a id="nestedatt--metadata--logos--canvas"></a>
+### Nested Schema for `metadata.logos.canvas`
+
+Read-Only:
+
+- `image_file_name` (String)

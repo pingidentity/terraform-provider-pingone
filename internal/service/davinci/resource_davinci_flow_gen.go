@@ -95,8 +95,9 @@ type davinciFlowResourceModel struct {
 
 func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	graphDataElementsEdgesDataAttrTypes := map[string]attr.Type{
-		"source": types.StringType,
-		"target": types.StringType,
+		"multi_value_source_id": types.StringType,
+		"source":                types.StringType,
+		"target":                types.StringType,
 	}
 	graphDataElementsEdgesPositionAttrTypes := map[string]attr.Type{
 		"x": types.Float64Type,
@@ -142,6 +143,7 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 		"js_custom_flow_player":              types.StringType,
 		"js_links":                           types.SetType{ElemType: settingsJsLinksElementType},
 		"log_level":                          types.Int32Type,
+		"preview_form_rendering_updates":     types.BoolType,
 		"require_authentication_to_initiate": types.BoolType,
 		"scrub_sensitive_info":               types.BoolType,
 		"sensitive_info_fields":              types.SetType{ElemType: types.StringType},
@@ -213,6 +215,9 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 										},
 										"data": schema.SingleNestedAttribute{
 											Attributes: map[string]schema.Attribute{
+												"multi_value_source_id": schema.StringAttribute{
+													Optional: true,
+												},
 												"source": schema.StringAttribute{
 													Required: true,
 													Validators: []validator.String{
@@ -274,6 +279,9 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 										},
 										"data": schema.SingleNestedAttribute{
 											Attributes: map[string]schema.Attribute{
+												"capability_class": schema.StringAttribute{
+													Optional: true,
+												},
 												"capability_name": schema.StringAttribute{
 													Optional: true,
 												},
@@ -621,6 +629,9 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 							int32validator.Between(1, 4),
 						},
 					},
+					"preview_form_rendering_updates": schema.BoolAttribute{
+						Optional: true,
+					},
 					"require_authentication_to_initiate": schema.BoolAttribute{
 						Optional: true,
 					},
@@ -669,6 +680,7 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 					"js_custom_flow_player":              types.StringNull(),
 					"js_links":                           types.SetNull(settingsJsLinksElementType),
 					"log_level":                          types.Int32Value(4),
+					"preview_form_rendering_updates":     types.BoolNull(),
 					"require_authentication_to_initiate": types.BoolNull(),
 					"scrub_sensitive_info":               types.BoolNull(),
 					"sensitive_info_fields":              types.SetNull(types.StringType),
@@ -720,6 +732,14 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 							},
 						},
 						Optional: true,
+					},
+					"subtype": schema.StringAttribute{
+						Optional: true,
+						Validators: []validator.String{
+							stringvalidator.OneOf(
+								"CIBA",
+							),
+						},
 					},
 					"type": schema.StringAttribute{
 						Required: true,
@@ -777,6 +797,7 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 					edgesDataValue := pingone.DaVinciFlowGraphDataRequestElementsEdgeData{}
 					edgesDataAttrs := edgesAttrs["data"].(types.Object).Attributes()
 					edgesDataValue.Id = edgesElementId
+					edgesDataValue.MultiValueSourceId = edgesDataAttrs["multi_value_source_id"].(types.String).ValueStringPointer()
 					edgesDataValue.Source = edgesDataAttrs["source"].(types.String).ValueString()
 					edgesDataValue.Target = edgesDataAttrs["target"].(types.String).ValueString()
 					edgesValue.Data = edgesDataValue
@@ -809,6 +830,7 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 					nodesValue.Classes = nodesAttrs["classes"].(types.String).ValueStringPointer()
 					nodesDataValue := pingone.DaVinciFlowGraphDataRequestElementsNodeData{}
 					nodesDataAttrs := nodesAttrs["data"].(types.Object).Attributes()
+					nodesDataValue.CapabilityClass = nodesDataAttrs["capability_class"].(types.String).ValueStringPointer()
 					nodesDataValue.CapabilityName = nodesDataAttrs["capability_name"].(types.String).ValueStringPointer()
 					nodesDataValue.ConnectionId = nodesDataAttrs["connection_id"].(types.String).ValueStringPointer()
 					nodesDataValue.ConnectorId = nodesDataAttrs["connector_id"].(types.String).ValueStringPointer()
@@ -1025,6 +1047,11 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 			}
 		}
 		settingsValue.LogLevel = settingsAttrs["log_level"].(types.Int32).ValueInt32Pointer()
+		if !settingsAttrs["preview_form_rendering_updates"].IsNull() && !settingsAttrs["preview_form_rendering_updates"].IsUnknown() {
+			settingsValue.PreviewFormRenderingUpdates = &pingone.DaVinciFlowSettingsRequestPreviewFormRenderingUpdates{
+				Bool: settingsAttrs["preview_form_rendering_updates"].(types.Bool).ValueBoolPointer(),
+			}
+		}
 		if !settingsAttrs["require_authentication_to_initiate"].IsNull() && !settingsAttrs["require_authentication_to_initiate"].IsUnknown() {
 			settingsValue.RequireAuthenticationToInitiate = &pingone.DaVinciFlowSettingsRequestRequireAuthenticationToInitiate{
 				Bool: settingsAttrs["require_authentication_to_initiate"].(types.Bool).ValueBoolPointer(),
@@ -1102,12 +1129,24 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 		triggerTypeValue, err := pingone.NewDaVinciFlowTriggerRequestTypeFromValue(triggerAttrs["type"].(types.String).ValueString())
 		if err != nil {
 			respDiags.AddAttributeError(
-				path.Root("type"),
+				path.Root("trigger").AtName("type"),
 				"Provided value is not valid",
-				fmt.Sprintf("The value provided for type is not valid: %s", err.Error()),
+				fmt.Sprintf("The value provided for trigger.type is not valid: %s", err.Error()),
 			)
 		} else {
 			triggerValue.Type = *triggerTypeValue
+		}
+		if !triggerAttrs["subtype"].IsNull() && !triggerAttrs["subtype"].IsUnknown() {
+			triggerSubtypeValue, err := pingone.NewDaVinciFlowTriggerRequestSubtypeFromValue(triggerAttrs["subtype"].(types.String).ValueString())
+			if err != nil {
+				respDiags.AddAttributeError(
+					path.Root("trigger").AtName("subtype"),
+					"Provided value is not valid",
+					fmt.Sprintf("The value provided for trigger.subtype is not valid: %s", err.Error()),
+				)
+			} else {
+				triggerValue.Subtype = triggerSubtypeValue
+			}
 		}
 		result.Trigger = triggerValue
 	}
@@ -1154,6 +1193,7 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 					edgesDataValue := pingone.DaVinciFlowGraphDataRequestElementsEdgeData{}
 					edgesDataAttrs := edgesAttrs["data"].(types.Object).Attributes()
 					edgesDataValue.Id = edgesElementId
+					edgesDataValue.MultiValueSourceId = edgesDataAttrs["multi_value_source_id"].(types.String).ValueStringPointer()
 					edgesDataValue.Source = edgesDataAttrs["source"].(types.String).ValueString()
 					edgesDataValue.Target = edgesDataAttrs["target"].(types.String).ValueString()
 					edgesValue.Data = edgesDataValue
@@ -1186,6 +1226,7 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 					nodesValue.Classes = nodesAttrs["classes"].(types.String).ValueStringPointer()
 					nodesDataValue := pingone.DaVinciFlowGraphDataRequestElementsNodeData{}
 					nodesDataAttrs := nodesAttrs["data"].(types.Object).Attributes()
+					nodesDataValue.CapabilityClass = nodesDataAttrs["capability_class"].(types.String).ValueStringPointer()
 					nodesDataValue.CapabilityName = nodesDataAttrs["capability_name"].(types.String).ValueStringPointer()
 					nodesDataValue.ConnectionId = nodesDataAttrs["connection_id"].(types.String).ValueStringPointer()
 					nodesDataValue.ConnectorId = nodesDataAttrs["connector_id"].(types.String).ValueStringPointer()
@@ -1402,6 +1443,11 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 			}
 		}
 		settingsValue.LogLevel = settingsAttrs["log_level"].(types.Int32).ValueInt32Pointer()
+		if !settingsAttrs["preview_form_rendering_updates"].IsNull() && !settingsAttrs["preview_form_rendering_updates"].IsUnknown() {
+			settingsValue.PreviewFormRenderingUpdates = &pingone.DaVinciFlowSettingsRequestPreviewFormRenderingUpdates{
+				Bool: settingsAttrs["preview_form_rendering_updates"].(types.Bool).ValueBoolPointer(),
+			}
+		}
 		if !settingsAttrs["require_authentication_to_initiate"].IsNull() && !settingsAttrs["require_authentication_to_initiate"].IsUnknown() {
 			settingsValue.RequireAuthenticationToInitiate = &pingone.DaVinciFlowSettingsRequestRequireAuthenticationToInitiate{
 				Bool: settingsAttrs["require_authentication_to_initiate"].(types.Bool).ValueBoolPointer(),
@@ -1479,12 +1525,24 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 		triggerTypeValue, err := pingone.NewDaVinciFlowTriggerRequestTypeFromValue(triggerAttrs["type"].(types.String).ValueString())
 		if err != nil {
 			respDiags.AddAttributeError(
-				path.Root("type"),
+				path.Root("trigger").AtName("type"),
 				"Provided value is not valid",
-				fmt.Sprintf("The value provided for type is not valid: %s", err.Error()),
+				fmt.Sprintf("The value provided for trigger.type is not valid: %s", err.Error()),
 			)
 		} else {
 			triggerValue.Type = *triggerTypeValue
+		}
+		if !triggerAttrs["subtype"].IsNull() && !triggerAttrs["subtype"].IsUnknown() {
+			triggerSubtypeValue, err := pingone.NewDaVinciFlowTriggerRequestSubtypeFromValue(triggerAttrs["subtype"].(types.String).ValueString())
+			if err != nil {
+				respDiags.AddAttributeError(
+					path.Root("trigger").AtName("subtype"),
+					"Provided value is not valid",
+					fmt.Sprintf("The value provided for trigger.subtype is not valid: %s", err.Error()),
+				)
+			} else {
+				triggerValue.Subtype = triggerSubtypeValue
+			}
 		}
 		result.Trigger = triggerValue
 	}
@@ -1525,8 +1583,9 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 	state.Enabled = types.BoolPointerValue(response.Enabled)
 	// graph_data
 	graphDataElementsEdgesDataAttrTypes := map[string]attr.Type{
-		"source": types.StringType,
-		"target": types.StringType,
+		"multi_value_source_id": types.StringType,
+		"source":                types.StringType,
+		"target":                types.StringType,
 	}
 	graphDataElementsEdgesPositionAttrTypes := map[string]attr.Type{
 		"x": types.Float64Type,
@@ -1546,16 +1605,17 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 	}
 	graphDataElementsEdgesElementType := types.ObjectType{AttrTypes: graphDataElementsEdgesAttrTypes}
 	graphDataElementsNodesDataAttrTypes := map[string]attr.Type{
-		"capability_name": types.StringType,
-		"connection_id":   types.StringType,
-		"connector_id":    types.StringType,
-		"id_unique":       types.StringType,
-		"label":           types.StringType,
-		"name":            types.StringType,
-		"node_type":       types.StringType,
-		"properties":      jsontypes.NormalizedType{},
-		"status":          types.StringType,
-		"type":            types.StringType,
+		"capability_class": types.StringType,
+		"capability_name":  types.StringType,
+		"connection_id":    types.StringType,
+		"connector_id":     types.StringType,
+		"id_unique":        types.StringType,
+		"label":            types.StringType,
+		"name":             types.StringType,
+		"node_type":        types.StringType,
+		"properties":       jsontypes.NormalizedType{},
+		"status":           types.StringType,
+		"type":             types.StringType,
 	}
 	graphDataElementsNodesPositionAttrTypes := map[string]attr.Type{
 		"x": types.Float64Type,
@@ -1617,8 +1677,9 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 		graphDataElementsEdgesValues := make(map[string]attr.Value)
 		for _, graphDataElementsEdgesResponseValue := range response.GraphData.Elements.Edges {
 			graphDataElementsEdgesDataValue, diags := types.ObjectValue(graphDataElementsEdgesDataAttrTypes, map[string]attr.Value{
-				"source": types.StringValue(graphDataElementsEdgesResponseValue.Data.Source),
-				"target": types.StringValue(graphDataElementsEdgesResponseValue.Data.Target),
+				"multi_value_source_id": types.StringPointerValue(graphDataElementsEdgesResponseValue.Data.MultiValueSourceId),
+				"source":                types.StringValue(graphDataElementsEdgesResponseValue.Data.Source),
+				"target":                types.StringValue(graphDataElementsEdgesResponseValue.Data.Target),
 			})
 			respDiags.Append(diags...)
 			graphDataElementsEdgesPositionValue, diags := types.ObjectValue(graphDataElementsEdgesPositionAttrTypes, map[string]attr.Value{
@@ -1658,16 +1719,17 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 				respDiags.Append(diags...)
 			}
 			graphDataElementsNodesDataValue, diags := types.ObjectValue(graphDataElementsNodesDataAttrTypes, map[string]attr.Value{
-				"capability_name": types.StringPointerValue(graphDataElementsNodesResponseValue.Data.CapabilityName),
-				"connection_id":   types.StringPointerValue(graphDataElementsNodesResponseValue.Data.ConnectionId),
-				"connector_id":    types.StringPointerValue(graphDataElementsNodesResponseValue.Data.ConnectorId),
-				"id_unique":       types.StringPointerValue(graphDataElementsNodesResponseValue.Data.IdUnique),
-				"label":           types.StringPointerValue(graphDataElementsNodesResponseValue.Data.Label),
-				"name":            types.StringPointerValue(graphDataElementsNodesResponseValue.Data.Name),
-				"node_type":       types.StringValue(graphDataElementsNodesResponseValue.Data.NodeType),
-				"properties":      graphDataElementsNodesDataPropertiesValue,
-				"status":          types.StringPointerValue(graphDataElementsNodesResponseValue.Data.Status),
-				"type":            types.StringPointerValue(graphDataElementsNodesResponseValue.Data.Type),
+				"capability_class": types.StringPointerValue(graphDataElementsNodesResponseValue.Data.CapabilityClass),
+				"capability_name":  types.StringPointerValue(graphDataElementsNodesResponseValue.Data.CapabilityName),
+				"connection_id":    types.StringPointerValue(graphDataElementsNodesResponseValue.Data.ConnectionId),
+				"connector_id":     types.StringPointerValue(graphDataElementsNodesResponseValue.Data.ConnectorId),
+				"id_unique":        types.StringPointerValue(graphDataElementsNodesResponseValue.Data.IdUnique),
+				"label":            types.StringPointerValue(graphDataElementsNodesResponseValue.Data.Label),
+				"name":             types.StringPointerValue(graphDataElementsNodesResponseValue.Data.Name),
+				"node_type":        types.StringValue(graphDataElementsNodesResponseValue.Data.NodeType),
+				"properties":       graphDataElementsNodesDataPropertiesValue,
+				"status":           types.StringPointerValue(graphDataElementsNodesResponseValue.Data.Status),
+				"type":             types.StringPointerValue(graphDataElementsNodesResponseValue.Data.Type),
 			})
 			respDiags.Append(diags...)
 			graphDataElementsNodesPositionValue, diags := types.ObjectValue(graphDataElementsNodesPositionAttrTypes, map[string]attr.Value{
@@ -1850,6 +1912,7 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 		"js_custom_flow_player":              types.StringType,
 		"js_links":                           types.SetType{ElemType: settingsJsLinksElementType},
 		"log_level":                          types.Int32Type,
+		"preview_form_rendering_updates":     types.BoolType,
 		"require_authentication_to_initiate": types.BoolType,
 		"scrub_sensitive_info":               types.BoolType,
 		"sensitive_info_fields":              types.SetType{ElemType: types.StringType},
@@ -1949,6 +2012,30 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			settingsJsLinksValue, diags = types.SetValue(settingsJsLinksElementType, settingsJsLinksValues)
 			respDiags.Append(diags...)
 		}
+		var settingsPreviewFormRenderingUpdatesValue types.Bool
+		if response.Settings.PreviewFormRenderingUpdates == nil {
+			settingsPreviewFormRenderingUpdatesValue = types.BoolNull()
+		} else {
+			settingsPreviewFormRenderingUpdatesValue = types.BoolNull()
+			if response.Settings.PreviewFormRenderingUpdates.Bool != nil {
+				settingsPreviewFormRenderingUpdatesValue = types.BoolPointerValue(response.Settings.PreviewFormRenderingUpdates.Bool)
+			}
+			if response.Settings.PreviewFormRenderingUpdates.DaVinciFlowSettingsResponsePreviewFormRenderingUpdatesChoice2 != nil {
+				switch *response.Settings.PreviewFormRenderingUpdates.DaVinciFlowSettingsResponsePreviewFormRenderingUpdatesChoice2 {
+				case pingone.DAVINCIFLOWSETTINGSRESPONSEPREVIEWFORMRENDERINGUPDATESCHOICE2_FALSE:
+					settingsPreviewFormRenderingUpdatesValue = types.BoolValue(false)
+				case pingone.DAVINCIFLOWSETTINGSRESPONSEPREVIEWFORMRENDERINGUPDATESCHOICE2_TRUE:
+					settingsPreviewFormRenderingUpdatesValue = types.BoolValue(true)
+				default:
+					// Should never happen since it's an enum
+					respDiags.AddError(
+						"Error parsing settings.preview_form_rendering_updates",
+						fmt.Sprintf("Unknown value for settings.preview_form_rendering_updates: %v", *response.Settings.PreviewFormRenderingUpdates.DaVinciFlowSettingsResponsePreviewFormRenderingUpdatesChoice2),
+					)
+					settingsPreviewFormRenderingUpdatesValue = types.BoolNull()
+				}
+			}
+		}
 		var settingsRequireAuthenticationToInitiateValue types.Bool
 		if response.Settings.RequireAuthenticationToInitiate == nil {
 			settingsRequireAuthenticationToInitiateValue = types.BoolNull()
@@ -2021,6 +2108,7 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			"js_custom_flow_player":              types.StringPointerValue(response.Settings.JsCustomFlowPlayer),
 			"js_links":                           settingsJsLinksValue,
 			"log_level":                          types.Int32PointerValue(response.Settings.LogLevel),
+			"preview_form_rendering_updates":     settingsPreviewFormRenderingUpdatesValue,
 			"require_authentication_to_initiate": settingsRequireAuthenticationToInitiateValue,
 			"scrub_sensitive_info":               settingsScrubSensitiveInfoValue,
 			"sensitive_info_fields":              settingsSensitiveInfoFieldsValue,
@@ -2051,6 +2139,7 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 	}
 	triggerAttrTypes := map[string]attr.Type{
 		"configuration": types.ObjectType{AttrTypes: triggerConfigurationAttrTypes},
+		"subtype":       types.StringType,
 		"type":          types.StringType,
 	}
 	var triggerValue types.Object
@@ -2082,6 +2171,7 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 		triggerTypeValue := types.StringValue(string(response.Trigger.Type))
 		triggerValue, diags = types.ObjectValue(triggerAttrTypes, map[string]attr.Value{
 			"configuration": triggerConfigurationValue,
+			"subtype":       types.StringPointerValue(response.Trigger.Subtype),
 			"type":          triggerTypeValue,
 		})
 		respDiags.Append(diags...)
