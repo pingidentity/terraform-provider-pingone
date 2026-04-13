@@ -1261,7 +1261,6 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 							Description:         oidcOptionsRefreshTokenTypeDescription.Description,
 							MarkdownDescription: oidcOptionsRefreshTokenTypeDescription.MarkdownDescription,
 							Optional:            true,
-							Computed:            true,
 
 							Validators: []validator.String{
 								stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationOIDCRefreshTokenTypeEnumValues)...),
