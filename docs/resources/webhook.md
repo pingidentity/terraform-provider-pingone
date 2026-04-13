@@ -42,14 +42,14 @@ resource "pingone_webhook" "my_webhook" {
 
 - `environment_id` (String) The ID of the environment to create the webhook in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `filter_options` (Attributes) A single object that specifies the PingOne platform event filters to be included to trigger this webhook. (see [below for nested schema](#nestedatt--filter_options))
-- `format` (String) A string that specifies one of the supported webhook formats.  Options are `ACTIVITY`, `NEWRELIC`, `SPLUNK`.
-- `http_endpoint_url` (String) A string that specifies a valid HTTPS URL to which event messages are sent.
 - `name` (String) A string that specifies the webhook name.
 
 ### Optional
 
 - `enabled` (Boolean) A boolean that specifies whether a created or updated webhook should be active or suspended. A suspended state (`"enabled":false`) accumulates all matched events, but these events are not delivered until the webhook becomes active again (`"enabled":true`). For suspended webhooks, events accumulate for a maximum of two weeks. Events older than two weeks are deleted. Restarted webhooks receive the saved events (up to two weeks from the restart date).  Defaults to `false`.
+- `format` (String) A string that specifies one of the supported webhook formats.  Options are `ACTIVITY`, `NEWRELIC`, `SPLUNK`.
 - `http_endpoint_headers` (Map of String) A map that specifies the headers applied to the outbound request (for example, `Authorization` `Basic usernamepassword`. The purpose of these headers is for the HTTPS endpoint to authenticate the PingOne service, ensuring that the information from PingOne is from a trusted source.
+- `http_endpoint_url` (String) A string that specifies a valid HTTPS URL to which event messages are sent.
 - `tls_client_auth_key_pair_id` (String) A string that specifies the PingOne resource ID of a key to be used for outbound mutual TLS (mTLS) authentication.  This key is used as a client credential to authenticate the webhook.  When using the `pingone_key` resource, the key must have a `usage_type` of `OUTBOUND_MTLS`.  If this property is set, `verify_tls_certificates` must be set to `true`.  Value must be a valid PingOne resource ID.
 - `verify_tls_certificates` (Boolean) A boolean that specifies whether a certificates should be verified. If this property's value is set to `false`, then all certificates are trusted. (Setting this property's value to false introduces a security risk.).  Defaults to `true`.
 
