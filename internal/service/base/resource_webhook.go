@@ -17,6 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -33,17 +34,20 @@ import (
 type WebhookResource serviceClientType
 
 type webhookResourceModelV1 struct {
-	Id                     pingonetypes.ResourceIDValue `tfsdk:"id"`
-	EnvironmentId          pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
-	Name                   types.String                 `tfsdk:"name"`
-	Enabled                types.Bool                   `tfsdk:"enabled"`
-	HttpEndpointUrl        types.String                 `tfsdk:"http_endpoint_url"`
-	HttpEndpointHeaders    types.Map                    `tfsdk:"http_endpoint_headers"`
-	VerifyTLSCertificates  types.Bool                   `tfsdk:"verify_tls_certificates"`
-	TLSClientAuthKeyPairId pingonetypes.ResourceIDValue `tfsdk:"tls_client_auth_key_pair_id"`
-	Format                 types.String                 `tfsdk:"format"`
-	FilterOptions          types.Object                 `tfsdk:"filter_options"`
-	PayloadOptions         types.Object                 `tfsdk:"payload_options"`
+	Id                       pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId            pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Name                     types.String                 `tfsdk:"name"`
+	Enabled                  types.Bool                   `tfsdk:"enabled"`
+	Protocol                 types.String                 `tfsdk:"protocol"`
+	HttpEndpointUrl          types.String                 `tfsdk:"http_endpoint_url"`
+	HttpEndpointHeaders      types.Map                    `tfsdk:"http_endpoint_headers"`
+	ConnectionDetailsUrl     types.String                 `tfsdk:"connection_details_url"`
+	ConnectionDetailsHeaders types.Map                    `tfsdk:"connection_details_headers"`
+	VerifyTLSCertificates    types.Bool                   `tfsdk:"verify_tls_certificates"`
+	TLSClientAuthKeyPairId   pingonetypes.ResourceIDValue `tfsdk:"tls_client_auth_key_pair_id"`
+	Format                   types.String                 `tfsdk:"format"`
+	FilterOptions            types.Object                 `tfsdk:"filter_options"`
+	PayloadOptions           types.Object                 `tfsdk:"payload_options"`
 }
 
 type webhookFilterOptionsResourceModelV1 struct {
@@ -67,11 +71,17 @@ type webhookMaximumPayloadLimitResourceModelV1 struct {
 
 type webhookPayloadFormatResourceModelV1 struct {
 	Https types.Object `tfsdk:"https"`
+	Tcp   types.Object `tfsdk:"tcp"`
 }
 
 type webhookPayloadFormatHttpsResourceModelV1 struct {
 	Format      types.String `tfsdk:"format"`
 	PrettyPrint types.Bool   `tfsdk:"pretty_print"`
+}
+
+type webhookPayloadFormatTCPResourceModelV1 struct {
+	Format               types.String `tfsdk:"format"`
+	AdditionalAttributes types.Map    `tfsdk:"additional_attributes"`
 }
 
 var (
@@ -96,11 +106,17 @@ var (
 
 	webhookPayloadFormatTFObjectTypes = map[string]attr.Type{
 		"https": types.ObjectType{AttrTypes: webhookPayloadFormatHTTPSObjectTypes},
+		"tcp":   types.ObjectType{AttrTypes: webhookPayloadFormatTCPObjectTypes},
 	}
 
 	webhookPayloadFormatHTTPSObjectTypes = map[string]attr.Type{
 		"format":       types.StringType,
 		"pretty_print": types.BoolType,
+	}
+
+	webhookPayloadFormatTCPObjectTypes = map[string]attr.Type{
+		"format":                types.StringType,
+		"additional_attributes": types.MapType{ElemType: types.StringType},
 	}
 )
 
@@ -109,6 +125,7 @@ var (
 	_ resource.Resource                = &WebhookResource{}
 	_ resource.ResourceWithConfigure   = &WebhookResource{}
 	_ resource.ResourceWithImportState = &WebhookResource{}
+	_ resource.ResourceWithModifyPlan  = &WebhookResource{}
 )
 
 // New Object
@@ -129,7 +146,19 @@ func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest
 	).DefaultValue("false")
 
 	httpEndpointHeaders := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A map that specifies the headers applied to the outbound request (for example, `Authorization` `Basic usernamepassword`. The purpose of these headers is for the HTTPS endpoint to authenticate the PingOne service, ensuring that the information from PingOne is from a trusted source.",
+		"A map that specifies the headers applied to the outbound request (for example, `Authorization` `Basic usernamepassword`. The purpose of these headers is for the HTTPS endpoint to authenticate the PingOne service, ensuring that the information from PingOne is from a trusted source. Requires `http_endpoint_url` to be set.",
+	)
+
+	protocolDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"This can be either `HTTPS` or `TCP_IP`.",
+	).DefaultValue("HTTPS")
+
+	connectionDetailsUrlDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies a valid a URI to which event messages are sent. Similar to `http_endpoint.url`, but not HTTPS-specific. Only one of `http_endpoint_url` or `connection_details_url` can be set.",
+	)
+
+	connectionDetailsHeadersDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The headers applied to the outbound request (for example: `\"Authorization\": \"Basic username:password\"`). The purpose of these headers is to authenticate the PingOne service, ensuring that the information from PingOne is from a trusted source. Similar to `http_endpoint.headers`, but not HTTPS-specific. Requires `connection_details_url` to be set.",
 	)
 
 	verifyTlsCertificatesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -186,6 +215,14 @@ func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest
 		"Only applicable when `payload_options.payload_format.https.format` is `JSON_ARRAY`. Pretty-print is enabled when `true`.",
 	)
 
+	payloadOptionsPayloadFormatFormatTCPFormatDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The payload format. This can be either `JSON_DOC` or `RFC_LOGLINE`.",
+	).AllowedValuesEnum(management.AllowedEnumSubscriptionPayloadFormatTcpFormatEnumValues)
+
+	payloadOptionsPayloadFormatFormatTCPAdditionalAttributesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Applicable only when `payload_options.payload_format.tcp.format` is set to `RFC_LOGLINE`. The attributes are specified as key-value pairs.",
+	)
+
 	const attrMinLength = 1
 	const attrFilterOptionsIncludedIDsMaxLength = 10
 
@@ -221,12 +258,26 @@ func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Default: booldefault.StaticBool(false),
 			},
 
+			"protocol": schema.StringAttribute{
+				Description:         protocolDescription.Description,
+				MarkdownDescription: protocolDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+
+				Default: stringdefault.StaticString(string(management.ENUMSUBSCRIPTIONPROTOCOL_HTTPS)),
+
+				Validators: []validator.String{
+					stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumSubscriptionProtocolEnumValues)...),
+				},
+			},
+
 			"http_endpoint_url": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a valid HTTPS URL to which event messages are sent.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a valid HTTPS URL to which event messages are sent. Only one of `http_endpoint_url` or `connection_details_url` can be set.").Description,
 				Optional:    true,
 
 				Validators: []validator.String{
 					stringvalidator.RegexMatches(regexp.MustCompile(`^https:\/\/.*`), "Must be a valid HTTPS URL"),
+					stringvalidator.ConflictsWith(path.MatchRoot("connection_details_url")),
 				},
 			},
 
@@ -239,6 +290,32 @@ func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest
 
 				Validators: []validator.Map{
 					mapvalidator.AlsoRequires(path.MatchRoot("http_endpoint_url")),
+				},
+			},
+
+			"connection_details_url": schema.StringAttribute{
+				Description:         connectionDetailsUrlDescription.Description,
+				MarkdownDescription: connectionDetailsUrlDescription.MarkdownDescription,
+				Optional:            true,
+				// This will match the HTTP URL when http_endpoint_url is set
+				Computed: true,
+
+				Validators: []validator.String{
+					stringvalidator.ConflictsWith(path.MatchRoot("http_endpoint_url")),
+				},
+			},
+
+			"connection_details_headers": schema.MapAttribute{
+				Description:         connectionDetailsHeadersDescription.Description,
+				MarkdownDescription: connectionDetailsHeadersDescription.MarkdownDescription,
+				Optional:            true,
+				// This will match the HTTP headers when http_endpoint_headers is set
+				Computed: true,
+
+				ElementType: types.StringType,
+
+				Validators: []validator.Map{
+					mapvalidator.AlsoRequires(path.MatchRoot("connection_details_url")),
 				},
 			},
 
@@ -402,6 +479,31 @@ func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest
 									},
 								},
 							},
+
+							"tcp": schema.SingleNestedAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies TCP payload formatting settings.").Description,
+								Optional:    true,
+
+								Attributes: map[string]schema.Attribute{
+									"format": schema.StringAttribute{
+										Description:         payloadOptionsPayloadFormatFormatTCPFormatDescription.Description,
+										MarkdownDescription: payloadOptionsPayloadFormatFormatTCPFormatDescription.MarkdownDescription,
+										Optional:            true,
+
+										Validators: []validator.String{
+											stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumSubscriptionPayloadFormatTcpFormatEnumValues)...),
+										},
+									},
+
+									"additional_attributes": schema.MapAttribute{
+										Description:         payloadOptionsPayloadFormatFormatTCPAdditionalAttributesDescription.Description,
+										MarkdownDescription: payloadOptionsPayloadFormatFormatTCPAdditionalAttributesDescription.MarkdownDescription,
+										Optional:            true,
+
+										ElementType: types.StringType,
+									},
+								},
+							},
 						},
 					},
 				},
@@ -433,6 +535,71 @@ func (r *WebhookResource) Configure(ctx context.Context, req resource.ConfigureR
 			"Expected the PingOne client, got nil.  Please report this issue to the provider maintainers.",
 		)
 		return
+	}
+}
+
+// ModifyPlan implements resource.ResourceWithModifyPlan.
+func (r *WebhookResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	// Destruction plan
+	if req.Plan.Raw.IsNull() || req.Config.Raw.IsNull() {
+		return
+	}
+
+	var plan, config webhookResourceModelV1
+	// Read Terraform plan and config data into the model
+	resp.Diagnostics.Append(resp.Plan.Get(ctx, &plan)...)
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
+
+	// Validate based on protocol
+	if !plan.Protocol.IsNull() && !plan.Protocol.IsUnknown() {
+		switch plan.Protocol.ValueString() {
+		case string(management.ENUMSUBSCRIPTIONPROTOCOL_HTTPS):
+			// For HTTPS, http_endpoint_url is required and connection_details_url must be null
+			if config.HttpEndpointUrl.IsNull() {
+				resp.Diagnostics.AddError(
+					"Invalid configuration",
+					"The http_endpoint_url attribute must be set when protocol is HTTPS.",
+				)
+			}
+			if !config.ConnectionDetailsUrl.IsNull() && !config.ConnectionDetailsUrl.IsUnknown() {
+				resp.Diagnostics.AddError(
+					"Invalid configuration",
+					"The connection_details_url attribute must not be set when protocol is HTTPS.",
+				)
+			}
+		case string(management.ENUMSUBSCRIPTIONPROTOCOL_TCP_IP):
+			// For TCP/IP, connection_details_url is required and http_endpoint_url must be null
+			if config.ConnectionDetailsUrl.IsNull() {
+				resp.Diagnostics.AddError(
+					"Invalid configuration",
+					"The connection_details_url attribute must be set when protocol is TCP_IP.",
+				)
+			}
+			if !config.HttpEndpointUrl.IsNull() && !config.HttpEndpointUrl.IsUnknown() {
+				resp.Diagnostics.AddError(
+					"Invalid configuration",
+					"The http_endpoint_url attribute must not be set when protocol is TCP_IP.",
+				)
+			}
+			// format isn't supported for TCP/IP
+			if !config.Format.IsNull() && !config.Format.IsUnknown() {
+				resp.Diagnostics.AddError(
+					"Invalid configuration",
+					"The format attribute is not supported when protocol is TCP_IP.",
+				)
+			}
+			// maximum payload limit isn't supported for TCP/IP
+			if !config.PayloadOptions.IsNull() && !config.PayloadOptions.IsUnknown() {
+				payloadOptionsAttrs := config.PayloadOptions.Attributes()
+				maximumPayloadLimit, ok := payloadOptionsAttrs["maximum_payload_limit"]
+				if ok && !maximumPayloadLimit.IsNull() && !maximumPayloadLimit.IsUnknown() {
+					resp.Diagnostics.AddError(
+						"Invalid configuration",
+						"The payload_options.maximum_payload_limit attribute is not supported when protocol is TCP_IP.",
+					)
+				}
+			}
+		}
 	}
 }
 
@@ -692,6 +859,27 @@ func (p *webhookResourceModelV1) expand(ctx context.Context) (*management.Subscr
 		data.SetHttpEndpoint(httpEndpoint)
 	}
 
+	if !p.ConnectionDetailsUrl.IsNull() && !p.ConnectionDetailsUrl.IsUnknown() {
+		connectionDetails := *management.NewSubscriptionConnectionDetails(p.ConnectionDetailsUrl.ValueString())
+
+		// Connection details headers require connection details url to be set
+		if !p.ConnectionDetailsHeaders.IsNull() && !p.ConnectionDetailsHeaders.IsUnknown() {
+			var headersPlan map[string]string
+			diags.Append(p.ConnectionDetailsHeaders.ElementsAs(ctx, &headersPlan, false)...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			connectionDetails.SetHeaders(headersPlan)
+		}
+
+		data.SetConnectionDetails(connectionDetails)
+	}
+
+	if !p.Protocol.IsNull() && !p.Protocol.IsUnknown() {
+		data.SetProtocol(management.EnumSubscriptionProtocol(p.Protocol.ValueString()))
+	}
+
 	if !p.Format.IsNull() && !p.Format.IsUnknown() {
 		data.SetFormat(management.EnumSubscriptionFormat(p.Format.ValueString()))
 	}
@@ -788,6 +976,35 @@ func (p *webhookPayloadOptionsResourceModelV1) expand(ctx context.Context) (*man
 			}
 
 			payloadFormat.SetHttps(*https)
+		}
+
+		if !payloadFormatPlan.Tcp.IsNull() && !payloadFormatPlan.Tcp.IsUnknown() {
+			var payloadFormatTCPPlan webhookPayloadFormatTCPResourceModelV1
+			diags.Append(payloadFormatPlan.Tcp.As(ctx, &payloadFormatTCPPlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    true,
+				UnhandledUnknownAsEmpty: true,
+			})...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			tcp := management.NewSubscriptionPayloadOptionsPayloadFormatTcp()
+
+			if !payloadFormatTCPPlan.Format.IsNull() && !payloadFormatTCPPlan.Format.IsUnknown() {
+				tcp.SetFormat(management.EnumSubscriptionPayloadFormatTcpFormat(payloadFormatTCPPlan.Format.ValueString()))
+			}
+
+			if !payloadFormatTCPPlan.AdditionalAttributes.IsNull() && !payloadFormatTCPPlan.AdditionalAttributes.IsUnknown() {
+				var additionalAttributesPlan map[string]string
+				diags.Append(payloadFormatTCPPlan.AdditionalAttributes.ElementsAs(ctx, &additionalAttributesPlan, false)...)
+				if diags.HasError() {
+					return nil, diags
+				}
+
+				tcp.SetAdditionalAttributes(additionalAttributesPlan)
+			}
+
+			payloadFormat.SetTcp(*tcp)
 		}
 
 		data.SetPayloadFormat(*payloadFormat)
@@ -903,6 +1120,7 @@ func (p *webhookResourceModelV1) toState(apiObject *management.Subscription) dia
 	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Enabled = framework.BoolOkToTF(apiObject.GetEnabledOk())
+	p.Protocol = framework.EnumOkToTF(apiObject.GetProtocolOk())
 
 	if v, ok := apiObject.GetHttpEndpointOk(); ok {
 		p.HttpEndpointUrl = framework.StringOkToTF(v.GetUrlOk())
@@ -910,6 +1128,14 @@ func (p *webhookResourceModelV1) toState(apiObject *management.Subscription) dia
 	} else {
 		p.HttpEndpointUrl = types.StringNull()
 		p.HttpEndpointHeaders = types.MapNull(types.StringType)
+	}
+
+	if v, ok := apiObject.GetConnectionDetailsOk(); ok {
+		p.ConnectionDetailsUrl = framework.StringOkToTF(v.GetUrlOk())
+		p.ConnectionDetailsHeaders = framework.StringMapOkToTF(v.GetHeadersOk())
+	} else {
+		p.ConnectionDetailsUrl = types.StringNull()
+		p.ConnectionDetailsHeaders = types.MapNull(types.StringType)
 	}
 
 	p.VerifyTLSCertificates = framework.BoolOkToTF(apiObject.GetVerifyTlsCertificatesOk())
@@ -1030,8 +1256,12 @@ func toStateWebhookPayloadFormat(v *management.SubscriptionPayloadOptionsPayload
 	https, d := toStateWebhookPayloadFormatHTTPS(v.GetHttpsOk())
 	diags.Append(d...)
 
+	tcp, d := toStateWebhookPayloadFormatTCP(v.GetTcpOk())
+	diags.Append(d...)
+
 	objMap := map[string]attr.Value{
 		"https": https,
+		"tcp":   tcp,
 	}
 
 	returnVar, d := types.ObjectValue(webhookPayloadFormatTFObjectTypes, objMap)
@@ -1053,6 +1283,24 @@ func toStateWebhookPayloadFormatHTTPS(v *management.SubscriptionPayloadOptionsPa
 	}
 
 	returnVar, d := types.ObjectValue(webhookPayloadFormatHTTPSObjectTypes, objMap)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func toStateWebhookPayloadFormatTCP(v *management.SubscriptionPayloadOptionsPayloadFormatTcp, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || v == nil {
+		return types.ObjectNull(webhookPayloadFormatTCPObjectTypes), diags
+	}
+
+	objMap := map[string]attr.Value{
+		"format":                framework.EnumOkToTF(v.GetFormatOk()),
+		"additional_attributes": framework.StringMapOkToTF(v.GetAdditionalAttributesOk()),
+	}
+
+	returnVar, d := types.ObjectValue(webhookPayloadFormatTCPObjectTypes, objMap)
 	diags.Append(d...)
 
 	return returnVar, diags
