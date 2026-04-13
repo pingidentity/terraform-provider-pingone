@@ -66,10 +66,6 @@ type webhookMaximumPayloadLimitResourceModelV1 struct {
 }
 
 type webhookPayloadFormatResourceModelV1 struct {
-	Format types.Object `tfsdk:"format"`
-}
-
-type webhookPayloadFormatFormatResourceModelV1 struct {
 	Https types.Object `tfsdk:"https"`
 }
 
@@ -99,10 +95,6 @@ var (
 	}
 
 	webhookPayloadFormatTFObjectTypes = map[string]attr.Type{
-		"format": types.ObjectType{AttrTypes: webhookPayloadFormatFormatTFObjectTypes},
-	}
-
-	webhookPayloadFormatFormatTFObjectTypes = map[string]attr.Type{
 		"https": types.ObjectType{AttrTypes: webhookPayloadFormatHTTPSObjectTypes},
 	}
 
@@ -191,7 +183,7 @@ func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest
 	).AllowedValuesEnum(management.AllowedEnumSubscriptionPayloadFormatHttpsFormatEnumValues)
 
 	payloadOptionsPayloadFormatFormatHTTPSPrettyPrintDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Only applicable when `payload_options.payload_format.format.https.format` is `JSON_ARRAY`. Pretty-print is enabled when `true`.",
+		"Only applicable when `payload_options.payload_format.https.format` is `JSON_ARRAY`. Pretty-print is enabled when `true`.",
 	)
 
 	const attrMinLength = 1
@@ -388,32 +380,25 @@ func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest
 						Optional:    true,
 
 						Attributes: map[string]schema.Attribute{
-							"format": schema.SingleNestedAttribute{
-								Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies protocol-specific payload format settings.").Description,
+							"https": schema.SingleNestedAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies HTTPS payload formatting settings.").Description,
 								Optional:    true,
 
 								Attributes: map[string]schema.Attribute{
-									"https": schema.SingleNestedAttribute{
-										Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies HTTPS payload formatting settings.").Description,
-										Optional:    true,
+									"format": schema.StringAttribute{
+										Description:         payloadOptionsPayloadFormatFormatHTTPSFormatDescription.Description,
+										MarkdownDescription: payloadOptionsPayloadFormatFormatHTTPSFormatDescription.MarkdownDescription,
+										Optional:            true,
 
-										Attributes: map[string]schema.Attribute{
-											"format": schema.StringAttribute{
-												Description:         payloadOptionsPayloadFormatFormatHTTPSFormatDescription.Description,
-												MarkdownDescription: payloadOptionsPayloadFormatFormatHTTPSFormatDescription.MarkdownDescription,
-												Optional:            true,
-
-												Validators: []validator.String{
-													stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumSubscriptionPayloadFormatHttpsFormatEnumValues)...),
-												},
-											},
-
-											"pretty_print": schema.BoolAttribute{
-												Description:         payloadOptionsPayloadFormatFormatHTTPSPrettyPrintDescription.Description,
-												MarkdownDescription: payloadOptionsPayloadFormatFormatHTTPSPrettyPrintDescription.MarkdownDescription,
-												Optional:            true,
-											},
+										Validators: []validator.String{
+											stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumSubscriptionPayloadFormatHttpsFormatEnumValues)...),
 										},
+									},
+
+									"pretty_print": schema.BoolAttribute{
+										Description:         payloadOptionsPayloadFormatFormatHTTPSPrettyPrintDescription.Description,
+										MarkdownDescription: payloadOptionsPayloadFormatFormatHTTPSPrettyPrintDescription.MarkdownDescription,
+										Optional:            true,
 									},
 								},
 							},
@@ -782,9 +767,9 @@ func (p *webhookPayloadOptionsResourceModelV1) expand(ctx context.Context) (*man
 
 		payloadFormat := management.NewSubscriptionPayloadOptionsPayloadFormat()
 
-		if !payloadFormatPlan.Format.IsNull() && !payloadFormatPlan.Format.IsUnknown() {
-			var payloadFormatFormatPlan webhookPayloadFormatFormatResourceModelV1
-			diags.Append(payloadFormatPlan.Format.As(ctx, &payloadFormatFormatPlan, basetypes.ObjectAsOptions{
+		if !payloadFormatPlan.Https.IsNull() && !payloadFormatPlan.Https.IsUnknown() {
+			var payloadFormatHTTPSPlan webhookPayloadFormatHttpsResourceModelV1
+			diags.Append(payloadFormatPlan.Https.As(ctx, &payloadFormatHTTPSPlan, basetypes.ObjectAsOptions{
 				UnhandledNullAsEmpty:    true,
 				UnhandledUnknownAsEmpty: true,
 			})...)
@@ -792,32 +777,17 @@ func (p *webhookPayloadOptionsResourceModelV1) expand(ctx context.Context) (*man
 				return nil, diags
 			}
 
-			payloadFormatFormat := management.NewSubscriptionPayloadOptionsPayloadFormatFormat()
+			https := management.NewSubscriptionPayloadOptionsPayloadFormatHttps()
 
-			if !payloadFormatFormatPlan.Https.IsNull() && !payloadFormatFormatPlan.Https.IsUnknown() {
-				var payloadFormatHTTPSPlan webhookPayloadFormatHttpsResourceModelV1
-				diags.Append(payloadFormatFormatPlan.Https.As(ctx, &payloadFormatHTTPSPlan, basetypes.ObjectAsOptions{
-					UnhandledNullAsEmpty:    true,
-					UnhandledUnknownAsEmpty: true,
-				})...)
-				if diags.HasError() {
-					return nil, diags
-				}
-
-				https := management.NewSubscriptionPayloadOptionsPayloadFormatFormatHttps()
-
-				if !payloadFormatHTTPSPlan.Format.IsNull() && !payloadFormatHTTPSPlan.Format.IsUnknown() {
-					https.SetFormat(management.EnumSubscriptionPayloadFormatHttpsFormat(payloadFormatHTTPSPlan.Format.ValueString()))
-				}
-
-				if !payloadFormatHTTPSPlan.PrettyPrint.IsNull() && !payloadFormatHTTPSPlan.PrettyPrint.IsUnknown() {
-					https.SetPrettyPrint(payloadFormatHTTPSPlan.PrettyPrint.ValueBool())
-				}
-
-				payloadFormatFormat.SetHttps(*https)
+			if !payloadFormatHTTPSPlan.Format.IsNull() && !payloadFormatHTTPSPlan.Format.IsUnknown() {
+				https.SetFormat(management.EnumSubscriptionPayloadFormatHttpsFormat(payloadFormatHTTPSPlan.Format.ValueString()))
 			}
 
-			payloadFormat.SetFormat(*payloadFormatFormat)
+			if !payloadFormatHTTPSPlan.PrettyPrint.IsNull() && !payloadFormatHTTPSPlan.PrettyPrint.IsUnknown() {
+				https.SetPrettyPrint(payloadFormatHTTPSPlan.PrettyPrint.ValueBool())
+			}
+
+			payloadFormat.SetHttps(*https)
 		}
 
 		data.SetPayloadFormat(*payloadFormat)
@@ -1057,11 +1027,11 @@ func toStateWebhookPayloadFormat(v *management.SubscriptionPayloadOptionsPayload
 		return types.ObjectNull(webhookPayloadFormatTFObjectTypes), diags
 	}
 
-	format, d := toStateWebhookPayloadFormatFormat(v.GetFormatOk())
+	https, d := toStateWebhookPayloadFormatHTTPS(v.GetHttpsOk())
 	diags.Append(d...)
 
 	objMap := map[string]attr.Value{
-		"format": format,
+		"https": https,
 	}
 
 	returnVar, d := types.ObjectValue(webhookPayloadFormatTFObjectTypes, objMap)
@@ -1070,27 +1040,7 @@ func toStateWebhookPayloadFormat(v *management.SubscriptionPayloadOptionsPayload
 	return returnVar, diags
 }
 
-func toStateWebhookPayloadFormatFormat(v *management.SubscriptionPayloadOptionsPayloadFormatFormat, ok bool) (types.Object, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if !ok || v == nil {
-		return types.ObjectNull(webhookPayloadFormatFormatTFObjectTypes), diags
-	}
-
-	https, d := toStateWebhookPayloadFormatHTTPS(v.GetHttpsOk())
-	diags.Append(d...)
-
-	objMap := map[string]attr.Value{
-		"https": https,
-	}
-
-	returnVar, d := types.ObjectValue(webhookPayloadFormatFormatTFObjectTypes, objMap)
-	diags.Append(d...)
-
-	return returnVar, diags
-}
-
-func toStateWebhookPayloadFormatHTTPS(v *management.SubscriptionPayloadOptionsPayloadFormatFormatHttps, ok bool) (types.Object, diag.Diagnostics) {
+func toStateWebhookPayloadFormatHTTPS(v *management.SubscriptionPayloadOptionsPayloadFormatHttps, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || v == nil {

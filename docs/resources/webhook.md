@@ -113,22 +113,15 @@ Optional:
 
 Optional:
 
-- `format` (Attributes) A single object that specifies protocol-specific payload format settings. (see [below for nested schema](#nestedatt--payload_options--payload_format--format))
+- `https` (Attributes) A single object that specifies HTTPS payload formatting settings. (see [below for nested schema](#nestedatt--payload_options--payload_format--https))
 
-<a id="nestedatt--payload_options--payload_format--format"></a>
-### Nested Schema for `payload_options.payload_format.format`
-
-Optional:
-
-- `https` (Attributes) A single object that specifies HTTPS payload formatting settings. (see [below for nested schema](#nestedatt--payload_options--payload_format--format--https))
-
-<a id="nestedatt--payload_options--payload_format--format--https"></a>
-### Nested Schema for `payload_options.payload_format.format.https`
+<a id="nestedatt--payload_options--payload_format--https"></a>
+### Nested Schema for `payload_options.payload_format.https`
 
 Optional:
 
 - `format` (String) The payload format.  Options are `JSON_ARRAY`, `ND_JSON`.
-- `pretty_print` (Boolean) Only applicable when `payload_options.payload_format.format.https.format` is `JSON_ARRAY`. Pretty-print is enabled when `true`.
+- `pretty_print` (Boolean) Only applicable when `payload_options.payload_format.https.format` is `JSON_ARRAY`. Pretty-print is enabled when `true`.
 
 ## Import
 

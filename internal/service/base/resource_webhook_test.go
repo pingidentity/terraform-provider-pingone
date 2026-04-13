@@ -159,8 +159,8 @@ func TestAccWebhook_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.useragent_exposed", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "payload_options.maximum_payload_limit.type", "EVENTS_PER_PAYLOAD"),
 					resource.TestCheckResourceAttr(resourceFullName, "payload_options.maximum_payload_limit.size", "250"),
-					resource.TestCheckResourceAttr(resourceFullName, "payload_options.payload_format.format.https.format", "JSON_ARRAY"),
-					resource.TestCheckResourceAttr(resourceFullName, "payload_options.payload_format.format.https.pretty_print", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "payload_options.payload_format.https.format", "JSON_ARRAY"),
+					resource.TestCheckResourceAttr(resourceFullName, "payload_options.payload_format.https.pretty_print", "true"),
 				),
 			},
 			{
@@ -275,8 +275,8 @@ func TestAccWebhook_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.useragent_exposed", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "payload_options.maximum_payload_limit.type", "EVENTS_PER_PAYLOAD"),
 					resource.TestCheckResourceAttr(resourceFullName, "payload_options.maximum_payload_limit.size", "250"),
-					resource.TestCheckResourceAttr(resourceFullName, "payload_options.payload_format.format.https.format", "JSON_ARRAY"),
-					resource.TestCheckResourceAttr(resourceFullName, "payload_options.payload_format.format.https.pretty_print", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "payload_options.payload_format.https.format", "JSON_ARRAY"),
+					resource.TestCheckResourceAttr(resourceFullName, "payload_options.payload_format.https.pretty_print", "true"),
 				),
 			},
 			{
@@ -301,8 +301,8 @@ func TestAccWebhook_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.useragent_exposed", "false"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "payload_options.maximum_payload_limit.type"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "payload_options.maximum_payload_limit.size"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "payload_options.payload_format.format.https.format"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "payload_options.payload_format.format.https.pretty_print"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "payload_options.payload_format.https.format"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "payload_options.payload_format.https.pretty_print"),
 				),
 			},
 			{
@@ -336,8 +336,8 @@ func TestAccWebhook_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.useragent_exposed", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "payload_options.maximum_payload_limit.type", "EVENTS_PER_PAYLOAD"),
 					resource.TestCheckResourceAttr(resourceFullName, "payload_options.maximum_payload_limit.size", "250"),
-					resource.TestCheckResourceAttr(resourceFullName, "payload_options.payload_format.format.https.format", "JSON_ARRAY"),
-					resource.TestCheckResourceAttr(resourceFullName, "payload_options.payload_format.format.https.pretty_print", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "payload_options.payload_format.https.format", "JSON_ARRAY"),
+					resource.TestCheckResourceAttr(resourceFullName, "payload_options.payload_format.https.pretty_print", "true"),
 				),
 			},
 		},
@@ -646,11 +646,9 @@ resource "pingone_webhook" "%[2]s" {
       size = 250
     }
     payload_format = {
-      format = {
-        https = {
-          format       = "JSON_ARRAY"
-          pretty_print = true
-        }
+      https = {
+        format       = "JSON_ARRAY"
+        pretty_print = true
       }
     }
   }
