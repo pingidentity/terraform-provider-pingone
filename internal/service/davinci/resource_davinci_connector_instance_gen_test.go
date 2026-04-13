@@ -148,11 +148,11 @@ func testAccDavinciConnectorInstance_MinimalMaximal(t *testing.T, withBootstrapC
 				ImportState:                          true,
 				ImportStateVerify:                    true,
 			},
-      {
-        // Connector metadata for this connector includes a vendor value
-        Config: davinciConnectorInstance_MetadataVendorHCL(resourceName, withBootstrapConfig),
-        Check:  davinciConnectorInstance_CheckComputedMetadataValuesWithVendor(resourceName),
-      },
+			{
+				// Connector metadata for this connector includes a vendor value
+				Config: davinciConnectorInstance_MetadataVendorHCL(resourceName, withBootstrapConfig),
+				Check:  davinciConnectorInstance_CheckComputedMetadataValuesWithVendor(resourceName),
+			},
 		},
 	})
 }
@@ -1220,12 +1220,12 @@ func davinciConnectorInstance_CheckComputedMetadataValues(resourceName string) r
 		resource.TestCheckResourceAttrSet(fmt.Sprintf("pingone_davinci_connector_instance.%s", resourceName), "metadata.colors.dark"),
 		resource.TestCheckResourceAttrSet(fmt.Sprintf("pingone_davinci_connector_instance.%s", resourceName), "metadata.logos.canvas.image_file_name"),
 		resource.TestCheckResourceAttrSet(fmt.Sprintf("pingone_davinci_connector_instance.%s", resourceName), "metadata.type"),
-  )
+	)
 }
 
 func davinciConnectorInstance_CheckComputedMetadataValuesWithVendor(resourceName string) resource.TestCheckFunc {
-  return resource.ComposeTestCheckFunc(
-    davinciConnectorInstance_CheckComputedMetadataValues(resourceName),
+	return resource.ComposeTestCheckFunc(
+		davinciConnectorInstance_CheckComputedMetadataValues(resourceName),
 		resource.TestCheckResourceAttrSet(fmt.Sprintf("pingone_davinci_connector_instance.%s", resourceName), "metadata.vendor"),
 	)
 }
