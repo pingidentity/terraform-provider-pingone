@@ -938,6 +938,13 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 								Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that allows configuration of FIDO2 authentication failure cool down settings.").Description,
 								Optional:    true,
 								Computed:    true,
+								Default: objectdefault.StaticValue(types.ObjectValueMust(
+									MFADevicePolicyTimePeriodTFObjectTypes,
+									map[string]attr.Value{
+										"duration":  types.Int32Value(fido2FailureCoolDownDurationDefault),
+										"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
+									},
+								)),
 
 								Attributes: map[string]schema.Attribute{
 									"duration": schema.Int32Attribute{
