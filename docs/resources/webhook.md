@@ -19,8 +19,9 @@ resource "pingone_environment" "my_environment" {
 resource "pingone_webhook" "my_webhook" {
   environment_id = pingone_environment.my_environment.id
 
-  name    = "My webhook"
-  enabled = true
+  name     = "My webhook"
+  enabled  = true
+  protocol = "HTTPS"
 
   http_endpoint_url = "https://audit.bxretail.org/"
   http_endpoint_headers = {
@@ -39,11 +40,9 @@ resource "pingone_webhook" "my_webhook" {
       size = 100
     }
     payload_format = {
-      format = {
-        https = {
-          format       = "JSON_ARRAY"
-          pretty_print = true
-        }
+      https = {
+        format       = "JSON_ARRAY"
+        pretty_print = true
       }
     }
   }
@@ -61,8 +60,8 @@ resource "pingone_webhook" "my_webhook" {
 
 ### Optional
 
-- `connection_details_headers` (Map of String) The headers applied to the outbound request (for example: `"Authorization": "Basic username:password"`). The purpose of these headers is to authenticate the PingOne service, ensuring that the information from PingOne is from a trusted source. Similar to `http_endpoint.headers`, but not HTTPS-specific. Requires `connection_details_url` to be set.
-- `connection_details_url` (String) A string that specifies a valid a URI to which event messages are sent. Similar to `http_endpoint.url`, but not HTTPS-specific. Only one of `http_endpoint_url` or `connection_details_url` can be set.
+- `connection_details_headers` (Map of String) The headers applied to the outbound request (for example: `"Authorization": "Basic username:password"`). The purpose of these headers is to authenticate the PingOne service, ensuring that the information from PingOne is from a trusted source. Similar to `http_endpoint.headers`, but not HTTPS-specific. Requires `connection_details_url` to be set. The API will automatically populate this field in state when using the 'HTTPS' protocol and setting the `http_endpoint_headers` field.
+- `connection_details_url` (String) A string that specifies a valid a URI to which event messages are sent. Similar to `http_endpoint.url`, but not HTTPS-specific. Only one of `http_endpoint_url` or `connection_details_url` can be set. The API will automatically populate this field in state when using the 'HTTPS' protocol and setting the `http_endpoint_url` field.
 - `enabled` (Boolean) A boolean that specifies whether a created or updated webhook should be active or suspended. A suspended state (`"enabled":false`) accumulates all matched events, but these events are not delivered until the webhook becomes active again (`"enabled":true`). For suspended webhooks, events accumulate for a maximum of two weeks. Events older than two weeks are deleted. Restarted webhooks receive the saved events (up to two weeks from the restart date).  Defaults to `false`.
 - `format` (String) A string that specifies one of the supported webhook formats.  Options are `ACTIVITY`, `NEWRELIC`, `SPLUNK`.
 - `http_endpoint_headers` (Map of String) A map that specifies the headers applied to the outbound request (for example, `Authorization` `Basic usernamepassword`. The purpose of these headers is for the HTTPS endpoint to authenticate the PingOne service, ensuring that the information from PingOne is from a trusted source. Requires `http_endpoint_url` to be set.

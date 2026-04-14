@@ -518,7 +518,7 @@ func TestAccWebhook_TCP(t *testing.T) {
 	t.Parallel()
 
 	resourceName := acctest.ResourceNameGen()
-	// resourceFullName := fmt.Sprintf("pingone_webhook.%s", resourceName)
+	resourceFullName := fmt.Sprintf("pingone_webhook.%s", resourceName)
 
 	name := resourceName
 
@@ -534,20 +534,31 @@ func TestAccWebhook_TCP(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: testAccWebhookConfig_TCP_Minimal(resourceName, name),
-				Check:  resource.ComposeTestCheckFunc(
-				//TODO
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "connection_details_headers.%"),
+					resource.TestCheckResourceAttr(resourceFullName, "verify_tls_certificates", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.ip_address_exposed", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.useragent_exposed", "false"),
 				),
 			},
 			{
 				Config: testAccWebhookConfig_TCP_Full(resourceName, name),
-				Check:  resource.ComposeTestCheckFunc(
-				//TODO
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckNoResourceAttr(resourceFullName, "connection_details_headers.%"),
 				),
 			},
 			{
 				Config: testAccWebhookConfig_TCP_Minimal(resourceName, name),
-				Check:  resource.ComposeTestCheckFunc(
-				//TODO
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "connection_details_headers.%"),
+					resource.TestCheckResourceAttr(resourceFullName, "verify_tls_certificates", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.ip_address_exposed", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.useragent_exposed", "false"),
 				),
 			},
 		},
@@ -1044,7 +1055,7 @@ resource "pingone_webhook" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
   name                   = "%[3]s"
-  enabled                = false
+  enabled                = true
   protocol               = "TCP_IP"
   connection_details_url = "tcp://localhost:1234"
 

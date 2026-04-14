@@ -154,11 +154,11 @@ func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest
 	).DefaultValue("HTTPS")
 
 	connectionDetailsUrlDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies a valid a URI to which event messages are sent. Similar to `http_endpoint.url`, but not HTTPS-specific. Only one of `http_endpoint_url` or `connection_details_url` can be set.",
+		"A string that specifies a valid a URI to which event messages are sent. Similar to `http_endpoint.url`, but not HTTPS-specific. Only one of `http_endpoint_url` or `connection_details_url` can be set. The API will automatically populate this field in state when using the 'HTTPS' protocol and setting the `http_endpoint_url` field.",
 	)
 
 	connectionDetailsHeadersDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The headers applied to the outbound request (for example: `\"Authorization\": \"Basic username:password\"`). The purpose of these headers is to authenticate the PingOne service, ensuring that the information from PingOne is from a trusted source. Similar to `http_endpoint.headers`, but not HTTPS-specific. Requires `connection_details_url` to be set.",
+		"The headers applied to the outbound request (for example: `\"Authorization\": \"Basic username:password\"`). The purpose of these headers is to authenticate the PingOne service, ensuring that the information from PingOne is from a trusted source. Similar to `http_endpoint.headers`, but not HTTPS-specific. Requires `connection_details_url` to be set. The API will automatically populate this field in state when using the 'HTTPS' protocol and setting the `http_endpoint_headers` field.",
 	)
 
 	verifyTlsCertificatesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -447,7 +447,7 @@ func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest
 							"size": schema.Int32Attribute{
 								Description:         payloadOptionsMaximumPayloadLimitSizeDescription.Description,
 								MarkdownDescription: payloadOptionsMaximumPayloadLimitSizeDescription.MarkdownDescription,
-								Optional:            true, //TODO handle default
+								Optional:            true,
 							},
 						},
 					},
@@ -558,13 +558,13 @@ func (r *WebhookResource) ModifyPlan(ctx context.Context, req resource.ModifyPla
 			if config.HttpEndpointUrl.IsNull() {
 				resp.Diagnostics.AddError(
 					"Invalid configuration",
-					"The http_endpoint_url attribute must be set when protocol is HTTPS.",
+					"The http_endpoint_url attribute must be configured when protocol is HTTPS.",
 				)
 			}
 			if !config.ConnectionDetailsUrl.IsNull() && !config.ConnectionDetailsUrl.IsUnknown() {
 				resp.Diagnostics.AddError(
 					"Invalid configuration",
-					"The connection_details_url attribute must not be set when protocol is HTTPS.",
+					"The connection_details_url attribute must not be directly configured when protocol is HTTPS.",
 				)
 			}
 		case string(management.ENUMSUBSCRIPTIONPROTOCOL_TCP_IP):
@@ -572,13 +572,13 @@ func (r *WebhookResource) ModifyPlan(ctx context.Context, req resource.ModifyPla
 			if config.ConnectionDetailsUrl.IsNull() {
 				resp.Diagnostics.AddError(
 					"Invalid configuration",
-					"The connection_details_url attribute must be set when protocol is TCP_IP.",
+					"The connection_details_url attribute must be configured when protocol is TCP_IP.",
 				)
 			}
 			if !config.HttpEndpointUrl.IsNull() && !config.HttpEndpointUrl.IsUnknown() {
 				resp.Diagnostics.AddError(
 					"Invalid configuration",
-					"The http_endpoint_url attribute must not be set when protocol is TCP_IP.",
+					"The http_endpoint_url attribute must not be configured when protocol is TCP_IP.",
 				)
 			}
 			// format isn't supported for TCP/IP
