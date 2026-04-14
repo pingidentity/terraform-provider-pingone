@@ -380,8 +380,8 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 	).DefaultValue(false)
 
 	fido2FailureCountDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("An integer that defines the maximum number of times that authentication can fail before the user is blocked. The minimum value is `%d`, the maximum value is `%d`, and the default is `%d`.", fido2FailureCountMin, fido2FailureCountMax, fido2FailureCountDefault),
-	)
+		fmt.Sprintf("An integer that defines the maximum number of times that authentication can fail before the user is blocked. The minimum value is `%d` and the maximum value is `%d`.", fido2FailureCountMin, fido2FailureCountMax),
+	).DefaultValue(fido2FailureCountDefault)
 
 	fido2FailureCoolDownDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("An integer that defines the length of time that the user is blocked after reaching the maximum number of failures. The minimum value is `%d` minutes and the maximum value is `%d` minutes.", fido2FailureCoolDownDurationMinMinutes, fido2FailureCoolDownDurationMaxMinutes),
@@ -922,9 +922,10 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 
 						Attributes: map[string]schema.Attribute{
 							"count": schema.Int32Attribute{
-								Description: fido2FailureCountDescription.Description,
-								Optional:    true,
-								Computed:    true,
+								Description:         fido2FailureCountDescription.Description,
+								MarkdownDescription: fido2FailureCountDescription.MarkdownDescription,
+								Optional:            true,
+								Computed:            true,
 
 								Default: int32default.StaticInt32(fido2FailureCountDefault),
 
@@ -938,18 +939,11 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 								Optional:    true,
 								Computed:    true,
 
-								Default: objectdefault.StaticValue(types.ObjectValueMust(
-									MFADevicePolicyTimePeriodTFObjectTypes,
-									map[string]attr.Value{
-										"duration":  types.Int32Value(fido2FailureCoolDownDurationDefault),
-										"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
-									},
-								)),
-
 								Attributes: map[string]schema.Attribute{
 									"duration": schema.Int32Attribute{
-										Description: fido2FailureCoolDownDurationDescription.Description,
-										Required:    true,
+										Description:         fido2FailureCoolDownDurationDescription.Description,
+										MarkdownDescription: fido2FailureCoolDownDurationDescription.MarkdownDescription,
+										Required:            true,
 									},
 
 									"time_unit": schema.StringAttribute{

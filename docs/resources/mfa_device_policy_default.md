@@ -827,9 +827,28 @@ Required:
 
 Optional:
 
+- `failure` (Attributes) A single object that allows configuration of FIDO2 authentication failure settings. (see [below for nested schema](#nestedatt--fido2--failure))
 - `fido2_policy_id` (String) A string that specifies the resource UUID that represents the FIDO2 policy in PingOne. When null, the environment's default FIDO2 Policy is used.
 - `pairing_disabled` (Boolean) A boolean that, when set to `true`, prevents users from pairing new devices with the FIDO2 method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.  Defaults to `false`.
 - `prompt_for_nickname_on_pairing` (Boolean) A boolean that, when set to `true`, prompts users to provide nicknames for devices during pairing.
+
+<a id="nestedatt--fido2--failure"></a>
+### Nested Schema for `fido2.failure`
+
+Optional:
+
+- `cool_down` (Attributes) A single object that allows configuration of FIDO2 authentication failure cool down settings. (see [below for nested schema](#nestedatt--fido2--failure--cool_down))
+- `count` (Number) An integer that defines the maximum number of times that authentication can fail before user is blocked for the specified period. The minimum value is `1` and the maximum value is `7`.
+
+<a id="nestedatt--fido2--failure--cool_down"></a>
+### Nested Schema for `fido2.failure.cool_down`
+
+Required:
+
+- `duration` (Number) An integer that defines the length of time that the user is blocked after reaching the maximum number of failures. The minimum value is `2` minutes and the maximum value is `30` minutes.
+- `time_unit` (String) A string that specifies the type of time unit for `duration`.  Options are `MINUTES`, `SECONDS`.
+
+
 
 
 <a id="nestedatt--notifications_policy"></a>
