@@ -102,6 +102,7 @@ type MFADevicePolicyTimePeriodResourceModel struct {
 
 type MFADevicePolicyFido2ResourceModel struct {
 	Enabled                    types.Bool                   `tfsdk:"enabled"`
+	Failure                    types.Object                 `tfsdk:"failure"`
 	Fido2PolicyId              pingonetypes.ResourceIDValue `tfsdk:"fido2_policy_id"`
 	PairingDisabled            types.Bool                   `tfsdk:"pairing_disabled"`
 	PromptForNicknameOnPairing types.Bool                   `tfsdk:"prompt_for_nickname_on_pairing"`
@@ -245,6 +246,7 @@ var (
 
 	MFADevicePolicyFido2TFObjectTypes = map[string]attr.Type{
 		"enabled":                        types.BoolType,
+		"failure":                        types.ObjectType{AttrTypes: MFADevicePolicyFailureTFObjectTypes},
 		"fido2_policy_id":                pingonetypes.ResourceIDType{},
 		"pairing_disabled":               types.BoolType,
 		"prompt_for_nickname_on_pairing": types.BoolType,
@@ -284,6 +286,13 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 
 	const totpOtpFailureCountDefault = 3
 	const totpOtpFailureCoolDownDurationDefault = 2
+
+	const fido2FailureCountDefault = 3
+	const fido2FailureCoolDownDurationDefault = 2
+	const fido2FailureCountMin = 1
+	const fido2FailureCountMax = 7
+	const fido2FailureCoolDownDurationMin = 2
+	const fido2FailureCoolDownDurationMax = 30
 
 	// schema descriptions and validation settings
 	deviceSelectionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -367,6 +376,14 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 	fido2PairingDisabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that, when set to `true`, prevents users from pairing new devices with the FIDO2 method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.",
 	).DefaultValue(false)
+
+	fido2FailureCountDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that defines the maximum number of times that authentication can fail before the user is blocked. The minimum value is `%d`, the maximum value is `%d`, and the default is `%d`.", fido2FailureCountMin, fido2FailureCountMax, fido2FailureCountDefault),
+	)
+
+	fido2FailureCoolDownDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of failures. The minimum value is `%d` minutes (`%d` seconds), the maximum value is `%d` minutes (`%d` seconds), and the default is `%d` minutes (`%d` seconds).", fido2FailureCoolDownDurationMin, fido2FailureCoolDownDurationMin*60, fido2FailureCoolDownDurationMax, fido2FailureCoolDownDurationMax*60, fido2FailureCoolDownDurationDefault, fido2FailureCoolDownDurationDefault*60),
+	)
 
 	promptForNicknameOnPairingDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that, when set to `true`, prompts users to provide nicknames for devices during pairing.",
@@ -857,7 +874,20 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 				Computed:    true,
 				Default: objectdefault.StaticValue(types.ObjectValueMust(MFADevicePolicyFido2TFObjectTypes,
 					map[string]attr.Value{
-						"enabled":                        types.BoolValue(false),
+						"enabled": types.BoolValue(false),
+						"failure": types.ObjectValueMust(
+							MFADevicePolicyFailureTFObjectTypes,
+							map[string]attr.Value{
+								"count": types.Int32Value(fido2FailureCountDefault),
+								"cool_down": types.ObjectValueMust(
+									MFADevicePolicyTimePeriodTFObjectTypes,
+									map[string]attr.Value{
+										"duration":  types.Int32Value(fido2FailureCoolDownDurationDefault),
+										"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
+									},
+								),
+							},
+						),
 						"fido2_policy_id":                framework.PingOneResourceIDToTF(""),
 						"pairing_disabled":               types.BoolNull(),
 						"prompt_for_nickname_on_pairing": types.BoolNull(),
@@ -867,6 +897,71 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 					"enabled": schema.BoolAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the FIDO2 method is enabled or disabled in the policy.").Description,
 						Required:    true,
+					},
+
+					"failure": schema.SingleNestedAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that allows configuration of FIDO2 authentication failure settings.").Description,
+						Optional:    true,
+						Computed:    true,
+
+						Default: objectdefault.StaticValue(types.ObjectValueMust(
+							MFADevicePolicyFailureTFObjectTypes,
+							map[string]attr.Value{
+								"count": types.Int32Value(fido2FailureCountDefault),
+								"cool_down": types.ObjectValueMust(
+									MFADevicePolicyTimePeriodTFObjectTypes,
+									map[string]attr.Value{
+										"duration":  types.Int32Value(fido2FailureCoolDownDurationDefault),
+										"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
+									},
+								),
+							},
+						)),
+
+						Attributes: map[string]schema.Attribute{
+							"count": schema.Int32Attribute{
+								Description: fido2FailureCountDescription.Description,
+								Optional:    true,
+								Computed:    true,
+
+								Default: int32default.StaticInt32(fido2FailureCountDefault),
+
+								Validators: []validator.Int32{
+									int32validator.Between(fido2FailureCountMin, fido2FailureCountMax),
+								},
+							},
+
+							"cool_down": schema.SingleNestedAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that allows configuration of FIDO2 authentication failure cool down settings.").Description,
+								Optional:    true,
+								Computed:    true,
+
+								Default: objectdefault.StaticValue(types.ObjectValueMust(
+									MFADevicePolicyTimePeriodTFObjectTypes,
+									map[string]attr.Value{
+										"duration":  types.Int32Value(fido2FailureCoolDownDurationDefault),
+										"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
+									},
+								)),
+
+								Attributes: map[string]schema.Attribute{
+									"duration": schema.Int32Attribute{
+										Description: fido2FailureCoolDownDurationDescription.Description,
+										Required:    true,
+									},
+
+									"time_unit": schema.StringAttribute{
+										Description:         durationTimeUnitMinsSecondsDescription.Description,
+										MarkdownDescription: durationTimeUnitMinsSecondsDescription.MarkdownDescription,
+										Required:            true,
+
+										Validators: []validator.String{
+											stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumTimeUnitEnumValues)...),
+										},
+									},
+								},
+							},
+						},
 					},
 
 					"pairing_disabled": schema.BoolAttribute{
@@ -1969,6 +2064,40 @@ func (p *MFADevicePolicyFido2ResourceModel) expand() *mfa.DeviceAuthenticationPo
 		data.SetFido2PolicyId(p.Fido2PolicyId.ValueString())
 	}
 
+	if !p.Failure.IsNull() && !p.Failure.IsUnknown() {
+		failure := mfa.NewDeviceAuthenticationPolicyCommonFido2Failure()
+
+		if count, ok := p.Failure.Attributes()["count"]; ok {
+			if countType, ok := count.(types.Int32); ok && !countType.IsNull() && !countType.IsUnknown() {
+				failure.SetCount(countType.ValueInt32())
+			}
+		}
+
+		if coolDown, ok := p.Failure.Attributes()["cool_down"]; ok {
+			if coolDownType, ok := coolDown.(types.Object); ok && !coolDownType.IsNull() && !coolDownType.IsUnknown() {
+				coolDownObj := mfa.NewDeviceAuthenticationPolicyCommonFido2FailureCoolDown()
+
+				if duration, ok := coolDownType.Attributes()["duration"]; ok {
+					if durationType, ok := duration.(types.Int32); ok && !durationType.IsNull() && !durationType.IsUnknown() {
+						coolDownObj.SetDuration(durationType.ValueInt32())
+					}
+				}
+
+				if timeUnit, ok := coolDownType.Attributes()["time_unit"]; ok {
+					if timeUnitType, ok := timeUnit.(types.String); ok && !timeUnitType.IsNull() && !timeUnitType.IsUnknown() {
+						coolDownObj.SetTimeUnit(mfa.EnumTimeUnit(timeUnitType.ValueString()))
+					}
+				}
+
+				failure.SetCoolDown(*coolDownObj)
+			}
+		}
+
+		if failure.HasCount() || failure.HasCoolDown() {
+			data.SetFailure(*failure)
+		}
+	}
+
 	if !p.PromptForNicknameOnPairing.IsNull() && !p.PromptForNicknameOnPairing.IsUnknown() {
 		data.SetPromptForNicknameOnPairing(p.PromptForNicknameOnPairing.ValueBool())
 	}
@@ -2635,14 +2764,63 @@ func toStateMfaDevicePolicyFido2(apiObject *mfa.DeviceAuthenticationPolicyCommon
 		return types.ObjectNull(MFADevicePolicyFido2TFObjectTypes), nil
 	}
 
+	failure, d := toStateMfaDevicePolicyFido2Failure(apiObject.GetFailureOk())
+	diags.Append(d...)
+	if diags.HasError() {
+		return types.ObjectNull(MFADevicePolicyFido2TFObjectTypes), diags
+	}
+
 	o := map[string]attr.Value{
 		"enabled":                        framework.BoolOkToTF(apiObject.GetEnabledOk()),
+		"failure":                        failure,
 		"fido2_policy_id":                framework.PingOneResourceIDOkToTF(apiObject.GetFido2PolicyIdOk()),
 		"pairing_disabled":               framework.BoolOkToTF(apiObject.GetPairingDisabledOk()),
 		"prompt_for_nickname_on_pairing": framework.BoolOkToTF(apiObject.GetPromptForNicknameOnPairingOk()),
 	}
 
 	objValue, d := types.ObjectValue(MFADevicePolicyFido2TFObjectTypes, o)
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func toStateMfaDevicePolicyFido2Failure(apiObject *mfa.DeviceAuthenticationPolicyCommonFido2Failure, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(MFADevicePolicyFailureTFObjectTypes), nil
+	}
+
+	coolDown, d := toStateMfaDevicePolicyFido2FailureCoolDown(apiObject.GetCoolDownOk())
+	diags.Append(d...)
+	if diags.HasError() {
+		return types.ObjectNull(MFADevicePolicyFailureTFObjectTypes), diags
+	}
+
+	o := map[string]attr.Value{
+		"cool_down": coolDown,
+		"count":     framework.Int32OkToTF(apiObject.GetCountOk()),
+	}
+
+	objValue, d := types.ObjectValue(MFADevicePolicyFailureTFObjectTypes, o)
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func toStateMfaDevicePolicyFido2FailureCoolDown(apiObject *mfa.DeviceAuthenticationPolicyCommonFido2FailureCoolDown, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(MFADevicePolicyTimePeriodTFObjectTypes), nil
+	}
+
+	o := map[string]attr.Value{
+		"duration":  framework.Int32OkToTF(apiObject.GetDurationOk()),
+		"time_unit": framework.EnumOkToTF(apiObject.GetTimeUnitOk()),
+	}
+
+	objValue, d := types.ObjectValue(MFADevicePolicyTimePeriodTFObjectTypes, o)
 	diags.Append(d...)
 
 	return objValue, diags
