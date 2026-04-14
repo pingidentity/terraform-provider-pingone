@@ -1165,6 +1165,9 @@ func (r *UserResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		sdk.DefaultCreateReadRetryable,
 		&responseEnabled,
 	)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// Remove from state if resource is not found
 	if responseEnabled == nil {
