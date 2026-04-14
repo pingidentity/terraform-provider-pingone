@@ -687,10 +687,10 @@ resource "pingone_application" "%[2]s-3" {
 resource "pingone_webhook" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
-  name                   = "%[3]s"
-  enabled                = false
-  protocol               = "HTTPS"
-  http_endpoint_url      = "https://localhost/"
+  name              = "%[3]s"
+  enabled           = false
+  protocol          = "HTTPS"
+  http_endpoint_url = "https://localhost/"
 
   http_endpoint_headers = {
     Authorization = "Basic usernamepassword"
@@ -963,8 +963,8 @@ func testAccWebhookConfig_TCP_Minimal(resourceName, name string) string {
 resource "pingone_webhook" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
-  name              = "%[3]s"
-  protocol = "TCP_IP"
+  name                   = "%[3]s"
+  protocol               = "TCP_IP"
   connection_details_url = "tcp://localhost:1234"
 
   filter_options = {

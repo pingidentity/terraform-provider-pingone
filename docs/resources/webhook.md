@@ -61,11 +61,14 @@ resource "pingone_webhook" "my_webhook" {
 
 ### Optional
 
+- `connection_details_headers` (Map of String) The headers applied to the outbound request (for example: `"Authorization": "Basic username:password"`). The purpose of these headers is to authenticate the PingOne service, ensuring that the information from PingOne is from a trusted source. Similar to `http_endpoint.headers`, but not HTTPS-specific. Requires `connection_details_url` to be set.
+- `connection_details_url` (String) A string that specifies a valid a URI to which event messages are sent. Similar to `http_endpoint.url`, but not HTTPS-specific. Only one of `http_endpoint_url` or `connection_details_url` can be set.
 - `enabled` (Boolean) A boolean that specifies whether a created or updated webhook should be active or suspended. A suspended state (`"enabled":false`) accumulates all matched events, but these events are not delivered until the webhook becomes active again (`"enabled":true`). For suspended webhooks, events accumulate for a maximum of two weeks. Events older than two weeks are deleted. Restarted webhooks receive the saved events (up to two weeks from the restart date).  Defaults to `false`.
 - `format` (String) A string that specifies one of the supported webhook formats.  Options are `ACTIVITY`, `NEWRELIC`, `SPLUNK`.
-- `http_endpoint_headers` (Map of String) A map that specifies the headers applied to the outbound request (for example, `Authorization` `Basic usernamepassword`. The purpose of these headers is for the HTTPS endpoint to authenticate the PingOne service, ensuring that the information from PingOne is from a trusted source.
-- `http_endpoint_url` (String) A string that specifies a valid HTTPS URL to which event messages are sent.
+- `http_endpoint_headers` (Map of String) A map that specifies the headers applied to the outbound request (for example, `Authorization` `Basic usernamepassword`. The purpose of these headers is for the HTTPS endpoint to authenticate the PingOne service, ensuring that the information from PingOne is from a trusted source. Requires `http_endpoint_url` to be set.
+- `http_endpoint_url` (String) A string that specifies a valid HTTPS URL to which event messages are sent. Only one of "http_endpoint_url" or "connection_details_url" can be set.
 - `payload_options` (Attributes) A single object that specifies payload limits and formatting options. (see [below for nested schema](#nestedatt--payload_options))
+- `protocol` (String) This can be either `HTTPS` or `TCP_IP`.  Defaults to `HTTPS`.
 - `tls_client_auth_key_pair_id` (String) A string that specifies the PingOne resource ID of a key to be used for outbound mutual TLS (mTLS) authentication.  This key is used as a client credential to authenticate the webhook.  When using the `pingone_key` resource, the key must have a `usage_type` of `OUTBOUND_MTLS`.  If this property is set, `verify_tls_certificates` must be set to `true`.  Value must be a valid PingOne resource ID.
 - `verify_tls_certificates` (Boolean) A boolean that specifies whether a certificates should be verified. If this property's value is set to `false`, then all certificates are trusted. (Setting this property's value to false introduces a security risk.).  Defaults to `true`.
 
@@ -114,6 +117,7 @@ Optional:
 Optional:
 
 - `https` (Attributes) A single object that specifies HTTPS payload formatting settings. (see [below for nested schema](#nestedatt--payload_options--payload_format--https))
+- `tcp` (Attributes) A single object that specifies TCP payload formatting settings. (see [below for nested schema](#nestedatt--payload_options--payload_format--tcp))
 
 <a id="nestedatt--payload_options--payload_format--https"></a>
 ### Nested Schema for `payload_options.payload_format.https`
@@ -122,6 +126,15 @@ Optional:
 
 - `format` (String) The payload format.  Options are `JSON_ARRAY`, `ND_JSON`.
 - `pretty_print` (Boolean) Only applicable when `payload_options.payload_format.https.format` is `JSON_ARRAY`. Pretty-print is enabled when `true`.
+
+
+<a id="nestedatt--payload_options--payload_format--tcp"></a>
+### Nested Schema for `payload_options.payload_format.tcp`
+
+Optional:
+
+- `additional_attributes` (Map of String) Applicable only when `payload_options.payload_format.tcp.format` is set to `RFC_LOGLINE`. The attributes are specified as key-value pairs.
+- `format` (String) The payload format. This can be either `JSON_DOC` or `RFC_LOGLINE`.  Options are `JSON_DOC`, `RFC_LOGLINE`.
 
 ## Import
 
