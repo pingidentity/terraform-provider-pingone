@@ -277,10 +277,10 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	const fido2FailureCoolDownDurationDefault = 2
 	const fido2FailureCountMin = 1
 	const fido2FailureCountMax = 7
-	const fido2FailureCoolDownDurationMinSeconds = 120
-	const fido2FailureCoolDownDurationMaxSeconds = 1800
 	const fido2FailureCoolDownDurationMinMinutes = 2
 	const fido2FailureCoolDownDurationMaxMinutes = 30
+	const fido2FailureCoolDownDurationMinSeconds = fido2FailureCoolDownDurationMinMinutes * 60
+	const fido2FailureCoolDownDurationMaxSeconds = fido2FailureCoolDownDurationMaxMinutes * 60
 
 	const rememberMeWebLifeTimeDurationDefault = 30
 	const rememberMeWebLifeTimeDurationMinMinutes = 1
@@ -668,8 +668,8 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	)
 
 	fido2FailureCoolDownDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of failures. Must be between `%d` seconds and `%d` minutes.", fido2FailureCoolDownDurationMinSeconds, fido2FailureCoolDownDurationMaxMinutes),
-	)
+		fmt.Sprintf("An integer that defines the length of time that the user is blocked after reaching the maximum number of failures. The minimum value is `%d` minutes and the maximum value is `%d` minutes.", fido2FailureCoolDownDurationMinMinutes, fido2FailureCoolDownDurationMaxMinutes),
+	).DefaultValue(fido2FailureCoolDownDurationDefault)
 
 	desktopDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("A single object that allows configuration of PingID desktop device authentication policy settings. Only applicable when `policy_type` is `%s`.", POLICY_TYPE_PINGID),
