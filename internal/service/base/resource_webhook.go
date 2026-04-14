@@ -204,7 +204,7 @@ func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest
 	).AllowedValuesEnum(management.AllowedEnumSubscriptionPayloadOptionsMaximumPayloadLimitTypeEnumValues)
 
 	payloadOptionsMaximumPayloadLimitSizeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The maximum size of the payload based on `payload_options.maximum_payload_limit.type`. For `EVENTS_PER_PAYLOAD` this can be from 1 to 500 events (defaults to 500). For `KB_PER_PAYLOAD` this can be from 1 to 4096 kilobytes.",
+		"The maximum size of the payload based on `payload_options.maximum_payload_limit.type`. For `EVENTS_PER_PAYLOAD` this can be from 1 to 500 events. For `KB_PER_PAYLOAD` this can be from 1 to 4096 kilobytes.",
 	)
 
 	payloadOptionsPayloadFormatFormatHTTPSFormatDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -567,6 +567,21 @@ func (r *WebhookResource) ModifyPlan(ctx context.Context, req resource.ModifyPla
 					"The connection_details_url attribute must not be directly configured when protocol is HTTPS.",
 				)
 			}
+			// The TCP payload format isn't supported for HTTPS
+			if !config.PayloadOptions.IsNull() && !config.PayloadOptions.IsUnknown() {
+				payloadOptionsAttrs := config.PayloadOptions.Attributes()
+				payloadFormat, ok := payloadOptionsAttrs["payload_format"]
+				if ok && !payloadFormat.IsNull() && !payloadFormat.IsUnknown() {
+					payloadFormatAttrs := payloadFormat.(types.Object).Attributes()
+					tcpFormat, ok := payloadFormatAttrs["tcp"]
+					if ok && !tcpFormat.IsNull() && !tcpFormat.IsUnknown() {
+						resp.Diagnostics.AddError(
+							"Invalid configuration",
+							"The payload_options.payload_format.tcp attribute is not supported when protocol is HTTPS.",
+						)
+					}
+				}
+			}
 		case string(management.ENUMSUBSCRIPTIONPROTOCOL_TCP_IP):
 			// For TCP/IP, connection_details_url is required and http_endpoint_url must be null
 			if config.ConnectionDetailsUrl.IsNull() {
@@ -588,15 +603,27 @@ func (r *WebhookResource) ModifyPlan(ctx context.Context, req resource.ModifyPla
 					"The format attribute is not supported when protocol is TCP_IP.",
 				)
 			}
-			// maximum payload limit isn't supported for TCP/IP
 			if !config.PayloadOptions.IsNull() && !config.PayloadOptions.IsUnknown() {
 				payloadOptionsAttrs := config.PayloadOptions.Attributes()
+				// maximum payload limit isn't supported for TCP/IP
 				maximumPayloadLimit, ok := payloadOptionsAttrs["maximum_payload_limit"]
 				if ok && !maximumPayloadLimit.IsNull() && !maximumPayloadLimit.IsUnknown() {
 					resp.Diagnostics.AddError(
 						"Invalid configuration",
 						"The payload_options.maximum_payload_limit attribute is not supported when protocol is TCP_IP.",
 					)
+				}
+				// The HTTPS payload format isn't supported for TCP/IP
+				payloadFormat, ok := payloadOptionsAttrs["payload_format"]
+				if ok && !payloadFormat.IsNull() && !payloadFormat.IsUnknown() {
+					payloadFormatAttrs := payloadFormat.(types.Object).Attributes()
+					httpsFormat, ok := payloadFormatAttrs["https"]
+					if ok && !httpsFormat.IsNull() && !httpsFormat.IsUnknown() {
+						resp.Diagnostics.AddError(
+							"Invalid configuration",
+							"The payload_options.payload_format.https attribute is not supported when protocol is TCP_IP.",
+						)
+					}
 				}
 			}
 		}

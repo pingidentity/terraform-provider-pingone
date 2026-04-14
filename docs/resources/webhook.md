@@ -106,7 +106,7 @@ Optional:
 
 Optional:
 
-- `size` (Number) The maximum size of the payload based on `payload_options.maximum_payload_limit.type`. For `EVENTS_PER_PAYLOAD` this can be from 1 to 500 events (defaults to 500). For `KB_PER_PAYLOAD` this can be from 1 to 4096 kilobytes.
+- `size` (Number) The maximum size of the payload based on `payload_options.maximum_payload_limit.type`. For `EVENTS_PER_PAYLOAD` this can be from 1 to 500 events. For `KB_PER_PAYLOAD` this can be from 1 to 4096 kilobytes.
 - `type` (String) The type of payload to use for limiting subscriptions.  Options are `EVENTS_PER_PAYLOAD`, `KB_PER_PAYLOAD`.
 
 
