@@ -385,6 +385,10 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the number of seconds a refresh token can be exchanged before re-authentication is required.").Description,
 						Computed:    true,
 					},
+					"refresh_token_type": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the format of the refresh token.").Description,
+						Computed:    true,
+					},
 					"refresh_token_rolling_grace_period_duration": schema.Int32Attribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("The number of seconds that a refresh token may be reused after having been exchanged for a new set of tokens.").Description,
 						Computed:    true,

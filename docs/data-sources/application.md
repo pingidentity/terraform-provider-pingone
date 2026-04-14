@@ -108,6 +108,7 @@ Read-Only:
 - `refresh_token_duration` (Number) An integer that specifies the lifetime in seconds of the refresh token.
 - `refresh_token_rolling_duration` (Number) An integer that specifies the number of seconds a refresh token can be exchanged before re-authentication is required.
 - `refresh_token_rolling_grace_period_duration` (Number) The number of seconds that a refresh token may be reused after having been exchanged for a new set of tokens.
+- `refresh_token_type` (String) A string that specifies the format of the refresh token.
 - `request_scopes_for_multiple_resources_enabled` (Boolean) A boolean that specifies whether the application can request scopes from multiple custom resources.
 - `require_signed_request_object` (Boolean) A boolean that indicates that the Java Web Token (JWT) for the [request query](https://openid.net/specs/openid-connect-core-1_0.html#RequestObject) parameter is required to be signed. If `false` or null, a signed request object is not required. Both `support_unsigned_request_object` and this property cannot be set to `true`.  Defaults to `false`.
 - `response_types` (Set of String) A list that specifies the code or token type returned by an authorization request.

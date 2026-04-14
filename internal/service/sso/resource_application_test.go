@@ -175,6 +175,7 @@ func TestAccApplication_OIDCFullWeb(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_duration", "3000000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_rolling_duration", "30000000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_rolling_grace_period_duration", "80000"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_type", "JSON_WEB_TOKEN"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.additional_refresh_token_replay_protection_enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.support_unsigned_request_object", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.require_signed_request_object", "false"),
@@ -265,6 +266,7 @@ func TestAccApplication_OIDCMinimalWeb(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_rolling_duration", "15552000"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.refresh_token_rolling_grace_period_duration"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.refresh_token_type"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.additional_refresh_token_replay_protection_enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.require_signed_request_object", "false"),
@@ -333,6 +335,7 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_rolling_duration", "15552000"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.refresh_token_rolling_grace_period_duration"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.refresh_token_type"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.additional_refresh_token_replay_protection_enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.support_unsigned_request_object", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.require_signed_request_object", "false"),
@@ -388,6 +391,7 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_duration", "3000000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_rolling_duration", "30000000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_rolling_grace_period_duration", "80000"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_type", "JSON_WEB_TOKEN"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.additional_refresh_token_replay_protection_enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.support_unsigned_request_object", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.require_signed_request_object", "false"),
@@ -439,6 +443,7 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.post_logout_redirect_uris.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_duration", "2592000"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.refresh_token_rolling_duration", "15552000"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.refresh_token_type"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.refresh_token_rolling_grace_period_duration"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.additional_refresh_token_replay_protection_enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.support_unsigned_request_object", "false"),
@@ -3672,6 +3677,7 @@ resource "pingone_application" "%[2]s" {
     refresh_token_duration                             = 3000000
     refresh_token_rolling_duration                     = 30000000
     refresh_token_rolling_grace_period_duration        = 80000
+    refresh_token_type                                 = "JSON_WEB_TOKEN"
     additional_refresh_token_replay_protection_enabled = false
 
     home_page_url      = "https://www.pingidentity.com"
