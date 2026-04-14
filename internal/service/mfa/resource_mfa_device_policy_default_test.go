@@ -139,6 +139,9 @@ func TestAccMFADevicePolicyDefault_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "totp.pairing_disabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.prompt_for_nickname_on_pairing", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "fido2.failure.count", "4"),
+					resource.TestCheckResourceAttr(resourceFullName, "fido2.failure.cool_down.duration", "150"),
+					resource.TestCheckResourceAttr(resourceFullName, "fido2.failure.cool_down.time_unit", "SECONDS"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.pairing_disabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.prompt_for_nickname_on_pairing", "false"),
 				),
@@ -206,6 +209,9 @@ func TestAccMFADevicePolicyDefault_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "fido2.failure.count", "3"),
+					resource.TestCheckResourceAttr(resourceFullName, "fido2.failure.cool_down.duration", "2"),
+					resource.TestCheckResourceAttr(resourceFullName, "fido2.failure.cool_down.time_unit", "MINUTES"),
 				),
 			},
 		},
@@ -779,6 +785,16 @@ func TestAccMFADevicePolicyDefault_Validation(t *testing.T) {
 						Config:      testAccMFADevicePolicyDefaultConfig_TotpOtpFailureCoolDownDuration(resourceName, name, 31),
 						ExpectError: regexp.MustCompile(`Attribute totp.otp.failure.cool_down.duration value must be between 1 and[\s\n]+30`),
 					},
+					// FIDO2 - failure count too high
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_Fido2FailureCount(environmentName, licenseID, resourceName, name, 8),
+						ExpectError: regexp.MustCompile(`Attribute fido2.failure.count value must be between 1 and 7`),
+					},
+					// FIDO2 - failure cool down duration too high for MINUTES
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_Fido2FailureCoolDownDuration(environmentName, licenseID, resourceName, name, 31),
+						ExpectError: regexp.MustCompile(`Attribute\s+fido2.failure.cool_down.duration\s+value must\s+be between\s+2 and\s+30`),
+					},
 				},
 			})
 		},
@@ -1244,7 +1260,14 @@ resource "pingone_mfa_device_policy_default" "%[3]s" {
   }
 
   fido2 = {
-    enabled                        = true
+    enabled = true
+    failure = {
+      count = 4
+      cool_down = {
+        duration  = 150
+        time_unit = "SECONDS"
+      }
+    }
     pairing_disabled               = false
     prompt_for_nickname_on_pairing = false
   }
@@ -3161,6 +3184,70 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
   voice   = { enabled = false }
   email   = { enabled = false }
 }`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name, duration)
+}
+
+func testAccMFADevicePolicyDefaultConfig_Fido2FailureCount(environmentName, licenseID, resourceName, name string, count int) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_mfa_device_policy_default" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  policy_type    = "PING_ONE_MFA"
+  name           = "%[4]s"
+
+  fido2 = {
+    enabled = true
+    failure = {
+      count = %[5]d
+      cool_down = {
+        duration  = 2
+        time_unit = "MINUTES"
+      }
+    }
+  }
+
+  sms   = { enabled = false }
+  voice = { enabled = false }
+  email = { enabled = false }
+  mobile = {
+    enabled = false
+  }
+  totp = {
+    enabled = false
+  }
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, count)
+}
+
+func testAccMFADevicePolicyDefaultConfig_Fido2FailureCoolDownDuration(environmentName, licenseID, resourceName, name string, duration int) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_mfa_device_policy_default" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+  policy_type    = "PING_ONE_MFA"
+  name           = "%[4]s"
+
+  fido2 = {
+    enabled = true
+    failure = {
+      count = 1
+      cool_down = {
+        duration  = %[5]d
+        time_unit = "MINUTES"
+      }
+    }
+  }
+
+  sms   = { enabled = false }
+  voice = { enabled = false }
+  email = { enabled = false }
+  mobile = {
+    enabled = false
+  }
+  totp = {
+    enabled = false
+  }
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, duration)
 }
 
 func testAccMFADevicePolicyDefaultConfig_WithIPs(resourceName, name string, ips []string) string {
