@@ -77,6 +77,7 @@ type formComponentsFieldResourceModel struct {
 	OtherOptionInputLabel        types.String `tfsdk:"other_option_input_label"`
 	OtherOptionKey               types.String `tfsdk:"other_option_key"`
 	OtherOptionLabel             types.String `tfsdk:"other_option_label"`
+	PollingAppearance            types.String `tfsdk:"polling_appearance"`
 	Position                     types.Object `tfsdk:"position"`
 	Required                     types.Bool   `tfsdk:"required"`
 	ShowPasswordRequirements     types.Bool   `tfsdk:"show_password_requirements"`
@@ -169,6 +170,7 @@ var (
 		"other_option_input_label":        types.StringType,
 		"other_option_key":                types.StringType,
 		"other_option_label":              types.StringType,
+		"polling_appearance":              types.StringType,
 		"position":                        types.ObjectType{AttrTypes: formComponentsFieldsPositionTFObjectTypes},
 		"required":                        types.BoolType,
 		"show_password_requirements":      types.BoolType,
@@ -369,6 +371,18 @@ var (
 				"visibility",
 			},
 		},
+		management.ENUMFORMFIELDTYPE_POLLING: {
+			Required: []string{
+				"type",
+				"position",
+				"key",
+				"polling_appearance",
+				"size",
+			},
+			Optional: []string{
+				"visibility",
+			},
+		},
 		management.ENUMFORMFIELDTYPE_QR_CODE: {
 			Required: []string{
 				"type",
@@ -496,6 +510,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 		management.ENUMFORMFIELDTYPE_ERROR_DISPLAY,
 		management.ENUMFORMFIELDTYPE_FLOW_LINK,
 		management.ENUMFORMFIELDTYPE_FLOW_BUTTON,
+		management.ENUMFORMFIELDTYPE_POLLING,
 		management.ENUMFORMFIELDTYPE_RECAPTCHA_V2,
 		management.ENUMFORMFIELDTYPE_QR_CODE,
 	}
@@ -667,6 +682,12 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 		"A boolean that specifies whether to display password requirements to the user.",
 	)
 
+	componentsFieldsPollingAppearanceDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		formFieldValidationDocumentation("polling_appearance"),
+	).AppendMarkdownString(
+		"A string that specifies the polling activity indicator appearance.",
+	).AllowedValuesEnum(management.AllowedEnumFormPollingAppearanceEnumValues)
+
 	componentsFieldsStylesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		formFieldValidationDocumentation("styles"),
 	).AppendMarkdownString(
@@ -746,7 +767,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 	componentsFieldsSizeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		formFieldValidationDocumentation("size"),
 	).AppendMarkdownString(
-		fmt.Sprintf("A string that specifies the reCAPTCHA size or the QR code size. For reCAPTCHA fields, options are `%s`. For QR code fields, options are `%s`.",
+		fmt.Sprintf("A string that specifies the reCAPTCHA size or the QR code/polling size. For reCAPTCHA fields, options are `%s`. For QR code and polling fields, options are `%s`.",
 			strings.Join(reCaptchaSizeAllowedValues, "`, `"),
 			strings.Join(genericSizeAllowedValues, "`, `")),
 	)
@@ -1113,6 +1134,12 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 									Computed:            true,
 								},
 
+								"polling_appearance": schema.StringAttribute{
+									Description:         componentsFieldsPollingAppearanceDescription.Description,
+									MarkdownDescription: componentsFieldsPollingAppearanceDescription.MarkdownDescription,
+									Optional:            true,
+								},
+
 								"styles": schema.SingleNestedAttribute{
 									Description:         componentsFieldsStylesDescription.Description,
 									MarkdownDescription: componentsFieldsStylesDescription.MarkdownDescription,
@@ -1452,6 +1479,8 @@ func (r *formComponentsFieldResourceModel) validateFieldSet(field string) bool {
 		return !r.OtherOptionKey.IsNull()
 	case "other_option_label":
 		return !r.OtherOptionLabel.IsNull()
+	case "polling_appearance":
+		return !r.PollingAppearance.IsNull()
 	case "position":
 		return !r.Position.IsNull()
 	case "required":
@@ -1999,8 +2028,8 @@ func (p *formResourceModel) validate(ctx context.Context, allowUnknowns bool) di
 					}
 				}
 
-				// Validate size value for QR_CODE and RECAPTCHA_V2
-				if field.Type.ValueString() == string(management.ENUMFORMFIELDTYPE_QR_CODE) {
+				// Validate size value for QR_CODE, POLLING and RECAPTCHA_V2
+				if field.Type.ValueString() == string(management.ENUMFORMFIELDTYPE_QR_CODE) || field.Type.ValueString() == string(management.ENUMFORMFIELDTYPE_POLLING) {
 					sizeValue := field.Size.ValueString()
 					validSizes := utils.EnumSliceToStringSlice(management.AllowedEnumFormItemSizeEnumValues)
 					if !slices.Contains(validSizes, sizeValue) {
@@ -2146,6 +2175,8 @@ func (p *formComponentsFieldResourceModel) expand(ctx context.Context) (*managem
 		data.FormFieldPassword, d = p.expandFieldPassword(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY):
 		data.FormFieldPasswordVerify, d = p.expandFieldPasswordVerify(ctx, positionData)
+	case string(management.ENUMFORMFIELDTYPE_POLLING):
+		data.FormFieldPolling, d = p.expandItemPolling(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_QR_CODE):
 		data.FormFieldQrCode, d = p.expandItemQRCode(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_RADIO):
@@ -2943,6 +2974,30 @@ func (p *formComponentsFieldVisibilityResourceModel) expand() *management.FormFi
 	return visibility
 }
 
+func (p *formComponentsFieldResourceModel) expandItemPolling(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldPolling, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := management.NewFormFieldPolling(
+		management.ENUMFORMFIELDTYPE_POLLING,
+		*positionData,
+		p.Key.ValueString(),
+		management.EnumFormPollingAppearance(p.PollingAppearance.ValueString()),
+		management.EnumFormItemSize(p.Size.ValueString()),
+	)
+
+	if !p.Visibility.IsNull() && !p.Visibility.IsUnknown() {
+		var plan formComponentsFieldVisibilityResourceModel
+		diags.Append(p.Visibility.As(ctx, &plan, basetypes.ObjectAsOptions{})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetVisibility(*plan.expand())
+	}
+
+	return data, diags
+}
+
 func (p *formComponentsFieldResourceModel) expandItemQRCode(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldQrCode, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	data := management.NewFormFieldQrCode(
@@ -3497,6 +3552,22 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 				"visibility":                      visibility,
 			}
 
+		case *management.FormFieldPolling:
+			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
+			diags.Append(d...)
+
+			visibility, d := formComponentsFieldsVisibilityOkToTF(t.GetVisibilityOk())
+			diags.Append(d...)
+
+			attributeMap = map[string]attr.Value{
+				"key":                framework.StringOkToTF(t.GetKeyOk()),
+				"polling_appearance": framework.EnumOkToTF(t.GetPollingAppearanceOk()),
+				"position":           position,
+				"size":               framework.EnumOkToTF(t.GetSizeOk()),
+				"type":               framework.EnumOkToTF(t.GetTypeOk()),
+				"visibility":         visibility,
+			}
+
 		case *management.FormFieldQrCode:
 			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
 			diags.Append(d...)
@@ -3663,6 +3734,7 @@ func formComponentsFieldsConvertEmptyValuesToTFNulls(attributeMap map[string]att
 		"other_option_input_label":        types.StringNull(),
 		"other_option_key":                types.StringNull(),
 		"other_option_label":              types.StringNull(),
+		"polling_appearance":              types.StringNull(),
 		"position":                        types.ObjectNull(formComponentsFieldsPositionTFObjectTypes),
 		"required":                        types.BoolNull(),
 		"show_password_requirements":      types.BoolNull(),
