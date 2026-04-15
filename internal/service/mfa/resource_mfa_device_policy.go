@@ -357,7 +357,7 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 
 	durationTimeUnitMinsSecondsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the type of time unit for `duration`.",
-	).AllowedValuesEnum(mfa.AllowedEnumTimeUnitEnumValues)
+	).AllowedValuesEnum(mfa.AllowedEnumTimeUnitEnumValues).DefaultValue(string(mfa.ENUMTIMEUNIT_MINUTES))
 
 	mobileApplicationsPairingKeyLifetimeTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the type of time unit for `duration`.",

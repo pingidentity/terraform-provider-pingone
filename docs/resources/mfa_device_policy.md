@@ -344,7 +344,7 @@ Optional:
 Required:
 
 - `duration` (Number) An integer that defines the length of time that push notifications should be blocked for the application if the defined limit has been reached. The minimum value is `1` minute and the maximum value is `120` minutes. If this parameter is not provided, the default value is `30` minutes.
-- `time_unit` (String) A string that specifies the type of time unit for `duration`.  Options are `MINUTES`, `SECONDS`.
+- `time_unit` (String) A string that specifies the type of time unit for `duration`.  Options are `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
 
 
 <a id="nestedatt--mobile--applications--push_limit--time_period"></a>
@@ -353,7 +353,7 @@ Required:
 Required:
 
 - `duration` (Number) An integer that defines the length of time that push notifications should be blocked for the application if the defined limit has been reached. The minimum value is `1` minute and the maximum value is `120` minutes. If this parameter is not provided, the default value is `30` minutes.
-- `time_unit` (String) A string that specifies the type of time unit for `duration`.  Options are `MINUTES`, `SECONDS`.
+- `time_unit` (String) A string that specifies the type of time unit for `duration`.  Options are `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
 
 
 
@@ -394,7 +394,7 @@ Optional:
 Required:
 
 - `duration` (Number) An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. The minimum value is `2`, maximum is `30`, and the default is `2`. Note that when using the "onetime authentication" feature, the user is not blocked after the maximum number of failures even if you specified a block duration.
-- `time_unit` (String) A string that specifies the type of time unit for `duration`.  Options are `MINUTES`, `SECONDS`.
+- `time_unit` (String) A string that specifies the type of time unit for `duration`.  Options are `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
 
 
 
@@ -489,7 +489,7 @@ Optional:
 Required:
 
 - `duration` (Number) An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures.
-- `time_unit` (String) A string that specifies the type of time unit for `duration`.  Options are `MINUTES`, `SECONDS`.
+- `time_unit` (String) A string that specifies the type of time unit for `duration`.  Options are `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
 
 
 
@@ -582,7 +582,7 @@ Optional:
 Required:
 
 - `duration` (Number) An integer that defines the length of time that the user is blocked after reaching the maximum number of failures. The minimum value is `2` minutes and the maximum value is `30` minutes.  Defaults to `2`.
-- `time_unit` (String) A string that specifies the type of time unit for `duration`.  Options are `MINUTES`, `SECONDS`.
+- `time_unit` (String) A string that specifies the type of time unit for `duration`.  Options are `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
 
 ## Import
 
