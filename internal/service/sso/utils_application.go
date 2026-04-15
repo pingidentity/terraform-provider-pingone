@@ -176,6 +176,7 @@ func applicationOidcOptionsCommonToTF(ctx context.Context, apiObject *management
 		"refresh_token_duration":                             framework.Int32OkToTF(apiObject.GetRefreshTokenDurationOk()),
 		"refresh_token_rolling_duration":                     framework.Int32OkToTF(apiObject.GetRefreshTokenRollingDurationOk()),
 		"refresh_token_rolling_grace_period_duration":        framework.Int32OkToTF(apiObject.GetRefreshTokenRollingGracePeriodDurationOk()),
+		"refresh_token_type":                                 framework.EnumOkToTF(apiObject.GetRefreshTokenTypeOk()),
 		"request_scopes_for_multiple_resources_enabled":      types.BoolValue(apiObject.GetRequestScopesForMultipleResourcesEnabled()),
 		"require_signed_request_object":                      framework.BoolOkToTF(apiObject.GetRequireSignedRequestObjectOk()),
 		"response_types":                                     framework.EnumSetOkToTF(apiObject.GetResponseTypesOk()),

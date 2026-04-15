@@ -734,6 +734,10 @@ func (r *UserDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		&responseEnabled,
 	)...)
 
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(data.toState(user, responseEnabled)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

@@ -1,0 +1,3 @@
+```release-note:bug
+`resource/pingone_branding_theme_default`: Fixed rare potential panic on resource deletion.
+```
