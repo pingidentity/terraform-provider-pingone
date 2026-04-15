@@ -485,7 +485,7 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 
 	durationTimeUnitMinsSecondsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the type of time unit for `duration`.",
-	).AllowedValuesEnum(mfa.AllowedEnumTimeUnitEnumValues)
+	).AllowedValuesEnum(mfa.AllowedEnumTimeUnitEnumValues).DefaultValue(string(mfa.ENUMTIMEUNIT_MINUTES))
 
 	mobileApplicationsPairingKeyLifetimeTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the type of time unit for `duration`.",
@@ -661,7 +661,7 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 
 	fido2FailureCountDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("An integer that defines the maximum number of times that authentication can fail before user is blocked for the specified period. The minimum value is `%d` and the maximum value is `%d`.", fido2FailureCountMin, fido2FailureCountMax),
-	)
+	).DefaultValue(fido2FailureCountDefault)
 
 	fido2FailureCoolDownDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A single object that allows configuration of FIDO2 authentication failure cool down settings.",
@@ -669,7 +669,7 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 
 	fido2FailureCoolDownDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("An integer that defines the length of time that the user is blocked after reaching the maximum number of failures. The minimum value is `%d` minutes and the maximum value is `%d` minutes.", fido2FailureCoolDownDurationMinMinutes, fido2FailureCoolDownDurationMaxMinutes),
-	)
+	).DefaultValue(fido2FailureCoolDownDurationDefault)
 
 	desktopDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("A single object that allows configuration of PingID desktop device authentication policy settings. Only applicable when `policy_type` is `%s`.", POLICY_TYPE_PINGID),
