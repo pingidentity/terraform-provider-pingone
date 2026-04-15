@@ -255,6 +255,10 @@ func (r *BrandingThemeDefaultResource) Delete(ctx context.Context, req resource.
 			&response,
 		)...)
 
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
 		bootstrapDefaultThemeId = response.Id
 	}
 
