@@ -264,9 +264,9 @@ var (
 				"key",
 				"input_type",
 				"title_enabled",
+				"agreement",
 			},
 			Optional: []string{
-				"agreement",
 				"visibility",
 			},
 		},
@@ -1456,6 +1456,13 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 											MarkdownDescription: componentsFieldsAgreementIdDescription.MarkdownDescription,
 											Optional:            true,
 											CustomType:          pingonetypes.ResourceIDType{},
+
+											Validators: []validator.String{
+												stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+													types.BoolValue(false),
+													path.MatchRelative().AtParent().AtName("use_dynamic_agreement"),
+												),
+											},
 										},
 
 										"use_dynamic_agreement": schema.BoolAttribute{

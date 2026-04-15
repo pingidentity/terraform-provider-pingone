@@ -238,7 +238,7 @@ Required:
 Optional:
 
 - `action` (String) **Required** when the `type` is one of `FIDO2`.  A string that specifies the FIDO2 action.  Options are `AUTHENTICATE`, `REGISTER`.
-- `agreement` (Attributes) Optional when the `type` is one of `AGREEMENT`.  A single object that contains the agreement configuration (see [below for nested schema](#nestedatt--components--fields--agreement))
+- `agreement` (Attributes) **Required** when the `type` is one of `AGREEMENT`.  A single object that contains the agreement configuration (see [below for nested schema](#nestedatt--components--fields--agreement))
 - `alignment` (String) **Required** when the `type` is one of `QR_CODE`, `RECAPTCHA_V2`.  A string that specifies the reCAPTCHA alignment.  Options are `CENTER`, `LEFT`, `RIGHT`.
 - `attribute_disabled` (Boolean) Optional when the `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `PASSWORD`, `PASSWORD_VERIFY`, `RADIO`, `TEXT`.  A boolean that specifies whether the linked directory attribute is disabled.
 - `content` (String) Optional when the `type` is one of `SLATE_TEXTBLOB`.  A string that specifies the field's content (for example, escaped JSON string when the field type is `SLATE_TEXTBLOB` - use `jsonencode` to convert JSON to escaped JSON string.)

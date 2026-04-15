@@ -2050,7 +2050,7 @@ func TestAccForm_ItemAgreement(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.input_type", "READ_ONLY_TEXT"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.title_enabled", "true"),
 			resource.TestMatchResourceAttr(resourceFullName, "components.fields.0.agreement.id", verify.P1ResourceIDRegexpFullString),
-			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.agreement.use_dynamic_agreement", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.agreement.use_dynamic_agreement", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.visibility.type", "ALWAYS_VISIBLE"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.visibility.key", "mykey"),
 			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
@@ -2067,6 +2067,8 @@ func TestAccForm_ItemAgreement(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "agreement-field"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.input_type", "READ_ONLY_TEXT"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.title_enabled", "false"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "components.fields.0.agreement.id"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.agreement.use_dynamic_agreement", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
 	}
@@ -5269,7 +5271,7 @@ resource "pingone_form" "%[2]s" {
         title_enabled = true
         agreement = {
           id                    = pingone_agreement.%[2]s.id
-          use_dynamic_agreement = true
+          use_dynamic_agreement = false
         }
         visibility = {
           type = "ALWAYS_VISIBLE"
@@ -5319,6 +5321,9 @@ resource "pingone_form" "%[2]s" {
         key           = "agreement-field"
         input_type    = "READ_ONLY_TEXT"
         title_enabled = false
+        agreement = {
+          use_dynamic_agreement = true
+        }
       },
       {
         type = "SUBMIT_BUTTON"
