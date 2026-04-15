@@ -273,6 +273,15 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	const totpOtpFailureCountDefault = 3
 	const totpOtpFailureCoolDownDurationDefault = 2
 
+	const fido2FailureCountDefault = 3
+	const fido2FailureCoolDownDurationDefault = 2
+	const fido2FailureCountMin = 1
+	const fido2FailureCountMax = 7
+	const fido2FailureCoolDownDurationMinMinutes = 2
+	const fido2FailureCoolDownDurationMaxMinutes = 30
+	const fido2FailureCoolDownDurationMinSeconds = fido2FailureCoolDownDurationMinMinutes * 60
+	const fido2FailureCoolDownDurationMaxSeconds = fido2FailureCoolDownDurationMaxMinutes * 60
+
 	const rememberMeWebLifeTimeDurationDefault = 30
 	const rememberMeWebLifeTimeDurationMinMinutes = 1
 	const rememberMeWebLifeTimeDurationMaxMinutes = 129600
@@ -476,7 +485,7 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 
 	durationTimeUnitMinsSecondsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the type of time unit for `duration`.",
-	).AllowedValuesEnum(mfa.AllowedEnumTimeUnitEnumValues)
+	).AllowedValuesEnum(mfa.AllowedEnumTimeUnitEnumValues).DefaultValue(string(mfa.ENUMTIMEUNIT_MINUTES))
 
 	mobileApplicationsPairingKeyLifetimeTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the type of time unit for `duration`.",
@@ -645,6 +654,22 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	fido2PolicyIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the resource UUID that represents the FIDO2 policy in PingOne. When null, the environment's default FIDO2 Policy is used.",
 	)
+
+	fido2FailureDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that allows configuration of FIDO2 authentication failure settings.",
+	)
+
+	fido2FailureCountDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that defines the maximum number of times that authentication can fail before user is blocked for the specified period. The minimum value is `%d` and the maximum value is `%d`.", fido2FailureCountMin, fido2FailureCountMax),
+	).DefaultValue(fido2FailureCountDefault)
+
+	fido2FailureCoolDownDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that allows configuration of FIDO2 authentication failure cool down settings.",
+	)
+
+	fido2FailureCoolDownDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that defines the length of time that the user is blocked after reaching the maximum number of failures. The minimum value is `%d` minutes and the maximum value is `%d` minutes.", fido2FailureCoolDownDurationMinMinutes, fido2FailureCoolDownDurationMaxMinutes),
+	).DefaultValue(fido2FailureCoolDownDurationDefault)
 
 	desktopDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("A single object that allows configuration of PingID desktop device authentication policy settings. Only applicable when `policy_type` is `%s`.", POLICY_TYPE_PINGID),
@@ -1727,7 +1752,20 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 				Computed:            true,
 				Default: objectdefault.StaticValue(types.ObjectValueMust(MFADevicePolicyFido2TFObjectTypes,
 					map[string]attr.Value{
-						"enabled":                        types.BoolValue(false),
+						"enabled": types.BoolValue(false),
+						"failure": types.ObjectValueMust(
+							MFADevicePolicyFailureTFObjectTypes,
+							map[string]attr.Value{
+								"count": types.Int32Value(fido2FailureCountDefault),
+								"cool_down": types.ObjectValueMust(
+									MFADevicePolicyTimePeriodTFObjectTypes,
+									map[string]attr.Value{
+										"duration":  types.Int32Value(fido2FailureCoolDownDurationDefault),
+										"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
+									},
+								),
+							},
+						),
 						"fido2_policy_id":                pingonetypes.NewResourceIDNull(),
 						"pairing_disabled":               types.BoolValue(false),
 						"prompt_for_nickname_on_pairing": types.BoolNull(),
@@ -1738,6 +1776,83 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 						Description:         fido2EnabledDescription.Description,
 						MarkdownDescription: fido2EnabledDescription.MarkdownDescription,
 						Required:            true,
+					},
+
+					"failure": schema.SingleNestedAttribute{
+						Description:         fido2FailureDescription.Description,
+						MarkdownDescription: fido2FailureDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+						Default: objectdefault.StaticValue(types.ObjectValueMust(
+							MFADevicePolicyFailureTFObjectTypes,
+							map[string]attr.Value{
+								"count": types.Int32Value(fido2FailureCountDefault),
+								"cool_down": types.ObjectValueMust(
+									MFADevicePolicyTimePeriodTFObjectTypes,
+									map[string]attr.Value{
+										"duration":  types.Int32Value(fido2FailureCoolDownDurationDefault),
+										"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
+									},
+								),
+							},
+						)),
+
+						Attributes: map[string]schema.Attribute{
+							"count": schema.Int32Attribute{
+								Description:         fido2FailureCountDescription.Description,
+								MarkdownDescription: fido2FailureCountDescription.MarkdownDescription,
+								Optional:            true,
+
+								Validators: []validator.Int32{
+									int32validator.Between(fido2FailureCountMin, fido2FailureCountMax),
+								},
+							},
+
+							"cool_down": schema.SingleNestedAttribute{
+								Description:         fido2FailureCoolDownDescription.Description,
+								MarkdownDescription: fido2FailureCoolDownDescription.MarkdownDescription,
+								Optional:            true,
+
+								Attributes: map[string]schema.Attribute{
+									"duration": schema.Int32Attribute{
+										Description:         fido2FailureCoolDownDurationDescription.Description,
+										MarkdownDescription: fido2FailureCoolDownDurationDescription.MarkdownDescription,
+										Required:            true,
+
+										Validators: []validator.Int32{
+											int32validator.Any(
+												int32validator.All(
+													int32validator.Between(fido2FailureCoolDownDurationMinSeconds, fido2FailureCoolDownDurationMaxSeconds),
+													int32validatorinternal.RegexMatchesPathValue(
+														regexp.MustCompile(`SECONDS`),
+														fmt.Sprintf("If `time_unit` is `SECONDS`, the allowed duration range is %d - %d.", fido2FailureCoolDownDurationMinSeconds, fido2FailureCoolDownDurationMaxSeconds),
+														path.MatchRelative().AtParent().AtName("time_unit"),
+													),
+												),
+												int32validator.All(
+													int32validator.Between(fido2FailureCoolDownDurationMinMinutes, fido2FailureCoolDownDurationMaxMinutes),
+													int32validatorinternal.RegexMatchesPathValue(
+														regexp.MustCompile(`MINUTES`),
+														fmt.Sprintf("If `time_unit` is `MINUTES`, the allowed duration range is %d - %d.", fido2FailureCoolDownDurationMinMinutes, fido2FailureCoolDownDurationMaxMinutes),
+														path.MatchRelative().AtParent().AtName("time_unit"),
+													),
+												),
+											),
+										},
+									},
+
+									"time_unit": schema.StringAttribute{
+										Description:         durationTimeUnitMinsSecondsDescription.Description,
+										MarkdownDescription: durationTimeUnitMinsSecondsDescription.MarkdownDescription,
+										Required:            true,
+
+										Validators: []validator.String{
+											stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumTimeUnitEnumValues)...),
+										},
+									},
+								},
+							},
+						},
 					},
 
 					"pairing_disabled": schema.BoolAttribute{
@@ -3195,6 +3310,15 @@ func (p *MFADevicePolicyDefaultResourceModel) buildDefaultPolicyStruct(mobileApp
 	}
 
 	fido2 := mfa.NewDeviceAuthenticationPolicyCommonFido2(fido2Enabled)
+	fido2FailureCoolDown := mfa.NewDeviceAuthenticationPolicyCommonFido2FailureCoolDown()
+	fido2FailureCoolDown.SetDuration(defaultOTPFailureCooldown)
+	fido2FailureCoolDown.SetTimeUnit(minutes)
+
+	fido2Failure := mfa.NewDeviceAuthenticationPolicyCommonFido2Failure()
+	fido2Failure.SetCount(defaultOTPFailureCount)
+	fido2Failure.SetCoolDown(*fido2FailureCoolDown)
+	fido2.SetFailure(*fido2Failure)
+
 	fido2.SetPairingDisabled(false)
 	fido2.SetPromptForNicknameOnPairing(false)
 	data.SetFido2(*fido2)

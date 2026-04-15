@@ -292,6 +292,18 @@ func MFADevicePolicyDefault_CheckDestroy(s *terraform.State) error {
 			return fmt.Errorf("expected FIDO2 PromptForNicknameOnPairing to be false")
 		}
 
+		if v := policy.Fido2.Failure.GetCount(); v != 3 {
+			return fmt.Errorf("expected FIDO2 Otp.Failure.Count to be 3, got %d", v)
+		}
+
+		if v := policy.Fido2.Failure.CoolDown.GetDuration(); v != 2 {
+			return fmt.Errorf("expected FIDO2 Otp.Failure.CoolDown.Duration to be 2, got %d", v)
+		}
+
+		if v := policy.Fido2.Failure.CoolDown.GetTimeUnit(); v != mfa.ENUMTIMEUNIT_MINUTES {
+			return fmt.Errorf("expected FIDO2 Otp.Failure.CoolDown.TimeUnit to be MINUTES, got %s", v)
+		}
+
 		// OATH Token
 		if policy.OathToken.GetEnabled() {
 			return fmt.Errorf("expected OATH Token to be disabled")

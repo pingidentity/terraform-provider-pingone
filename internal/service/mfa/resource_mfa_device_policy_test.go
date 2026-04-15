@@ -1278,6 +1278,9 @@ func TestAccMFADevicePolicy_FIDO2_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "fido2.failure.count", "4"),
+					resource.TestCheckResourceAttr(resourceFullName, "fido2.failure.cool_down.duration", "5"),
+					resource.TestCheckResourceAttr(resourceFullName, "fido2.failure.cool_down.time_unit", "MINUTES"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.pairing_disabled", "true"),
 					resource.TestMatchResourceAttr(resourceFullName, "fido2.fido2_policy_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.prompt_for_nickname_on_pairing", "true"),
@@ -1331,6 +1334,9 @@ func TestAccMFADevicePolicy_FIDO2_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "fido2.failure.count", "3"),
+					resource.TestCheckResourceAttr(resourceFullName, "fido2.failure.cool_down.duration", "2"),
+					resource.TestCheckResourceAttr(resourceFullName, "fido2.failure.cool_down.time_unit", "MINUTES"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.pairing_disabled", "false"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "fido2.fido2_policy_id"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "fido2.prompt_for_nickname_on_pairing"),
@@ -1368,6 +1374,9 @@ func TestAccMFADevicePolicy_FIDO2_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "fido2.failure.count", "4"),
+					resource.TestCheckResourceAttr(resourceFullName, "fido2.failure.cool_down.duration", "5"),
+					resource.TestCheckResourceAttr(resourceFullName, "fido2.failure.cool_down.time_unit", "MINUTES"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.pairing_disabled", "true"),
 					resource.TestMatchResourceAttr(resourceFullName, "fido2.fido2_policy_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.prompt_for_nickname_on_pairing", "true"),
@@ -1383,6 +1392,9 @@ func TestAccMFADevicePolicy_FIDO2_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "fido2.failure.count", "3"),
+					resource.TestCheckResourceAttr(resourceFullName, "fido2.failure.cool_down.duration", "2"),
+					resource.TestCheckResourceAttr(resourceFullName, "fido2.failure.cool_down.time_unit", "MINUTES"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.pairing_disabled", "false"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "fido2.fido2_policy_id"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "fido2.prompt_for_nickname_on_pairing"),
@@ -1398,6 +1410,9 @@ func TestAccMFADevicePolicy_FIDO2_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "fido2.failure.count", "4"),
+					resource.TestCheckResourceAttr(resourceFullName, "fido2.failure.cool_down.duration", "5"),
+					resource.TestCheckResourceAttr(resourceFullName, "fido2.failure.cool_down.time_unit", "MINUTES"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.pairing_disabled", "true"),
 					resource.TestMatchResourceAttr(resourceFullName, "fido2.fido2_policy_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.prompt_for_nickname_on_pairing", "true"),
@@ -1435,6 +1450,9 @@ func TestAccMFADevicePolicy_FIDO2_Disabled(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.enabled", "true"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "fido2.failure.count"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "fido2.failure.cool_down.duration"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "fido2.failure.cool_down.time_unit"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.pairing_disabled", "true"),
 					resource.TestMatchResourceAttr(resourceFullName, "fido2.fido2_policy_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.prompt_for_nickname_on_pairing", "true"),
@@ -1450,6 +1468,9 @@ func TestAccMFADevicePolicy_FIDO2_Disabled(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.enabled", "false"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "fido2.failure.count"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "fido2.failure.cool_down.duration"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "fido2.failure.cool_down.time_unit"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "fido2.pairing_disabled"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "fido2.fido2_policy_id"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "fido2.prompt_for_nickname_on_pairing"),
@@ -1465,6 +1486,9 @@ func TestAccMFADevicePolicy_FIDO2_Disabled(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.enabled", "true"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "fido2.failure.count"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "fido2.failure.cool_down.duration"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "fido2.failure.cool_down.time_unit"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.pairing_disabled", "true"),
 					resource.TestMatchResourceAttr(resourceFullName, "fido2.fido2_policy_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.prompt_for_nickname_on_pairing", "true"),
@@ -3016,6 +3040,14 @@ resource "pingone_mfa_device_policy" "%[2]s" {
   fido2 = {
     enabled          = true
     pairing_disabled = true
+
+    failure = {
+      count = 4
+      cool_down = {
+        duration  = 5
+        time_unit = "MINUTES"
+      }
+    }
 
     prompt_for_nickname_on_pairing = true
 

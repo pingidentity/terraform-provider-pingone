@@ -1,0 +1,7 @@
+```release-note:enhancement
+`resource/pingone_mfa_device_policy`: Added support for `fido2.failure` attribute
+```
+
+```release-note:enhancement
+`resource/pingone_mfa_device_policy_default`: Added support for `fido2.failure` attribute
+```
