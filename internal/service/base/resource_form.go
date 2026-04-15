@@ -95,8 +95,8 @@ type formComponentsFieldResourceModel struct {
 }
 
 type formComponentsFieldAgreementResourceModel struct {
-	Id                  types.String `tfsdk:"id"`
-	UseDynamicAgreement types.Bool   `tfsdk:"use_dynamic_agreement"`
+	Id                  pingonetypes.ResourceIDValue `tfsdk:"id"`
+	UseDynamicAgreement types.Bool                   `tfsdk:"use_dynamic_agreement"`
 }
 
 type formComponentsFieldPositionResourceModel struct {
@@ -198,7 +198,7 @@ var (
 	}
 
 	formComponentsFieldsAgreementTFObjectTypes = map[string]attr.Type{
-		"id":                    types.StringType,
+		"id":                    pingonetypes.ResourceIDType{},
 		"use_dynamic_agreement": types.BoolType,
 	}
 
@@ -1455,6 +1455,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 											Description:         componentsFieldsAgreementIdDescription.Description,
 											MarkdownDescription: componentsFieldsAgreementIdDescription.MarkdownDescription,
 											Optional:            true,
+											CustomType:          pingonetypes.ResourceIDType{},
 										},
 
 										"use_dynamic_agreement": schema.BoolAttribute{
@@ -4191,7 +4192,7 @@ func formComponentsFieldsAgreementOkToTF(apiObject *management.FormAgreementAllO
 	}
 
 	objValue, d := types.ObjectValue(formComponentsFieldsAgreementTFObjectTypes, map[string]attr.Value{
-		"id":                    framework.StringOkToTF(apiObject.GetIdOk()),
+		"id":                    framework.PingOneResourceIDOkToTF(apiObject.GetIdOk()),
 		"use_dynamic_agreement": framework.BoolOkToTF(apiObject.GetUseDynamicAgreementOk()),
 	})
 	diags.Append(d...)
