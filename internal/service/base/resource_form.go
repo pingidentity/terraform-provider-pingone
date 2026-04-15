@@ -62,6 +62,7 @@ type formComponentsResourceModel struct {
 
 type formComponentsFieldResourceModel struct {
 	Alignment                    types.String `tfsdk:"alignment"`
+	Action                       types.String `tfsdk:"action"`
 	AttributeDisabled            types.Bool   `tfsdk:"attribute_disabled"`
 	Content                      types.String `tfsdk:"content"`
 	FallbackText                 types.String `tfsdk:"fallback_text"`
@@ -84,6 +85,7 @@ type formComponentsFieldResourceModel struct {
 	Size                         types.String `tfsdk:"size"`
 	Styles                       types.Object `tfsdk:"styles"`
 	Theme                        types.String `tfsdk:"theme"`
+	Trigger                      types.String `tfsdk:"trigger"`
 	Type                         types.String `tfsdk:"type"`
 	Validation                   types.Object `tfsdk:"validation"`
 	Visibility                   types.Object `tfsdk:"visibility"`
@@ -155,6 +157,7 @@ var (
 	// Form Components Fields
 	formComponentsFieldsTFObjectTypes = map[string]attr.Type{
 		"alignment":                       types.StringType,
+		"action":                          types.StringType,
 		"attribute_disabled":              types.BoolType,
 		"content":                         types.StringType,
 		"fallback_text":                   types.StringType,
@@ -177,6 +180,7 @@ var (
 		"size":                            types.StringType,
 		"styles":                          types.ObjectType{AttrTypes: formComponentsFieldsFieldStylesTFObjectTypes},
 		"theme":                           types.StringType,
+		"trigger":                         types.StringType,
 		"type":                            types.StringType,
 		"validation":                      types.ObjectType{AttrTypes: formComponentsFieldsFieldElementValidationTFObjectTypes},
 		"visibility":                      types.ObjectType{AttrTypes: formComponentsFieldsVisibilityTFObjectTypes},
@@ -333,6 +337,19 @@ var (
 			},
 			Optional: []string{
 				"styles",
+				"visibility",
+			},
+		},
+		management.ENUMFORMFIELDTYPE_FIDO2: {
+			Required: []string{
+				"type",
+				"position",
+				"key",
+				"trigger",
+				"action",
+				"label",
+			},
+			Optional: []string{
 				"visibility",
 			},
 		},
@@ -511,6 +528,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 		management.ENUMFORMFIELDTYPE_FLOW_LINK,
 		management.ENUMFORMFIELDTYPE_FLOW_BUTTON,
 		management.ENUMFORMFIELDTYPE_POLLING,
+		management.ENUMFORMFIELDTYPE_FIDO2,
 		management.ENUMFORMFIELDTYPE_RECAPTCHA_V2,
 		management.ENUMFORMFIELDTYPE_QR_CODE,
 	}
@@ -687,6 +705,18 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 	).AppendMarkdownString(
 		"A string that specifies the polling activity indicator appearance.",
 	).AllowedValuesEnum(management.AllowedEnumFormPollingAppearanceEnumValues)
+
+	componentsFieldsTriggerDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		formFieldValidationDocumentation("trigger"),
+	).AppendMarkdownString(
+		"A string that specifies the FIDO2 UI trigger type.",
+	).AllowedValuesEnum(management.AllowedEnumFormFIDO2TriggerEnumValues)
+
+	componentsFieldsActionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		formFieldValidationDocumentation("action"),
+	).AppendMarkdownString(
+		"A string that specifies the FIDO2 action.",
+	).AllowedValuesEnum(management.AllowedEnumFormFIDO2ActionEnumValues)
 
 	componentsFieldsStylesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		formFieldValidationDocumentation("styles"),
@@ -1140,6 +1170,26 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 									Optional:            true,
 								},
 
+								"trigger": schema.StringAttribute{
+									Description:         componentsFieldsTriggerDescription.Description,
+									MarkdownDescription: componentsFieldsTriggerDescription.MarkdownDescription,
+									Optional:            true,
+
+									Validators: []validator.String{
+										stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumFormFIDO2TriggerEnumValues)...),
+									},
+								},
+
+								"action": schema.StringAttribute{
+									Description:         componentsFieldsActionDescription.Description,
+									MarkdownDescription: componentsFieldsActionDescription.MarkdownDescription,
+									Optional:            true,
+
+									Validators: []validator.String{
+										stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumFormFIDO2ActionEnumValues)...),
+									},
+								},
+
 								"styles": schema.SingleNestedAttribute{
 									Description:         componentsFieldsStylesDescription.Description,
 									MarkdownDescription: componentsFieldsStylesDescription.MarkdownDescription,
@@ -1449,6 +1499,8 @@ func (r *formComponentsFieldResourceModel) validateFieldSet(field string) bool {
 	switch field {
 	case "alignment":
 		return !r.Alignment.IsNull()
+	case "action":
+		return !r.Action.IsNull()
 	case "attribute_disabled":
 		return !r.AttributeDisabled.IsNull()
 	case "content":
@@ -1493,6 +1545,8 @@ func (r *formComponentsFieldResourceModel) validateFieldSet(field string) bool {
 		return !r.Styles.IsNull()
 	case "theme":
 		return !r.Theme.IsNull()
+	case "trigger":
+		return !r.Trigger.IsNull()
 	case "type":
 		return !r.Type.IsNull()
 	case "validation":
@@ -2167,6 +2221,8 @@ func (p *formComponentsFieldResourceModel) expand(ctx context.Context) (*managem
 		data.FormFieldEmptyField, d = p.expandItemEmptyField(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_ERROR_DISPLAY):
 		data.FormFieldErrorDisplay, d = p.expandItemErrorDisplay(ctx, positionData)
+	case string(management.ENUMFORMFIELDTYPE_FIDO2):
+		data.FormFieldFIDO2, d = p.expandItemFIDO2(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_FLOW_BUTTON):
 		data.FormFieldFlowButton, d = p.expandItemFlowButton(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_FLOW_LINK):
@@ -2998,6 +3054,31 @@ func (p *formComponentsFieldResourceModel) expandItemPolling(ctx context.Context
 	return data, diags
 }
 
+func (p *formComponentsFieldResourceModel) expandItemFIDO2(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldFIDO2, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := management.NewFormFieldFIDO2(
+		management.ENUMFORMFIELDTYPE_FIDO2,
+		*positionData,
+		p.Key.ValueString(),
+		management.EnumFormFIDO2Trigger(p.Trigger.ValueString()),
+		management.EnumFormFIDO2Action(p.Action.ValueString()),
+		p.Label.ValueString(),
+	)
+
+	if !p.Visibility.IsNull() && !p.Visibility.IsUnknown() {
+		var plan formComponentsFieldVisibilityResourceModel
+		diags.Append(p.Visibility.As(ctx, &plan, basetypes.ObjectAsOptions{})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetVisibility(*plan.expand())
+	}
+
+	return data, diags
+}
+
 func (p *formComponentsFieldResourceModel) expandItemQRCode(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldQrCode, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	data := management.NewFormFieldQrCode(
@@ -3447,6 +3528,23 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 				"visibility": visibility,
 			}
 
+		case *management.FormFieldFIDO2:
+			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
+			diags.Append(d...)
+
+			visibility, d := formComponentsFieldsVisibilityOkToTF(t.GetVisibilityOk())
+			diags.Append(d...)
+
+			attributeMap = map[string]attr.Value{
+				"action":     framework.EnumOkToTF(t.GetActionOk()),
+				"key":        framework.StringOkToTF(t.GetKeyOk()),
+				"label":      framework.StringOkToTF(t.GetLabelOk()),
+				"position":   position,
+				"trigger":    framework.EnumOkToTF(t.GetTriggerOk()),
+				"type":       framework.EnumOkToTF(t.GetTypeOk()),
+				"visibility": visibility,
+			}
+
 		case *management.FormFieldFlowButton:
 			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
 			diags.Append(d...)
@@ -3719,6 +3817,7 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 func formComponentsFieldsConvertEmptyValuesToTFNulls(attributeMap map[string]attr.Value) map[string]attr.Value {
 	nullMap := map[string]attr.Value{
 		"alignment":                       types.StringNull(),
+		"action":                          types.StringNull(),
 		"attribute_disabled":              types.BoolNull(),
 		"content":                         types.StringNull(),
 		"fallback_text":                   types.StringNull(),
@@ -3741,6 +3840,7 @@ func formComponentsFieldsConvertEmptyValuesToTFNulls(attributeMap map[string]att
 		"size":                            types.StringNull(),
 		"styles":                          types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes),
 		"theme":                           types.StringNull(),
+		"trigger":                         types.StringNull(),
 		"type":                            types.StringNull(),
 		"validation":                      types.ObjectNull(formComponentsFieldsFieldElementValidationTFObjectTypes),
 		"visibility":                      types.ObjectNull(formComponentsFieldsVisibilityTFObjectTypes),
