@@ -2096,9 +2096,7 @@ func (p *MFADevicePolicyFido2ResourceModel) expand() *mfa.DeviceAuthenticationPo
 			}
 		}
 
-		if failure.HasCount() || failure.HasCoolDown() {
-			data.SetFailure(*failure)
-		}
+		data.SetFailure(*failure)
 	}
 
 	if !p.PromptForNicknameOnPairing.IsNull() && !p.PromptForNicknameOnPairing.IsUnknown() {
