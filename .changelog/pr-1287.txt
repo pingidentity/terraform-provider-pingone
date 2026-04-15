@@ -1,0 +1,3 @@
+```release-note:enhancement
+`resource/pingone_form`: Added support for `POLLING` form field type, including new `polling_appearance` attribute.
+```
