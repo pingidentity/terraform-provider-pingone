@@ -1869,7 +1869,7 @@ func TestAccForm_ItemPolling(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "polling-field"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.polling_appearance", "SPINNER"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.size", "MEDIUM"),
-			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.visibility.type", "SHOW_BY_DEFAULT"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.visibility.type", "ALWAYS_VISIBLE"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.visibility.key", "mykey"),
 			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
@@ -4895,7 +4895,7 @@ resource "pingone_form" "%[2]s" {
         polling_appearance = "SPINNER"
         size               = "MEDIUM"
         visibility = {
-          type = "SHOW_BY_DEFAULT"
+          type = "ALWAYS_VISIBLE"
           key  = "mykey"
         }
       },
