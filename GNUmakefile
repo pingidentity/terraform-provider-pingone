@@ -38,6 +38,18 @@ testacc: build
 	TF_ACC=1 go test $(BUILD_TAGS) $$(go list ./internal/client/...) -v $(TESTARGS) -timeout 120m
 	TF_ACC=1 go test $(BUILD_TAGS) $$(go list ./internal/service/...) -v $(TESTARGS) -timeout 120m
 
+testaccprefix: build
+	@if [ -z "$(SERVICE)" ]; then \
+		echo "SERVICE is required (e.g. SERVICE=base)"; \
+		exit 1; \
+	fi
+	@if [ -z "$(PREFIX)" ]; then \
+		echo "PREFIX is required (e.g. PREFIX=TestAccCustomDomain_)"; \
+		exit 1; \
+	fi
+	$(TESTACC_BETA_ENV) TF_ACC=1 go test $(BUILD_TAGS) -v -timeout 3000s -run ^$(PREFIX) github.com/pingidentity/terraform-provider-pingone/internal/service/$(SERVICE)
+
+
 sweep: build
 	@echo "WARNING: This will destroy infrastructure. Use only in development accounts."
 	go test $(BUILD_TAGS) $(SWEEP_DIR) -v -sweep=all $(SWEEPARGS) -timeout 10m
@@ -121,4 +133,4 @@ generateconnectorref: build
 	mkdir -p examples/davinci-connector-instances
 	cd tools/dvgenerate && go run ./cmd/generate -file="$(if $(CONNECTOR_SCHEMA_FILE),$(abspath $(CONNECTOR_SCHEMA_FILE)),$(abspath ./tools/dvgenerate/internal/connector-schema.json))"
 
-.PHONY: build install generate docscategorycheck test testacc sweep vet fmtcheck depscheck lint golangci-lint importlint providerlint tflint terrafmt terrafmtcheck betatagscheck devcheck devchecknotest generateconnectorref
+.PHONY: build install generate docscategorycheck test testacc testaccprefix sweep vet fmtcheck depscheck lint golangci-lint importlint providerlint tflint terrafmt terrafmtcheck betatagscheck devcheck devchecknotest generateconnectorref

@@ -135,10 +135,15 @@ func TestAccWebhook_Full(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "protocol", "HTTPS"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_url", "https://localhost/"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_headers.%", "2"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_headers.Authorization", "Basic usernamepassword"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_headers.Content-Type", "application/json"),
+					resource.TestCheckResourceAttr(resourceFullName, "connection_details_url", "https://localhost/"),
+					resource.TestCheckResourceAttr(resourceFullName, "connection_details_headers.%", "2"),
+					resource.TestCheckResourceAttr(resourceFullName, "connection_details_headers.Authorization", "Basic usernamepassword"),
+					resource.TestCheckResourceAttr(resourceFullName, "connection_details_headers.Content-Type", "application/json"),
 					resource.TestCheckResourceAttr(resourceFullName, "verify_tls_certificates", "false"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "tls_client_auth_key_pair_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "format", "ACTIVITY"),
@@ -157,6 +162,12 @@ func TestAccWebhook_Full(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.included_tags.*", "adminIdentityEvent"),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.ip_address_exposed", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.useragent_exposed", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "payload_options.maximum_payload_limit.type", "EVENTS_PER_PAYLOAD"),
+					resource.TestCheckResourceAttr(resourceFullName, "payload_options.maximum_payload_limit.size", "250"),
+					resource.TestCheckResourceAttr(resourceFullName, "payload_options.payload_format.https.format", "JSON_ARRAY"),
+					resource.TestCheckResourceAttr(resourceFullName, "payload_options.payload_format.https.pretty_print", "true"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "payload_options.payload_format.tcp.format"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "payload_options.payload_format.tcp.additional_attributes.%"),
 				),
 			},
 			{
@@ -203,11 +214,14 @@ func TestAccWebhook_Minimal(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "protocol", "HTTPS"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_url", "https://localhost/"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_headers.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "connection_details_url", "https://localhost/"),
+					resource.TestCheckResourceAttr(resourceFullName, "connection_details_headers.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "verify_tls_certificates", "true"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "tls_client_auth_key_pair_id"),
-					resource.TestCheckResourceAttr(resourceFullName, "format", "SPLUNK"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "format"),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.included_action_types.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.included_action_types.*", "ACCOUNT.LINKED"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.included_action_types.*", "ACCOUNT.UNLINKED"),
@@ -247,10 +261,15 @@ func TestAccWebhook_Change(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "protocol", "HTTPS"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_url", "https://localhost/"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_headers.%", "2"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_headers.Authorization", "Basic usernamepassword"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_headers.Content-Type", "application/json"),
+					resource.TestCheckResourceAttr(resourceFullName, "connection_details_url", "https://localhost/"),
+					resource.TestCheckResourceAttr(resourceFullName, "connection_details_headers.%", "2"),
+					resource.TestCheckResourceAttr(resourceFullName, "connection_details_headers.Authorization", "Basic usernamepassword"),
+					resource.TestCheckResourceAttr(resourceFullName, "connection_details_headers.Content-Type", "application/json"),
 					resource.TestCheckResourceAttr(resourceFullName, "verify_tls_certificates", "false"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "tls_client_auth_key_pair_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "format", "ACTIVITY"),
@@ -269,6 +288,12 @@ func TestAccWebhook_Change(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.included_tags.*", "adminIdentityEvent"),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.ip_address_exposed", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.useragent_exposed", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "payload_options.maximum_payload_limit.type", "EVENTS_PER_PAYLOAD"),
+					resource.TestCheckResourceAttr(resourceFullName, "payload_options.maximum_payload_limit.size", "250"),
+					resource.TestCheckResourceAttr(resourceFullName, "payload_options.payload_format.https.format", "JSON_ARRAY"),
+					resource.TestCheckResourceAttr(resourceFullName, "payload_options.payload_format.https.pretty_print", "true"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "payload_options.payload_format.tcp.format"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "payload_options.payload_format.tcp.additional_attributes.%"),
 				),
 			},
 			{
@@ -278,11 +303,14 @@ func TestAccWebhook_Change(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "protocol", "HTTPS"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_url", "https://localhost/"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_headers.%", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "connection_details_url", "https://localhost/"),
+					resource.TestCheckResourceAttr(resourceFullName, "connection_details_headers.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "verify_tls_certificates", "true"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "tls_client_auth_key_pair_id"),
-					resource.TestCheckResourceAttr(resourceFullName, "format", "SPLUNK"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "format"),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.included_action_types.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.included_action_types.*", "ACCOUNT.LINKED"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.included_action_types.*", "ACCOUNT.UNLINKED"),
@@ -291,6 +319,12 @@ func TestAccWebhook_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.included_tags.#", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.ip_address_exposed", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.useragent_exposed", "false"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "payload_options.maximum_payload_limit.type"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "payload_options.maximum_payload_limit.size"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "payload_options.payload_format.https.format"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "payload_options.payload_format.https.pretty_print"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "payload_options.payload_format.tcp.format"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "payload_options.payload_format.tcp.additional_attributes.%"),
 				),
 			},
 			{
@@ -300,10 +334,15 @@ func TestAccWebhook_Change(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "protocol", "HTTPS"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_url", "https://localhost/"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_headers.%", "2"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_headers.Authorization", "Basic usernamepassword"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_headers.Content-Type", "application/json"),
+					resource.TestCheckResourceAttr(resourceFullName, "connection_details_url", "https://localhost/"),
+					resource.TestCheckResourceAttr(resourceFullName, "connection_details_headers.%", "2"),
+					resource.TestCheckResourceAttr(resourceFullName, "connection_details_headers.Authorization", "Basic usernamepassword"),
+					resource.TestCheckResourceAttr(resourceFullName, "connection_details_headers.Content-Type", "application/json"),
 					resource.TestCheckResourceAttr(resourceFullName, "verify_tls_certificates", "false"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "tls_client_auth_key_pair_id"),
 					resource.TestCheckResourceAttr(resourceFullName, "format", "ACTIVITY"),
@@ -322,6 +361,12 @@ func TestAccWebhook_Change(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "filter_options.included_tags.*", "adminIdentityEvent"),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.ip_address_exposed", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "filter_options.useragent_exposed", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "payload_options.maximum_payload_limit.type", "EVENTS_PER_PAYLOAD"),
+					resource.TestCheckResourceAttr(resourceFullName, "payload_options.maximum_payload_limit.size", "250"),
+					resource.TestCheckResourceAttr(resourceFullName, "payload_options.payload_format.https.format", "JSON_ARRAY"),
+					resource.TestCheckResourceAttr(resourceFullName, "payload_options.payload_format.https.pretty_print", "true"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "payload_options.payload_format.tcp.format"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "payload_options.payload_format.tcp.additional_attributes.%"),
 				),
 			},
 		},
@@ -469,6 +514,61 @@ func TestAccWebhook_Populations(t *testing.T) {
 	})
 }
 
+func TestAccWebhook_TCP(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_webhook.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             base.Webhook_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccWebhookConfig_TCP_Minimal(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "connection_details_headers.%"),
+					resource.TestCheckResourceAttr(resourceFullName, "verify_tls_certificates", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.ip_address_exposed", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.useragent_exposed", "false"),
+				),
+			},
+			{
+				Config: testAccWebhookConfig_TCP_Full(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "connection_details_headers.%"),
+					resource.TestCheckResourceAttr(resourceFullName, "verify_tls_certificates", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.ip_address_exposed", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.useragent_exposed", "true"),
+				),
+			},
+			{
+				Config: testAccWebhookConfig_TCP_Minimal(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "connection_details_headers.%"),
+					resource.TestCheckResourceAttr(resourceFullName, "verify_tls_certificates", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.ip_address_exposed", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.useragent_exposed", "false"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccWebhook_BadParameters(t *testing.T) {
 	t.Parallel()
 
@@ -511,6 +611,337 @@ func TestAccWebhook_BadParameters(t *testing.T) {
 			},
 		},
 	})
+}
+
+func TestAccWebhook_ValidationChecks(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccWebhookConfig_ModifyPlanValidation_HTTPSMissingHTTPEndpointURL(resourceName),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`http_endpoint_url attribute must be configured`),
+			},
+			{
+				Config:      testAccWebhookConfig_ModifyPlanValidation_HTTPSConnectionDetailsURLConfigured(resourceName),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`connection_details_url attribute must not be directly configured`),
+			},
+			{
+				Config:      testAccWebhookConfig_ModifyPlanValidation_HTTPSPayloadFormatTCPConfigured(resourceName),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`payload_options\.payload_format\.tcp attribute is not supported`),
+			},
+			{
+				Config:      testAccWebhookConfig_ModifyPlanValidation_HTTPSPrettyPrintWithoutJSONArray(resourceName),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`payload_options\.payload_format\.https\.pretty_print attribute can only be`),
+			},
+			{
+				Config:      testAccWebhookConfig_ModifyPlanValidation_TCPMissingConnectionDetailsURL(resourceName),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`connection_details_url attribute must be configured`),
+			},
+			{
+				Config:      testAccWebhookConfig_ModifyPlanValidation_TCPHTTPEndpointURLConfigured(resourceName),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`http_endpoint_url attribute must not be configured`),
+			},
+			{
+				Config:      testAccWebhookConfig_ModifyPlanValidation_TCPFormatConfigured(resourceName),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`format attribute is not supported`),
+			},
+			{
+				Config:      testAccWebhookConfig_ModifyPlanValidation_TCPMaximumPayloadLimitConfigured(resourceName),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`payload_options\.maximum_payload_limit attribute is not supported`),
+			},
+			{
+				Config:      testAccWebhookConfig_ModifyPlanValidation_TCPPayloadFormatHTTPSConfigured(resourceName),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`payload_options\.payload_format\.https attribute is not supported`),
+			},
+			{
+				Config:      testAccWebhookConfig_ModifyPlanValidation_TCPAdditionalAttributesWithoutRFCLogline(resourceName),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`payload_options\.payload_format\.tcp\.additional_attributes attribute can\s+only\s+be\s+configured`),
+			},
+		},
+	})
+}
+
+func testAccWebhookConfig_ModifyPlanValidation_HTTPSMissingHTTPEndpointURL(resourceName string) string {
+	name := fmt.Sprintf("%s-https-missing-http-endpoint-url", resourceName)
+
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_webhook" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name     = "%[3]s"
+  protocol = "HTTPS"
+
+  filter_options = {
+    included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
+  }
+}`,
+		acctest.GenericSandboxEnvironment(),
+		resourceName,
+		name,
+	)
+}
+
+func testAccWebhookConfig_ModifyPlanValidation_HTTPSConnectionDetailsURLConfigured(resourceName string) string {
+	name := fmt.Sprintf("%s-https-connection-details-url", resourceName)
+
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_webhook" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name                   = "%[3]s"
+  protocol               = "HTTPS"
+  connection_details_url = "tcp://localhost:1234"
+
+  filter_options = {
+    included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
+  }
+}`,
+		acctest.GenericSandboxEnvironment(),
+		resourceName,
+		name,
+	)
+}
+
+func testAccWebhookConfig_ModifyPlanValidation_HTTPSPayloadFormatTCPConfigured(resourceName string) string {
+	name := fmt.Sprintf("%s-https-payload-format-tcp", resourceName)
+
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_webhook" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name              = "%[3]s"
+  protocol          = "HTTPS"
+  http_endpoint_url = "https://localhost/"
+
+  filter_options = {
+    included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
+  }
+
+  payload_options = {
+    payload_format = {
+      tcp = {}
+    }
+  }
+}`,
+		acctest.GenericSandboxEnvironment(),
+		resourceName,
+		name,
+	)
+}
+
+func testAccWebhookConfig_ModifyPlanValidation_HTTPSPrettyPrintWithoutJSONArray(resourceName string) string {
+	name := fmt.Sprintf("%s-https-pretty-print", resourceName)
+
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_webhook" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name              = "%[3]s"
+  protocol          = "HTTPS"
+  http_endpoint_url = "https://localhost/"
+
+  filter_options = {
+    included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
+  }
+
+  payload_options = {
+    payload_format = {
+      https = {
+        pretty_print = true
+      }
+    }
+  }
+}`,
+		acctest.GenericSandboxEnvironment(),
+		resourceName,
+		name,
+	)
+}
+
+func testAccWebhookConfig_ModifyPlanValidation_TCPMissingConnectionDetailsURL(resourceName string) string {
+	name := fmt.Sprintf("%s-tcp-missing-connection-details-url", resourceName)
+
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_webhook" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name     = "%[3]s"
+  protocol = "TCP_IP"
+
+  filter_options = {
+    included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
+  }
+}`,
+		acctest.GenericSandboxEnvironment(),
+		resourceName,
+		name,
+	)
+}
+
+func testAccWebhookConfig_ModifyPlanValidation_TCPHTTPEndpointURLConfigured(resourceName string) string {
+	name := fmt.Sprintf("%s-tcp-http-endpoint-url", resourceName)
+
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_webhook" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name              = "%[3]s"
+  protocol          = "TCP_IP"
+  http_endpoint_url = "https://localhost/"
+
+  filter_options = {
+    included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
+  }
+}`,
+		acctest.GenericSandboxEnvironment(),
+		resourceName,
+		name,
+	)
+}
+
+func testAccWebhookConfig_ModifyPlanValidation_TCPFormatConfigured(resourceName string) string {
+	name := fmt.Sprintf("%s-tcp-format", resourceName)
+
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_webhook" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name                   = "%[3]s"
+  protocol               = "TCP_IP"
+  connection_details_url = "tcp://localhost:1234"
+  format                 = "ACTIVITY"
+
+  filter_options = {
+    included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
+  }
+}`,
+		acctest.GenericSandboxEnvironment(),
+		resourceName,
+		name,
+	)
+}
+
+func testAccWebhookConfig_ModifyPlanValidation_TCPMaximumPayloadLimitConfigured(resourceName string) string {
+	name := fmt.Sprintf("%s-tcp-maximum-payload-limit", resourceName)
+
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_webhook" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name                   = "%[3]s"
+  protocol               = "TCP_IP"
+  connection_details_url = "tcp://localhost:1234"
+
+  filter_options = {
+    included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
+  }
+
+  payload_options = {
+    maximum_payload_limit = {}
+  }
+}`,
+		acctest.GenericSandboxEnvironment(),
+		resourceName,
+		name,
+	)
+}
+
+func testAccWebhookConfig_ModifyPlanValidation_TCPPayloadFormatHTTPSConfigured(resourceName string) string {
+	name := fmt.Sprintf("%s-tcp-payload-format-https", resourceName)
+
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_webhook" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name                   = "%[3]s"
+  protocol               = "TCP_IP"
+  connection_details_url = "tcp://localhost:1234"
+
+  filter_options = {
+    included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
+  }
+
+  payload_options = {
+    payload_format = {
+      https = {}
+    }
+  }
+}`,
+		acctest.GenericSandboxEnvironment(),
+		resourceName,
+		name,
+	)
+}
+
+func testAccWebhookConfig_ModifyPlanValidation_TCPAdditionalAttributesWithoutRFCLogline(resourceName string) string {
+	name := fmt.Sprintf("%s-tcp-additional-attributes", resourceName)
+
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_webhook" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name                   = "%[3]s"
+  protocol               = "TCP_IP"
+  connection_details_url = "tcp://localhost:1234"
+
+  filter_options = {
+    included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
+  }
+
+  payload_options = {
+    payload_format = {
+      tcp = {
+        additional_attributes = {
+          source = "terraform-test"
+        }
+      }
+    }
+  }
+}`,
+		acctest.GenericSandboxEnvironment(),
+		resourceName,
+		name,
+	)
 }
 
 func testAccWebhookConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
@@ -604,6 +1035,7 @@ resource "pingone_webhook" "%[2]s" {
 
   name              = "%[3]s"
   enabled           = false
+  protocol          = "HTTPS"
   http_endpoint_url = "https://localhost/"
 
   http_endpoint_headers = {
@@ -623,6 +1055,19 @@ resource "pingone_webhook" "%[2]s" {
     ip_address_exposed       = true
     useragent_exposed        = true
   }
+
+  payload_options = {
+    maximum_payload_limit = {
+      type = "EVENTS_PER_PAYLOAD"
+      size = 250
+    }
+    payload_format = {
+      https = {
+        format       = "JSON_ARRAY"
+        pretty_print = true
+      }
+    }
+  }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -635,8 +1080,6 @@ resource "pingone_webhook" "%[2]s" {
 
   name              = "%[3]s"
   http_endpoint_url = "https://localhost/"
-
-  format = "SPLUNK"
 
   filter_options = {
     included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
@@ -855,6 +1298,122 @@ resource "pingone_webhook" "%[2]s" {
     included_population_ids  = [pingone_population.%[3]s-new.id, pingone_population.%[3]s-1.id]
     ip_address_exposed       = false
     useragent_exposed        = true
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccWebhookConfig_TCP_Minimal(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_webhook" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name                   = "%[3]s"
+  protocol               = "TCP_IP"
+  connection_details_url = "tcp://localhost:1234"
+
+  filter_options = {
+    included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccWebhookConfig_TCP_Full(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_population" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s-1"
+}
+
+resource "pingone_population" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s-2"
+}
+
+resource "pingone_population" "%[2]s-3" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s-3"
+}
+
+resource "pingone_application" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-1"
+  enabled        = true
+
+  oidc_options = {
+    type                       = "SINGLE_PAGE_APP"
+    grant_types                = ["AUTHORIZATION_CODE"]
+    response_types             = ["CODE"]
+    pkce_enforcement           = "S256_REQUIRED"
+    token_endpoint_auth_method = "NONE"
+    redirect_uris              = ["https://www.pingidentity.com"]
+  }
+}
+
+resource "pingone_application" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-2"
+  enabled        = true
+
+  oidc_options = {
+    type                       = "SINGLE_PAGE_APP"
+    grant_types                = ["AUTHORIZATION_CODE"]
+    response_types             = ["CODE"]
+    pkce_enforcement           = "S256_REQUIRED"
+    token_endpoint_auth_method = "NONE"
+    redirect_uris              = ["https://www.pingidentity.com"]
+  }
+}
+
+resource "pingone_application" "%[2]s-3" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-3"
+  enabled        = true
+
+  oidc_options = {
+    type                       = "SINGLE_PAGE_APP"
+    grant_types                = ["AUTHORIZATION_CODE"]
+    response_types             = ["CODE"]
+    pkce_enforcement           = "S256_REQUIRED"
+    token_endpoint_auth_method = "NONE"
+    redirect_uris              = ["https://www.pingidentity.com"]
+  }
+}
+
+resource "pingone_webhook" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name                   = "%[3]s"
+  enabled                = true
+  protocol               = "TCP_IP"
+  connection_details_url = "tcp://localhost:1234"
+
+  verify_tls_certificates = false
+
+  filter_options = {
+    included_action_types    = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
+    included_application_ids = [pingone_application.%[3]s-2.id, pingone_application.%[3]s-3.id, pingone_application.%[3]s-1.id]
+    included_population_ids  = [pingone_population.%[3]s-2.id, pingone_population.%[3]s-3.id, pingone_population.%[3]s-1.id]
+    included_tags            = ["adminIdentityEvent"]
+    ip_address_exposed       = true
+    useragent_exposed        = true
+  }
+
+  payload_options = {
+    payload_format = {
+      tcp = {
+        format = "RFC_LOGLINE"
+        additional_attributes = {
+          source = "terraform-example"
+        }
+      }
+    }
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

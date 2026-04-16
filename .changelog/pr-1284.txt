@@ -1,0 +1,11 @@
+```release-note:enhancement
+`resource/pingone_webhook`: Added support for the `payloadOptions`, `connection_details_headers`, `connection_details_url`, and `protocol` attributes. This adds support for TCP/IP webhook configurations.
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2` v0.14.12 => v0.14.13
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.68.1 => v0.68.2
+```
