@@ -681,15 +681,18 @@ func TestAccWebhook_ValidationChecks(t *testing.T) {
 	})
 }
 
-func testAccWebhookConfig_ModifyPlanValidation(resourceName, name, configBody string) string {
+func testAccWebhookConfig_ModifyPlanValidation_HTTPSMissingHTTPEndpointURL(resourceName string) string {
+	name := fmt.Sprintf("%s-https-missing-http-endpoint-url", resourceName)
+
 	return fmt.Sprintf(`
 		%[1]s
 
 resource "pingone_webhook" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
-  name = "%[3]s"
-%[4]s
+  name     = "%[3]s"
+  protocol = "HTTPS"
+
   filter_options = {
     included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
   }
@@ -697,36 +700,77 @@ resource "pingone_webhook" "%[2]s" {
 		acctest.GenericSandboxEnvironment(),
 		resourceName,
 		name,
-		configBody,
 	)
 }
 
-func testAccWebhookConfig_ModifyPlanValidation_HTTPSMissingHTTPEndpointURL(resourceName string) string {
-	return testAccWebhookConfig_ModifyPlanValidation(resourceName, fmt.Sprintf("%s-https-missing-http-endpoint-url", resourceName), `  protocol = "HTTPS"
-`)
-}
-
 func testAccWebhookConfig_ModifyPlanValidation_HTTPSConnectionDetailsURLConfigured(resourceName string) string {
-	return testAccWebhookConfig_ModifyPlanValidation(resourceName, fmt.Sprintf("%s-https-connection-details-url", resourceName), `  protocol               = "HTTPS"
+	name := fmt.Sprintf("%s-https-connection-details-url", resourceName)
+
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_webhook" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name                   = "%[3]s"
+  protocol               = "HTTPS"
   connection_details_url = "tcp://localhost:1234"
-`)
+
+  filter_options = {
+    included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
+  }
+}`,
+		acctest.GenericSandboxEnvironment(),
+		resourceName,
+		name,
+	)
 }
 
 func testAccWebhookConfig_ModifyPlanValidation_HTTPSPayloadFormatTCPConfigured(resourceName string) string {
-	return testAccWebhookConfig_ModifyPlanValidation(resourceName, fmt.Sprintf("%s-https-payload-format-tcp", resourceName), `  protocol          = "HTTPS"
+	name := fmt.Sprintf("%s-https-payload-format-tcp", resourceName)
+
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_webhook" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name              = "%[3]s"
+  protocol          = "HTTPS"
   http_endpoint_url = "https://localhost/"
+
+  filter_options = {
+    included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
+  }
 
   payload_options = {
     payload_format = {
       tcp = {}
     }
   }
-`)
+}`,
+		acctest.GenericSandboxEnvironment(),
+		resourceName,
+		name,
+	)
 }
 
 func testAccWebhookConfig_ModifyPlanValidation_HTTPSPrettyPrintWithoutJSONArray(resourceName string) string {
-	return testAccWebhookConfig_ModifyPlanValidation(resourceName, fmt.Sprintf("%s-https-pretty-print", resourceName), `  protocol          = "HTTPS"
+	name := fmt.Sprintf("%s-https-pretty-print", resourceName)
+
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_webhook" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name              = "%[3]s"
+  protocol          = "HTTPS"
   http_endpoint_url = "https://localhost/"
+
+  filter_options = {
+    included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
+  }
 
   payload_options = {
     payload_format = {
@@ -735,52 +779,154 @@ func testAccWebhookConfig_ModifyPlanValidation_HTTPSPrettyPrintWithoutJSONArray(
       }
     }
   }
-`)
+}`,
+		acctest.GenericSandboxEnvironment(),
+		resourceName,
+		name,
+	)
 }
 
 func testAccWebhookConfig_ModifyPlanValidation_TCPMissingConnectionDetailsURL(resourceName string) string {
-	return testAccWebhookConfig_ModifyPlanValidation(resourceName, fmt.Sprintf("%s-tcp-missing-connection-details-url", resourceName), `  protocol = "TCP_IP"
-`)
+	name := fmt.Sprintf("%s-tcp-missing-connection-details-url", resourceName)
+
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_webhook" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name     = "%[3]s"
+  protocol = "TCP_IP"
+
+  filter_options = {
+    included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
+  }
+}`,
+		acctest.GenericSandboxEnvironment(),
+		resourceName,
+		name,
+	)
 }
 
 func testAccWebhookConfig_ModifyPlanValidation_TCPHTTPEndpointURLConfigured(resourceName string) string {
-	return testAccWebhookConfig_ModifyPlanValidation(resourceName, fmt.Sprintf("%s-tcp-http-endpoint-url", resourceName), `  protocol          = "TCP_IP"
+	name := fmt.Sprintf("%s-tcp-http-endpoint-url", resourceName)
+
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_webhook" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name              = "%[3]s"
+  protocol          = "TCP_IP"
   http_endpoint_url = "https://localhost/"
-`)
+
+  filter_options = {
+    included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
+  }
+}`,
+		acctest.GenericSandboxEnvironment(),
+		resourceName,
+		name,
+	)
 }
 
 func testAccWebhookConfig_ModifyPlanValidation_TCPFormatConfigured(resourceName string) string {
-	return testAccWebhookConfig_ModifyPlanValidation(resourceName, fmt.Sprintf("%s-tcp-format", resourceName), `  protocol               = "TCP_IP"
+	name := fmt.Sprintf("%s-tcp-format", resourceName)
+
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_webhook" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name                   = "%[3]s"
+  protocol               = "TCP_IP"
   connection_details_url = "tcp://localhost:1234"
   format                 = "ACTIVITY"
-`)
+
+  filter_options = {
+    included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
+  }
+}`,
+		acctest.GenericSandboxEnvironment(),
+		resourceName,
+		name,
+	)
 }
 
 func testAccWebhookConfig_ModifyPlanValidation_TCPMaximumPayloadLimitConfigured(resourceName string) string {
-	return testAccWebhookConfig_ModifyPlanValidation(resourceName, fmt.Sprintf("%s-tcp-maximum-payload-limit", resourceName), `  protocol               = "TCP_IP"
+	name := fmt.Sprintf("%s-tcp-maximum-payload-limit", resourceName)
+
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_webhook" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name                   = "%[3]s"
+  protocol               = "TCP_IP"
   connection_details_url = "tcp://localhost:1234"
+
+  filter_options = {
+    included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
+  }
 
   payload_options = {
     maximum_payload_limit = {}
   }
-`)
+}`,
+		acctest.GenericSandboxEnvironment(),
+		resourceName,
+		name,
+	)
 }
 
 func testAccWebhookConfig_ModifyPlanValidation_TCPPayloadFormatHTTPSConfigured(resourceName string) string {
-	return testAccWebhookConfig_ModifyPlanValidation(resourceName, fmt.Sprintf("%s-tcp-payload-format-https", resourceName), `  protocol               = "TCP_IP"
+	name := fmt.Sprintf("%s-tcp-payload-format-https", resourceName)
+
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_webhook" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name                   = "%[3]s"
+  protocol               = "TCP_IP"
   connection_details_url = "tcp://localhost:1234"
+
+  filter_options = {
+    included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
+  }
 
   payload_options = {
     payload_format = {
       https = {}
     }
   }
-`)
+}`,
+		acctest.GenericSandboxEnvironment(),
+		resourceName,
+		name,
+	)
 }
 
 func testAccWebhookConfig_ModifyPlanValidation_TCPAdditionalAttributesWithoutRFCLogline(resourceName string) string {
-	return testAccWebhookConfig_ModifyPlanValidation(resourceName, fmt.Sprintf("%s-tcp-additional-attributes", resourceName), `  protocol               = "TCP_IP"
+	name := fmt.Sprintf("%s-tcp-additional-attributes", resourceName)
+
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_webhook" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name                   = "%[3]s"
+  protocol               = "TCP_IP"
   connection_details_url = "tcp://localhost:1234"
+
+  filter_options = {
+    included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
+  }
 
   payload_options = {
     payload_format = {
@@ -791,7 +937,11 @@ func testAccWebhookConfig_ModifyPlanValidation_TCPAdditionalAttributesWithoutRFC
       }
     }
   }
-`)
+}`,
+		acctest.GenericSandboxEnvironment(),
+		resourceName,
+		name,
+	)
 }
 
 func testAccWebhookConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
