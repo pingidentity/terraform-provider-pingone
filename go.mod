@@ -37,6 +37,8 @@ require (
 	github.com/pingidentity/pingone-go-client v0.10.0
 )
 
+replace github.com/patrickcping/pingone-go-sdk-v2/management => ../pingone-go-sdk-v2/management
+
 require (
 	4d63.com/gocheckcompilerdirectives v1.3.0 // indirect
 	4d63.com/gochecknoglobals v0.2.2 // indirect
