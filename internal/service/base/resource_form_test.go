@@ -2123,6 +2123,102 @@ func TestAccForm_ItemAgreement(t *testing.T) {
 	})
 }
 
+func TestAccForm_ItemSingleCheckbox(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_form.%s", resourceName)
+
+	name := resourceName
+
+	fullStep := resource.TestStep{
+		Config: testAccFormConfig_ItemSingleCheckboxFull(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.width", "50"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "SINGLE_CHECKBOX"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "single-checkbox-field"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Accept Terms and Conditions\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label_mode", "FLOAT"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.required", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.attribute_disabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.appearance", "SWITCH"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.input_type", "BOOLEAN"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.error_message", "Please accept the agreement."),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.visibility.type", "ALWAYS_VISIBLE"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.visibility.key", "mykey"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
+		),
+	}
+
+	minimalStep := resource.TestStep{
+		Config: testAccFormConfig_ItemSingleCheckboxMinimal(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "SINGLE_CHECKBOX"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "single-checkbox-field"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Accept Terms and Conditions\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.appearance", "CHECKBOX"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.input_type", "BOOLEAN"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "components.fields.0.error_message"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
+		),
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             base.Form_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Full step
+			fullStep,
+			{
+				Config:  testAccFormConfig_ItemSingleCheckboxFull(resourceName, name),
+				Destroy: true,
+			},
+			// Minimal step
+			minimalStep,
+			{
+				Config:  testAccFormConfig_ItemSingleCheckboxMinimal(resourceName, name),
+				Destroy: true,
+			},
+			// Change
+			fullStep,
+			minimalStep,
+			fullStep,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					// This computed attribute may be affected by other tests. Just ignore it here since it's fully computed.
+					"language_bundle",
+				},
+			},
+		},
+	})
+}
+
 func TestAccForm_ItemSlateTextblob(t *testing.T) {
 	t.Parallel()
 
@@ -5324,6 +5420,106 @@ resource "pingone_form" "%[2]s" {
         agreement = {
           use_dynamic_agreement = true
         }
+      },
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 1
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+      }
+    ]
+  }
+}
+	`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccFormConfig_ItemSingleCheckboxFull(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = true
+  mark_optional = false
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "SINGLE_CHECKBOX"
+
+        position = {
+          row   = 0
+          col   = 0
+          width = 50
+        }
+
+        key                = "single-checkbox-field"
+        label              = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Accept Terms and Conditions\"}]}]"
+        label_mode         = "FLOAT"
+        required           = true
+        attribute_disabled = false
+        appearance         = "SWITCH"
+        input_type         = "BOOLEAN"
+        error_message      = "Please accept the agreement."
+
+        visibility = {
+          type = "ALWAYS_VISIBLE"
+          key  = "mykey"
+        }
+      },
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 1
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+      }
+    ]
+  }
+}
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccFormConfig_ItemSingleCheckboxMinimal(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = true
+  mark_optional = false
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "SINGLE_CHECKBOX"
+
+        position = {
+          row = 0
+          col = 0
+        }
+
+        key        = "single-checkbox-field"
+        label      = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Accept Terms and Conditions\"}]}]"
+        appearance = "CHECKBOX"
+        input_type = "BOOLEAN"
       },
       {
         type = "SUBMIT_BUTTON"
