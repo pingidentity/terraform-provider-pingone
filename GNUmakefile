@@ -133,4 +133,4 @@ generateconnectorref: build
 	mkdir -p examples/davinci-connector-instances
 	cd tools/dvgenerate && go run ./cmd/generate -file="$(if $(CONNECTOR_SCHEMA_FILE),$(abspath $(CONNECTOR_SCHEMA_FILE)),$(abspath ./tools/dvgenerate/internal/connector-schema.json))"
 
-.PHONY: build install generate docscategorycheck test testacc sweep vet fmtcheck depscheck lint golangci-lint importlint providerlint tflint terrafmt terrafmtcheck betatagscheck devcheck devchecknotest generateconnectorref
+.PHONY: build install generate docscategorycheck test testacc testaccprefix sweep vet fmtcheck depscheck lint golangci-lint importlint providerlint tflint terrafmt terrafmtcheck betatagscheck devcheck devchecknotest generateconnectorref

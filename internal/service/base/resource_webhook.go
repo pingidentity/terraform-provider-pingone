@@ -149,12 +149,14 @@ func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest
 		"A map that specifies the headers applied to the outbound request (for example, `Authorization` `Basic usernamepassword`. The purpose of these headers is for the HTTPS endpoint to authenticate the PingOne service, ensuring that the information from PingOne is from a trusted source. Requires `http_endpoint_url` to be set.",
 	)
 
+	httpEndpointUrlDescription := framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a valid HTTPS URL to which event messages are sent. Only one of `http_endpoint_url` or `connection_details_url` can be set.")
+
 	protocolDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"This can be either `HTTPS` or `TCP_IP`.",
-	).DefaultValue("HTTPS")
+		"The protocol to be used for the webhook.",
+	).DefaultValue("HTTPS").AllowedValuesEnum(management.AllowedEnumSubscriptionProtocolEnumValues)
 
 	connectionDetailsUrlDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies a valid a URI to which event messages are sent. Similar to `http_endpoint.url`, but not HTTPS-specific. Only one of `http_endpoint_url` or `connection_details_url` can be set. The API will automatically populate this field in state when using the 'HTTPS' protocol and setting the `http_endpoint_url` field.",
+		"A string that specifies a valid URI to which event messages are sent. Similar to `http_endpoint.url`, but not HTTPS-specific. Only one of `http_endpoint_url` or `connection_details_url` can be set. The API will automatically populate this field in state when using the 'HTTPS' protocol and setting the `http_endpoint_url` field.",
 	)
 
 	connectionDetailsHeadersDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -216,7 +218,7 @@ func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest
 	)
 
 	payloadOptionsPayloadFormatFormatTCPFormatDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The payload format. This can be either `JSON_DOC` or `RFC_LOGLINE`.",
+		"The payload format.",
 	).AllowedValuesEnum(management.AllowedEnumSubscriptionPayloadFormatTcpFormatEnumValues)
 
 	payloadOptionsPayloadFormatFormatTCPAdditionalAttributesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -272,8 +274,9 @@ func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest
 			},
 
 			"http_endpoint_url": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a valid HTTPS URL to which event messages are sent. Only one of `http_endpoint_url` or `connection_details_url` can be set.").Description,
-				Optional:    true,
+				Description:         httpEndpointUrlDescription.Description,
+				MarkdownDescription: httpEndpointUrlDescription.MarkdownDescription,
+				Optional:            true,
 
 				Validators: []validator.String{
 					stringvalidator.RegexMatches(regexp.MustCompile(`^https:\/\/.*`), "Must be a valid HTTPS URL"),
