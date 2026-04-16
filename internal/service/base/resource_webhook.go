@@ -570,11 +570,11 @@ func (r *WebhookResource) ModifyPlan(ctx context.Context, req resource.ModifyPla
 					"The connection_details_url attribute must not be directly configured when protocol is HTTPS.",
 				)
 			}
-			// The TCP payload format isn't supported for HTTPS
 			if !config.PayloadOptions.IsNull() && !config.PayloadOptions.IsUnknown() {
 				payloadOptionsAttrs := config.PayloadOptions.Attributes()
 				payloadFormat, ok := payloadOptionsAttrs["payload_format"]
 				if ok && !payloadFormat.IsNull() && !payloadFormat.IsUnknown() {
+					// The TCP payload format isn't supported for HTTPS
 					payloadFormatAttrs := payloadFormat.(types.Object).Attributes()
 					tcpFormat, ok := payloadFormatAttrs["tcp"]
 					if ok && !tcpFormat.IsNull() && !tcpFormat.IsUnknown() {
@@ -582,6 +582,20 @@ func (r *WebhookResource) ModifyPlan(ctx context.Context, req resource.ModifyPla
 							"Invalid configuration",
 							"The payload_options.payload_format.tcp attribute is not supported when protocol is HTTPS.",
 						)
+					}
+					httpFormat, ok := payloadFormatAttrs["https"]
+					if ok && !httpFormat.IsNull() && !httpFormat.IsUnknown() {
+						httpFormatAttrs := httpFormat.(types.Object).Attributes()
+						format, ok := httpFormatAttrs["format"]
+						prettyPrint, ok2 := httpFormatAttrs["pretty_print"]
+						// pretty_print can only be true when format is JSON_ARRAY
+						if ok && format.(types.String).ValueString() != string(management.ENUMSUBSCRIPTIONPAYLOADFORMATHTTPSFORMAT_JSON_ARRAY) &&
+							ok2 && !prettyPrint.IsNull() && !prettyPrint.IsUnknown() && prettyPrint.(types.Bool).ValueBool() {
+							resp.Diagnostics.AddError(
+								"Invalid configuration",
+								"The payload_options.payload_format.https.pretty_print attribute can only be true when payload_options.payload_format.https.format is JSON_ARRAY.",
+							)
+						}
 					}
 				}
 			}
@@ -626,6 +640,20 @@ func (r *WebhookResource) ModifyPlan(ctx context.Context, req resource.ModifyPla
 							"Invalid configuration",
 							"The payload_options.payload_format.https attribute is not supported when protocol is TCP_IP.",
 						)
+					}
+					tcpFormat, ok := payloadFormatAttrs["tcp"]
+					if ok && !tcpFormat.IsNull() && !tcpFormat.IsUnknown() {
+						tcpFormatAttrs := tcpFormat.(types.Object).Attributes()
+						format, ok := tcpFormatAttrs["format"]
+						additionalAttributes, ok2 := tcpFormatAttrs["additional_attributes"]
+						// The additional_attributes can only be configured when format is RFC_LOGLINE
+						if ok && format.(types.String).ValueString() != string(management.ENUMSUBSCRIPTIONPAYLOADFORMATTCPFORMAT_RFC_LOGLINE) &&
+							ok2 && !additionalAttributes.IsNull() && !additionalAttributes.IsUnknown() {
+							resp.Diagnostics.AddError(
+								"Invalid configuration",
+								"The payload_options.payload_format.tcp.additional_attributes attribute can only be configured when payload_options.payload_format.tcp.format is RFC_LOGLINE.",
+							)
+						}
 					}
 				}
 			}

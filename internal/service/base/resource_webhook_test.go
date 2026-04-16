@@ -547,7 +547,11 @@ func TestAccWebhook_TCP(t *testing.T) {
 				Config: testAccWebhookConfig_TCP_Full(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "connection_details_headers.%"),
+					resource.TestCheckResourceAttr(resourceFullName, "verify_tls_certificates", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.ip_address_exposed", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "filter_options.useragent_exposed", "true"),
 				),
 			},
 			{
