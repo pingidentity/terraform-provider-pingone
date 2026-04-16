@@ -613,6 +613,177 @@ func TestAccWebhook_BadParameters(t *testing.T) {
 	})
 }
 
+func TestAccWebhook_ValidationChecks(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccWebhookConfig_ModifyPlanValidation_HTTPSMissingHTTPEndpointURL(resourceName),
+				ExpectError: regexp.MustCompile(`http_endpoint_url attribute must be configured`),
+			},
+			{
+				Config:      testAccWebhookConfig_ModifyPlanValidation_HTTPSConnectionDetailsURLConfigured(resourceName),
+				ExpectError: regexp.MustCompile(`connection_details_url attribute must not be directly configured`),
+			},
+			{
+				Config:      testAccWebhookConfig_ModifyPlanValidation_HTTPSPayloadFormatTCPConfigured(resourceName),
+				ExpectError: regexp.MustCompile(`payload_options\.payload_format\.tcp attribute is not supported`),
+			},
+			{
+				Config:      testAccWebhookConfig_ModifyPlanValidation_HTTPSPrettyPrintWithoutJSONArray(resourceName),
+				ExpectError: regexp.MustCompile(`payload_options\.payload_format\.https\.pretty_print attribute can only be`),
+			},
+			{
+				Config:      testAccWebhookConfig_ModifyPlanValidation_TCPMissingConnectionDetailsURL(resourceName),
+				ExpectError: regexp.MustCompile(`connection_details_url attribute must be configured`),
+			},
+			{
+				Config:      testAccWebhookConfig_ModifyPlanValidation_TCPHTTPEndpointURLConfigured(resourceName),
+				ExpectError: regexp.MustCompile(`http_endpoint_url attribute must not be configured`),
+			},
+			{
+				Config:      testAccWebhookConfig_ModifyPlanValidation_TCPFormatConfigured(resourceName),
+				ExpectError: regexp.MustCompile(`format attribute is not supported`),
+			},
+			{
+				Config:      testAccWebhookConfig_ModifyPlanValidation_TCPMaximumPayloadLimitConfigured(resourceName),
+				ExpectError: regexp.MustCompile(`payload_options\.maximum_payload_limit attribute is not supported`),
+			},
+			{
+				Config:      testAccWebhookConfig_ModifyPlanValidation_TCPPayloadFormatHTTPSConfigured(resourceName),
+				ExpectError: regexp.MustCompile(`payload_options\.payload_format\.https attribute is not supported`),
+			},
+			{
+				Config:      testAccWebhookConfig_ModifyPlanValidation_TCPAdditionalAttributesWithoutRFCLogline(resourceName),
+				ExpectError: regexp.MustCompile(`payload_options\.payload_format\.tcp\.additional_attributes attribute can\s+only\s+be\s+configured`),
+			},
+		},
+	})
+}
+
+func testAccWebhookConfig_ModifyPlanValidation(resourceName, name, configBody string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_webhook" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+%[4]s
+  filter_options = {
+    included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
+  }
+}`,
+		acctest.GenericSandboxEnvironment(),
+		resourceName,
+		name,
+		configBody,
+	)
+}
+
+func testAccWebhookConfig_ModifyPlanValidation_HTTPSMissingHTTPEndpointURL(resourceName string) string {
+	return testAccWebhookConfig_ModifyPlanValidation(resourceName, fmt.Sprintf("%s-https-missing-http-endpoint-url", resourceName), `  protocol = "HTTPS"
+`)
+}
+
+func testAccWebhookConfig_ModifyPlanValidation_HTTPSConnectionDetailsURLConfigured(resourceName string) string {
+	return testAccWebhookConfig_ModifyPlanValidation(resourceName, fmt.Sprintf("%s-https-connection-details-url", resourceName), `  protocol               = "HTTPS"
+  connection_details_url = "tcp://localhost:1234"
+`)
+}
+
+func testAccWebhookConfig_ModifyPlanValidation_HTTPSPayloadFormatTCPConfigured(resourceName string) string {
+	return testAccWebhookConfig_ModifyPlanValidation(resourceName, fmt.Sprintf("%s-https-payload-format-tcp", resourceName), `  protocol          = "HTTPS"
+  http_endpoint_url = "https://localhost/"
+
+  payload_options = {
+    payload_format = {
+      tcp = {}
+    }
+  }
+`)
+}
+
+func testAccWebhookConfig_ModifyPlanValidation_HTTPSPrettyPrintWithoutJSONArray(resourceName string) string {
+	return testAccWebhookConfig_ModifyPlanValidation(resourceName, fmt.Sprintf("%s-https-pretty-print", resourceName), `  protocol          = "HTTPS"
+  http_endpoint_url = "https://localhost/"
+
+  payload_options = {
+    payload_format = {
+      https = {
+        pretty_print = true
+      }
+    }
+  }
+`)
+}
+
+func testAccWebhookConfig_ModifyPlanValidation_TCPMissingConnectionDetailsURL(resourceName string) string {
+	return testAccWebhookConfig_ModifyPlanValidation(resourceName, fmt.Sprintf("%s-tcp-missing-connection-details-url", resourceName), `  protocol = "TCP_IP"
+`)
+}
+
+func testAccWebhookConfig_ModifyPlanValidation_TCPHTTPEndpointURLConfigured(resourceName string) string {
+	return testAccWebhookConfig_ModifyPlanValidation(resourceName, fmt.Sprintf("%s-tcp-http-endpoint-url", resourceName), `  protocol          = "TCP_IP"
+  http_endpoint_url = "https://localhost/"
+`)
+}
+
+func testAccWebhookConfig_ModifyPlanValidation_TCPFormatConfigured(resourceName string) string {
+	return testAccWebhookConfig_ModifyPlanValidation(resourceName, fmt.Sprintf("%s-tcp-format", resourceName), `  protocol               = "TCP_IP"
+  connection_details_url = "tcp://localhost:1234"
+  format                 = "ACTIVITY"
+`)
+}
+
+func testAccWebhookConfig_ModifyPlanValidation_TCPMaximumPayloadLimitConfigured(resourceName string) string {
+	return testAccWebhookConfig_ModifyPlanValidation(resourceName, fmt.Sprintf("%s-tcp-maximum-payload-limit", resourceName), `  protocol               = "TCP_IP"
+  connection_details_url = "tcp://localhost:1234"
+
+  payload_options = {
+    maximum_payload_limit = {}
+  }
+`)
+}
+
+func testAccWebhookConfig_ModifyPlanValidation_TCPPayloadFormatHTTPSConfigured(resourceName string) string {
+	return testAccWebhookConfig_ModifyPlanValidation(resourceName, fmt.Sprintf("%s-tcp-payload-format-https", resourceName), `  protocol               = "TCP_IP"
+  connection_details_url = "tcp://localhost:1234"
+
+  payload_options = {
+    payload_format = {
+      https = {}
+    }
+  }
+`)
+}
+
+func testAccWebhookConfig_ModifyPlanValidation_TCPAdditionalAttributesWithoutRFCLogline(resourceName string) string {
+	return testAccWebhookConfig_ModifyPlanValidation(resourceName, fmt.Sprintf("%s-tcp-additional-attributes", resourceName), `  protocol               = "TCP_IP"
+  connection_details_url = "tcp://localhost:1234"
+
+  payload_options = {
+    payload_format = {
+      tcp = {
+        additional_attributes = {
+          source = "terraform-test"
+        }
+      }
+    }
+  }
+`)
+}
+
 func testAccWebhookConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
