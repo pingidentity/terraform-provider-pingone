@@ -1680,12 +1680,12 @@ func TestAccForm_ItemSocialLoginButton(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.width", "50"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "SOCIAL_LOGIN_BUTTON"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "social-login-button-field"),
-			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.idp_name", "Google"),
-			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.idp_type", "GOOGLE"),
-			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.idp_id", "my-google-idp-id"),
-			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.idp_enabled", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.idp_name", "MyIdp"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.idp_type", "TWITTER"),
+			resource.TestMatchResourceAttr(resourceFullName, "components.fields.0.idp_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.idp_enabled", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.icon_src", "https://example.com/icon.png"),
-			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Continue with Google\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Continue with Twitter\"}]}]"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.width", "25"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.width_unit", "PERCENT"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.height", "36"),
@@ -1715,11 +1715,11 @@ func TestAccForm_ItemSocialLoginButton(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "SOCIAL_LOGIN_BUTTON"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "social-login-button-field"),
-			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.idp_name", "Google"),
-			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.idp_type", "GOOGLE"),
-			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.idp_id", "my-google-idp-id"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.idp_name", "MyIdp"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.idp_type", "TWITTER"),
+			resource.TestMatchResourceAttr(resourceFullName, "components.fields.0.idp_id", verify.P1ResourceIDRegexpFullString),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.idp_enabled", "false"),
-			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Continue with Google\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Continue with Twitter\"}]}]"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "components.fields.0.icon_src"),
 			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
@@ -4999,6 +4999,16 @@ func testAccFormConfig_ItemSocialLoginButtonFull(resourceName, name string) stri
 	return fmt.Sprintf(`
 	%[1]s
 
+resource "pingone_identity_provider" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  twitter = {
+    client_id     = "dummyclientid1"
+    client_secret = "dummyclientsecret1"
+  }
+}
+
 resource "pingone_form" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
@@ -5022,12 +5032,11 @@ resource "pingone_form" "%[2]s" {
           width = 50
         }
 
-        idp_name    = "Google"
-        idp_type    = "GOOGLE"
-        idp_id      = "my-google-idp-id"
-        idp_enabled = true
-        icon_src    = "https://example.com/icon.png"
-        label       = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Continue with Google\"}]}]"
+        idp_name = "MyIdp"
+        idp_type = "TWITTER"
+        idp_id   = pingone_identity_provider.%[2]s.id
+        icon_src = "https://example.com/icon.png"
+        label    = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Continue with Twitter\"}]}]"
 
         styles = {
           width      = 25
@@ -5072,6 +5081,16 @@ func testAccFormConfig_ItemSocialLoginButtonMinimal(resourceName, name string) s
 	return fmt.Sprintf(`
 	%[1]s
 
+resource "pingone_identity_provider" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  twitter = {
+    client_id     = "dummyclientid1"
+    client_secret = "dummyclientsecret1"
+  }
+}
+
 resource "pingone_form" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
@@ -5094,11 +5113,10 @@ resource "pingone_form" "%[2]s" {
           col = 0
         }
 
-        idp_name    = "Google"
-        idp_type    = "GOOGLE"
-        idp_id      = "my-google-idp-id"
-        idp_enabled = false
-        label       = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Continue with Google\"}]}]"
+        idp_name = "MyIdp"
+        idp_type = "TWITTER"
+        idp_id   = pingone_identity_provider.%[2]s.id
+        label    = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Continue with Twitter\"}]}]"
       },
       {
         type = "SUBMIT_BUTTON"

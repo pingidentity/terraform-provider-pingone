@@ -247,7 +247,6 @@ Optional:
 - `fallback_text` (String) Optional when the `type` is one of `QR_CODE`.  A string that specifies the text label for fallback under the QR code.
 - `icon` (Attributes) Optional when the `type` is one of `SLATE_TEXTBLOB`.  An object that specifies the icon. (see [below for nested schema](#nestedatt--components--fields--icon))
 - `icon_src` (String) Optional when the `type` is one of `SOCIAL_LOGIN_BUTTON`.  A string that specifies the icon image URL to be displayed on the button.
-- `idp_enabled` (Boolean) **Required** when the `type` is one of `SOCIAL_LOGIN_BUTTON`.  A boolean that specifies whether the external identity provider is enabled.
 - `idp_id` (String) **Required** when the `type` is one of `SOCIAL_LOGIN_BUTTON`.  A string that specifies the external identity provider's ID.
 - `idp_name` (String) **Required** when the `type` is one of `SOCIAL_LOGIN_BUTTON`.  A string that specifies the external identity provider name.
 - `idp_type` (String) **Required** when the `type` is one of `SOCIAL_LOGIN_BUTTON`.  A string that specifies the external identity provider type.  Options are `AMAZON`, `APPLE`, `FACEBOOK`, `GITHUB`, `GOOGLE`, `LDAP`, `LINKEDIN`, `LINKEDIN_OIDC`, `MICROSOFT`, `OPENID_CONNECT`, `PAYPAL`, `SAML`, `TWITTER`, `YAHOO`.
@@ -273,6 +272,10 @@ Optional:
 - `trigger` (String) **Required** when the `type` is one of `FIDO2`.  A string that specifies the FIDO2 UI trigger type.  Options are `AUTOMATIC`, `BUTTON`.
 - `validation` (Attributes) **Required** when the `type` is one of `TEXT`, optional when the `type` is one of `PASSWORD`, `PASSWORD_VERIFY`.  An object containing validation data for the field. (see [below for nested schema](#nestedatt--components--fields--validation))
 - `visibility` (Attributes) An object that specifies the visibility settings for a form field. (see [below for nested schema](#nestedatt--components--fields--visibility))
+
+Read-Only:
+
+- `idp_enabled` (Boolean) A boolean that specifies whether the external identity provider is enabled.
 
 <a id="nestedatt--components--fields--position"></a>
 ### Nested Schema for `components.fields.position`

@@ -451,7 +451,6 @@ var (
 				"idp_name",
 				"idp_type",
 				"idp_id",
-				"idp_enabled",
 				"label",
 			},
 			Optional: []string{
@@ -1150,7 +1149,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 								"idp_enabled": schema.BoolAttribute{
 									Description:         componentsFieldsIdpEnabledDescription.Description,
 									MarkdownDescription: componentsFieldsIdpEnabledDescription.MarkdownDescription,
-									Optional:            true,
+									Computed:            true,
 								},
 
 								"idp_id": schema.StringAttribute{
@@ -2985,7 +2984,6 @@ func (p *formComponentsFieldResourceModel) expandItemSocialLoginButton(ctx conte
 		p.IdpName.ValueString(),
 		management.EnumFormSocialLoginIdpType(p.IdpType.ValueString()),
 		p.IdpId.ValueString(),
-		p.IdpEnabled.ValueBool(),
 		p.Label.ValueString(),
 	)
 
