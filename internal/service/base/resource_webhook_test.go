@@ -629,42 +629,52 @@ func TestAccWebhook_ValidationChecks(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccWebhookConfig_ModifyPlanValidation_HTTPSMissingHTTPEndpointURL(resourceName),
+				PlanOnly:    true,
 				ExpectError: regexp.MustCompile(`http_endpoint_url attribute must be configured`),
 			},
 			{
 				Config:      testAccWebhookConfig_ModifyPlanValidation_HTTPSConnectionDetailsURLConfigured(resourceName),
+				PlanOnly:    true,
 				ExpectError: regexp.MustCompile(`connection_details_url attribute must not be directly configured`),
 			},
 			{
 				Config:      testAccWebhookConfig_ModifyPlanValidation_HTTPSPayloadFormatTCPConfigured(resourceName),
+				PlanOnly:    true,
 				ExpectError: regexp.MustCompile(`payload_options\.payload_format\.tcp attribute is not supported`),
 			},
 			{
 				Config:      testAccWebhookConfig_ModifyPlanValidation_HTTPSPrettyPrintWithoutJSONArray(resourceName),
+				PlanOnly:    true,
 				ExpectError: regexp.MustCompile(`payload_options\.payload_format\.https\.pretty_print attribute can only be`),
 			},
 			{
 				Config:      testAccWebhookConfig_ModifyPlanValidation_TCPMissingConnectionDetailsURL(resourceName),
+				PlanOnly:    true,
 				ExpectError: regexp.MustCompile(`connection_details_url attribute must be configured`),
 			},
 			{
 				Config:      testAccWebhookConfig_ModifyPlanValidation_TCPHTTPEndpointURLConfigured(resourceName),
+				PlanOnly:    true,
 				ExpectError: regexp.MustCompile(`http_endpoint_url attribute must not be configured`),
 			},
 			{
 				Config:      testAccWebhookConfig_ModifyPlanValidation_TCPFormatConfigured(resourceName),
+				PlanOnly:    true,
 				ExpectError: regexp.MustCompile(`format attribute is not supported`),
 			},
 			{
 				Config:      testAccWebhookConfig_ModifyPlanValidation_TCPMaximumPayloadLimitConfigured(resourceName),
+				PlanOnly:    true,
 				ExpectError: regexp.MustCompile(`payload_options\.maximum_payload_limit attribute is not supported`),
 			},
 			{
 				Config:      testAccWebhookConfig_ModifyPlanValidation_TCPPayloadFormatHTTPSConfigured(resourceName),
+				PlanOnly:    true,
 				ExpectError: regexp.MustCompile(`payload_options\.payload_format\.https attribute is not supported`),
 			},
 			{
 				Config:      testAccWebhookConfig_ModifyPlanValidation_TCPAdditionalAttributesWithoutRFCLogline(resourceName),
+				PlanOnly:    true,
 				ExpectError: regexp.MustCompile(`payload_options\.payload_format\.tcp\.additional_attributes attribute can\s+only\s+be\s+configured`),
 			},
 		},
