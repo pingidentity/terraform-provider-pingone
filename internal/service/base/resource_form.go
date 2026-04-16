@@ -1744,7 +1744,7 @@ func (r *FormResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRe
 		// attribute_disabled default
 		if field.AttributeDisabled.IsUnknown() {
 			switch field.Type.ValueString() {
-			case string(management.ENUMFORMFIELDTYPE_CHECKBOX), string(management.ENUMFORMFIELDTYPE_COMBOBOX), string(management.ENUMFORMFIELDTYPE_DROPDOWN), string(management.ENUMFORMFIELDTYPE_RADIO), string(management.ENUMFORMFIELDTYPE_PASSWORD), string(management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY), string(management.ENUMFORMFIELDTYPE_TEXT):
+			case string(management.ENUMFORMFIELDTYPE_CHECKBOX), string(management.ENUMFORMFIELDTYPE_COMBOBOX), string(management.ENUMFORMFIELDTYPE_DROPDOWN), string(management.ENUMFORMFIELDTYPE_RADIO), string(management.ENUMFORMFIELDTYPE_PASSWORD), string(management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY), string(management.ENUMFORMFIELDTYPE_SINGLE_CHECKBOX), string(management.ENUMFORMFIELDTYPE_TEXT):
 				field.AttributeDisabled = types.BoolValue(false)
 			default:
 				field.AttributeDisabled = types.BoolNull()
@@ -1755,7 +1755,7 @@ func (r *FormResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRe
 		// required default
 		if field.Required.IsUnknown() {
 			switch field.Type.ValueString() {
-			case string(management.ENUMFORMFIELDTYPE_CHECKBOX), string(management.ENUMFORMFIELDTYPE_COMBOBOX), string(management.ENUMFORMFIELDTYPE_DROPDOWN), string(management.ENUMFORMFIELDTYPE_RADIO), string(management.ENUMFORMFIELDTYPE_PASSWORD), string(management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY), string(management.ENUMFORMFIELDTYPE_TEXT):
+			case string(management.ENUMFORMFIELDTYPE_CHECKBOX), string(management.ENUMFORMFIELDTYPE_COMBOBOX), string(management.ENUMFORMFIELDTYPE_DROPDOWN), string(management.ENUMFORMFIELDTYPE_RADIO), string(management.ENUMFORMFIELDTYPE_PASSWORD), string(management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY), string(management.ENUMFORMFIELDTYPE_SINGLE_CHECKBOX), string(management.ENUMFORMFIELDTYPE_TEXT):
 				field.Required = types.BoolValue(false)
 			default:
 				field.Required = types.BoolNull()

@@ -2143,7 +2143,7 @@ func TestAccForm_ItemSingleCheckbox(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Accept Terms and Conditions\"}]}]"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label_mode", "FLOAT"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.required", "true"),
-			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.attribute_disabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.attribute_disabled", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.appearance", "SWITCH"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.input_type", "BOOLEAN"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.error_message", "Please accept the agreement."),
@@ -2162,6 +2162,8 @@ func TestAccForm_ItemSingleCheckbox(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "SINGLE_CHECKBOX"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "single-checkbox-field"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Accept Terms and Conditions\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.required", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.attribute_disabled", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.appearance", "CHECKBOX"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.input_type", "BOOLEAN"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "components.fields.0.error_message"),
@@ -5466,7 +5468,7 @@ resource "pingone_form" "%[2]s" {
         label              = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Accept Terms and Conditions\"}]}]"
         label_mode         = "FLOAT"
         required           = true
-        attribute_disabled = false
+        attribute_disabled = true
         appearance         = "SWITCH"
         input_type         = "BOOLEAN"
         error_message      = "Please accept the agreement."
