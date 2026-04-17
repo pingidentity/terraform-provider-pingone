@@ -30,14 +30,12 @@ require (
 	github.com/patrickcping/pingone-go-sdk-v2 v0.14.13
 	github.com/patrickcping/pingone-go-sdk-v2/authorize v0.8.3
 	github.com/patrickcping/pingone-go-sdk-v2/credentials v0.12.1
-	github.com/patrickcping/pingone-go-sdk-v2/management v0.68.2
+	github.com/patrickcping/pingone-go-sdk-v2/management v0.69.0
 	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.25.0
 	github.com/patrickcping/pingone-go-sdk-v2/risk v0.21.1
 	github.com/patrickcping/pingone-go-sdk-v2/verify v0.11.2
 	github.com/pingidentity/pingone-go-client v0.10.0
 )
-
-replace github.com/patrickcping/pingone-go-sdk-v2/management => ../pingone-go-sdk-v2/management
 
 require (
 	4d63.com/gocheckcompilerdirectives v1.3.0 // indirect
