@@ -216,7 +216,7 @@ resource "pingone_form" "my_awesome_form" {
 
 ### Read-Only
 
-- `field_types` (Set of String) A set of strings that specifies the field types in the form.  Options are `CHECKBOX`, `COMBOBOX`, `DIVIDER`, `DROPDOWN`, `EMPTY_FIELD`, `ERROR_DISPLAY`, `FLOW_BUTTON`, `FLOW_LINK`, `PASSWORD`, `PASSWORD_VERIFY`, `QR_CODE`, `RADIO`, `RECAPTCHA_V2`, `SLATE_TEXTBLOB`, `SUBMIT_BUTTON`, `TEXT`.
+- `field_types` (Set of String) A set of strings that specifies the field types in the form.  Options are `AGREEMENT`, `CHECKBOX`, `COMBOBOX`, `DIVIDER`, `DROPDOWN`, `EMPTY_FIELD`, `ERROR_DISPLAY`, `FIDO2`, `FLOW_BUTTON`, `FLOW_LINK`, `PASSWORD`, `PASSWORD_VERIFY`, `POLLING`, `QR_CODE`, `RADIO`, `RECAPTCHA_V2`, `SLATE_TEXTBLOB`, `SUBMIT_BUTTON`, `TEXT`.
 - `id` (String) The ID of this resource.
 - `language_bundle` (Map of String) An object that provides a map of i18n keys to their translations. This object includes both the keys and their default translations. The PingOne language management service finds this object, and creates the new keys for translation for this form.
 
@@ -233,17 +233,20 @@ Required:
 Required:
 
 - `position` (Attributes) A single object that specifies the position of the form field in the form.  The combination of `col` and `row` must be unique between form fields. (see [below for nested schema](#nestedatt--components--fields--position))
-- `type` (String) A string that specifies the type of form field.  Options are `CHECKBOX`, `COMBOBOX`, `DIVIDER`, `DROPDOWN`, `EMPTY_FIELD`, `ERROR_DISPLAY`, `FLOW_BUTTON`, `FLOW_LINK`, `PASSWORD`, `PASSWORD_VERIFY`, `QR_CODE`, `RADIO`, `RECAPTCHA_V2`, `SLATE_TEXTBLOB`, `SUBMIT_BUTTON`, `TEXT`.
+- `type` (String) A string that specifies the type of form field.  Options are `AGREEMENT`, `CHECKBOX`, `COMBOBOX`, `DIVIDER`, `DROPDOWN`, `EMPTY_FIELD`, `ERROR_DISPLAY`, `FIDO2`, `FLOW_BUTTON`, `FLOW_LINK`, `PASSWORD`, `PASSWORD_VERIFY`, `POLLING`, `QR_CODE`, `RADIO`, `RECAPTCHA_V2`, `SLATE_TEXTBLOB`, `SUBMIT_BUTTON`, `TEXT`.
 
 Optional:
 
+- `action` (String) **Required** when the `type` is one of `FIDO2`.  A string that specifies the FIDO2 action.  Options are `AUTHENTICATE`, `REGISTER`.
+- `agreement` (Attributes) **Required** when the `type` is one of `AGREEMENT`.  A single object that contains the agreement configuration (see [below for nested schema](#nestedatt--components--fields--agreement))
 - `alignment` (String) **Required** when the `type` is one of `QR_CODE`, `RECAPTCHA_V2`.  A string that specifies the reCAPTCHA alignment.  Options are `CENTER`, `LEFT`, `RIGHT`.
 - `attribute_disabled` (Boolean) Optional when the `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `PASSWORD`, `PASSWORD_VERIFY`, `RADIO`, `TEXT`.  A boolean that specifies whether the linked directory attribute is disabled.
 - `content` (String) Optional when the `type` is one of `SLATE_TEXTBLOB`.  A string that specifies the field's content (for example, escaped JSON string when the field type is `SLATE_TEXTBLOB` - use `jsonencode` to convert JSON to escaped JSON string.)
 - `fallback_text` (String) Optional when the `type` is one of `QR_CODE`.  A string that specifies the text label for fallback under the QR code.
 - `icon` (Attributes) Optional when the `type` is one of `SLATE_TEXTBLOB`.  An object that specifies the icon. (see [below for nested schema](#nestedatt--components--fields--icon))
-- `key` (String) **Required** when the `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `FLOW_BUTTON`, `FLOW_LINK`, `PASSWORD`, `PASSWORD_VERIFY`, `QR_CODE`, `RADIO`, `TEXT`, optional when the `type` is one of `SLATE_TEXTBLOB`.  A string that specifies an identifier for the field component.
-- `label` (String) **Required** when the `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `FLOW_BUTTON`, `FLOW_LINK`, `PASSWORD`, `PASSWORD_VERIFY`, `RADIO`, `SUBMIT_BUTTON`, `TEXT`.  A string that specifies the field label.
+- `input_type` (String) **Required** when the `type` is one of `AGREEMENT`.  A string that specifies the type of field.  Options are `READ_ONLY_TEXT`.
+- `key` (String) **Required** when the `type` is one of `AGREEMENT`, `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `FIDO2`, `FLOW_BUTTON`, `FLOW_LINK`, `PASSWORD`, `PASSWORD_VERIFY`, `POLLING`, `QR_CODE`, `RADIO`, `TEXT`, optional when the `type` is one of `SLATE_TEXTBLOB`.  A string that specifies an identifier for the field component.
+- `label` (String) **Required** when the `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `FIDO2`, `FLOW_BUTTON`, `FLOW_LINK`, `PASSWORD`, `PASSWORD_VERIFY`, `RADIO`, `SUBMIT_BUTTON`, `TEXT`.  A string that specifies the field label.
 - `label_mode` (String) Optional when the `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `PASSWORD`, `PASSWORD_VERIFY`, `RADIO`, `TEXT`.  A string that specifies how the field is rendered.  Options are `DEFAULT`, `FLOAT`.
 - `label_password_verify` (String) Optional when the `type` is one of `PASSWORD_VERIFY`.  A string that when a second field for verifies password is used, this property specifies the field label for that verify field.
 - `layout` (String) **Required** when the `type` is one of `CHECKBOX`, `RADIO`, optional when the `type` is one of `COMBOBOX`, `DROPDOWN`, `PASSWORD`, `PASSWORD_VERIFY`, `TEXT`.  A string that specifies layout attributes for radio button and checkbox fields.  Options are `HORIZONTAL`, `VERTICAL`.
@@ -253,11 +256,14 @@ Optional:
 - `other_option_input_label` (String) A string that specifies the label placeholder text for the other option in drop-down controls.
 - `other_option_key` (String) A string that specifies the key associated with the other option.
 - `other_option_label` (String) A string that specifies the label for a custom or "other" choice in a list.
+- `polling_appearance` (String) **Required** when the `type` is one of `POLLING`.  A string that specifies the polling activity indicator appearance.  Options are `DOTS`, `NONE`, `SPINNER`.
 - `required` (Boolean) Optional when the `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `PASSWORD`, `PASSWORD_VERIFY`, `RADIO`, `TEXT`.  A boolean that specifies whether the field is required.
 - `show_password_requirements` (Boolean) Optional when the `type` is one of `PASSWORD`, `PASSWORD_VERIFY`.  A boolean that specifies whether to display password requirements to the user.
-- `size` (String) **Required** when the `type` is one of `QR_CODE`, `RECAPTCHA_V2`.  A string that specifies the reCAPTCHA size or the QR code size. For reCAPTCHA fields, options are `NORMAL`, `COMPACT`. For QR code fields, options are `SMALL`, `MEDIUM`, `LARGE`.
+- `size` (String) **Required** when the `type` is one of `POLLING`, `QR_CODE`, `RECAPTCHA_V2`.  A string that specifies the reCAPTCHA size or the QR code/polling size. For reCAPTCHA fields, options are `NORMAL`, `COMPACT`. For QR code and polling fields, options are `SMALL`, `MEDIUM`, `LARGE`.
 - `styles` (Attributes) Optional when the `type` is one of `FLOW_BUTTON`, `FLOW_LINK`, `SUBMIT_BUTTON`.  A single object that describes style settings for the field. (see [below for nested schema](#nestedatt--components--fields--styles))
 - `theme` (String) **Required** when the `type` is one of `RECAPTCHA_V2`.  A string that specifies the reCAPTCHA theme.  Options are `DARK`, `LIGHT`.
+- `title_enabled` (Boolean) **Required** when the `type` is one of `AGREEMENT`.  Specifies whether the title is enabled.
+- `trigger` (String) **Required** when the `type` is one of `FIDO2`.  A string that specifies the FIDO2 UI trigger type.  Options are `AUTOMATIC`, `BUTTON`.
 - `validation` (Attributes) **Required** when the `type` is one of `TEXT`, optional when the `type` is one of `PASSWORD`, `PASSWORD_VERIFY`.  An object containing validation data for the field. (see [below for nested schema](#nestedatt--components--fields--validation))
 - `visibility` (Attributes) An object that specifies the visibility settings for a form field. (see [below for nested schema](#nestedatt--components--fields--visibility))
 
@@ -272,6 +278,15 @@ Required:
 Optional:
 
 - `width` (Number) An integer that specifies the width of the form field in the form (in percentage).
+
+
+<a id="nestedatt--components--fields--agreement"></a>
+### Nested Schema for `components.fields.agreement`
+
+Optional:
+
+- `id` (String) An identifier that specifies the ID of the agreement.
+- `use_dynamic_agreement` (Boolean) An agreement option that specifies whether to use the agreement identified in the DaVinci form node.
 
 
 <a id="nestedatt--components--fields--icon"></a>
