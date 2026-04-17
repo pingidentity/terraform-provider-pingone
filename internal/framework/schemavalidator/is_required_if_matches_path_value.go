@@ -13,7 +13,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
 var (
@@ -30,13 +29,13 @@ var (
 	_ validator.String  = IsRequiredIfMatchesPathValueValidator{}
 )
 
-// IsRequiredIfMatchesPathValueValidator validates if the provided string value equals
-// the value at the provided path expression(s).  If matched, the current arguemnt is required.
+// IsRequiredIfMatchesPathValueValidator validates if the provided attribute value equals
+// the value at the provided path expression(s).  If matched, the current argument is required.
 //
 // If a list of expressions is provided, all expressions are checked until a match is found,
 // or the list of expressions is exhausted.
 type IsRequiredIfMatchesPathValueValidator struct {
-	TargetValue basetypes.StringValue
+	TargetValue attr.Value
 	Expressions path.Expressions
 }
 
@@ -53,7 +52,7 @@ type IsRequiredIfMatchesPathValueValidatorResponse struct {
 
 // Description describes the validation in plain text formatting.
 func (v IsRequiredIfMatchesPathValueValidator) Description(_ context.Context) string {
-	return fmt.Sprintf("The argument is required if the value %s is present at the defined path: %v", v.TargetValue.ValueString(), v.Expressions)
+	return fmt.Sprintf("The argument is required if the value %s is present at the defined path: %v", v.TargetValue.String(), v.Expressions)
 }
 
 // MarkdownDescription describes the validation in Markdown formatting.
