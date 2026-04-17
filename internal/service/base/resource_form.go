@@ -63,10 +63,12 @@ type formComponentsResourceModel struct {
 type formComponentsFieldResourceModel struct {
 	Alignment                    types.String `tfsdk:"alignment"`
 	Action                       types.String `tfsdk:"action"`
+	Agreement                    types.Object `tfsdk:"agreement"`
 	AttributeDisabled            types.Bool   `tfsdk:"attribute_disabled"`
 	Content                      types.String `tfsdk:"content"`
 	FallbackText                 types.String `tfsdk:"fallback_text"`
 	Icon                         types.Object `tfsdk:"icon"`
+	InputType                    types.String `tfsdk:"input_type"`
 	Key                          types.String `tfsdk:"key"`
 	Label                        types.String `tfsdk:"label"`
 	LabelMode                    types.String `tfsdk:"label_mode"`
@@ -85,10 +87,16 @@ type formComponentsFieldResourceModel struct {
 	Size                         types.String `tfsdk:"size"`
 	Styles                       types.Object `tfsdk:"styles"`
 	Theme                        types.String `tfsdk:"theme"`
+	TitleEnabled                 types.Bool   `tfsdk:"title_enabled"`
 	Trigger                      types.String `tfsdk:"trigger"`
 	Type                         types.String `tfsdk:"type"`
 	Validation                   types.Object `tfsdk:"validation"`
 	Visibility                   types.Object `tfsdk:"visibility"`
+}
+
+type formComponentsFieldAgreementResourceModel struct {
+	Id                  pingonetypes.ResourceIDValue `tfsdk:"id"`
+	UseDynamicAgreement types.Bool                   `tfsdk:"use_dynamic_agreement"`
 }
 
 type formComponentsFieldPositionResourceModel struct {
@@ -158,10 +166,12 @@ var (
 	formComponentsFieldsTFObjectTypes = map[string]attr.Type{
 		"alignment":                       types.StringType,
 		"action":                          types.StringType,
+		"agreement":                       types.ObjectType{AttrTypes: formComponentsFieldsAgreementTFObjectTypes},
 		"attribute_disabled":              types.BoolType,
 		"content":                         types.StringType,
 		"fallback_text":                   types.StringType,
 		"icon":                            types.ObjectType{AttrTypes: formComponentsFieldsIconTFObjectTypes},
+		"input_type":                      types.StringType,
 		"key":                             types.StringType,
 		"label_mode":                      types.StringType,
 		"label_password_verify":           types.StringType,
@@ -180,10 +190,16 @@ var (
 		"size":                            types.StringType,
 		"styles":                          types.ObjectType{AttrTypes: formComponentsFieldsFieldStylesTFObjectTypes},
 		"theme":                           types.StringType,
+		"title_enabled":                   types.BoolType,
 		"trigger":                         types.StringType,
 		"type":                            types.StringType,
 		"validation":                      types.ObjectType{AttrTypes: formComponentsFieldsFieldElementValidationTFObjectTypes},
 		"visibility":                      types.ObjectType{AttrTypes: formComponentsFieldsVisibilityTFObjectTypes},
+	}
+
+	formComponentsFieldsAgreementTFObjectTypes = map[string]attr.Type{
+		"id":                    pingonetypes.ResourceIDType{},
+		"use_dynamic_agreement": types.BoolType,
 	}
 
 	// Form Components Fields Position
@@ -241,6 +257,19 @@ var (
 	}
 
 	formComponentsFieldsSchemaDefMap = map[management.EnumFormFieldType]formComponentsFieldsSchemaDef{
+		management.ENUMFORMFIELDTYPE_AGREEMENT: {
+			Required: []string{
+				"type",
+				"position",
+				"key",
+				"input_type",
+				"title_enabled",
+				"agreement",
+			},
+			Optional: []string{
+				"visibility",
+			},
+		},
 		management.ENUMFORMFIELDTYPE_CHECKBOX: {
 			Required: []string{
 				"type",
@@ -513,6 +542,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 	const colMaxValue = 3
 
 	supportedFormFieldTypes := []management.EnumFormFieldType{
+		management.ENUMFORMFIELDTYPE_AGREEMENT,
 		management.ENUMFORMFIELDTYPE_TEXT,
 		management.ENUMFORMFIELDTYPE_PASSWORD,
 		management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY,
@@ -820,6 +850,32 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 		"A string that specifies the text label for fallback under the QR code.",
 	)
 
+	componentsFieldsInputTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		formFieldValidationDocumentation("input_type"),
+	).AppendMarkdownString(
+		"A string that specifies the type of field.",
+	).AllowedValuesEnum(management.AllowedEnumFormAgreementInputTypeEnumValues)
+
+	componentsFieldsTitleEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		formFieldValidationDocumentation("title_enabled"),
+	).AppendMarkdownString(
+		"Specifies whether the title is enabled.",
+	)
+
+	componentsFieldsAgreementDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		formFieldValidationDocumentation("agreement"),
+	).AppendMarkdownString(
+		"A single object that contains the agreement configuration",
+	)
+
+	componentsFieldsAgreementIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An identifier that specifies the ID of the agreement.",
+	)
+
+	componentsFieldsAgreementUseDynamicAgreementDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An agreement option that specifies whether to use the agreement identified in the DaVinci form node.",
+	)
+
 	componentsFieldsVisibilityDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that specifies the visibility settings for a form field.",
 	)
@@ -1011,6 +1067,16 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 												stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumFormItemIconSizeEnumValues)...),
 											},
 										},
+									},
+								},
+
+								"input_type": schema.StringAttribute{
+									Description:         componentsFieldsInputTypeDescription.Description,
+									MarkdownDescription: componentsFieldsInputTypeDescription.MarkdownDescription,
+									Optional:            true,
+
+									Validators: []validator.String{
+										stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumFormAgreementInputTypeEnumValues)...),
 									},
 								},
 
@@ -1333,6 +1399,12 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 									Optional:            true,
 								},
 
+								"title_enabled": schema.BoolAttribute{
+									Description:         componentsFieldsTitleEnabledDescription.Description,
+									MarkdownDescription: componentsFieldsTitleEnabledDescription.MarkdownDescription,
+									Optional:            true,
+								},
+
 								"alignment": schema.StringAttribute{
 									Description:         componentsFieldsAlignmentDescription.Description,
 									MarkdownDescription: componentsFieldsAlignmentDescription.MarkdownDescription,
@@ -1369,6 +1441,34 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 													path.MatchRelative().AtParent().AtName("type"),
 												),
 											},
+										},
+									},
+								},
+
+								"agreement": schema.SingleNestedAttribute{
+									Description:         componentsFieldsAgreementDescription.Description,
+									MarkdownDescription: componentsFieldsAgreementDescription.MarkdownDescription,
+									Optional:            true,
+
+									Attributes: map[string]schema.Attribute{
+										"id": schema.StringAttribute{
+											Description:         componentsFieldsAgreementIdDescription.Description,
+											MarkdownDescription: componentsFieldsAgreementIdDescription.MarkdownDescription,
+											Optional:            true,
+											CustomType:          pingonetypes.ResourceIDType{},
+
+											Validators: []validator.String{
+												stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+													types.BoolValue(false),
+													path.MatchRelative().AtParent().AtName("use_dynamic_agreement"),
+												),
+											},
+										},
+
+										"use_dynamic_agreement": schema.BoolAttribute{
+											Description:         componentsFieldsAgreementUseDynamicAgreementDescription.Description,
+											MarkdownDescription: componentsFieldsAgreementUseDynamicAgreementDescription.MarkdownDescription,
+											Optional:            true,
 										},
 									},
 								},
@@ -1501,6 +1601,8 @@ func (r *formComponentsFieldResourceModel) validateFieldSet(field string) bool {
 		return !r.Alignment.IsNull()
 	case "action":
 		return !r.Action.IsNull()
+	case "agreement":
+		return !r.Agreement.IsNull()
 	case "attribute_disabled":
 		return !r.AttributeDisabled.IsNull()
 	case "content":
@@ -1509,6 +1611,8 @@ func (r *formComponentsFieldResourceModel) validateFieldSet(field string) bool {
 		return !r.FallbackText.IsNull()
 	case "icon":
 		return !r.Icon.IsNull()
+	case "input_type":
+		return !r.InputType.IsNull()
 	case "key":
 		return !r.Key.IsNull()
 	case "label":
@@ -1545,6 +1649,8 @@ func (r *formComponentsFieldResourceModel) validateFieldSet(field string) bool {
 		return !r.Styles.IsNull()
 	case "theme":
 		return !r.Theme.IsNull()
+	case "title_enabled":
+		return !r.TitleEnabled.IsNull()
 	case "trigger":
 		return !r.Trigger.IsNull()
 	case "type":
@@ -2209,6 +2315,8 @@ func (p *formComponentsFieldResourceModel) expand(ctx context.Context) (*managem
 	positionData := positionPlan.expand()
 
 	switch p.Type.ValueString() {
+	case string(management.ENUMFORMFIELDTYPE_AGREEMENT):
+		data.FormFieldFormAgreement, d = p.expandItemAgreement(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_CHECKBOX):
 		data.FormFieldCheckbox, d = p.expandFieldCheckbox(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_COMBOBOX):
@@ -3177,6 +3285,52 @@ func (p *formComponentsFieldResourceModel) expandItemSlateTextblob(ctx context.C
 	return data, diags
 }
 
+func (p *formComponentsFieldResourceModel) expandItemAgreement(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldFormAgreement, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := management.NewFormFieldFormAgreement(
+		management.ENUMFORMFIELDTYPE_AGREEMENT,
+		*positionData,
+		p.Key.ValueString(),
+		management.EnumFormAgreementInputType(p.InputType.ValueString()),
+		p.TitleEnabled.ValueBool(),
+	)
+
+	if !p.Agreement.IsNull() && !p.Agreement.IsUnknown() {
+		var plan formComponentsFieldAgreementResourceModel
+		diags.Append(p.Agreement.As(ctx, &plan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		agreement := management.NewFormAgreementAllOfAgreement()
+		if !plan.Id.IsNull() && !plan.Id.IsUnknown() {
+			agreement.SetId(plan.Id.ValueString())
+		}
+
+		if !plan.UseDynamicAgreement.IsNull() && !plan.UseDynamicAgreement.IsUnknown() {
+			agreement.SetUseDynamicAgreement(plan.UseDynamicAgreement.ValueBool())
+		}
+
+		data.SetAgreement(*agreement)
+	}
+
+	if !p.Visibility.IsNull() && !p.Visibility.IsUnknown() {
+		var plan formComponentsFieldVisibilityResourceModel
+		diags.Append(p.Visibility.As(ctx, &plan, basetypes.ObjectAsOptions{})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetVisibility(*plan.expand())
+	}
+
+	return data, diags
+}
+
 func (p *formComponentsFieldStylesResourceModel) expand(ctx context.Context, styleType string) (interface{}, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -3393,6 +3547,26 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 		fieldObject := v.GetActualInstance()
 
 		switch t := fieldObject.(type) {
+		case *management.FormFieldFormAgreement:
+			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
+			diags.Append(d...)
+
+			agreement, d := formComponentsFieldsAgreementOkToTF(t.GetAgreementOk())
+			diags.Append(d...)
+
+			visibility, d := formComponentsFieldsVisibilityOkToTF(t.GetVisibilityOk())
+			diags.Append(d...)
+
+			attributeMap = map[string]attr.Value{
+				"agreement":     agreement,
+				"input_type":    framework.EnumOkToTF(t.GetInputTypeOk()),
+				"key":           framework.StringOkToTF(t.GetKeyOk()),
+				"position":      position,
+				"title_enabled": framework.BoolOkToTF(t.GetTitleEnabledOk()),
+				"type":          framework.EnumOkToTF(t.GetTypeOk()),
+				"visibility":    visibility,
+			}
+
 		case *management.FormFieldCheckbox:
 			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
 			diags.Append(d...)
@@ -3818,10 +3992,12 @@ func formComponentsFieldsConvertEmptyValuesToTFNulls(attributeMap map[string]att
 	nullMap := map[string]attr.Value{
 		"alignment":                       types.StringNull(),
 		"action":                          types.StringNull(),
+		"agreement":                       types.ObjectNull(formComponentsFieldsAgreementTFObjectTypes),
 		"attribute_disabled":              types.BoolNull(),
 		"content":                         types.StringNull(),
 		"fallback_text":                   types.StringNull(),
 		"icon":                            types.ObjectNull(formComponentsFieldsIconTFObjectTypes),
+		"input_type":                      types.StringNull(),
 		"key":                             types.StringNull(),
 		"label_mode":                      types.StringNull(),
 		"label_password_verify":           types.StringNull(),
@@ -3840,6 +4016,7 @@ func formComponentsFieldsConvertEmptyValuesToTFNulls(attributeMap map[string]att
 		"size":                            types.StringNull(),
 		"styles":                          types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes),
 		"theme":                           types.StringNull(),
+		"title_enabled":                   types.BoolNull(),
 		"trigger":                         types.StringNull(),
 		"type":                            types.StringNull(),
 		"validation":                      types.ObjectNull(formComponentsFieldsFieldElementValidationTFObjectTypes),
@@ -4008,6 +4185,22 @@ func formComponentsFieldsVisibilityOkToTF(apiObject *management.FormFieldCommonV
 	objValue, d := types.ObjectValue(formComponentsFieldsVisibilityTFObjectTypes, map[string]attr.Value{
 		"type": framework.EnumOkToTF(apiObject.GetTypeOk()),
 		"key":  framework.StringOkToTF(apiObject.GetKeyOk()),
+	})
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func formComponentsFieldsAgreementOkToTF(apiObject *management.FormAgreementAllOfAgreement, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(formComponentsFieldsAgreementTFObjectTypes), diags
+	}
+
+	objValue, d := types.ObjectValue(formComponentsFieldsAgreementTFObjectTypes, map[string]attr.Value{
+		"id":                    framework.PingOneResourceIDOkToTF(apiObject.GetIdOk()),
+		"use_dynamic_agreement": framework.BoolOkToTF(apiObject.GetUseDynamicAgreementOk()),
 	})
 	diags.Append(d...)
 
