@@ -1,0 +1,3 @@
+```release-note:enhancement
+`resource/pingone_form`: Added support for `SINGLE_CHECKBOX` form field type, including new `appearance` and `error_message` attributes.
+```
