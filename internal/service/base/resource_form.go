@@ -1382,6 +1382,10 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 									Description:         componentsFieldsPollingAppearanceDescription.Description,
 									MarkdownDescription: componentsFieldsPollingAppearanceDescription.MarkdownDescription,
 									Optional:            true,
+
+									Validators: []validator.String{
+										stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumFormPollingAppearanceEnumValues)...),
+									},
 								},
 
 								"trigger": schema.StringAttribute{
