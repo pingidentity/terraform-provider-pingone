@@ -44,6 +44,7 @@ type MFADevicePolicyResourceModel struct {
 	Name                  types.String                 `tfsdk:"name"`
 	Authentication        types.Object                 `tfsdk:"authentication"`
 	NewDeviceNotification types.String                 `tfsdk:"new_device_notification"`
+	IgnoreUserLock        types.Bool                   `tfsdk:"ignore_user_lock"`
 	Default               types.Bool                   `tfsdk:"default"`
 	Sms                   types.Object                 `tfsdk:"sms"`
 	Voice                 types.Object                 `tfsdk:"voice"`
@@ -305,6 +306,10 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 		"A string that defines whether a user should be notified if a new authentication method has been added to their account.",
 	).AllowedValuesEnum(mfa.AllowedEnumMFADevicePolicyNewDeviceNotificationEnumValues).DefaultValue(string(mfa.ENUMMFADEVICEPOLICYNEWDEVICENOTIFICATION_NONE))
 
+	ignoreUserLockDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that, when set to `true`, allows PingOne to skip the account lock check during MFA authentication.",
+	).DefaultValue(false)
+
 	defaultDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether this MFA device policy is enforced as the default within the environment. When set to `true`, all other MFA device policies are `false`.",
 	).DefaultValue(false)
@@ -446,6 +451,15 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 				Validators: []validator.String{
 					stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumMFADevicePolicyNewDeviceNotificationEnumValues)...),
 				},
+			},
+
+			"ignore_user_lock": schema.BoolAttribute{
+				Description:         ignoreUserLockDescription.Description,
+				MarkdownDescription: ignoreUserLockDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+
+				Default: booldefault.StaticBool(false),
 			},
 
 			"default": schema.BoolAttribute{
@@ -1543,6 +1557,10 @@ func (p *MFADevicePolicyResourceModel) expand(ctx context.Context, apiClient *ma
 		)
 	}
 
+	if !p.IgnoreUserLock.IsNull() && !p.IgnoreUserLock.IsUnknown() {
+		policy.SetIgnoreUserLock(p.IgnoreUserLock.ValueBool())
+	}
+
 	if !p.Default.IsNull() && !p.Default.IsUnknown() {
 		policy.SetDefault(p.Default.ValueBool())
 	} else {
@@ -2127,6 +2145,8 @@ func (p *MFADevicePolicyResourceModel) toState(apiObject *mfa.DeviceAuthenticati
 	diags.Append(d...)
 
 	p.NewDeviceNotification = framework.EnumOkToTF(apiObject.GetNewDeviceNotificationOk())
+
+	p.IgnoreUserLock = framework.BoolOkToTF(apiObject.GetIgnoreUserLockOk())
 
 	p.Default = framework.BoolOkToTF(apiObject.GetDefaultOk())
 

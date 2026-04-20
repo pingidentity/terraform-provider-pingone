@@ -133,6 +133,7 @@ func TestAccMFADevicePolicy_SMS_Full(t *testing.T) {
 				Config: testAccMFADevicePolicyConfig_FullSMS(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "authentication.device_selection", "DEFAULT_TO_FIRST"),
+					resource.TestCheckResourceAttr(resourceFullName, "ignore_user_lock", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.pairing_disabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.otp.lifetime.duration", "75"),
@@ -192,6 +193,7 @@ func TestAccMFADevicePolicy_SMS_Minimal(t *testing.T) {
 				Config: testAccMFADevicePolicyConfig_MinimalSMS(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "authentication.device_selection", "DEFAULT_TO_FIRST"),
+					resource.TestCheckResourceAttr(resourceFullName, "ignore_user_lock", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.pairing_disabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.otp.lifetime.duration", "30"),
@@ -235,6 +237,7 @@ func TestAccMFADevicePolicy_SMS_Change(t *testing.T) {
 				Config: testAccMFADevicePolicyConfig_FullSMS(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "authentication.device_selection", "DEFAULT_TO_FIRST"),
+					resource.TestCheckResourceAttr(resourceFullName, "ignore_user_lock", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.pairing_disabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.otp.lifetime.duration", "75"),
@@ -1707,6 +1710,7 @@ resource "pingone_mfa_device_policy" "%[2]s" {
   name           = "%[3]s"
 
   new_device_notification = "SMS_THEN_EMAIL"
+  ignore_user_lock        = true
 
   authentication = {
     device_selection = "DEFAULT_TO_FIRST"
