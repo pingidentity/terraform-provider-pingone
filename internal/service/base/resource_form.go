@@ -2377,6 +2377,30 @@ func (p *formResourceModel) validate(ctx context.Context, allowUnknowns bool) di
 						)
 					}
 				}
+
+				// Validate input_type value for AGREEMENT and SINGLE_CHECKBOX
+				if field.Type.ValueString() == string(management.ENUMFORMFIELDTYPE_AGREEMENT) {
+					inputTypeValue := field.InputType.ValueString()
+					validInputTypes := utils.EnumSliceToStringSlice(management.AllowedEnumFormAgreementInputTypeEnumValues)
+					if !slices.Contains(validInputTypes, inputTypeValue) {
+						diags.AddAttributeError(
+							path.Root("components").AtName("fields"),
+							"Invalid DaVinci form configuration",
+							fmt.Sprintf("The `input_type` parameter must be set to one of [%s] for the `%s` field type.", strings.Join(validInputTypes, ", "), field.Type.ValueString()),
+						)
+					}
+				}
+				if field.Type.ValueString() == string(management.ENUMFORMFIELDTYPE_SINGLE_CHECKBOX) {
+					inputTypeValue := field.InputType.ValueString()
+					validInputTypes := utils.EnumSliceToStringSlice(management.AllowedEnumFormSingleCheckboxInputTypeEnumValues)
+					if !slices.Contains(validInputTypes, inputTypeValue) {
+						diags.AddAttributeError(
+							path.Root("components").AtName("fields"),
+							"Invalid DaVinci form configuration",
+							fmt.Sprintf("The `input_type` parameter must be set to one of [%s] for the `%s` field type.", strings.Join(validInputTypes, ", "), field.Type.ValueString()),
+						)
+					}
+				}
 			}
 		}
 	}
