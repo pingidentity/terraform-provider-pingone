@@ -331,6 +331,18 @@ Required:
 
 - `enabled` (Boolean) A boolean that specifies whether push notification is enabled or disabled for the application in the policy.
 
+Optional:
+
+- `number_matching` (Attributes) A single object that configures number matching for push notifications. (see [below for nested schema](#nestedatt--mobile--applications--push--number_matching))
+
+<a id="nestedatt--mobile--applications--push--number_matching"></a>
+### Nested Schema for `mobile.applications.push.number_matching`
+
+Required:
+
+- `enabled` (Boolean) A boolean that, when set to `true`, requires the authenticating user to select a number that was displayed to them on the accessing device.
+
+
 
 <a id="nestedatt--mobile--applications--push_limit"></a>
 ### Nested Schema for `mobile.applications.push_limit`

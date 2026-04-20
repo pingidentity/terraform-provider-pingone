@@ -154,7 +154,11 @@ type MFADevicePolicyMobileApplicationDeviceAuthorizationResourceModel struct {
 }
 
 type MFADevicePolicyMobileApplicationOtpResourceModel MFADevicePolicyEnabledResourceModel
-type MFADevicePolicyMobileApplicationPushResourceModel MFADevicePolicyEnabledResourceModel
+type MFADevicePolicyMobileApplicationPushResourceModel struct {
+	Enabled        types.Bool   `tfsdk:"enabled"`
+	NumberMatching types.Object `tfsdk:"number_matching"`
+}
+type MFADevicePolicyMobileApplicationPushNumberMatchingResourceModel MFADevicePolicyEnabledResourceModel
 type MFADevicePolicyEnabledResourceModel struct {
 	Enabled types.Bool `tfsdk:"enabled"`
 }
@@ -226,6 +230,11 @@ var (
 	}
 
 	MFADevicePolicyMobileApplicationPushTFObjectTypes = map[string]attr.Type{
+		"enabled":         types.BoolType,
+		"number_matching": types.ObjectType{AttrTypes: MFADevicePolicyMobileApplicationPushNumberMatchingTFObjectTypes},
+	}
+
+	MFADevicePolicyMobileApplicationPushNumberMatchingTFObjectTypes = map[string]attr.Type{
 		"enabled": types.BoolType,
 	}
 
@@ -425,6 +434,14 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 
 	mobileApplicationsPushTimeoutDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An integer that defines the length of time that push notifications should be blocked for the application if the defined limit has been reached. The minimum value is `1` minute and the maximum value is `120` minutes. If this parameter is not provided, the default value is `30` minutes.",
+	)
+
+	mobileApplicationsPushNumberMatchingDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that configures number matching for push notifications.",
+	)
+
+	mobileApplicationsPushNumberMatchingEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that, when set to `true`, requires the authenticating user to select a number that was displayed to them on the accessing device.",
 	)
 
 	mobileOtpFailureCountDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -762,6 +779,28 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 										"enabled": schema.BoolAttribute{
 											Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether push notification is enabled or disabled for the application in the policy.").Description,
 											Required:    true,
+										},
+
+										"number_matching": schema.SingleNestedAttribute{
+											Description:         mobileApplicationsPushNumberMatchingDescription.Description,
+											MarkdownDescription: mobileApplicationsPushNumberMatchingDescription.MarkdownDescription,
+											Optional:            true,
+											Computed:            true,
+
+											Default: objectdefault.StaticValue(types.ObjectValueMust(
+												MFADevicePolicyMobileApplicationPushNumberMatchingTFObjectTypes,
+												map[string]attr.Value{
+													"enabled": types.BoolValue(false),
+												},
+											)),
+
+											Attributes: map[string]schema.Attribute{
+												"enabled": schema.BoolAttribute{
+													Description:         mobileApplicationsPushNumberMatchingEnabledDescription.Description,
+													MarkdownDescription: mobileApplicationsPushNumberMatchingEnabledDescription.MarkdownDescription,
+													Required:            true,
+												},
+											},
 										},
 									},
 								},
@@ -2146,6 +2185,22 @@ func (p *MFADevicePolicyMobileApplicationResourceModel) expand(ctx context.Conte
 				plan.Enabled.ValueBool(),
 			),
 		)
+
+		if !plan.NumberMatching.IsNull() && !plan.NumberMatching.IsUnknown() {
+			var numberMatchingPlan MFADevicePolicyMobileApplicationPushNumberMatchingResourceModel
+			diags.Append(plan.NumberMatching.As(ctx, &numberMatchingPlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			if push, ok := data.GetPushOk(); ok && push != nil {
+				push.SetNumberMatching(*mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerPushNumberMatching(numberMatchingPlan.Enabled.ValueBool()))
+				data.SetPush(*push)
+			}
+		}
 	}
 
 	// Push Limit
@@ -2743,11 +2798,35 @@ func toStateMfaDevicePolicyMobileApplicationsPush(apiObject *mfa.DeviceAuthentic
 		return types.ObjectNull(MFADevicePolicyMobileApplicationPushTFObjectTypes), nil
 	}
 
+	numberMatching, d := toStateMfaDevicePolicyMobileApplicationsPushNumberMatching(apiObject.GetNumberMatchingOk())
+	diags.Append(d...)
+	if diags.HasError() {
+		return types.ObjectNull(MFADevicePolicyMobileApplicationPushTFObjectTypes), diags
+	}
+
+	o := map[string]attr.Value{
+		"enabled":         framework.BoolOkToTF(apiObject.GetEnabledOk()),
+		"number_matching": numberMatching,
+	}
+
+	objValue, d := types.ObjectValue(MFADevicePolicyMobileApplicationPushTFObjectTypes, o)
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func toStateMfaDevicePolicyMobileApplicationsPushNumberMatching(apiObject *mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInnerPushNumberMatching, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(MFADevicePolicyMobileApplicationPushNumberMatchingTFObjectTypes), nil
+	}
+
 	o := map[string]attr.Value{
 		"enabled": framework.BoolOkToTF(apiObject.GetEnabledOk()),
 	}
 
-	objValue, d := types.ObjectValue(MFADevicePolicyMobileApplicationPushTFObjectTypes, o)
+	objValue, d := types.ObjectValue(MFADevicePolicyMobileApplicationPushNumberMatchingTFObjectTypes, o)
 	diags.Append(d...)
 
 	return objValue, diags

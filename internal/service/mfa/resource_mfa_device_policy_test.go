@@ -726,6 +726,7 @@ func TestAccMFADevicePolicy_Mobile_Full(t *testing.T) {
 
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application1FullName, "mobile.applications.%s.pairing_disabled", "true"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application1FullName, "mobile.applications.%s.push.enabled", "true"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application1FullName, "mobile.applications.%s.push.number_matching.enabled", "true"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application1FullName, "mobile.applications.%s.push_timeout.duration", "100"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application1FullName, "mobile.applications.%s.push_timeout.time_unit", "SECONDS"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application1FullName, "mobile.applications.%s.pairing_key_lifetime.duration", "3"),
@@ -743,6 +744,7 @@ func TestAccMFADevicePolicy_Mobile_Full(t *testing.T) {
 
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application2FullName, "mobile.applications.%s.pairing_disabled", "false"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application2FullName, "mobile.applications.%s.push.enabled", "false"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application2FullName, "mobile.applications.%s.push.number_matching.enabled", "false"),
 					mfa.TestCheckMFADevicePolicyApplicationMapNoResourceAttr(resourceFullName, application2FullName, "mobile.applications.%s.push_timeout.duration"),
 					mfa.TestCheckMFADevicePolicyApplicationMapNoResourceAttr(resourceFullName, application2FullName, "mobile.applications.%s.push_timeout.time_unit"),
 					mfa.TestCheckMFADevicePolicyApplicationMapNoResourceAttr(resourceFullName, application2FullName, "mobile.applications.%s.pairing_key_lifetime.duration"),
@@ -758,6 +760,7 @@ func TestAccMFADevicePolicy_Mobile_Full(t *testing.T) {
 
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application3FullName, "mobile.applications.%s.pairing_disabled", "false"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application3FullName, "mobile.applications.%s.push.enabled", "true"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application3FullName, "mobile.applications.%s.push.number_matching.enabled", "false"),
 					mfa.TestCheckMFADevicePolicyApplicationMapNoResourceAttr(resourceFullName, application3FullName, "mobile.applications.%s.push_timeout.duration"),
 					mfa.TestCheckMFADevicePolicyApplicationMapNoResourceAttr(resourceFullName, application3FullName, "mobile.applications.%s.push_timeout.time_unit"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application3FullName, "mobile.applications.%s.pairing_key_lifetime.duration", "55"),
@@ -943,6 +946,7 @@ func TestAccMFADevicePolicy_Mobile_Change(t *testing.T) {
 
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application1FullName, "mobile.applications.%s.pairing_disabled", "true"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application1FullName, "mobile.applications.%s.push.enabled", "true"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application1FullName, "mobile.applications.%s.push.number_matching.enabled", "true"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application1FullName, "mobile.applications.%s.push_timeout.duration", "100"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application1FullName, "mobile.applications.%s.push_timeout.time_unit", "SECONDS"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application1FullName, "mobile.applications.%s.pairing_key_lifetime.duration", "3"),
@@ -960,6 +964,7 @@ func TestAccMFADevicePolicy_Mobile_Change(t *testing.T) {
 
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application2FullName, "mobile.applications.%s.pairing_disabled", "false"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application2FullName, "mobile.applications.%s.push.enabled", "false"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application2FullName, "mobile.applications.%s.push.number_matching.enabled", "false"),
 					mfa.TestCheckMFADevicePolicyApplicationMapNoResourceAttr(resourceFullName, application2FullName, "mobile.applications.%s.push_timeout.duration"),
 					mfa.TestCheckMFADevicePolicyApplicationMapNoResourceAttr(resourceFullName, application2FullName, "mobile.applications.%s.push_timeout.time_unit"),
 					mfa.TestCheckMFADevicePolicyApplicationMapNoResourceAttr(resourceFullName, application2FullName, "mobile.applications.%s.pairing_key_lifetime.duration"),
@@ -975,6 +980,7 @@ func TestAccMFADevicePolicy_Mobile_Change(t *testing.T) {
 
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application3FullName, "mobile.applications.%s.pairing_disabled", "false"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application3FullName, "mobile.applications.%s.push.enabled", "true"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application3FullName, "mobile.applications.%s.push.number_matching.enabled", "false"),
 					mfa.TestCheckMFADevicePolicyApplicationMapNoResourceAttr(resourceFullName, application3FullName, "mobile.applications.%s.push_timeout.duration"),
 					mfa.TestCheckMFADevicePolicyApplicationMapNoResourceAttr(resourceFullName, application3FullName, "mobile.applications.%s.push_timeout.time_unit"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application3FullName, "mobile.applications.%s.pairing_key_lifetime.duration", "55"),
@@ -1027,6 +1033,7 @@ func TestAccMFADevicePolicy_Mobile_Change(t *testing.T) {
 
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application1FullName, "mobile.applications.%s.pairing_disabled", "true"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application1FullName, "mobile.applications.%s.push.enabled", "true"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application1FullName, "mobile.applications.%s.push.number_matching.enabled", "true"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application1FullName, "mobile.applications.%s.push_timeout.duration", "100"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application1FullName, "mobile.applications.%s.push_timeout.time_unit", "SECONDS"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application1FullName, "mobile.applications.%s.pairing_key_lifetime.duration", "3"),
@@ -1044,6 +1051,7 @@ func TestAccMFADevicePolicy_Mobile_Change(t *testing.T) {
 
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application2FullName, "mobile.applications.%s.pairing_disabled", "false"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application2FullName, "mobile.applications.%s.push.enabled", "false"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application2FullName, "mobile.applications.%s.push.number_matching.enabled", "false"),
 					mfa.TestCheckMFADevicePolicyApplicationMapNoResourceAttr(resourceFullName, application2FullName, "mobile.applications.%s.push_timeout.duration"),
 					mfa.TestCheckMFADevicePolicyApplicationMapNoResourceAttr(resourceFullName, application2FullName, "mobile.applications.%s.push_timeout.time_unit"),
 					mfa.TestCheckMFADevicePolicyApplicationMapNoResourceAttr(resourceFullName, application2FullName, "mobile.applications.%s.pairing_key_lifetime.duration"),
@@ -1059,6 +1067,7 @@ func TestAccMFADevicePolicy_Mobile_Change(t *testing.T) {
 
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application3FullName, "mobile.applications.%s.pairing_disabled", "false"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application3FullName, "mobile.applications.%s.push.enabled", "true"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application3FullName, "mobile.applications.%s.push.number_matching.enabled", "false"),
 					mfa.TestCheckMFADevicePolicyApplicationMapNoResourceAttr(resourceFullName, application3FullName, "mobile.applications.%s.push_timeout.duration"),
 					mfa.TestCheckMFADevicePolicyApplicationMapNoResourceAttr(resourceFullName, application3FullName, "mobile.applications.%s.push_timeout.time_unit"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application3FullName, "mobile.applications.%s.pairing_key_lifetime.duration", "55"),
@@ -2235,6 +2244,9 @@ resource "pingone_mfa_device_policy" "%[2]s" {
 
         push = {
           enabled = true
+          number_matching = {
+            enabled = true
+          }
         }
 
         push_timeout = {
