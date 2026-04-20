@@ -200,6 +200,7 @@ resource "pingone_mfa_device_policy" "my_awesome_mfa_device_policy" {
 - `fido2` (Attributes) A single object that allows configuration of FIDO2 device authentication policy settings. (see [below for nested schema](#nestedatt--fido2))
 - `ignore_user_lock` (Boolean) A boolean that, when set to `true`, allows PingOne to skip the account lock check during MFA authentication.  Defaults to `false`.
 - `new_device_notification` (String) A string that defines whether a user should be notified if a new authentication method has been added to their account.  Options are `EMAIL_THEN_SMS`, `NONE`, `SMS_THEN_EMAIL`.  Defaults to `NONE`.
+- `notifications_policy` (Attributes) A single object that specifies the notification policy to use for this MFA device policy. If not specified, the default notification policy for the environment will be used. (see [below for nested schema](#nestedatt--notifications_policy))
 
 ### Read-Only
 
@@ -584,6 +585,16 @@ Required:
 
 - `duration` (Number) An integer that defines the length of time that the user is blocked after reaching the maximum number of failures. The minimum value is `2` minutes and the maximum value is `30` minutes.  Defaults to `2`.
 - `time_unit` (String) A string that specifies the type of time unit for `duration`.  Options are `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
+
+
+
+
+<a id="nestedatt--notifications_policy"></a>
+### Nested Schema for `notifications_policy`
+
+Required:
+
+- `id` (String) A string that specifies the ID of the notification policy to use.
 
 ## Import
 

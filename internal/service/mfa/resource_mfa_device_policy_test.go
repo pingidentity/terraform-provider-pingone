@@ -134,6 +134,7 @@ func TestAccMFADevicePolicy_SMS_Full(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "authentication.device_selection", "DEFAULT_TO_FIRST"),
 					resource.TestCheckResourceAttr(resourceFullName, "ignore_user_lock", "true"),
+					resource.TestMatchResourceAttr(resourceFullName, "notifications_policy.id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.pairing_disabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.otp.lifetime.duration", "75"),
@@ -194,6 +195,7 @@ func TestAccMFADevicePolicy_SMS_Minimal(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "authentication.device_selection", "DEFAULT_TO_FIRST"),
 					resource.TestCheckResourceAttr(resourceFullName, "ignore_user_lock", "false"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "notifications_policy.id"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.pairing_disabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.otp.lifetime.duration", "30"),
@@ -238,6 +240,7 @@ func TestAccMFADevicePolicy_SMS_Change(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "authentication.device_selection", "DEFAULT_TO_FIRST"),
 					resource.TestCheckResourceAttr(resourceFullName, "ignore_user_lock", "true"),
+					resource.TestMatchResourceAttr(resourceFullName, "notifications_policy.id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.pairing_disabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.otp.lifetime.duration", "75"),
@@ -1705,12 +1708,25 @@ func testAccMFADevicePolicyConfig_FullSMS(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
+resource "pingone_notification_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
 resource "pingone_mfa_device_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
   new_device_notification = "SMS_THEN_EMAIL"
   ignore_user_lock        = true
+
+  notifications_policy = {
+    id = pingone_notification_policy.%[2]s.id
+  }
 
   authentication = {
     device_selection = "DEFAULT_TO_FIRST"

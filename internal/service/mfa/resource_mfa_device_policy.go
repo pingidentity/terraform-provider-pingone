@@ -45,6 +45,7 @@ type MFADevicePolicyResourceModel struct {
 	Authentication        types.Object                 `tfsdk:"authentication"`
 	NewDeviceNotification types.String                 `tfsdk:"new_device_notification"`
 	IgnoreUserLock        types.Bool                   `tfsdk:"ignore_user_lock"`
+	NotificationsPolicy   types.Object                 `tfsdk:"notifications_policy"`
 	Default               types.Bool                   `tfsdk:"default"`
 	Sms                   types.Object                 `tfsdk:"sms"`
 	Voice                 types.Object                 `tfsdk:"voice"`
@@ -68,6 +69,10 @@ type MFADevicePolicyTotpResourceModel struct {
 	PairingDisabled            types.Bool   `tfsdk:"pairing_disabled"`
 	PromptForNicknameOnPairing types.Bool   `tfsdk:"prompt_for_nickname_on_pairing"`
 	UriParameters              types.Map    `tfsdk:"uri_parameters"`
+}
+
+type MFADevicePolicyNotificationsPolicyResourceModel struct {
+	Id types.String `tfsdk:"id"`
 }
 
 type MFADevicePolicyOfflineDeviceResourceModel struct {
@@ -310,6 +315,14 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 		"A boolean that, when set to `true`, allows PingOne to skip the account lock check during MFA authentication.",
 	).DefaultValue(false)
 
+	notificationsPolicyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies the notification policy to use for this MFA device policy. If not specified, the default notification policy for the environment will be used.",
+	)
+
+	notificationsPolicyIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the ID of the notification policy to use.",
+	)
+
 	defaultDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether this MFA device policy is enforced as the default within the environment. When set to `true`, all other MFA device policies are `false`.",
 	).DefaultValue(false)
@@ -460,6 +473,24 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 				Computed:            true,
 
 				Default: booldefault.StaticBool(false),
+			},
+
+			"notifications_policy": schema.SingleNestedAttribute{
+				Description:         notificationsPolicyDescription.Description,
+				MarkdownDescription: notificationsPolicyDescription.MarkdownDescription,
+				Optional:            true,
+
+				Attributes: map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Description:         notificationsPolicyIdDescription.Description,
+						MarkdownDescription: notificationsPolicyIdDescription.MarkdownDescription,
+						Required:            true,
+
+						Validators: []validator.String{
+							verify.P1ResourceIDValidator(),
+						},
+					},
+				},
 			},
 
 			"default": schema.BoolAttribute{
@@ -1561,6 +1592,21 @@ func (p *MFADevicePolicyResourceModel) expand(ctx context.Context, apiClient *ma
 		policy.SetIgnoreUserLock(p.IgnoreUserLock.ValueBool())
 	}
 
+	if !p.NotificationsPolicy.IsNull() && !p.NotificationsPolicy.IsUnknown() {
+		var notificationsPolicyPlan MFADevicePolicyNotificationsPolicyResourceModel
+		diags.Append(p.NotificationsPolicy.As(ctx, &notificationsPolicyPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		policy.SetNotificationsPolicy(
+			*mfa.NewDeviceAuthenticationPolicyCommonNotificationsPolicy(notificationsPolicyPlan.Id.ValueString()),
+		)
+	}
+
 	if !p.Default.IsNull() && !p.Default.IsUnknown() {
 		policy.SetDefault(p.Default.ValueBool())
 	} else {
@@ -2147,6 +2193,9 @@ func (p *MFADevicePolicyResourceModel) toState(apiObject *mfa.DeviceAuthenticati
 	p.NewDeviceNotification = framework.EnumOkToTF(apiObject.GetNewDeviceNotificationOk())
 
 	p.IgnoreUserLock = framework.BoolOkToTF(apiObject.GetIgnoreUserLockOk())
+
+	p.NotificationsPolicy, d = toStateMfaDevicePolicyNotificationsPolicy(apiObject.GetNotificationsPolicyOk())
+	diags.Append(d...)
 
 	p.Default = framework.BoolOkToTF(apiObject.GetDefaultOk())
 
