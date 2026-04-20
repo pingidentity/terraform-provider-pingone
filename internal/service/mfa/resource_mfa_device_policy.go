@@ -29,6 +29,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	int32validatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/int32validator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
@@ -46,6 +47,7 @@ type MFADevicePolicyResourceModel struct {
 	NewDeviceNotification types.String                 `tfsdk:"new_device_notification"`
 	IgnoreUserLock        types.Bool                   `tfsdk:"ignore_user_lock"`
 	NotificationsPolicy   types.Object                 `tfsdk:"notifications_policy"`
+	RememberMe            types.Object                 `tfsdk:"remember_me"`
 	Default               types.Bool                   `tfsdk:"default"`
 	Sms                   types.Object                 `tfsdk:"sms"`
 	Voice                 types.Object                 `tfsdk:"voice"`
@@ -73,6 +75,15 @@ type MFADevicePolicyTotpResourceModel struct {
 
 type MFADevicePolicyNotificationsPolicyResourceModel struct {
 	Id types.String `tfsdk:"id"`
+}
+
+type MFADevicePolicyRememberMeResourceModel struct {
+	Web types.Object `tfsdk:"web"`
+}
+
+type MFADevicePolicyRememberMeWebResourceModel struct {
+	Enabled  types.Bool   `tfsdk:"enabled"`
+	LifeTime types.Object `tfsdk:"life_time"`
 }
 
 type MFADevicePolicyOfflineDeviceResourceModel struct {
@@ -302,6 +313,14 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 	const fido2FailureCoolDownDurationMinSeconds = fido2FailureCoolDownDurationMinMinutes * 60
 	const fido2FailureCoolDownDurationMaxSeconds = fido2FailureCoolDownDurationMaxMinutes * 60
 
+	const rememberMeWebLifeTimeDurationDefault = 30
+	const rememberMeWebLifeTimeDurationMinMinutes = 1
+	const rememberMeWebLifeTimeDurationMaxMinutes = 129600
+	const rememberMeWebLifeTimeDurationMinHours = 1
+	const rememberMeWebLifeTimeDurationMaxHours = 2160
+	const rememberMeWebLifeTimeDurationMinDays = 1
+	const rememberMeWebLifeTimeDurationMaxDays = 90
+
 	// schema descriptions and validation settings
 	deviceSelectionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that defines the device selection method.",
@@ -322,6 +341,49 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 	notificationsPolicyIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the ID of the notification policy to use.",
 	)
+
+	rememberMeDefault := types.ObjectValueMust(
+		MFADevicePolicyRememberMeTFObjectTypes,
+		map[string]attr.Value{
+			"web": types.ObjectValueMust(
+				MFADevicePolicyRememberMeWebTFObjectTypes,
+				map[string]attr.Value{
+					"enabled": types.BoolValue(false),
+					"life_time": types.ObjectValueMust(
+						MFADevicePolicyTimePeriodTFObjectTypes,
+						map[string]attr.Value{
+							"duration":  types.Int32Value(rememberMeWebLifeTimeDurationDefault),
+							"time_unit": types.StringValue(string(mfa.ENUMTIMEUNITREMEMBERMEWEBLIFETIME_MINUTES)),
+						},
+					),
+				},
+			),
+		},
+	)
+
+	rememberMeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies 'remember me' settings so that users do not have to authenticate when accessing applications from a device they have used already.",
+	)
+
+	rememberMeWebDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that contains the 'remember me' settings for accessing applications from a browser.",
+	)
+
+	rememberMeWebEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that, when set to `true`, enables the 'remember me' option in the MFA policy.",
+	)
+
+	rememberMeWebLifeTimeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A single object that defines the period during which users will not have to authenticate if they are accessing applications from a device they have used before. The 'remember me' period can be anywhere from `%d` minute to `%d` days.", rememberMeWebLifeTimeDurationMinMinutes, rememberMeWebLifeTimeDurationMaxDays),
+	)
+
+	rememberMeWebLifeTimeDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that, used in conjunction with `time_unit`, defines the 'remember me' period.",
+	)
+
+	rememberMeWebLifeTimeTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the time unit to use for the 'remember me' period.",
+	).AllowedValuesEnum(mfa.AllowedEnumTimeUnitRememberMeWebLifeTimeEnumValues)
 
 	defaultDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether this MFA device policy is enforced as the default within the environment. When set to `true`, all other MFA device policies are `false`.",
@@ -488,6 +550,84 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 
 						Validators: []validator.String{
 							verify.P1ResourceIDValidator(),
+						},
+					},
+				},
+			},
+
+			"remember_me": schema.SingleNestedAttribute{
+				Description:         rememberMeDescription.Description,
+				MarkdownDescription: rememberMeDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+
+				Default: objectdefault.StaticValue(rememberMeDefault),
+
+				Attributes: map[string]schema.Attribute{
+					"web": schema.SingleNestedAttribute{
+						Description:         rememberMeWebDescription.Description,
+						MarkdownDescription: rememberMeWebDescription.MarkdownDescription,
+						Required:            true,
+
+						Attributes: map[string]schema.Attribute{
+							"enabled": schema.BoolAttribute{
+								Description:         rememberMeWebEnabledDescription.Description,
+								MarkdownDescription: rememberMeWebEnabledDescription.MarkdownDescription,
+								Required:            true,
+							},
+
+							"life_time": schema.SingleNestedAttribute{
+								Description:         rememberMeWebLifeTimeDescription.Description,
+								MarkdownDescription: rememberMeWebLifeTimeDescription.MarkdownDescription,
+								Required:            true,
+
+								Attributes: map[string]schema.Attribute{
+									"duration": schema.Int32Attribute{
+										Description:         rememberMeWebLifeTimeDurationDescription.Description,
+										MarkdownDescription: rememberMeWebLifeTimeDurationDescription.MarkdownDescription,
+										Required:            true,
+
+										Validators: []validator.Int32{
+											int32validator.Any(
+												int32validator.All(
+													int32validator.Between(rememberMeWebLifeTimeDurationMinMinutes, rememberMeWebLifeTimeDurationMaxMinutes),
+													int32validatorinternal.RegexMatchesPathValue(
+														regexp.MustCompile(`MINUTES`),
+														fmt.Sprintf("If `time_unit` is `MINUTES`, the allowed duration range is %d - %d.", rememberMeWebLifeTimeDurationMinMinutes, rememberMeWebLifeTimeDurationMaxMinutes),
+														path.MatchRelative().AtParent().AtName("time_unit"),
+													),
+												),
+												int32validator.All(
+													int32validator.Between(rememberMeWebLifeTimeDurationMinHours, rememberMeWebLifeTimeDurationMaxHours),
+													int32validatorinternal.RegexMatchesPathValue(
+														regexp.MustCompile(`HOURS`),
+														fmt.Sprintf("If `time_unit` is `HOURS`, the allowed duration range is %d - %d.", rememberMeWebLifeTimeDurationMinHours, rememberMeWebLifeTimeDurationMaxHours),
+														path.MatchRelative().AtParent().AtName("time_unit"),
+													),
+												),
+												int32validator.All(
+													int32validator.Between(rememberMeWebLifeTimeDurationMinDays, rememberMeWebLifeTimeDurationMaxDays),
+													int32validatorinternal.RegexMatchesPathValue(
+														regexp.MustCompile(`DAYS`),
+														fmt.Sprintf("If `time_unit` is `DAYS`, the allowed duration range is %d - %d.", rememberMeWebLifeTimeDurationMinDays, rememberMeWebLifeTimeDurationMaxDays),
+														path.MatchRelative().AtParent().AtName("time_unit"),
+													),
+												),
+											),
+										},
+									},
+
+									"time_unit": schema.StringAttribute{
+										Description:         rememberMeWebLifeTimeTimeUnitDescription.Description,
+										MarkdownDescription: rememberMeWebLifeTimeTimeUnitDescription.MarkdownDescription,
+										Required:            true,
+
+										Validators: []validator.String{
+											stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumTimeUnitRememberMeWebLifeTimeEnumValues)...),
+										},
+									},
+								},
+							},
 						},
 					},
 				},
@@ -1607,6 +1747,49 @@ func (p *MFADevicePolicyResourceModel) expand(ctx context.Context, apiClient *ma
 		)
 	}
 
+	if !p.RememberMe.IsNull() && !p.RememberMe.IsUnknown() {
+		var rememberMePlan MFADevicePolicyRememberMeResourceModel
+		diags.Append(p.RememberMe.As(ctx, &rememberMePlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		if !rememberMePlan.Web.IsNull() && !rememberMePlan.Web.IsUnknown() {
+			var webPlan MFADevicePolicyRememberMeWebResourceModel
+			diags.Append(rememberMePlan.Web.As(ctx, &webPlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			var lifeTimePlan MFADevicePolicyTimePeriodResourceModel
+			diags.Append(webPlan.LifeTime.As(ctx, &lifeTimePlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			lifeTime := mfa.DeviceAuthenticationPolicyCommonRememberMeWebLifeTime{}
+			lifeTime.SetDuration(lifeTimePlan.Duration.ValueInt32())
+			lifeTime.SetTimeUnit(mfa.EnumTimeUnitRememberMeWebLifeTime(lifeTimePlan.TimeUnit.ValueString()))
+
+			web := mfa.NewDeviceAuthenticationPolicyCommonRememberMeWeb(
+				webPlan.Enabled.ValueBool(),
+				lifeTime,
+			)
+
+			rememberMe := mfa.NewDeviceAuthenticationPolicyCommonRememberMe(*web)
+			policy.SetRememberMe(*rememberMe)
+		}
+	}
+
 	if !p.Default.IsNull() && !p.Default.IsUnknown() {
 		policy.SetDefault(p.Default.ValueBool())
 	} else {
@@ -2195,6 +2378,9 @@ func (p *MFADevicePolicyResourceModel) toState(apiObject *mfa.DeviceAuthenticati
 	p.IgnoreUserLock = framework.BoolOkToTF(apiObject.GetIgnoreUserLockOk())
 
 	p.NotificationsPolicy, d = toStateMfaDevicePolicyNotificationsPolicy(apiObject.GetNotificationsPolicyOk())
+	diags.Append(d...)
+
+	p.RememberMe, d = toStateMfaDevicePolicyRememberMe(apiObject.GetRememberMeOk())
 	diags.Append(d...)
 
 	p.Default = framework.BoolOkToTF(apiObject.GetDefaultOk())

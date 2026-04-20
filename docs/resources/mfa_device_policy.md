@@ -201,6 +201,7 @@ resource "pingone_mfa_device_policy" "my_awesome_mfa_device_policy" {
 - `ignore_user_lock` (Boolean) A boolean that, when set to `true`, allows PingOne to skip the account lock check during MFA authentication.  Defaults to `false`.
 - `new_device_notification` (String) A string that defines whether a user should be notified if a new authentication method has been added to their account.  Options are `EMAIL_THEN_SMS`, `NONE`, `SMS_THEN_EMAIL`.  Defaults to `NONE`.
 - `notifications_policy` (Attributes) A single object that specifies the notification policy to use for this MFA device policy. If not specified, the default notification policy for the environment will be used. (see [below for nested schema](#nestedatt--notifications_policy))
+- `remember_me` (Attributes) A single object that specifies 'remember me' settings so that users do not have to authenticate when accessing applications from a device they have used already. (see [below for nested schema](#nestedatt--remember_me))
 
 ### Read-Only
 
@@ -595,6 +596,30 @@ Required:
 Required:
 
 - `id` (String) A string that specifies the ID of the notification policy to use.
+
+
+<a id="nestedatt--remember_me"></a>
+### Nested Schema for `remember_me`
+
+Required:
+
+- `web` (Attributes) A single object that contains the 'remember me' settings for accessing applications from a browser. (see [below for nested schema](#nestedatt--remember_me--web))
+
+<a id="nestedatt--remember_me--web"></a>
+### Nested Schema for `remember_me.web`
+
+Required:
+
+- `enabled` (Boolean) A boolean that, when set to `true`, enables the 'remember me' option in the MFA policy.
+- `life_time` (Attributes) A single object that defines the period during which users will not have to authenticate if they are accessing applications from a device they have used before. The 'remember me' period can be anywhere from `1` minute to `90` days. (see [below for nested schema](#nestedatt--remember_me--web--life_time))
+
+<a id="nestedatt--remember_me--web--life_time"></a>
+### Nested Schema for `remember_me.web.life_time`
+
+Required:
+
+- `duration` (Number) An integer that, used in conjunction with `time_unit`, defines the 'remember me' period.
+- `time_unit` (String) A string that specifies the time unit to use for the 'remember me' period.  Options are `DAYS`, `HOURS`, `MINUTES`.
 
 ## Import
 

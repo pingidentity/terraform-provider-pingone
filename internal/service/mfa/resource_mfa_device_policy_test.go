@@ -135,6 +135,9 @@ func TestAccMFADevicePolicy_SMS_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "authentication.device_selection", "DEFAULT_TO_FIRST"),
 					resource.TestCheckResourceAttr(resourceFullName, "ignore_user_lock", "true"),
 					resource.TestMatchResourceAttr(resourceFullName, "notifications_policy.id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "remember_me.web.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "remember_me.web.life_time.duration", "60"),
+					resource.TestCheckResourceAttr(resourceFullName, "remember_me.web.life_time.time_unit", "MINUTES"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.pairing_disabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.otp.lifetime.duration", "75"),
@@ -196,6 +199,9 @@ func TestAccMFADevicePolicy_SMS_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "authentication.device_selection", "DEFAULT_TO_FIRST"),
 					resource.TestCheckResourceAttr(resourceFullName, "ignore_user_lock", "false"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "notifications_policy.id"),
+					resource.TestCheckResourceAttr(resourceFullName, "remember_me.web.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "remember_me.web.life_time.duration", "30"),
+					resource.TestCheckResourceAttr(resourceFullName, "remember_me.web.life_time.time_unit", "MINUTES"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.pairing_disabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.otp.lifetime.duration", "30"),
@@ -241,6 +247,9 @@ func TestAccMFADevicePolicy_SMS_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "authentication.device_selection", "DEFAULT_TO_FIRST"),
 					resource.TestCheckResourceAttr(resourceFullName, "ignore_user_lock", "true"),
 					resource.TestMatchResourceAttr(resourceFullName, "notifications_policy.id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "remember_me.web.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "remember_me.web.life_time.duration", "60"),
+					resource.TestCheckResourceAttr(resourceFullName, "remember_me.web.life_time.time_unit", "MINUTES"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.pairing_disabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.otp.lifetime.duration", "75"),
@@ -1726,6 +1735,16 @@ resource "pingone_mfa_device_policy" "%[2]s" {
 
   notifications_policy = {
     id = pingone_notification_policy.%[2]s.id
+  }
+
+  remember_me = {
+    web = {
+      enabled = true
+      life_time = {
+        duration  = 60
+        time_unit = "MINUTES"
+      }
+    }
   }
 
   authentication = {
