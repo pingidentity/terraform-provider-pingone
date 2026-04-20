@@ -52,6 +52,7 @@ type MFADevicePolicyResourceModel struct {
 	Sms                   types.Object                 `tfsdk:"sms"`
 	Voice                 types.Object                 `tfsdk:"voice"`
 	Email                 types.Object                 `tfsdk:"email"`
+	WhatsApp              types.Object                 `tfsdk:"whats_app"`
 	Mobile                types.Object                 `tfsdk:"mobile"`
 	Totp                  types.Object                 `tfsdk:"totp"`
 	Fido2                 types.Object                 `tfsdk:"fido2"`
@@ -64,6 +65,7 @@ type MFADevicePolicyAuthenticationResourceModel struct {
 type MFADevicePolicySmsResourceModel MFADevicePolicyOfflineDeviceResourceModel
 type MFADevicePolicyVoiceResourceModel MFADevicePolicyOfflineDeviceResourceModel
 type MFADevicePolicyEmailResourceModel MFADevicePolicyOfflineDeviceResourceModel
+type MFADevicePolicyWhatsAppResourceModel MFADevicePolicyOfflineDeviceResourceModel
 
 type MFADevicePolicyTotpResourceModel struct {
 	Enabled                    types.Bool   `tfsdk:"enabled"`
@@ -674,6 +676,8 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 			"voice": r.devicePolicyOfflineDeviceSchemaAttribute("voice OTP"),
 
 			"email": r.devicePolicyOfflineDeviceSchemaAttribute("email OTP"),
+
+			"whats_app": r.devicePolicyOfflineDeviceSchemaAttributeOptional("WhatsApp OTP"),
 
 			"mobile": schema.SingleNestedAttribute{
 				Description:         mobileDescription.Description,
@@ -1396,6 +1400,55 @@ func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttribute(descr
 	}
 }
 
+func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttributeOptional(descriptionMethod string) schema.SingleNestedAttribute {
+
+	const otpFailureCountDefault = 3
+	const otpFailureCoolDownDurationDefault = 0
+	const otpLifetimeDurationDefault = 30
+	const otpOtpLengthDefault = 6
+
+	a := r.devicePolicyOfflineDeviceSchemaAttribute(descriptionMethod)
+	a.Required = false
+	a.Optional = true
+	a.Computed = true
+	a.Default = objectdefault.StaticValue(types.ObjectValueMust(
+		MFADevicePolicyOfflineDeviceTFObjectTypes,
+		map[string]attr.Value{
+			"enabled":          types.BoolValue(false),
+			"pairing_disabled": types.BoolValue(false),
+			"otp": types.ObjectValueMust(
+				MFADevicePolicyOfflineDeviceOtpTFObjectTypes,
+				map[string]attr.Value{
+					"failure": types.ObjectValueMust(
+						MFADevicePolicyFailureTFObjectTypes,
+						map[string]attr.Value{
+							"count": types.Int32Value(otpFailureCountDefault),
+							"cool_down": types.ObjectValueMust(
+								MFADevicePolicyTimePeriodTFObjectTypes,
+								map[string]attr.Value{
+									"duration":  types.Int32Value(otpFailureCoolDownDurationDefault),
+									"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
+								},
+							),
+						},
+					),
+					"lifetime": types.ObjectValueMust(
+						MFADevicePolicyTimePeriodTFObjectTypes,
+						map[string]attr.Value{
+							"duration":  types.Int32Value(otpLifetimeDurationDefault),
+							"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
+						},
+					),
+					"otp_length": types.Int32Value(otpOtpLengthDefault),
+				},
+			),
+			"prompt_for_nickname_on_pairing": types.BoolNull(),
+		},
+	))
+
+	return a
+}
+
 func (r *MFADevicePolicyResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	// Prevent panic if the provider has not been configured.
 	if req.ProviderData == nil {
@@ -1703,6 +1756,24 @@ func (p *MFADevicePolicyResourceModel) expand(ctx context.Context, apiClient *ma
 		return nil, diags
 	}
 
+	// WhatsApp
+	var whatsApp *mfa.DeviceAuthenticationPolicyOfflineDevice
+	if !p.WhatsApp.IsNull() && !p.WhatsApp.IsUnknown() {
+		var whatsAppPlan MFADevicePolicyWhatsAppResourceModel
+		diags.Append(p.WhatsApp.As(ctx, &whatsAppPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+		whatsApp, d = whatsAppPlan.expand(ctx)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+	}
+
 	// Mobile
 	var mobilePlan MFADevicePolicyMobileResourceModel
 	diags.Append(p.Mobile.As(ctx, &mobilePlan, basetypes.ObjectAsOptions{
@@ -1744,6 +1815,10 @@ func (p *MFADevicePolicyResourceModel) expand(ctx context.Context, apiClient *ma
 		false, // default
 		false, // forSignOnPolicy
 	)
+
+	if whatsApp != nil {
+		policy.SetWhatsapp(*whatsApp)
+	}
 
 	// FIDO2
 	if !p.Fido2.IsNull() && !p.Fido2.IsUnknown() {
@@ -1881,6 +1956,11 @@ func (p *MFADevicePolicyVoiceResourceModel) expand(ctx context.Context) (*mfa.De
 }
 
 func (p *MFADevicePolicyEmailResourceModel) expand(ctx context.Context) (*mfa.DeviceAuthenticationPolicyOfflineDevice, diag.Diagnostics) {
+	data := MFADevicePolicyOfflineDeviceResourceModel(*p)
+	return data.expand(ctx)
+}
+
+func (p *MFADevicePolicyWhatsAppResourceModel) expand(ctx context.Context) (*mfa.DeviceAuthenticationPolicyOfflineDevice, diag.Diagnostics) {
 	data := MFADevicePolicyOfflineDeviceResourceModel(*p)
 	return data.expand(ctx)
 }
@@ -2472,6 +2552,9 @@ func (p *MFADevicePolicyResourceModel) toState(apiObject *mfa.DeviceAuthenticati
 	p.Email, d = toStateMfaDevicePolicyEmail(apiObject.GetEmailOk())
 	diags.Append(d...)
 
+	p.WhatsApp, d = toStateMfaDevicePolicyWhatsApp(apiObject.GetWhatsappOk())
+	diags.Append(d...)
+
 	p.Mobile, d = toStateMfaDevicePolicyMobile(apiObject.GetMobileOk())
 	diags.Append(d...)
 
@@ -2649,6 +2732,10 @@ func toStateMfaDevicePolicyVoice(apiObject *mfa.DeviceAuthenticationPolicyOfflin
 }
 
 func toStateMfaDevicePolicyEmail(apiObject *mfa.DeviceAuthenticationPolicyOfflineDevice, ok bool) (types.Object, diag.Diagnostics) {
+	return toStateMfaDevicePolicyOfflineDevice(apiObject, ok)
+}
+
+func toStateMfaDevicePolicyWhatsApp(apiObject *mfa.DeviceAuthenticationPolicyOfflineDevice, ok bool) (types.Object, diag.Diagnostics) {
 	return toStateMfaDevicePolicyOfflineDevice(apiObject, ok)
 }
 

@@ -202,6 +202,7 @@ resource "pingone_mfa_device_policy" "my_awesome_mfa_device_policy" {
 - `new_device_notification` (String) A string that defines whether a user should be notified if a new authentication method has been added to their account.  Options are `EMAIL_THEN_SMS`, `NONE`, `SMS_THEN_EMAIL`.  Defaults to `NONE`.
 - `notifications_policy` (Attributes) A single object that specifies the notification policy to use for this MFA device policy. If not specified, the default notification policy for the environment will be used. (see [below for nested schema](#nestedatt--notifications_policy))
 - `remember_me` (Attributes) A single object that specifies 'remember me' settings so that users do not have to authenticate when accessing applications from a device they have used already. (see [below for nested schema](#nestedatt--remember_me))
+- `whats_app` (Attributes) A single object that allows configuration of WhatsApp OTP device authentication policy settings. (see [below for nested schema](#nestedatt--whats_app))
 
 ### Read-Only
 
@@ -633,6 +634,57 @@ Required:
 
 - `duration` (Number) An integer that, used in conjunction with `time_unit`, defines the 'remember me' period.
 - `time_unit` (String) A string that specifies the time unit to use for the 'remember me' period.  Options are `DAYS`, `HOURS`, `MINUTES`.
+
+
+
+
+<a id="nestedatt--whats_app"></a>
+### Nested Schema for `whats_app`
+
+Required:
+
+- `enabled` (Boolean) A boolean that specifies whether the WhatsApp OTP method is enabled or disabled in the policy.
+
+Optional:
+
+- `otp` (Attributes) A single object that allows configuration of WhatsApp OTP settings. (see [below for nested schema](#nestedatt--whats_app--otp))
+- `pairing_disabled` (Boolean) A boolean that, when set to `true`, prevents users from pairing new devices with the WhatsApp OTP method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.  Defaults to `false`.
+- `prompt_for_nickname_on_pairing` (Boolean) A boolean that, when set to `true`, prompts users to provide nicknames for devices during pairing.
+
+<a id="nestedatt--whats_app--otp"></a>
+### Nested Schema for `whats_app.otp`
+
+Optional:
+
+- `failure` (Attributes) A single object that allows configuration of WhatsApp OTP failure settings. (see [below for nested schema](#nestedatt--whats_app--otp--failure))
+- `lifetime` (Attributes) A single object that allows configuration of WhatsApp OTP lifetime settings. (see [below for nested schema](#nestedatt--whats_app--otp--lifetime))
+- `otp_length` (Number) An integer that specifies the length of the OTP that is shown to users.  Minimum length is `6` digits and maximum is `10` digits.  Defaults to `6`.
+
+<a id="nestedatt--whats_app--otp--failure"></a>
+### Nested Schema for `whats_app.otp.failure`
+
+Required:
+
+- `cool_down` (Attributes) A single object that allows configuration of WhatsApp OTP failure cool down settings. (see [below for nested schema](#nestedatt--whats_app--otp--failure--cool_down))
+- `count` (Number) An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked.
+
+<a id="nestedatt--whats_app--otp--failure--cool_down"></a>
+### Nested Schema for `whats_app.otp.failure.cool_down`
+
+Required:
+
+- `duration` (Number) An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures.
+- `time_unit` (String) A string that specifies the type of time unit for `duration`.  Options are `MINUTES`, `SECONDS`.
+
+
+
+<a id="nestedatt--whats_app--otp--lifetime"></a>
+### Nested Schema for `whats_app.otp.lifetime`
+
+Required:
+
+- `duration` (Number) An integer that defines the duration (number of time units) that the passcode is valid before it expires.
+- `time_unit` (String) A string that specifies the type of time unit for `duration`.  Options are `MINUTES`, `SECONDS`.
 
 ## Import
 
