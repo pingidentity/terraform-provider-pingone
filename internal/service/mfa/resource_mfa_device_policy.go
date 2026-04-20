@@ -326,6 +326,7 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 	const fido2FailureCoolDownDurationMinSeconds = fido2FailureCoolDownDurationMinMinutes * 60
 	const fido2FailureCoolDownDurationMaxSeconds = fido2FailureCoolDownDurationMaxMinutes * 60
 
+	const totpPasscodeGracePeriodDefault = 5
 	const totpPasscodeGracePeriodMin = 1
 	const totpPasscodeGracePeriodMax = 10
 
@@ -480,8 +481,8 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 	)
 
 	totpPasscodeGracePeriodDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"An integer that specifies the TOTP passcode grace period in 30-second windows. The minimum value is `1` and the maximum value is `10`.",
-	)
+		fmt.Sprintf("An integer that specifies the TOTP passcode grace period in 30-second windows. The minimum value is `%d` and the maximum value is `%d`.", totpPasscodeGracePeriodMin, totpPasscodeGracePeriodMax),
+	).DefaultValue(totpPasscodeGracePeriodDefault)
 
 	fido2PairingDisabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that, when set to `true`, prevents users from pairing new devices with the FIDO2 method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.",
@@ -1034,6 +1035,9 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 						Description:         totpPasscodeGracePeriodDescription.Description,
 						MarkdownDescription: totpPasscodeGracePeriodDescription.MarkdownDescription,
 						Optional:            true,
+						Computed:            true,
+
+						Default: int32default.StaticInt32(totpPasscodeGracePeriodDefault),
 
 						Validators: []validator.Int32{
 							int32validator.Between(totpPasscodeGracePeriodMin, totpPasscodeGracePeriodMax),
@@ -1243,10 +1247,13 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttribute(descriptionMethod string) schema.SingleNestedAttribute {
 
 	const otpFailureCountDefault = 3
+	const otpFailureCountMin = 1
+	const otpFailureCountMax = 7
+
 	const otpFailureCoolDownDurationDefault = 0
 	const otpLifetimeDurationDefault = 30
-	const otpOtpLengthDefault = 6
 
+	const otpOtpLengthDefault = 6
 	const otpOtpLengthMin = 6
 	const otpOtpLengthMax = 10
 
@@ -1265,6 +1272,10 @@ func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttribute(descr
 	promptForNicknameOnPairingDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that, when set to `true`, prompts users to provide nicknames for devices during pairing.",
 	)
+
+	otpFailureCountDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. Minimum is `%d` and maximum is `%d`.", otpFailureCountMin, otpFailureCountMax),
+	).DefaultValue(otpFailureCountDefault)
 
 	return schema.SingleNestedAttribute{
 		Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("A single object that allows configuration of %s device authentication policy settings.", descriptionMethod)).Description,
@@ -1346,8 +1357,13 @@ func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttribute(descr
 							},
 
 							"count": schema.Int32Attribute{
-								Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked.").Description,
-								Required:    true,
+								Description:         otpFailureCountDescription.Description,
+								MarkdownDescription: otpFailureCountDescription.MarkdownDescription,
+								Required:            true,
+
+								Validators: []validator.Int32{
+									int32validator.Between(otpFailureCountMin, otpFailureCountMax),
+								},
 							},
 						},
 					},
@@ -1756,24 +1772,6 @@ func (p *MFADevicePolicyResourceModel) expand(ctx context.Context, apiClient *ma
 		return nil, diags
 	}
 
-	// WhatsApp
-	var whatsApp *mfa.DeviceAuthenticationPolicyOfflineDevice
-	if !p.WhatsApp.IsNull() && !p.WhatsApp.IsUnknown() {
-		var whatsAppPlan MFADevicePolicyWhatsAppResourceModel
-		diags.Append(p.WhatsApp.As(ctx, &whatsAppPlan, basetypes.ObjectAsOptions{
-			UnhandledNullAsEmpty:    false,
-			UnhandledUnknownAsEmpty: false,
-		})...)
-		if diags.HasError() {
-			return nil, diags
-		}
-		whatsApp, d = whatsAppPlan.expand(ctx)
-		diags.Append(d...)
-		if diags.HasError() {
-			return nil, diags
-		}
-	}
-
 	// Mobile
 	var mobilePlan MFADevicePolicyMobileResourceModel
 	diags.Append(p.Mobile.As(ctx, &mobilePlan, basetypes.ObjectAsOptions{
@@ -1816,7 +1814,22 @@ func (p *MFADevicePolicyResourceModel) expand(ctx context.Context, apiClient *ma
 		false, // forSignOnPolicy
 	)
 
-	if whatsApp != nil {
+	// WhatsApp
+	if !p.WhatsApp.IsNull() && !p.WhatsApp.IsUnknown() {
+		var whatsAppPlan MFADevicePolicyWhatsAppResourceModel
+		diags.Append(p.WhatsApp.As(ctx, &whatsAppPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+		whatsApp, d := whatsAppPlan.expand(ctx)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
 		policy.SetWhatsapp(*whatsApp)
 	}
 
