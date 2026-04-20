@@ -337,6 +337,19 @@ var (
 				"visibility",
 			},
 		},
+		management.ENUMFORMFIELDTYPE_DEVICE_REGISTRATION: {
+			Required: []string{
+				"type",
+				"position",
+				"key",
+				"label",
+				"options",
+			},
+			Optional: []string{
+				"required",
+				"visibility",
+			},
+		},
 		management.ENUMFORMFIELDTYPE_DIVIDER: {
 			Required: []string{
 				"type",
@@ -619,6 +632,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 		management.ENUMFORMFIELDTYPE_DROPDOWN,
 		management.ENUMFORMFIELDTYPE_COMBOBOX,
 		management.ENUMFORMFIELDTYPE_DEVICE_AUTHENTICATION,
+		management.ENUMFORMFIELDTYPE_DEVICE_REGISTRATION,
 		management.ENUMFORMFIELDTYPE_DIVIDER,
 		management.ENUMFORMFIELDTYPE_EMPTY_FIELD,
 		management.ENUMFORMFIELDTYPE_SLATE_TEXTBLOB,
@@ -774,7 +788,9 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 	).AppendMarkdownString(
 		"For `DEVICE_AUTHENTICATION`, this is a list of devices available for authentication, which must not be empty.",
 	).AppendMarkdownString(
-		"For `DEVICE_AUTHENTICATION`, each option object supports `type`, `title`, optional `description`, and optional `icon_src`. For `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, and `RADIO`, each option object supports `label` and `value`.",
+		"For `DEVICE_REGISTRATION`, this is a list of devices available for registration, which must not be empty.",
+	).AppendMarkdownString(
+		"For `DEVICE_AUTHENTICATION` and `DEVICE_REGISTRATION`, each option object supports `type`, `title`, optional `description`, and optional `icon_src`. For `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, and `RADIO`, each option object supports `label` and `value`.",
 	)
 
 	componentsFieldsOptionsLabelDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -790,25 +806,36 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 	)
 
 	componentsFieldsOptionsTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Device type. Supported when the parent field `type` is `DEVICE_AUTHENTICATION`.",
-	).AllowedValuesEnum(management.AllowedEnumFormAuthenticationDeviceTypeEnumValues)
+		"Device type.",
+	).AppendMarkdownString(
+		"Supported when the parent field `type` is `DEVICE_AUTHENTICATION` or `DEVICE_REGISTRATION`.",
+	).AllowedValuesComplex(map[string]string{
+		string(management.ENUMFORMAUTHENTICATIONDEVICETYPE_EMAIL):      "available when the parent field `type` is `DEVICE_AUTHENTICATION` or `DEVICE_REGISTRATION`",
+		string(management.ENUMFORMAUTHENTICATIONDEVICETYPE_FIDO2):      "available when the parent field `type` is `DEVICE_AUTHENTICATION` or `DEVICE_REGISTRATION`",
+		string(management.ENUMFORMAUTHENTICATIONDEVICETYPE_MOBILE):     "available when the parent field `type` is `DEVICE_AUTHENTICATION` or `DEVICE_REGISTRATION`",
+		string(management.ENUMFORMAUTHENTICATIONDEVICETYPE_SMS):        "available when the parent field `type` is `DEVICE_AUTHENTICATION` or `DEVICE_REGISTRATION`",
+		string(management.ENUMFORMAUTHENTICATIONDEVICETYPE_TOTP):       "available when the parent field `type` is `DEVICE_AUTHENTICATION` or `DEVICE_REGISTRATION`",
+		string(management.ENUMFORMAUTHENTICATIONDEVICETYPE_VOICE):      "available when the parent field `type` is `DEVICE_AUTHENTICATION` or `DEVICE_REGISTRATION`",
+		string(management.ENUMFORMAUTHENTICATIONDEVICETYPE_WHATSAPP):   "available when the parent field `type` is `DEVICE_AUTHENTICATION` or `DEVICE_REGISTRATION`",
+		string(management.ENUMFORMAUTHENTICATIONDEVICETYPE_MAGIC_LINK): "available when the parent field `type` is `DEVICE_AUTHENTICATION`",
+	})
 
 	componentsFieldsOptionsTitleDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Title for the device.",
 	).AppendMarkdownString(
-		"Supported when the parent field `type` is `DEVICE_AUTHENTICATION`.",
+		"Supported when the parent field `type` is `DEVICE_AUTHENTICATION` or `DEVICE_REGISTRATION`.",
 	)
 
 	componentsFieldsOptionsDeviceDescriptionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Description for the device (Max 1000 characters).",
 	).AppendMarkdownString(
-		"Supported when the parent field `type` is `DEVICE_AUTHENTICATION`.",
+		"Supported when the parent field `type` is `DEVICE_AUTHENTICATION` or `DEVICE_REGISTRATION`.",
 	)
 
 	componentsFieldsOptionsIconSrcDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Icon image source to display for the device (Max 500 characters).",
 	).AppendMarkdownString(
-		"Supported when the parent field `type` is `DEVICE_AUTHENTICATION`.",
+		"Supported when the parent field `type` is `DEVICE_AUTHENTICATION` or `DEVICE_REGISTRATION`.",
 	)
 
 	componentsFieldsRequiredDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -1337,7 +1364,12 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 												MarkdownDescription: componentsFieldsOptionsTypeDescription.MarkdownDescription,
 												Optional:            true,
 												Validators: []validator.String{
-													stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumFormAuthenticationDeviceTypeEnumValues)...),
+													stringvalidator.OneOf(
+														append(
+															utils.EnumSliceToStringSlice(management.AllowedEnumFormAuthenticationDeviceTypeEnumValues),
+															utils.EnumSliceToStringSlice(management.AllowedEnumFormRegistrationDeviceTypeEnumValues)...,
+														)...,
+													),
 												},
 											},
 
@@ -1939,7 +1971,7 @@ func (r *FormResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRe
 		// required default
 		if field.Required.IsUnknown() {
 			switch field.Type.ValueString() {
-			case string(management.ENUMFORMFIELDTYPE_CHECKBOX), string(management.ENUMFORMFIELDTYPE_COMBOBOX), string(management.ENUMFORMFIELDTYPE_DROPDOWN), string(management.ENUMFORMFIELDTYPE_RADIO), string(management.ENUMFORMFIELDTYPE_PASSWORD), string(management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY), string(management.ENUMFORMFIELDTYPE_SINGLE_CHECKBOX), string(management.ENUMFORMFIELDTYPE_TEXT), string(management.ENUMFORMFIELDTYPE_DEVICE_AUTHENTICATION):
+			case string(management.ENUMFORMFIELDTYPE_CHECKBOX), string(management.ENUMFORMFIELDTYPE_COMBOBOX), string(management.ENUMFORMFIELDTYPE_DROPDOWN), string(management.ENUMFORMFIELDTYPE_RADIO), string(management.ENUMFORMFIELDTYPE_PASSWORD), string(management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY), string(management.ENUMFORMFIELDTYPE_SINGLE_CHECKBOX), string(management.ENUMFORMFIELDTYPE_TEXT), string(management.ENUMFORMFIELDTYPE_DEVICE_AUTHENTICATION), string(management.ENUMFORMFIELDTYPE_DEVICE_REGISTRATION):
 				field.Required = types.BoolValue(false)
 			default:
 				field.Required = types.BoolNull()
@@ -2374,6 +2406,7 @@ func (p *formResourceModel) validate(ctx context.Context, allowUnknowns bool) di
 				}
 
 				if field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_DEVICE_AUTHENTICATION))) ||
+					field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_DEVICE_REGISTRATION))) ||
 					field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_CHECKBOX))) ||
 					field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_COMBOBOX))) ||
 					field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_DROPDOWN))) ||
@@ -2396,7 +2429,8 @@ func (p *formResourceModel) validate(ctx context.Context, allowUnknowns bool) di
 						}
 
 						for optionIndex, option := range optionsPlan {
-							if field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_DEVICE_AUTHENTICATION))) {
+							if field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_DEVICE_AUTHENTICATION))) ||
+								field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_DEVICE_REGISTRATION))) {
 								if !option.Label.IsNull() && !option.Label.IsUnknown() {
 									diags.AddAttributeError(
 										path.Root("components").AtName("fields"),
@@ -2411,6 +2445,26 @@ func (p *formResourceModel) validate(ctx context.Context, allowUnknowns bool) di
 										"Invalid DaVinci form configuration",
 										fmt.Sprintf("The `options[%d].value` field is not supported for the `%s` field type.", optionIndex, field.Type.ValueString()),
 									)
+								}
+
+								if !option.Type.IsNull() && !option.Type.IsUnknown() {
+									if field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_DEVICE_AUTHENTICATION))) &&
+										!slices.Contains(utils.EnumSliceToStringSlice(management.AllowedEnumFormAuthenticationDeviceTypeEnumValues), option.Type.ValueString()) {
+										diags.AddAttributeError(
+											path.Root("components").AtName("fields"),
+											"Invalid DaVinci form configuration",
+											fmt.Sprintf("The `options[%d].type` field must be one of `%s` for the `%s` field type.", optionIndex, strings.Join(utils.EnumSliceToStringSlice(management.AllowedEnumFormAuthenticationDeviceTypeEnumValues), "`, `"), field.Type.ValueString()),
+										)
+									}
+
+									if field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_DEVICE_REGISTRATION))) &&
+										!slices.Contains(utils.EnumSliceToStringSlice(management.AllowedEnumFormRegistrationDeviceTypeEnumValues), option.Type.ValueString()) {
+										diags.AddAttributeError(
+											path.Root("components").AtName("fields"),
+											"Invalid DaVinci form configuration",
+											fmt.Sprintf("The `options[%d].type` field must be one of `%s` for the `%s` field type.", optionIndex, strings.Join(utils.EnumSliceToStringSlice(management.AllowedEnumFormRegistrationDeviceTypeEnumValues), "`, `"), field.Type.ValueString()),
+										)
+									}
 								}
 							} else {
 								if !option.Type.IsNull() && !option.Type.IsUnknown() {
@@ -2672,6 +2726,8 @@ func (p *formComponentsFieldResourceModel) expand(ctx context.Context) (*managem
 		data.FormFieldCombobox, d = p.expandFieldCombobox(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_DEVICE_AUTHENTICATION):
 		data.FormFieldDeviceAuthentication, d = p.expandFieldDeviceAuthentication(ctx, positionData)
+	case string(management.ENUMFORMFIELDTYPE_DEVICE_REGISTRATION):
+		data.FormFieldDeviceRegistration, d = p.expandFieldDeviceRegistration(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_DIVIDER):
 		data.FormFieldDivider, d = p.expandItemDivider(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_DROPDOWN):
@@ -3066,6 +3122,58 @@ func (p *formComponentsFieldResourceModel) expandFieldDeviceAuthentication(ctx c
 
 	data := management.NewFormFieldDeviceAuthentication(
 		management.ENUMFORMFIELDTYPE_DEVICE_AUTHENTICATION,
+		*positionData,
+		p.Key.ValueString(),
+		p.Label.ValueString(),
+		options,
+	)
+
+	if !p.Required.IsNull() && !p.Required.IsUnknown() {
+		data.SetRequired(p.Required.ValueBool())
+	}
+
+	if !p.Visibility.IsNull() && !p.Visibility.IsUnknown() {
+		var plan formComponentsFieldVisibilityResourceModel
+		diags.Append(p.Visibility.As(ctx, &plan, basetypes.ObjectAsOptions{})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetVisibility(*plan.expand())
+	}
+
+	return data, diags
+}
+
+func (p *formComponentsFieldResourceModel) expandFieldDeviceRegistration(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldDeviceRegistration, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var optionsPlan []formComponentsFieldElementOptionsResourceModel
+	diags.Append(p.Options.ElementsAs(ctx, &optionsPlan, false)...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	options := make([]management.RegistrationDevice, 0)
+	for _, v := range optionsPlan {
+		option := management.NewRegistrationDevice(
+			management.EnumFormRegistrationDeviceType(v.Type.ValueString()),
+			v.Title.ValueString(),
+		)
+
+		if !v.Description.IsNull() && !v.Description.IsUnknown() {
+			option.SetDescription(v.Description.ValueString())
+		}
+
+		if !v.IconSrc.IsNull() && !v.IconSrc.IsUnknown() {
+			option.SetIconSrc(v.IconSrc.ValueString())
+		}
+
+		options = append(options, *option)
+	}
+
+	data := management.NewFormFieldDeviceRegistration(
+		management.ENUMFORMFIELDTYPE_DEVICE_REGISTRATION,
 		*positionData,
 		p.Key.ValueString(),
 		p.Label.ValueString(),
@@ -4247,6 +4355,26 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 				"visibility": visibility,
 			}
 
+		case *management.FormFieldDeviceRegistration:
+			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
+			diags.Append(d...)
+
+			options, d := formComponentsFieldsRegistrationDeviceOptionsOkToTF(t.GetOptionsOk())
+			diags.Append(d...)
+
+			visibility, d := formComponentsFieldsVisibilityOkToTF(t.GetVisibilityOk())
+			diags.Append(d...)
+
+			attributeMap = map[string]attr.Value{
+				"key":        framework.StringOkToTF(t.GetKeyOk()),
+				"label":      framework.StringOkToTF(t.GetLabelOk()),
+				"options":    options,
+				"position":   position,
+				"required":   framework.BoolOkToTF(t.GetRequiredOk()),
+				"type":       framework.EnumOkToTF(t.GetTypeOk()),
+				"visibility": visibility,
+			}
+
 		case *management.FormFieldDivider:
 			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
 			diags.Append(d...)
@@ -4743,6 +4871,35 @@ func formComponentsFieldsElementOptionsOkToTF(apiObject []management.FormElement
 }
 
 func formComponentsFieldsAuthenticationDeviceOptionsOkToTF(apiObject []management.AuthenticationDevice, ok bool) (basetypes.SetValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	tfObjType := types.ObjectType{AttrTypes: formComponentsFieldsFieldElementOptionTFObjectTypes}
+
+	if !ok || apiObject == nil {
+		return types.SetNull(tfObjType), diags
+	}
+
+	objectAttrTypes := []attr.Value{}
+	for _, v := range apiObject {
+		objValue, d := types.ObjectValue(formComponentsFieldsFieldElementOptionTFObjectTypes, map[string]attr.Value{
+			"label":       types.StringNull(),
+			"value":       types.StringNull(),
+			"type":        framework.EnumOkToTF(v.GetTypeOk()),
+			"title":       framework.StringOkToTF(v.GetTitleOk()),
+			"description": framework.StringOkToTF(v.GetDescriptionOk()),
+			"icon_src":    framework.StringOkToTF(v.GetIconSrcOk()),
+		})
+		diags.Append(d...)
+
+		objectAttrTypes = append(objectAttrTypes, objValue)
+	}
+
+	returnVar, d := types.SetValue(tfObjType, objectAttrTypes)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func formComponentsFieldsRegistrationDeviceOptionsOkToTF(apiObject []management.RegistrationDevice, ok bool) (basetypes.SetValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	tfObjType := types.ObjectType{AttrTypes: formComponentsFieldsFieldElementOptionTFObjectTypes}
 
