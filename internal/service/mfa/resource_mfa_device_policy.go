@@ -68,6 +68,7 @@ type MFADevicePolicyEmailResourceModel MFADevicePolicyOfflineDeviceResourceModel
 type MFADevicePolicyTotpResourceModel struct {
 	Enabled                    types.Bool   `tfsdk:"enabled"`
 	Otp                        types.Object `tfsdk:"otp"`
+	PasscodeGracePeriod        types.Int32  `tfsdk:"passcode_grace_period"`
 	PairingDisabled            types.Bool   `tfsdk:"pairing_disabled"`
 	PromptForNicknameOnPairing types.Bool   `tfsdk:"prompt_for_nickname_on_pairing"`
 	UriParameters              types.Map    `tfsdk:"uri_parameters"`
@@ -256,6 +257,7 @@ var (
 	MFADevicePolicyTotpTFObjectTypes = map[string]attr.Type{
 		"enabled":                        types.BoolType,
 		"otp":                            types.ObjectType{AttrTypes: MFADevicePolicyTotpOtpTFObjectTypes},
+		"passcode_grace_period":          types.Int32Type,
 		"pairing_disabled":               types.BoolType,
 		"prompt_for_nickname_on_pairing": types.BoolType,
 		"uri_parameters":                 types.MapType{ElemType: types.StringType},
@@ -321,6 +323,9 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 	const fido2FailureCoolDownDurationMaxMinutes = 30
 	const fido2FailureCoolDownDurationMinSeconds = fido2FailureCoolDownDurationMinMinutes * 60
 	const fido2FailureCoolDownDurationMaxSeconds = fido2FailureCoolDownDurationMaxMinutes * 60
+
+	const totpPasscodeGracePeriodMin = 1
+	const totpPasscodeGracePeriodMax = 10
 
 	const rememberMeWebLifeTimeDurationDefault = 30
 	const rememberMeWebLifeTimeDurationMinMinutes = 1
@@ -470,6 +475,10 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 
 	totpUriParametersDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A map of string key:value pairs that specifies `otpauth` URI parameters. For example, if you provide a value for the `issuer` parameter, then authenticators that support that parameter will display the text you specify together with the OTP (in addition to the username). This can help users recognize which application the OTP is for. If you intend on using the same MFA policy for multiple applications, choose a name that reflects the group of applications.",
+	)
+
+	totpPasscodeGracePeriodDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that specifies the TOTP passcode grace period in 30-second windows. The minimum value is `1` and the maximum value is `10`.",
 	)
 
 	fido2PairingDisabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -1015,6 +1024,16 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 						Computed:            true,
 
 						Default: booldefault.StaticBool(false),
+					},
+
+					"passcode_grace_period": schema.Int32Attribute{
+						Description:         totpPasscodeGracePeriodDescription.Description,
+						MarkdownDescription: totpPasscodeGracePeriodDescription.MarkdownDescription,
+						Optional:            true,
+
+						Validators: []validator.Int32{
+							int32validator.Between(totpPasscodeGracePeriodMin, totpPasscodeGracePeriodMax),
+						},
 					},
 
 					"otp": schema.SingleNestedAttribute{
@@ -2336,6 +2355,10 @@ func (p *MFADevicePolicyTotpResourceModel) expand(ctx context.Context) (*mfa.Dev
 		data.SetPairingDisabled(p.PairingDisabled.ValueBool())
 	}
 
+	if !p.PasscodeGracePeriod.IsNull() && !p.PasscodeGracePeriod.IsUnknown() {
+		data.SetPasscodeGracePeriod(p.PasscodeGracePeriod.ValueInt32())
+	}
+
 	// Prompt for Nickname on Pairing
 	if !p.PromptForNicknameOnPairing.IsNull() && !p.PromptForNicknameOnPairing.IsUnknown() {
 		data.SetPromptForNicknameOnPairing(p.PromptForNicknameOnPairing.ValueBool())
@@ -3016,6 +3039,7 @@ func toStateMfaDevicePolicyTotp(apiObject *mfa.DeviceAuthenticationPolicyCommonT
 	o := map[string]attr.Value{
 		"enabled":                        framework.BoolOkToTF(apiObject.GetEnabledOk()),
 		"otp":                            otp,
+		"passcode_grace_period":          framework.Int32OkToTF(apiObject.GetPasscodeGracePeriodOk()),
 		"pairing_disabled":               framework.BoolOkToTF(apiObject.GetPairingDisabledOk()),
 		"prompt_for_nickname_on_pairing": framework.BoolOkToTF(apiObject.GetPromptForNicknameOnPairingOk()),
 		"uri_parameters":                 framework.StringMapOkToTF(apiObject.GetUriParametersOk()),

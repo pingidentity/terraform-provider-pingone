@@ -1121,6 +1121,7 @@ func TestAccMFADevicePolicy_Totp_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.pairing_disabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.passcode_grace_period", "5"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.count", "5"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.cool_down.duration", "125"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.cool_down.time_unit", "SECONDS"),
@@ -1180,6 +1181,7 @@ func TestAccMFADevicePolicy_Totp_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.pairing_disabled", "false"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "totp.passcode_grace_period"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.count", "3"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.cool_down.duration", "2"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.cool_down.time_unit", "MINUTES"),
@@ -1220,6 +1222,7 @@ func TestAccMFADevicePolicy_Totp_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.pairing_disabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.passcode_grace_period", "5"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.count", "5"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.cool_down.duration", "125"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.cool_down.time_unit", "SECONDS"),
@@ -1241,6 +1244,7 @@ func TestAccMFADevicePolicy_Totp_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.pairing_disabled", "false"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "totp.passcode_grace_period"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.count", "3"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.cool_down.duration", "2"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.cool_down.time_unit", "MINUTES"),
@@ -1259,6 +1263,7 @@ func TestAccMFADevicePolicy_Totp_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.pairing_disabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.passcode_grace_period", "5"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.count", "5"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.cool_down.duration", "125"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.cool_down.time_unit", "SECONDS"),
@@ -2952,8 +2957,9 @@ resource "pingone_mfa_device_policy" "%[2]s" {
   }
 
   totp = {
-    enabled          = true
-    pairing_disabled = true
+    enabled               = true
+    pairing_disabled      = true
+    passcode_grace_period = 5
 
     prompt_for_nickname_on_pairing = true
 
