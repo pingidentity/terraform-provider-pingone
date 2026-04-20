@@ -1,0 +1,7 @@
+```release-note:enhancement
+`resource/pingone_form`: Added support for `SINGLE_CHECKBOX` form field type, including new `appearance` and `error_message` attributes.
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.68.2 => v0.69.0
+```
