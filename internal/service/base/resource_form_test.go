@@ -1663,6 +1663,114 @@ func TestAccForm_ItemFlowLink(t *testing.T) {
 	})
 }
 
+func TestAccForm_ItemSocialLoginButton(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_form.%s", resourceName)
+
+	name := resourceName
+
+	fullStep := resource.TestStep{
+		Config: testAccFormConfig_ItemSocialLoginButtonFull(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.width", "50"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "SOCIAL_LOGIN_BUTTON"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "social-login-button-field"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.idp_name", "MyIdp"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.idp_type", "TWITTER"),
+			resource.TestMatchResourceAttr(resourceFullName, "components.fields.0.idp_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.idp_enabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.icon_src", "https://example.com/icon.png"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Continue with Twitter\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.width", "25"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.width_unit", "PERCENT"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.height", "36"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.padding.top", "10"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.padding.right", "12"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.padding.bottom", "14"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.padding.left", "16"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.alignment", "RIGHT"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.background_color", "#FF0000"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.text_color", "#00FF00"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.border_color", "#0000FF"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.display_default_theme_button_background_color", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.display_default_theme_button_border_color", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.display_default_theme_button_text_color", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.styles.enabled", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.visibility.type", "SHOW_BY_DEFAULT"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.visibility.key", "mykey"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
+		),
+	}
+
+	minimalStep := resource.TestStep{
+		Config: testAccFormConfig_ItemSocialLoginButtonMinimal(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "SOCIAL_LOGIN_BUTTON"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "social-login-button-field"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.idp_name", "MyIdp"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.idp_type", "TWITTER"),
+			resource.TestMatchResourceAttr(resourceFullName, "components.fields.0.idp_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.idp_enabled", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Continue with Twitter\"}]}]"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "components.fields.0.icon_src"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
+		),
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             base.Form_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			fullStep,
+			{
+				Config:  testAccFormConfig_ItemSocialLoginButtonFull(resourceName, name),
+				Destroy: true,
+			},
+			minimalStep,
+			{
+				Config:  testAccFormConfig_ItemSocialLoginButtonMinimal(resourceName, name),
+				Destroy: true,
+			},
+			fullStep,
+			minimalStep,
+			fullStep,
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					// This computed attribute may be affected by other tests. Just ignore it here since it's fully computed.
+					"language_bundle",
+				},
+			},
+		},
+	})
+}
+
 func TestAccForm_ItemQRCode(t *testing.T) {
 	t.Parallel()
 
@@ -4871,6 +4979,144 @@ resource "pingone_form" "%[2]s" {
         }
 
         label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Placeholder\"}]}]"
+      },
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 1
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccFormConfig_ItemSocialLoginButtonFull(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_identity_provider" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  twitter = {
+    client_id     = "dummyclientid1"
+    client_secret = "dummyclientsecret1"
+  }
+}
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = true
+  mark_optional = false
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "SOCIAL_LOGIN_BUTTON"
+
+        key = "social-login-button-field"
+
+        position = {
+          row   = 0
+          col   = 0
+          width = 50
+        }
+
+        idp_name = "MyIdp"
+        idp_type = "TWITTER"
+        idp_id   = pingone_identity_provider.%[2]s.id
+        icon_src = "https://example.com/icon.png"
+        label    = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Continue with Twitter\"}]}]"
+
+        styles = {
+          width      = 25
+          width_unit = "PERCENT"
+          height     = 36
+
+          padding = {
+            top    = 10
+            right  = 12
+            bottom = 14
+            left   = 16
+          }
+
+          alignment        = "RIGHT"
+          background_color = "#FF0000"
+          text_color       = "#00FF00"
+          border_color     = "#0000FF"
+          enabled          = true
+        }
+
+        visibility = {
+          type = "SHOW_BY_DEFAULT"
+          key  = "mykey"
+        }
+      },
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 1
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccFormConfig_ItemSocialLoginButtonMinimal(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_identity_provider" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  twitter = {
+    client_id     = "dummyclientid1"
+    client_secret = "dummyclientsecret1"
+  }
+}
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = true
+  mark_optional = false
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "SOCIAL_LOGIN_BUTTON"
+
+        key = "social-login-button-field"
+
+        position = {
+          row = 0
+          col = 0
+        }
+
+        idp_name = "MyIdp"
+        idp_type = "TWITTER"
+        idp_id   = pingone_identity_provider.%[2]s.id
+        label    = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Continue with Twitter\"}]}]"
       },
       {
         type = "SUBMIT_BUTTON"

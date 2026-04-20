@@ -1,0 +1,3 @@
+```release-note:enhancement
+`resource/pingone_form`: Added support for `SOCIAL_LOGIN_BUTTON` form field type, including new `icon_src`, `idp_id`, `idp_name`, `idp_type`,  and `idp_enabled` attributes.
+```
