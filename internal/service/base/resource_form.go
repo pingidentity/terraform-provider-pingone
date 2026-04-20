@@ -2355,50 +2355,52 @@ func (p *formResourceModel) validate(ctx context.Context, allowUnknowns bool) di
 				}
 
 				// Validate size value for QR_CODE, POLLING and RECAPTCHA_V2
-				if field.Type.ValueString() == string(management.ENUMFORMFIELDTYPE_QR_CODE) || field.Type.ValueString() == string(management.ENUMFORMFIELDTYPE_POLLING) {
+				if !field.Size.IsNull() && !field.Size.IsUnknown() {
 					sizeValue := field.Size.ValueString()
-					validSizes := utils.EnumSliceToStringSlice(management.AllowedEnumFormItemSizeEnumValues)
-					if !slices.Contains(validSizes, sizeValue) {
-						diags.AddAttributeError(
-							path.Root("components").AtName("fields"),
-							"Invalid DaVinci form configuration",
-							fmt.Sprintf("The `size` parameter must be set to one of [%s] for the `%s` field type.", strings.Join(validSizes, ", "), field.Type.ValueString()),
-						)
+					if field.Type.ValueString() == string(management.ENUMFORMFIELDTYPE_QR_CODE) || field.Type.ValueString() == string(management.ENUMFORMFIELDTYPE_POLLING) {
+						validSizes := utils.EnumSliceToStringSlice(management.AllowedEnumFormItemSizeEnumValues)
+						if !slices.Contains(validSizes, sizeValue) {
+							diags.AddAttributeError(
+								path.Root("components").AtName("fields"),
+								"Invalid DaVinci form configuration",
+								fmt.Sprintf("The `size` parameter must be set to one of [%s] for the `%s` field type.", strings.Join(validSizes, ", "), field.Type.ValueString()),
+							)
+						}
 					}
-				}
-				if field.Type.ValueString() == string(management.ENUMFORMFIELDTYPE_RECAPTCHA_V2) {
-					sizeValue := field.Size.ValueString()
-					validSizes := utils.EnumSliceToStringSlice(management.AllowedEnumFormRecaptchaV2SizeEnumValues)
-					if !slices.Contains(validSizes, sizeValue) {
-						diags.AddAttributeError(
-							path.Root("components").AtName("fields"),
-							"Invalid DaVinci form configuration",
-							fmt.Sprintf("The `size` parameter must be set to one of [%s] for the `%s` field type.", strings.Join(validSizes, ", "), field.Type.ValueString()),
-						)
+					if field.Type.ValueString() == string(management.ENUMFORMFIELDTYPE_RECAPTCHA_V2) {
+						validSizes := utils.EnumSliceToStringSlice(management.AllowedEnumFormRecaptchaV2SizeEnumValues)
+						if !slices.Contains(validSizes, sizeValue) {
+							diags.AddAttributeError(
+								path.Root("components").AtName("fields"),
+								"Invalid DaVinci form configuration",
+								fmt.Sprintf("The `size` parameter must be set to one of [%s] for the `%s` field type.", strings.Join(validSizes, ", "), field.Type.ValueString()),
+							)
+						}
 					}
 				}
 
 				// Validate input_type value for AGREEMENT and SINGLE_CHECKBOX
-				if field.Type.ValueString() == string(management.ENUMFORMFIELDTYPE_AGREEMENT) {
+				if !field.InputType.IsNull() && !field.InputType.IsUnknown() {
 					inputTypeValue := field.InputType.ValueString()
-					validInputTypes := utils.EnumSliceToStringSlice(management.AllowedEnumFormAgreementInputTypeEnumValues)
-					if !slices.Contains(validInputTypes, inputTypeValue) {
-						diags.AddAttributeError(
-							path.Root("components").AtName("fields"),
-							"Invalid DaVinci form configuration",
-							fmt.Sprintf("The `input_type` parameter must be set to one of [%s] for the `%s` field type.", strings.Join(validInputTypes, ", "), field.Type.ValueString()),
-						)
+					if field.Type.ValueString() == string(management.ENUMFORMFIELDTYPE_AGREEMENT) {
+						validInputTypes := utils.EnumSliceToStringSlice(management.AllowedEnumFormAgreementInputTypeEnumValues)
+						if !slices.Contains(validInputTypes, inputTypeValue) {
+							diags.AddAttributeError(
+								path.Root("components").AtName("fields"),
+								"Invalid DaVinci form configuration",
+								fmt.Sprintf("The `input_type` parameter must be set to one of [%s] for the `%s` field type.", strings.Join(validInputTypes, ", "), field.Type.ValueString()),
+							)
+						}
 					}
-				}
-				if field.Type.ValueString() == string(management.ENUMFORMFIELDTYPE_SINGLE_CHECKBOX) {
-					inputTypeValue := field.InputType.ValueString()
-					validInputTypes := utils.EnumSliceToStringSlice(management.AllowedEnumFormSingleCheckboxInputTypeEnumValues)
-					if !slices.Contains(validInputTypes, inputTypeValue) {
-						diags.AddAttributeError(
-							path.Root("components").AtName("fields"),
-							"Invalid DaVinci form configuration",
-							fmt.Sprintf("The `input_type` parameter must be set to one of [%s] for the `%s` field type.", strings.Join(validInputTypes, ", "), field.Type.ValueString()),
-						)
+					if field.Type.ValueString() == string(management.ENUMFORMFIELDTYPE_SINGLE_CHECKBOX) {
+						validInputTypes := utils.EnumSliceToStringSlice(management.AllowedEnumFormSingleCheckboxInputTypeEnumValues)
+						if !slices.Contains(validInputTypes, inputTypeValue) {
+							diags.AddAttributeError(
+								path.Root("components").AtName("fields"),
+								"Invalid DaVinci form configuration",
+								fmt.Sprintf("The `input_type` parameter must be set to one of [%s] for the `%s` field type.", strings.Join(validInputTypes, ", "), field.Type.ValueString()),
+							)
+						}
 					}
 				}
 			}
