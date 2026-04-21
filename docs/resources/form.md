@@ -246,7 +246,7 @@ Optional:
 - `country_code_label` (String) Optional when the `type` is one of `PHONE_NUMBER`.  Label for the country code field.
 - `default_country_code` (String) Optional when the `type` is one of `PHONE_NUMBER`.  The country code to default the country code selection field to (two character country code).
 - `error_message` (String) Optional when the `type` is one of `SINGLE_CHECKBOX`.  A string that specifies the message to display if validation fails.
-- `extension_label` (String) Optional when the `type` is one of `PHONE_NUMBER`.  Label for the extension field. This is required and must not be blank if showExtension is true.
+- `extension_label` (String) Optional when the `type` is one of `PHONE_NUMBER`.  Label for the extension field. This is required and must not be blank if `show_extension` is `true`.
 - `fallback_text` (String) Optional when the `type` is one of `QR_CODE`.  A string that specifies the text label for fallback under the QR code.
 - `icon` (Attributes) Optional when the `type` is one of `SLATE_TEXTBLOB`.  An object that specifies the icon. (see [below for nested schema](#nestedatt--components--fields--icon))
 - `icon_src` (String) Optional when the `type` is one of `SOCIAL_LOGIN_BUTTON`.  A string that specifies the icon image URL to be displayed on the button.

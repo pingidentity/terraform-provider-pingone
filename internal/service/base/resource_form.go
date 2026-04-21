@@ -883,7 +883,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 	componentsFieldsExtensionLabelDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		formFieldValidationDocumentation("extension_label"),
 	).AppendMarkdownString(
-		"Label for the extension field. This is required and must not be blank if showExtension is true.",
+		"Label for the extension field. This is required and must not be blank if `show_extension` is `true`.",
 	)
 
 	componentsFieldsValidationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
