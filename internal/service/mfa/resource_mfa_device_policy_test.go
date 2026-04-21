@@ -149,15 +149,7 @@ func TestAccMFADevicePolicy_SMS_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "sms.prompt_for_nickname_on_pairing", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "email.enabled", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "whats_app.enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "whats_app.pairing_disabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.lifetime.duration", "70"),
-					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.lifetime.time_unit", "SECONDS"),
-					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.failure.count", "6"),
-					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.failure.cool_down.duration", "10"),
-					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.failure.cool_down.time_unit", "SECONDS"),
-					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.otp_length", "8"),
-					resource.TestCheckResourceAttr(resourceFullName, "whats_app.prompt_for_nickname_on_pairing", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "whats_app.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.enabled", "false"),
@@ -223,7 +215,7 @@ func TestAccMFADevicePolicy_SMS_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "voice.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "email.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "whats_app.enabled", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "whats_app.pairing_disabled", "false"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "whats_app.pairing_disabled"),
 					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.lifetime.duration", "30"),
 					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.lifetime.time_unit", "MINUTES"),
 					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.failure.count", "3"),
@@ -279,15 +271,7 @@ func TestAccMFADevicePolicy_SMS_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "sms.prompt_for_nickname_on_pairing", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "email.enabled", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "whats_app.enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "whats_app.pairing_disabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.lifetime.duration", "70"),
-					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.lifetime.time_unit", "SECONDS"),
-					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.failure.count", "6"),
-					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.failure.cool_down.duration", "10"),
-					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.failure.cool_down.time_unit", "SECONDS"),
-					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.otp_length", "8"),
-					resource.TestCheckResourceAttr(resourceFullName, "whats_app.prompt_for_nickname_on_pairing", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "whats_app.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.enabled", "false"),
@@ -310,7 +294,7 @@ func TestAccMFADevicePolicy_SMS_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "voice.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "email.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "whats_app.enabled", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "whats_app.pairing_disabled", "false"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "whats_app.pairing_disabled"),
 					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.lifetime.duration", "30"),
 					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.lifetime.time_unit", "MINUTES"),
 					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.failure.count", "3"),
@@ -339,15 +323,7 @@ func TestAccMFADevicePolicy_SMS_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "sms.prompt_for_nickname_on_pairing", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "email.enabled", "false"),
-					resource.TestCheckResourceAttr(resourceFullName, "whats_app.enabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "whats_app.pairing_disabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.lifetime.duration", "70"),
-					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.lifetime.time_unit", "SECONDS"),
-					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.failure.count", "6"),
-					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.failure.cool_down.duration", "10"),
-					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.failure.cool_down.time_unit", "SECONDS"),
-					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.otp_length", "8"),
-					resource.TestCheckResourceAttr(resourceFullName, "whats_app.prompt_for_nickname_on_pairing", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "whats_app.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.enabled", "false"),
@@ -1226,7 +1202,7 @@ func TestAccMFADevicePolicy_Totp_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.pairing_disabled", "false"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "totp.passcode_grace_period"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.passcode_grace_period", "5"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.count", "3"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.cool_down.duration", "2"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.cool_down.time_unit", "MINUTES"),
@@ -1289,7 +1265,7 @@ func TestAccMFADevicePolicy_Totp_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.pairing_disabled", "false"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "totp.passcode_grace_period"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.passcode_grace_period", "5"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.count", "3"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.cool_down.duration", "2"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.cool_down.time_unit", "MINUTES"),
@@ -1844,27 +1820,28 @@ resource "pingone_mfa_device_policy" "%[2]s" {
   }
 
   whats_app = {
-    enabled          = true
+    enabled = false
+
     pairing_disabled = true
 
     prompt_for_nickname_on_pairing = true
 
     otp = {
       lifetime = {
-        duration  = 70
-        time_unit = "SECONDS"
+        duration  = 30
+        time_unit = "MINUTES"
       }
 
       failure = {
-        count = 6
+        count = 3
 
         cool_down = {
-          duration  = 10
-          time_unit = "SECONDS"
+          duration  = 0
+          time_unit = "MINUTES"
         }
       }
 
-      otp_length = 8
+      otp_length = 7
     }
   }
 

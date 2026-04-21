@@ -338,6 +338,15 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 	const rememberMeWebLifeTimeDurationMinDays = 1
 	const rememberMeWebLifeTimeDurationMaxDays = 90
 
+	const whatsAppOtpFailureCountDefault = 3
+	const whatsAppOtpFailureCountMin = 1
+	const whatsAppOtpFailureCountMax = 7
+	const whatsAppOtpFailureCoolDownDurationDefault = 0
+	const whatsAppOtpLifetimeDurationDefault = 30
+	const whatsAppOtpLengthDefault = 6
+	const whatsAppOtpLengthMin = 6
+	const whatsAppOtpLengthMax = 10
+
 	// schema descriptions and validation settings
 	deviceSelectionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that defines the device selection method.",
@@ -495,6 +504,26 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 	fido2FailureCoolDownDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("An integer that defines the length of time that the user is blocked after reaching the maximum number of failures. The minimum value is `%d` minutes and the maximum value is `%d` minutes.", fido2FailureCoolDownDurationMinMinutes, fido2FailureCoolDownDurationMaxMinutes),
 	).DefaultValue(fido2FailureCoolDownDurationDefault)
+
+	whatsAppDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that allows configuration of WhatsApp OTP device authentication policy settings. To set `enabled = true`, WhatsApp sender settings must already be configured in PingOne.",
+	)
+
+	whatsAppPairingDisabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that, when set to `true`, prevents users from pairing new devices with the WhatsApp OTP method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.",
+	)
+
+	whatsAppOtpFailureCountDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. Minimum is `%d` and maximum is `%d`.", whatsAppOtpFailureCountMin, whatsAppOtpFailureCountMax),
+	)
+
+	whatsAppOtpLengthDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that specifies the length of the OTP that is shown to users.  Minimum length is `%d` digits and maximum is `%d` digits.", whatsAppOtpLengthMin, whatsAppOtpLengthMax),
+	)
+
+	whatsAppOtpTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the type of time unit for `duration`.",
+	).AllowedValuesEnum(mfa.AllowedEnumTimeUnitEnumValues)
 
 	promptForNicknameOnPairingDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that, when set to `true`, prompts users to provide nicknames for devices during pairing.",
@@ -678,7 +707,146 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 
 			"email": r.devicePolicyOfflineDeviceSchemaAttribute("email OTP"),
 
-			"whats_app": r.devicePolicyOfflineDeviceSchemaAttributeOptional("WhatsApp OTP"),
+			"whats_app": schema.SingleNestedAttribute{
+				Description:         whatsAppDescription.Description,
+				MarkdownDescription: whatsAppDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+
+				Default: objectdefault.StaticValue(types.ObjectValueMust(
+					MFADevicePolicyOfflineDeviceTFObjectTypes,
+					map[string]attr.Value{
+						"enabled": types.BoolValue(false),
+						"otp": types.ObjectValueMust(
+							MFADevicePolicyOfflineDeviceOtpTFObjectTypes,
+							map[string]attr.Value{
+								"failure": types.ObjectValueMust(
+									MFADevicePolicyFailureTFObjectTypes,
+									map[string]attr.Value{
+										"count": types.Int32Value(whatsAppOtpFailureCountDefault),
+										"cool_down": types.ObjectValueMust(
+											MFADevicePolicyTimePeriodTFObjectTypes,
+											map[string]attr.Value{
+												"duration":  types.Int32Value(whatsAppOtpFailureCoolDownDurationDefault),
+												"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
+											},
+										),
+									},
+								),
+								"lifetime": types.ObjectValueMust(
+									MFADevicePolicyTimePeriodTFObjectTypes,
+									map[string]attr.Value{
+										"duration":  types.Int32Value(whatsAppOtpLifetimeDurationDefault),
+										"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
+									},
+								),
+								"otp_length": types.Int32Value(whatsAppOtpLengthDefault),
+							},
+						),
+						"pairing_disabled":               types.BoolNull(),
+						"prompt_for_nickname_on_pairing": types.BoolNull(),
+					},
+				)),
+
+				Attributes: map[string]schema.Attribute{
+					"enabled": schema.BoolAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the WhatsApp OTP method is enabled or disabled in the policy.").Description,
+						Required:    true,
+					},
+
+					"pairing_disabled": schema.BoolAttribute{
+						Description:         whatsAppPairingDisabledDescription.Description,
+						MarkdownDescription: whatsAppPairingDisabledDescription.MarkdownDescription,
+						Optional:            true,
+					},
+
+					"otp": schema.SingleNestedAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that allows configuration of WhatsApp OTP settings.").Description,
+						Required:    true,
+
+						Attributes: map[string]schema.Attribute{
+							"failure": schema.SingleNestedAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that allows configuration of WhatsApp OTP failure settings.").Description,
+								Required:    true,
+
+								Attributes: map[string]schema.Attribute{
+									"cool_down": schema.SingleNestedAttribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that allows configuration of WhatsApp OTP failure cool down settings.").Description,
+										Required:    true,
+
+										Attributes: map[string]schema.Attribute{
+											"duration": schema.Int32Attribute{
+												Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures.").Description,
+												Required:    true,
+											},
+
+											"time_unit": schema.StringAttribute{
+												Description:         whatsAppOtpTimeUnitDescription.Description,
+												MarkdownDescription: whatsAppOtpTimeUnitDescription.MarkdownDescription,
+												Required:            true,
+
+												Validators: []validator.String{
+													stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumTimeUnitEnumValues)...),
+												},
+											},
+										},
+									},
+
+									"count": schema.Int32Attribute{
+										Description:         whatsAppOtpFailureCountDescription.Description,
+										MarkdownDescription: whatsAppOtpFailureCountDescription.MarkdownDescription,
+										Required:            true,
+
+										Validators: []validator.Int32{
+											int32validator.Between(whatsAppOtpFailureCountMin, whatsAppOtpFailureCountMax),
+										},
+									},
+								},
+							},
+
+							"lifetime": schema.SingleNestedAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that allows configuration of WhatsApp OTP lifetime settings.").Description,
+								Required:    true,
+
+								Attributes: map[string]schema.Attribute{
+									"duration": schema.Int32Attribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the duration (number of time units) that the passcode is valid before it expires.").Description,
+										Required:    true,
+									},
+
+									"time_unit": schema.StringAttribute{
+										Description:         whatsAppOtpTimeUnitDescription.Description,
+										MarkdownDescription: whatsAppOtpTimeUnitDescription.MarkdownDescription,
+										Required:            true,
+
+										Validators: []validator.String{
+											stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumTimeUnitEnumValues)...),
+										},
+									},
+								},
+							},
+
+							"otp_length": schema.Int32Attribute{
+								Description:         whatsAppOtpLengthDescription.Description,
+								MarkdownDescription: whatsAppOtpLengthDescription.MarkdownDescription,
+								Optional:            true,
+								Computed:            true,
+
+								Default: int32default.StaticInt32(whatsAppOtpLengthDefault),
+								Validators: []validator.Int32{
+									int32validator.Between(whatsAppOtpLengthMin, whatsAppOtpLengthMax),
+								},
+							},
+						},
+					},
+
+					"prompt_for_nickname_on_pairing": schema.BoolAttribute{
+						Description:         promptForNicknameOnPairingDescription.Description,
+						MarkdownDescription: promptForNicknameOnPairingDescription.MarkdownDescription,
+						Optional:            true,
+					},
+				},
+			},
 
 			"mobile": schema.SingleNestedAttribute{
 				Description:         mobileDescription.Description,
@@ -1416,55 +1584,6 @@ func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttribute(descr
 	}
 }
 
-func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttributeOptional(descriptionMethod string) schema.SingleNestedAttribute {
-
-	const otpFailureCountDefault = 3
-	const otpFailureCoolDownDurationDefault = 0
-	const otpLifetimeDurationDefault = 30
-	const otpOtpLengthDefault = 6
-
-	a := r.devicePolicyOfflineDeviceSchemaAttribute(descriptionMethod)
-	a.Required = false
-	a.Optional = true
-	a.Computed = true
-	a.Default = objectdefault.StaticValue(types.ObjectValueMust(
-		MFADevicePolicyOfflineDeviceTFObjectTypes,
-		map[string]attr.Value{
-			"enabled":          types.BoolValue(false),
-			"pairing_disabled": types.BoolValue(false),
-			"otp": types.ObjectValueMust(
-				MFADevicePolicyOfflineDeviceOtpTFObjectTypes,
-				map[string]attr.Value{
-					"failure": types.ObjectValueMust(
-						MFADevicePolicyFailureTFObjectTypes,
-						map[string]attr.Value{
-							"count": types.Int32Value(otpFailureCountDefault),
-							"cool_down": types.ObjectValueMust(
-								MFADevicePolicyTimePeriodTFObjectTypes,
-								map[string]attr.Value{
-									"duration":  types.Int32Value(otpFailureCoolDownDurationDefault),
-									"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
-								},
-							),
-						},
-					),
-					"lifetime": types.ObjectValueMust(
-						MFADevicePolicyTimePeriodTFObjectTypes,
-						map[string]attr.Value{
-							"duration":  types.Int32Value(otpLifetimeDurationDefault),
-							"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
-						},
-					),
-					"otp_length": types.Int32Value(otpOtpLengthDefault),
-				},
-			),
-			"prompt_for_nickname_on_pairing": types.BoolNull(),
-		},
-	))
-
-	return a
-}
-
 func (r *MFADevicePolicyResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	// Prevent panic if the provider has not been configured.
 	if req.ProviderData == nil {
@@ -1830,7 +1949,7 @@ func (p *MFADevicePolicyResourceModel) expand(ctx context.Context, apiClient *ma
 			return nil, diags
 		}
 
-		policy.SetWhatsapp(*whatsApp)
+		policy.SetWhatsApp(*whatsApp)
 	}
 
 	// FIDO2
@@ -2565,7 +2684,7 @@ func (p *MFADevicePolicyResourceModel) toState(apiObject *mfa.DeviceAuthenticati
 	p.Email, d = toStateMfaDevicePolicyEmail(apiObject.GetEmailOk())
 	diags.Append(d...)
 
-	p.WhatsApp, d = toStateMfaDevicePolicyWhatsApp(apiObject.GetWhatsappOk())
+	p.WhatsApp, d = toStateMfaDevicePolicyWhatsApp(apiObject.GetWhatsAppOk())
 	diags.Append(d...)
 
 	p.Mobile, d = toStateMfaDevicePolicyMobile(apiObject.GetMobileOk())
