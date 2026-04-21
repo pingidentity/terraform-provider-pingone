@@ -1253,14 +1253,8 @@ func TestAccForm_FieldDeviceAuthentication(t *testing.T) {
 				"type":  "EMAIL",
 				"title": "Email",
 			}),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.0.options.*", map[string]string{
-				"type":  "SMS",
-				"title": "SMS",
-			}),
 			resource.TestCheckNoResourceAttr(resourceFullName, "components.fields.0.options.0.description"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "components.fields.0.options.0.icon_src"),
-			resource.TestCheckNoResourceAttr(resourceFullName, "components.fields.0.options.1.description"),
-			resource.TestCheckNoResourceAttr(resourceFullName, "components.fields.0.options.1.icon_src"),
 			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
 	}
@@ -1360,14 +1354,8 @@ func TestAccForm_FieldDeviceRegistration(t *testing.T) {
 				"type":  "EMAIL",
 				"title": "Email",
 			}),
-			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.0.options.*", map[string]string{
-				"type":  "SMS",
-				"title": "SMS",
-			}),
 			resource.TestCheckNoResourceAttr(resourceFullName, "components.fields.0.options.0.description"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "components.fields.0.options.0.icon_src"),
-			resource.TestCheckNoResourceAttr(resourceFullName, "components.fields.0.options.1.description"),
-			resource.TestCheckNoResourceAttr(resourceFullName, "components.fields.0.options.1.icon_src"),
 			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
 		),
 	}
@@ -3976,10 +3964,6 @@ resource "pingone_form" "%[2]s" {
             type  = "EMAIL"
             title = "Email"
           },
-          {
-            type  = "SMS"
-            title = "SMS"
-          }
         ]
       },
       {
@@ -4141,10 +4125,6 @@ resource "pingone_form" "%[2]s" {
             type  = "EMAIL"
             title = "Email"
           },
-          {
-            type  = "SMS"
-            title = "SMS"
-          }
         ]
       },
       {
