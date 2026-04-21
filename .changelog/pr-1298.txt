@@ -1,0 +1,7 @@
+```release-note:enhancement
+`resource/pingone_form`: Added support for `DEVICE_AUTHENTICATION` form field type, including new `options.description`, `options.icon_src`, `options.title`, and `options.type` attributes.
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.69.0 => v0.70.0
+```
