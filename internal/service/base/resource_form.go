@@ -770,23 +770,15 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 	componentsFieldsOptionsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		formFieldValidationDocumentation("options"),
 	).AppendMarkdownString(
-		"An array of objects that specifies the unique list of options.",
-	).AppendMarkdownString(
-		"For `DEVICE_AUTHENTICATION`, this is a list of devices available for authentication, which must not be empty.",
-	).AppendMarkdownString(
-		"For `DEVICE_AUTHENTICATION`, each option object supports `type`, `title`, optional `description`, and optional `icon_src`. For `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, and `RADIO`, each option object supports `label` and `value`.",
+		"An array of objects that specifies the unique list of options. For `DEVICE_AUTHENTICATION`, this is a list of devices available for authentication, which must not be empty, and each option object supports `type`, `title`, optional `description`, and optional `icon_src`. For `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, and `RADIO`, each option object supports `label` and `value`.",
 	)
 
 	componentsFieldsOptionsLabelDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies the option's label in the form field that is shown to the end user.",
-	).AppendMarkdownString(
-		"Supported when the parent field `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `RADIO`.",
+		"A string that specifies the option's label in the form field that is shown to the end user. Supported when the parent field `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `RADIO`.",
 	)
 
 	componentsFieldsOptionsValueDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies the option's value in the form field that is posted as form data.",
-	).AppendMarkdownString(
-		"Supported when the parent field `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `RADIO`.",
+		"A string that specifies the option's value in the form field that is posted as form data. Supported when the parent field `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `RADIO`.",
 	)
 
 	componentsFieldsOptionsTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -794,21 +786,15 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 	).AllowedValuesEnum(management.AllowedEnumFormAuthenticationDeviceTypeEnumValues)
 
 	componentsFieldsOptionsTitleDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Title for the device.",
-	).AppendMarkdownString(
-		"Supported when the parent field `type` is `DEVICE_AUTHENTICATION`.",
+		"Title for the device. Supported when the parent field `type` is `DEVICE_AUTHENTICATION`.",
 	)
 
 	componentsFieldsOptionsDeviceDescriptionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Description for the device (Max 1000 characters).",
-	).AppendMarkdownString(
-		"Supported when the parent field `type` is `DEVICE_AUTHENTICATION`.",
+		"Description for the device (Max 1000 characters). Supported when the parent field `type` is `DEVICE_AUTHENTICATION`.",
 	)
 
 	componentsFieldsOptionsIconSrcDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Icon image source to display for the device (Max 500 characters).",
-	).AppendMarkdownString(
-		"Supported when the parent field `type` is `DEVICE_AUTHENTICATION`.",
+		"Icon image source to display for the device (Max 500 characters). Supported when the parent field `type` is `DEVICE_AUTHENTICATION`.",
 	)
 
 	componentsFieldsRequiredDescription := framework.SchemaAttributeDescriptionFromMarkdown(

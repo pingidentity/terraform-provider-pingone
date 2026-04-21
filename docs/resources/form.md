@@ -256,7 +256,7 @@ Optional:
 - `label_mode` (String) Optional when the `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `PASSWORD`, `PASSWORD_VERIFY`, `RADIO`, `SINGLE_CHECKBOX`, `TEXT`.  A string that specifies how the field is rendered.  Options are `DEFAULT`, `FLOAT`.
 - `label_password_verify` (String) Optional when the `type` is one of `PASSWORD_VERIFY`.  A string that when a second field for verifies password is used, this property specifies the field label for that verify field.
 - `layout` (String) **Required** when the `type` is one of `CHECKBOX`, `RADIO`, optional when the `type` is one of `COMBOBOX`, `DROPDOWN`, `PASSWORD`, `PASSWORD_VERIFY`, `TEXT`.  A string that specifies layout attributes for radio button and checkbox fields.  Options are `HORIZONTAL`, `VERTICAL`.
-- `options` (Attributes Set) **Required** when the `type` is one of `CHECKBOX`, `COMBOBOX`, `DEVICE_AUTHENTICATION`, `DROPDOWN`, `RADIO`.  An array of objects that specifies the unique list of options.  For `DEVICE_AUTHENTICATION`, this is a list of devices available for authentication, which must not be empty.  For `DEVICE_AUTHENTICATION`, each option object supports `type`, `title`, optional `description`, and optional `icon_src`. For `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, and `RADIO`, each option object supports `label` and `value`. (see [below for nested schema](#nestedatt--components--fields--options))
+- `options` (Attributes Set) **Required** when the `type` is one of `CHECKBOX`, `COMBOBOX`, `DEVICE_AUTHENTICATION`, `DROPDOWN`, `RADIO`.  An array of objects that specifies the unique list of options. For `DEVICE_AUTHENTICATION`, this is a list of devices available for authentication, which must not be empty, and each option object supports `type`, `title`, optional `description`, and optional `icon_src`. For `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, and `RADIO`, each option object supports `label` and `value`. (see [below for nested schema](#nestedatt--components--fields--options))
 - `other_option_attribute_disabled` (Boolean) A boolean that specifies whether the other option is disabled.
 - `other_option_enabled` (Boolean) A boolean that specifies whether the end user can type an entry that is not in a predefined list.
 - `other_option_input_label` (String) A string that specifies the label placeholder text for the other option in drop-down controls.
@@ -313,12 +313,12 @@ Required:
 
 Optional:
 
-- `description` (String) Description for the device (Max 1000 characters).  Supported when the parent field `type` is `DEVICE_AUTHENTICATION`.
-- `icon_src` (String) Icon image source to display for the device (Max 500 characters).  Supported when the parent field `type` is `DEVICE_AUTHENTICATION`.
-- `label` (String) A string that specifies the option's label in the form field that is shown to the end user.  Supported when the parent field `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `RADIO`.
-- `title` (String) Title for the device.  Supported when the parent field `type` is `DEVICE_AUTHENTICATION`.
+- `description` (String) Description for the device (Max 1000 characters). Supported when the parent field `type` is `DEVICE_AUTHENTICATION`.
+- `icon_src` (String) Icon image source to display for the device (Max 500 characters). Supported when the parent field `type` is `DEVICE_AUTHENTICATION`.
+- `label` (String) A string that specifies the option's label in the form field that is shown to the end user. Supported when the parent field `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `RADIO`.
+- `title` (String) Title for the device. Supported when the parent field `type` is `DEVICE_AUTHENTICATION`.
 - `type` (String) Device type. Supported when the parent field `type` is `DEVICE_AUTHENTICATION`.  Options are `EMAIL`, `FIDO2`, `MAGIC_LINK`, `MOBILE`, `SMS`, `TOTP`, `VOICE`, `WHATSAPP`.
-- `value` (String) A string that specifies the option's value in the form field that is posted as form data.  Supported when the parent field `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `RADIO`.
+- `value` (String) A string that specifies the option's value in the form field that is posted as form data. Supported when the parent field `type` is one of `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, `RADIO`.
 
 
 <a id="nestedatt--components--fields--styles"></a>
