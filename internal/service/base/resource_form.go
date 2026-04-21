@@ -796,9 +796,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 	)
 
 	componentsFieldsOptionsTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Device type.",
-	).AppendMarkdownString(
-		"Supported when the parent field `type` is `DEVICE_AUTHENTICATION` or `DEVICE_REGISTRATION`.",
+		"Device type. Supported when the parent field `type` is `DEVICE_AUTHENTICATION` or `DEVICE_REGISTRATION`.",
 	).AllowedValuesComplex(map[string]string{
 		string(management.ENUMFORMAUTHENTICATIONDEVICETYPE_EMAIL):      "available when the parent field `type` is `DEVICE_AUTHENTICATION` or `DEVICE_REGISTRATION`",
 		string(management.ENUMFORMAUTHENTICATIONDEVICETYPE_FIDO2):      "available when the parent field `type` is `DEVICE_AUTHENTICATION` or `DEVICE_REGISTRATION`",
