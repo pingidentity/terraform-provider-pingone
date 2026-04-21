@@ -5,7 +5,6 @@ go 1.25.6
 tool (
 	github.com/bflad/tfproviderlint/cmd/tfproviderlintx
 	github.com/golangci/golangci-lint/v2/cmd/golangci-lint
-	github.com/hashicorp/go-changelog/cmd/changelog-build
 	github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
 	github.com/katbyte/terrafmt
 	github.com/pavius/impi/cmd/impi

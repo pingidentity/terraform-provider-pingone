@@ -67,7 +67,10 @@ type formComponentsFieldResourceModel struct {
 	Appearance                   types.String `tfsdk:"appearance"`
 	AttributeDisabled            types.Bool   `tfsdk:"attribute_disabled"`
 	Content                      types.String `tfsdk:"content"`
+	CountryCodeLabel             types.String `tfsdk:"country_code_label"`
+	DefaultCountryCode           types.String `tfsdk:"default_country_code"`
 	ErrorMessage                 types.String `tfsdk:"error_message"`
+	ExtensionLabel               types.String `tfsdk:"extension_label"`
 	FallbackText                 types.String `tfsdk:"fallback_text"`
 	IconSrc                      types.String `tfsdk:"icon_src"`
 	IdpEnabled                   types.Bool   `tfsdk:"idp_enabled"`
@@ -90,6 +93,7 @@ type formComponentsFieldResourceModel struct {
 	PollingAppearance            types.String `tfsdk:"polling_appearance"`
 	Position                     types.Object `tfsdk:"position"`
 	Required                     types.Bool   `tfsdk:"required"`
+	ShowExtension                types.Bool   `tfsdk:"show_extension"`
 	ShowPasswordRequirements     types.Bool   `tfsdk:"show_password_requirements"`
 	Size                         types.String `tfsdk:"size"`
 	Styles                       types.Object `tfsdk:"styles"`
@@ -97,6 +101,7 @@ type formComponentsFieldResourceModel struct {
 	TitleEnabled                 types.Bool   `tfsdk:"title_enabled"`
 	Trigger                      types.String `tfsdk:"trigger"`
 	Type                         types.String `tfsdk:"type"`
+	ValidatePhoneNumber          types.Bool   `tfsdk:"validate_phone_number"`
 	Validation                   types.Object `tfsdk:"validation"`
 	Visibility                   types.Object `tfsdk:"visibility"`
 }
@@ -181,7 +186,10 @@ var (
 		"appearance":                      types.StringType,
 		"attribute_disabled":              types.BoolType,
 		"content":                         types.StringType,
+		"country_code_label":              types.StringType,
+		"default_country_code":            types.StringType,
 		"error_message":                   types.StringType,
+		"extension_label":                 types.StringType,
 		"fallback_text":                   types.StringType,
 		"icon_src":                        types.StringType,
 		"idp_enabled":                     types.BoolType,
@@ -204,6 +212,7 @@ var (
 		"polling_appearance":              types.StringType,
 		"position":                        types.ObjectType{AttrTypes: formComponentsFieldsPositionTFObjectTypes},
 		"required":                        types.BoolType,
+		"show_extension":                  types.BoolType,
 		"show_password_requirements":      types.BoolType,
 		"size":                            types.StringType,
 		"styles":                          types.ObjectType{AttrTypes: formComponentsFieldsFieldStylesTFObjectTypes},
@@ -211,6 +220,7 @@ var (
 		"title_enabled":                   types.BoolType,
 		"trigger":                         types.StringType,
 		"type":                            types.StringType,
+		"validate_phone_number":           types.BoolType,
 		"validation":                      types.ObjectType{AttrTypes: formComponentsFieldsFieldElementValidationTFObjectTypes},
 		"visibility":                      types.ObjectType{AttrTypes: formComponentsFieldsVisibilityTFObjectTypes},
 	}
@@ -348,6 +358,25 @@ var (
 			Optional: []string{
 				"required",
 				"visibility",
+			},
+		},
+		management.ENUMFORMFIELDTYPE_PHONE_NUMBER: {
+			Required: []string{
+				"type",
+				"position",
+				"key",
+				"label",
+			},
+			Optional: []string{
+				"attribute_disabled",
+				"label_mode",
+				"required",
+				"visibility",
+				"default_country_code",
+				"country_code_label",
+				"validate_phone_number",
+				"show_extension",
+				"extension_label",
 			},
 		},
 		management.ENUMFORMFIELDTYPE_DIVIDER: {
@@ -633,6 +662,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 		management.ENUMFORMFIELDTYPE_COMBOBOX,
 		management.ENUMFORMFIELDTYPE_DEVICE_AUTHENTICATION,
 		management.ENUMFORMFIELDTYPE_DEVICE_REGISTRATION,
+		management.ENUMFORMFIELDTYPE_PHONE_NUMBER,
 		management.ENUMFORMFIELDTYPE_DIVIDER,
 		management.ENUMFORMFIELDTYPE_EMPTY_FIELD,
 		management.ENUMFORMFIELDTYPE_SLATE_TEXTBLOB,
@@ -842,6 +872,36 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 		formFieldValidationDocumentation("required"),
 	).AppendMarkdownString(
 		"A boolean that specifies whether the field is required.",
+	)
+
+	componentsFieldsDefaultCountryCodeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		formFieldValidationDocumentation("default_country_code"),
+	).AppendMarkdownString(
+		"The country code to default the country code selection field to (two character country code).",
+	)
+
+	componentsFieldsCountryCodeLabelDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		formFieldValidationDocumentation("country_code_label"),
+	).AppendMarkdownString(
+		"Label for the country code field.",
+	)
+
+	componentsFieldsValidatePhoneNumberDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		formFieldValidationDocumentation("validate_phone_number"),
+	).AppendMarkdownString(
+		"Whether to validate the phone number input.",
+	)
+
+	componentsFieldsShowExtensionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		formFieldValidationDocumentation("show_extension"),
+	).AppendMarkdownString(
+		"Whether to show an extension field.",
+	)
+
+	componentsFieldsExtensionLabelDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		formFieldValidationDocumentation("extension_label"),
+	).AppendMarkdownString(
+		"Label for the extension field. This is required and must not be blank if showExtension is true.",
 	)
 
 	componentsFieldsValidationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -1401,6 +1461,45 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 									Computed:            true,
 								},
 
+								"default_country_code": schema.StringAttribute{
+									Description:         componentsFieldsDefaultCountryCodeDescription.Description,
+									MarkdownDescription: componentsFieldsDefaultCountryCodeDescription.MarkdownDescription,
+									Optional:            true,
+								},
+
+								"country_code_label": schema.StringAttribute{
+									Description:         componentsFieldsCountryCodeLabelDescription.Description,
+									MarkdownDescription: componentsFieldsCountryCodeLabelDescription.MarkdownDescription,
+									Optional:            true,
+								},
+
+								"validate_phone_number": schema.BoolAttribute{
+									Description:         componentsFieldsValidatePhoneNumberDescription.Description,
+									MarkdownDescription: componentsFieldsValidatePhoneNumberDescription.MarkdownDescription,
+									Optional:            true,
+									Computed:            true,
+								},
+
+								"show_extension": schema.BoolAttribute{
+									Description:         componentsFieldsShowExtensionDescription.Description,
+									MarkdownDescription: componentsFieldsShowExtensionDescription.MarkdownDescription,
+									Optional:            true,
+									Computed:            true,
+								},
+
+								"extension_label": schema.StringAttribute{
+									Description:         componentsFieldsExtensionLabelDescription.Description,
+									MarkdownDescription: componentsFieldsExtensionLabelDescription.MarkdownDescription,
+									Optional:            true,
+
+									Validators: []validator.String{
+										stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+											types.BoolValue(true),
+											path.MatchRelative().AtParent().AtName("show_extension"),
+										),
+									},
+								},
+
 								"validation": schema.SingleNestedAttribute{
 									Description:         componentsFieldsValidationDescription.Description,
 									MarkdownDescription: componentsFieldsValidationDescription.MarkdownDescription,
@@ -1872,8 +1971,14 @@ func (r *formComponentsFieldResourceModel) validateFieldSet(field string) bool {
 		return !r.AttributeDisabled.IsNull()
 	case "content":
 		return !r.Content.IsNull()
+	case "country_code_label":
+		return !r.CountryCodeLabel.IsNull()
+	case "default_country_code":
+		return !r.DefaultCountryCode.IsNull()
 	case "error_message":
 		return !r.ErrorMessage.IsNull()
+	case "extension_label":
+		return !r.ExtensionLabel.IsNull()
 	case "fallback_text":
 		return !r.FallbackText.IsNull()
 	case "icon_src":
@@ -1918,6 +2023,8 @@ func (r *formComponentsFieldResourceModel) validateFieldSet(field string) bool {
 		return !r.Position.IsNull()
 	case "required":
 		return !r.Required.IsNull()
+	case "show_extension":
+		return !r.ShowExtension.IsNull()
 	case "show_password_requirements":
 		return !r.ShowPasswordRequirements.IsNull()
 	case "size":
@@ -1932,6 +2039,8 @@ func (r *formComponentsFieldResourceModel) validateFieldSet(field string) bool {
 		return !r.Trigger.IsNull()
 	case "type":
 		return !r.Type.IsNull()
+	case "validate_phone_number":
+		return !r.ValidatePhoneNumber.IsNull()
 	case "validation":
 		return !r.Validation.IsNull()
 	case "visibility":
@@ -1986,6 +2095,28 @@ func (r *FormResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRe
 				field.ShowPasswordRequirements = types.BoolValue(false)
 			default:
 				field.ShowPasswordRequirements = types.BoolNull()
+			}
+			modifiedPlan = true
+		}
+
+		// validate_phone_number default
+		if field.ValidatePhoneNumber.IsUnknown() {
+			switch field.Type.ValueString() {
+			case string(management.ENUMFORMFIELDTYPE_PHONE_NUMBER):
+				field.ValidatePhoneNumber = types.BoolValue(false)
+			default:
+				field.ValidatePhoneNumber = types.BoolNull()
+			}
+			modifiedPlan = true
+		}
+
+		// show_extension default
+		if field.ShowExtension.IsUnknown() {
+			switch field.Type.ValueString() {
+			case string(management.ENUMFORMFIELDTYPE_PHONE_NUMBER):
+				field.ShowExtension = types.BoolValue(false)
+			default:
+				field.ShowExtension = types.BoolNull()
 			}
 			modifiedPlan = true
 		}
@@ -2532,6 +2663,18 @@ func (p *formResourceModel) validate(ctx context.Context, allowUnknowns bool) di
 					}
 				}
 
+				if field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_PHONE_NUMBER))) {
+					if !field.ShowExtension.IsNull() && !field.ShowExtension.IsUnknown() && field.ShowExtension.ValueBool() {
+						if field.ExtensionLabel.IsNull() || field.ExtensionLabel.IsUnknown() || strings.TrimSpace(field.ExtensionLabel.ValueString()) == "" {
+							diags.AddAttributeError(
+								path.Root("components").AtName("fields"),
+								"Invalid DaVinci form configuration",
+								"The `extension_label` field is required for the `PHONE_NUMBER` field type when `show_extension` is true.",
+							)
+						}
+					}
+				}
+
 				// Validate if PASSWORD or PASSWORDVERIFY, the validation.type must be NONE
 				if field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_PASSWORD))) || field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY))) {
 					if field.Validation.IsUnknown() && !allowUnknowns {
@@ -2728,6 +2871,8 @@ func (p *formComponentsFieldResourceModel) expand(ctx context.Context) (*managem
 		data.FormFieldDeviceAuthentication, d = p.expandFieldDeviceAuthentication(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_DEVICE_REGISTRATION):
 		data.FormFieldDeviceRegistration, d = p.expandFieldDeviceRegistration(ctx, positionData)
+	case string(management.ENUMFORMFIELDTYPE_PHONE_NUMBER):
+		data.FormFieldPhoneNumber, d = p.expandFieldPhoneNumber(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_DIVIDER):
 		data.FormFieldDivider, d = p.expandItemDivider(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_DROPDOWN):
@@ -3658,6 +3803,61 @@ func (p *formComponentsFieldResourceModel) expandFieldSubmitButton(ctx context.C
 	return data, diags
 }
 
+func (p *formComponentsFieldResourceModel) expandFieldPhoneNumber(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldPhoneNumber, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := management.NewFormFieldPhoneNumber(
+		management.ENUMFORMFIELDTYPE_PHONE_NUMBER,
+		*positionData,
+		p.Key.ValueString(),
+		p.Label.ValueString(),
+	)
+
+	if !p.AttributeDisabled.IsNull() && !p.AttributeDisabled.IsUnknown() {
+		data.SetAttributeDisabled(p.AttributeDisabled.ValueBool())
+	}
+
+	if !p.LabelMode.IsNull() && !p.LabelMode.IsUnknown() {
+		data.SetLabelMode(management.EnumFormElementLabelMode(p.LabelMode.ValueString()))
+	}
+
+	if !p.Required.IsNull() && !p.Required.IsUnknown() {
+		data.SetRequired(p.Required.ValueBool())
+	}
+
+	if !p.DefaultCountryCode.IsNull() && !p.DefaultCountryCode.IsUnknown() {
+		data.SetDefaultCountryCode(p.DefaultCountryCode.ValueString())
+	}
+
+	if !p.CountryCodeLabel.IsNull() && !p.CountryCodeLabel.IsUnknown() {
+		data.SetCountryCodeLabel(p.CountryCodeLabel.ValueString())
+	}
+
+	if !p.ValidatePhoneNumber.IsNull() && !p.ValidatePhoneNumber.IsUnknown() {
+		data.SetValidatePhoneNumber(p.ValidatePhoneNumber.ValueBool())
+	}
+
+	if !p.ShowExtension.IsNull() && !p.ShowExtension.IsUnknown() {
+		data.SetShowExtension(p.ShowExtension.ValueBool())
+	}
+
+	if !p.ExtensionLabel.IsNull() && !p.ExtensionLabel.IsUnknown() {
+		data.SetExtensionLabel(p.ExtensionLabel.ValueString())
+	}
+
+	if !p.Visibility.IsNull() && !p.Visibility.IsUnknown() {
+		var visibilityPlan formComponentsFieldVisibilityResourceModel
+		diags.Append(p.Visibility.As(ctx, &visibilityPlan, basetypes.ObjectAsOptions{})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetVisibility(*visibilityPlan.expand())
+	}
+
+	return data, diags
+}
+
 func (p *formComponentsFieldResourceModel) expandFieldText(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldText, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -4375,6 +4575,29 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 				"visibility": visibility,
 			}
 
+		case *management.FormFieldPhoneNumber:
+			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
+			diags.Append(d...)
+
+			visibility, d := formComponentsFieldsVisibilityOkToTF(t.GetVisibilityOk())
+			diags.Append(d...)
+
+			attributeMap = map[string]attr.Value{
+				"attribute_disabled":    framework.BoolOkToTF(t.GetAttributeDisabledOk()),
+				"country_code_label":    framework.StringOkToTF(t.GetCountryCodeLabelOk()),
+				"default_country_code":  framework.StringOkToTF(t.GetDefaultCountryCodeOk()),
+				"extension_label":       framework.StringOkToTF(t.GetExtensionLabelOk()),
+				"key":                   framework.StringOkToTF(t.GetKeyOk()),
+				"label_mode":            framework.EnumOkToTF(t.GetLabelModeOk()),
+				"label":                 framework.StringOkToTF(t.GetLabelOk()),
+				"position":              position,
+				"required":              framework.BoolOkToTF(t.GetRequiredOk()),
+				"show_extension":        framework.BoolOkToTF(t.GetShowExtensionOk()),
+				"type":                  framework.EnumOkToTF(t.GetTypeOk()),
+				"validate_phone_number": framework.BoolOkToTF(t.GetValidatePhoneNumberOk()),
+				"visibility":            visibility,
+			}
+
 		case *management.FormFieldDivider:
 			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
 			diags.Append(d...)
@@ -4764,7 +4987,10 @@ func formComponentsFieldsConvertEmptyValuesToTFNulls(attributeMap map[string]att
 		"appearance":                      types.StringNull(),
 		"attribute_disabled":              types.BoolNull(),
 		"content":                         types.StringNull(),
+		"country_code_label":              types.StringNull(),
+		"default_country_code":            types.StringNull(),
 		"error_message":                   types.StringNull(),
+		"extension_label":                 types.StringNull(),
 		"fallback_text":                   types.StringNull(),
 		"icon_src":                        types.StringNull(),
 		"idp_enabled":                     types.BoolNull(),
@@ -4787,6 +5013,7 @@ func formComponentsFieldsConvertEmptyValuesToTFNulls(attributeMap map[string]att
 		"polling_appearance":              types.StringNull(),
 		"position":                        types.ObjectNull(formComponentsFieldsPositionTFObjectTypes),
 		"required":                        types.BoolNull(),
+		"show_extension":                  types.BoolNull(),
 		"show_password_requirements":      types.BoolNull(),
 		"size":                            types.StringNull(),
 		"styles":                          types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes),
@@ -4794,6 +5021,7 @@ func formComponentsFieldsConvertEmptyValuesToTFNulls(attributeMap map[string]att
 		"title_enabled":                   types.BoolNull(),
 		"trigger":                         types.StringNull(),
 		"type":                            types.StringNull(),
+		"validate_phone_number":           types.BoolNull(),
 		"validation":                      types.ObjectNull(formComponentsFieldsFieldElementValidationTFObjectTypes),
 		"visibility":                      types.ObjectNull(formComponentsFieldsVisibilityTFObjectTypes),
 	}
