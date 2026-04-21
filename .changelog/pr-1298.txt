@@ -3,5 +3,13 @@
 ```
 
 ```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2` v0.14.13 => v0.14.14
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.25.0 => v0.25.1
+```
+
+```release-note:note
 bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.69.0 => v0.70.0
 ```
