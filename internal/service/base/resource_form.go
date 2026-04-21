@@ -872,13 +872,13 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 		formFieldValidationDocumentation("validate_phone_number"),
 	).AppendMarkdownString(
 		"Whether to validate the phone number input.",
-	)
+	).DefaultValue(true)
 
 	componentsFieldsShowExtensionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		formFieldValidationDocumentation("show_extension"),
 	).AppendMarkdownString(
 		"Whether to show an extension field.",
-	)
+	).DefaultValue(false)
 
 	componentsFieldsExtensionLabelDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		formFieldValidationDocumentation("extension_label"),
@@ -2051,7 +2051,7 @@ func (r *FormResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRe
 		// attribute_disabled default
 		if field.AttributeDisabled.IsUnknown() {
 			switch field.Type.ValueString() {
-			case string(management.ENUMFORMFIELDTYPE_CHECKBOX), string(management.ENUMFORMFIELDTYPE_COMBOBOX), string(management.ENUMFORMFIELDTYPE_DROPDOWN), string(management.ENUMFORMFIELDTYPE_RADIO), string(management.ENUMFORMFIELDTYPE_PASSWORD), string(management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY), string(management.ENUMFORMFIELDTYPE_SINGLE_CHECKBOX), string(management.ENUMFORMFIELDTYPE_TEXT):
+			case string(management.ENUMFORMFIELDTYPE_CHECKBOX), string(management.ENUMFORMFIELDTYPE_COMBOBOX), string(management.ENUMFORMFIELDTYPE_DROPDOWN), string(management.ENUMFORMFIELDTYPE_RADIO), string(management.ENUMFORMFIELDTYPE_PASSWORD), string(management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY), string(management.ENUMFORMFIELDTYPE_SINGLE_CHECKBOX), string(management.ENUMFORMFIELDTYPE_TEXT), string(management.ENUMFORMFIELDTYPE_PHONE_NUMBER):
 				field.AttributeDisabled = types.BoolValue(false)
 			default:
 				field.AttributeDisabled = types.BoolNull()
@@ -2062,7 +2062,7 @@ func (r *FormResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRe
 		// required default
 		if field.Required.IsUnknown() {
 			switch field.Type.ValueString() {
-			case string(management.ENUMFORMFIELDTYPE_CHECKBOX), string(management.ENUMFORMFIELDTYPE_COMBOBOX), string(management.ENUMFORMFIELDTYPE_DROPDOWN), string(management.ENUMFORMFIELDTYPE_RADIO), string(management.ENUMFORMFIELDTYPE_PASSWORD), string(management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY), string(management.ENUMFORMFIELDTYPE_SINGLE_CHECKBOX), string(management.ENUMFORMFIELDTYPE_TEXT), string(management.ENUMFORMFIELDTYPE_DEVICE_AUTHENTICATION), string(management.ENUMFORMFIELDTYPE_DEVICE_REGISTRATION):
+			case string(management.ENUMFORMFIELDTYPE_CHECKBOX), string(management.ENUMFORMFIELDTYPE_COMBOBOX), string(management.ENUMFORMFIELDTYPE_DROPDOWN), string(management.ENUMFORMFIELDTYPE_RADIO), string(management.ENUMFORMFIELDTYPE_PASSWORD), string(management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY), string(management.ENUMFORMFIELDTYPE_SINGLE_CHECKBOX), string(management.ENUMFORMFIELDTYPE_TEXT), string(management.ENUMFORMFIELDTYPE_DEVICE_AUTHENTICATION), string(management.ENUMFORMFIELDTYPE_DEVICE_REGISTRATION), string(management.ENUMFORMFIELDTYPE_PHONE_NUMBER):
 				field.Required = types.BoolValue(false)
 			default:
 				field.Required = types.BoolNull()
@@ -2085,7 +2085,7 @@ func (r *FormResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRe
 		if field.ValidatePhoneNumber.IsUnknown() {
 			switch field.Type.ValueString() {
 			case string(management.ENUMFORMFIELDTYPE_PHONE_NUMBER):
-				field.ValidatePhoneNumber = types.BoolValue(false)
+				field.ValidatePhoneNumber = types.BoolValue(true)
 			default:
 				field.ValidatePhoneNumber = types.BoolNull()
 			}
@@ -2642,18 +2642,6 @@ func (p *formResourceModel) validate(ctx context.Context, allowUnknowns bool) di
 							"Invalid DaVinci form configuration",
 							fmt.Sprintf("The `required` parameter must be set to `true` for the `%s` field type when the `key` is a user field.", field.Type.ValueString()),
 						)
-					}
-				}
-
-				if field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_PHONE_NUMBER))) {
-					if !field.ShowExtension.IsNull() && !field.ShowExtension.IsUnknown() && field.ShowExtension.ValueBool() {
-						if field.ExtensionLabel.IsNull() || field.ExtensionLabel.IsUnknown() || strings.TrimSpace(field.ExtensionLabel.ValueString()) == "" {
-							diags.AddAttributeError(
-								path.Root("components").AtName("fields"),
-								"Invalid DaVinci form configuration",
-								"The `extension_label` field is required for the `PHONE_NUMBER` field type when `show_extension` is true.",
-							)
-						}
 					}
 				}
 

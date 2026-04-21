@@ -267,14 +267,14 @@ Optional:
 - `other_option_label` (String) A string that specifies the label for a custom or "other" choice in a list.
 - `polling_appearance` (String) **Required** when the `type` is one of `POLLING`.  A string that specifies the polling activity indicator appearance.  Options are `DOTS`, `NONE`, `SPINNER`.
 - `required` (Boolean) Optional when the `type` is one of `CHECKBOX`, `COMBOBOX`, `DEVICE_AUTHENTICATION`, `DEVICE_REGISTRATION`, `DROPDOWN`, `PASSWORD`, `PASSWORD_VERIFY`, `PHONE_NUMBER`, `RADIO`, `SINGLE_CHECKBOX`, `TEXT`.  A boolean that specifies whether the field is required.
-- `show_extension` (Boolean) Optional when the `type` is one of `PHONE_NUMBER`.  Whether to show an extension field.
+- `show_extension` (Boolean) Optional when the `type` is one of `PHONE_NUMBER`.  Whether to show an extension field.  Defaults to `false`.
 - `show_password_requirements` (Boolean) Optional when the `type` is one of `PASSWORD`, `PASSWORD_VERIFY`.  A boolean that specifies whether to display password requirements to the user.
 - `size` (String) **Required** when the `type` is one of `POLLING`, `QR_CODE`, `RECAPTCHA_V2`.  A string that specifies the reCAPTCHA size or the QR code/polling size. For reCAPTCHA fields, options are `NORMAL`, `COMPACT`. For QR code and polling fields, options are `SMALL`, `MEDIUM`, `LARGE`.
 - `styles` (Attributes) Optional when the `type` is one of `FLOW_BUTTON`, `FLOW_LINK`, `SOCIAL_LOGIN_BUTTON`, `SUBMIT_BUTTON`.  A single object that describes style settings for the field. (see [below for nested schema](#nestedatt--components--fields--styles))
 - `theme` (String) **Required** when the `type` is one of `RECAPTCHA_V2`.  A string that specifies the reCAPTCHA theme.  Options are `DARK`, `LIGHT`.
 - `title_enabled` (Boolean) **Required** when the `type` is one of `AGREEMENT`.  Specifies whether the title is enabled.
 - `trigger` (String) **Required** when the `type` is one of `FIDO2`.  A string that specifies the FIDO2 UI trigger type.  Options are `AUTOMATIC`, `BUTTON`.
-- `validate_phone_number` (Boolean) Optional when the `type` is one of `PHONE_NUMBER`.  Whether to validate the phone number input.
+- `validate_phone_number` (Boolean) Optional when the `type` is one of `PHONE_NUMBER`.  Whether to validate the phone number input.  Defaults to `true`.
 - `validation` (Attributes) **Required** when the `type` is one of `TEXT`, optional when the `type` is one of `PASSWORD`, `PASSWORD_VERIFY`.  An object containing validation data for the field. (see [below for nested schema](#nestedatt--components--fields--validation))
 - `visibility` (Attributes) An object that specifies the visibility settings for a form field. (see [below for nested schema](#nestedatt--components--fields--visibility))
 

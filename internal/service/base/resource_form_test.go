@@ -1422,7 +1422,7 @@ func TestAccForm_FieldPhoneNumber(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.width", "50"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "PHONE_NUMBER"),
-			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "user.phoneNumber"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "phone"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Phone number\"}]}]"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.default_country_code", "US"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.country_code_label", "Country code"),
@@ -1442,7 +1442,7 @@ func TestAccForm_FieldPhoneNumber(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "PHONE_NUMBER"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "phone-number-field"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Phone number\"}]}]"),
-			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.validate_phone_number", "false"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.validate_phone_number", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.show_extension", "false"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "components.fields.0.default_country_code"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "components.fields.0.country_code_label"),
@@ -1463,7 +1463,8 @@ func TestAccForm_FieldPhoneNumber(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccFormConfig_FieldPhoneNumberMissingExtensionLabel(resourceName, name),
-				ExpectError: regexp.MustCompile(`Invalid DaVinci form configuration`),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`extension_label is required because`),
 			},
 			fullStep,
 			{
@@ -4167,7 +4168,7 @@ resource "pingone_form" "%[2]s" {
           width = 50
         }
 
-        key                   = "user.phoneNumber"
+        key                   = "phone"
         label                 = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Phone number\"}]}]"
         attribute_disabled    = false
         label_mode            = "FLOAT"
