@@ -9,8 +9,8 @@ jobs:
     name: generate schema
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod'
       
@@ -29,7 +29,7 @@ jobs:
         continue-on-error: false
 
       - name: Install Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@v4
 
       - name: Generate Terraform Provider Documentation
         run: |
@@ -85,7 +85,7 @@ jobs:
       - name: Create PR
         id: create_pr
         if: steps.check_changes.outputs.CONTENT_CHANGED == 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         env:
           BRANCH_NAME: ${{ env.BRANCH_NAME }}
         with:
