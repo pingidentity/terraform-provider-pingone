@@ -1305,6 +1305,203 @@ func TestAccForm_FieldDeviceAuthentication(t *testing.T) {
 	})
 }
 
+func TestAccForm_FieldDeviceRegistration(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_form.%s", resourceName)
+
+	name := resourceName
+
+	fullStep := resource.TestStep{
+		Config: testAccFormConfig_FieldDeviceRegistrationFull(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.width", "50"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "DEVICE_REGISTRATION"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "device-registration-field"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Choose your registration device\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.required", "true"),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.0.options.*", map[string]string{
+				"type":        "EMAIL",
+				"title":       "Email",
+				"description": "Register using email",
+				"icon_src":    "https://example.com/icons/email.png",
+			}),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.0.options.*", map[string]string{
+				"type":        "SMS",
+				"title":       "SMS",
+				"description": "Register using SMS",
+				"icon_src":    "https://example.com/icons/sms.png",
+			}),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
+		),
+	}
+
+	minimalStep := resource.TestStep{
+		Config: testAccFormConfig_FieldDeviceRegistrationMinimal(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "DEVICE_REGISTRATION"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "device-registration-field"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Choose your registration device\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.required", "false"),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "components.fields.0.options.*", map[string]string{
+				"type":  "EMAIL",
+				"title": "Email",
+			}),
+			resource.TestCheckNoResourceAttr(resourceFullName, "components.fields.0.options.0.description"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "components.fields.0.options.0.icon_src"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
+		),
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             base.Form_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			fullStep,
+			{
+				Config:  testAccFormConfig_FieldDeviceRegistrationFull(resourceName, name),
+				Destroy: true,
+			},
+			minimalStep,
+			{
+				Config:  testAccFormConfig_FieldDeviceRegistrationMinimal(resourceName, name),
+				Destroy: true,
+			},
+			fullStep,
+			minimalStep,
+			fullStep,
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					// This computed attribute may be affected by other tests. Just ignore it here since it's fully computed.
+					"language_bundle",
+				},
+			},
+		},
+	})
+}
+
+func TestAccForm_FieldPhoneNumber(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_form.%s", resourceName)
+
+	name := resourceName
+
+	fullStep := resource.TestStep{
+		Config: testAccFormConfig_FieldPhoneNumberFull(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.width", "50"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "PHONE_NUMBER"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "phone"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Phone number\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.default_country_code", "US"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.country_code_label", "Country code"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.validate_phone_number", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.show_extension", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.extension_label", "Extension"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
+		),
+	}
+
+	minimalStep := resource.TestStep{
+		Config: testAccFormConfig_FieldPhoneNumberMinimal(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.#", "2"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.row", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.position.col", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.type", "PHONE_NUMBER"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.key", "phone-number-field"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.label", "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Phone number\"}]}]"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.validate_phone_number", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "components.fields.0.show_extension", "false"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "components.fields.0.default_country_code"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "components.fields.0.country_code_label"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "components.fields.0.extension_label"),
+			resource.TestCheckResourceAttr(resourceFullName, "language_bundle.%", "1"),
+		),
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             base.Form_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccFormConfig_FieldPhoneNumberMissingExtensionLabel(resourceName, name),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`extension_label is required because`),
+			},
+			fullStep,
+			{
+				Config:  testAccFormConfig_FieldPhoneNumberFull(resourceName, name),
+				Destroy: true,
+			},
+			minimalStep,
+			{
+				Config:  testAccFormConfig_FieldPhoneNumberMinimal(resourceName, name),
+				Destroy: true,
+			},
+			fullStep,
+			minimalStep,
+			fullStep,
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					// This computed attribute may be affected by other tests. Just ignore it here since it's fully computed.
+					"language_bundle",
+				},
+			},
+		},
+	})
+}
+
 func TestAccForm_ItemDivider(t *testing.T) {
 	t.Parallel()
 
@@ -3818,6 +4015,258 @@ resource "pingone_form" "%[2]s" {
             value = "option-1"
           }
         ]
+      },
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 1
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccFormConfig_FieldDeviceRegistrationFull(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = true
+  mark_optional = false
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "DEVICE_REGISTRATION"
+
+        position = {
+          row   = 0
+          col   = 0
+          width = 50
+        }
+
+        key      = "device-registration-field"
+        label    = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Choose your registration device\"}]}]"
+        required = true
+
+        options = [
+          {
+            type        = "EMAIL"
+            title       = "Email"
+            description = "Register using email"
+            icon_src    = "https://example.com/icons/email.png"
+          },
+          {
+            type        = "SMS"
+            title       = "SMS"
+            description = "Register using SMS"
+            icon_src    = "https://example.com/icons/sms.png"
+          }
+        ]
+
+        visibility = {
+          type = "ALWAYS_VISIBLE"
+        }
+      },
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 1
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccFormConfig_FieldDeviceRegistrationMinimal(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = true
+  mark_optional = false
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "DEVICE_REGISTRATION"
+
+        position = {
+          row = 0
+          col = 0
+        }
+
+        key   = "device-registration-field"
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Choose your registration device\"}]}]"
+
+        options = [
+          {
+            type  = "EMAIL"
+            title = "Email"
+          },
+        ]
+      },
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 1
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccFormConfig_FieldPhoneNumberFull(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = true
+  mark_optional = false
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "PHONE_NUMBER"
+
+        position = {
+          row   = 0
+          col   = 0
+          width = 50
+        }
+
+        key                   = "phone"
+        label                 = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Phone number\"}]}]"
+        attribute_disabled    = false
+        label_mode            = "FLOAT"
+        required              = true
+        default_country_code  = "US"
+        country_code_label    = "Country code"
+        validate_phone_number = true
+        show_extension        = true
+        extension_label       = "Extension"
+
+        visibility = {
+          type = "ALWAYS_VISIBLE"
+        }
+      },
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 1
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccFormConfig_FieldPhoneNumberMinimal(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = true
+  mark_optional = false
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "PHONE_NUMBER"
+
+        position = {
+          row = 0
+          col = 0
+        }
+
+        key   = "phone-number-field"
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Phone number\"}]}]"
+      },
+      {
+        type = "SUBMIT_BUTTON"
+
+        position = {
+          row = 1
+          col = 0
+        }
+
+        label = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"\"},{\"type\":\"i18n\",\"key\":\"button.text\",\"defaultTranslation\":\"Submit\",\"inline\":true,\"children\":[{\"text\":\"\"}]},{\"text\":\"\"}]}]"
+      }
+    ]
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccFormConfig_FieldPhoneNumberMissingExtensionLabel(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_form" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mark_required = true
+  mark_optional = false
+
+  cols = 4
+
+  components = {
+    fields = [
+      {
+        type = "PHONE_NUMBER"
+
+        position = {
+          row = 0
+          col = 0
+        }
+
+        key            = "phone-number-field"
+        label          = "[{\"type\":\"paragraph\",\"children\":[{\"text\":\"Phone number\"}]}]"
+        show_extension = true
       },
       {
         type = "SUBMIT_BUTTON"

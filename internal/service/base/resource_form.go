@@ -67,7 +67,10 @@ type formComponentsFieldResourceModel struct {
 	Appearance                   types.String `tfsdk:"appearance"`
 	AttributeDisabled            types.Bool   `tfsdk:"attribute_disabled"`
 	Content                      types.String `tfsdk:"content"`
+	CountryCodeLabel             types.String `tfsdk:"country_code_label"`
+	DefaultCountryCode           types.String `tfsdk:"default_country_code"`
 	ErrorMessage                 types.String `tfsdk:"error_message"`
+	ExtensionLabel               types.String `tfsdk:"extension_label"`
 	FallbackText                 types.String `tfsdk:"fallback_text"`
 	IconSrc                      types.String `tfsdk:"icon_src"`
 	IdpEnabled                   types.Bool   `tfsdk:"idp_enabled"`
@@ -90,6 +93,7 @@ type formComponentsFieldResourceModel struct {
 	PollingAppearance            types.String `tfsdk:"polling_appearance"`
 	Position                     types.Object `tfsdk:"position"`
 	Required                     types.Bool   `tfsdk:"required"`
+	ShowExtension                types.Bool   `tfsdk:"show_extension"`
 	ShowPasswordRequirements     types.Bool   `tfsdk:"show_password_requirements"`
 	Size                         types.String `tfsdk:"size"`
 	Styles                       types.Object `tfsdk:"styles"`
@@ -97,6 +101,7 @@ type formComponentsFieldResourceModel struct {
 	TitleEnabled                 types.Bool   `tfsdk:"title_enabled"`
 	Trigger                      types.String `tfsdk:"trigger"`
 	Type                         types.String `tfsdk:"type"`
+	ValidatePhoneNumber          types.Bool   `tfsdk:"validate_phone_number"`
 	Validation                   types.Object `tfsdk:"validation"`
 	Visibility                   types.Object `tfsdk:"visibility"`
 }
@@ -181,7 +186,10 @@ var (
 		"appearance":                      types.StringType,
 		"attribute_disabled":              types.BoolType,
 		"content":                         types.StringType,
+		"country_code_label":              types.StringType,
+		"default_country_code":            types.StringType,
 		"error_message":                   types.StringType,
+		"extension_label":                 types.StringType,
 		"fallback_text":                   types.StringType,
 		"icon_src":                        types.StringType,
 		"idp_enabled":                     types.BoolType,
@@ -204,6 +212,7 @@ var (
 		"polling_appearance":              types.StringType,
 		"position":                        types.ObjectType{AttrTypes: formComponentsFieldsPositionTFObjectTypes},
 		"required":                        types.BoolType,
+		"show_extension":                  types.BoolType,
 		"show_password_requirements":      types.BoolType,
 		"size":                            types.StringType,
 		"styles":                          types.ObjectType{AttrTypes: formComponentsFieldsFieldStylesTFObjectTypes},
@@ -211,6 +220,7 @@ var (
 		"title_enabled":                   types.BoolType,
 		"trigger":                         types.StringType,
 		"type":                            types.StringType,
+		"validate_phone_number":           types.BoolType,
 		"validation":                      types.ObjectType{AttrTypes: formComponentsFieldsFieldElementValidationTFObjectTypes},
 		"visibility":                      types.ObjectType{AttrTypes: formComponentsFieldsVisibilityTFObjectTypes},
 	}
@@ -335,6 +345,38 @@ var (
 			Optional: []string{
 				"required",
 				"visibility",
+			},
+		},
+		management.ENUMFORMFIELDTYPE_DEVICE_REGISTRATION: {
+			Required: []string{
+				"type",
+				"position",
+				"key",
+				"label",
+				"options",
+			},
+			Optional: []string{
+				"required",
+				"visibility",
+			},
+		},
+		management.ENUMFORMFIELDTYPE_PHONE_NUMBER: {
+			Required: []string{
+				"type",
+				"position",
+				"key",
+				"label",
+			},
+			Optional: []string{
+				"attribute_disabled",
+				"label_mode",
+				"required",
+				"visibility",
+				"default_country_code",
+				"country_code_label",
+				"validate_phone_number",
+				"show_extension",
+				"extension_label",
 			},
 		},
 		management.ENUMFORMFIELDTYPE_DIVIDER: {
@@ -619,6 +661,8 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 		management.ENUMFORMFIELDTYPE_DROPDOWN,
 		management.ENUMFORMFIELDTYPE_COMBOBOX,
 		management.ENUMFORMFIELDTYPE_DEVICE_AUTHENTICATION,
+		management.ENUMFORMFIELDTYPE_DEVICE_REGISTRATION,
+		management.ENUMFORMFIELDTYPE_PHONE_NUMBER,
 		management.ENUMFORMFIELDTYPE_DIVIDER,
 		management.ENUMFORMFIELDTYPE_EMPTY_FIELD,
 		management.ENUMFORMFIELDTYPE_SLATE_TEXTBLOB,
@@ -770,7 +814,7 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 	componentsFieldsOptionsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		formFieldValidationDocumentation("options"),
 	).AppendMarkdownString(
-		"An array of objects that specifies the unique list of options. For `DEVICE_AUTHENTICATION`, this is a list of devices available for authentication, which must not be empty, and each option object supports `type`, `title`, optional `description`, and optional `icon_src`. For `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, and `RADIO`, each option object supports `label` and `value`.",
+		"An array of objects that specifies the unique list of options. For `DEVICE_AUTHENTICATION` and `DEVICE_REGISTRATION`, this is a list of available devices, which must not be empty, and each option object supports `type`, `title`, optional `description`, and optional `icon_src`. For `CHECKBOX`, `COMBOBOX`, `DROPDOWN`, and `RADIO`, each option object supports `label` and `value`.",
 	)
 
 	componentsFieldsOptionsLabelDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -782,25 +826,64 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 	)
 
 	componentsFieldsOptionsTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Device type. Supported when the parent field `type` is `DEVICE_AUTHENTICATION`.",
-	).AllowedValuesEnum(management.AllowedEnumFormAuthenticationDeviceTypeEnumValues)
+		"Device type. Supported when the parent field `type` is `DEVICE_AUTHENTICATION` or `DEVICE_REGISTRATION`.",
+	).AllowedValuesComplex(map[string]string{
+		string(management.ENUMFORMAUTHENTICATIONDEVICETYPE_EMAIL):      "available when the parent field `type` is `DEVICE_AUTHENTICATION` or `DEVICE_REGISTRATION`",
+		string(management.ENUMFORMAUTHENTICATIONDEVICETYPE_FIDO2):      "available when the parent field `type` is `DEVICE_AUTHENTICATION` or `DEVICE_REGISTRATION`",
+		string(management.ENUMFORMAUTHENTICATIONDEVICETYPE_MOBILE):     "available when the parent field `type` is `DEVICE_AUTHENTICATION` or `DEVICE_REGISTRATION`",
+		string(management.ENUMFORMAUTHENTICATIONDEVICETYPE_SMS):        "available when the parent field `type` is `DEVICE_AUTHENTICATION` or `DEVICE_REGISTRATION`",
+		string(management.ENUMFORMAUTHENTICATIONDEVICETYPE_TOTP):       "available when the parent field `type` is `DEVICE_AUTHENTICATION` or `DEVICE_REGISTRATION`",
+		string(management.ENUMFORMAUTHENTICATIONDEVICETYPE_VOICE):      "available when the parent field `type` is `DEVICE_AUTHENTICATION` or `DEVICE_REGISTRATION`",
+		string(management.ENUMFORMAUTHENTICATIONDEVICETYPE_WHATSAPP):   "available when the parent field `type` is `DEVICE_AUTHENTICATION` or `DEVICE_REGISTRATION`",
+		string(management.ENUMFORMAUTHENTICATIONDEVICETYPE_MAGIC_LINK): "available when the parent field `type` is `DEVICE_AUTHENTICATION`",
+	})
 
 	componentsFieldsOptionsTitleDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Title for the device. Supported when the parent field `type` is `DEVICE_AUTHENTICATION`.",
+		"Title for the device. Supported when the parent field `type` is `DEVICE_AUTHENTICATION` or `DEVICE_REGISTRATION`.",
 	)
 
 	componentsFieldsOptionsDeviceDescriptionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Description for the device (Max 1000 characters). Supported when the parent field `type` is `DEVICE_AUTHENTICATION`.",
+		"Description for the device (Max 1000 characters). Supported when the parent field `type` is `DEVICE_AUTHENTICATION` or `DEVICE_REGISTRATION`.",
 	)
 
 	componentsFieldsOptionsIconSrcDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Icon image source to display for the device (Max 500 characters). Supported when the parent field `type` is `DEVICE_AUTHENTICATION`.",
+		"Icon image source to display for the device (Max 500 characters). Supported when the parent field `type` is `DEVICE_AUTHENTICATION` or `DEVICE_REGISTRATION`.",
 	)
 
 	componentsFieldsRequiredDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		formFieldValidationDocumentation("required"),
 	).AppendMarkdownString(
 		"A boolean that specifies whether the field is required.",
+	)
+
+	componentsFieldsDefaultCountryCodeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		formFieldValidationDocumentation("default_country_code"),
+	).AppendMarkdownString(
+		"The country code to default the country code selection field to (two character country code).",
+	)
+
+	componentsFieldsCountryCodeLabelDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		formFieldValidationDocumentation("country_code_label"),
+	).AppendMarkdownString(
+		"Label for the country code field.",
+	)
+
+	componentsFieldsValidatePhoneNumberDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		formFieldValidationDocumentation("validate_phone_number"),
+	).AppendMarkdownString(
+		"Whether to validate the phone number input.",
+	).DefaultValue(true)
+
+	componentsFieldsShowExtensionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		formFieldValidationDocumentation("show_extension"),
+	).AppendMarkdownString(
+		"Whether to show an extension field.",
+	).DefaultValue(false)
+
+	componentsFieldsExtensionLabelDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		formFieldValidationDocumentation("extension_label"),
+	).AppendMarkdownString(
+		"Label for the extension field. This is required and must not be blank if `show_extension` is `true`.",
 	)
 
 	componentsFieldsValidationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -1323,7 +1406,12 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 												MarkdownDescription: componentsFieldsOptionsTypeDescription.MarkdownDescription,
 												Optional:            true,
 												Validators: []validator.String{
-													stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumFormAuthenticationDeviceTypeEnumValues)...),
+													stringvalidator.OneOf(
+														append(
+															utils.EnumSliceToStringSlice(management.AllowedEnumFormAuthenticationDeviceTypeEnumValues),
+															utils.EnumSliceToStringSlice(management.AllowedEnumFormRegistrationDeviceTypeEnumValues)...,
+														)...,
+													),
 												},
 											},
 
@@ -1353,6 +1441,45 @@ func (r *FormResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 									MarkdownDescription: componentsFieldsRequiredDescription.MarkdownDescription,
 									Optional:            true,
 									Computed:            true,
+								},
+
+								"default_country_code": schema.StringAttribute{
+									Description:         componentsFieldsDefaultCountryCodeDescription.Description,
+									MarkdownDescription: componentsFieldsDefaultCountryCodeDescription.MarkdownDescription,
+									Optional:            true,
+								},
+
+								"country_code_label": schema.StringAttribute{
+									Description:         componentsFieldsCountryCodeLabelDescription.Description,
+									MarkdownDescription: componentsFieldsCountryCodeLabelDescription.MarkdownDescription,
+									Optional:            true,
+								},
+
+								"validate_phone_number": schema.BoolAttribute{
+									Description:         componentsFieldsValidatePhoneNumberDescription.Description,
+									MarkdownDescription: componentsFieldsValidatePhoneNumberDescription.MarkdownDescription,
+									Optional:            true,
+									Computed:            true,
+								},
+
+								"show_extension": schema.BoolAttribute{
+									Description:         componentsFieldsShowExtensionDescription.Description,
+									MarkdownDescription: componentsFieldsShowExtensionDescription.MarkdownDescription,
+									Optional:            true,
+									Computed:            true,
+								},
+
+								"extension_label": schema.StringAttribute{
+									Description:         componentsFieldsExtensionLabelDescription.Description,
+									MarkdownDescription: componentsFieldsExtensionLabelDescription.MarkdownDescription,
+									Optional:            true,
+
+									Validators: []validator.String{
+										stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+											types.BoolValue(true),
+											path.MatchRelative().AtParent().AtName("show_extension"),
+										),
+									},
 								},
 
 								"validation": schema.SingleNestedAttribute{
@@ -1826,8 +1953,14 @@ func (r *formComponentsFieldResourceModel) validateFieldSet(field string) bool {
 		return !r.AttributeDisabled.IsNull()
 	case "content":
 		return !r.Content.IsNull()
+	case "country_code_label":
+		return !r.CountryCodeLabel.IsNull()
+	case "default_country_code":
+		return !r.DefaultCountryCode.IsNull()
 	case "error_message":
 		return !r.ErrorMessage.IsNull()
+	case "extension_label":
+		return !r.ExtensionLabel.IsNull()
 	case "fallback_text":
 		return !r.FallbackText.IsNull()
 	case "icon_src":
@@ -1872,6 +2005,8 @@ func (r *formComponentsFieldResourceModel) validateFieldSet(field string) bool {
 		return !r.Position.IsNull()
 	case "required":
 		return !r.Required.IsNull()
+	case "show_extension":
+		return !r.ShowExtension.IsNull()
 	case "show_password_requirements":
 		return !r.ShowPasswordRequirements.IsNull()
 	case "size":
@@ -1886,6 +2021,8 @@ func (r *formComponentsFieldResourceModel) validateFieldSet(field string) bool {
 		return !r.Trigger.IsNull()
 	case "type":
 		return !r.Type.IsNull()
+	case "validate_phone_number":
+		return !r.ValidatePhoneNumber.IsNull()
 	case "validation":
 		return !r.Validation.IsNull()
 	case "visibility":
@@ -1914,7 +2051,7 @@ func (r *FormResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRe
 		// attribute_disabled default
 		if field.AttributeDisabled.IsUnknown() {
 			switch field.Type.ValueString() {
-			case string(management.ENUMFORMFIELDTYPE_CHECKBOX), string(management.ENUMFORMFIELDTYPE_COMBOBOX), string(management.ENUMFORMFIELDTYPE_DROPDOWN), string(management.ENUMFORMFIELDTYPE_RADIO), string(management.ENUMFORMFIELDTYPE_PASSWORD), string(management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY), string(management.ENUMFORMFIELDTYPE_SINGLE_CHECKBOX), string(management.ENUMFORMFIELDTYPE_TEXT):
+			case string(management.ENUMFORMFIELDTYPE_CHECKBOX), string(management.ENUMFORMFIELDTYPE_COMBOBOX), string(management.ENUMFORMFIELDTYPE_DROPDOWN), string(management.ENUMFORMFIELDTYPE_RADIO), string(management.ENUMFORMFIELDTYPE_PASSWORD), string(management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY), string(management.ENUMFORMFIELDTYPE_SINGLE_CHECKBOX), string(management.ENUMFORMFIELDTYPE_TEXT), string(management.ENUMFORMFIELDTYPE_PHONE_NUMBER):
 				field.AttributeDisabled = types.BoolValue(false)
 			default:
 				field.AttributeDisabled = types.BoolNull()
@@ -1925,7 +2062,7 @@ func (r *FormResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRe
 		// required default
 		if field.Required.IsUnknown() {
 			switch field.Type.ValueString() {
-			case string(management.ENUMFORMFIELDTYPE_CHECKBOX), string(management.ENUMFORMFIELDTYPE_COMBOBOX), string(management.ENUMFORMFIELDTYPE_DROPDOWN), string(management.ENUMFORMFIELDTYPE_RADIO), string(management.ENUMFORMFIELDTYPE_PASSWORD), string(management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY), string(management.ENUMFORMFIELDTYPE_SINGLE_CHECKBOX), string(management.ENUMFORMFIELDTYPE_TEXT), string(management.ENUMFORMFIELDTYPE_DEVICE_AUTHENTICATION):
+			case string(management.ENUMFORMFIELDTYPE_CHECKBOX), string(management.ENUMFORMFIELDTYPE_COMBOBOX), string(management.ENUMFORMFIELDTYPE_DROPDOWN), string(management.ENUMFORMFIELDTYPE_RADIO), string(management.ENUMFORMFIELDTYPE_PASSWORD), string(management.ENUMFORMFIELDTYPE_PASSWORD_VERIFY), string(management.ENUMFORMFIELDTYPE_SINGLE_CHECKBOX), string(management.ENUMFORMFIELDTYPE_TEXT), string(management.ENUMFORMFIELDTYPE_DEVICE_AUTHENTICATION), string(management.ENUMFORMFIELDTYPE_DEVICE_REGISTRATION), string(management.ENUMFORMFIELDTYPE_PHONE_NUMBER):
 				field.Required = types.BoolValue(false)
 			default:
 				field.Required = types.BoolNull()
@@ -1940,6 +2077,28 @@ func (r *FormResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRe
 				field.ShowPasswordRequirements = types.BoolValue(false)
 			default:
 				field.ShowPasswordRequirements = types.BoolNull()
+			}
+			modifiedPlan = true
+		}
+
+		// validate_phone_number default
+		if field.ValidatePhoneNumber.IsUnknown() {
+			switch field.Type.ValueString() {
+			case string(management.ENUMFORMFIELDTYPE_PHONE_NUMBER):
+				field.ValidatePhoneNumber = types.BoolValue(true)
+			default:
+				field.ValidatePhoneNumber = types.BoolNull()
+			}
+			modifiedPlan = true
+		}
+
+		// show_extension default
+		if field.ShowExtension.IsUnknown() {
+			switch field.Type.ValueString() {
+			case string(management.ENUMFORMFIELDTYPE_PHONE_NUMBER):
+				field.ShowExtension = types.BoolValue(false)
+			default:
+				field.ShowExtension = types.BoolNull()
 			}
 			modifiedPlan = true
 		}
@@ -2360,6 +2519,7 @@ func (p *formResourceModel) validate(ctx context.Context, allowUnknowns bool) di
 				}
 
 				if field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_DEVICE_AUTHENTICATION))) ||
+					field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_DEVICE_REGISTRATION))) ||
 					field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_CHECKBOX))) ||
 					field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_COMBOBOX))) ||
 					field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_DROPDOWN))) ||
@@ -2382,7 +2542,8 @@ func (p *formResourceModel) validate(ctx context.Context, allowUnknowns bool) di
 						}
 
 						for optionIndex, option := range optionsPlan {
-							if field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_DEVICE_AUTHENTICATION))) {
+							if field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_DEVICE_AUTHENTICATION))) ||
+								field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_DEVICE_REGISTRATION))) {
 								if !option.Label.IsNull() && !option.Label.IsUnknown() {
 									diags.AddAttributeError(
 										path.Root("components").AtName("fields"),
@@ -2397,6 +2558,26 @@ func (p *formResourceModel) validate(ctx context.Context, allowUnknowns bool) di
 										"Invalid DaVinci form configuration",
 										fmt.Sprintf("The `options[%d].value` field is not supported for the `%s` field type.", optionIndex, field.Type.ValueString()),
 									)
+								}
+
+								if !option.Type.IsNull() && !option.Type.IsUnknown() {
+									if field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_DEVICE_AUTHENTICATION))) &&
+										!slices.Contains(utils.EnumSliceToStringSlice(management.AllowedEnumFormAuthenticationDeviceTypeEnumValues), option.Type.ValueString()) {
+										diags.AddAttributeError(
+											path.Root("components").AtName("fields"),
+											"Invalid DaVinci form configuration",
+											fmt.Sprintf("The `options[%d].type` field must be one of `%s` for the `%s` field type.", optionIndex, strings.Join(utils.EnumSliceToStringSlice(management.AllowedEnumFormAuthenticationDeviceTypeEnumValues), "`, `"), field.Type.ValueString()),
+										)
+									}
+
+									if field.Type.Equal(types.StringValue(string(management.ENUMFORMFIELDTYPE_DEVICE_REGISTRATION))) &&
+										!slices.Contains(utils.EnumSliceToStringSlice(management.AllowedEnumFormRegistrationDeviceTypeEnumValues), option.Type.ValueString()) {
+										diags.AddAttributeError(
+											path.Root("components").AtName("fields"),
+											"Invalid DaVinci form configuration",
+											fmt.Sprintf("The `options[%d].type` field must be one of `%s` for the `%s` field type.", optionIndex, strings.Join(utils.EnumSliceToStringSlice(management.AllowedEnumFormRegistrationDeviceTypeEnumValues), "`, `"), field.Type.ValueString()),
+										)
+									}
 								}
 							} else {
 								if !option.Type.IsNull() && !option.Type.IsUnknown() {
@@ -2658,6 +2839,10 @@ func (p *formComponentsFieldResourceModel) expand(ctx context.Context) (*managem
 		data.FormFieldCombobox, d = p.expandFieldCombobox(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_DEVICE_AUTHENTICATION):
 		data.FormFieldDeviceAuthentication, d = p.expandFieldDeviceAuthentication(ctx, positionData)
+	case string(management.ENUMFORMFIELDTYPE_DEVICE_REGISTRATION):
+		data.FormFieldDeviceRegistration, d = p.expandFieldDeviceRegistration(ctx, positionData)
+	case string(management.ENUMFORMFIELDTYPE_PHONE_NUMBER):
+		data.FormFieldPhoneNumber, d = p.expandFieldPhoneNumber(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_DIVIDER):
 		data.FormFieldDivider, d = p.expandItemDivider(ctx, positionData)
 	case string(management.ENUMFORMFIELDTYPE_DROPDOWN):
@@ -3052,6 +3237,58 @@ func (p *formComponentsFieldResourceModel) expandFieldDeviceAuthentication(ctx c
 
 	data := management.NewFormFieldDeviceAuthentication(
 		management.ENUMFORMFIELDTYPE_DEVICE_AUTHENTICATION,
+		*positionData,
+		p.Key.ValueString(),
+		p.Label.ValueString(),
+		options,
+	)
+
+	if !p.Required.IsNull() && !p.Required.IsUnknown() {
+		data.SetRequired(p.Required.ValueBool())
+	}
+
+	if !p.Visibility.IsNull() && !p.Visibility.IsUnknown() {
+		var plan formComponentsFieldVisibilityResourceModel
+		diags.Append(p.Visibility.As(ctx, &plan, basetypes.ObjectAsOptions{})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetVisibility(*plan.expand())
+	}
+
+	return data, diags
+}
+
+func (p *formComponentsFieldResourceModel) expandFieldDeviceRegistration(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldDeviceRegistration, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	var optionsPlan []formComponentsFieldElementOptionsResourceModel
+	diags.Append(p.Options.ElementsAs(ctx, &optionsPlan, false)...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	options := make([]management.RegistrationDevice, 0)
+	for _, v := range optionsPlan {
+		option := management.NewRegistrationDevice(
+			management.EnumFormRegistrationDeviceType(v.Type.ValueString()),
+			v.Title.ValueString(),
+		)
+
+		if !v.Description.IsNull() && !v.Description.IsUnknown() {
+			option.SetDescription(v.Description.ValueString())
+		}
+
+		if !v.IconSrc.IsNull() && !v.IconSrc.IsUnknown() {
+			option.SetIconSrc(v.IconSrc.ValueString())
+		}
+
+		options = append(options, *option)
+	}
+
+	data := management.NewFormFieldDeviceRegistration(
+		management.ENUMFORMFIELDTYPE_DEVICE_REGISTRATION,
 		*positionData,
 		p.Key.ValueString(),
 		p.Label.ValueString(),
@@ -3531,6 +3768,61 @@ func (p *formComponentsFieldResourceModel) expandFieldSubmitButton(ctx context.C
 		}
 
 		data.SetVisibility(*plan.expand())
+	}
+
+	return data, diags
+}
+
+func (p *formComponentsFieldResourceModel) expandFieldPhoneNumber(ctx context.Context, positionData *management.FormFieldCommonPosition) (*management.FormFieldPhoneNumber, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	data := management.NewFormFieldPhoneNumber(
+		management.ENUMFORMFIELDTYPE_PHONE_NUMBER,
+		*positionData,
+		p.Key.ValueString(),
+		p.Label.ValueString(),
+	)
+
+	if !p.AttributeDisabled.IsNull() && !p.AttributeDisabled.IsUnknown() {
+		data.SetAttributeDisabled(p.AttributeDisabled.ValueBool())
+	}
+
+	if !p.LabelMode.IsNull() && !p.LabelMode.IsUnknown() {
+		data.SetLabelMode(management.EnumFormElementLabelMode(p.LabelMode.ValueString()))
+	}
+
+	if !p.Required.IsNull() && !p.Required.IsUnknown() {
+		data.SetRequired(p.Required.ValueBool())
+	}
+
+	if !p.DefaultCountryCode.IsNull() && !p.DefaultCountryCode.IsUnknown() {
+		data.SetDefaultCountryCode(p.DefaultCountryCode.ValueString())
+	}
+
+	if !p.CountryCodeLabel.IsNull() && !p.CountryCodeLabel.IsUnknown() {
+		data.SetCountryCodeLabel(p.CountryCodeLabel.ValueString())
+	}
+
+	if !p.ValidatePhoneNumber.IsNull() && !p.ValidatePhoneNumber.IsUnknown() {
+		data.SetValidatePhoneNumber(p.ValidatePhoneNumber.ValueBool())
+	}
+
+	if !p.ShowExtension.IsNull() && !p.ShowExtension.IsUnknown() {
+		data.SetShowExtension(p.ShowExtension.ValueBool())
+	}
+
+	if !p.ExtensionLabel.IsNull() && !p.ExtensionLabel.IsUnknown() {
+		data.SetExtensionLabel(p.ExtensionLabel.ValueString())
+	}
+
+	if !p.Visibility.IsNull() && !p.Visibility.IsUnknown() {
+		var visibilityPlan formComponentsFieldVisibilityResourceModel
+		diags.Append(p.Visibility.As(ctx, &visibilityPlan, basetypes.ObjectAsOptions{})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetVisibility(*visibilityPlan.expand())
 	}
 
 	return data, diags
@@ -4233,6 +4525,49 @@ func formComponentsFieldsOkToTF(apiObject []management.FormField, ok bool) (base
 				"visibility": visibility,
 			}
 
+		case *management.FormFieldDeviceRegistration:
+			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
+			diags.Append(d...)
+
+			options, d := formComponentsFieldsRegistrationDeviceOptionsOkToTF(t.GetOptionsOk())
+			diags.Append(d...)
+
+			visibility, d := formComponentsFieldsVisibilityOkToTF(t.GetVisibilityOk())
+			diags.Append(d...)
+
+			attributeMap = map[string]attr.Value{
+				"key":        framework.StringOkToTF(t.GetKeyOk()),
+				"label":      framework.StringOkToTF(t.GetLabelOk()),
+				"options":    options,
+				"position":   position,
+				"required":   framework.BoolOkToTF(t.GetRequiredOk()),
+				"type":       framework.EnumOkToTF(t.GetTypeOk()),
+				"visibility": visibility,
+			}
+
+		case *management.FormFieldPhoneNumber:
+			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
+			diags.Append(d...)
+
+			visibility, d := formComponentsFieldsVisibilityOkToTF(t.GetVisibilityOk())
+			diags.Append(d...)
+
+			attributeMap = map[string]attr.Value{
+				"attribute_disabled":    framework.BoolOkToTF(t.GetAttributeDisabledOk()),
+				"country_code_label":    framework.StringOkToTF(t.GetCountryCodeLabelOk()),
+				"default_country_code":  framework.StringOkToTF(t.GetDefaultCountryCodeOk()),
+				"extension_label":       framework.StringOkToTF(t.GetExtensionLabelOk()),
+				"key":                   framework.StringOkToTF(t.GetKeyOk()),
+				"label_mode":            framework.EnumOkToTF(t.GetLabelModeOk()),
+				"label":                 framework.StringOkToTF(t.GetLabelOk()),
+				"position":              position,
+				"required":              framework.BoolOkToTF(t.GetRequiredOk()),
+				"show_extension":        framework.BoolOkToTF(t.GetShowExtensionOk()),
+				"type":                  framework.EnumOkToTF(t.GetTypeOk()),
+				"validate_phone_number": framework.BoolOkToTF(t.GetValidatePhoneNumberOk()),
+				"visibility":            visibility,
+			}
+
 		case *management.FormFieldDivider:
 			position, d := formComponentsFieldsPositionOkToTF(t.GetPositionOk())
 			diags.Append(d...)
@@ -4622,7 +4957,10 @@ func formComponentsFieldsConvertEmptyValuesToTFNulls(attributeMap map[string]att
 		"appearance":                      types.StringNull(),
 		"attribute_disabled":              types.BoolNull(),
 		"content":                         types.StringNull(),
+		"country_code_label":              types.StringNull(),
+		"default_country_code":            types.StringNull(),
 		"error_message":                   types.StringNull(),
+		"extension_label":                 types.StringNull(),
 		"fallback_text":                   types.StringNull(),
 		"icon_src":                        types.StringNull(),
 		"idp_enabled":                     types.BoolNull(),
@@ -4645,6 +4983,7 @@ func formComponentsFieldsConvertEmptyValuesToTFNulls(attributeMap map[string]att
 		"polling_appearance":              types.StringNull(),
 		"position":                        types.ObjectNull(formComponentsFieldsPositionTFObjectTypes),
 		"required":                        types.BoolNull(),
+		"show_extension":                  types.BoolNull(),
 		"show_password_requirements":      types.BoolNull(),
 		"size":                            types.StringNull(),
 		"styles":                          types.ObjectNull(formComponentsFieldsFieldStylesTFObjectTypes),
@@ -4652,6 +4991,7 @@ func formComponentsFieldsConvertEmptyValuesToTFNulls(attributeMap map[string]att
 		"title_enabled":                   types.BoolNull(),
 		"trigger":                         types.StringNull(),
 		"type":                            types.StringNull(),
+		"validate_phone_number":           types.BoolNull(),
 		"validation":                      types.ObjectNull(formComponentsFieldsFieldElementValidationTFObjectTypes),
 		"visibility":                      types.ObjectNull(formComponentsFieldsVisibilityTFObjectTypes),
 	}
@@ -4729,6 +5069,35 @@ func formComponentsFieldsElementOptionsOkToTF(apiObject []management.FormElement
 }
 
 func formComponentsFieldsAuthenticationDeviceOptionsOkToTF(apiObject []management.AuthenticationDevice, ok bool) (basetypes.SetValue, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	tfObjType := types.ObjectType{AttrTypes: formComponentsFieldsFieldElementOptionTFObjectTypes}
+
+	if !ok || apiObject == nil {
+		return types.SetNull(tfObjType), diags
+	}
+
+	objectAttrTypes := []attr.Value{}
+	for _, v := range apiObject {
+		objValue, d := types.ObjectValue(formComponentsFieldsFieldElementOptionTFObjectTypes, map[string]attr.Value{
+			"label":       types.StringNull(),
+			"value":       types.StringNull(),
+			"type":        framework.EnumOkToTF(v.GetTypeOk()),
+			"title":       framework.StringOkToTF(v.GetTitleOk()),
+			"description": framework.StringOkToTF(v.GetDescriptionOk()),
+			"icon_src":    framework.StringOkToTF(v.GetIconSrcOk()),
+		})
+		diags.Append(d...)
+
+		objectAttrTypes = append(objectAttrTypes, objValue)
+	}
+
+	returnVar, d := types.SetValue(tfObjType, objectAttrTypes)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func formComponentsFieldsRegistrationDeviceOptionsOkToTF(apiObject []management.RegistrationDevice, ok bool) (basetypes.SetValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	tfObjType := types.ObjectType{AttrTypes: formComponentsFieldsFieldElementOptionTFObjectTypes}
 
