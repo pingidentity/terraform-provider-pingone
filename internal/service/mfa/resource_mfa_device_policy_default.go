@@ -94,6 +94,14 @@ type MFADevicePolicyDefaultMobileResourceModel struct {
 	PromptForNicknameOnPairing types.Bool   `tfsdk:"prompt_for_nickname_on_pairing"`
 }
 
+type MFADevicePolicyDefaultTotpResourceModel struct {
+	Enabled                    types.Bool   `tfsdk:"enabled"`
+	Otp                        types.Object `tfsdk:"otp"`
+	PairingDisabled            types.Bool   `tfsdk:"pairing_disabled"`
+	PromptForNicknameOnPairing types.Bool   `tfsdk:"prompt_for_nickname_on_pairing"`
+	UriParameters              types.Map    `tfsdk:"uri_parameters"`
+}
+
 type MFADevicePolicyDefaultMobileApplicationResourceModel struct {
 	AutoEnrolment                   types.Object `tfsdk:"auto_enrollment"`
 	BiometricsEnabled               types.Bool   `tfsdk:"biometrics_enabled"`
@@ -216,6 +224,14 @@ var (
 		"enabled":                        types.BoolType,
 		"otp":                            types.ObjectType{AttrTypes: MFADevicePolicyMobileOtpTFObjectTypes},
 		"prompt_for_nickname_on_pairing": types.BoolType,
+	}
+
+	MFADevicePolicyDefaultTotpTFObjectTypes = map[string]attr.Type{
+		"enabled":                        types.BoolType,
+		"otp":                            types.ObjectType{AttrTypes: MFADevicePolicyTotpOtpTFObjectTypes},
+		"pairing_disabled":               types.BoolType,
+		"prompt_for_nickname_on_pairing": types.BoolType,
+		"uri_parameters":                 types.MapType{ElemType: types.StringType},
 	}
 )
 
@@ -3436,7 +3452,7 @@ func (p *MFADevicePolicyDefaultResourceModel) expand(ctx context.Context) (mfa.D
 	}
 
 	// TOTP
-	var totpPlan MFADevicePolicyTotpResourceModel
+	var totpPlan MFADevicePolicyDefaultTotpResourceModel
 	diags.Append(p.Totp.As(ctx, &totpPlan, basetypes.ObjectAsOptions{
 		UnhandledNullAsEmpty:    false,
 		UnhandledUnknownAsEmpty: false,
@@ -3640,6 +3656,20 @@ func (p *MFADevicePolicyDefaultResourceModel) expand(ctx context.Context) (mfa.D
 	}
 
 	return *data, diags
+}
+
+func (p *MFADevicePolicyDefaultTotpResourceModel) expand(ctx context.Context) (*mfa.DeviceAuthenticationPolicyCommonTotp, diag.Diagnostics) {
+	// Keep default resource schema decoupled while reusing shared expansion behavior.
+	sharedTotpPlan := MFADevicePolicyTotpResourceModel{
+		Enabled:                    p.Enabled,
+		Otp:                        p.Otp,
+		PasscodeGracePeriod:        types.Int32Null(),
+		PairingDisabled:            p.PairingDisabled,
+		PromptForNicknameOnPairing: p.PromptForNicknameOnPairing,
+		UriParameters:              p.UriParameters,
+	}
+
+	return sharedTotpPlan.expand(ctx)
 }
 
 func (p *MFADevicePolicyDesktopResourceModel) expand(ctx context.Context) (*mfa.DeviceAuthenticationPolicyPingIDDevice, diag.Diagnostics) {
@@ -4120,7 +4150,7 @@ func (p *MFADevicePolicyDefaultResourceModel) toState(apiObject *mfa.DeviceAuthe
 	p.Mobile, d = toStateMfaDevicePolicyMobileForDefault(mobileApiObj, mobileOk, policyType)
 	diags.Append(d...)
 
-	p.Totp, d = toStateMfaDevicePolicyTotp(apiObject.GetTotpOk())
+	p.Totp, d = toStateMfaDevicePolicyTotpForDefault(apiObject.GetTotpOk())
 	diags.Append(d...)
 
 	p.OathToken, d = toStateMfaDevicePolicyOathToken(apiObject.GetOathTokenOk())
@@ -4144,6 +4174,33 @@ func (p *MFADevicePolicyDefaultResourceModel) toState(apiObject *mfa.DeviceAuthe
 	}
 
 	return diags
+}
+
+func toStateMfaDevicePolicyTotpForDefault(apiObject *mfa.DeviceAuthenticationPolicyCommonTotp, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(MFADevicePolicyDefaultTotpTFObjectTypes), nil
+	}
+
+	otp, d := toStateMfaDevicePolicyTotpOtp(apiObject.GetOtpOk())
+	diags.Append(d...)
+	if diags.HasError() {
+		return types.ObjectNull(MFADevicePolicyDefaultTotpTFObjectTypes), diags
+	}
+
+	o := map[string]attr.Value{
+		"enabled":                        framework.BoolOkToTF(apiObject.GetEnabledOk()),
+		"otp":                            otp,
+		"pairing_disabled":               framework.BoolOkToTF(apiObject.GetPairingDisabledOk()),
+		"prompt_for_nickname_on_pairing": framework.BoolOkToTF(apiObject.GetPromptForNicknameOnPairingOk()),
+		"uri_parameters":                 framework.StringMapOkToTF(apiObject.GetUriParametersOk()),
+	}
+
+	objValue, d := types.ObjectValue(MFADevicePolicyDefaultTotpTFObjectTypes, o)
+	diags.Append(d...)
+
+	return objValue, diags
 }
 
 func toStateMfaDevicePolicyPingIDDevice(apiObject *mfa.DeviceAuthenticationPolicyPingIDDevice, ok bool) (types.Object, diag.Diagnostics) {
