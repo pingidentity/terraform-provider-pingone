@@ -29,6 +29,7 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
+	int32validatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/int32validator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
@@ -44,10 +45,14 @@ type MFADevicePolicyResourceModel struct {
 	Name                  types.String                 `tfsdk:"name"`
 	Authentication        types.Object                 `tfsdk:"authentication"`
 	NewDeviceNotification types.String                 `tfsdk:"new_device_notification"`
+	IgnoreUserLock        types.Bool                   `tfsdk:"ignore_user_lock"`
+	NotificationsPolicy   types.Object                 `tfsdk:"notifications_policy"`
+	RememberMe            types.Object                 `tfsdk:"remember_me"`
 	Default               types.Bool                   `tfsdk:"default"`
 	Sms                   types.Object                 `tfsdk:"sms"`
 	Voice                 types.Object                 `tfsdk:"voice"`
 	Email                 types.Object                 `tfsdk:"email"`
+	WhatsApp              types.Object                 `tfsdk:"whats_app"`
 	Mobile                types.Object                 `tfsdk:"mobile"`
 	Totp                  types.Object                 `tfsdk:"totp"`
 	Fido2                 types.Object                 `tfsdk:"fido2"`
@@ -60,13 +65,28 @@ type MFADevicePolicyAuthenticationResourceModel struct {
 type MFADevicePolicySmsResourceModel MFADevicePolicyOfflineDeviceResourceModel
 type MFADevicePolicyVoiceResourceModel MFADevicePolicyOfflineDeviceResourceModel
 type MFADevicePolicyEmailResourceModel MFADevicePolicyOfflineDeviceResourceModel
+type MFADevicePolicyWhatsAppResourceModel MFADevicePolicyOfflineDeviceResourceModel
 
 type MFADevicePolicyTotpResourceModel struct {
 	Enabled                    types.Bool   `tfsdk:"enabled"`
 	Otp                        types.Object `tfsdk:"otp"`
+	PasscodeGracePeriod        types.Int32  `tfsdk:"passcode_grace_period"`
 	PairingDisabled            types.Bool   `tfsdk:"pairing_disabled"`
 	PromptForNicknameOnPairing types.Bool   `tfsdk:"prompt_for_nickname_on_pairing"`
 	UriParameters              types.Map    `tfsdk:"uri_parameters"`
+}
+
+type MFADevicePolicyNotificationsPolicyResourceModel struct {
+	Id types.String `tfsdk:"id"`
+}
+
+type MFADevicePolicyRememberMeResourceModel struct {
+	Web types.Object `tfsdk:"web"`
+}
+
+type MFADevicePolicyRememberMeWebResourceModel struct {
+	Enabled  types.Bool   `tfsdk:"enabled"`
+	LifeTime types.Object `tfsdk:"life_time"`
 }
 
 type MFADevicePolicyOfflineDeviceResourceModel struct {
@@ -137,7 +157,11 @@ type MFADevicePolicyMobileApplicationDeviceAuthorizationResourceModel struct {
 }
 
 type MFADevicePolicyMobileApplicationOtpResourceModel MFADevicePolicyEnabledResourceModel
-type MFADevicePolicyMobileApplicationPushResourceModel MFADevicePolicyEnabledResourceModel
+type MFADevicePolicyMobileApplicationPushResourceModel struct {
+	Enabled        types.Bool   `tfsdk:"enabled"`
+	NumberMatching types.Object `tfsdk:"number_matching"`
+}
+type MFADevicePolicyMobileApplicationPushNumberMatchingResourceModel MFADevicePolicyEnabledResourceModel
 type MFADevicePolicyEnabledResourceModel struct {
 	Enabled types.Bool `tfsdk:"enabled"`
 }
@@ -209,6 +233,11 @@ var (
 	}
 
 	MFADevicePolicyMobileApplicationPushTFObjectTypes = map[string]attr.Type{
+		"enabled":         types.BoolType,
+		"number_matching": types.ObjectType{AttrTypes: MFADevicePolicyMobileApplicationPushNumberMatchingTFObjectTypes},
+	}
+
+	MFADevicePolicyMobileApplicationPushNumberMatchingTFObjectTypes = map[string]attr.Type{
 		"enabled": types.BoolType,
 	}
 
@@ -230,6 +259,7 @@ var (
 	MFADevicePolicyTotpTFObjectTypes = map[string]attr.Type{
 		"enabled":                        types.BoolType,
 		"otp":                            types.ObjectType{AttrTypes: MFADevicePolicyTotpOtpTFObjectTypes},
+		"passcode_grace_period":          types.Int32Type,
 		"pairing_disabled":               types.BoolType,
 		"prompt_for_nickname_on_pairing": types.BoolType,
 		"uri_parameters":                 types.MapType{ElemType: types.StringType},
@@ -296,6 +326,27 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 	const fido2FailureCoolDownDurationMinSeconds = fido2FailureCoolDownDurationMinMinutes * 60
 	const fido2FailureCoolDownDurationMaxSeconds = fido2FailureCoolDownDurationMaxMinutes * 60
 
+	const totpPasscodeGracePeriodDefault = 5
+	const totpPasscodeGracePeriodMin = 1
+	const totpPasscodeGracePeriodMax = 10
+
+	const rememberMeWebLifeTimeDurationDefault = 30
+	const rememberMeWebLifeTimeDurationMinMinutes = 1
+	const rememberMeWebLifeTimeDurationMaxMinutes = 129600
+	const rememberMeWebLifeTimeDurationMinHours = 1
+	const rememberMeWebLifeTimeDurationMaxHours = 2160
+	const rememberMeWebLifeTimeDurationMinDays = 1
+	const rememberMeWebLifeTimeDurationMaxDays = 90
+
+	const whatsAppOtpFailureCountDefault = 3
+	const whatsAppOtpFailureCountMin = 1
+	const whatsAppOtpFailureCountMax = 7
+	const whatsAppOtpFailureCoolDownDurationDefault = 0
+	const whatsAppOtpLifetimeDurationDefault = 30
+	const whatsAppOtpLengthDefault = 6
+	const whatsAppOtpLengthMin = 6
+	const whatsAppOtpLengthMax = 10
+
 	// schema descriptions and validation settings
 	deviceSelectionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that defines the device selection method.",
@@ -304,6 +355,61 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 	newDeviceNotificationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that defines whether a user should be notified if a new authentication method has been added to their account.",
 	).AllowedValuesEnum(mfa.AllowedEnumMFADevicePolicyNewDeviceNotificationEnumValues).DefaultValue(string(mfa.ENUMMFADEVICEPOLICYNEWDEVICENOTIFICATION_NONE))
+
+	ignoreUserLockDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that, when set to `true`, allows PingOne to skip the account lock check during MFA authentication.",
+	).DefaultValue(false)
+
+	notificationsPolicyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies the notification policy to use for this MFA device policy. If not specified, the default notification policy for the environment will be used.",
+	)
+
+	notificationsPolicyIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the ID of the notification policy to use.",
+	)
+
+	rememberMeDefault := types.ObjectValueMust(
+		MFADevicePolicyRememberMeTFObjectTypes,
+		map[string]attr.Value{
+			"web": types.ObjectValueMust(
+				MFADevicePolicyRememberMeWebTFObjectTypes,
+				map[string]attr.Value{
+					"enabled": types.BoolValue(false),
+					"life_time": types.ObjectValueMust(
+						MFADevicePolicyTimePeriodTFObjectTypes,
+						map[string]attr.Value{
+							"duration":  types.Int32Value(rememberMeWebLifeTimeDurationDefault),
+							"time_unit": types.StringValue(string(mfa.ENUMTIMEUNITREMEMBERMEWEBLIFETIME_MINUTES)),
+						},
+					),
+				},
+			),
+		},
+	)
+
+	rememberMeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies 'remember me' settings so that users do not have to authenticate when accessing applications from a device they have used already.",
+	)
+
+	rememberMeWebDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that contains the 'remember me' settings for accessing applications from a browser.",
+	)
+
+	rememberMeWebEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that, when set to `true`, enables the 'remember me' option in the MFA policy.",
+	)
+
+	rememberMeWebLifeTimeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A single object that defines the period during which users will not have to authenticate if they are accessing applications from a device they have used before. The 'remember me' period can be anywhere from `%d` minute to `%d` days.", rememberMeWebLifeTimeDurationMinMinutes, rememberMeWebLifeTimeDurationMaxDays),
+	)
+
+	rememberMeWebLifeTimeDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that, used in conjunction with `time_unit`, defines the 'remember me' period.",
+	)
+
+	rememberMeWebLifeTimeTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the time unit to use for the 'remember me' period.",
+	).AllowedValuesEnum(mfa.AllowedEnumTimeUnitRememberMeWebLifeTimeEnumValues)
 
 	defaultDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether this MFA device policy is enforced as the default within the environment. When set to `true`, all other MFA device policies are `false`.",
@@ -347,6 +453,14 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 		"An integer that defines the length of time that push notifications should be blocked for the application if the defined limit has been reached. The minimum value is `1` minute and the maximum value is `120` minutes. If this parameter is not provided, the default value is `30` minutes.",
 	)
 
+	mobileApplicationsPushNumberMatchingDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that configures number matching for push notifications.",
+	)
+
+	mobileApplicationsPushNumberMatchingEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that, when set to `true`, requires the authenticating user to select a number that was displayed to them on the accessing device.",
+	)
+
 	mobileOtpFailureCountDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. The minimum value is `%d`, maximum is `%d`, and the default is `%d`.", mobileOtpFailureCountMin, mobileOtpFailureCountMax, mobileOtpFailureCountDefault),
 	)
@@ -375,6 +489,10 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 		"A map of string key:value pairs that specifies `otpauth` URI parameters. For example, if you provide a value for the `issuer` parameter, then authenticators that support that parameter will display the text you specify together with the OTP (in addition to the username). This can help users recognize which application the OTP is for. If you intend on using the same MFA policy for multiple applications, choose a name that reflects the group of applications.",
 	)
 
+	totpPasscodeGracePeriodDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that specifies the TOTP passcode grace period in 30-second windows. The minimum value is `%d` and the maximum value is `%d`.", totpPasscodeGracePeriodMin, totpPasscodeGracePeriodMax),
+	).DefaultValue(totpPasscodeGracePeriodDefault)
+
 	fido2PairingDisabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that, when set to `true`, prevents users from pairing new devices with the FIDO2 method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.",
 	).DefaultValue(false)
@@ -386,6 +504,26 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 	fido2FailureCoolDownDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("An integer that defines the length of time that the user is blocked after reaching the maximum number of failures. The minimum value is `%d` minutes and the maximum value is `%d` minutes.", fido2FailureCoolDownDurationMinMinutes, fido2FailureCoolDownDurationMaxMinutes),
 	).DefaultValue(fido2FailureCoolDownDurationDefault)
+
+	whatsAppDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that allows configuration of WhatsApp OTP device authentication policy settings. To set `enabled = true`, WhatsApp sender settings must already be configured in PingOne.",
+	)
+
+	whatsAppPairingDisabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that, when set to `true`, prevents users from pairing new devices with the WhatsApp OTP method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.",
+	)
+
+	whatsAppOtpFailureCountDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. Minimum is `%d` and maximum is `%d`.", whatsAppOtpFailureCountMin, whatsAppOtpFailureCountMax),
+	)
+
+	whatsAppOtpLengthDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that specifies the length of the OTP that is shown to users.  Minimum length is `%d` digits and maximum is `%d` digits.", whatsAppOtpLengthMin, whatsAppOtpLengthMax),
+	)
+
+	whatsAppOtpTimeUnitDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the type of time unit for `duration`.",
+	).AllowedValuesEnum(mfa.AllowedEnumTimeUnitEnumValues)
 
 	promptForNicknameOnPairingDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that, when set to `true`, prompts users to provide nicknames for devices during pairing.",
@@ -448,6 +586,111 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 				},
 			},
 
+			"ignore_user_lock": schema.BoolAttribute{
+				Description:         ignoreUserLockDescription.Description,
+				MarkdownDescription: ignoreUserLockDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+
+				Default: booldefault.StaticBool(false),
+			},
+
+			"notifications_policy": schema.SingleNestedAttribute{
+				Description:         notificationsPolicyDescription.Description,
+				MarkdownDescription: notificationsPolicyDescription.MarkdownDescription,
+				Optional:            true,
+
+				Attributes: map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Description:         notificationsPolicyIdDescription.Description,
+						MarkdownDescription: notificationsPolicyIdDescription.MarkdownDescription,
+						Required:            true,
+
+						Validators: []validator.String{
+							verify.P1ResourceIDValidator(),
+						},
+					},
+				},
+			},
+
+			"remember_me": schema.SingleNestedAttribute{
+				Description:         rememberMeDescription.Description,
+				MarkdownDescription: rememberMeDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+
+				Default: objectdefault.StaticValue(rememberMeDefault),
+
+				Attributes: map[string]schema.Attribute{
+					"web": schema.SingleNestedAttribute{
+						Description:         rememberMeWebDescription.Description,
+						MarkdownDescription: rememberMeWebDescription.MarkdownDescription,
+						Required:            true,
+
+						Attributes: map[string]schema.Attribute{
+							"enabled": schema.BoolAttribute{
+								Description:         rememberMeWebEnabledDescription.Description,
+								MarkdownDescription: rememberMeWebEnabledDescription.MarkdownDescription,
+								Required:            true,
+							},
+
+							"life_time": schema.SingleNestedAttribute{
+								Description:         rememberMeWebLifeTimeDescription.Description,
+								MarkdownDescription: rememberMeWebLifeTimeDescription.MarkdownDescription,
+								Required:            true,
+
+								Attributes: map[string]schema.Attribute{
+									"duration": schema.Int32Attribute{
+										Description:         rememberMeWebLifeTimeDurationDescription.Description,
+										MarkdownDescription: rememberMeWebLifeTimeDurationDescription.MarkdownDescription,
+										Required:            true,
+
+										Validators: []validator.Int32{
+											int32validator.Any(
+												int32validator.All(
+													int32validator.Between(rememberMeWebLifeTimeDurationMinMinutes, rememberMeWebLifeTimeDurationMaxMinutes),
+													int32validatorinternal.RegexMatchesPathValue(
+														regexp.MustCompile(`MINUTES`),
+														fmt.Sprintf("If `time_unit` is `MINUTES`, the allowed duration range is %d - %d.", rememberMeWebLifeTimeDurationMinMinutes, rememberMeWebLifeTimeDurationMaxMinutes),
+														path.MatchRelative().AtParent().AtName("time_unit"),
+													),
+												),
+												int32validator.All(
+													int32validator.Between(rememberMeWebLifeTimeDurationMinHours, rememberMeWebLifeTimeDurationMaxHours),
+													int32validatorinternal.RegexMatchesPathValue(
+														regexp.MustCompile(`HOURS`),
+														fmt.Sprintf("If `time_unit` is `HOURS`, the allowed duration range is %d - %d.", rememberMeWebLifeTimeDurationMinHours, rememberMeWebLifeTimeDurationMaxHours),
+														path.MatchRelative().AtParent().AtName("time_unit"),
+													),
+												),
+												int32validator.All(
+													int32validator.Between(rememberMeWebLifeTimeDurationMinDays, rememberMeWebLifeTimeDurationMaxDays),
+													int32validatorinternal.RegexMatchesPathValue(
+														regexp.MustCompile(`DAYS`),
+														fmt.Sprintf("If `time_unit` is `DAYS`, the allowed duration range is %d - %d.", rememberMeWebLifeTimeDurationMinDays, rememberMeWebLifeTimeDurationMaxDays),
+														path.MatchRelative().AtParent().AtName("time_unit"),
+													),
+												),
+											),
+										},
+									},
+
+									"time_unit": schema.StringAttribute{
+										Description:         rememberMeWebLifeTimeTimeUnitDescription.Description,
+										MarkdownDescription: rememberMeWebLifeTimeTimeUnitDescription.MarkdownDescription,
+										Required:            true,
+
+										Validators: []validator.String{
+											stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumTimeUnitRememberMeWebLifeTimeEnumValues)...),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+
 			"default": schema.BoolAttribute{
 				Description:         defaultDescription.Description,
 				MarkdownDescription: defaultDescription.MarkdownDescription,
@@ -463,6 +706,147 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 			"voice": r.devicePolicyOfflineDeviceSchemaAttribute("voice OTP"),
 
 			"email": r.devicePolicyOfflineDeviceSchemaAttribute("email OTP"),
+
+			"whats_app": schema.SingleNestedAttribute{
+				Description:         whatsAppDescription.Description,
+				MarkdownDescription: whatsAppDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+
+				Default: objectdefault.StaticValue(types.ObjectValueMust(
+					MFADevicePolicyOfflineDeviceTFObjectTypes,
+					map[string]attr.Value{
+						"enabled": types.BoolValue(false),
+						"otp": types.ObjectValueMust(
+							MFADevicePolicyOfflineDeviceOtpTFObjectTypes,
+							map[string]attr.Value{
+								"failure": types.ObjectValueMust(
+									MFADevicePolicyFailureTFObjectTypes,
+									map[string]attr.Value{
+										"count": types.Int32Value(whatsAppOtpFailureCountDefault),
+										"cool_down": types.ObjectValueMust(
+											MFADevicePolicyTimePeriodTFObjectTypes,
+											map[string]attr.Value{
+												"duration":  types.Int32Value(whatsAppOtpFailureCoolDownDurationDefault),
+												"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
+											},
+										),
+									},
+								),
+								"lifetime": types.ObjectValueMust(
+									MFADevicePolicyTimePeriodTFObjectTypes,
+									map[string]attr.Value{
+										"duration":  types.Int32Value(whatsAppOtpLifetimeDurationDefault),
+										"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
+									},
+								),
+								"otp_length": types.Int32Value(whatsAppOtpLengthDefault),
+							},
+						),
+						"pairing_disabled":               types.BoolNull(),
+						"prompt_for_nickname_on_pairing": types.BoolNull(),
+					},
+				)),
+
+				Attributes: map[string]schema.Attribute{
+					"enabled": schema.BoolAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the WhatsApp OTP method is enabled or disabled in the policy.").Description,
+						Required:    true,
+					},
+
+					"pairing_disabled": schema.BoolAttribute{
+						Description:         whatsAppPairingDisabledDescription.Description,
+						MarkdownDescription: whatsAppPairingDisabledDescription.MarkdownDescription,
+						Optional:            true,
+					},
+
+					"otp": schema.SingleNestedAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that allows configuration of WhatsApp OTP settings.").Description,
+						Required:    true,
+
+						Attributes: map[string]schema.Attribute{
+							"failure": schema.SingleNestedAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that allows configuration of WhatsApp OTP failure settings.").Description,
+								Required:    true,
+
+								Attributes: map[string]schema.Attribute{
+									"cool_down": schema.SingleNestedAttribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that allows configuration of WhatsApp OTP failure cool down settings.").Description,
+										Required:    true,
+
+										Attributes: map[string]schema.Attribute{
+											"duration": schema.Int32Attribute{
+												Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures.").Description,
+												Required:    true,
+											},
+
+											"time_unit": schema.StringAttribute{
+												Description:         whatsAppOtpTimeUnitDescription.Description,
+												MarkdownDescription: whatsAppOtpTimeUnitDescription.MarkdownDescription,
+												Required:            true,
+
+												Validators: []validator.String{
+													stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumTimeUnitEnumValues)...),
+												},
+											},
+										},
+									},
+
+									"count": schema.Int32Attribute{
+										Description:         whatsAppOtpFailureCountDescription.Description,
+										MarkdownDescription: whatsAppOtpFailureCountDescription.MarkdownDescription,
+										Required:            true,
+
+										Validators: []validator.Int32{
+											int32validator.Between(whatsAppOtpFailureCountMin, whatsAppOtpFailureCountMax),
+										},
+									},
+								},
+							},
+
+							"lifetime": schema.SingleNestedAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that allows configuration of WhatsApp OTP lifetime settings.").Description,
+								Required:    true,
+
+								Attributes: map[string]schema.Attribute{
+									"duration": schema.Int32Attribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the duration (number of time units) that the passcode is valid before it expires.").Description,
+										Required:    true,
+									},
+
+									"time_unit": schema.StringAttribute{
+										Description:         whatsAppOtpTimeUnitDescription.Description,
+										MarkdownDescription: whatsAppOtpTimeUnitDescription.MarkdownDescription,
+										Required:            true,
+
+										Validators: []validator.String{
+											stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumTimeUnitEnumValues)...),
+										},
+									},
+								},
+							},
+
+							"otp_length": schema.Int32Attribute{
+								Description:         whatsAppOtpLengthDescription.Description,
+								MarkdownDescription: whatsAppOtpLengthDescription.MarkdownDescription,
+								Optional:            true,
+								Computed:            true,
+
+								Default: int32default.StaticInt32(whatsAppOtpLengthDefault),
+								Validators: []validator.Int32{
+									int32validator.Between(whatsAppOtpLengthMin, whatsAppOtpLengthMax),
+								},
+							},
+						},
+					},
+
+					"prompt_for_nickname_on_pairing": schema.BoolAttribute{
+						Description:         promptForNicknameOnPairingDescription.Description,
+						MarkdownDescription: promptForNicknameOnPairingDescription.MarkdownDescription,
+						Optional:            true,
+					},
+				},
+			},
 
 			"mobile": schema.SingleNestedAttribute{
 				Description:         mobileDescription.Description,
@@ -577,6 +961,28 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 										"enabled": schema.BoolAttribute{
 											Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether push notification is enabled or disabled for the application in the policy.").Description,
 											Required:    true,
+										},
+
+										"number_matching": schema.SingleNestedAttribute{
+											Description:         mobileApplicationsPushNumberMatchingDescription.Description,
+											MarkdownDescription: mobileApplicationsPushNumberMatchingDescription.MarkdownDescription,
+											Optional:            true,
+											Computed:            true,
+
+											Default: objectdefault.StaticValue(types.ObjectValueMust(
+												MFADevicePolicyMobileApplicationPushNumberMatchingTFObjectTypes,
+												map[string]attr.Value{
+													"enabled": types.BoolValue(false),
+												},
+											)),
+
+											Attributes: map[string]schema.Attribute{
+												"enabled": schema.BoolAttribute{
+													Description:         mobileApplicationsPushNumberMatchingEnabledDescription.Description,
+													MarkdownDescription: mobileApplicationsPushNumberMatchingEnabledDescription.MarkdownDescription,
+													Required:            true,
+												},
+											},
 										},
 									},
 								},
@@ -793,6 +1199,19 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 						Default: booldefault.StaticBool(false),
 					},
 
+					"passcode_grace_period": schema.Int32Attribute{
+						Description:         totpPasscodeGracePeriodDescription.Description,
+						MarkdownDescription: totpPasscodeGracePeriodDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: int32default.StaticInt32(totpPasscodeGracePeriodDefault),
+
+						Validators: []validator.Int32{
+							int32validator.Between(totpPasscodeGracePeriodMin, totpPasscodeGracePeriodMax),
+						},
+					},
+
 					"otp": schema.SingleNestedAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that allows configuration of TOTP OTP settings.").Description,
 						Optional:    true,
@@ -996,10 +1415,13 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttribute(descriptionMethod string) schema.SingleNestedAttribute {
 
 	const otpFailureCountDefault = 3
+	const otpFailureCountMin = 1
+	const otpFailureCountMax = 7
+
 	const otpFailureCoolDownDurationDefault = 0
 	const otpLifetimeDurationDefault = 30
-	const otpOtpLengthDefault = 6
 
+	const otpOtpLengthDefault = 6
 	const otpOtpLengthMin = 6
 	const otpOtpLengthMax = 10
 
@@ -1018,6 +1440,10 @@ func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttribute(descr
 	promptForNicknameOnPairingDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that, when set to `true`, prompts users to provide nicknames for devices during pairing.",
 	)
+
+	otpFailureCountDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. Minimum is `%d` and maximum is `%d`.", otpFailureCountMin, otpFailureCountMax),
+	).DefaultValue(otpFailureCountDefault)
 
 	return schema.SingleNestedAttribute{
 		Description: framework.SchemaAttributeDescriptionFromMarkdown(fmt.Sprintf("A single object that allows configuration of %s device authentication policy settings.", descriptionMethod)).Description,
@@ -1099,8 +1525,13 @@ func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttribute(descr
 							},
 
 							"count": schema.Int32Attribute{
-								Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked.").Description,
-								Required:    true,
+								Description:         otpFailureCountDescription.Description,
+								MarkdownDescription: otpFailureCountDescription.MarkdownDescription,
+								Required:            true,
+
+								Validators: []validator.Int32{
+									int32validator.Between(otpFailureCountMin, otpFailureCountMax),
+								},
 							},
 						},
 					},
@@ -1502,6 +1933,25 @@ func (p *MFADevicePolicyResourceModel) expand(ctx context.Context, apiClient *ma
 		false, // forSignOnPolicy
 	)
 
+	// WhatsApp
+	if !p.WhatsApp.IsNull() && !p.WhatsApp.IsUnknown() {
+		var whatsAppPlan MFADevicePolicyWhatsAppResourceModel
+		diags.Append(p.WhatsApp.As(ctx, &whatsAppPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+		whatsApp, d := whatsAppPlan.expand(ctx)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		policy.SetWhatsApp(*whatsApp)
+	}
+
 	// FIDO2
 	if !p.Fido2.IsNull() && !p.Fido2.IsUnknown() {
 		var fido2Plan MFADevicePolicyFido2ResourceModel
@@ -1543,6 +1993,68 @@ func (p *MFADevicePolicyResourceModel) expand(ctx context.Context, apiClient *ma
 		)
 	}
 
+	if !p.IgnoreUserLock.IsNull() && !p.IgnoreUserLock.IsUnknown() {
+		policy.SetIgnoreUserLock(p.IgnoreUserLock.ValueBool())
+	}
+
+	if !p.NotificationsPolicy.IsNull() && !p.NotificationsPolicy.IsUnknown() {
+		var notificationsPolicyPlan MFADevicePolicyNotificationsPolicyResourceModel
+		diags.Append(p.NotificationsPolicy.As(ctx, &notificationsPolicyPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		policy.SetNotificationsPolicy(
+			*mfa.NewDeviceAuthenticationPolicyCommonNotificationsPolicy(notificationsPolicyPlan.Id.ValueString()),
+		)
+	}
+
+	if !p.RememberMe.IsNull() && !p.RememberMe.IsUnknown() {
+		var rememberMePlan MFADevicePolicyRememberMeResourceModel
+		diags.Append(p.RememberMe.As(ctx, &rememberMePlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		if !rememberMePlan.Web.IsNull() && !rememberMePlan.Web.IsUnknown() {
+			var webPlan MFADevicePolicyRememberMeWebResourceModel
+			diags.Append(rememberMePlan.Web.As(ctx, &webPlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			var lifeTimePlan MFADevicePolicyTimePeriodResourceModel
+			diags.Append(webPlan.LifeTime.As(ctx, &lifeTimePlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			lifeTime := mfa.DeviceAuthenticationPolicyCommonRememberMeWebLifeTime{}
+			lifeTime.SetDuration(lifeTimePlan.Duration.ValueInt32())
+			lifeTime.SetTimeUnit(mfa.EnumTimeUnitRememberMeWebLifeTime(lifeTimePlan.TimeUnit.ValueString()))
+
+			web := mfa.NewDeviceAuthenticationPolicyCommonRememberMeWeb(
+				webPlan.Enabled.ValueBool(),
+				lifeTime,
+			)
+
+			rememberMe := mfa.NewDeviceAuthenticationPolicyCommonRememberMe(*web)
+			policy.SetRememberMe(*rememberMe)
+		}
+	}
+
 	if !p.Default.IsNull() && !p.Default.IsUnknown() {
 		policy.SetDefault(p.Default.ValueBool())
 	} else {
@@ -1576,6 +2088,11 @@ func (p *MFADevicePolicyVoiceResourceModel) expand(ctx context.Context) (*mfa.De
 }
 
 func (p *MFADevicePolicyEmailResourceModel) expand(ctx context.Context) (*mfa.DeviceAuthenticationPolicyOfflineDevice, diag.Diagnostics) {
+	data := MFADevicePolicyOfflineDeviceResourceModel(*p)
+	return data.expand(ctx)
+}
+
+func (p *MFADevicePolicyWhatsAppResourceModel) expand(ctx context.Context) (*mfa.DeviceAuthenticationPolicyOfflineDevice, diag.Diagnostics) {
 	data := MFADevicePolicyOfflineDeviceResourceModel(*p)
 	return data.expand(ctx)
 }
@@ -1899,6 +2416,22 @@ func (p *MFADevicePolicyMobileApplicationResourceModel) expand(ctx context.Conte
 				plan.Enabled.ValueBool(),
 			),
 		)
+
+		if !plan.NumberMatching.IsNull() && !plan.NumberMatching.IsUnknown() {
+			var numberMatchingPlan MFADevicePolicyMobileApplicationPushNumberMatchingResourceModel
+			diags.Append(plan.NumberMatching.As(ctx, &numberMatchingPlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			if push, ok := data.GetPushOk(); ok && push != nil {
+				push.SetNumberMatching(*mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerPushNumberMatching(numberMatchingPlan.Enabled.ValueBool()))
+				data.SetPush(*push)
+			}
+		}
 	}
 
 	// Push Limit
@@ -2034,6 +2567,10 @@ func (p *MFADevicePolicyTotpResourceModel) expand(ctx context.Context) (*mfa.Dev
 		data.SetPairingDisabled(p.PairingDisabled.ValueBool())
 	}
 
+	if !p.PasscodeGracePeriod.IsNull() && !p.PasscodeGracePeriod.IsUnknown() {
+		data.SetPasscodeGracePeriod(p.PasscodeGracePeriod.ValueInt32())
+	}
+
 	// Prompt for Nickname on Pairing
 	if !p.PromptForNicknameOnPairing.IsNull() && !p.PromptForNicknameOnPairing.IsUnknown() {
 		data.SetPromptForNicknameOnPairing(p.PromptForNicknameOnPairing.ValueBool())
@@ -2128,6 +2665,14 @@ func (p *MFADevicePolicyResourceModel) toState(apiObject *mfa.DeviceAuthenticati
 
 	p.NewDeviceNotification = framework.EnumOkToTF(apiObject.GetNewDeviceNotificationOk())
 
+	p.IgnoreUserLock = framework.BoolOkToTF(apiObject.GetIgnoreUserLockOk())
+
+	p.NotificationsPolicy, d = toStateMfaDevicePolicyNotificationsPolicy(apiObject.GetNotificationsPolicyOk())
+	diags.Append(d...)
+
+	p.RememberMe, d = toStateMfaDevicePolicyRememberMe(apiObject.GetRememberMeOk())
+	diags.Append(d...)
+
 	p.Default = framework.BoolOkToTF(apiObject.GetDefaultOk())
 
 	p.Sms, d = toStateMfaDevicePolicySms(apiObject.GetSmsOk())
@@ -2137,6 +2682,9 @@ func (p *MFADevicePolicyResourceModel) toState(apiObject *mfa.DeviceAuthenticati
 	diags.Append(d...)
 
 	p.Email, d = toStateMfaDevicePolicyEmail(apiObject.GetEmailOk())
+	diags.Append(d...)
+
+	p.WhatsApp, d = toStateMfaDevicePolicyWhatsApp(apiObject.GetWhatsAppOk())
 	diags.Append(d...)
 
 	p.Mobile, d = toStateMfaDevicePolicyMobile(apiObject.GetMobileOk())
@@ -2319,6 +2867,10 @@ func toStateMfaDevicePolicyEmail(apiObject *mfa.DeviceAuthenticationPolicyOfflin
 	return toStateMfaDevicePolicyOfflineDevice(apiObject, ok)
 }
 
+func toStateMfaDevicePolicyWhatsApp(apiObject *mfa.DeviceAuthenticationPolicyOfflineDevice, ok bool) (types.Object, diag.Diagnostics) {
+	return toStateMfaDevicePolicyOfflineDevice(apiObject, ok)
+}
+
 func toStateMfaDevicePolicyMobile(apiObject *mfa.DeviceAuthenticationPolicyCommonMobile, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -2488,11 +3040,35 @@ func toStateMfaDevicePolicyMobileApplicationsPush(apiObject *mfa.DeviceAuthentic
 		return types.ObjectNull(MFADevicePolicyMobileApplicationPushTFObjectTypes), nil
 	}
 
+	numberMatching, d := toStateMfaDevicePolicyMobileApplicationsPushNumberMatching(apiObject.GetNumberMatchingOk())
+	diags.Append(d...)
+	if diags.HasError() {
+		return types.ObjectNull(MFADevicePolicyMobileApplicationPushTFObjectTypes), diags
+	}
+
+	o := map[string]attr.Value{
+		"enabled":         framework.BoolOkToTF(apiObject.GetEnabledOk()),
+		"number_matching": numberMatching,
+	}
+
+	objValue, d := types.ObjectValue(MFADevicePolicyMobileApplicationPushTFObjectTypes, o)
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+func toStateMfaDevicePolicyMobileApplicationsPushNumberMatching(apiObject *mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInnerPushNumberMatching, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(MFADevicePolicyMobileApplicationPushNumberMatchingTFObjectTypes), nil
+	}
+
 	o := map[string]attr.Value{
 		"enabled": framework.BoolOkToTF(apiObject.GetEnabledOk()),
 	}
 
-	objValue, d := types.ObjectValue(MFADevicePolicyMobileApplicationPushTFObjectTypes, o)
+	objValue, d := types.ObjectValue(MFADevicePolicyMobileApplicationPushNumberMatchingTFObjectTypes, o)
 	diags.Append(d...)
 
 	return objValue, diags
@@ -2682,6 +3258,7 @@ func toStateMfaDevicePolicyTotp(apiObject *mfa.DeviceAuthenticationPolicyCommonT
 	o := map[string]attr.Value{
 		"enabled":                        framework.BoolOkToTF(apiObject.GetEnabledOk()),
 		"otp":                            otp,
+		"passcode_grace_period":          framework.Int32OkToTF(apiObject.GetPasscodeGracePeriodOk()),
 		"pairing_disabled":               framework.BoolOkToTF(apiObject.GetPairingDisabledOk()),
 		"prompt_for_nickname_on_pairing": framework.BoolOkToTF(apiObject.GetPromptForNicknameOnPairingOk()),
 		"uri_parameters":                 framework.StringMapOkToTF(apiObject.GetUriParametersOk()),

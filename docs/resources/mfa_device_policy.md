@@ -198,7 +198,11 @@ resource "pingone_mfa_device_policy" "my_awesome_mfa_device_policy" {
 
 - `authentication` (Attributes) A single object that allows configuration of authentication settings in the device policy. (see [below for nested schema](#nestedatt--authentication))
 - `fido2` (Attributes) A single object that allows configuration of FIDO2 device authentication policy settings. (see [below for nested schema](#nestedatt--fido2))
+- `ignore_user_lock` (Boolean) A boolean that, when set to `true`, allows PingOne to skip the account lock check during MFA authentication.  Defaults to `false`.
 - `new_device_notification` (String) A string that defines whether a user should be notified if a new authentication method has been added to their account.  Options are `EMAIL_THEN_SMS`, `NONE`, `SMS_THEN_EMAIL`.  Defaults to `NONE`.
+- `notifications_policy` (Attributes) A single object that specifies the notification policy to use for this MFA device policy. If not specified, the default notification policy for the environment will be used. (see [below for nested schema](#nestedatt--notifications_policy))
+- `remember_me` (Attributes) A single object that specifies 'remember me' settings so that users do not have to authenticate when accessing applications from a device they have used already. (see [below for nested schema](#nestedatt--remember_me))
+- `whats_app` (Attributes) A single object that allows configuration of WhatsApp OTP device authentication policy settings. To set `enabled = true`, WhatsApp sender settings must already be configured in PingOne. (see [below for nested schema](#nestedatt--whats_app))
 
 ### Read-Only
 
@@ -233,7 +237,7 @@ Optional:
 Required:
 
 - `cool_down` (Attributes) A single object that allows configuration of email OTP failure cool down settings. (see [below for nested schema](#nestedatt--email--otp--failure--cool_down))
-- `count` (Number) An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked.
+- `count` (Number) An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. Minimum is `1` and maximum is `7`.  Defaults to `3`.
 
 <a id="nestedatt--email--otp--failure--cool_down"></a>
 ### Nested Schema for `email.otp.failure.cool_down`
@@ -327,6 +331,18 @@ Required:
 Required:
 
 - `enabled` (Boolean) A boolean that specifies whether push notification is enabled or disabled for the application in the policy.
+
+Optional:
+
+- `number_matching` (Attributes) A single object that configures number matching for push notifications. (see [below for nested schema](#nestedatt--mobile--applications--push--number_matching))
+
+<a id="nestedatt--mobile--applications--push--number_matching"></a>
+### Nested Schema for `mobile.applications.push.number_matching`
+
+Required:
+
+- `enabled` (Boolean) A boolean that, when set to `true`, requires the authenticating user to select a number that was displayed to them on the accessing device.
+
 
 
 <a id="nestedatt--mobile--applications--push_limit"></a>
@@ -428,7 +444,7 @@ Optional:
 Required:
 
 - `cool_down` (Attributes) A single object that allows configuration of SMS OTP failure cool down settings. (see [below for nested schema](#nestedatt--sms--otp--failure--cool_down))
-- `count` (Number) An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked.
+- `count` (Number) An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. Minimum is `1` and maximum is `7`.  Defaults to `3`.
 
 <a id="nestedatt--sms--otp--failure--cool_down"></a>
 ### Nested Schema for `sms.otp.failure.cool_down`
@@ -462,6 +478,7 @@ Optional:
 
 - `otp` (Attributes) A single object that allows configuration of TOTP OTP settings. (see [below for nested schema](#nestedatt--totp--otp))
 - `pairing_disabled` (Boolean) A boolean that, when set to `true`, prevents users from pairing new devices with the TOTP method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.  Defaults to `false`.
+- `passcode_grace_period` (Number) An integer that specifies the TOTP passcode grace period in 30-second windows. The minimum value is `1` and the maximum value is `10`.  Defaults to `5`.
 - `prompt_for_nickname_on_pairing` (Boolean) A boolean that, when set to `true`, prompts users to provide nicknames for devices during pairing.
 - `uri_parameters` (Map of String) A map of string key:value pairs that specifies `otpauth` URI parameters. For example, if you provide a value for the `issuer` parameter, then authenticators that support that parameter will display the text you specify together with the OTP (in addition to the username). This can help users recognize which application the OTP is for. If you intend on using the same MFA policy for multiple applications, choose a name that reflects the group of applications.
 
@@ -523,7 +540,7 @@ Optional:
 Required:
 
 - `cool_down` (Attributes) A single object that allows configuration of voice OTP failure cool down settings. (see [below for nested schema](#nestedatt--voice--otp--failure--cool_down))
-- `count` (Number) An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked.
+- `count` (Number) An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. Minimum is `1` and maximum is `7`.  Defaults to `3`.
 
 <a id="nestedatt--voice--otp--failure--cool_down"></a>
 ### Nested Schema for `voice.otp.failure.cool_down`
@@ -583,6 +600,94 @@ Required:
 
 - `duration` (Number) An integer that defines the length of time that the user is blocked after reaching the maximum number of failures. The minimum value is `2` minutes and the maximum value is `30` minutes.  Defaults to `2`.
 - `time_unit` (String) A string that specifies the type of time unit for `duration`.  Options are `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
+
+
+
+
+<a id="nestedatt--notifications_policy"></a>
+### Nested Schema for `notifications_policy`
+
+Required:
+
+- `id` (String) A string that specifies the ID of the notification policy to use.
+
+
+<a id="nestedatt--remember_me"></a>
+### Nested Schema for `remember_me`
+
+Required:
+
+- `web` (Attributes) A single object that contains the 'remember me' settings for accessing applications from a browser. (see [below for nested schema](#nestedatt--remember_me--web))
+
+<a id="nestedatt--remember_me--web"></a>
+### Nested Schema for `remember_me.web`
+
+Required:
+
+- `enabled` (Boolean) A boolean that, when set to `true`, enables the 'remember me' option in the MFA policy.
+- `life_time` (Attributes) A single object that defines the period during which users will not have to authenticate if they are accessing applications from a device they have used before. The 'remember me' period can be anywhere from `1` minute to `90` days. (see [below for nested schema](#nestedatt--remember_me--web--life_time))
+
+<a id="nestedatt--remember_me--web--life_time"></a>
+### Nested Schema for `remember_me.web.life_time`
+
+Required:
+
+- `duration` (Number) An integer that, used in conjunction with `time_unit`, defines the 'remember me' period.
+- `time_unit` (String) A string that specifies the time unit to use for the 'remember me' period.  Options are `DAYS`, `HOURS`, `MINUTES`.
+
+
+
+
+<a id="nestedatt--whats_app"></a>
+### Nested Schema for `whats_app`
+
+Required:
+
+- `enabled` (Boolean) A boolean that specifies whether the WhatsApp OTP method is enabled or disabled in the policy.
+- `otp` (Attributes) A single object that allows configuration of WhatsApp OTP settings. (see [below for nested schema](#nestedatt--whats_app--otp))
+
+Optional:
+
+- `pairing_disabled` (Boolean) A boolean that, when set to `true`, prevents users from pairing new devices with the WhatsApp OTP method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.
+- `prompt_for_nickname_on_pairing` (Boolean) A boolean that, when set to `true`, prompts users to provide nicknames for devices during pairing.
+
+<a id="nestedatt--whats_app--otp"></a>
+### Nested Schema for `whats_app.otp`
+
+Required:
+
+- `failure` (Attributes) A single object that allows configuration of WhatsApp OTP failure settings. (see [below for nested schema](#nestedatt--whats_app--otp--failure))
+- `lifetime` (Attributes) A single object that allows configuration of WhatsApp OTP lifetime settings. (see [below for nested schema](#nestedatt--whats_app--otp--lifetime))
+
+Optional:
+
+- `otp_length` (Number) An integer that specifies the length of the OTP that is shown to users.  Minimum length is `6` digits and maximum is `10` digits.
+
+<a id="nestedatt--whats_app--otp--failure"></a>
+### Nested Schema for `whats_app.otp.failure`
+
+Required:
+
+- `cool_down` (Attributes) A single object that allows configuration of WhatsApp OTP failure cool down settings. (see [below for nested schema](#nestedatt--whats_app--otp--failure--cool_down))
+- `count` (Number) An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. Minimum is `1` and maximum is `7`.
+
+<a id="nestedatt--whats_app--otp--failure--cool_down"></a>
+### Nested Schema for `whats_app.otp.failure.cool_down`
+
+Required:
+
+- `duration` (Number) An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures.
+- `time_unit` (String) A string that specifies the type of time unit for `duration`.  Options are `MINUTES`, `SECONDS`.
+
+
+
+<a id="nestedatt--whats_app--otp--lifetime"></a>
+### Nested Schema for `whats_app.otp.lifetime`
+
+Required:
+
+- `duration` (Number) An integer that defines the duration (number of time units) that the passcode is valid before it expires.
+- `time_unit` (String) A string that specifies the type of time unit for `duration`.  Options are `MINUTES`, `SECONDS`.
 
 ## Import
 

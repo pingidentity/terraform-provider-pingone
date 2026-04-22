@@ -133,6 +133,11 @@ func TestAccMFADevicePolicy_SMS_Full(t *testing.T) {
 				Config: testAccMFADevicePolicyConfig_FullSMS(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "authentication.device_selection", "DEFAULT_TO_FIRST"),
+					resource.TestCheckResourceAttr(resourceFullName, "ignore_user_lock", "true"),
+					resource.TestMatchResourceAttr(resourceFullName, "notifications_policy.id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "remember_me.web.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "remember_me.web.life_time.duration", "60"),
+					resource.TestCheckResourceAttr(resourceFullName, "remember_me.web.life_time.time_unit", "MINUTES"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.pairing_disabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.otp.lifetime.duration", "75"),
@@ -144,6 +149,7 @@ func TestAccMFADevicePolicy_SMS_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "sms.prompt_for_nickname_on_pairing", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "email.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "whats_app.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.enabled", "false"),
@@ -192,6 +198,11 @@ func TestAccMFADevicePolicy_SMS_Minimal(t *testing.T) {
 				Config: testAccMFADevicePolicyConfig_MinimalSMS(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "authentication.device_selection", "DEFAULT_TO_FIRST"),
+					resource.TestCheckResourceAttr(resourceFullName, "ignore_user_lock", "false"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "notifications_policy.id"),
+					resource.TestCheckResourceAttr(resourceFullName, "remember_me.web.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "remember_me.web.life_time.duration", "30"),
+					resource.TestCheckResourceAttr(resourceFullName, "remember_me.web.life_time.time_unit", "MINUTES"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.pairing_disabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.otp.lifetime.duration", "30"),
@@ -203,6 +214,15 @@ func TestAccMFADevicePolicy_SMS_Minimal(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "sms.prompt_for_nickname_on_pairing"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "email.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "whats_app.enabled", "false"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "whats_app.pairing_disabled"),
+					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.lifetime.duration", "30"),
+					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.lifetime.time_unit", "MINUTES"),
+					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.failure.count", "3"),
+					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.failure.cool_down.duration", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.failure.cool_down.time_unit", "MINUTES"),
+					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.otp_length", "6"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "whats_app.prompt_for_nickname_on_pairing"),
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.enabled", "false"),
@@ -235,6 +255,11 @@ func TestAccMFADevicePolicy_SMS_Change(t *testing.T) {
 				Config: testAccMFADevicePolicyConfig_FullSMS(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceFullName, "authentication.device_selection", "DEFAULT_TO_FIRST"),
+					resource.TestCheckResourceAttr(resourceFullName, "ignore_user_lock", "true"),
+					resource.TestMatchResourceAttr(resourceFullName, "notifications_policy.id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "remember_me.web.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "remember_me.web.life_time.duration", "60"),
+					resource.TestCheckResourceAttr(resourceFullName, "remember_me.web.life_time.time_unit", "MINUTES"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.pairing_disabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.otp.lifetime.duration", "75"),
@@ -246,6 +271,7 @@ func TestAccMFADevicePolicy_SMS_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "sms.prompt_for_nickname_on_pairing", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "email.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "whats_app.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.enabled", "false"),
@@ -267,6 +293,15 @@ func TestAccMFADevicePolicy_SMS_Change(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "sms.prompt_for_nickname_on_pairing"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "email.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "whats_app.enabled", "false"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "whats_app.pairing_disabled"),
+					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.lifetime.duration", "30"),
+					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.lifetime.time_unit", "MINUTES"),
+					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.failure.count", "3"),
+					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.failure.cool_down.duration", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.failure.cool_down.time_unit", "MINUTES"),
+					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.otp_length", "6"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "whats_app.prompt_for_nickname_on_pairing"),
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.enabled", "false"),
@@ -288,6 +323,7 @@ func TestAccMFADevicePolicy_SMS_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "sms.prompt_for_nickname_on_pairing", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "email.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "whats_app.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.enabled", "false"),
@@ -711,6 +747,7 @@ func TestAccMFADevicePolicy_Mobile_Full(t *testing.T) {
 
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application1FullName, "mobile.applications.%s.pairing_disabled", "true"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application1FullName, "mobile.applications.%s.push.enabled", "true"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application1FullName, "mobile.applications.%s.push.number_matching.enabled", "true"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application1FullName, "mobile.applications.%s.push_timeout.duration", "100"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application1FullName, "mobile.applications.%s.push_timeout.time_unit", "SECONDS"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application1FullName, "mobile.applications.%s.pairing_key_lifetime.duration", "3"),
@@ -728,6 +765,7 @@ func TestAccMFADevicePolicy_Mobile_Full(t *testing.T) {
 
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application2FullName, "mobile.applications.%s.pairing_disabled", "false"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application2FullName, "mobile.applications.%s.push.enabled", "false"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application2FullName, "mobile.applications.%s.push.number_matching.enabled", "false"),
 					mfa.TestCheckMFADevicePolicyApplicationMapNoResourceAttr(resourceFullName, application2FullName, "mobile.applications.%s.push_timeout.duration"),
 					mfa.TestCheckMFADevicePolicyApplicationMapNoResourceAttr(resourceFullName, application2FullName, "mobile.applications.%s.push_timeout.time_unit"),
 					mfa.TestCheckMFADevicePolicyApplicationMapNoResourceAttr(resourceFullName, application2FullName, "mobile.applications.%s.pairing_key_lifetime.duration"),
@@ -743,6 +781,7 @@ func TestAccMFADevicePolicy_Mobile_Full(t *testing.T) {
 
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application3FullName, "mobile.applications.%s.pairing_disabled", "false"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application3FullName, "mobile.applications.%s.push.enabled", "true"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application3FullName, "mobile.applications.%s.push.number_matching.enabled", "false"),
 					mfa.TestCheckMFADevicePolicyApplicationMapNoResourceAttr(resourceFullName, application3FullName, "mobile.applications.%s.push_timeout.duration"),
 					mfa.TestCheckMFADevicePolicyApplicationMapNoResourceAttr(resourceFullName, application3FullName, "mobile.applications.%s.push_timeout.time_unit"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application3FullName, "mobile.applications.%s.pairing_key_lifetime.duration", "55"),
@@ -928,6 +967,7 @@ func TestAccMFADevicePolicy_Mobile_Change(t *testing.T) {
 
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application1FullName, "mobile.applications.%s.pairing_disabled", "true"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application1FullName, "mobile.applications.%s.push.enabled", "true"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application1FullName, "mobile.applications.%s.push.number_matching.enabled", "true"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application1FullName, "mobile.applications.%s.push_timeout.duration", "100"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application1FullName, "mobile.applications.%s.push_timeout.time_unit", "SECONDS"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application1FullName, "mobile.applications.%s.pairing_key_lifetime.duration", "3"),
@@ -945,6 +985,7 @@ func TestAccMFADevicePolicy_Mobile_Change(t *testing.T) {
 
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application2FullName, "mobile.applications.%s.pairing_disabled", "false"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application2FullName, "mobile.applications.%s.push.enabled", "false"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application2FullName, "mobile.applications.%s.push.number_matching.enabled", "false"),
 					mfa.TestCheckMFADevicePolicyApplicationMapNoResourceAttr(resourceFullName, application2FullName, "mobile.applications.%s.push_timeout.duration"),
 					mfa.TestCheckMFADevicePolicyApplicationMapNoResourceAttr(resourceFullName, application2FullName, "mobile.applications.%s.push_timeout.time_unit"),
 					mfa.TestCheckMFADevicePolicyApplicationMapNoResourceAttr(resourceFullName, application2FullName, "mobile.applications.%s.pairing_key_lifetime.duration"),
@@ -960,6 +1001,7 @@ func TestAccMFADevicePolicy_Mobile_Change(t *testing.T) {
 
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application3FullName, "mobile.applications.%s.pairing_disabled", "false"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application3FullName, "mobile.applications.%s.push.enabled", "true"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application3FullName, "mobile.applications.%s.push.number_matching.enabled", "false"),
 					mfa.TestCheckMFADevicePolicyApplicationMapNoResourceAttr(resourceFullName, application3FullName, "mobile.applications.%s.push_timeout.duration"),
 					mfa.TestCheckMFADevicePolicyApplicationMapNoResourceAttr(resourceFullName, application3FullName, "mobile.applications.%s.push_timeout.time_unit"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application3FullName, "mobile.applications.%s.pairing_key_lifetime.duration", "55"),
@@ -1012,6 +1054,7 @@ func TestAccMFADevicePolicy_Mobile_Change(t *testing.T) {
 
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application1FullName, "mobile.applications.%s.pairing_disabled", "true"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application1FullName, "mobile.applications.%s.push.enabled", "true"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application1FullName, "mobile.applications.%s.push.number_matching.enabled", "true"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application1FullName, "mobile.applications.%s.push_timeout.duration", "100"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application1FullName, "mobile.applications.%s.push_timeout.time_unit", "SECONDS"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application1FullName, "mobile.applications.%s.pairing_key_lifetime.duration", "3"),
@@ -1029,6 +1072,7 @@ func TestAccMFADevicePolicy_Mobile_Change(t *testing.T) {
 
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application2FullName, "mobile.applications.%s.pairing_disabled", "false"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application2FullName, "mobile.applications.%s.push.enabled", "false"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application2FullName, "mobile.applications.%s.push.number_matching.enabled", "false"),
 					mfa.TestCheckMFADevicePolicyApplicationMapNoResourceAttr(resourceFullName, application2FullName, "mobile.applications.%s.push_timeout.duration"),
 					mfa.TestCheckMFADevicePolicyApplicationMapNoResourceAttr(resourceFullName, application2FullName, "mobile.applications.%s.push_timeout.time_unit"),
 					mfa.TestCheckMFADevicePolicyApplicationMapNoResourceAttr(resourceFullName, application2FullName, "mobile.applications.%s.pairing_key_lifetime.duration"),
@@ -1044,6 +1088,7 @@ func TestAccMFADevicePolicy_Mobile_Change(t *testing.T) {
 
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application3FullName, "mobile.applications.%s.pairing_disabled", "false"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application3FullName, "mobile.applications.%s.push.enabled", "true"),
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application3FullName, "mobile.applications.%s.push.number_matching.enabled", "false"),
 					mfa.TestCheckMFADevicePolicyApplicationMapNoResourceAttr(resourceFullName, application3FullName, "mobile.applications.%s.push_timeout.duration"),
 					mfa.TestCheckMFADevicePolicyApplicationMapNoResourceAttr(resourceFullName, application3FullName, "mobile.applications.%s.push_timeout.time_unit"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, application3FullName, "mobile.applications.%s.pairing_key_lifetime.duration", "55"),
@@ -1097,6 +1142,7 @@ func TestAccMFADevicePolicy_Totp_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.pairing_disabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.passcode_grace_period", "5"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.count", "5"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.cool_down.duration", "125"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.cool_down.time_unit", "SECONDS"),
@@ -1156,6 +1202,7 @@ func TestAccMFADevicePolicy_Totp_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.pairing_disabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.passcode_grace_period", "5"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.count", "3"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.cool_down.duration", "2"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.cool_down.time_unit", "MINUTES"),
@@ -1196,6 +1243,7 @@ func TestAccMFADevicePolicy_Totp_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.pairing_disabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.passcode_grace_period", "5"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.count", "5"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.cool_down.duration", "125"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.cool_down.time_unit", "SECONDS"),
@@ -1217,6 +1265,7 @@ func TestAccMFADevicePolicy_Totp_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.pairing_disabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.passcode_grace_period", "5"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.count", "3"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.cool_down.duration", "2"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.cool_down.time_unit", "MINUTES"),
@@ -1235,6 +1284,7 @@ func TestAccMFADevicePolicy_Totp_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.pairing_disabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.passcode_grace_period", "5"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.count", "5"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.cool_down.duration", "125"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.otp.failure.cool_down.time_unit", "SECONDS"),
@@ -1702,11 +1752,35 @@ func testAccMFADevicePolicyConfig_FullSMS(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
+resource "pingone_notification_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
 resource "pingone_mfa_device_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
 
   new_device_notification = "SMS_THEN_EMAIL"
+  ignore_user_lock        = true
+
+  notifications_policy = {
+    id = pingone_notification_policy.%[2]s.id
+  }
+
+  remember_me = {
+    web = {
+      enabled = true
+      life_time = {
+        duration  = 60
+        time_unit = "MINUTES"
+      }
+    }
+  }
 
   authentication = {
     device_selection = "DEFAULT_TO_FIRST"
@@ -1743,6 +1817,32 @@ resource "pingone_mfa_device_policy" "%[2]s" {
 
   email = {
     enabled = false
+  }
+
+  whats_app = {
+    enabled = false
+
+    pairing_disabled = true
+
+    prompt_for_nickname_on_pairing = true
+
+    otp = {
+      lifetime = {
+        duration  = 30
+        time_unit = "MINUTES"
+      }
+
+      failure = {
+        count = 3
+
+        cool_down = {
+          duration  = 0
+          time_unit = "MINUTES"
+        }
+      }
+
+      otp_length = 7
+    }
   }
 
   mobile = {
@@ -2196,6 +2296,9 @@ resource "pingone_mfa_device_policy" "%[2]s" {
 
         push = {
           enabled = true
+          number_matching = {
+            enabled = true
+          }
         }
 
         push_timeout = {
@@ -2901,8 +3004,9 @@ resource "pingone_mfa_device_policy" "%[2]s" {
   }
 
   totp = {
-    enabled          = true
-    pairing_disabled = true
+    enabled               = true
+    pairing_disabled      = true
+    passcode_grace_period = 5
 
     prompt_for_nickname_on_pairing = true
 
