@@ -97,6 +97,7 @@ type MFADevicePolicyDefaultMobileResourceModel struct {
 type MFADevicePolicyDefaultTotpResourceModel struct {
 	Enabled                    types.Bool   `tfsdk:"enabled"`
 	Otp                        types.Object `tfsdk:"otp"`
+	PasscodeGracePeriod        types.Int32  `tfsdk:"passcode_grace_period"`
 	PairingDisabled            types.Bool   `tfsdk:"pairing_disabled"`
 	PromptForNicknameOnPairing types.Bool   `tfsdk:"prompt_for_nickname_on_pairing"`
 	UriParameters              types.Map    `tfsdk:"uri_parameters"`
@@ -229,6 +230,7 @@ var (
 	MFADevicePolicyDefaultTotpTFObjectTypes = map[string]attr.Type{
 		"enabled":                        types.BoolType,
 		"otp":                            types.ObjectType{AttrTypes: MFADevicePolicyTotpOtpTFObjectTypes},
+		"passcode_grace_period":          types.Int32Type,
 		"pairing_disabled":               types.BoolType,
 		"prompt_for_nickname_on_pairing": types.BoolType,
 		"uri_parameters":                 types.MapType{ElemType: types.StringType},
@@ -288,6 +290,9 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 
 	const totpOtpFailureCountDefault = 3
 	const totpOtpFailureCoolDownDurationDefault = 2
+	const totpPasscodeGracePeriodDefault = 5
+	const totpPasscodeGracePeriodMin = 1
+	const totpPasscodeGracePeriodMax = 10
 
 	const fido2FailureCountDefault = 3
 	const fido2FailureCoolDownDurationDefault = 2
@@ -522,6 +527,10 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	totpUriParametersDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A map of string key:value pairs that specifies `otpauth` URI parameters. For example, if you provide a value for the `issuer` parameter, then authenticators that support that parameter will display the text you specify together with the OTP (in addition to the username). This can help users recognize which application the OTP is for. If you intend on using the same MFA policy for multiple applications, choose a name that reflects the group of applications.",
 	)
+
+	totpPasscodeGracePeriodDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that specifies the passcode grace period window count for TOTP. Minimum is `%d` and maximum is `%d`.", totpPasscodeGracePeriodMin, totpPasscodeGracePeriodMax),
+	).DefaultValue(totpPasscodeGracePeriodDefault)
 
 	fido2PairingDisabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that, when set to `true`, prevents users from pairing new devices with the FIDO2 method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.",
@@ -1652,6 +1661,19 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 						Computed:            true,
 
 						Default: booldefault.StaticBool(false),
+					},
+
+					"passcode_grace_period": schema.Int32Attribute{
+						Description:         totpPasscodeGracePeriodDescription.Description,
+						MarkdownDescription: totpPasscodeGracePeriodDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: int32default.StaticInt32(totpPasscodeGracePeriodDefault),
+
+						Validators: []validator.Int32{
+							int32validator.Between(totpPasscodeGracePeriodMin, totpPasscodeGracePeriodMax),
+						},
 					},
 
 					"otp": schema.SingleNestedAttribute{
@@ -3187,6 +3209,7 @@ func (p *MFADevicePolicyDefaultResourceModel) buildDefaultPolicyStruct(mobileApp
 		defaultOTPPeriodDuration       = 30
 		defaultOTPFailureCount         = 3
 		defaultOTPFailureCooldown      = 2
+		defaultTotpPasscodeGracePeriod = 5
 		defaultOTPLength               = 6
 		defaultPushTimeout             = 100
 		defaultPairingKeyLifetime      = 48
@@ -3302,6 +3325,8 @@ func (p *MFADevicePolicyDefaultResourceModel) buildDefaultPolicyStruct(mobileApp
 	totpEnabled := !isPingID
 	totp := mfa.NewDeviceAuthenticationPolicyCommonTotp(totpEnabled, *totpOtp)
 	totp.SetPairingDisabled(false)
+	totp.SetPasscodeGracePeriod(defaultTotpPasscodeGracePeriod)
+
 	totp.SetPromptForNicknameOnPairing(false)
 
 	data := mfa.NewDeviceAuthenticationPolicy(
@@ -3663,7 +3688,7 @@ func (p *MFADevicePolicyDefaultTotpResourceModel) expand(ctx context.Context) (*
 	sharedTotpPlan := MFADevicePolicyTotpResourceModel{
 		Enabled:                    p.Enabled,
 		Otp:                        p.Otp,
-		PasscodeGracePeriod:        types.Int32Null(),
+		PasscodeGracePeriod:        p.PasscodeGracePeriod,
 		PairingDisabled:            p.PairingDisabled,
 		PromptForNicknameOnPairing: p.PromptForNicknameOnPairing,
 		UriParameters:              p.UriParameters,
@@ -4192,6 +4217,7 @@ func toStateMfaDevicePolicyTotpForDefault(apiObject *mfa.DeviceAuthenticationPol
 	o := map[string]attr.Value{
 		"enabled":                        framework.BoolOkToTF(apiObject.GetEnabledOk()),
 		"otp":                            otp,
+		"passcode_grace_period":          framework.Int32OkToTF(apiObject.GetPasscodeGracePeriodOk()),
 		"pairing_disabled":               framework.BoolOkToTF(apiObject.GetPairingDisabledOk()),
 		"prompt_for_nickname_on_pairing": framework.BoolOkToTF(apiObject.GetPromptForNicknameOnPairingOk()),
 		"uri_parameters":                 framework.StringMapOkToTF(apiObject.GetUriParametersOk()),

@@ -136,6 +136,7 @@ func TestAccMFADevicePolicyDefault_Full(t *testing.T) {
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, fmt.Sprintf("pingone_application.%s", resourceName), "mobile.applications.%s.pairing_key_lifetime.duration", "10"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, fmt.Sprintf("pingone_application.%s", resourceName), "mobile.applications.%s.push_timeout.duration", "45"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.passcode_grace_period", "7"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.pairing_disabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.prompt_for_nickname_on_pairing", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.enabled", "true"),
@@ -208,6 +209,7 @@ func TestAccMFADevicePolicyDefault_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "email.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.passcode_grace_period", "5"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.failure.count", "3"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.failure.cool_down.duration", "2"),
@@ -379,6 +381,7 @@ func TestAccMFADevicePolicyDefault_PingID_Full(t *testing.T) {
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, fmt.Sprintf("data.pingone_application.%s", resourceName), "mobile.applications.%s.new_request_duration_configuration.total_timeout.time_unit", "SECONDS"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, fmt.Sprintf("data.pingone_application.%s", resourceName), "mobile.applications.%s.ip_pairing_configuration.any_ip_address", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.passcode_grace_period", "5"),
 					resource.TestCheckResourceAttr(resourceFullName, "desktop.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "desktop.otp.failure.count", "5"),
 					resource.TestCheckResourceAttr(resourceFullName, "yubikey.enabled", "true"),
@@ -1246,6 +1249,7 @@ resource "pingone_mfa_device_policy_default" "%[3]s" {
 
   totp = {
     enabled                        = true
+    passcode_grace_period          = 7
     pairing_disabled               = false
     prompt_for_nickname_on_pairing = false
     otp = {

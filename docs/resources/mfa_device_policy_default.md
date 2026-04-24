@@ -163,6 +163,7 @@ resource "pingone_mfa_device_policy_default" "my_awesome_mfa_device_policy_defau
 
   totp = {
     enabled                        = true
+    passcode_grace_period          = 5
     pairing_disabled               = false
     prompt_for_nickname_on_pairing = false
     otp = {
@@ -676,6 +677,7 @@ Optional:
 
 - `otp` (Attributes) A single object that allows configuration of TOTP OTP settings. (see [below for nested schema](#nestedatt--totp--otp))
 - `pairing_disabled` (Boolean) A boolean that, when set to `true`, prevents users from pairing new devices with the TOTP method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.  Defaults to `false`.
+- `passcode_grace_period` (Number) An integer that specifies the passcode grace period window count for TOTP. Minimum is `1` and maximum is `10`.  Defaults to `5`.
 - `prompt_for_nickname_on_pairing` (Boolean) A boolean that, when set to `true`, prompts users to provide nicknames for devices during pairing.
 - `uri_parameters` (Map of String) A map of string key:value pairs that specifies `otpauth` URI parameters. For example, if you provide a value for the `issuer` parameter, then authenticators that support that parameter will display the text you specify together with the OTP (in addition to the username). This can help users recognize which application the OTP is for. If you intend on using the same MFA policy for multiple applications, choose a name that reflects the group of applications.
 

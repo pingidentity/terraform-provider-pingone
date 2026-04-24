@@ -143,6 +143,7 @@ resource "pingone_mfa_device_policy_default" "my_awesome_mfa_device_policy_defau
 
   totp = {
     enabled                        = true
+    passcode_grace_period          = 5
     pairing_disabled               = false
     prompt_for_nickname_on_pairing = false
     otp = {

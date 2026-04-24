@@ -279,6 +279,10 @@ func MFADevicePolicyDefault_CheckDestroy(s *terraform.State) error {
 			return fmt.Errorf("expected TOTP Otp.Failure.CoolDown.TimeUnit to be MINUTES, got %s", v)
 		}
 
+		if v := policy.Totp.GetPasscodeGracePeriod(); v != 5 {
+			return fmt.Errorf("expected TOTP PasscodeGracePeriod to be 5, got %d", v)
+		}
+
 		// FIDO2
 		if policy.Fido2.GetEnabled() {
 			return fmt.Errorf("expected FIDO2 to be disabled")
