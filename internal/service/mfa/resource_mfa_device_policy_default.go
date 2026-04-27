@@ -23,6 +23,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
+"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -66,6 +68,7 @@ type MFADevicePolicyDefaultResourceModel struct {
 	Sms                   types.Object                 `tfsdk:"sms"`
 	Voice                 types.Object                 `tfsdk:"voice"`
 	Email                 types.Object                 `tfsdk:"email"`
+	WhatsApp              types.Object                 `tfsdk:"whats_app"`
 	Mobile                types.Object                 `tfsdk:"mobile"`
 	Totp                  types.Object                 `tfsdk:"totp"`
 	Fido2                 types.Object                 `tfsdk:"fido2"`
@@ -387,6 +390,10 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	deviceSelectionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that defines the device selection method.",
 	).AllowedValuesEnum(mfa.AllowedEnumMFADevicePolicySelectionEnumValues).DefaultValue(string(mfa.ENUMMFADEVICEPOLICYSELECTION_DEFAULT_TO_FIRST))
+
+	whatsAppDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A single object that allows configuration of WhatsApp OTP device authentication policy settings. Only applicable for %s policies.", POLICY_TYPE_PINGONE_MFA),
+	)
 
 	newDeviceNotificationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that defines whether a user should be notified if a new authentication method has been added to their account.",
@@ -1007,6 +1014,25 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 			"voice": r.devicePolicyOfflineDeviceSchemaAttribute("voice OTP"),
 
 			"email": r.devicePolicyOfflineDeviceSchemaAttribute("email OTP"),
+
+			"whats_app": schema.SingleNestedAttribute{
+				Description:         whatsAppDescription.Description,
+				MarkdownDescription: whatsAppDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.UseStateForUnknown(),
+				},
+
+				Validators: []validator.Object{
+					objectvalidator.ConflictsIfMatchesPathValue(
+						types.StringValue(POLICY_TYPE_PINGID),
+						path.MatchRoot("policy_type"),
+					),
+				},
+
+				Attributes: r.devicePolicyOfflineDeviceSchemaAttribute("WhatsApp OTP").Attributes,
+			},
 
 			"mobile": schema.SingleNestedAttribute{
 				Description:         mobileDescription.Description,
@@ -3680,6 +3706,26 @@ func (p *MFADevicePolicyDefaultResourceModel) expand(ctx context.Context) (mfa.D
 		tflog.Debug(ctx, "oath_token is null or unknown, NOT sending to API")
 	}
 
+	// WhatsApp - only for PingOne MFA
+	if policyType != POLICY_TYPE_PINGID && !p.WhatsApp.IsNull() && !p.WhatsApp.IsUnknown() {
+		var whatsAppPlan MFADevicePolicyWhatsAppResourceModel
+		diags.Append(p.WhatsApp.As(ctx, &whatsAppPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return mfa.DeviceAuthenticationPolicy{}, diags
+		}
+
+		whatsApp, d := whatsAppPlan.expand(ctx)
+		diags.Append(d...)
+		if diags.HasError() {
+			return mfa.DeviceAuthenticationPolicy{}, diags
+		}
+
+		data.SetWhatsApp(*whatsApp)
+	}
+
 	return *data, diags
 }
 
@@ -4186,6 +4232,8 @@ func (p *MFADevicePolicyDefaultResourceModel) toState(apiObject *mfa.DeviceAuthe
 
 	// Policy type specific fields
 	if isPingID {
+		p.WhatsApp = types.ObjectNull(MFADevicePolicyOfflineDeviceTFObjectTypes)
+
 		// PingID-specific devices
 		p.Desktop, d = toStateMfaDevicePolicyPingIDDevice(apiObject.GetDesktopOk())
 		diags.Append(d...)
@@ -4193,6 +4241,9 @@ func (p *MFADevicePolicyDefaultResourceModel) toState(apiObject *mfa.DeviceAuthe
 		p.Yubikey, d = toStateMfaDevicePolicyPingIDDevice(apiObject.GetYubikeyOk())
 		diags.Append(d...)
 	} else {
+		p.WhatsApp, d = toStateMfaDevicePolicyWhatsApp(apiObject.GetWhatsAppOk())
+		diags.Append(d...)
+
 		// Set PingID-specific fields to null for PingOneMFA policies
 		p.Desktop = types.ObjectNull(MFADevicePolicyCommonDeviceTFObjectTypes)
 		p.Yubikey = types.ObjectNull(MFADevicePolicyCommonDeviceTFObjectTypes)
