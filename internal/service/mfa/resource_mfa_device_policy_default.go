@@ -23,9 +23,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
-"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -911,6 +912,10 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 				Computed:            true,
 
 				CustomType: timetypes.RFC3339Type{},
+
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseNonNullStateForUnknown(),
+				},
 			},
 
 			"notifications_policy": schema.SingleNestedAttribute{
@@ -1021,7 +1026,7 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 				Optional:            true,
 				Computed:            true,
 				PlanModifiers: []planmodifier.Object{
-					objectplanmodifier.UseStateForUnknown(),
+					objectplanmodifier.UseNonNullStateForUnknown(),
 				},
 
 				Validators: []validator.Object{
@@ -2475,7 +2480,81 @@ func (r *MFADevicePolicyDefaultResource) ModifyPlan(ctx context.Context, req res
 			"State change warning",
 			"A destroy plan has been detected for the \"pingone_mfa_device_policy_default\" resource.  The default MFA device policy will be removed from Terraform's state.  The policy itself will not be removed from the PingOne service but will be reset to its default configuration.",
 		)
+		return
 	}
+
+	var plan MFADevicePolicyDefaultResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if plan.PolicyType.ValueString() == POLICY_TYPE_PINGONE_MFA && (plan.WhatsApp.IsUnknown() || plan.WhatsApp.IsNull()) {
+		whatsAppDefault := defaultWhatsAppObjectValue()
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("whats_app"), whatsAppDefault)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		plan.WhatsApp = whatsAppDefault
+	}
+
+	if req.State.Raw.IsNull() {
+		return
+	}
+
+	var state MFADevicePolicyDefaultResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	plan.UpdatedAt = state.UpdatedAt
+
+	if !req.Plan.Raw.Equal(req.State.Raw) {
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("updated_at"), timetypes.NewRFC3339Unknown())...)
+	}
+}
+
+func defaultWhatsAppObjectValue() types.Object {
+	const otpFailureCountDefault = 3
+	const otpLifetimeDurationDefault = 30
+	const otpOtpLengthDefault = 6
+
+	return types.ObjectValueMust(
+		MFADevicePolicyOfflineDeviceTFObjectTypes,
+		map[string]attr.Value{
+			"enabled":          types.BoolValue(false),
+			"pairing_disabled": types.BoolValue(false),
+			"otp": types.ObjectValueMust(
+				MFADevicePolicyOfflineDeviceOtpTFObjectTypes,
+				map[string]attr.Value{
+					"failure": types.ObjectValueMust(
+						MFADevicePolicyFailureTFObjectTypes,
+						map[string]attr.Value{
+							"count": types.Int32Value(otpFailureCountDefault),
+							"cool_down": types.ObjectValueMust(
+								MFADevicePolicyTimePeriodTFObjectTypes,
+								map[string]attr.Value{
+									"duration":  types.Int32Value(0),
+									"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
+								},
+							),
+						},
+					),
+					"lifetime": types.ObjectValueMust(
+						MFADevicePolicyTimePeriodTFObjectTypes,
+						map[string]attr.Value{
+							"duration":  types.Int32Value(otpLifetimeDurationDefault),
+							"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
+						},
+					),
+					"otp_length": types.Int32Value(otpOtpLengthDefault),
+				},
+			),
+			"prompt_for_nickname_on_pairing": types.BoolNull(),
+		},
+	)
 }
 
 func (r *MFADevicePolicyDefaultResource) devicePolicyOfflineDeviceSchemaAttribute(descriptionMethod string) schema.SingleNestedAttribute {
@@ -3431,6 +3510,9 @@ func (p *MFADevicePolicyDefaultResourceModel) buildDefaultPolicyStruct(mobileApp
 		yubikey.SetPairingDisabled(false)
 
 		data.SetYubikey(*yubikey)
+	} else {
+		whatsApp := mfa.NewDeviceAuthenticationPolicyOfflineDevice(false, *offlineOtp)
+		data.SetWhatsApp(*whatsApp)
 	}
 
 	return data

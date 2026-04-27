@@ -125,6 +125,14 @@ func TestAccMFADevicePolicyDefault_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "email.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "email.pairing_disabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "whats_app.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "whats_app.pairing_disabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.failure.count", "4"),
+					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.failure.cool_down.duration", "3"),
+					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.failure.cool_down.time_unit", "MINUTES"),
+					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.lifetime.duration", "30"),
+					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.lifetime.time_unit", "MINUTES"),
+					resource.TestCheckResourceAttr(resourceFullName, "whats_app.otp.otp_length", "6"),
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.applications.%", "1"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, fmt.Sprintf("pingone_application.%s", resourceName), "mobile.applications.%s.auto_enrollment.enabled", "true"),
@@ -207,6 +215,7 @@ func TestAccMFADevicePolicyDefault_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "sms.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "voice.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "email.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "whats_app.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "totp.passcode_grace_period", "5"),
@@ -656,6 +665,11 @@ func TestAccMFADevicePolicyDefault_Validation(t *testing.T) {
 					// Yubikey should conflict with PingOneMFA policy type
 					{
 						Config:      testAccMFADevicePolicyDefaultConfig_PingID_YubikeyWithPingOneMFA(resourceName, name),
+						ExpectError: regexp.MustCompile(`Invalid argument combination`),
+					},
+					// WhatsApp should conflict with PingID policy type
+					{
+						Config:      testAccMFADevicePolicyDefaultConfig_PingID_WhatsAppWithPingID(resourceName, name),
 						ExpectError: regexp.MustCompile(`Invalid argument combination`),
 					},
 					// Missing desktop block
@@ -1186,6 +1200,25 @@ resource "pingone_mfa_device_policy_default" "%[3]s" {
     }
   }
 
+  whats_app = {
+    enabled          = false
+    pairing_disabled = false
+    otp = {
+      failure = {
+        count = 4
+        cool_down = {
+          duration  = 3
+          time_unit = "MINUTES"
+        }
+      }
+      lifetime = {
+        duration  = 30
+        time_unit = "MINUTES"
+      }
+      otp_length = 6
+    }
+  }
+
   mobile = {
     enabled                        = true
     prompt_for_nickname_on_pairing = false
@@ -1576,6 +1609,71 @@ resource "pingone_mfa_device_policy_default" "%[2]s" {
   }
 
   totp = {
+    enabled = false
+  }
+}`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name)
+}
+
+func testAccMFADevicePolicyDefaultConfig_PingID_WhatsAppWithPingID(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+resource "pingone_mfa_device_policy_default" "%[2]s" {
+  environment_id = data.pingone_environment.workforce_test.id
+  policy_type    = "PING_ONE_ID"
+
+  name = "%[3]s"
+
+  sms = {
+    enabled = false
+  }
+
+  voice = {
+    enabled = false
+  }
+
+  email = {
+    enabled = false
+  }
+
+  mobile = {
+    enabled = true
+    applications = {
+      "11111111-1111-1111-1111-111111111111" = {
+        type = "pingIdAppConfig"
+        otp = {
+          enabled = true
+        }
+        new_request_duration_configuration = {
+          device_timeout = {
+            duration  = 30
+            time_unit = "SECONDS"
+          }
+          total_timeout = {
+            duration  = 70
+            time_unit = "SECONDS"
+          }
+        }
+        ip_pairing_configuration = {
+          any_ip_address = true
+        }
+      }
+    }
+  }
+
+  totp = {
+    enabled = false
+  }
+
+  desktop = {
+    enabled = false
+  }
+
+  yubikey = {
+    enabled = false
+  }
+
+  whats_app = {
     enabled = false
   }
 }`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name)
