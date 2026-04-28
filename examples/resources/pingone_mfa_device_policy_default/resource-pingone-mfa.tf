@@ -85,6 +85,26 @@ resource "pingone_mfa_device_policy_default" "my_awesome_mfa_device_policy_defau
     }
   }
 
+  whats_app = {
+    enabled                        = true
+    pairing_disabled               = false
+    prompt_for_nickname_on_pairing = false
+    otp = {
+      failure = {
+        count = 3
+        cool_down = {
+          duration  = 2
+          time_unit = "MINUTES"
+        }
+      }
+      lifetime = {
+        duration  = 30
+        time_unit = "MINUTES"
+      }
+      otp_length = 6
+    }
+  }
+
   mobile = {
     enabled                        = true
     prompt_for_nickname_on_pairing = false
@@ -143,6 +163,7 @@ resource "pingone_mfa_device_policy_default" "my_awesome_mfa_device_policy_defau
 
   totp = {
     enabled                        = true
+    passcode_grace_period          = 5
     pairing_disabled               = false
     prompt_for_nickname_on_pairing = false
     otp = {

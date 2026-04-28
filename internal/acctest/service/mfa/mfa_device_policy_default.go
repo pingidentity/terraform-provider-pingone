@@ -78,8 +78,8 @@ func MFADevicePolicyDefault_CheckDestroy(s *terraform.State) error {
 			return fmt.Errorf("expected SMS Otp.Failure.Count to be 3, got %d", v)
 		}
 
-		if v := policy.Sms.Otp.Failure.CoolDown.GetDuration(); v != 2 {
-			return fmt.Errorf("expected SMS Otp.Failure.CoolDown.Duration to be 2, got %d", v)
+		if v := policy.Sms.Otp.Failure.CoolDown.GetDuration(); v != 0 {
+			return fmt.Errorf("expected SMS Otp.Failure.CoolDown.Duration to be 0, got %d", v)
 		}
 
 		if v := policy.Sms.Otp.Failure.CoolDown.GetTimeUnit(); v != mfa.ENUMTIMEUNIT_MINUTES {
@@ -115,8 +115,8 @@ func MFADevicePolicyDefault_CheckDestroy(s *terraform.State) error {
 			return fmt.Errorf("expected Voice Otp.Failure.Count to be 3, got %d", v)
 		}
 
-		if v := policy.Voice.Otp.Failure.CoolDown.GetDuration(); v != 2 {
-			return fmt.Errorf("expected Voice Otp.Failure.CoolDown.Duration to be 2, got %d", v)
+		if v := policy.Voice.Otp.Failure.CoolDown.GetDuration(); v != 0 {
+			return fmt.Errorf("expected Voice Otp.Failure.CoolDown.Duration to be 0, got %d", v)
 		}
 
 		if v := policy.Voice.Otp.Failure.CoolDown.GetTimeUnit(); v != mfa.ENUMTIMEUNIT_MINUTES {
@@ -152,8 +152,8 @@ func MFADevicePolicyDefault_CheckDestroy(s *terraform.State) error {
 			return fmt.Errorf("expected Email Otp.Failure.Count to be 3, got %d", v)
 		}
 
-		if v := policy.Email.Otp.Failure.CoolDown.GetDuration(); v != 2 {
-			return fmt.Errorf("expected Email Otp.Failure.CoolDown.Duration to be 2, got %d", v)
+		if v := policy.Email.Otp.Failure.CoolDown.GetDuration(); v != 0 {
+			return fmt.Errorf("expected Email Otp.Failure.CoolDown.Duration to be 0, got %d", v)
 		}
 
 		if v := policy.Email.Otp.Failure.CoolDown.GetTimeUnit(); v != mfa.ENUMTIMEUNIT_MINUTES {
@@ -277,6 +277,50 @@ func MFADevicePolicyDefault_CheckDestroy(s *terraform.State) error {
 
 		if v := policy.Totp.Otp.Failure.CoolDown.GetTimeUnit(); v != mfa.ENUMTIMEUNIT_MINUTES {
 			return fmt.Errorf("expected TOTP Otp.Failure.CoolDown.TimeUnit to be MINUTES, got %s", v)
+		}
+
+		if v := policy.Totp.GetPasscodeGracePeriod(); v != 5 {
+			return fmt.Errorf("expected TOTP PasscodeGracePeriod to be 5, got %d", v)
+		}
+
+		// WhatsApp
+		policyType := rs.Primary.Attributes["policy_type"]
+		if policyType == "PING_ONE_MFA" {
+			if policy.WhatsApp.GetEnabled() {
+				return fmt.Errorf("expected WhatsApp to be disabled")
+			}
+
+			if policy.WhatsApp.GetPairingDisabled() {
+				return fmt.Errorf("expected WhatsApp PairingDisabled to be false")
+			}
+
+			if policy.WhatsApp.GetPromptForNicknameOnPairing() {
+				return fmt.Errorf("expected WhatsApp PromptForNicknameOnPairing to be false")
+			}
+
+			if v := policy.WhatsApp.Otp.LifeTime.GetDuration(); v != 30 {
+				return fmt.Errorf("expected WhatsApp Otp.LifeTime.Duration to be 30, got %d", v)
+			}
+
+			if v := policy.WhatsApp.Otp.LifeTime.GetTimeUnit(); v != mfa.ENUMTIMEUNIT_MINUTES {
+				return fmt.Errorf("expected WhatsApp Otp.LifeTime.TimeUnit to be MINUTES, got %s", v)
+			}
+
+			if v := policy.WhatsApp.Otp.Failure.GetCount(); v != 3 {
+				return fmt.Errorf("expected WhatsApp Otp.Failure.Count to be 3, got %d", v)
+			}
+
+			if v := policy.WhatsApp.Otp.Failure.CoolDown.GetDuration(); v != 0 {
+				return fmt.Errorf("expected WhatsApp Otp.Failure.CoolDown.Duration to be 0, got %d", v)
+			}
+
+			if v := policy.WhatsApp.Otp.Failure.CoolDown.GetTimeUnit(); v != mfa.ENUMTIMEUNIT_MINUTES {
+				return fmt.Errorf("expected WhatsApp Otp.Failure.CoolDown.TimeUnit to be MINUTES, got %s", v)
+			}
+
+			if v := policy.WhatsApp.Otp.GetOtpLength(); v != 6 {
+				return fmt.Errorf("expected WhatsApp Otp.OtpLength to be 6, got %d", v)
+			}
 		}
 
 		// FIDO2

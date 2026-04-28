@@ -23,7 +23,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int32default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -66,6 +69,7 @@ type MFADevicePolicyDefaultResourceModel struct {
 	Sms                   types.Object                 `tfsdk:"sms"`
 	Voice                 types.Object                 `tfsdk:"voice"`
 	Email                 types.Object                 `tfsdk:"email"`
+	WhatsApp              types.Object                 `tfsdk:"whats_app"`
 	Mobile                types.Object                 `tfsdk:"mobile"`
 	Totp                  types.Object                 `tfsdk:"totp"`
 	Fido2                 types.Object                 `tfsdk:"fido2"`
@@ -97,6 +101,7 @@ type MFADevicePolicyDefaultMobileResourceModel struct {
 type MFADevicePolicyDefaultTotpResourceModel struct {
 	Enabled                    types.Bool   `tfsdk:"enabled"`
 	Otp                        types.Object `tfsdk:"otp"`
+	PasscodeGracePeriod        types.Int32  `tfsdk:"passcode_grace_period"`
 	PairingDisabled            types.Bool   `tfsdk:"pairing_disabled"`
 	PromptForNicknameOnPairing types.Bool   `tfsdk:"prompt_for_nickname_on_pairing"`
 	UriParameters              types.Map    `tfsdk:"uri_parameters"`
@@ -229,6 +234,7 @@ var (
 	MFADevicePolicyDefaultTotpTFObjectTypes = map[string]attr.Type{
 		"enabled":                        types.BoolType,
 		"otp":                            types.ObjectType{AttrTypes: MFADevicePolicyTotpOtpTFObjectTypes},
+		"passcode_grace_period":          types.Int32Type,
 		"pairing_disabled":               types.BoolType,
 		"prompt_for_nickname_on_pairing": types.BoolType,
 		"uri_parameters":                 types.MapType{ElemType: types.StringType},
@@ -288,6 +294,9 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 
 	const totpOtpFailureCountDefault = 3
 	const totpOtpFailureCoolDownDurationDefault = 2
+	const totpPasscodeGracePeriodDefault = 5
+	const totpPasscodeGracePeriodMin = 1
+	const totpPasscodeGracePeriodMax = 10
 
 	const fido2FailureCountDefault = 3
 	const fido2FailureCoolDownDurationDefault = 2
@@ -382,6 +391,10 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	deviceSelectionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that defines the device selection method.",
 	).AllowedValuesEnum(mfa.AllowedEnumMFADevicePolicySelectionEnumValues).DefaultValue(string(mfa.ENUMMFADEVICEPOLICYSELECTION_DEFAULT_TO_FIRST))
+
+	whatsAppDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A single object that allows configuration of WhatsApp OTP device authentication policy settings. Only applicable for %s policies.", POLICY_TYPE_PINGONE_MFA),
+	)
 
 	newDeviceNotificationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that defines whether a user should be notified if a new authentication method has been added to their account.",
@@ -522,6 +535,10 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	totpUriParametersDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A map of string key:value pairs that specifies `otpauth` URI parameters. For example, if you provide a value for the `issuer` parameter, then authenticators that support that parameter will display the text you specify together with the OTP (in addition to the username). This can help users recognize which application the OTP is for. If you intend on using the same MFA policy for multiple applications, choose a name that reflects the group of applications.",
 	)
+
+	totpPasscodeGracePeriodDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that specifies the passcode grace period window count for TOTP. Minimum is `%d` and maximum is `%d`.", totpPasscodeGracePeriodMin, totpPasscodeGracePeriodMax),
+	).DefaultValue(totpPasscodeGracePeriodDefault)
 
 	fido2PairingDisabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that, when set to `true`, prevents users from pairing new devices with the FIDO2 method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.",
@@ -895,6 +912,10 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 				Computed:            true,
 
 				CustomType: timetypes.RFC3339Type{},
+
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseNonNullStateForUnknown(),
+				},
 			},
 
 			"notifications_policy": schema.SingleNestedAttribute{
@@ -998,6 +1019,25 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 			"voice": r.devicePolicyOfflineDeviceSchemaAttribute("voice OTP"),
 
 			"email": r.devicePolicyOfflineDeviceSchemaAttribute("email OTP"),
+
+			"whats_app": schema.SingleNestedAttribute{
+				Description:         whatsAppDescription.Description,
+				MarkdownDescription: whatsAppDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.UseNonNullStateForUnknown(),
+				},
+
+				Validators: []validator.Object{
+					objectvalidator.ConflictsIfMatchesPathValue(
+						types.StringValue(POLICY_TYPE_PINGID),
+						path.MatchRoot("policy_type"),
+					),
+				},
+
+				Attributes: r.devicePolicyOfflineDeviceSchemaAttribute("WhatsApp OTP").Attributes,
+			},
 
 			"mobile": schema.SingleNestedAttribute{
 				Description:         mobileDescription.Description,
@@ -1652,6 +1692,19 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 						Computed:            true,
 
 						Default: booldefault.StaticBool(false),
+					},
+
+					"passcode_grace_period": schema.Int32Attribute{
+						Description:         totpPasscodeGracePeriodDescription.Description,
+						MarkdownDescription: totpPasscodeGracePeriodDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: int32default.StaticInt32(totpPasscodeGracePeriodDefault),
+
+						Validators: []validator.Int32{
+							int32validator.Between(totpPasscodeGracePeriodMin, totpPasscodeGracePeriodMax),
+						},
 					},
 
 					"otp": schema.SingleNestedAttribute{
@@ -2427,7 +2480,83 @@ func (r *MFADevicePolicyDefaultResource) ModifyPlan(ctx context.Context, req res
 			"State change warning",
 			"A destroy plan has been detected for the \"pingone_mfa_device_policy_default\" resource.  The default MFA device policy will be removed from Terraform's state.  The policy itself will not be removed from the PingOne service but will be reset to its default configuration.",
 		)
+		return
 	}
+
+	var plan MFADevicePolicyDefaultResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if plan.PolicyType.ValueString() == POLICY_TYPE_PINGONE_MFA && (plan.WhatsApp.IsUnknown() || plan.WhatsApp.IsNull()) {
+		whatsAppDefault := defaultWhatsAppObjectValue()
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("whats_app"), whatsAppDefault)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		plan.WhatsApp = whatsAppDefault
+	}
+
+	if req.State.Raw.IsNull() {
+		return
+	}
+
+	var state MFADevicePolicyDefaultResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	plan.UpdatedAt = state.UpdatedAt
+
+	// `whats_app` has a conditional default, which can create plan noise where Terraform shows `updated_at` as `(known after apply)` even when no configurable values changed.
+	// This check ensures `updated_at` is marked as unknown only when the planned configuration actually differs from state.
+	if !req.Plan.Raw.Equal(req.State.Raw) {
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("updated_at"), timetypes.NewRFC3339Unknown())...)
+	}
+}
+
+func defaultWhatsAppObjectValue() types.Object {
+	const otpFailureCountDefault = 3
+	const otpLifetimeDurationDefault = 30
+	const otpOtpLengthDefault = 6
+
+	return types.ObjectValueMust(
+		MFADevicePolicyOfflineDeviceTFObjectTypes,
+		map[string]attr.Value{
+			"enabled":          types.BoolValue(false),
+			"pairing_disabled": types.BoolValue(false),
+			"otp": types.ObjectValueMust(
+				MFADevicePolicyOfflineDeviceOtpTFObjectTypes,
+				map[string]attr.Value{
+					"failure": types.ObjectValueMust(
+						MFADevicePolicyFailureTFObjectTypes,
+						map[string]attr.Value{
+							"count": types.Int32Value(otpFailureCountDefault),
+							"cool_down": types.ObjectValueMust(
+								MFADevicePolicyTimePeriodTFObjectTypes,
+								map[string]attr.Value{
+									"duration":  types.Int32Value(0),
+									"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
+								},
+							),
+						},
+					),
+					"lifetime": types.ObjectValueMust(
+						MFADevicePolicyTimePeriodTFObjectTypes,
+						map[string]attr.Value{
+							"duration":  types.Int32Value(otpLifetimeDurationDefault),
+							"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
+						},
+					),
+					"otp_length": types.Int32Value(otpOtpLengthDefault),
+				},
+			),
+			"prompt_for_nickname_on_pairing": types.BoolNull(),
+		},
+	)
 }
 
 func (r *MFADevicePolicyDefaultResource) devicePolicyOfflineDeviceSchemaAttribute(descriptionMethod string) schema.SingleNestedAttribute {
@@ -3184,27 +3313,29 @@ func FetchDefaultMFADevicePolicyWithTimeout(ctx context.Context, apiClient *mfa.
 
 func (p *MFADevicePolicyDefaultResourceModel) buildDefaultPolicyStruct(mobileAppID string) *mfa.DeviceAuthenticationPolicy {
 	const (
-		defaultOTPPeriodDuration       = 30
-		defaultOTPFailureCount         = 3
-		defaultOTPFailureCooldown      = 2
-		defaultOTPLength               = 6
-		defaultPushTimeout             = 100
-		defaultPairingKeyLifetime      = 48
-		defaultPushLimitCount          = 5
-		defaultPushLimitPeriod         = 10
-		defaultPushLimitLockDuration   = 30
-		defaultNewRequestDeviceTimeout = 25
-		defaultNewRequestTotalTimeout  = 40
-		defaultRememberMeDuration      = 30
+		defaultOTPPeriodDuration         = 30
+		defaultOTPFailureCount           = 3
+		defaultOTPFailureCooldown        = 2
+		defaultOfflineOTPFailureCoolDown = 0
+		defaultTotpPasscodeGracePeriod   = 5
+		defaultOTPLength                 = 6
+		defaultPushTimeout               = 100
+		defaultPairingKeyLifetime        = 48
+		defaultPushLimitCount            = 5
+		defaultPushLimitPeriod           = 10
+		defaultPushLimitLockDuration     = 30
+		defaultNewRequestDeviceTimeout   = 25
+		defaultNewRequestTotalTimeout    = 40
+		defaultRememberMeDuration        = 30
 	)
 
 	minutes := mfa.EnumTimeUnit("MINUTES")
 
 	isPingID := !p.PolicyType.IsNull() && !p.PolicyType.IsUnknown() && p.PolicyType.ValueString() == POLICY_TYPE_PINGID
 
-	// Offline OTP Defaults (SMS, Voice, Email)
+	// Offline OTP Defaults (SMS, Voice, Email, WhatsApp)
 	offlineOtpLifetime := mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpLifeTime(defaultOTPPeriodDuration, minutes)
-	offlineOtpFailureCooldown := mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailureCoolDown(defaultOTPFailureCooldown, minutes)
+	offlineOtpFailureCooldown := mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailureCoolDown(defaultOfflineOTPFailureCoolDown, minutes)
 	offlineOtpFailure := mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailure(defaultOTPFailureCount, *offlineOtpFailureCooldown)
 	offlineOtp := mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtp(*offlineOtpLifetime, *offlineOtpFailure)
 	offlineOtp.SetOtpLength(defaultOTPLength)
@@ -3302,6 +3433,8 @@ func (p *MFADevicePolicyDefaultResourceModel) buildDefaultPolicyStruct(mobileApp
 	totpEnabled := !isPingID
 	totp := mfa.NewDeviceAuthenticationPolicyCommonTotp(totpEnabled, *totpOtp)
 	totp.SetPairingDisabled(false)
+	totp.SetPasscodeGracePeriod(defaultTotpPasscodeGracePeriod)
+
 	totp.SetPromptForNicknameOnPairing(false)
 
 	data := mfa.NewDeviceAuthenticationPolicy(
@@ -3380,6 +3513,10 @@ func (p *MFADevicePolicyDefaultResourceModel) buildDefaultPolicyStruct(mobileApp
 		yubikey.SetPairingDisabled(false)
 
 		data.SetYubikey(*yubikey)
+	} else {
+		whatsApp := mfa.NewDeviceAuthenticationPolicyOfflineDevice(false, *offlineOtp)
+		whatsApp.SetPairingDisabled(false)
+		data.SetWhatsApp(*whatsApp)
 	}
 
 	return data
@@ -3655,6 +3792,26 @@ func (p *MFADevicePolicyDefaultResourceModel) expand(ctx context.Context) (mfa.D
 		tflog.Debug(ctx, "oath_token is null or unknown, NOT sending to API")
 	}
 
+	// WhatsApp - only for PingOne MFA
+	if policyType != POLICY_TYPE_PINGID && !p.WhatsApp.IsNull() && !p.WhatsApp.IsUnknown() {
+		var whatsAppPlan MFADevicePolicyWhatsAppResourceModel
+		diags.Append(p.WhatsApp.As(ctx, &whatsAppPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return mfa.DeviceAuthenticationPolicy{}, diags
+		}
+
+		whatsApp, d := whatsAppPlan.expand(ctx)
+		diags.Append(d...)
+		if diags.HasError() {
+			return mfa.DeviceAuthenticationPolicy{}, diags
+		}
+
+		data.SetWhatsApp(*whatsApp)
+	}
+
 	return *data, diags
 }
 
@@ -3663,7 +3820,7 @@ func (p *MFADevicePolicyDefaultTotpResourceModel) expand(ctx context.Context) (*
 	sharedTotpPlan := MFADevicePolicyTotpResourceModel{
 		Enabled:                    p.Enabled,
 		Otp:                        p.Otp,
-		PasscodeGracePeriod:        types.Int32Null(),
+		PasscodeGracePeriod:        p.PasscodeGracePeriod,
 		PairingDisabled:            p.PairingDisabled,
 		PromptForNicknameOnPairing: p.PromptForNicknameOnPairing,
 		UriParameters:              p.UriParameters,
@@ -4161,6 +4318,8 @@ func (p *MFADevicePolicyDefaultResourceModel) toState(apiObject *mfa.DeviceAuthe
 
 	// Policy type specific fields
 	if isPingID {
+		p.WhatsApp = types.ObjectNull(MFADevicePolicyOfflineDeviceTFObjectTypes)
+
 		// PingID-specific devices
 		p.Desktop, d = toStateMfaDevicePolicyPingIDDevice(apiObject.GetDesktopOk())
 		diags.Append(d...)
@@ -4168,6 +4327,9 @@ func (p *MFADevicePolicyDefaultResourceModel) toState(apiObject *mfa.DeviceAuthe
 		p.Yubikey, d = toStateMfaDevicePolicyPingIDDevice(apiObject.GetYubikeyOk())
 		diags.Append(d...)
 	} else {
+		p.WhatsApp, d = toStateMfaDevicePolicyWhatsApp(apiObject.GetWhatsAppOk())
+		diags.Append(d...)
+
 		// Set PingID-specific fields to null for PingOneMFA policies
 		p.Desktop = types.ObjectNull(MFADevicePolicyCommonDeviceTFObjectTypes)
 		p.Yubikey = types.ObjectNull(MFADevicePolicyCommonDeviceTFObjectTypes)
@@ -4192,6 +4354,7 @@ func toStateMfaDevicePolicyTotpForDefault(apiObject *mfa.DeviceAuthenticationPol
 	o := map[string]attr.Value{
 		"enabled":                        framework.BoolOkToTF(apiObject.GetEnabledOk()),
 		"otp":                            otp,
+		"passcode_grace_period":          framework.Int32OkToTF(apiObject.GetPasscodeGracePeriodOk()),
 		"pairing_disabled":               framework.BoolOkToTF(apiObject.GetPairingDisabledOk()),
 		"prompt_for_nickname_on_pairing": framework.BoolOkToTF(apiObject.GetPromptForNicknameOnPairingOk()),
 		"uri_parameters":                 framework.StringMapOkToTF(apiObject.GetUriParametersOk()),
