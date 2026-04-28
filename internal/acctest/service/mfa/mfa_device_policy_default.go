@@ -78,8 +78,8 @@ func MFADevicePolicyDefault_CheckDestroy(s *terraform.State) error {
 			return fmt.Errorf("expected SMS Otp.Failure.Count to be 3, got %d", v)
 		}
 
-		if v := policy.Sms.Otp.Failure.CoolDown.GetDuration(); v != 2 {
-			return fmt.Errorf("expected SMS Otp.Failure.CoolDown.Duration to be 2, got %d", v)
+		if v := policy.Sms.Otp.Failure.CoolDown.GetDuration(); v != 0 {
+			return fmt.Errorf("expected SMS Otp.Failure.CoolDown.Duration to be 0, got %d", v)
 		}
 
 		if v := policy.Sms.Otp.Failure.CoolDown.GetTimeUnit(); v != mfa.ENUMTIMEUNIT_MINUTES {
@@ -115,8 +115,8 @@ func MFADevicePolicyDefault_CheckDestroy(s *terraform.State) error {
 			return fmt.Errorf("expected Voice Otp.Failure.Count to be 3, got %d", v)
 		}
 
-		if v := policy.Voice.Otp.Failure.CoolDown.GetDuration(); v != 2 {
-			return fmt.Errorf("expected Voice Otp.Failure.CoolDown.Duration to be 2, got %d", v)
+		if v := policy.Voice.Otp.Failure.CoolDown.GetDuration(); v != 0 {
+			return fmt.Errorf("expected Voice Otp.Failure.CoolDown.Duration to be 0, got %d", v)
 		}
 
 		if v := policy.Voice.Otp.Failure.CoolDown.GetTimeUnit(); v != mfa.ENUMTIMEUNIT_MINUTES {
@@ -152,8 +152,8 @@ func MFADevicePolicyDefault_CheckDestroy(s *terraform.State) error {
 			return fmt.Errorf("expected Email Otp.Failure.Count to be 3, got %d", v)
 		}
 
-		if v := policy.Email.Otp.Failure.CoolDown.GetDuration(); v != 2 {
-			return fmt.Errorf("expected Email Otp.Failure.CoolDown.Duration to be 2, got %d", v)
+		if v := policy.Email.Otp.Failure.CoolDown.GetDuration(); v != 0 {
+			return fmt.Errorf("expected Email Otp.Failure.CoolDown.Duration to be 0, got %d", v)
 		}
 
 		if v := policy.Email.Otp.Failure.CoolDown.GetTimeUnit(); v != mfa.ENUMTIMEUNIT_MINUTES {
@@ -310,8 +310,8 @@ func MFADevicePolicyDefault_CheckDestroy(s *terraform.State) error {
 				return fmt.Errorf("expected WhatsApp Otp.Failure.Count to be 3, got %d", v)
 			}
 
-			if v := policy.WhatsApp.Otp.Failure.CoolDown.GetDuration(); v != 2 {
-				return fmt.Errorf("expected WhatsApp Otp.Failure.CoolDown.Duration to be 2, got %d", v)
+			if v := policy.WhatsApp.Otp.Failure.CoolDown.GetDuration(); v != 0 {
+				return fmt.Errorf("expected WhatsApp Otp.Failure.CoolDown.Duration to be 0, got %d", v)
 			}
 
 			if v := policy.WhatsApp.Otp.Failure.CoolDown.GetTimeUnit(); v != mfa.ENUMTIMEUNIT_MINUTES {

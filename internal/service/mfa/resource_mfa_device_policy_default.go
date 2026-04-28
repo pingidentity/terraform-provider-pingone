@@ -3313,28 +3313,29 @@ func FetchDefaultMFADevicePolicyWithTimeout(ctx context.Context, apiClient *mfa.
 
 func (p *MFADevicePolicyDefaultResourceModel) buildDefaultPolicyStruct(mobileAppID string) *mfa.DeviceAuthenticationPolicy {
 	const (
-		defaultOTPPeriodDuration       = 30
-		defaultOTPFailureCount         = 3
-		defaultOTPFailureCooldown      = 2
-		defaultTotpPasscodeGracePeriod = 5
-		defaultOTPLength               = 6
-		defaultPushTimeout             = 100
-		defaultPairingKeyLifetime      = 48
-		defaultPushLimitCount          = 5
-		defaultPushLimitPeriod         = 10
-		defaultPushLimitLockDuration   = 30
-		defaultNewRequestDeviceTimeout = 25
-		defaultNewRequestTotalTimeout  = 40
-		defaultRememberMeDuration      = 30
+		defaultOTPPeriodDuration         = 30
+		defaultOTPFailureCount           = 3
+		defaultOTPFailureCooldown        = 2
+		defaultOfflineOTPFailureCoolDown = 0
+		defaultTotpPasscodeGracePeriod   = 5
+		defaultOTPLength                 = 6
+		defaultPushTimeout               = 100
+		defaultPairingKeyLifetime        = 48
+		defaultPushLimitCount            = 5
+		defaultPushLimitPeriod           = 10
+		defaultPushLimitLockDuration     = 30
+		defaultNewRequestDeviceTimeout   = 25
+		defaultNewRequestTotalTimeout    = 40
+		defaultRememberMeDuration        = 30
 	)
 
 	minutes := mfa.EnumTimeUnit("MINUTES")
 
 	isPingID := !p.PolicyType.IsNull() && !p.PolicyType.IsUnknown() && p.PolicyType.ValueString() == POLICY_TYPE_PINGID
 
-	// Offline OTP Defaults (SMS, Voice, Email)
+	// Offline OTP Defaults (SMS, Voice, Email, WhatsApp)
 	offlineOtpLifetime := mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpLifeTime(defaultOTPPeriodDuration, minutes)
-	offlineOtpFailureCooldown := mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailureCoolDown(defaultOTPFailureCooldown, minutes)
+	offlineOtpFailureCooldown := mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailureCoolDown(defaultOfflineOTPFailureCoolDown, minutes)
 	offlineOtpFailure := mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtpFailure(defaultOTPFailureCount, *offlineOtpFailureCooldown)
 	offlineOtp := mfa.NewDeviceAuthenticationPolicyOfflineDeviceOtp(*offlineOtpLifetime, *offlineOtpFailure)
 	offlineOtp.SetOtpLength(defaultOTPLength)
@@ -3514,6 +3515,7 @@ func (p *MFADevicePolicyDefaultResourceModel) buildDefaultPolicyStruct(mobileApp
 		data.SetYubikey(*yubikey)
 	} else {
 		whatsApp := mfa.NewDeviceAuthenticationPolicyOfflineDevice(false, *offlineOtp)
+		whatsApp.SetPairingDisabled(false)
 		data.SetWhatsApp(*whatsApp)
 	}
 
