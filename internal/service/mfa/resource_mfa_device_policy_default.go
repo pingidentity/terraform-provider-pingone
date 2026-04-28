@@ -2511,6 +2511,8 @@ func (r *MFADevicePolicyDefaultResource) ModifyPlan(ctx context.Context, req res
 
 	plan.UpdatedAt = state.UpdatedAt
 
+	// `whats_app` has a conditional default, which can create plan noise where Terraform shows `updated_at` as `(known after apply)` even when no configurable values changed.
+	// This check ensures `updated_at` is marked as unknown only when the planned configuration actually differs from state.
 	if !req.Plan.Raw.Equal(req.State.Raw) {
 		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("updated_at"), timetypes.NewRFC3339Unknown())...)
 	}
