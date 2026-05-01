@@ -86,6 +86,21 @@ resource "pingone_davinci_connector_instance" "pingOneFormsConnector" {
     value = var.pingoneformsconnector_property_form_data
   }
   property {
+    name  = "hyperlinkUrls"
+    type  = "string"
+    value = var.pingoneformsconnector_property_hyperlink_urls
+  }
+  property {
+    name  = "imageSectionLabel"
+    type  = "string"
+    value = var.pingoneformsconnector_property_image_section_label
+  }
+  property {
+    name  = "imageUrls"
+    type  = "string"
+    value = var.pingoneformsconnector_property_image_urls
+  }
+  property {
     name  = "innerCss"
     type  = "string"
     value = var.pingoneformsconnector_property_inner_css

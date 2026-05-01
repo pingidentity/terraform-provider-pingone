@@ -1429,6 +1429,7 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `apiToken` (string): Cloudflare API Token. Console display name: "API Token".
 * `body` (string): The raw formatted JSON body. Console display name: "Body".
 * `domain` (string): Domain. Console display name: "Domain".
+* `email` (string): Email. Console display name: "Email".
 * `endpoint` (string): The Cloudflare API endpoint, such as "/accounts/eaa16507a7d5779d6b428b0780962120/intel/domain". Console display name: "Endpoint".
 * `headers` (string): Add HTTP headers and provide their values. Console display name: "Headers".
 * `ip` (string): IP Address. Console display name: "IP Address".
@@ -3534,7 +3535,7 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `agreement` (string): The agreement to show to the user. For a dynamic agreement, select Use Agreement ID and enter a value in the Agreement ID field. Console display name: "Agreement".
 * `agreementId` (string): Enter the ID of the agreement to show, such as "68373acc-c0ef-4258-b69d-8152320a8237". This allows you to show a different agreement depending on the flow context. Console display name: "Agreement ID".
 * `agreementSectionLabel` (string): Console display name: "Agreement".
-* `authenticationMethodList` (string): The list of MFA authentication methods that you want to make available to the user, such as "EMAIL,TOTP". To allow all devices, enter "EMAIL, MOBILE, SMS, VOICE, TOTP, FIDO2, MAGIC_LINK". Separate multiple values with a comma. Console display name: "Custom Authentication Method List".
+* `authenticationMethodList` (string): The list of MFA authentication methods that you want to make available to the user, such as "EMAIL,TOTP". To allow all devices, enter "EMAIL, MOBILE, SMS, VOICE, TOTP, FIDO2, MAGIC_LINK, YUBIKEY, OATH_TOKEN, WHATSAPP, PINGID_DESKTOP_GEN2". Separate multiple values with a comma. Console display name: "Custom Authentication Method List".
 * `authenticationMethodSource` (string): Determines where to get the list of authentication methods to present to the user. Select an MFA policy, specify a policy ID, or specify the exact authentication method list. Console display name: "Authentication Method Source".
 * `buttonText` (string): The text to show on the continue button, such as "Submit" or "Continue". Console display name: "Button Text".
 * `challenge` (string): Select a challenge variable from your flow, such as from a Challenge or Flow Conductor node. When this challenge is completed in another branch of the flow, the main flow continues past the form. Console display name: "".
@@ -3547,6 +3548,9 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `enableRisk` (string): Enable PingOne Protect SDK to collect device information. Console display name: "Enable Device Profiling".
 * `form` (string): The form to show. You can add forms in PingOne > User Experience > Forms. Console display name: "Form".
 * `formData` (string): Optionally provide a value to pre-populate the fields in your form. Users can keep the pre-populated value or change it before submitting the form. Console display name: "Initial Field Values".
+* `hyperlinkUrls` (string): The URL for the image hyperlink, such as "https://example.com/sign-up". Console display name: "Hyperlink URLs".
+* `imageSectionLabel` (string): Console display name: "Image".
+* `imageUrls` (string): The URL for the image to show, such as "https://example.com/image.jpg". Console display name: "Image URLs".
 * `innerCss` (string): Console display name: "CSS".
 * `innerHtml` (string): Console display name: "Inner HTML".
 * `isIAFDetectionEnabled` (string): Identify the agent used to access the application and detect if it is an IAF (Intelligent Automation Framework) agent. Console display name: "Enable IAF Detection (Experimental)".
@@ -12711,6 +12715,7 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `matchAttribute` (string): Select the attribute that you want to match against the provided identifier to find a user. Console display name: "PingOne Attribute".
 * `matchAttributes` (string): Enter the PingOne attributes you want to use to find a user, such as username, userID, or email. Console display name: "PingOne Attributes".
 * `memberGroupRelationship` (string): The output will only include members that are directly assigned to the group, instead of including any members assigned by a filter. Console display name: "Direct Member Relationship".
+* `mfaStatus` (string): Console display name: "MFA Status".
 * `mobilePhone` (string): Console display name: "Mobile Phone".
 * `newPassword` (string): The user's new password. Console display name: "New Password".
 * `nextEvent` (string): Console display name: "".
@@ -12750,6 +12755,7 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `userFilter` (string): A filter to automatically assign users to the group. Console display name: "Dynamic User Filter".
 * `userId` (string): ID of the User. Console display name: "User ID".
 * `userIdentifierForFindUser` (string): Enter the identifier, which was captured earlier in the flow, that you want to use to find a user. For example, if the attributes specified are email and username, and the identifier is username, the system will search for users whose email or username match the value captured under username. Console display name: "Identifier".
+* `userInactivityDurationDays` (string): Console display name: "User Inactivity Duration (days)".
 * `userLocale` (string): The user's location, which determines the language in which the agreement is written and indicated by an IEFT BCP 47 language tag, such as "en-US" or "az-Arab". Console display name: "User Locale".
 * `userTypeId` (string): Select the user type through which the users can be found. Console display name: "User Type".
 * `username` (string): The unique identifier for the user. Console display name: "Username".
@@ -15016,7 +15022,7 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `idTokenExpiry` (string): Console display name: "".
 * `publicKeyId` (string): A unique identifier for the public key, used to identify the correct key when multiple keys are in use or have been rotated. Used for tokens created with RS*, ES*, or PS* algorithms that use key IDs. Console display name: "Public Key ID".
 * `publicKeyJWTEndpointURL` (string): The JWKS endpoint for the public key associated with the private key that was used to create the JWT token, such as "https://yourcompany.com/.well-known/jwks.json". For tokens created with RS*, ES*, or PS* algorithms, you must provide the key here or in the Public Key PEM Contents field. Console display name: "Public Key JWKS Endpoint URL".
-* `publicKeyPEMContents` (string): The public key in associated with the private key that was used to create the JWT token. The key must be in PEM format, which includes the `-----BEGIN PUBLIC KEY-----` and `-----END PUBLIC KEY-----` delimiters. For tokens created with RS*, ES*, or PS* algorithms, you must provide the key here or in the Public Key JWKS Endpoint URL. Console display name: "Public Key PEM Contents".
+* `publicKeyPEMContents` (string): The public key associated with the private key that was used to create the JWT token. The key must be in PEM format, which includes the `-----BEGIN PUBLIC KEY-----` and `-----END PUBLIC KEY-----` delimiters. For tokens created with RS*, ES*, or PS* algorithms, you must provide the key here or in the Public Key JWKS Endpoint URL. Console display name: "Public Key PEM Contents".
 * `publicKeyType` (string): Select whether to provide a key directly from DaVinci, by pasting a public key PEM file, or by pointing to a JWKS file by URL. Console display name: "Public Key Type".
 * `resolveToUser` (string): Console display name: "".
 * `secretKey` (string): The symmetric key used to create the JWT token. Required for tokens created with HS* algorithms. Console display name: "Secret Key".
@@ -15337,7 +15343,6 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `email` (string): Email address of the User. Console display name: "Email".
 * `errorIfUserExists` (string): Console display name: "".
 * `name` (string): Name of the User. Console display name: "Name".
-* `newPassword` (string): If password feature is enabled in the User Connection and this field is present, a new hashed password and salt will be stored in the user record. Console display name: "New Password".
 * `password` (string): If password feature is enabled in the User Connection and this field is present, a hashed password and salt will be stored in the user record. Console display name: "Password".
 * `passwordLengthMax` (string): Console display name: "".
 * `passwordLengthMin` (string): Console display name: "".

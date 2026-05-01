@@ -31,11 +31,6 @@ resource "pingone_davinci_connector_instance" "userPolicyConnector" {
     value = var.userpolicyconnector_property_name
   }
   property {
-    name  = "newPassword"
-    type  = "string"
-    value = var.userpolicyconnector_property_new_password
-  }
-  property {
     name  = "password"
     type  = "string"
     value = var.userpolicyconnector_property_password
