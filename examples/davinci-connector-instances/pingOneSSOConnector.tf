@@ -276,6 +276,11 @@ resource "pingone_davinci_connector_instance" "pingOneSSOConnector" {
     value = var.pingonessoconnector_property_member_group_relationship
   }
   property {
+    name  = "mfaStatus"
+    type  = "string"
+    value = var.pingonessoconnector_property_mfa_status
+  }
+  property {
     name  = "mobilePhone"
     type  = "string"
     value = var.pingonessoconnector_property_mobile_phone
@@ -469,6 +474,11 @@ resource "pingone_davinci_connector_instance" "pingOneSSOConnector" {
     name  = "userIdentifierForFindUser"
     type  = "string"
     value = var.pingonessoconnector_property_user_identifier_for_find_user
+  }
+  property {
+    name  = "userInactivityDurationDays"
+    type  = "string"
+    value = var.pingonessoconnector_property_user_inactivity_duration_days
   }
   property {
     name  = "userLocale"
