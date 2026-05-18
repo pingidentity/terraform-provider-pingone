@@ -33,7 +33,7 @@ require (
 	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.25.1
 	github.com/patrickcping/pingone-go-sdk-v2/risk v0.21.1
 	github.com/patrickcping/pingone-go-sdk-v2/verify v0.11.2
-	github.com/pingidentity/pingone-go-client v0.10.1
+	github.com/pingidentity/pingone-go-client v0.11.0
 )
 
 require (
@@ -398,7 +398,7 @@ require (
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/detectors/gcp v1.39.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.63.0 // indirect
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.63.0 // indirect
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.65.0 // indirect
 	go.opentelemetry.io/otel v1.43.0 // indirect
 	go.opentelemetry.io/otel/metric v1.43.0 // indirect
 	go.opentelemetry.io/otel/sdk v1.43.0 // indirect
