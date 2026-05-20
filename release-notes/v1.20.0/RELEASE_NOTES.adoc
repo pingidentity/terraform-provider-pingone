@@ -1,0 +1,14 @@
+= Release Notes for v1.20.0
+:toc:
+:toclevels: 3
+:sectnums:
+
+Release Date: 2026-05-20
+
+== ENHANCEMENTS
+* link:https://github.com/pingidentity/terraform-provider-pingone/commit/41df5e7e[41df5e7e] `resource/pingone_mfa_device_policy_default`: Added support for `totp.passcode_grace_period` and `whats_app` attributes link:https://github.com/pingidentity/terraform-provider-pingone/pull/1309[#1309]
+
+== NOTES
+* link:https://github.com/pingidentity/terraform-provider-pingone/commit/509d4885[509d4885] Update Connector Reference Guide (01 May 2026). link:https://github.com/pingidentity/terraform-provider-pingone/pull/1310[#1310]
+* link:https://github.com/pingidentity/terraform-provider-pingone/commit/08dea5dd[08dea5dd] bump `github.com/hashicorp/terraform-plugin-sdk/v2` v2.40.0 => v2.40.1 link:https://github.com/pingidentity/terraform-provider-pingone/pull/1312[#1312]
+
