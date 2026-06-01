@@ -406,14 +406,14 @@ resource "pingone_davinci_connector_instance" "pingOneSSOConnector" {
     value = var.pingonessoconnector_property_skip_button_press
   }
   property {
-    name  = "subFlowVersion"
-    type  = "string"
-    value = var.pingonessoconnector_property_sub_flow_version
-  }
-  property {
     name  = "subflow"
     type  = "string"
     value = var.pingonessoconnector_property_subflow
+  }
+  property {
+    name  = "subflowVersion"
+    type  = "string"
+    value = var.pingonessoconnector_property_subflow_version
   }
   property {
     name  = "templateLocale"

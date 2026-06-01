@@ -125,6 +125,7 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `loginEventFailureCode` (string): Login Event failure code. Console display name: "Failure Code".
 * `middleName` (string): User's middle name. Console display name: "Middle Name".
 * `pageID` (string): UBA unique page ID defined from the collector script. Console display name: "Page ID".
+* `passwordForgotFailureCode` (string): Password Forgot Event failure code. Console display name: "Failure Code".
 * `previousAvsResult` (string): Previous AVS result. Console display name: "Previous AVS Result".
 * `previousCardBin` (string): Previous leading digits (BIN). Console display name: "Previous Card BIN".
 * `previousCardLastFour` (string): Previous last four digits. Console display name: "Previous Card Last Four".
@@ -159,7 +160,7 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `username` (string): User's username (if applicable). Console display name: "Username".
 * `verificationAttempts` (string): Number of attempts the user tried to verify. Console display name: "Verification Attempts".
 * `verificationFailureCode` (string): Verification Event failure code. Console display name: "Failure Code".
-* `verificationStatus` (string): Status of the verification (mapped to failureCode in the doc). Console display name: "Verification Status".
+* `verificationStatus` (string): Status of the verification (mapped to failureCode). Console display name: "Verification Status".
 * `verificationType` (string): Kind of verification the user attempted. Console display name: "Verification Type".
 
 
@@ -756,6 +757,66 @@ Example:
 {{ tffile (printf "%s" "examples/davinci-connector-instances/authenticIdConnector.tf") }}
 
 
+## Authentication
+
+Connector ID (`connector.id` in the resource): `authenticationUseCaseConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `accountCreatedCustomTemplateVariant` (string): You can enter a custom template name, or leave blank to use the default template. You can also enter a parameter from a previous connector, or any text. Console display name: "Custom Value".
+* `accountCreatedNotificationSettingsLabel` (string): Console display name: "Notification Settings".
+* `accountCreatedShowAdvancedFields` (string): Show advance fields. Console display name: "Show advanced fields".
+* `accountCreatedTemplateVariables` (string): If Custom variables are defined in the notification body, map them here. Console display name: "Notification Variables".
+* `additionalUserProperties` (string): Add other attributes and their values. Console display name: "Other Attributes".
+* `agreement` (string): The name of the agreement. Console display name: "Agreement".
+* `agreementId` (string): A unique identifier for the agreement the user has to accept. Console display name: "Agreement ID".
+* `agreementLabel` (string): Console display name: "Agreement".
+* `changePasswordCustomTemplateVariant` (string): You can enter a custom template name, or leave blank to use the default template. You can also enter a parameter from a previous connector, or any text. Console display name: "Custom Value".
+* `changePasswordNotificationSettingsLabel` (string): Console display name: "Notification Settings".
+* `changePasswordShowAdvancedFields` (string): Show advance fields. Console display name: "Show advanced fields".
+* `changePasswordTemplateVariables` (string): If Custom variables are defined in the notification body, map them here. Console display name: "Notification Variables".
+* `checkAccountStatusAgreement` (string): The name of the agreement. Console display name: "Agreement".
+* `checkAccountStatusAgreementId` (string): A unique identifier for the agreement the user has to accept. Console display name: "Agreement ID".
+* `checkAccountVerificationStatus` (string): When enabled, DaVinci checks whether the user has verified their email address. If they haven't, DaVinci sends a verification code to the email address and continues from the Verification Required outcome. Your flow should collect the verification code from the user and verify it. Console display name: "Check Account Verification Status".
+* `checkAgreementConsent` (string): When enabled, DaVinci checks whether the user has not consented to the latest version of the selected agreement. If they haven't, the flow continues from the Agreement Required outcome. Your flow should present the agreement and record whether the user accepts or declines it. Console display name: "Check Agreement Consent".
+* `currentPassword` (string): The user's current password. Console display name: "Current Password".
+* `email` (string): The user's email address, such as "jsmith@example.com". When Require Email Verification is enabled, this field is required. Console display name: "Email".
+* `family` (string): The user's family name, such as "Smith". Console display name: "Family Name".
+* `given` (string): The user's given name, such as "John". Console display name: "Given Name".
+* `labelSendVerificationCode` (string): Console display name: "This capability does not require any additional configuration.".
+* `mobilePhone` (string): The user's phone number, such as "+1-555-555-1234". Console display name: "Phone".
+* `newPassword` (string): The user's new password. Console display name: "New Password".
+* `nextEvent` (string): Console display name: "".
+* `notificationSettingsLabel` (string): Console display name: "Notification Settings".
+* `password` (string): The user's password to validate. Console display name: "Password".
+* `population` (string): The name of the population. Console display name: "Population".
+* `populationId` (string): The unique identifier for the population. Console display name: "Population ID".
+* `recoveryCode` (string): The code to validate. Console display name: "Recovery Code".
+* `requireUserToVerifyEmail` (string): When enabled, the user must verify their account to finish registration. PingOne sends a verification code to the address provided in the Email field. Following this node, prompt the user to enter the verification code. When disabled, the user does not have to verify their email address. Console display name: "Require user to verify their email".
+* `resendPasswordRecoveryCode` (string): When enabled, resend password recovery code mode is enabled. Console display name: "Resend Password Recovery Code".
+* `sectionLabelAccountVerification` (string): Console display name: "Account Verification".
+* `sectionLabelAgreementConsent` (string): Console display name: "Agreement Consent".
+* `sectionLabelNotification` (string): Console display name: "Notification Settings".
+* `sectionLabelPwd` (string): Console display name: "Password Settings".
+* `sectionLabelPwdAuthn` (string): Console display name: "Password Authentication Settings".
+* `sectionLabelUserDetails` (string): Console display name: "User Details".
+* `showAdvancedFields` (string): Show advance fields. Console display name: "Show advanced fields".
+* `templateVariantAccountCreated` (string): The name of a custom notification defined in PingOne. If the form you want is not listed, select Enter Custom Value. Console display name: "Notification Name (Account Created)".
+* `templateVariantChangePassword` (string): The name of a custom notification defined in PingOne. If the form you want is not listed, select Enter Custom Value. Console display name: "Notification Name (Change Password)".
+* `templateVariantVerificationCode` (string): The name of a custom notification defined in PingOne. If the form you want is not listed, select Enter Custom Value. Console display name: "Notification Name (Verification Code)".
+* `userId` (string): ID of the User. Console display name: "User ID".
+* `username` (string): The unique identifier for the user. Console display name: "Username".
+* `verificationCode` (string): The code emailed to the user to verify their email address. Console display name: "Verification Code".
+* `verificationCodeCustomTemplateVariant` (string): You can enter a custom template name, or leave blank to use the default template. You can also enter a parameter from a previous connector, or any text. Console display name: "Custom Value".
+* `verificationCodeNotificationSettingsLabel` (string): Console display name: "Notification Settings".
+* `verificationCodeShowAdvancedFields` (string): Show advance fields. Console display name: "Show advanced fields".
+* `verificationCodeTemplateVariables` (string): If Custom variables are defined in the notification body, map them here. Console display name: "Notification Variables".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/authenticationUseCaseConnector.tf") }}
+
+
 ## Authomize API
 
 Connector ID (`connector.id` in the resource): `connector-oai-authomizeapireference`
@@ -1337,9 +1398,22 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `authType` (string): Console display name: "".
 * `button` (string): Console display name: "Verify with CLEAR".
 * `customAuth` (string): Console display name: "".
+* `customFields` (string): Custom key-value pairs passed to CLEAR (e.g., your internal customer or employee ID for identity matching). Console display name: "Custom Fields".
 * `showPoweredBy` (string): Console display name: "".
 * `skipButtonPress` (string): Console display name: "".
 * `url` (string): The target URL for the post-verification redirect. Console display name: "Redirect URL".
+* `userId` (string): CLEAR user ID for re-verification. When provided, triggers a re-verification flow against an existing CLEAR identity instead of a full initial verification. Console display name: "User ID".
+* `userProfileAddressCity` (string): User's city for CLEAR identity matching. Console display name: "City".
+* `userProfileAddressCountry` (string): User's country for CLEAR identity matching. Console display name: "Country".
+* `userProfileAddressLine1` (string): User's street address line 1 for CLEAR identity matching. Console display name: "Address Line 1".
+* `userProfileAddressLine2` (string): User's street address line 2 for CLEAR identity matching. Console display name: "Address Line 2".
+* `userProfileAddressPostalCode` (string): User's postal code for CLEAR identity matching. Console display name: "Postal Code".
+* `userProfileAddressState` (string): User's state for CLEAR identity matching. Console display name: "State".
+* `userProfileDob` (string): User's date of birth for CLEAR identity matching. Console display name: "Date of Birth".
+* `userProfileEmail` (string): User's email address for CLEAR identity matching. Console display name: "Email".
+* `userProfileFirstName` (string): User's first name for CLEAR identity matching. Console display name: "First Name".
+* `userProfileLastName` (string): User's last name for CLEAR identity matching. Console display name: "Last Name".
+* `userProfilePhone` (string): User's phone number for CLEAR identity matching. Console display name: "Phone".
 
 
 Example:
@@ -8442,6 +8516,82 @@ Example:
 {{ tffile (printf "%s" "examples/davinci-connector-instances/locationPolicyConnector.tf") }}
 
 
+## MFA
+
+Connector ID (`connector.id` in the resource): `mfaUseCaseConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `activationStatus` (string): The current status of the device. If a device has an ACTIVATION_REQUIRED status, activate it before you add it as a trusted device. Console display name: "Activation Status".
+* `applicationId` (string): The unique identifier of the native application which initiated the authentication flow. Console display name: "Application".
+* `applicationIds` (string): Select the application(s) that can be used with the push settings. Leave this list empty to allow all available native applications in the environment to be used. Console display name: "Applications".
+* `assertion` (string): A string that specifies the authenticator assertion response. The string contains the signed challenge needed to complete the MFA authentication. Console display name: "Assertion".
+* `attestation` (string): A read-only string that specifies the public key and signed challenge used to complete registration and device activation. The attestation is generated by the browser as a response to a specific user action, such as a fingerprint scan or tap on a security key. Console display name: "Attestation".
+* `authTemplateName` (string): Indicates whether the notification is intended for a user authentication flow. Console display name: "Notification Type".
+* `authenticatingApplicationId` (string): The unique identifier for the mobile application used to authenticate a user. Console display name: "Application".
+* `clientContext` (string): Additional attributes that can be passed to the mobile application during the authentication. Console display name: "Mobile Client Context".
+* `compatibility` (string): Console display name: "WebAuthn Browser Compatibility".
+* `customApplicationId` (string): Console display name: "Application ID".
+* `customAuthenticatingApplicationId` (string): Console display name: "Application ID".
+* `customDeviceAuthenticationPolicyId` (string): Console display name: "MFA Policy ID".
+* `customDeviceType` (string): Console display name: "Enter Device Type".
+* `customNotificationPolicyId` (string): Console display name: "Notification Policy ID".
+* `customTemplateVariant` (string): You can enter a custom template name, or leave blank to use the default template. You can also enter a parameter from a previous connector, or any text. Console display name: "Custom Value".
+* `device` (string): The PingOne MFA Device. Console display name: "Device".
+* `deviceAuthenRpId` (string): If you define a Relying Party ID (RPID) here, it overrides the RPID defined in the FIDO policy in the PingOne admin console. Console display name: "Relying Party ID".
+* `deviceAuthenticationId` (string): The unique identifier for the MFA Device Authentication. Console display name: "Device Authentication ID".
+* `deviceAuthenticationPolicyId` (string): The ID of your PingOne MFA device authentication policy. Console display name: "MFA Policy ID".
+* `deviceId` (string): The MFA device type unique identifier (UUID) to be used for authentication. If this value is not provided,  Authentication will be as per  MFA policy settings. Console display name: "Device ID".
+* `deviceType` (string): The type of device used during authentication. Console display name: "Device Type".
+* `devices` (string): The PingOne MFA Devices. Console display name: "Devices".
+* `email` (string): The email address to associate with the device. Applies only to devices that use email during authentication. Console display name: "Email".
+* `extension` (string): The phone extension for this device. It can include digits, comma, # and *. If there is more than one extension then a comma should separate the extension and the nested extension. Console display name: "Extension".
+* `fido2Settings` (boolean): Show advanced fields for FIDO2 Settings. Console display name: "Show advanced fields".
+* `fidoCompatibility` (string): A string that specifies the FIDO Authenticators that are allowed to be used. Options are FULL (compatible with FIDO2, platform biometrics, and security key) and NONE (not compatible with FIDO). Console display name: "FIDO Compatibility".
+* `mfaEnabled` (boolean): Enable or disable user MFA. Console display name: "Enable User MFA".
+* `mfaPolicyId` (string): The ID of your PingOne MFA device authentication policy. Console display name: "MFA Policy Id".
+* `mfaSettings` (boolean): Show advanced fields for MFA Settings. Console display name: "Show advanced fields".
+* `mobilePayload` (string): A signed challenge generated by PingOne MFA mobile SDK. Console display name: "Mobile Payload".
+* `nickname` (string): A nickname that identifies this device. The device nickname is limited to 100 characters. Console display name: "Device Nickname".
+* `notificationPolicyId` (string): A unique identifier for the policy. Console display name: "Notification Policy".
+* `notificationSettings` (boolean): Show advanced fields for Notification Settings. Console display name: "Show advanced fields".
+* `origin` (string): The address of the server sending the initial registration challenge to the device. Console display name: "Origin".
+* `otp` (string): The one-time passcode (OTP) sent to the user. Console display name: "One-time Passcode".
+* `otpSettings` (boolean): Show advanced fields for OTP Settings. Console display name: "Show advanced fields".
+* `pairingKeyId` (string): The unique identifier for the pairing key. Console display name: "Pairing Key ID".
+* `phone` (string): The phone number to associate with the device. Applies only to devices that use SMS and Voice SMS messages during authentication. Console display name: "Phone Number".
+* `pushSettings` (boolean): Show advanced fields for PUSH Settings. Console display name: "Show advanced fields".
+* `reason` (string): The reason that the authentication was canceled. 
+Possible values are SIGNOUT, CHANGE_DEVICE, ADD_DEVICE. Any other reason will get the value - DEFAULT. Console display name: "Reason For Cancellation
+".
+* `rpId` (string): If you define a Relying Party ID (RPID) here, it overrides the RPID defined in the FIDO policy in the PingOne admin console. Console display name: "Relying Party ID".
+* `rpName` (string): A string that specifies the relying party's human-readable display name. Console display name: "Relying Party Name".
+* `sectionLabelDeviceDetails` (string): Console display name: "Device Details".
+* `sectionLabelFido` (string): Console display name: "FIDO2 Settings".
+* `sectionLabelMfaSettings` (string): Console display name: "MFA Settings".
+* `sectionLabelNotification` (string): Console display name: "Notification Settings".
+* `sectionLabelOtp` (string): Console display name: "OTP Settings".
+* `sectionLabelPush` (string): Console display name: "Push Settings".
+* `sectionLabelUserDetails` (string): Console display name: "User and Device Details".
+* `selectedDeviceOtp` (string): The one-time passcode (OTP) of the device used to authenticate. If the Device ID is not provided, the OTP is validated against all the applicable devices. Console display name: "One-time Passcode".
+* `serialNumber` (string): The unique identifier for the OATH token. Console display name: "Serial Number".
+* `setDeviceOrder` (string): Select how to set the device order. Console display name: "Set Device Order".
+* `setFilterFlag` (boolean): Filter devices by activation status and device type. Console display name: "Filters".
+* `showAdvancedFields` (boolean): Show advanced fields. Console display name: "Show advanced fields".
+* `showPoweredBy` (string): Console display name: "".
+* `skipButtonPress` (string): Console display name: "".
+* `statusFilter` (string): non-active devices are not usable during an authentication. Console display name: "Status".
+* `templateLocale` (string): Add a locale to allow localized notifications for end-users. ISO Language Codes are supported. Console display name: "Notification Locale".
+* `templateVariables` (string): If Custom variables are defined in the notification body, map them here. Console display name: "Notification Variables".
+* `templateVariant` (string): The name of a custom notification defined in PingOne. If the form you want is not listed, select Enter Custom Value. Console display name: "Notification Name".
+* `userAgent` (string): Browser user agent. Console display name: "User Agent".
+* `userId` (string): The unique identifier for the user. Console display name: "User ID".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/mfaUseCaseConnector.tf") }}
+
+
 ## Mailchimp
 
 Connector ID (`connector.id` in the resource): `connectorMailchimp`
@@ -9025,6 +9175,7 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `password` (string): Console display name: "Password".
 * `showPoweredBy` (string): Console display name: "".
 * `skipButtonPress` (string): Console display name: "".
+* `tokenRefreshThreshold` (string): The amount of time in seconds, such as "60", before the access token expires that DaVinci should refresh the token. Enter a value between 30 and 600. The default value is 60. Console display name: "Token Refresh Threshold".
 * `username` (string): Console display name: "Username".
 
 
@@ -12741,8 +12892,8 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `showPoweredBy` (string): Console display name: "".
 * `singleFactorSignOnFormId` (string): Select the sign on form for single-factor authentication. Console display name: "Sign On Form".
 * `skipButtonPress` (string): Console display name: "".
-* `subFlowVersion` (string): The version ID of the subflow to run. Leave blank to use the latest version. Console display name: "Version ID".
 * `subflow` (string): The subflow to run for each user. Console display name: "Subflow".
+* `subflowVersion` (string): The version ID of the subflow to run. Leave blank to use the latest version. Console display name: "Version ID".
 * `templateLocale` (string): Add a locale to allow localized notifications for end-users. ISO Language Codes are supported. Console display name: "Notification Locale".
 * `templateVariables` (string): If Custom variables are defined in the notification body, map them here. Console display name: "Notification Variables".
 * `templateVariant` (string): The name of a custom notification defined in PingOne. If the form you want is not listed, select Enter Custom Value. Console display name: "Notification Name".
@@ -13145,9 +13296,11 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `targetResourceName` (string): The name of the application or resource the user wants to access. Console display name: "Application Name".
 * `targetedPolicy` (boolean): Determines whether the evaluation should automatically select an appropriate policy based on its intended targets, or if a specific policy must be explicitly defined by the user. Console display name: "Targeted Policies Evaluation".
 * `userAgent` (string): The user agent of the browser/device that triggered the flow. Console display name: "User Agent".
+* `userEmail` (string): The email address of the user whose risk is being evaluated. Console display name: "User Email".
 * `userGroups` (string): User groups names. Console display name: "User Groups".
 * `userId` (string): The ID of the user whose risk is being evaluated. Console display name: "User ID".
 * `userName` (string): The username of the user whose risk is being evaluated. Console display name: "User Name".
+* `userPhone` (string): The phone number of the user whose risk is being evaluated. Console display name: "User Phone".
 * `userType` (string): Indicates whether the user exists in the PingOne directory or in an external directory. Console display name: "User Type".
 
 
@@ -13272,6 +13425,38 @@ Properties (used under the `properties` block in the resource as a key in the JS
 
 Example:
 {{ tffile (printf "%s" "examples/davinci-connector-instances/privateidConnector.tf") }}
+
+
+## Protect
+
+Connector ID (`connector.id` in the resource): `pingOneSnodeRiskConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `cookie` (string): The cookie of the browser/device that triggered the flow. Console display name: "Cookie".
+* `customAttributes` (string): Your Custom Attributes defined at Ping. Console display name: "Custom Attributes".
+* `envId` (string): Your Environment ID provided by Ping. Console display name: "Environment ID".
+* `externalId` (string): A unique device identifier generated and managed independently of the Signals SDK (SKrisk). Console display name: "External ID".
+* `flowType` (string): The type of flow in which risk is evaluated. Console display name: "Flow Type".
+* `outcomes` (string): Select the outcomes that are available for this risk evaluation. Defaults to Approve, Deny, and MFA if not specified. Console display name: "Outcomes".
+* `riskId` (string): ID of the Risk Evaluation. Console display name: "Risk Evaluation ID".
+* `riskPolicySetId` (string): The global risk policy ID used during risk evaluation. Console display name: "Global Policy ID".
+* `sessionId` (string): The unique session ID associated with the event. Console display name: "Session ID".
+* `showPoweredBy` (string): Console display name: "".
+* `skRiskFP` (string): Console display name: "Risk input from device".
+* `skipButtonPress` (string): Console display name: "".
+* `subtype` (string): The subtype of the flow. Console display name: "Flow Subtype".
+* `targetResourceId` (string): The ID for the application or resource the user wants to access. Console display name: "Application ID".
+* `targetResourceName` (string): The name of the application or resource the user wants to access. Console display name: "Application Name".
+* `targetedPolicy` (boolean): Determines whether the evaluation should automatically select an appropriate policy based on its intended targets, or if a specific policy must be explicitly defined by the user. Console display name: "Targeted Policies Evaluation".
+* `userGroups` (string): User groups names. Console display name: "User Groups".
+* `userId` (string): The ID of the user whose risk is being evaluated. Console display name: "User ID".
+* `userName` (string): The username of the user whose risk is being evaluated. Console display name: "User Name".
+* `userType` (string): Indicates whether the user exists in the PingOne directory or in an external directory. Console display name: "User Type".
+
+
+Example:
+{{ tffile (printf "%s" "examples/davinci-connector-instances/pingOneSnodeRiskConnector.tf") }}
 
 
 ## Prove
@@ -14984,11 +15169,14 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `screen5Config` (string): Console display name: "".
 * `showCredAddedOn` (string): Console display name: "".
 * `showCredAddedVia` (string): Console display name: "".
+* `skWebhookUri` (string): Console display name: "Redirect Webhook URI".
 * `state` (string): The name of the state you want a match for. Console display name: "State".
 * `title` (string): Console display name: "".
 * `toolTip` (string): Console display name: "".
 * `useScore20` (string): Console display name: "".
 * `username` (string): Console display name: "".
+* `voiceOtpLanguage` (string): A code specifying the language of the predefined template you wish to use. Console display name: "Language".
+* `voiceOtpPhoneNumber` (string): The end user's phone number, as a string of digits without spaces or punctuation, beginning with the country dialing code (for example, "1" for North America). Console display name: "Phone Number".
 
 
 Example:

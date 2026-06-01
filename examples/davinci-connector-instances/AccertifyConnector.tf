@@ -96,6 +96,11 @@ resource "pingone_davinci_connector_instance" "AccertifyConnector" {
     value = var.accertifyconnector_property_page_id
   }
   property {
+    name  = "passwordForgotFailureCode"
+    type  = "string"
+    value = var.accertifyconnector_property_password_forgot_failure_code
+  }
+  property {
     name  = "previousAvsResult"
     type  = "string"
     value = var.accertifyconnector_property_previous_avs_result

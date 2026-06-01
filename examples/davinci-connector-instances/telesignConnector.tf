@@ -176,6 +176,11 @@ resource "pingone_davinci_connector_instance" "telesignConnector" {
     value = var.telesignconnector_property_show_cred_added_via
   }
   property {
+    name  = "skWebhookUri"
+    type  = "string"
+    value = var.telesignconnector_property_sk_webhook_uri
+  }
+  property {
     name  = "state"
     type  = "string"
     value = var.telesignconnector_property_state
@@ -199,5 +204,15 @@ resource "pingone_davinci_connector_instance" "telesignConnector" {
     name  = "username"
     type  = "string"
     value = var.telesignconnector_property_username
+  }
+  property {
+    name  = "voiceOtpLanguage"
+    type  = "string"
+    value = var.telesignconnector_property_voice_otp_language
+  }
+  property {
+    name  = "voiceOtpPhoneNumber"
+    type  = "string"
+    value = var.telesignconnector_property_voice_otp_phone_number
   }
 }

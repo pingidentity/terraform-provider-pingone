@@ -166,6 +166,11 @@ resource "pingone_davinci_connector_instance" "pingOneRiskConnector" {
     value = var.pingoneriskconnector_property_user_agent
   }
   property {
+    name  = "userEmail"
+    type  = "string"
+    value = var.pingoneriskconnector_property_user_email
+  }
+  property {
     name  = "userGroups"
     type  = "string"
     value = var.pingoneriskconnector_property_user_groups
@@ -179,6 +184,11 @@ resource "pingone_davinci_connector_instance" "pingOneRiskConnector" {
     name  = "userName"
     type  = "string"
     value = var.pingoneriskconnector_property_user_name
+  }
+  property {
+    name  = "userPhone"
+    type  = "string"
+    value = var.pingoneriskconnector_property_user_phone
   }
   property {
     name  = "userType"
