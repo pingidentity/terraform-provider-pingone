@@ -294,7 +294,7 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 
 	defaultResultTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The default result type.",
-	).AllowedValuesEnum(risk.AllowedEnumResultTypeEnumValues)
+	).AllowedValuesEnum([]risk.EnumResultType{risk.ENUMRESULTTYPE_VALUE})
 
 	defaultResultLevelDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The default result level.",
@@ -332,7 +332,7 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 
 	policyOverrideResultTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the type of the risk result should be applied to the policy evalution result when the override condition is met.",
-	).AllowedValuesEnum(risk.AllowedEnumResultTypeEnumValues).DefaultValue(string(risk.ENUMRESULTTYPE_VALUE))
+	).AllowedValuesEnum([]risk.EnumResultType{risk.ENUMRESULTTYPE_VALUE}).DefaultValue(string(risk.ENUMRESULTTYPE_VALUE))
 
 	policyOverrideConditionTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the type of the override condition to evaluate.",
@@ -687,7 +687,7 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 									Default: stringdefault.StaticString(string(risk.ENUMRESULTTYPE_VALUE)),
 
 									Validators: []validator.String{
-										stringvalidator.OneOf(utils.EnumSliceToStringSlice(risk.AllowedEnumResultTypeEnumValues)...),
+										stringvalidator.OneOf(utils.EnumSliceToStringSlice([]risk.EnumResultType{risk.ENUMRESULTTYPE_VALUE})...),
 									},
 
 									PlanModifiers: []planmodifier.String{

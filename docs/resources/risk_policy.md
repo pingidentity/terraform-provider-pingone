@@ -260,7 +260,7 @@ Required:
 
 Read-Only:
 
-- `type` (String) The default result type.  Options are `MITIGATION`, `MITIGATION_FALLBACK`, `VALUE`.
+- `type` (String) The default result type.  Options are `VALUE`.
 
 
 <a id="nestedatt--fallback"></a>
@@ -362,7 +362,7 @@ Required:
 
 Optional:
 
-- `type` (String) A string that specifies the type of the risk result should be applied to the policy evalution result when the override condition is met.  Options are `MITIGATION`, `MITIGATION_FALLBACK`, `VALUE`.  Defaults to `VALUE`.
+- `type` (String) A string that specifies the type of the risk result should be applied to the policy evalution result when the override condition is met.  Options are `VALUE`.  Defaults to `VALUE`.
 - `value` (String) An administrator defined string value that is applied to the policy evaluation result when the override condition is met.
 
 
