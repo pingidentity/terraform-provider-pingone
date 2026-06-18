@@ -61,6 +61,7 @@ type riskPolicyResourceModel struct {
 	Overrides           types.List                   `tfsdk:"overrides"`
 	Mitigations         types.List                   `tfsdk:"mitigations"`
 	Fallback            types.Object                 `tfsdk:"fallback"`
+	Targets             types.Object                 `tfsdk:"targets"`
 }
 
 type riskPolicyResourceDefaultResultModel struct {
@@ -130,6 +131,20 @@ type riskPolicyResourceMitigationFallbackModel struct {
 	MfaAuthenticationPolicyId pingonetypes.ResourceIDValue `tfsdk:"mfa_authentication_policy_id"`
 	MfaRegistrationPolicyId   pingonetypes.ResourceIDValue `tfsdk:"mfa_registration_policy_id"`
 	VerifyPolicyId            pingonetypes.ResourceIDValue `tfsdk:"verify_policy_id"`
+}
+
+type riskPolicyResourceTargetsModel struct {
+	Condition types.Object `tfsdk:"condition"`
+}
+
+type riskPolicyResourceTargetsConditionModel struct {
+	And types.List `tfsdk:"and"`
+}
+
+type riskPolicyResourceTargetsConditionAndModel struct {
+	Type     types.String `tfsdk:"type"`
+	List     types.List   `tfsdk:"list"`
+	Contains types.String `tfsdk:"contains"`
 }
 
 var (
@@ -222,6 +237,25 @@ var (
 		"mfa_authentication_policy_id": pingonetypes.ResourceIDType{},
 		"mfa_registration_policy_id":   pingonetypes.ResourceIDType{},
 		"verify_policy_id":             pingonetypes.ResourceIDType{},
+	}
+
+	// Targets
+	targetsConditionAndTFObjectTypes = map[string]attr.Type{
+		"type":     types.StringType,
+		"list":     types.ListType{ElemType: types.StringType},
+		"contains": types.StringType,
+	}
+
+	targetsConditionTFObjectTypes = map[string]attr.Type{
+		"and": types.ListType{
+			ElemType: types.ObjectType{AttrTypes: targetsConditionAndTFObjectTypes},
+		},
+	}
+
+	targetsTFObjectTypes = map[string]attr.Type{
+		"condition": types.ObjectType{
+			AttrTypes: targetsConditionTFObjectTypes,
+		},
 	}
 )
 
@@ -346,6 +380,31 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 
 	policyFallbackDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A single object that specifies the required catch-all fallback mitigation entry (`result.type=MITIGATION_FALLBACK`). Required when `mitigations` is configured. Carries a single mitigation action with no condition.",
+	)
+
+	// Targets
+	policyTargetsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that scopes this policy set to a subset of events (targeted policy). Pairs with `mitigations` (and the weights/scores backbone) but is mutually exclusive with `overrides`.",
+	)
+
+	policyTargetsConditionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies the AND-of-sub-conditions targeting condition. All sub-conditions in `and` must be satisfied for the policy set to be selected.",
+	)
+
+	policyTargetsConditionAndDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An ordered list of sub-conditions that are combined with AND logic. Each entry pairs a `list` of values with the event attribute (`contains`) to check against.",
+	)
+
+	policyTargetsConditionAndTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A read-only string that identifies the sub-condition kind. Inferred by the API from `contains`.",
+	).AllowedValuesEnum(risk.AllowedEnumRiskPolicySetTargetsConditionTypeEnumValues)
+
+	policyTargetsConditionAndListDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A list of values to match against the event attribute specified in `contains`. Transaction types are one or more of `REGISTRATION`, `AUTHENTICATION`, `ACCESS`, `AUTHORIZATION`, `TRANSACTION`. User groups are group names. Applications are PingOne application IDs.",
+	)
+
+	policyTargetsConditionAndContainsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The event attribute checked against `list`. For transaction types use `${event.flow.type}`; for user groups use `${event.user.groups}`; for applications use `${event.targetResource.id}`.",
 	)
 
 	// Schema
@@ -721,6 +780,7 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 					listvalidator.ConflictsWith(
 						path.MatchRelative().AtParent().AtName("mitigations"),
 						path.MatchRelative().AtParent().AtName("fallback"),
+						path.MatchRelative().AtParent().AtName("targets"),
 					),
 				},
 			},
@@ -961,6 +1021,62 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 					),
 					objectvalidator.AlsoRequires(
 						path.MatchRelative().AtParent().AtName("mitigations"),
+					),
+				},
+			},
+
+			"targets": schema.SingleNestedAttribute{
+				Description:         policyTargetsDescription.Description,
+				MarkdownDescription: policyTargetsDescription.MarkdownDescription,
+
+				Optional: true,
+
+				Attributes: map[string]schema.Attribute{
+					"condition": schema.SingleNestedAttribute{
+						Description:         policyTargetsConditionDescription.Description,
+						MarkdownDescription: policyTargetsConditionDescription.MarkdownDescription,
+						Required:            true,
+
+						Attributes: map[string]schema.Attribute{
+							"and": schema.ListNestedAttribute{
+								Description:         policyTargetsConditionAndDescription.Description,
+								MarkdownDescription: policyTargetsConditionAndDescription.MarkdownDescription,
+								Required:            true,
+
+								NestedObject: schema.NestedAttributeObject{
+									Attributes: map[string]schema.Attribute{
+										"type": schema.StringAttribute{
+											Description:         policyTargetsConditionAndTypeDescription.Description,
+											MarkdownDescription: policyTargetsConditionAndTypeDescription.MarkdownDescription,
+											Computed:            true,
+
+											PlanModifiers: []planmodifier.String{
+												stringplanmodifier.UseNonNullStateForUnknown(),
+											},
+										},
+
+										"list": schema.ListAttribute{
+											Description:         policyTargetsConditionAndListDescription.Description,
+											MarkdownDescription: policyTargetsConditionAndListDescription.MarkdownDescription,
+											Required:            true,
+											ElementType:         types.StringType,
+										},
+
+										"contains": schema.StringAttribute{
+											Description:         policyTargetsConditionAndContainsDescription.Description,
+											MarkdownDescription: policyTargetsConditionAndContainsDescription.MarkdownDescription,
+											Required:            true,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+
+				Validators: []validator.Object{
+					objectvalidator.ConflictsWith(
+						path.MatchRelative().AtParent().AtName("overrides"),
 					),
 				},
 			},
@@ -2023,6 +2139,70 @@ func (p *riskPolicyResourceModel) expand(ctx context.Context, apiClient *risk.AP
 	}
 	data.SetEvaluatedPredictors(evaluatedPredictors)
 
+	// Targets
+	if !p.Targets.IsNull() && !p.Targets.IsUnknown() {
+		var targetsPlan riskPolicyResourceTargetsModel
+		diags.Append(p.Targets.As(ctx, &targetsPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		if !targetsPlan.Condition.IsNull() && !targetsPlan.Condition.IsUnknown() {
+			var conditionPlan riskPolicyResourceTargetsConditionModel
+			diags.Append(targetsPlan.Condition.As(ctx, &conditionPlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			sdkCondition := risk.NewRiskPolicySetTargetsCondition()
+
+			if !conditionPlan.And.IsNull() && !conditionPlan.And.IsUnknown() {
+				var andPlan []riskPolicyResourceTargetsConditionAndModel
+				diags.Append(conditionPlan.And.ElementsAs(ctx, &andPlan, false)...)
+				if diags.HasError() {
+					return nil, diags
+				}
+
+				andInners := make([]risk.RiskPolicySetTargetsConditionAndInner, 0, len(andPlan))
+				for _, entry := range andPlan {
+					inner := risk.NewRiskPolicySetTargetsConditionAndInner()
+
+					if !entry.List.IsNull() && !entry.List.IsUnknown() {
+						var listPlan []types.String
+						diags.Append(entry.List.ElementsAs(ctx, &listPlan, false)...)
+						if diags.HasError() {
+							return nil, diags
+						}
+						listStrings, d := framework.TFTypeStringSliceToStringSlice(listPlan, path.Root("targets").AtName("condition").AtName("and").AtName("list"))
+						diags.Append(d...)
+						if diags.HasError() {
+							return nil, diags
+						}
+						inner.SetList(listStrings)
+					}
+
+					if !entry.Contains.IsNull() && !entry.Contains.IsUnknown() {
+						inner.SetContains(entry.Contains.ValueString())
+					}
+
+					andInners = append(andInners, *inner)
+				}
+
+				sdkCondition.SetAnd(andInners)
+			}
+
+			sdkTargets := risk.NewRiskPolicySetTargets()
+			sdkTargets.SetCondition(*sdkCondition)
+			data.SetTargets(*sdkTargets)
+		}
+	}
+
 	return data, diags
 }
 
@@ -2171,6 +2351,54 @@ func (p *riskPolicyResourceModel) toState(apiObject *risk.RiskPolicySet) diag.Di
 
 	p.PolicyWeights, p.PolicyScores, p.Overrides, p.Mitigations, p.Fallback, d = p.toStatePolicy(r, ok)
 	diags.Append(d...)
+
+	// Targets
+	p.Targets = types.ObjectNull(targetsTFObjectTypes)
+	if targets, ok := apiObject.GetTargetsOk(); ok {
+		if condition, ok := targets.GetConditionOk(); ok {
+			andList := make([]attr.Value, 0)
+
+			for _, andInner := range condition.GetAnd() {
+				listValues := make([]attr.Value, 0)
+				for _, s := range andInner.GetList() {
+					listValues = append(listValues, types.StringValue(s))
+				}
+
+				listVal, ld := types.ListValue(types.StringType, listValues)
+				diags.Append(ld...)
+
+				andMap := map[string]attr.Value{
+					"type":     framework.EnumOkToTF(andInner.GetTypeOk()),
+					"list":     listVal,
+					"contains": framework.StringOkToTF(andInner.GetContainsOk()),
+				}
+
+				andObj, od := types.ObjectValue(targetsConditionAndTFObjectTypes, andMap)
+				diags.Append(od...)
+
+				andList = append(andList, andObj)
+			}
+
+			andListVal, ld := types.ListValue(types.ObjectType{AttrTypes: targetsConditionAndTFObjectTypes}, andList)
+			diags.Append(ld...)
+
+			conditionMap := map[string]attr.Value{
+				"and": andListVal,
+			}
+
+			conditionObj, cd := types.ObjectValue(targetsConditionTFObjectTypes, conditionMap)
+			diags.Append(cd...)
+
+			targetsMap := map[string]attr.Value{
+				"condition": conditionObj,
+			}
+
+			targetsObj, td := types.ObjectValue(targetsTFObjectTypes, targetsMap)
+			diags.Append(td...)
+
+			p.Targets = targetsObj
+		}
+	}
 
 	return diags
 }
