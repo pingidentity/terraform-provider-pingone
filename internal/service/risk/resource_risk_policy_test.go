@@ -1279,6 +1279,7 @@ func TestAccRiskPolicy_Mitigations(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
 		resource.TestCheckResourceAttr(resourceFullName, "mitigations.#", "4"),
 		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "mitigations.*", map[string]string{
+			"name":                                "anonymousNetwork",
 			"priority":                            "1",
 			"action":                              "CUSTOM",
 			"custom_action":                       "customActionValue",
@@ -1288,6 +1289,7 @@ func TestAccRiskPolicy_Mitigations(t *testing.T) {
 			"condition.predictor_reference_value": "${details.anonymousNetwork.level}",
 		}),
 		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "mitigations.*", map[string]string{
+			"name":                                "geoVelocity",
 			"priority":                            "2",
 			"action":                              "MFA",
 			"condition.type":                      "VALUE_COMPARISON",
@@ -1296,6 +1298,7 @@ func TestAccRiskPolicy_Mitigations(t *testing.T) {
 			"condition.predictor_reference_value": "${details.geoVelocity.level}",
 		}),
 		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "mitigations.*", map[string]string{
+			"name":                                "geoVelocity",
 			"priority":                            "3",
 			"action":                              "VERIFY",
 			"condition.type":                      "VALUE_COMPARISON",
@@ -1304,16 +1307,21 @@ func TestAccRiskPolicy_Mitigations(t *testing.T) {
 			"condition.predictor_reference_value": "${details.geoVelocity.level}",
 		}),
 		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "mitigations.*", map[string]string{
+			"name":           "WHITELIST",
 			"priority":       "4",
-			"action":         "DENY",
+			"action":         "DENY_AND_SUSPEND",
 			"condition.type": "IP_RANGE",
 			"condition.ip_range.#":                   "2",
 			"condition.predictor_reference_contains": "${transaction.ip}",
 		}),
 		resource.TestCheckResourceAttr(resourceFullName, "fallback.action", "APPROVE"),
 		resource.TestCheckResourceAttr(resourceFullName, "targets.condition.and.#", "2"),
-		resource.TestCheckResourceAttr(resourceFullName, "targets.condition.and.0.contains", "${event.flow.type}"),
-		resource.TestCheckResourceAttr(resourceFullName, "targets.condition.and.1.contains", "${event.user.groups}"),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "targets.condition.and.*", map[string]string{
+			"contains": "${event.flow.type}",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "targets.condition.and.*", map[string]string{
+			"contains": "${event.user.groups}",
+		}),
 	)
 
 	minimalCheck := resource.ComposeTestCheckFunc(
@@ -1322,6 +1330,7 @@ func TestAccRiskPolicy_Mitigations(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "name", name),
 		resource.TestCheckResourceAttr(resourceFullName, "mitigations.#", "1"),
 		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "mitigations.*", map[string]string{
+			"name":                                "anonymousNetwork",
 			"priority":                            "1",
 			"action":                              "DENY",
 			"condition.type":                      "VALUE_COMPARISON",
@@ -1466,7 +1475,7 @@ resource "pingone_risk_policy" "%[2]s" {
     },
 
     {
-      action = "DENY"
+      action = "DENY_AND_SUSPEND"
 
       condition = {
         type = "IP_RANGE"
