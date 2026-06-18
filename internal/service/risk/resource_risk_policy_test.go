@@ -1264,3 +1264,396 @@ resource "pingone_risk_policy" "%[2]s" {
   ]
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
+
+func TestAccRiskPolicy_Mitigations(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_risk_policy.%s", resourceName)
+
+	name := resourceName
+
+	fullCheck := resource.ComposeTestCheckFunc(
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckResourceAttr(resourceFullName, "name", name),
+		resource.TestCheckResourceAttr(resourceFullName, "mitigations.#", "4"),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "mitigations.*", map[string]string{
+			"priority":                            "1",
+			"action":                              "CUSTOM",
+			"custom_action":                       "customActionValue",
+			"condition.type":                      "VALUE_COMPARISON",
+			"condition.equals":                    "HIGH",
+			"condition.compact_name":              "anonymousNetwork",
+			"condition.predictor_reference_value": "${details.anonymousNetwork.level}",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "mitigations.*", map[string]string{
+			"priority":                            "2",
+			"action":                              "MFA",
+			"condition.type":                      "VALUE_COMPARISON",
+			"condition.equals":                    "HIGH",
+			"condition.compact_name":              "geoVelocity",
+			"condition.predictor_reference_value": "${details.geoVelocity.level}",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "mitigations.*", map[string]string{
+			"priority":                            "3",
+			"action":                              "VERIFY",
+			"condition.type":                      "VALUE_COMPARISON",
+			"condition.equals":                    "MEDIUM",
+			"condition.compact_name":              "geoVelocity",
+			"condition.predictor_reference_value": "${details.geoVelocity.level}",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "mitigations.*", map[string]string{
+			"priority":       "4",
+			"action":         "DENY",
+			"condition.type": "IP_RANGE",
+			"condition.ip_range.#":                   "2",
+			"condition.predictor_reference_contains": "${transaction.ip}",
+		}),
+		resource.TestCheckResourceAttr(resourceFullName, "fallback.action", "APPROVE"),
+		resource.TestCheckResourceAttr(resourceFullName, "targets.condition.and.#", "2"),
+		resource.TestCheckResourceAttr(resourceFullName, "targets.condition.and.0.contains", "${event.flow.type}"),
+		resource.TestCheckResourceAttr(resourceFullName, "targets.condition.and.1.contains", "${event.user.groups}"),
+	)
+
+	minimalCheck := resource.ComposeTestCheckFunc(
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckResourceAttr(resourceFullName, "name", name),
+		resource.TestCheckResourceAttr(resourceFullName, "mitigations.#", "1"),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "mitigations.*", map[string]string{
+			"priority":                            "1",
+			"action":                              "DENY",
+			"condition.type":                      "VALUE_COMPARISON",
+			"condition.equals":                    "HIGH",
+			"condition.compact_name":              "anonymousNetwork",
+			"condition.predictor_reference_value": "${details.anonymousNetwork.level}",
+		}),
+		resource.TestCheckResourceAttr(resourceFullName, "fallback.action", "DENY"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		// PreCheck: func() {
+		//	acctest.PreCheckNoTestAccFlaky(t)
+		// 	acctest.PreCheckClient(t)
+		// 	acctest.PreCheckNoBeta(t)
+		// },
+		PreCheck:                 func() { t.Skipf("PND-5900") },
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             risk.RiskPolicy_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Full
+			{
+				Config: testAccRiskPolicyConfig_Mitigations_Full(resourceName, name),
+				Check:  fullCheck,
+			},
+			{
+				Config:  testAccRiskPolicyConfig_Mitigations_Full(resourceName, name),
+				Destroy: true,
+			},
+			// Minimal
+			{
+				Config: testAccRiskPolicyConfig_Mitigations_Minimal(resourceName, name),
+				Check:  minimalCheck,
+			},
+			{
+				Config:  testAccRiskPolicyConfig_Mitigations_Minimal(resourceName, name),
+				Destroy: true,
+			},
+			// Change
+			{
+				Config: testAccRiskPolicyConfig_Mitigations_Full(resourceName, name),
+				Check:  fullCheck,
+			},
+			{
+				Config: testAccRiskPolicyConfig_Mitigations_Minimal(resourceName, name),
+				Check:  minimalCheck,
+			},
+			{
+				Config: testAccRiskPolicyConfig_Mitigations_Full(resourceName, name),
+				Check:  fullCheck,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			// Mutual-exclusion error cases
+			{
+				Config:      testAccRiskPolicyConfig_Mitigations_ConflictsWithOverrides(resourceName, name),
+				ExpectError: regexp.MustCompile(`Attribute "mitigations" cannot be specified when "overrides" is specified`),
+			},
+			{
+				Config:      testAccRiskPolicyConfig_Mitigations_TargetsConflictsWithOverrides(resourceName, name),
+				ExpectError: regexp.MustCompile(`Attribute "targets" cannot be specified when "overrides" is specified`),
+			},
+		},
+	})
+}
+
+func testAccRiskPolicyConfig_Mitigations_Full(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  policy_scores = {
+    policy_threshold_medium = {
+      min_score = 35
+    }
+
+    policy_threshold_high = {
+      min_score = 70
+    }
+
+    predictors = [
+      {
+        compact_name = "ipRisk"
+        score        = 45
+      },
+      {
+        compact_name = "geoVelocity"
+        score        = 45
+      }
+    ]
+  }
+
+  mitigations = [
+    {
+      action        = "CUSTOM"
+      custom_action = "customActionValue"
+
+      condition = {
+        type         = "VALUE_COMPARISON"
+        compact_name = "anonymousNetwork"
+        equals       = "HIGH"
+      }
+    },
+
+    {
+      action = "MFA"
+
+      condition = {
+        type         = "VALUE_COMPARISON"
+        compact_name = "geoVelocity"
+        equals       = "HIGH"
+      }
+    },
+
+    {
+      action = "VERIFY"
+
+      condition = {
+        type         = "VALUE_COMPARISON"
+        compact_name = "geoVelocity"
+        equals       = "MEDIUM"
+      }
+    },
+
+    {
+      action = "DENY"
+
+      condition = {
+        type = "IP_RANGE"
+        ip_range = [
+          "10.0.0.0/8",
+          "172.16.0.0/12",
+        ]
+      }
+    }
+  ]
+
+  fallback = {
+    action = "APPROVE"
+  }
+
+  targets = {
+    condition = {
+      and = [
+        {
+          list     = ["AUTHENTICATION", "AUTHORIZATION"]
+          contains = "$${event.flow.type}"
+        },
+        {
+          list     = ["Sales"]
+          contains = "$${event.user.groups}"
+        },
+      ]
+    }
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRiskPolicyConfig_Mitigations_Minimal(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  policy_scores = {
+    policy_threshold_medium = {
+      min_score = 35
+    }
+
+    policy_threshold_high = {
+      min_score = 70
+    }
+
+    predictors = [
+      {
+        compact_name = "ipRisk"
+        score        = 45
+      },
+      {
+        compact_name = "geoVelocity"
+        score        = 45
+      }
+    ]
+  }
+
+  mitigations = [
+    {
+      action = "DENY"
+
+      condition = {
+        type         = "VALUE_COMPARISON"
+        compact_name = "anonymousNetwork"
+        equals       = "HIGH"
+      }
+    }
+  ]
+
+  fallback = {
+    action = "DENY"
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRiskPolicyConfig_Mitigations_ConflictsWithOverrides(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  policy_scores = {
+    policy_threshold_medium = {
+      min_score = 35
+    }
+
+    policy_threshold_high = {
+      min_score = 70
+    }
+
+    predictors = [
+      {
+        compact_name = "ipRisk"
+        score        = 45
+      }
+    ]
+  }
+
+  overrides = [
+    {
+      result = {
+        level = "HIGH"
+      }
+
+      condition = {
+        type         = "VALUE_COMPARISON"
+        compact_name = "anonymousNetwork"
+        equals       = "HIGH"
+      }
+    }
+  ]
+
+  mitigations = [
+    {
+      action = "DENY"
+
+      condition = {
+        type         = "VALUE_COMPARISON"
+        compact_name = "geoVelocity"
+        equals       = "HIGH"
+      }
+    }
+  ]
+
+  fallback = {
+    action = "DENY"
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRiskPolicyConfig_Mitigations_TargetsConflictsWithOverrides(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  policy_scores = {
+    policy_threshold_medium = {
+      min_score = 35
+    }
+
+    policy_threshold_high = {
+      min_score = 70
+    }
+
+    predictors = [
+      {
+        compact_name = "ipRisk"
+        score        = 45
+      }
+    ]
+  }
+
+  overrides = [
+    {
+      result = {
+        level = "HIGH"
+      }
+
+      condition = {
+        type         = "VALUE_COMPARISON"
+        compact_name = "anonymousNetwork"
+        equals       = "HIGH"
+      }
+    }
+  ]
+
+  targets = {
+    condition = {
+      and = [
+        {
+          list     = ["AUTHENTICATION"]
+          contains = "$${event.flow.type}"
+        },
+      ]
+    }
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
