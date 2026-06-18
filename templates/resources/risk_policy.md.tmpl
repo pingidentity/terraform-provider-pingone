@@ -17,6 +17,10 @@ description: |-
 
 {{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-weights.tf") }}
 
+## Example Usage - Mitigations based policy
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-mitigations.tf") }}
+
 {{ .SchemaMarkdown | trimspace }}
 
 ## Import
