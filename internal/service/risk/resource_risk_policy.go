@@ -1414,7 +1414,8 @@ func (p *riskPolicyResourceModel) expand(ctx context.Context, apiClient *risk.AP
 				return nil, diags
 			}
 
-			result := risk.NewRiskPolicyResult(risk.EnumRiskLevel(resultPlan.Level.ValueString()))
+			result := risk.NewRiskPolicyResult()
+			result.SetLevel(risk.EnumRiskLevel(resultPlan.Level.ValueString()))
 
 			if !resultPlan.Value.IsNull() && !resultPlan.Value.IsUnknown() {
 				result.SetValue(resultPlan.Value.ValueString())
@@ -1425,10 +1426,10 @@ func (p *riskPolicyResourceModel) expand(ctx context.Context, apiClient *risk.AP
 			}
 
 			op := *risk.NewRiskPolicy(
-				*condition,
 				overridePlan.Name.ValueString(),
 				*result,
 			)
+			op.SetCondition(*condition)
 
 			op.SetPriority(overridePlan.Priority.ValueInt32())
 
@@ -1437,20 +1438,18 @@ func (p *riskPolicyResourceModel) expand(ctx context.Context, apiClient *risk.AP
 	}
 
 	// Medium Weighted Policy
-	mwp := *risk.NewRiskPolicy(
-		*mediumPolicyCondition,
-		"MEDIUM_WEIGHTED_POLICY",
-		*risk.NewRiskPolicyResult(risk.ENUMRISKLEVEL_MEDIUM),
-	)
+	mwpResult := risk.NewRiskPolicyResult()
+	mwpResult.SetLevel(risk.ENUMRISKLEVEL_MEDIUM)
+	mwp := *risk.NewRiskPolicy("MEDIUM_WEIGHTED_POLICY", *mwpResult)
+	mwp.SetCondition(*mediumPolicyCondition)
 	mwp.SetPriority(int32(len(riskPolicies)) + 1)
 	riskPolicies = append(riskPolicies, mwp)
 
 	// High Weighted Policy
-	hwp := *risk.NewRiskPolicy(
-		*highPolicyCondition,
-		"HIGH_WEIGHTED_POLICY",
-		*risk.NewRiskPolicyResult(risk.ENUMRISKLEVEL_HIGH),
-	)
+	hwpResult := risk.NewRiskPolicyResult()
+	hwpResult.SetLevel(risk.ENUMRISKLEVEL_HIGH)
+	hwp := *risk.NewRiskPolicy("HIGH_WEIGHTED_POLICY", *hwpResult)
+	hwp.SetCondition(*highPolicyCondition)
 	hwp.SetPriority(int32(len(riskPolicies)) + 1)
 	riskPolicies = append(riskPolicies, hwp)
 
