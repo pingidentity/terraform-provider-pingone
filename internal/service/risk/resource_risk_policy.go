@@ -59,6 +59,8 @@ type riskPolicyResourceModel struct {
 	PolicyWeights       types.Object                 `tfsdk:"policy_weights"`
 	PolicyScores        types.Object                 `tfsdk:"policy_scores"`
 	Overrides           types.List                   `tfsdk:"overrides"`
+	Mitigations         types.List                   `tfsdk:"mitigations"`
+	Fallback            types.Object                 `tfsdk:"fallback"`
 }
 
 type riskPolicyResourceDefaultResultModel struct {
@@ -109,6 +111,25 @@ type riskPolicyResourcePolicyOverrideConditionModel struct {
 	PredictorReferenceValue    types.String `tfsdk:"predictor_reference_value"`
 	IPRange                    types.Set    `tfsdk:"ip_range"`
 	PredictorReferenceContains types.String `tfsdk:"predictor_reference_contains"`
+}
+
+type riskPolicyResourcePolicyMitigationModel struct {
+	Name                      types.String                 `tfsdk:"name"`
+	Priority                  types.Int32                  `tfsdk:"priority"`
+	Condition                 types.Object                 `tfsdk:"condition"`
+	Action                    types.String                 `tfsdk:"action"`
+	CustomAction              types.String                 `tfsdk:"custom_action"`
+	MfaAuthenticationPolicyId pingonetypes.ResourceIDValue `tfsdk:"mfa_authentication_policy_id"`
+	MfaRegistrationPolicyId   pingonetypes.ResourceIDValue `tfsdk:"mfa_registration_policy_id"`
+	VerifyPolicyId            pingonetypes.ResourceIDValue `tfsdk:"verify_policy_id"`
+}
+
+type riskPolicyResourceMitigationFallbackModel struct {
+	Action                    types.String                 `tfsdk:"action"`
+	CustomAction              types.String                 `tfsdk:"custom_action"`
+	MfaAuthenticationPolicyId pingonetypes.ResourceIDValue `tfsdk:"mfa_authentication_policy_id"`
+	MfaRegistrationPolicyId   pingonetypes.ResourceIDValue `tfsdk:"mfa_registration_policy_id"`
+	VerifyPolicyId            pingonetypes.ResourceIDValue `tfsdk:"verify_policy_id"`
 }
 
 var (
@@ -179,6 +200,28 @@ var (
 		"predictor_reference_value":    types.StringType,
 		"ip_range":                     types.SetType{ElemType: types.StringType},
 		"predictor_reference_contains": types.StringType,
+	}
+
+	// Mitigations
+	mitigationsTFObjectTypes = map[string]attr.Type{
+		"name":     types.StringType,
+		"priority": types.Int32Type,
+		"condition": types.ObjectType{
+			AttrTypes: overridesConditionTFObjectTypes,
+		},
+		"action":                       types.StringType,
+		"custom_action":                types.StringType,
+		"mfa_authentication_policy_id": pingonetypes.ResourceIDType{},
+		"mfa_registration_policy_id":   pingonetypes.ResourceIDType{},
+		"verify_policy_id":             pingonetypes.ResourceIDType{},
+	}
+
+	mitigationsFallbackTFObjectTypes = map[string]attr.Type{
+		"action":                       types.StringType,
+		"custom_action":                types.StringType,
+		"mfa_authentication_policy_id": pingonetypes.ResourceIDType{},
+		"mfa_registration_policy_id":   pingonetypes.ResourceIDType{},
+		"verify_policy_id":             pingonetypes.ResourceIDType{},
 	}
 )
 
@@ -274,6 +317,35 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 
 	policyOverrideConditionIPRangeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Required when `equals` is set to `IP_RANGE`.  A set of strings that specifies the CIDR ranges that should be evaluated against the value of the `predictor_reference_contains` attribute, that must be matched for the override result to be applied to the policy evaluation.  Values must be valid IPv4 or IPv6 CIDR ranges.",
+	)
+
+	// Mitigations
+	policyMitigationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An ordered list of mitigation-style policy entries to apply to the policy. Each entry pairs a condition with a single mitigation action. Mutually exclusive with `overrides`. When this block is configured, a `fallback` block must also be configured.",
+	)
+
+	policyMitigationActionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the mitigation action to apply when the condition is met.",
+	).AllowedValuesEnum(risk.AllowedEnumMitigationActionEnumValues)
+
+	policyMitigationCustomActionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the custom action name. Required when `action` is `CUSTOM`.",
+	)
+
+	policyMitigationMfaAuthPolicyIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The ID of the MFA (sign-on/authentication) policy to apply. Required when `action` is `MFA`.",
+	)
+
+	policyMitigationMfaRegPolicyIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The ID of the MFA registration policy to apply. Applies to MFA registration flows when `action` is `MFA`.",
+	)
+
+	policyMitigationVerifyPolicyIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The ID of the PingOne Verify policy to apply. Required when `action` is `VERIFY`.",
+	)
+
+	policyFallbackDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies the required catch-all fallback mitigation entry (`result.type=MITIGATION_FALLBACK`). Required when `mitigations` is configured. Carries a single mitigation action with no condition.",
 	)
 
 	// Schema
@@ -646,6 +718,251 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 
 				Validators: []validator.List{
 					listvalidator.SizeAtLeast(attrMinLength),
+					listvalidator.ConflictsWith(
+						path.MatchRelative().AtParent().AtName("mitigations"),
+						path.MatchRelative().AtParent().AtName("fallback"),
+					),
+				},
+			},
+
+			"mitigations": schema.ListNestedAttribute{
+				Description:         policyMitigationDescription.Description,
+				MarkdownDescription: policyMitigationDescription.MarkdownDescription,
+
+				Optional: true,
+
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that represents the name of the mitigation policy entry. Computed from the condition's compact name or set by the provider.").Description,
+							Optional:    true,
+							Computed:    true,
+						},
+
+						"priority": schema.Int32Attribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that indicates the order in which the mitigation entry is applied during risk policy evaluation. The lower the value, the higher the priority. The priority is determined by the order in which the entries are defined in HCL.").Description,
+							Computed:    true,
+						},
+
+						"condition": schema.SingleNestedAttribute{
+							Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that contains the conditions to evaluate that determine whether the mitigation action will be applied to the risk policy evaluation.").Description,
+							Required:    true,
+
+							Attributes: map[string]schema.Attribute{
+								"type": schema.StringAttribute{
+									Description:         policyOverrideConditionTypeDescription.Description,
+									MarkdownDescription: policyOverrideConditionTypeDescription.MarkdownDescription,
+									Required:            true,
+
+									Validators: []validator.String{
+										stringvalidator.OneOf(
+											string(risk.ENUMRISKPOLICYCONDITIONTYPE_VALUE_COMPARISON),
+											string(risk.ENUMRISKPOLICYCONDITIONTYPE_IP_RANGE),
+										),
+									},
+								},
+
+								// Value comparison
+								"equals": schema.StringAttribute{
+									Description:         policyOverrideConditionEqualsDescription.Description,
+									MarkdownDescription: policyOverrideConditionEqualsDescription.MarkdownDescription,
+									Optional:            true,
+
+									Validators: []validator.String{
+										stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+											basetypes.NewStringValue(string(risk.ENUMRISKPOLICYCONDITIONTYPE_VALUE_COMPARISON)),
+											path.MatchRelative().AtParent().AtName("type"),
+										),
+									},
+								},
+
+								"compact_name": schema.StringAttribute{
+									Description:         policyOverrideConditionCompactNameDescription.Description,
+									MarkdownDescription: policyOverrideConditionCompactNameDescription.MarkdownDescription,
+									Optional:            true,
+
+									Validators: []validator.String{
+										stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+											basetypes.NewStringValue(string(risk.ENUMRISKPOLICYCONDITIONTYPE_VALUE_COMPARISON)),
+											path.MatchRelative().AtParent().AtName("type"),
+										),
+									},
+								},
+
+								"predictor_reference_value": schema.StringAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the attribute reference of the value to evaluate.").Description,
+									Computed:    true,
+								},
+
+								// IP range
+								"ip_range": schema.SetAttribute{
+									Description:         policyOverrideConditionIPRangeDescription.Description,
+									MarkdownDescription: policyOverrideConditionIPRangeDescription.MarkdownDescription,
+									Optional:            true,
+
+									ElementType: types.StringType,
+
+									Validators: []validator.Set{
+										setvalidator.ValueStringsAre(
+											stringvalidator.RegexMatches(verify.IPv4IPv6Regexp, "Values must be valid IPv4 or IPv6 CIDR format."),
+										),
+										setvalidatorinternal.IsRequiredIfMatchesPathValue(
+											basetypes.NewStringValue(string(risk.ENUMRISKPOLICYCONDITIONTYPE_IP_RANGE)),
+											path.MatchRelative().AtParent().AtName("type"),
+										),
+									},
+								},
+
+								"predictor_reference_contains": schema.StringAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the attribute reference of the collection to evaluate.").Description,
+									Computed:    true,
+								},
+							},
+						},
+
+						"action": schema.StringAttribute{
+							Description:         policyMitigationActionDescription.Description,
+							MarkdownDescription: policyMitigationActionDescription.MarkdownDescription,
+							Required:            true,
+
+							Validators: []validator.String{
+								stringvalidator.OneOf(utils.EnumSliceToStringSlice(risk.AllowedEnumMitigationActionEnumValues)...),
+							},
+						},
+
+						"custom_action": schema.StringAttribute{
+							Description:         policyMitigationCustomActionDescription.Description,
+							MarkdownDescription: policyMitigationCustomActionDescription.MarkdownDescription,
+							Optional:            true,
+
+							Validators: []validator.String{
+								stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+									basetypes.NewStringValue(string(risk.ENUMMITIGATIONACTION_CUSTOM)),
+									path.MatchRelative().AtParent().AtName("action"),
+								),
+							},
+						},
+
+						"mfa_authentication_policy_id": schema.StringAttribute{
+							Description:         policyMitigationMfaAuthPolicyIdDescription.Description,
+							MarkdownDescription: policyMitigationMfaAuthPolicyIdDescription.MarkdownDescription,
+							Optional:            true,
+							CustomType:          pingonetypes.ResourceIDType{},
+
+							Validators: []validator.String{
+								stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+									basetypes.NewStringValue(string(risk.ENUMMITIGATIONACTION_MFA)),
+									path.MatchRelative().AtParent().AtName("action"),
+								),
+							},
+						},
+
+						"mfa_registration_policy_id": schema.StringAttribute{
+							Description:         policyMitigationMfaRegPolicyIdDescription.Description,
+							MarkdownDescription: policyMitigationMfaRegPolicyIdDescription.MarkdownDescription,
+							Optional:            true,
+							CustomType:          pingonetypes.ResourceIDType{},
+						},
+
+						"verify_policy_id": schema.StringAttribute{
+							Description:         policyMitigationVerifyPolicyIdDescription.Description,
+							MarkdownDescription: policyMitigationVerifyPolicyIdDescription.MarkdownDescription,
+							Optional:            true,
+							CustomType:          pingonetypes.ResourceIDType{},
+
+							Validators: []validator.String{
+								stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+									basetypes.NewStringValue(string(risk.ENUMMITIGATIONACTION_VERIFY)),
+									path.MatchRelative().AtParent().AtName("action"),
+								),
+							},
+						},
+					},
+				},
+
+				Validators: []validator.List{
+					listvalidator.ConflictsWith(
+						path.MatchRelative().AtParent().AtName("overrides"),
+					),
+					listvalidator.AlsoRequires(
+						path.MatchRelative().AtParent().AtName("fallback"),
+					),
+				},
+			},
+
+			"fallback": schema.SingleNestedAttribute{
+				Description:         policyFallbackDescription.Description,
+				MarkdownDescription: policyFallbackDescription.MarkdownDescription,
+
+				Optional: true,
+
+				Attributes: map[string]schema.Attribute{
+					"action": schema.StringAttribute{
+						Description:         policyMitigationActionDescription.Description,
+						MarkdownDescription: policyMitigationActionDescription.MarkdownDescription,
+						Required:            true,
+
+						Validators: []validator.String{
+							stringvalidator.OneOf(utils.EnumSliceToStringSlice(risk.AllowedEnumMitigationActionEnumValues)...),
+						},
+					},
+
+					"custom_action": schema.StringAttribute{
+						Description:         policyMitigationCustomActionDescription.Description,
+						MarkdownDescription: policyMitigationCustomActionDescription.MarkdownDescription,
+						Optional:            true,
+
+						Validators: []validator.String{
+							stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+								basetypes.NewStringValue(string(risk.ENUMMITIGATIONACTION_CUSTOM)),
+								path.MatchRelative().AtParent().AtName("action"),
+							),
+						},
+					},
+
+					"mfa_authentication_policy_id": schema.StringAttribute{
+						Description:         policyMitigationMfaAuthPolicyIdDescription.Description,
+						MarkdownDescription: policyMitigationMfaAuthPolicyIdDescription.MarkdownDescription,
+						Optional:            true,
+						CustomType:          pingonetypes.ResourceIDType{},
+
+						Validators: []validator.String{
+							stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+								basetypes.NewStringValue(string(risk.ENUMMITIGATIONACTION_MFA)),
+								path.MatchRelative().AtParent().AtName("action"),
+							),
+						},
+					},
+
+					"mfa_registration_policy_id": schema.StringAttribute{
+						Description:         policyMitigationMfaRegPolicyIdDescription.Description,
+						MarkdownDescription: policyMitigationMfaRegPolicyIdDescription.MarkdownDescription,
+						Optional:            true,
+						CustomType:          pingonetypes.ResourceIDType{},
+					},
+
+					"verify_policy_id": schema.StringAttribute{
+						Description:         policyMitigationVerifyPolicyIdDescription.Description,
+						MarkdownDescription: policyMitigationVerifyPolicyIdDescription.MarkdownDescription,
+						Optional:            true,
+						CustomType:          pingonetypes.ResourceIDType{},
+
+						Validators: []validator.String{
+							stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+								basetypes.NewStringValue(string(risk.ENUMMITIGATIONACTION_VERIFY)),
+								path.MatchRelative().AtParent().AtName("action"),
+							),
+						},
+					},
+				},
+
+				Validators: []validator.Object{
+					objectvalidator.ConflictsWith(
+						path.MatchRelative().AtParent().AtName("overrides"),
+					),
+					objectvalidator.AlsoRequires(
+						path.MatchRelative().AtParent().AtName("mitigations"),
+					),
 				},
 			},
 		},
@@ -1650,24 +1967,26 @@ func (p *riskPolicyResourceModel) toState(apiObject *risk.RiskPolicySet) diag.Di
 
 	r, ok := apiObject.GetRiskPoliciesOk()
 
-	p.PolicyWeights, p.PolicyScores, p.Overrides, d = p.toStatePolicy(r, ok)
+	p.PolicyWeights, p.PolicyScores, p.Overrides, p.Mitigations, p.Fallback, d = p.toStatePolicy(r, ok)
 	diags.Append(d...)
 
 	return diags
 }
 
-func (p *riskPolicyResourceModel) toStatePolicy(riskPolicies []risk.RiskPolicy, ok bool) (basetypes.ObjectValue, basetypes.ObjectValue, basetypes.ListValue, diag.Diagnostics) {
+func (p *riskPolicyResourceModel) toStatePolicy(riskPolicies []risk.RiskPolicy, ok bool) (basetypes.ObjectValue, basetypes.ObjectValue, basetypes.ListValue, basetypes.ListValue, basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	objPolicyWeightsValue := types.ObjectUnknown(policyWeightsTFObjectTypes)
 	objPolicyScoresValue := types.ObjectUnknown(policyScoresTFObjectTypes)
 	objOverridesValue := types.ListUnknown(types.ObjectType{AttrTypes: overridesTFObjectTypes})
+	objMitigationsValue := types.ListNull(types.ObjectType{AttrTypes: mitigationsTFObjectTypes})
+	objFallbackValue := types.ObjectNull(mitigationsFallbackTFObjectTypes)
 
 	useScores := false
 	useWeights := false
 
 	if !ok || riskPolicies == nil || len(riskPolicies) < 1 {
-		return objPolicyWeightsValue, objPolicyScoresValue, objOverridesValue, diags
+		return objPolicyWeightsValue, objPolicyScoresValue, objOverridesValue, objMitigationsValue, objFallbackValue, diags
 	}
 
 	highMediumPolicy := map[string]attr.Value{}
@@ -1833,7 +2152,7 @@ func (p *riskPolicyResourceModel) toStatePolicy(riskPolicies []risk.RiskPolicy, 
 		objOverridesValue = types.ListNull(types.ObjectType{AttrTypes: overridesTFObjectTypes})
 	}
 
-	return objPolicyWeightsValue, objPolicyScoresValue, objOverridesValue, diags
+	return objPolicyWeightsValue, objPolicyScoresValue, objOverridesValue, objMitigationsValue, objFallbackValue, diags
 }
 
 func riskPolicyScoresCompactNameFromReferenceOk(v *string, ok bool) basetypes.StringValue {
