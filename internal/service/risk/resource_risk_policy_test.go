@@ -1292,6 +1292,7 @@ func TestAccRiskPolicy_Mitigations(t *testing.T) {
 			"name":                                "geoVelocity",
 			"priority":                            "2",
 			"action":                              "MFA",
+			"mfa_authentication_policy_id":        "00000000-0000-0000-0000-000000000001",
 			"condition.type":                      "VALUE_COMPARISON",
 			"condition.equals":                    "HIGH",
 			"condition.compact_name":              "geoVelocity",
@@ -1301,6 +1302,7 @@ func TestAccRiskPolicy_Mitigations(t *testing.T) {
 			"name":                                "geoVelocity",
 			"priority":                            "3",
 			"action":                              "VERIFY",
+			"verify_policy_id":                    "00000000-0000-0000-0000-000000000002",
 			"condition.type":                      "VALUE_COMPARISON",
 			"condition.equals":                    "MEDIUM",
 			"condition.compact_name":              "geoVelocity",
@@ -1455,7 +1457,8 @@ resource "pingone_risk_policy" "%[2]s" {
     },
 
     {
-      action = "MFA"
+      action                       = "MFA"
+      mfa_authentication_policy_id = "00000000-0000-0000-0000-000000000001"
 
       condition = {
         type         = "VALUE_COMPARISON"
@@ -1465,7 +1468,8 @@ resource "pingone_risk_policy" "%[2]s" {
     },
 
     {
-      action = "VERIFY"
+      action          = "VERIFY"
+      verify_policy_id = "00000000-0000-0000-0000-000000000002"
 
       condition = {
         type         = "VALUE_COMPARISON"
