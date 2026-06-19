@@ -16,6 +16,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -115,7 +117,6 @@ func (r *NotificationSettingsEmailResource) Schema(ctx context.Context, req reso
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(attrMinLength),
 					stringvalidator.ExactlyOneOf(path.MatchRoot("custom_provider_name"), path.MatchRoot("host")),
-					stringvalidator.ConflictsWith(path.MatchRoot("protocol")),
 					stringvalidator.ConflictsWith(path.MatchRoot("auth_token")),
 					stringvalidator.ConflictsWith(path.MatchRoot("custom_provider_name")),
 					stringvalidator.ConflictsWith(path.MatchRoot("requests")),
@@ -232,6 +233,9 @@ func (r *NotificationSettingsEmailResource) Schema(ctx context.Context, req reso
 			"provider_type": schema.StringAttribute{
 				Description: "A string that specifies the provider type.",
 				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(), // or objectplanmodifier.Ignore
+				},
 			},
 
 			"requests": schema.SetNestedAttribute{
