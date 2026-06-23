@@ -114,6 +114,14 @@ type riskPolicyResourcePolicyOverrideConditionModel struct {
 	PredictorReferenceContains types.String `tfsdk:"predictor_reference_contains"`
 }
 
+type riskPolicyResourcePolicyMitigationConditionModel struct {
+	Type                       types.String `tfsdk:"type"`
+	Equals                     types.String `tfsdk:"equals"`
+	CompactName                types.String `tfsdk:"compact_name"`
+	PredictorReferenceValue    types.String `tfsdk:"predictor_reference_value"`
+	PredictorReferenceContains types.String `tfsdk:"predictor_reference_contains"`
+}
+
 type riskPolicyResourcePolicyMitigationModel struct {
 	Name                      types.String                 `tfsdk:"name"`
 	Priority                  types.Int32                  `tfsdk:"priority"`
@@ -217,12 +225,20 @@ var (
 		"predictor_reference_contains": types.StringType,
 	}
 
+	mitigationConditionTFObjectTypes = map[string]attr.Type{
+		"type":                         types.StringType,
+		"equals":                       types.StringType,
+		"compact_name":                 types.StringType,
+		"predictor_reference_value":    types.StringType,
+		"predictor_reference_contains": types.StringType,
+	}
+
 	// Mitigations
 	mitigationsTFObjectTypes = map[string]attr.Type{
 		"name":     types.StringType,
 		"priority": types.Int32Type,
 		"condition": types.ObjectType{
-			AttrTypes: overridesConditionTFObjectTypes,
+			AttrTypes: mitigationConditionTFObjectTypes,
 		},
 		"action":                       types.StringType,
 		"custom_action":                types.StringType,
@@ -379,12 +395,12 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 	)
 
 	policyFallbackDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A single object that specifies the required catch-all fallback mitigation entry (`result.type=MITIGATION_FALLBACK`). Required when `mitigations` is configured. Carries a single mitigation action with no condition.",
+		"A single object that specifies the required catch-all fallback mitigation entry (`result.type=MITIGATION_FALLBACK`). Required when `mitigations` or `targets` is configured. Carries a single mitigation action with no condition.",
 	)
 
 	// Targets
 	policyTargetsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A single object that scopes this policy set to a subset of events (targeted policy). Pairs with `mitigations` (and the weights/scores backbone) but is mutually exclusive with `overrides`.",
+		"A single object that scopes this policy set to a subset of events (targeted policy). When configured, a `fallback` block is required and `mitigations` may optionally be configured. Mutually exclusive with `overrides`.",
 	)
 
 	policyTargetsConditionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -816,7 +832,6 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 									Validators: []validator.String{
 										stringvalidator.OneOf(
 											string(risk.ENUMRISKPOLICYCONDITIONTYPE_VALUE_COMPARISON),
-											string(risk.ENUMRISKPOLICYCONDITIONTYPE_IP_RANGE),
 										),
 									},
 								},
@@ -851,25 +866,6 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 								"predictor_reference_value": schema.StringAttribute{
 									Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the attribute reference of the value to evaluate.").Description,
 									Computed:    true,
-								},
-
-								// IP range
-								"ip_range": schema.SetAttribute{
-									Description:         policyOverrideConditionIPRangeDescription.Description,
-									MarkdownDescription: policyOverrideConditionIPRangeDescription.MarkdownDescription,
-									Optional:            true,
-
-									ElementType: types.StringType,
-
-									Validators: []validator.Set{
-										setvalidator.ValueStringsAre(
-											stringvalidator.RegexMatches(verify.IPv4IPv6Regexp, "Values must be valid IPv4 or IPv6 CIDR format."),
-										),
-										setvalidatorinternal.IsRequiredIfMatchesPathValue(
-											basetypes.NewStringValue(string(risk.ENUMRISKPOLICYCONDITIONTYPE_IP_RANGE)),
-											path.MatchRelative().AtParent().AtName("type"),
-										),
-									},
 								},
 
 								"predictor_reference_contains": schema.StringAttribute{
@@ -1019,9 +1015,6 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 					objectvalidator.ConflictsWith(
 						path.MatchRelative().AtParent().AtName("overrides"),
 					),
-					objectvalidator.AlsoRequires(
-						path.MatchRelative().AtParent().AtName("mitigations"),
-					),
 				},
 			},
 
@@ -1042,6 +1035,10 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 								Description:         policyTargetsConditionAndDescription.Description,
 								MarkdownDescription: policyTargetsConditionAndDescription.MarkdownDescription,
 								Required:            true,
+
+								Validators: []validator.List{
+									listvalidator.SizeAtLeast(1),
+								},
 
 								NestedObject: schema.NestedAttributeObject{
 									Attributes: map[string]schema.Attribute{
@@ -1077,6 +1074,9 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 				Validators: []validator.Object{
 					objectvalidator.ConflictsWith(
 						path.MatchRelative().AtParent().AtName("overrides"),
+					),
+					objectvalidator.AlsoRequires(
+						path.MatchRelative().AtParent().AtName("fallback"),
 					),
 				},
 			},
@@ -1389,7 +1389,7 @@ func (r *RiskPolicyResource) ModifyPlan(ctx context.Context, req resource.Modify
 			priorityCount++
 
 			// The Condition
-			var conditionPlan riskPolicyResourcePolicyOverrideConditionModel
+			var conditionPlan riskPolicyResourcePolicyMitigationConditionModel
 			resp.Diagnostics.Append(mitigationPlan.Condition.As(ctx, &conditionPlan, basetypes.ObjectAsOptions{
 				UnhandledNullAsEmpty:    false,
 				UnhandledUnknownAsEmpty: false,
@@ -1409,22 +1409,15 @@ func (r *RiskPolicyResource) ModifyPlan(ctx context.Context, req resource.Modify
 				mitigationName = conditionPlan.CompactName.ValueString()
 			}
 
-			if !conditionPlan.IPRange.IsNull() && !conditionPlan.IPRange.IsUnknown() {
-				predictorReferenceContains = framework.StringToTF("${transaction.ip}")
-				predictorReferenceValue = types.StringNull()
-				mitigationName = "WHITELIST"
-			}
-
 			conditionMap := map[string]attr.Value{
 				"type":                         conditionPlan.Type,
 				"equals":                       conditionPlan.Equals,
 				"compact_name":                 conditionPlan.CompactName,
 				"predictor_reference_value":    predictorReferenceValue,
-				"ip_range":                     conditionPlan.IPRange,
 				"predictor_reference_contains": predictorReferenceContains,
 			}
 
-			conditionObj, d := types.ObjectValue(overridesConditionTFObjectTypes, conditionMap)
+			conditionObj, d := types.ObjectValue(mitigationConditionTFObjectTypes, conditionMap)
 			resp.Diagnostics.Append(d...)
 
 			mitigationMap := map[string]attr.Value{
@@ -1958,7 +1951,7 @@ func (p *riskPolicyResourceModel) expand(ctx context.Context, apiClient *risk.AP
 		for _, mitigationPlan := range mitigationsPlan {
 
 			// The Condition
-			var conditionPlan riskPolicyResourcePolicyOverrideConditionModel
+			var conditionPlan riskPolicyResourcePolicyMitigationConditionModel
 			diags.Append(mitigationPlan.Condition.As(ctx, &conditionPlan, basetypes.ObjectAsOptions{
 				UnhandledNullAsEmpty:    false,
 				UnhandledUnknownAsEmpty: false,
@@ -1981,26 +1974,6 @@ func (p *riskPolicyResourceModel) expand(ctx context.Context, apiClient *risk.AP
 				if !slices.Contains(predictorCompactNames, conditionPlan.CompactName.ValueString()) {
 					predictorCompactNames = append(predictorCompactNames, conditionPlan.CompactName.ValueString())
 				}
-			}
-
-			if !conditionPlan.PredictorReferenceContains.IsNull() && !conditionPlan.PredictorReferenceContains.IsUnknown() {
-				condition.SetContains(conditionPlan.PredictorReferenceContains.ValueString())
-			}
-
-			if !conditionPlan.IPRange.IsNull() && !conditionPlan.IPRange.IsUnknown() {
-				var conditionIPRangePlan []types.String
-				diags.Append(conditionPlan.IPRange.ElementsAs(ctx, &conditionIPRangePlan, false)...)
-				if diags.HasError() {
-					return nil, diags
-				}
-
-				conditionIPRange, d := framework.TFTypeStringSliceToStringSlice(conditionIPRangePlan, path.Root("mitigations").AtName("condition").AtName("ip_range"))
-				diags.Append(d...)
-				if diags.HasError() {
-					return nil, diags
-				}
-
-				condition.SetIpRange(conditionIPRange)
 			}
 
 			// The Result
@@ -2469,15 +2442,14 @@ func (p *riskPolicyResourceModel) toStatePolicy(riskPolicies []risk.RiskPolicy, 
 							"equals":                       equalsString,
 							"compact_name":                 riskPolicyOverrideCompactNameFromReferenceOk(condition.GetValueOk()),
 							"predictor_reference_value":    framework.StringOkToTF(condition.GetValueOk()),
-							"ip_range":                     framework.StringSetOkToTF(condition.GetIpRangeOk()),
 							"predictor_reference_contains": framework.StringOkToTF(condition.GetContainsOk()),
 						}
 
 						var d diag.Diagnostics
-						conditionObj, d = types.ObjectValue(overridesConditionTFObjectTypes, conditionMap)
+						conditionObj, d = types.ObjectValue(mitigationConditionTFObjectTypes, conditionMap)
 						diags.Append(d...)
 					} else {
-						conditionObj = types.ObjectNull(overridesConditionTFObjectTypes)
+						conditionObj = types.ObjectNull(mitigationConditionTFObjectTypes)
 					}
 
 					mitigationInners, ok := policyResult.GetMitigationsOk()

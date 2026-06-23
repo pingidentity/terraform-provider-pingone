@@ -239,12 +239,12 @@ resource "pingone_risk_policy" "my_awesome_mitigations_risk_policy" {
 
 - `default_result` (Attributes) A single nested object that specifies the default result value for the risk policy. (see [below for nested schema](#nestedatt--default_result))
 - `evaluated_predictors` (Set of String) A set of IDs for the predictors to evaluate in this policy set.  If omitted, if this property is null, all of the licensed predictors are used.
-- `fallback` (Attributes) A single object that specifies the required catch-all fallback mitigation entry (`result.type=MITIGATION_FALLBACK`). Required when `mitigations` is configured. Carries a single mitigation action with no condition. (see [below for nested schema](#nestedatt--fallback))
+- `fallback` (Attributes) A single object that specifies the required catch-all fallback mitigation entry (`result.type=MITIGATION_FALLBACK`). Required when `mitigations` or `targets` is configured. Carries a single mitigation action with no condition. (see [below for nested schema](#nestedatt--fallback))
 - `mitigations` (Attributes List) An ordered list of mitigation-style policy entries to apply to the policy. Each entry pairs a condition with a single mitigation action. Mutually exclusive with `overrides`. When this block is configured, a `fallback` block must also be configured. (see [below for nested schema](#nestedatt--mitigations))
 - `overrides` (Attributes List) An ordered list of policy overrides to apply to the policy.  The ordering of the overrides is important as it determines the priority of the policy override during policy evaluation. (see [below for nested schema](#nestedatt--overrides))
 - `policy_scores` (Attributes) An object that describes settings for a risk policy calculated by aggregating score values, with a final result being the sum of score values from each of the configured predictors.  Exactly one of the following must be defined: `policy_weights`, `policy_scores`. (see [below for nested schema](#nestedatt--policy_scores))
 - `policy_weights` (Attributes) An object that describes settings for a risk policy using a weighted average calculation, with a final result being a risk score between `0` and `10`.  Exactly one of the following must be defined: `policy_weights`, `policy_scores`. (see [below for nested schema](#nestedatt--policy_weights))
-- `targets` (Attributes) A single object that scopes this policy set to a subset of events (targeted policy). Pairs with `mitigations` (and the weights/scores backbone) but is mutually exclusive with `overrides`. (see [below for nested schema](#nestedatt--targets))
+- `targets` (Attributes) A single object that scopes this policy set to a subset of events (targeted policy). When configured, a `fallback` block is required and `mitigations` may optionally be configured. Mutually exclusive with `overrides`. (see [below for nested schema](#nestedatt--targets))
 
 ### Read-Only
 
@@ -309,7 +309,6 @@ Optional:
 
 - `compact_name` (String) Required when `equals` is set to `VALUE_COMPARISON`.  A string that specifies the compact name of the predictor to apply to the override condition.
 - `equals` (String) Required when `equals` is set to `VALUE_COMPARISON`.  A string that specifies the value of the `predictor_reference_value` that must be matched for the override result to be applied to the policy evaluation.
-- `ip_range` (Set of String) Required when `equals` is set to `IP_RANGE`.  A set of strings that specifies the CIDR ranges that should be evaluated against the value of the `predictor_reference_contains` attribute, that must be matched for the override result to be applied to the policy evaluation.  Values must be valid IPv4 or IPv6 CIDR ranges.
 
 Read-Only:
 
