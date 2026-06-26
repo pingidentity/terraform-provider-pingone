@@ -48,10 +48,9 @@ resource "pingone_risk_policy" "my_awesome_mitigations_risk_policy" {
       action = "DENY"
 
       condition = {
-        type = "IP_RANGE"
-        ip_range = [
-          "192.168.0.0/24",
-        ]
+        type         = "VALUE_COMPARISON"
+        compact_name = pingone_risk_predictor.my_awesome_geovelocity_anomaly_predictor.compact_name
+        equals       = "HIGH"
       }
     }
   ]
