@@ -1378,7 +1378,7 @@ func TestAccRiskPolicy_Mitigations(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
-			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckTestAccFlaky(t)
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoBeta(t)
 		},
