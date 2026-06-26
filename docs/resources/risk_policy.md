@@ -238,7 +238,7 @@ resource "pingone_risk_policy" "my_awesome_mitigations_risk_policy" {
 
 - `default_result` (Attributes) A single nested object that specifies the default result value for the risk policy. (see [below for nested schema](#nestedatt--default_result))
 - `evaluated_predictors` (Set of String) A set of IDs for the predictors to evaluate in this policy set.  If omitted, if this property is null, all of the licensed predictors are used.
-- `fallback` (Attributes) A single object that specifies the required catch-all fallback mitigation entry (`result.type=MITIGATION_FALLBACK`). Required when `mitigations` or `targets` is configured. Carries a single mitigation action with no condition. (see [below for nested schema](#nestedatt--fallback))
+- `fallback` (Attributes) A single object that specifies the required catch-all fallback mitigation action, applied when no mitigation condition matches. Required when `mitigations` or `targets` is configured. Carries a single mitigation action with no condition. (see [below for nested schema](#nestedatt--fallback))
 - `mitigations` (Attributes List) An ordered list of mitigation-style policy entries to apply to the policy. Each entry pairs a condition with a single mitigation action. Mutually exclusive with `overrides`. When this block is configured, a `fallback` block must also be configured. (see [below for nested schema](#nestedatt--mitigations))
 - `overrides` (Attributes List) An ordered list of policy overrides to apply to the policy.  The ordering of the overrides is important as it determines the priority of the policy override during policy evaluation. (see [below for nested schema](#nestedatt--overrides))
 - `policy_scores` (Attributes) An object that describes settings for a risk policy calculated by aggregating score values, with a final result being the sum of score values from each of the configured predictors.  Exactly one of the following must be defined: `policy_weights`, `policy_scores`. (see [below for nested schema](#nestedatt--policy_scores))
@@ -479,7 +479,7 @@ Required:
 Required:
 
 - `contains` (String) The event attribute checked against `list`. For transaction types use `${event.flow.type}`; for user groups use `${event.user.groups}`; for applications use `${event.targetResource.id}`.
-- `list` (List of String) A list of values to match against the event attribute specified in `contains`. Transaction types are one or more of `REGISTRATION`, `AUTHENTICATION`, `ACCESS`, `AUTHORIZATION`, `TRANSACTION`. User groups are group names. Applications are PingOne application IDs.
+- `list` (List of String) A list of values to match against the event attribute specified in `contains`. Transaction types are one or more of `AUTHENTICATION`, `REGISTRATION`, `ACCESS`, `AUTHORIZATION`, `TRANSACTION`. User groups are group names. Applications are PingOne application IDs.
 
 Read-Only:
 

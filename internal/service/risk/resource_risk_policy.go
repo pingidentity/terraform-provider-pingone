@@ -395,7 +395,7 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 	)
 
 	policyFallbackDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A single object that specifies the required catch-all fallback mitigation entry (`result.type=MITIGATION_FALLBACK`). Required when `mitigations` or `targets` is configured. Carries a single mitigation action with no condition.",
+		"A single object that specifies the required catch-all fallback mitigation action, applied when no mitigation condition matches. Required when `mitigations` or `targets` is configured. Carries a single mitigation action with no condition.",
 	)
 
 	// Targets
@@ -416,7 +416,10 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 	).AllowedValuesEnum(risk.AllowedEnumRiskPolicySetTargetsConditionTypeEnumValues)
 
 	policyTargetsConditionAndListDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A list of values to match against the event attribute specified in `contains`. Transaction types are one or more of `REGISTRATION`, `AUTHENTICATION`, `ACCESS`, `AUTHORIZATION`, `TRANSACTION`. User groups are group names. Applications are PingOne application IDs.",
+		fmt.Sprintf(
+			"A list of values to match against the event attribute specified in `contains`. Transaction types are one or more of `%s`. User groups are group names. Applications are PingOne application IDs.",
+			strings.Join(utils.EnumSliceToStringSlice(risk.AllowedEnumFlowTypeEnumValues), "`, `"),
+		),
 	)
 
 	policyTargetsConditionAndContainsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
