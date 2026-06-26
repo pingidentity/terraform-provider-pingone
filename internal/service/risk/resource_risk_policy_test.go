@@ -140,7 +140,7 @@ func TestAccRiskPolicy_Full(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
-			acctest.PreCheckTestAccFlaky(t)
+			acctest.PreCheckTestAccFlaky(t) // PND-5900: policy PUT reverts to previous config on next GET, leaving a non-empty refresh plan
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoBeta(t)
 		},
@@ -230,7 +230,7 @@ func TestAccRiskPolicy_Scores(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
-			acctest.PreCheckTestAccFlaky(t)
+			acctest.PreCheckTestAccFlaky(t) // PND-5900: policy PUT reverts to previous config on next GET, leaving a non-empty refresh plan
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoBeta(t)
 		},
@@ -349,7 +349,7 @@ func TestAccRiskPolicy_Weights(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
-			acctest.PreCheckTestAccFlaky(t)
+			acctest.PreCheckTestAccFlaky(t) // PND-5900: policy PUT reverts to previous config on next GET, leaving a non-empty refresh plan
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoBeta(t)
 		},
@@ -468,7 +468,7 @@ func TestAccRiskPolicy_ChangeType(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
-			acctest.PreCheckTestAccFlaky(t)
+			acctest.PreCheckTestAccFlaky(t) // PND-5900: policy PUT reverts to previous config on next GET, leaving a non-empty refresh plan
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoBeta(t)
 		},
@@ -561,7 +561,7 @@ func TestAccRiskPolicy_PolicyOverrides(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
-			acctest.PreCheckTestAccFlaky(t)
+			acctest.PreCheckTestAccFlaky(t) // PND-5900: policy PUT reverts to previous config on next GET, leaving a non-empty refresh plan
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoBeta(t)
 		},
@@ -630,7 +630,7 @@ func TestAccRiskPolicy_BadParameters(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
-			acctest.PreCheckTestAccFlaky(t)
+			acctest.PreCheckTestAccFlaky(t) // PND-5900: policy PUT reverts to previous config on next GET, leaving a non-empty refresh plan
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoBeta(t)
 		},
@@ -1378,7 +1378,7 @@ func TestAccRiskPolicy_Mitigations(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
-			acctest.PreCheckTestAccFlaky(t)
+			acctest.PreCheckTestAccFlaky(t) // PND-5900: policy PUT reverts to previous config on next GET, leaving a non-empty refresh plan
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoBeta(t)
 		},
@@ -2108,7 +2108,7 @@ func TestAccRiskPolicy_OverridesMitigationsChangeType(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
-			acctest.PreCheckTestAccFlaky(t)
+			acctest.PreCheckTestAccFlaky(t) // PND-5900: policy PUT reverts to previous config on next GET, leaving a non-empty refresh plan
 			acctest.PreCheckClient(t)
 			acctest.PreCheckNoBeta(t)
 		},
