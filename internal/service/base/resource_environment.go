@@ -19,7 +19,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -162,7 +161,7 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 		map[string]string{
 			string(management.ENUMBILLOFMATERIALSPRODUCTTAGS_DAVINCI_MINIMAL): "allows for a creation of an environment without example/demo configuration in the DaVinci service",
 		},
-	).RequiresReplace()
+	)
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -327,10 +326,6 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 							ElementType: types.StringType,
 
 							Optional: true,
-
-							PlanModifiers: []planmodifier.Set{
-								setplanmodifier.RequiresReplace(),
-							},
 
 							Validators: []validator.Set{
 								setvalidator.ValueStringsAre(
