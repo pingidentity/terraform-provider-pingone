@@ -2400,7 +2400,6 @@ func (p *riskPolicyResourceModel) toStatePolicy(riskPolicies []risk.RiskPolicy, 
 	mitigations := []attr.Value{}
 
 	setOverride := false
-	setMitigation := false
 
 	for _, policy := range riskPolicies {
 		// Check the result type first to distinguish mitigation entries from overrides
@@ -2429,8 +2428,6 @@ func (p *riskPolicyResourceModel) toStatePolicy(riskPolicies []risk.RiskPolicy, 
 
 				if *resultType == risk.ENUMRESULTTYPE_MITIGATION {
 					// Mitigation entry: has a condition and a mitigations array.
-					setMitigation = true
-
 					var conditionObj basetypes.ObjectValue
 					if condition, ok := policy.GetConditionOk(); ok {
 						var equalsString basetypes.StringValue
@@ -2654,7 +2651,7 @@ func (p *riskPolicyResourceModel) toStatePolicy(riskPolicies []risk.RiskPolicy, 
 		objOverridesValue = types.ListNull(types.ObjectType{AttrTypes: overridesTFObjectTypes})
 	}
 
-	if setMitigation {
+	if len(mitigations) > 0 {
 		objMitigationsValue, d = types.ListValue(types.ObjectType{AttrTypes: mitigationsTFObjectTypes}, mitigations)
 		diags.Append(d...)
 	} else {

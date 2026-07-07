@@ -1511,6 +1511,57 @@ func TestAccRiskPolicy_MitigationsValidation(t *testing.T) {
 	})
 }
 
+func TestAccRiskPolicy_OverridesMitigationsChangeType(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_risk_policy.%s", resourceName)
+
+	name := resourceName
+
+	overridesCheck := resource.ComposeTestCheckFunc(
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckResourceAttr(resourceFullName, "overrides.#", "1"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "mitigations.#"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "fallback.action"),
+	)
+
+	migrationsCheck := resource.ComposeTestCheckFunc(
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckResourceAttr(resourceFullName, "mitigations.#", "1"),
+		resource.TestCheckResourceAttr(resourceFullName, "fallback.action", "DENY"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "overrides.#"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckTestAccFlaky(t) // PND-5900: policy PUT reverts to previous config on next GET, leaving a non-empty refresh plan
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             risk.RiskPolicy_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Start with overrides
+			{
+				Config: testAccRiskPolicyConfig_OverridesForTypeChange(resourceName, name),
+				Check:  overridesCheck,
+			},
+			// Switch to mitigations
+			{
+				Config: testAccRiskPolicyConfig_MitigationsForTypeChange(resourceName, name),
+				Check:  migrationsCheck,
+			},
+			// Switch back to overrides
+			{
+				Config: testAccRiskPolicyConfig_OverridesForTypeChange(resourceName, name),
+				Check:  overridesCheck,
+			},
+		},
+	})
+}
+
 func testAccRiskPolicyConfig_Mitigations_withFallback(resourceName, name, fallback string) string {
 	return fmt.Sprintf(`
 	%[1]s
@@ -2082,57 +2133,6 @@ resource "pingone_risk_policy" "%[2]s" {
     action = "DENY"
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
-}
-
-func TestAccRiskPolicy_OverridesMitigationsChangeType(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_risk_policy.%s", resourceName)
-
-	name := resourceName
-
-	overridesCheck := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-		resource.TestCheckResourceAttr(resourceFullName, "overrides.#", "1"),
-		resource.TestCheckNoResourceAttr(resourceFullName, "mitigations.#"),
-		resource.TestCheckNoResourceAttr(resourceFullName, "fallback.action"),
-	)
-
-	migrationsCheck := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-		resource.TestCheckResourceAttr(resourceFullName, "mitigations.#", "1"),
-		resource.TestCheckResourceAttr(resourceFullName, "fallback.action", "DENY"),
-		resource.TestCheckNoResourceAttr(resourceFullName, "overrides.#"),
-	)
-
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acctest.PreCheckTestAccFlaky(t) // PND-5900: policy PUT reverts to previous config on next GET, leaving a non-empty refresh plan
-			acctest.PreCheckClient(t)
-			acctest.PreCheckNoBeta(t)
-		},
-		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             risk.RiskPolicy_CheckDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			// Start with overrides
-			{
-				Config: testAccRiskPolicyConfig_OverridesForTypeChange(resourceName, name),
-				Check:  overridesCheck,
-			},
-			// Switch to mitigations
-			{
-				Config: testAccRiskPolicyConfig_MitigationsForTypeChange(resourceName, name),
-				Check:  migrationsCheck,
-			},
-			// Switch back to overrides
-			{
-				Config: testAccRiskPolicyConfig_OverridesForTypeChange(resourceName, name),
-				Check:  overridesCheck,
-			},
-		},
-	})
 }
 
 func testAccRiskPolicyConfig_MitigationsForTypeChange(resourceName, name string) string {
