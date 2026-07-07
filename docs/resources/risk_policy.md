@@ -272,9 +272,9 @@ Required:
 Optional:
 
 - `custom_action` (String) A string that specifies the custom action name. Required when `action` is `CUSTOM`.
-- `mfa_authentication_policy_id` (String) The ID of the MFA (sign-on/authentication) policy to apply. Required when `action` is `MFA`.
+- `mfa_authentication_policy_id` (String) The ID of the MFA (sign-on/authentication) policy to apply. Optionally set when `action` is `MFA`; if omitted, the environment's default MFA policy is used.
 - `mfa_registration_policy_id` (String) The ID of the MFA registration policy to apply. Applies to MFA registration flows when `action` is `MFA`.
-- `verify_policy_id` (String) The ID of the PingOne Verify policy to apply. Required when `action` is `VERIFY`.
+- `verify_policy_id` (String) The ID of the PingOne Verify policy to apply. Optionally set when `action` is `VERIFY`; if omitted, the environment's default Verify policy is used.
 
 
 <a id="nestedatt--mitigations"></a>
@@ -288,9 +288,9 @@ Required:
 Optional:
 
 - `custom_action` (String) A string that specifies the custom action name. Required when `action` is `CUSTOM`.
-- `mfa_authentication_policy_id` (String) The ID of the MFA (sign-on/authentication) policy to apply. Required when `action` is `MFA`.
+- `mfa_authentication_policy_id` (String) The ID of the MFA (sign-on/authentication) policy to apply. Optionally set when `action` is `MFA`; if omitted, the environment's default MFA policy is used.
 - `mfa_registration_policy_id` (String) The ID of the MFA registration policy to apply. Applies to MFA registration flows when `action` is `MFA`.
-- `verify_policy_id` (String) The ID of the PingOne Verify policy to apply. Required when `action` is `VERIFY`.
+- `verify_policy_id` (String) The ID of the PingOne Verify policy to apply. Optionally set when `action` is `VERIFY`; if omitted, the environment's default Verify policy is used.
 
 Read-Only:
 
