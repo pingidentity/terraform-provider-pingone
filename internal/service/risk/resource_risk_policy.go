@@ -383,7 +383,7 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 	)
 
 	policyMitigationMfaAuthPolicyIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The ID of the MFA (sign-on/authentication) policy to apply. Required when `action` is `MFA`.",
+		"The ID of the MFA (sign-on/authentication) policy to apply. Optionally set when `action` is `MFA`; if omitted, the environment's default MFA policy is used.",
 	)
 
 	policyMitigationMfaRegPolicyIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -391,7 +391,7 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 	)
 
 	policyMitigationVerifyPolicyIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The ID of the PingOne Verify policy to apply. Required when `action` is `VERIFY`.",
+		"The ID of the PingOne Verify policy to apply. Optionally set when `action` is `VERIFY`; if omitted, the environment's default Verify policy is used.",
 	)
 
 	policyFallbackDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -893,8 +893,17 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 							MarkdownDescription: policyMitigationCustomActionDescription.MarkdownDescription,
 							Optional:            true,
 
+							// custom_action is set if and only if action is CUSTOM. The two
+							// validators enforce opposite halves of that biconditional:
+							// required-if catches action=CUSTOM with no custom_action (API
+							// rejects it), and conflicts-if-not catches custom_action set with
+							// a different action (the API silently drops it, causing drift).
 							Validators: []validator.String{
 								stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+									basetypes.NewStringValue(string(risk.ENUMMITIGATIONACTION_CUSTOM)),
+									path.MatchRelative().AtParent().AtName("action"),
+								),
+								stringvalidatorinternal.ConflictsIfDoesNotMatchPathValue(
 									basetypes.NewStringValue(string(risk.ENUMMITIGATIONACTION_CUSTOM)),
 									path.MatchRelative().AtParent().AtName("action"),
 								),
@@ -908,7 +917,7 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 							CustomType:          pingonetypes.ResourceIDType{},
 
 							Validators: []validator.String{
-								stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+								stringvalidatorinternal.ConflictsIfDoesNotMatchPathValue(
 									basetypes.NewStringValue(string(risk.ENUMMITIGATIONACTION_MFA)),
 									path.MatchRelative().AtParent().AtName("action"),
 								),
@@ -920,6 +929,13 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 							MarkdownDescription: policyMitigationMfaRegPolicyIdDescription.MarkdownDescription,
 							Optional:            true,
 							CustomType:          pingonetypes.ResourceIDType{},
+
+							Validators: []validator.String{
+								stringvalidatorinternal.ConflictsIfDoesNotMatchPathValue(
+									basetypes.NewStringValue(string(risk.ENUMMITIGATIONACTION_MFA)),
+									path.MatchRelative().AtParent().AtName("action"),
+								),
+							},
 						},
 
 						"verify_policy_id": schema.StringAttribute{
@@ -929,7 +945,7 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 							CustomType:          pingonetypes.ResourceIDType{},
 
 							Validators: []validator.String{
-								stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+								stringvalidatorinternal.ConflictsIfDoesNotMatchPathValue(
 									basetypes.NewStringValue(string(risk.ENUMMITIGATIONACTION_VERIFY)),
 									path.MatchRelative().AtParent().AtName("action"),
 								),
@@ -970,8 +986,17 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 						MarkdownDescription: policyMitigationCustomActionDescription.MarkdownDescription,
 						Optional:            true,
 
+						// custom_action is set if and only if action is CUSTOM. The two
+						// validators enforce opposite halves of that biconditional:
+						// required-if catches action=CUSTOM with no custom_action (API
+						// rejects it), and conflicts-if-not catches custom_action set with
+						// a different action (the API silently drops it, causing drift).
 						Validators: []validator.String{
 							stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+								basetypes.NewStringValue(string(risk.ENUMMITIGATIONACTION_CUSTOM)),
+								path.MatchRelative().AtParent().AtName("action"),
+							),
+							stringvalidatorinternal.ConflictsIfDoesNotMatchPathValue(
 								basetypes.NewStringValue(string(risk.ENUMMITIGATIONACTION_CUSTOM)),
 								path.MatchRelative().AtParent().AtName("action"),
 							),
@@ -985,7 +1010,7 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 						CustomType:          pingonetypes.ResourceIDType{},
 
 						Validators: []validator.String{
-							stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+							stringvalidatorinternal.ConflictsIfDoesNotMatchPathValue(
 								basetypes.NewStringValue(string(risk.ENUMMITIGATIONACTION_MFA)),
 								path.MatchRelative().AtParent().AtName("action"),
 							),
@@ -997,6 +1022,13 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 						MarkdownDescription: policyMitigationMfaRegPolicyIdDescription.MarkdownDescription,
 						Optional:            true,
 						CustomType:          pingonetypes.ResourceIDType{},
+
+						Validators: []validator.String{
+							stringvalidatorinternal.ConflictsIfDoesNotMatchPathValue(
+								basetypes.NewStringValue(string(risk.ENUMMITIGATIONACTION_MFA)),
+								path.MatchRelative().AtParent().AtName("action"),
+							),
+						},
 					},
 
 					"verify_policy_id": schema.StringAttribute{
@@ -1006,7 +1038,7 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 						CustomType:          pingonetypes.ResourceIDType{},
 
 						Validators: []validator.String{
-							stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+							stringvalidatorinternal.ConflictsIfDoesNotMatchPathValue(
 								basetypes.NewStringValue(string(risk.ENUMMITIGATIONACTION_VERIFY)),
 								path.MatchRelative().AtParent().AtName("action"),
 							),

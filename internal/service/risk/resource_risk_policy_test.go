@@ -1507,6 +1507,11 @@ func TestAccRiskPolicy_MitigationsValidation(t *testing.T) {
 				Config:      testAccRiskPolicyConfig_Mitigations_ConditionIPRange(resourceName, name),
 				ExpectError: regexp.MustCompile(`mitigations.*condition\.type value must be one of`),
 			},
+			// a mitigation action policy id cannot be set unless the action matches
+			{
+				Config:      testAccRiskPolicyConfig_Mitigations_MismatchedActionPolicyID(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid argument combination`),
+			},
 		},
 	})
 }
@@ -2086,6 +2091,52 @@ resource "pingone_risk_policy" "%[2]s" {
 
       condition = {
         type = "IP_RANGE"
+      }
+    }
+  ]
+
+  fallback = {
+    action = "DENY"
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRiskPolicyConfig_Mitigations_MismatchedActionPolicyID(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  policy_scores = {
+    policy_threshold_medium = {
+      min_score = 35
+    }
+
+    policy_threshold_high = {
+      min_score = 70
+    }
+
+    predictors = [
+      {
+        compact_name = "ipRisk"
+        score        = 45
+      }
+    ]
+  }
+
+  mitigations = [
+    {
+      action = "DENY"
+
+      verify_policy_id = "9c052a8a-14be-44e4-8f07-2662569994ce"
+
+      condition = {
+        type         = "VALUE_COMPARISON"
+        compact_name = "ipRisk"
+        equals       = "HIGH"
       }
     }
   ]
