@@ -42,6 +42,7 @@ type MFADevicePolicyResource serviceClientType
 type MFADevicePolicyResourceModel struct {
 	Id                    pingonetypes.ResourceIDValue `tfsdk:"id"`
 	EnvironmentId         pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	PolicyType            types.String                 `tfsdk:"policy_type"`
 	Name                  types.String                 `tfsdk:"name"`
 	Authentication        types.Object                 `tfsdk:"authentication"`
 	NewDeviceNotification types.String                 `tfsdk:"new_device_notification"`
@@ -56,6 +57,9 @@ type MFADevicePolicyResourceModel struct {
 	Mobile                types.Object                 `tfsdk:"mobile"`
 	Totp                  types.Object                 `tfsdk:"totp"`
 	Fido2                 types.Object                 `tfsdk:"fido2"`
+	Desktop               types.Object                 `tfsdk:"desktop"`
+	Yubikey               types.Object                 `tfsdk:"yubikey"`
+	OathToken             types.Object                 `tfsdk:"oath_token"`
 }
 
 type MFADevicePolicyAuthenticationResourceModel struct {
@@ -136,15 +140,18 @@ type MFADevicePolicyMobileResourceModel struct {
 }
 
 type MFADevicePolicyMobileApplicationResourceModel struct {
-	AutoEnrolment       types.Object `tfsdk:"auto_enrollment"`
-	DeviceAuthorization types.Object `tfsdk:"device_authorization"`
-	IntegrityDetection  types.String `tfsdk:"integrity_detection"`
-	Otp                 types.Object `tfsdk:"otp"`
-	PairingDisabled     types.Bool   `tfsdk:"pairing_disabled"`
-	PairingKeyLifetime  types.Object `tfsdk:"pairing_key_lifetime"`
-	Push                types.Object `tfsdk:"push"`
-	PushLimit           types.Object `tfsdk:"push_limit"`
-	PushTimeout         types.Object `tfsdk:"push_timeout"`
+	AutoEnrolment                   types.Object `tfsdk:"auto_enrollment"`
+	BiometricsEnabled               types.Bool   `tfsdk:"biometrics_enabled"`
+	DeviceAuthorization             types.Object `tfsdk:"device_authorization"`
+	IntegrityDetection              types.String `tfsdk:"integrity_detection"`
+	IpPairingConfiguration          types.Object `tfsdk:"ip_pairing_configuration"`
+	Otp                             types.Object `tfsdk:"otp"`
+	PairingDisabled                 types.Bool   `tfsdk:"pairing_disabled"`
+	PairingKeyLifetime              types.Object `tfsdk:"pairing_key_lifetime"`
+	Push                            types.Object `tfsdk:"push"`
+	PushLimit                       types.Object `tfsdk:"push_limit"`
+	PushTimeout                     types.Object `tfsdk:"push_timeout"`
+	NewRequestDurationConfiguration types.Object `tfsdk:"new_request_duration_configuration"`
 }
 
 type MFADevicePolicyMobileApplicationAutoEnrolmentResourceModel struct {
@@ -208,15 +215,18 @@ var (
 	}
 
 	MFADevicePolicyMobileApplicationTFObjectTypes = map[string]attr.Type{
-		"auto_enrollment":      types.ObjectType{AttrTypes: MFADevicePolicyMobileApplicationAutoEnrolmentTFObjectTypes},
-		"device_authorization": types.ObjectType{AttrTypes: MFADevicePolicyMobileApplicationDeviceAuthorizationTFObjectTypes},
-		"integrity_detection":  types.StringType,
-		"otp":                  types.ObjectType{AttrTypes: MFADevicePolicyMobileApplicationOtpTFObjectTypes},
-		"pairing_disabled":     types.BoolType,
-		"pairing_key_lifetime": types.ObjectType{AttrTypes: MFADevicePolicyTimePeriodTFObjectTypes},
-		"push":                 types.ObjectType{AttrTypes: MFADevicePolicyMobileApplicationPushTFObjectTypes},
-		"push_limit":           types.ObjectType{AttrTypes: MFADevicePolicyMobileApplicationPushLimitTFObjectTypes},
-		"push_timeout":         types.ObjectType{AttrTypes: MFADevicePolicyTimePeriodTFObjectTypes},
+		"auto_enrollment":                    types.ObjectType{AttrTypes: MFADevicePolicyMobileApplicationAutoEnrolmentTFObjectTypes},
+		"biometrics_enabled":                 types.BoolType,
+		"device_authorization":               types.ObjectType{AttrTypes: MFADevicePolicyMobileApplicationDeviceAuthorizationTFObjectTypes},
+		"integrity_detection":                types.StringType,
+		"ip_pairing_configuration":           types.ObjectType{AttrTypes: MFADevicePolicyMobileIpPairingConfigurationTFObjectTypes},
+		"otp":                                types.ObjectType{AttrTypes: MFADevicePolicyMobileApplicationOtpTFObjectTypes},
+		"pairing_disabled":                   types.BoolType,
+		"pairing_key_lifetime":               types.ObjectType{AttrTypes: MFADevicePolicyTimePeriodTFObjectTypes},
+		"push":                               types.ObjectType{AttrTypes: MFADevicePolicyMobileApplicationPushTFObjectTypes},
+		"push_limit":                         types.ObjectType{AttrTypes: MFADevicePolicyMobileApplicationPushLimitTFObjectTypes},
+		"push_timeout":                       types.ObjectType{AttrTypes: MFADevicePolicyTimePeriodTFObjectTypes},
+		"new_request_duration_configuration": types.ObjectType{AttrTypes: MFADevicePolicyMobileApplicationNewRequestDurationConfigurationTFObjectTypes},
 	}
 
 	MFADevicePolicyMobileApplicationAutoEnrolmentTFObjectTypes = map[string]attr.Type{
