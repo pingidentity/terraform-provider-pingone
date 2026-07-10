@@ -9,6 +9,7 @@ import (
 	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int32validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -28,9 +29,12 @@ import (
 	"github.com/patrickcping/pingone-go-sdk-v2/mfa"
 	"github.com/patrickcping/pingone-go-sdk-v2/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/boolvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	int32validatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/int32validator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/framework/objectvalidator"
+	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -357,7 +361,215 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 	const whatsAppOtpLengthMin = 6
 	const whatsAppOtpLengthMax = 10
 
+	const pingidDeviceOtpFailureCountDefault = 3
+	const pingidDeviceOtpFailureCountMin = 1
+	const pingidDeviceOtpFailureCountMax = 7
+
+	const pingidDeviceOtpFailureCoolDownDurationDefault = 2
+	const pingidDeviceOtpFailureCoolDownDurationMinSeconds = 1
+	const pingidDeviceOtpFailureCoolDownDurationMaxSeconds = 1800
+	const pingidDeviceOtpFailureCoolDownDurationMinMinutes = 1
+	const pingidDeviceOtpFailureCoolDownDurationMaxMinutes = 30
+
+	const pingidDevicePairingKeyLifetimeDurationMinMinutes = 1
+	const pingidDevicePairingKeyLifetimeDurationMaxMinutes = 2880
+	const pingidDevicePairingKeyLifetimeDurationMinHours = 1
+	const pingidDevicePairingKeyLifetimeDurationMaxHours = 48
+
+	const mobileApplicationsNewRequestDurationConfigurationDeviceTimeoutDefault = 25
+	const mobileApplicationsNewRequestDurationConfigurationDeviceTimeoutMin = 15
+	const mobileApplicationsNewRequestDurationConfigurationDeviceTimeoutMax = 75
+
+	const mobileApplicationsNewRequestDurationConfigurationTotalTimeoutDefault = 40
+	const mobileApplicationsNewRequestDurationConfigurationTotalTimeoutMin = 30
+	const mobileApplicationsNewRequestDurationConfigurationTotalTimeoutMax = 90
+
+	// Default values for oath_token
+	oathTokenDefault := types.ObjectValueMust(
+		MFADevicePolicyCommonDeviceTFObjectTypes,
+		map[string]attr.Value{
+			"enabled": types.BoolValue(false),
+			"otp": types.ObjectValueMust(
+				MFADevicePolicyCommonDeviceOtpTFObjectTypes,
+				map[string]attr.Value{
+					"failure": types.ObjectValueMust(
+						MFADevicePolicyFailureTFObjectTypes,
+						map[string]attr.Value{
+							"count": types.Int32Value(pingidDeviceOtpFailureCountDefault),
+							"cool_down": types.ObjectValueMust(
+								MFADevicePolicyTimePeriodTFObjectTypes,
+								map[string]attr.Value{
+									"duration":  types.Int32Value(pingidDeviceOtpFailureCoolDownDurationDefault),
+									"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
+								},
+							),
+						},
+					),
+				},
+			),
+			"pairing_disabled":               types.BoolValue(false),
+			"pairing_key_lifetime":           types.ObjectNull(MFADevicePolicyTimePeriodTFObjectTypes),
+			"prompt_for_nickname_on_pairing": types.BoolValue(false),
+		},
+	)
+
 	// schema descriptions and validation settings
+
+	policyTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the type of MFA device policy.",
+	).AllowedValues(POLICY_TYPE_PINGONE_MFA, POLICY_TYPE_PINGID).DefaultValue(POLICY_TYPE_PINGONE_MFA)
+
+	mobileApplicationsBiometricsEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A boolean that specifies whether biometric authentication methods (such as fingerprint or facial recognition) are enabled for MFA. Only applicable for %s policies.", POLICY_TYPE_PINGID),
+	)
+
+	mobileIpPairingConfigurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A single object that allows you to restrict device pairing to specific IP addresses. Only applicable for %s policies.", POLICY_TYPE_PINGID),
+	)
+
+	mobileIpPairingConfigurationAnyIpAddressDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that, when set to `false`, restricts device pairing to specific IP addresses defined in `only_these_ip_addresses`.",
+	).DefaultValue(true)
+
+	mobileIpPairingConfigurationOnlyTheseIpAddressesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A list of IP addresses or address ranges from which users can pair their devices. This parameter is required when `any_ip_address` is set to `false`. Each item in the array must be in CIDR notation, for example, `192.168.1.1/32` or `10.0.0.0/8`.",
+	)
+
+	mobileApplicationsNewRequestDurationConfigurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A single object that configures timeout settings for authentication request notifications. Only applicable for %s policies.", POLICY_TYPE_PINGID),
+	)
+
+	mobileApplicationsNewRequestDurationConfigurationDeviceTimeoutDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A single object that specifies the maximum time a notification can remain pending before it is displayed to the user. Value must be between `%d` and `%d` seconds.", mobileApplicationsNewRequestDurationConfigurationDeviceTimeoutMin, mobileApplicationsNewRequestDurationConfigurationDeviceTimeoutMax),
+	).DefaultValue(mobileApplicationsNewRequestDurationConfigurationDeviceTimeoutDefault)
+
+	mobileApplicationsNewRequestDurationConfigurationTotalTimeoutDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A single object that specifies the total time an authentication request notification has to be handled by the user before timing out. The `total_timeout.duration` must exceed `device_timeout.duration` by at least 15 seconds.  Value must be between `%d` and `%d` seconds.", mobileApplicationsNewRequestDurationConfigurationTotalTimeoutMin, mobileApplicationsNewRequestDurationConfigurationTotalTimeoutMax),
+	).DefaultValue(mobileApplicationsNewRequestDurationConfigurationTotalTimeoutDefault)
+
+	mobileApplicationsNewRequestDurationConfigurationTimeoutDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An integer that specifies the timeout duration in seconds.",
+	)
+
+	desktopDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A single object that allows configuration of PingID desktop device authentication policy settings. Only applicable when `policy_type` is `%s`.", POLICY_TYPE_PINGID),
+	)
+
+	desktopEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether the desktop device method is enabled or disabled in the policy.",
+	)
+
+	desktopOtpDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies OTP failure settings for desktop devices.",
+	)
+
+	desktopOtpFailureDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that allows configuration of OTP failure settings.",
+	)
+
+	desktopOtpFailureCountDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. Must be between %d and %d.", pingidDeviceOtpFailureCountMin, pingidDeviceOtpFailureCountMax),
+	)
+
+	desktopOtpFailureCoolDownDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies OTP failure cool down settings.",
+	)
+
+	desktopOtpFailureCoolDownDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. Must be between `%d` seconds and `%d` minutes.", pingidDeviceOtpFailureCoolDownDurationMinSeconds, pingidDeviceOtpFailureCoolDownDurationMaxMinutes),
+	)
+
+	desktopPairingDisabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that, when set to `true`, prevents users from pairing new desktop devices.",
+	)
+
+	desktopPairingKeyLifetimeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies pairing key lifetime settings for desktop devices.",
+	)
+
+	desktopPairingKeyLifetimeDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that defines the amount of time an issued pairing key can be used until it expires. Must be between %d minutes and %d hours.", pingidDevicePairingKeyLifetimeDurationMinMinutes, pingidDevicePairingKeyLifetimeDurationMaxHours),
+	)
+
+	yubikeyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A single object that allows configuration of PingID Yubikey device authentication policy settings. Only applicable when `policy_type` is `%s`.", POLICY_TYPE_PINGID),
+	)
+
+	yubikeyEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether the Yubikey device method is enabled or disabled in the policy.",
+	)
+
+	yubikeyOtpDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies OTP failure settings for Yubikey devices.",
+	)
+
+	yubikeyOtpFailureDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that allows configuration of OTP failure settings.",
+	)
+
+	yubikeyOtpFailureCountDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. Must be between %d and %d.", pingidDeviceOtpFailureCountMin, pingidDeviceOtpFailureCountMax),
+	)
+
+	yubikeyOtpFailureCoolDownDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies OTP failure cool down settings.",
+	)
+
+	yubikeyOtpFailureCoolDownDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. Must be between `%d` seconds and `%d` minutes.", pingidDeviceOtpFailureCoolDownDurationMinSeconds, pingidDeviceOtpFailureCoolDownDurationMaxMinutes),
+	)
+
+	yubikeyPairingDisabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that, when set to `true`, prevents users from pairing new Yubikey devices.",
+	)
+
+	yubikeyPairingKeyLifetimeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies pairing key lifetime settings for Yubikey devices.",
+	)
+
+	yubikeyPairingKeyLifetimeDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that defines the amount of time an issued pairing key can be used until it expires. Must be between %d minutes and %d hours.", pingidDevicePairingKeyLifetimeDurationMinMinutes, pingidDevicePairingKeyLifetimeDurationMaxHours),
+	)
+
+	oathTokenDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that allows configuration of OATH token device authentication policy settings.",
+	)
+
+	oathTokenEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether the OATH token device method is enabled or disabled in the policy.",
+	)
+
+	oathTokenOtpDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies OTP failure settings for OATH token devices.",
+	)
+
+	oathTokenOtpFailureDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that allows configuration of OTP failure settings.",
+	)
+
+	oathTokenOtpFailureCountDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that defines the maximum number of times that the OTP entry can fail for a user, before they are blocked. Must be between `%d` and `%d`.", pingidDeviceOtpFailureCountMin, pingidDeviceOtpFailureCountMax),
+	)
+
+	oathTokenOtpFailureCoolDownDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies OTP failure cool down settings.",
+	)
+
+	oathTokenOtpFailureCoolDownDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. Must be between `%d` seconds and `%d` minutes.", pingidDeviceOtpFailureCoolDownDurationMinSeconds, pingidDeviceOtpFailureCoolDownDurationMaxMinutes),
+	)
+
+	oathTokenPairingDisabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that, when set to `true`, prevents users from pairing new OATH token devices.",
+	)
+
+	oathTokenPairingKeyLifetimeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies pairing key lifetime settings for OATH token devices.",
+	)
+
+	oathTokenPairingKeyLifetimeDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that defines the amount of time an issued pairing key can be used until it expires. Must be between `%d` minutes and `%d` hours.", pingidDevicePairingKeyLifetimeDurationMinMinutes, pingidDevicePairingKeyLifetimeDurationMaxHours),
+	)
 	deviceSelectionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that defines the device selection method.",
 	).AllowedValuesEnum(mfa.AllowedEnumMFADevicePolicySelectionEnumValues).DefaultValue(string(mfa.ENUMMFADEVICEPOLICYSELECTION_DEFAULT_TO_FIRST))
@@ -549,6 +761,19 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 			"environment_id": framework.Attr_LinkID(
 				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment that contains the MFA device policy to manage."),
 			),
+
+			"policy_type": schema.StringAttribute{
+				Description:         policyTypeDescription.Description,
+				MarkdownDescription: policyTypeDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+
+				Default: stringdefault.StaticString(POLICY_TYPE_PINGONE_MFA),
+
+				Validators: []validator.String{
+					stringvalidator.OneOf(POLICY_TYPE_PINGONE_MFA, POLICY_TYPE_PINGID),
+				},
+			},
 
 			"name": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the MFA policy's unique name within the environment.").Description,
@@ -888,6 +1113,20 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 									},
 								},
 
+								"biometrics_enabled": schema.BoolAttribute{
+									Description:         mobileApplicationsBiometricsEnabledDescription.Description,
+									MarkdownDescription: mobileApplicationsBiometricsEnabledDescription.MarkdownDescription,
+									Optional:            true,
+									Computed:            true,
+
+									Validators: []validator.Bool{
+										boolvalidator.ConflictsIfMatchesPathValue(
+											types.StringValue(POLICY_TYPE_PINGONE_MFA),
+											path.MatchRoot("policy_type"),
+										),
+									},
+								},
+
 								"device_authorization": schema.SingleNestedAttribute{
 									Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies device authorization settings for the application in the policy.").Description,
 									Optional:    true,
@@ -1104,6 +1343,139 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 
 											Validators: []validator.String{
 												stringvalidator.OneOf(string(mfa.ENUMTIMEUNIT_SECONDS)),
+											},
+										},
+									},
+								},
+
+								"new_request_duration_configuration": schema.SingleNestedAttribute{
+									Description:         mobileApplicationsNewRequestDurationConfigurationDescription.Description,
+									MarkdownDescription: mobileApplicationsNewRequestDurationConfigurationDescription.MarkdownDescription,
+									Optional:            true,
+									Computed:            true,
+
+									Validators: []validator.Object{
+										objectvalidator.ConflictsIfMatchesPathValue(
+											types.StringValue(POLICY_TYPE_PINGONE_MFA),
+											path.MatchRoot("policy_type"),
+										),
+										objectvalidator.IsRequiredIfMatchesPathValue(
+											types.StringValue(POLICY_TYPE_PINGID),
+											path.MatchRoot("policy_type"),
+										),
+									},
+
+									Attributes: map[string]schema.Attribute{
+										"device_timeout": schema.SingleNestedAttribute{
+											Description:         mobileApplicationsNewRequestDurationConfigurationDeviceTimeoutDescription.Description,
+											MarkdownDescription: mobileApplicationsNewRequestDurationConfigurationDeviceTimeoutDescription.MarkdownDescription,
+											Required:            true,
+
+											Attributes: map[string]schema.Attribute{
+												"duration": schema.Int32Attribute{
+													Description:         mobileApplicationsNewRequestDurationConfigurationTimeoutDurationDescription.Description,
+													MarkdownDescription: mobileApplicationsNewRequestDurationConfigurationTimeoutDurationDescription.MarkdownDescription,
+													Optional:            true,
+													Computed:            true,
+
+													Default: int32default.StaticInt32(mobileApplicationsNewRequestDurationConfigurationDeviceTimeoutDefault),
+
+													Validators: []validator.Int32{
+														int32validator.Between(mobileApplicationsNewRequestDurationConfigurationDeviceTimeoutMin, mobileApplicationsNewRequestDurationConfigurationDeviceTimeoutMax),
+													},
+												},
+
+												"time_unit": schema.StringAttribute{
+													Description:         durationTimeUnitSecondsDescription.Description,
+													MarkdownDescription: durationTimeUnitSecondsDescription.MarkdownDescription,
+													Optional:            true,
+													Computed:            true,
+
+													Default: stringdefault.StaticString(string(mfa.ENUMTIMEUNIT_SECONDS)),
+
+													Validators: []validator.String{
+														stringvalidator.OneOf(string(mfa.ENUMTIMEUNIT_SECONDS)),
+													},
+												},
+											},
+										},
+
+										"total_timeout": schema.SingleNestedAttribute{
+											Description:         mobileApplicationsNewRequestDurationConfigurationTotalTimeoutDescription.Description,
+											MarkdownDescription: mobileApplicationsNewRequestDurationConfigurationTotalTimeoutDescription.MarkdownDescription,
+											Required:            true,
+
+											Attributes: map[string]schema.Attribute{
+												"duration": schema.Int32Attribute{
+													Description:         mobileApplicationsNewRequestDurationConfigurationTimeoutDurationDescription.Description,
+													MarkdownDescription: mobileApplicationsNewRequestDurationConfigurationTimeoutDurationDescription.MarkdownDescription,
+													Optional:            true,
+													Computed:            true,
+
+													Default: int32default.StaticInt32(mobileApplicationsNewRequestDurationConfigurationTotalTimeoutDefault),
+
+													Validators: []validator.Int32{
+														int32validator.Between(mobileApplicationsNewRequestDurationConfigurationTotalTimeoutMin, mobileApplicationsNewRequestDurationConfigurationTotalTimeoutMax),
+													},
+												},
+
+												"time_unit": schema.StringAttribute{
+													Description:         durationTimeUnitSecondsDescription.Description,
+													MarkdownDescription: durationTimeUnitSecondsDescription.MarkdownDescription,
+													Optional:            true,
+													Computed:            true,
+
+													Default: stringdefault.StaticString(string(mfa.ENUMTIMEUNIT_SECONDS)),
+
+													Validators: []validator.String{
+														stringvalidator.OneOf(string(mfa.ENUMTIMEUNIT_SECONDS)),
+													},
+												},
+											},
+										},
+									},
+								},
+
+								"ip_pairing_configuration": schema.SingleNestedAttribute{
+									Description:         mobileIpPairingConfigurationDescription.Description,
+									MarkdownDescription: mobileIpPairingConfigurationDescription.MarkdownDescription,
+									Optional:            true,
+
+									Validators: []validator.Object{
+										objectvalidator.ConflictsIfMatchesPathValue(
+											types.StringValue(POLICY_TYPE_PINGONE_MFA),
+											path.MatchRoot("policy_type"),
+										),
+										objectvalidator.IsRequiredIfMatchesPathValue(
+											types.StringValue(POLICY_TYPE_PINGID),
+											path.MatchRoot("policy_type"),
+										),
+									},
+
+									Attributes: map[string]schema.Attribute{
+										"any_ip_address": schema.BoolAttribute{
+											Description:         mobileIpPairingConfigurationAnyIpAddressDescription.Description,
+											MarkdownDescription: mobileIpPairingConfigurationAnyIpAddressDescription.MarkdownDescription,
+											Optional:            true,
+											Computed:            true,
+
+											Default: booldefault.StaticBool(true),
+										},
+
+										"only_these_ip_addresses": schema.SetAttribute{
+											Description:         mobileIpPairingConfigurationOnlyTheseIpAddressesDescription.Description,
+											MarkdownDescription: mobileIpPairingConfigurationOnlyTheseIpAddressesDescription.MarkdownDescription,
+											ElementType:         types.StringType,
+											Optional:            true,
+
+											Validators: []validator.Set{
+												setvalidator.ValueStringsAre(
+													stringvalidator.RegexMatches(regexp.MustCompile(`^(?:\d{1,3}\.){3}\d{1,3}/\d{1,2}$`), "Expected value to be in CIDR notation (e.g., 192.168.0.1/24 or 10.0.0.5/32)"),
+												),
+												setvalidatorinternal.IsRequiredIfMatchesPathBoolValue(
+													types.BoolValue(false),
+													path.MatchRelative().AtParent().AtName("any_ip_address"),
+												),
 											},
 										},
 									},
@@ -1415,6 +1787,530 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 						Description:         promptForNicknameOnPairingDescription.Description,
 						MarkdownDescription: promptForNicknameOnPairingDescription.MarkdownDescription,
 						Optional:            true,
+					},
+				},
+			},
+
+			"desktop": schema.SingleNestedAttribute{
+				Description:         desktopDescription.Description,
+				MarkdownDescription: desktopDescription.MarkdownDescription,
+				Optional:            true,
+
+				Validators: []validator.Object{
+					objectvalidator.IsRequiredIfMatchesPathValue(
+						types.StringValue(POLICY_TYPE_PINGID),
+						path.MatchRoot("policy_type"),
+					),
+					objectvalidator.ConflictsIfMatchesPathValue(
+						types.StringValue(POLICY_TYPE_PINGONE_MFA),
+						path.MatchRoot("policy_type"),
+					),
+				},
+
+				Attributes: map[string]schema.Attribute{
+					"enabled": schema.BoolAttribute{
+						Description:         desktopEnabledDescription.Description,
+						MarkdownDescription: desktopEnabledDescription.MarkdownDescription,
+						Required:            true,
+					},
+
+					"otp": schema.SingleNestedAttribute{
+						Description:         desktopOtpDescription.Description,
+						MarkdownDescription: desktopOtpDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: objectdefault.StaticValue(types.ObjectValueMust(
+							MFADevicePolicyCommonDeviceOtpTFObjectTypes,
+							map[string]attr.Value{
+								"failure": types.ObjectValueMust(
+									MFADevicePolicyFailureTFObjectTypes,
+									map[string]attr.Value{
+										"count": types.Int32Value(pingidDeviceOtpFailureCountDefault),
+										"cool_down": types.ObjectValueMust(
+											MFADevicePolicyTimePeriodTFObjectTypes,
+											map[string]attr.Value{
+												"duration":  types.Int32Value(pingidDeviceOtpFailureCoolDownDurationDefault),
+												"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
+											},
+										),
+									},
+								),
+							},
+						)),
+						Attributes: map[string]schema.Attribute{
+							"failure": schema.SingleNestedAttribute{
+								Description:         desktopOtpFailureDescription.Description,
+								MarkdownDescription: desktopOtpFailureDescription.MarkdownDescription,
+								Optional:            true,
+
+								Attributes: map[string]schema.Attribute{
+									"count": schema.Int32Attribute{
+										Description:         desktopOtpFailureCountDescription.Description,
+										MarkdownDescription: desktopOtpFailureCountDescription.MarkdownDescription,
+										Optional:            true,
+
+										Validators: []validator.Int32{
+											int32validator.Between(pingidDeviceOtpFailureCountMin, pingidDeviceOtpFailureCountMax),
+										},
+									},
+
+									"cool_down": schema.SingleNestedAttribute{
+										Description:         desktopOtpFailureCoolDownDescription.Description,
+										MarkdownDescription: desktopOtpFailureCoolDownDescription.MarkdownDescription,
+										Optional:            true,
+
+										Attributes: map[string]schema.Attribute{
+											"duration": schema.Int32Attribute{
+												Description:         desktopOtpFailureCoolDownDurationDescription.Description,
+												MarkdownDescription: desktopOtpFailureCoolDownDurationDescription.MarkdownDescription,
+												Required:            true,
+
+												Validators: []validator.Int32{
+													int32validator.Any(
+														int32validator.All(
+															int32validator.Between(pingidDeviceOtpFailureCoolDownDurationMinSeconds, pingidDeviceOtpFailureCoolDownDurationMaxSeconds),
+															int32validatorinternal.RegexMatchesPathValue(
+																regexp.MustCompile(`SECONDS`),
+																fmt.Sprintf("If `time_unit` is `SECONDS`, the allowed duration range is %d - %d.", pingidDeviceOtpFailureCoolDownDurationMinSeconds, pingidDeviceOtpFailureCoolDownDurationMaxSeconds),
+																path.MatchRelative().AtParent().AtName("time_unit"),
+															),
+														),
+														int32validator.All(
+															int32validator.Between(pingidDeviceOtpFailureCoolDownDurationMinMinutes, pingidDeviceOtpFailureCoolDownDurationMaxMinutes),
+															int32validatorinternal.RegexMatchesPathValue(
+																regexp.MustCompile(`MINUTES`),
+																fmt.Sprintf("If `time_unit` is `MINUTES`, the allowed duration range is %d - %d.", pingidDeviceOtpFailureCoolDownDurationMinMinutes, pingidDeviceOtpFailureCoolDownDurationMaxMinutes),
+																path.MatchRelative().AtParent().AtName("time_unit"),
+															),
+														),
+													),
+												},
+											},
+
+											"time_unit": schema.StringAttribute{
+												Description:         durationTimeUnitMinsSecondsDescription.Description,
+												MarkdownDescription: durationTimeUnitMinsSecondsDescription.MarkdownDescription,
+												Required:            true,
+
+												Validators: []validator.String{
+													stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumTimeUnitEnumValues)...),
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+
+					"pairing_disabled": schema.BoolAttribute{
+						Description:         desktopPairingDisabledDescription.Description,
+						MarkdownDescription: desktopPairingDisabledDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: booldefault.StaticBool(false),
+					},
+
+					"pairing_key_lifetime": schema.SingleNestedAttribute{
+						Description:         desktopPairingKeyLifetimeDescription.Description,
+						MarkdownDescription: desktopPairingKeyLifetimeDescription.MarkdownDescription,
+						Optional:            true,
+
+						Attributes: map[string]schema.Attribute{
+							"duration": schema.Int32Attribute{
+								Description:         desktopPairingKeyLifetimeDurationDescription.Description,
+								MarkdownDescription: desktopPairingKeyLifetimeDurationDescription.MarkdownDescription,
+								Required:            true,
+
+								Validators: []validator.Int32{
+									int32validator.Any(
+										int32validator.All(
+											int32validator.Between(pingidDevicePairingKeyLifetimeDurationMinMinutes, pingidDevicePairingKeyLifetimeDurationMaxMinutes),
+											int32validatorinternal.RegexMatchesPathValue(
+												regexp.MustCompile(`MINUTES`),
+												fmt.Sprintf("If `time_unit` is `MINUTES`, the allowed duration range is %d - %d.", pingidDevicePairingKeyLifetimeDurationMinMinutes, pingidDevicePairingKeyLifetimeDurationMaxMinutes),
+												path.MatchRelative().AtParent().AtName("time_unit"),
+											),
+										),
+										int32validator.All(
+											int32validator.Between(pingidDevicePairingKeyLifetimeDurationMinHours, pingidDevicePairingKeyLifetimeDurationMaxHours),
+											int32validatorinternal.RegexMatchesPathValue(
+												regexp.MustCompile(`HOURS`),
+												fmt.Sprintf("If `time_unit` is `HOURS`, the allowed duration range is %d - %d.", pingidDevicePairingKeyLifetimeDurationMinHours, pingidDevicePairingKeyLifetimeDurationMaxHours),
+												path.MatchRelative().AtParent().AtName("time_unit"),
+											),
+										),
+									),
+								},
+							},
+
+							"time_unit": schema.StringAttribute{
+								Description:         mobileApplicationsPairingKeyLifetimeTimeUnitDescription.Description,
+								MarkdownDescription: mobileApplicationsPairingKeyLifetimeTimeUnitDescription.MarkdownDescription,
+								Required:            true,
+
+								Validators: []validator.String{
+									stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumTimeUnitPairingKeyLifetimeEnumValues)...),
+								},
+							},
+						},
+					},
+
+					"prompt_for_nickname_on_pairing": schema.BoolAttribute{
+						Description:         promptForNicknameOnPairingDescription.Description,
+						MarkdownDescription: promptForNicknameOnPairingDescription.MarkdownDescription,
+						Optional:            true,
+					},
+				},
+			},
+
+			"yubikey": schema.SingleNestedAttribute{
+				Description:         yubikeyDescription.Description,
+				MarkdownDescription: yubikeyDescription.MarkdownDescription,
+				Optional:            true,
+
+				Validators: []validator.Object{
+					objectvalidator.IsRequiredIfMatchesPathValue(
+						types.StringValue(POLICY_TYPE_PINGID),
+						path.MatchRoot("policy_type"),
+					),
+					objectvalidator.ConflictsIfMatchesPathValue(
+						types.StringValue(POLICY_TYPE_PINGONE_MFA),
+						path.MatchRoot("policy_type"),
+					),
+				},
+
+				Attributes: map[string]schema.Attribute{
+					"enabled": schema.BoolAttribute{
+						Description:         yubikeyEnabledDescription.Description,
+						MarkdownDescription: yubikeyEnabledDescription.MarkdownDescription,
+						Required:            true,
+					},
+
+					"otp": schema.SingleNestedAttribute{
+						Description:         yubikeyOtpDescription.Description,
+						MarkdownDescription: yubikeyOtpDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: objectdefault.StaticValue(types.ObjectValueMust(
+							MFADevicePolicyCommonDeviceOtpTFObjectTypes,
+							map[string]attr.Value{
+								"failure": types.ObjectValueMust(
+									MFADevicePolicyFailureTFObjectTypes,
+									map[string]attr.Value{
+										"count": types.Int32Value(pingidDeviceOtpFailureCountDefault),
+										"cool_down": types.ObjectValueMust(
+											MFADevicePolicyTimePeriodTFObjectTypes,
+											map[string]attr.Value{
+												"duration":  types.Int32Value(pingidDeviceOtpFailureCoolDownDurationDefault),
+												"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
+											},
+										),
+									},
+								),
+							},
+						)),
+						Attributes: map[string]schema.Attribute{
+							"failure": schema.SingleNestedAttribute{
+								Description:         yubikeyOtpFailureDescription.Description,
+								MarkdownDescription: yubikeyOtpFailureDescription.MarkdownDescription,
+								Optional:            true,
+
+								Attributes: map[string]schema.Attribute{
+									"count": schema.Int32Attribute{
+										Description:         yubikeyOtpFailureCountDescription.Description,
+										MarkdownDescription: yubikeyOtpFailureCountDescription.MarkdownDescription,
+										Optional:            true,
+
+										Validators: []validator.Int32{
+											int32validator.Between(pingidDeviceOtpFailureCountMin, pingidDeviceOtpFailureCountMax),
+										},
+									},
+
+									"cool_down": schema.SingleNestedAttribute{
+										Description:         yubikeyOtpFailureCoolDownDescription.Description,
+										MarkdownDescription: yubikeyOtpFailureCoolDownDescription.MarkdownDescription,
+										Optional:            true,
+
+										Attributes: map[string]schema.Attribute{
+											"duration": schema.Int32Attribute{
+												Description:         yubikeyOtpFailureCoolDownDurationDescription.Description,
+												MarkdownDescription: yubikeyOtpFailureCoolDownDurationDescription.MarkdownDescription,
+												Required:            true,
+
+												Validators: []validator.Int32{
+													int32validator.Any(
+														int32validator.All(
+															int32validator.Between(pingidDeviceOtpFailureCoolDownDurationMinSeconds, pingidDeviceOtpFailureCoolDownDurationMaxSeconds),
+															int32validatorinternal.RegexMatchesPathValue(
+																regexp.MustCompile(`SECONDS`),
+																fmt.Sprintf("If `time_unit` is `SECONDS`, the allowed duration range is %d - %d.", pingidDeviceOtpFailureCoolDownDurationMinSeconds, pingidDeviceOtpFailureCoolDownDurationMaxSeconds),
+																path.MatchRelative().AtParent().AtName("time_unit"),
+															),
+														),
+														int32validator.All(
+															int32validator.Between(pingidDeviceOtpFailureCoolDownDurationMinMinutes, pingidDeviceOtpFailureCoolDownDurationMaxMinutes),
+															int32validatorinternal.RegexMatchesPathValue(
+																regexp.MustCompile(`MINUTES`),
+																fmt.Sprintf("If `time_unit` is `MINUTES`, the allowed duration range is %d - %d.", pingidDeviceOtpFailureCoolDownDurationMinMinutes, pingidDeviceOtpFailureCoolDownDurationMaxMinutes),
+																path.MatchRelative().AtParent().AtName("time_unit"),
+															),
+														),
+													),
+												},
+											},
+
+											"time_unit": schema.StringAttribute{
+												Description:         durationTimeUnitMinsSecondsDescription.Description,
+												MarkdownDescription: durationTimeUnitMinsSecondsDescription.MarkdownDescription,
+												Required:            true,
+
+												Validators: []validator.String{
+													stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumTimeUnitEnumValues)...),
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+
+					"pairing_disabled": schema.BoolAttribute{
+						Description:         yubikeyPairingDisabledDescription.Description,
+						MarkdownDescription: yubikeyPairingDisabledDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: booldefault.StaticBool(false),
+					},
+
+					"pairing_key_lifetime": schema.SingleNestedAttribute{
+						Description:         yubikeyPairingKeyLifetimeDescription.Description,
+						MarkdownDescription: yubikeyPairingKeyLifetimeDescription.MarkdownDescription,
+						Optional:            true,
+
+						Attributes: map[string]schema.Attribute{
+							"duration": schema.Int32Attribute{
+								Description:         yubikeyPairingKeyLifetimeDurationDescription.Description,
+								MarkdownDescription: yubikeyPairingKeyLifetimeDurationDescription.MarkdownDescription,
+								Required:            true,
+
+								Validators: []validator.Int32{
+									int32validator.Any(
+										int32validator.All(
+											int32validator.Between(pingidDevicePairingKeyLifetimeDurationMinMinutes, pingidDevicePairingKeyLifetimeDurationMaxMinutes),
+											int32validatorinternal.RegexMatchesPathValue(
+												regexp.MustCompile(`MINUTES`),
+												fmt.Sprintf("If `time_unit` is `MINUTES`, the allowed duration range is %d - %d.", pingidDevicePairingKeyLifetimeDurationMinMinutes, pingidDevicePairingKeyLifetimeDurationMaxMinutes),
+												path.MatchRelative().AtParent().AtName("time_unit"),
+											),
+										),
+										int32validator.All(
+											int32validator.Between(pingidDevicePairingKeyLifetimeDurationMinHours, pingidDevicePairingKeyLifetimeDurationMaxHours),
+											int32validatorinternal.RegexMatchesPathValue(
+												regexp.MustCompile(`HOURS`),
+												fmt.Sprintf("If `time_unit` is `HOURS`, the allowed duration range is %d - %d.", pingidDevicePairingKeyLifetimeDurationMinHours, pingidDevicePairingKeyLifetimeDurationMaxHours),
+												path.MatchRelative().AtParent().AtName("time_unit"),
+											),
+										),
+									),
+								},
+							},
+
+							"time_unit": schema.StringAttribute{
+								Description:         mobileApplicationsPairingKeyLifetimeTimeUnitDescription.Description,
+								MarkdownDescription: mobileApplicationsPairingKeyLifetimeTimeUnitDescription.MarkdownDescription,
+								Required:            true,
+
+								Validators: []validator.String{
+									stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumTimeUnitPairingKeyLifetimeEnumValues)...),
+								},
+							},
+						},
+					},
+
+					"prompt_for_nickname_on_pairing": schema.BoolAttribute{
+						Description:         promptForNicknameOnPairingDescription.Description,
+						MarkdownDescription: promptForNicknameOnPairingDescription.MarkdownDescription,
+						Optional:            true,
+					},
+				},
+			},
+
+			"oath_token": schema.SingleNestedAttribute{
+				Description:         oathTokenDescription.Description,
+				MarkdownDescription: oathTokenDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+
+				Default: objectdefault.StaticValue(oathTokenDefault),
+
+				Attributes: map[string]schema.Attribute{
+					"enabled": schema.BoolAttribute{
+						Description:         oathTokenEnabledDescription.Description,
+						MarkdownDescription: oathTokenEnabledDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: booldefault.StaticBool(false),
+					},
+
+					"otp": schema.SingleNestedAttribute{
+						Description:         oathTokenOtpDescription.Description,
+						MarkdownDescription: oathTokenOtpDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: objectdefault.StaticValue(types.ObjectValueMust(
+							MFADevicePolicyCommonDeviceOtpTFObjectTypes,
+							map[string]attr.Value{
+								"failure": types.ObjectValueMust(
+									MFADevicePolicyFailureTFObjectTypes,
+									map[string]attr.Value{
+										"count": types.Int32Value(pingidDeviceOtpFailureCountDefault),
+										"cool_down": types.ObjectValueMust(
+											MFADevicePolicyTimePeriodTFObjectTypes,
+											map[string]attr.Value{
+												"duration":  types.Int32Value(pingidDeviceOtpFailureCoolDownDurationDefault),
+												"time_unit": types.StringValue(string(mfa.ENUMTIMEUNIT_MINUTES)),
+											},
+										),
+									},
+								),
+							},
+						)),
+
+						Attributes: map[string]schema.Attribute{
+							"failure": schema.SingleNestedAttribute{
+								Description:         oathTokenOtpFailureDescription.Description,
+								MarkdownDescription: oathTokenOtpFailureDescription.MarkdownDescription,
+								Optional:            true,
+
+								Attributes: map[string]schema.Attribute{
+									"count": schema.Int32Attribute{
+										Description:         oathTokenOtpFailureCountDescription.Description,
+										MarkdownDescription: oathTokenOtpFailureCountDescription.MarkdownDescription,
+										Optional:            true,
+
+										Validators: []validator.Int32{
+											int32validator.Between(pingidDeviceOtpFailureCountMin, pingidDeviceOtpFailureCountMax),
+										},
+									},
+
+									"cool_down": schema.SingleNestedAttribute{
+										Description:         oathTokenOtpFailureCoolDownDescription.Description,
+										MarkdownDescription: oathTokenOtpFailureCoolDownDescription.MarkdownDescription,
+										Optional:            true,
+
+										Attributes: map[string]schema.Attribute{
+											"duration": schema.Int32Attribute{
+												Description:         oathTokenOtpFailureCoolDownDurationDescription.Description,
+												MarkdownDescription: oathTokenOtpFailureCoolDownDurationDescription.MarkdownDescription,
+												Required:            true,
+
+												Validators: []validator.Int32{
+													int32validator.Any(
+														int32validator.All(
+															int32validator.Between(pingidDeviceOtpFailureCoolDownDurationMinSeconds, pingidDeviceOtpFailureCoolDownDurationMaxSeconds),
+															int32validatorinternal.RegexMatchesPathValue(
+																regexp.MustCompile(`SECONDS`),
+																fmt.Sprintf("If `time_unit` is `SECONDS`, the allowed duration range is %d - %d.", pingidDeviceOtpFailureCoolDownDurationMinSeconds, pingidDeviceOtpFailureCoolDownDurationMaxSeconds),
+																path.MatchRelative().AtParent().AtName("time_unit"),
+															),
+														),
+														int32validator.All(
+															int32validator.Between(pingidDeviceOtpFailureCoolDownDurationMinMinutes, pingidDeviceOtpFailureCoolDownDurationMaxMinutes),
+															int32validatorinternal.RegexMatchesPathValue(
+																regexp.MustCompile(`MINUTES`),
+																fmt.Sprintf("If `time_unit` is `MINUTES`, the allowed duration range is %d - %d.", pingidDeviceOtpFailureCoolDownDurationMinMinutes, pingidDeviceOtpFailureCoolDownDurationMaxMinutes),
+																path.MatchRelative().AtParent().AtName("time_unit"),
+															),
+														),
+													),
+												},
+											},
+
+											"time_unit": schema.StringAttribute{
+												Description:         durationTimeUnitMinsSecondsDescription.Description,
+												MarkdownDescription: durationTimeUnitMinsSecondsDescription.MarkdownDescription,
+												Required:            true,
+
+												Validators: []validator.String{
+													stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumTimeUnitEnumValues)...),
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+
+					"pairing_disabled": schema.BoolAttribute{
+						Description:         oathTokenPairingDisabledDescription.Description,
+						MarkdownDescription: oathTokenPairingDisabledDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: booldefault.StaticBool(false),
+					},
+
+					"pairing_key_lifetime": schema.SingleNestedAttribute{
+						Description:         oathTokenPairingKeyLifetimeDescription.Description,
+						MarkdownDescription: oathTokenPairingKeyLifetimeDescription.MarkdownDescription,
+						Optional:            true,
+
+						Attributes: map[string]schema.Attribute{
+							"duration": schema.Int32Attribute{
+								Description:         oathTokenPairingKeyLifetimeDurationDescription.Description,
+								MarkdownDescription: oathTokenPairingKeyLifetimeDurationDescription.MarkdownDescription,
+								Required:            true,
+
+								Validators: []validator.Int32{
+									int32validator.Any(
+										int32validator.All(
+											int32validator.Between(pingidDevicePairingKeyLifetimeDurationMinMinutes, pingidDevicePairingKeyLifetimeDurationMaxMinutes),
+											int32validatorinternal.RegexMatchesPathValue(
+												regexp.MustCompile(`MINUTES`),
+												fmt.Sprintf("If `time_unit` is `MINUTES`, the allowed duration range is %d - %d.", pingidDevicePairingKeyLifetimeDurationMinMinutes, pingidDevicePairingKeyLifetimeDurationMaxMinutes),
+												path.MatchRelative().AtParent().AtName("time_unit"),
+											),
+										),
+										int32validator.All(
+											int32validator.Between(pingidDevicePairingKeyLifetimeDurationMinHours, pingidDevicePairingKeyLifetimeDurationMaxHours),
+											int32validatorinternal.RegexMatchesPathValue(
+												regexp.MustCompile(`HOURS`),
+												fmt.Sprintf("If `time_unit` is `HOURS`, the allowed duration range is %d - %d.", pingidDevicePairingKeyLifetimeDurationMinHours, pingidDevicePairingKeyLifetimeDurationMaxHours),
+												path.MatchRelative().AtParent().AtName("time_unit"),
+											),
+										),
+									),
+								},
+							},
+
+							"time_unit": schema.StringAttribute{
+								Description:         mobileApplicationsPairingKeyLifetimeTimeUnitDescription.Description,
+								MarkdownDescription: mobileApplicationsPairingKeyLifetimeTimeUnitDescription.MarkdownDescription,
+								Required:            true,
+
+								Validators: []validator.String{
+									stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumTimeUnitPairingKeyLifetimeEnumValues)...),
+								},
+							},
+						},
+					},
+
+					"prompt_for_nickname_on_pairing": schema.BoolAttribute{
+						Description:         promptForNicknameOnPairingDescription.Description,
+						MarkdownDescription: promptForNicknameOnPairingDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: booldefault.StaticBool(false),
 					},
 				},
 			},
