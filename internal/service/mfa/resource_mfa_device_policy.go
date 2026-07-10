@@ -3703,6 +3703,12 @@ func (p *MFADevicePolicyResourceModel) toState(apiObject *mfa.DeviceAuthenticati
 
 	var d diag.Diagnostics
 
+	// Infer the client-side-only policy_type discriminator from the API response
+	// (the API never returns policy_type; it is derived from the presence of
+	// PingID-specific fields, mirroring the _default resource's determinePolicyType).
+	policyType := determinePolicyType(apiObject)
+	p.PolicyType = types.StringValue(policyType)
+
 	p.Id = framework.PingOneResourceIDToTF(apiObject.GetId())
 	p.EnvironmentId = framework.PingOneResourceIDToTF(*apiObject.GetEnvironment().Id)
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
@@ -3734,13 +3740,30 @@ func (p *MFADevicePolicyResourceModel) toState(apiObject *mfa.DeviceAuthenticati
 	p.WhatsApp, d = toStateMfaDevicePolicyWhatsApp(apiObject.GetWhatsAppOk())
 	diags.Append(d...)
 
-	p.Mobile, d = toStateMfaDevicePolicyMobile(apiObject.GetMobileOk())
+	mobileApiObj, mobileOk := apiObject.GetMobileOk()
+	p.Mobile, d = toStateMfaDevicePolicyMobile(mobileApiObj, mobileOk, policyType)
 	diags.Append(d...)
 
 	p.Totp, d = toStateMfaDevicePolicyTotp(apiObject.GetTotpOk())
 	diags.Append(d...)
 
 	p.Fido2, d = toStateMfaDevicePolicyFido2(apiObject.GetFido2Ok())
+	diags.Append(d...)
+
+	// Desktop / Yubikey - PingID only; null for PingOne MFA policies
+	if policyType == POLICY_TYPE_PINGID {
+		p.Desktop, d = toStateMfaDevicePolicyPingIDDevice(apiObject.GetDesktopOk())
+		diags.Append(d...)
+
+		p.Yubikey, d = toStateMfaDevicePolicyPingIDDevice(apiObject.GetYubikeyOk())
+		diags.Append(d...)
+	} else {
+		p.Desktop = types.ObjectNull(MFADevicePolicyCommonDeviceTFObjectTypes)
+		p.Yubikey = types.ObjectNull(MFADevicePolicyCommonDeviceTFObjectTypes)
+	}
+
+	// OathToken - both policy types (not gated on policy_type)
+	p.OathToken, d = toStateMfaDevicePolicyOathToken(apiObject.GetOathTokenOk())
 	diags.Append(d...)
 
 	return diags
@@ -3918,14 +3941,15 @@ func toStateMfaDevicePolicyWhatsApp(apiObject *mfa.DeviceAuthenticationPolicyOff
 	return toStateMfaDevicePolicyOfflineDevice(apiObject, ok)
 }
 
-func toStateMfaDevicePolicyMobile(apiObject *mfa.DeviceAuthenticationPolicyCommonMobile, ok bool) (types.Object, diag.Diagnostics) {
+func toStateMfaDevicePolicyMobile(apiObject *mfa.DeviceAuthenticationPolicyCommonMobile, ok bool, policyType string) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
 		return types.ObjectNull(MFADevicePolicyMobileTFObjectTypes), nil
 	}
 
-	applications, d := toStateMfaDevicePolicyMobileApplications(apiObject.GetApplicationsOk())
+	appsApiObj, appsOk := apiObject.GetApplicationsOk()
+	applications, d := toStateMfaDevicePolicyMobileApplications(appsApiObj, appsOk, policyType)
 	diags.Append(d...)
 	if diags.HasError() {
 		return types.ObjectNull(MFADevicePolicyMobileTFObjectTypes), diags
@@ -3950,7 +3974,7 @@ func toStateMfaDevicePolicyMobile(apiObject *mfa.DeviceAuthenticationPolicyCommo
 	return objValue, diags
 }
 
-func toStateMfaDevicePolicyMobileApplications(apiObject []mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInner, ok bool) (types.Map, diag.Diagnostics) {
+func toStateMfaDevicePolicyMobileApplications(apiObject []mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInner, ok bool, policyType string) (types.Map, diag.Diagnostics) {
 	var diags, d diag.Diagnostics
 
 	tfObjType := types.ObjectType{AttrTypes: MFADevicePolicyMobileApplicationTFObjectTypes}
@@ -3958,6 +3982,8 @@ func toStateMfaDevicePolicyMobileApplications(apiObject []mfa.DeviceAuthenticati
 	if !ok || apiObject == nil {
 		return types.MapNull(tfObjType), nil
 	}
+
+	isPingID := (policyType == POLICY_TYPE_PINGID)
 
 	objectList := map[string]attr.Value{}
 	for _, application := range apiObject {
@@ -4004,16 +4030,44 @@ func toStateMfaDevicePolicyMobileApplications(apiObject []mfa.DeviceAuthenticati
 			return types.MapNull(tfObjType), diags
 		}
 
+		// PingID-only mobile-application fields - populated for PingID, null for PingOne MFA
+		var biometricsEnabled types.Bool
+		var newRequestDurationConfiguration types.Object
+		var ipPairingConfiguration types.Object
+
+		if isPingID {
+			biometricsEnabled = framework.BoolOkToTF(application.GetBiometricsEnabledOk())
+
+			newRequestDurationConfiguration, d = toStateMfaDevicePolicyMobileApplicationsNewRequestDurationConfiguration(application.GetNewRequestDurationConfigurationOk())
+			diags.Append(d...)
+			if diags.HasError() {
+				return types.MapNull(tfObjType), diags
+			}
+
+			ipPairingConfiguration, d = toStateMfaDevicePolicyMobileApplicationsIpPairingConfiguration(application.GetIpPairingConfigurationOk())
+			diags.Append(d...)
+			if diags.HasError() {
+				return types.MapNull(tfObjType), diags
+			}
+		} else {
+			biometricsEnabled = types.BoolNull()
+			newRequestDurationConfiguration = types.ObjectNull(MFADevicePolicyMobileApplicationNewRequestDurationConfigurationTFObjectTypes)
+			ipPairingConfiguration = types.ObjectNull(MFADevicePolicyMobileIpPairingConfigurationTFObjectTypes)
+		}
+
 		o := map[string]attr.Value{
-			"auto_enrollment":      autoEnrolment,
-			"device_authorization": deviceAuthorization,
-			"integrity_detection":  framework.EnumOkToTF(application.GetIntegrityDetectionOk()),
-			"otp":                  otp,
-			"pairing_disabled":     framework.BoolOkToTF(application.GetPairingDisabledOk()),
-			"pairing_key_lifetime": pairingKeyLifetime,
-			"push":                 push,
-			"push_limit":           pushLimit,
-			"push_timeout":         pushTimeout,
+			"auto_enrollment":                    autoEnrolment,
+			"biometrics_enabled":                 biometricsEnabled,
+			"device_authorization":               deviceAuthorization,
+			"integrity_detection":                framework.EnumOkToTF(application.GetIntegrityDetectionOk()),
+			"ip_pairing_configuration":           ipPairingConfiguration,
+			"otp":                                otp,
+			"pairing_disabled":                   framework.BoolOkToTF(application.GetPairingDisabledOk()),
+			"pairing_key_lifetime":               pairingKeyLifetime,
+			"push":                               push,
+			"push_limit":                         pushLimit,
+			"push_timeout":                       pushTimeout,
+			"new_request_duration_configuration": newRequestDurationConfiguration,
 		}
 
 		objValue, d := types.ObjectValue(MFADevicePolicyMobileApplicationTFObjectTypes, o)
@@ -4219,6 +4273,110 @@ func toStateMfaDevicePolicyMobileApplicationsPushTimeout(apiObject *mfa.DeviceAu
 	}
 
 	objValue, d := types.ObjectValue(MFADevicePolicyTimePeriodTFObjectTypes, o)
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+// toStateMfaDevicePolicyMobileApplicationsNewRequestDurationConfiguration flattens the
+// PingID-only mobile-application new_request_duration_configuration (device_timeout/total_timeout).
+func toStateMfaDevicePolicyMobileApplicationsNewRequestDurationConfiguration(apiObject *mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInnerNewRequestDurationConfiguration, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(MFADevicePolicyMobileApplicationNewRequestDurationConfigurationTFObjectTypes), nil
+	}
+
+	deviceTimeoutAPI, deviceTimeoutOk := apiObject.GetDeviceTimeoutOk()
+	deviceTimeout, d := toStateMfaDevicePolicyMobileApplicationsNewRequestDurationConfigurationTimeout(deviceTimeoutAPI, deviceTimeoutOk)
+	diags.Append(d...)
+	if diags.HasError() {
+		return types.ObjectNull(MFADevicePolicyMobileApplicationNewRequestDurationConfigurationTFObjectTypes), diags
+	}
+
+	totalTimeoutAPI, totalTimeoutOk := apiObject.GetTotalTimeoutOk()
+	totalTimeout, d := toStateMfaDevicePolicyMobileApplicationsNewRequestDurationConfigurationTimeout(totalTimeoutAPI, totalTimeoutOk)
+	diags.Append(d...)
+	if diags.HasError() {
+		return types.ObjectNull(MFADevicePolicyMobileApplicationNewRequestDurationConfigurationTFObjectTypes), diags
+	}
+
+	o := map[string]attr.Value{
+		"device_timeout": deviceTimeout,
+		"total_timeout":  totalTimeout,
+	}
+
+	objValue, d := types.ObjectValue(MFADevicePolicyMobileApplicationNewRequestDurationConfigurationTFObjectTypes, o)
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+// toStateMfaDevicePolicyMobileApplicationsNewRequestDurationConfigurationTimeout flattens either
+// the device_timeout or total_timeout sub-object, both of which share the same duration/time_unit shape.
+func toStateMfaDevicePolicyMobileApplicationsNewRequestDurationConfigurationTimeout(apiObject interface{}, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(MFADevicePolicyMobileApplicationNewRequestDurationConfigurationTimeoutTFObjectTypes), nil
+	}
+
+	var duration *int32
+	var durationOk bool
+	var timeUnit *mfa.EnumTimeUnitSeconds
+	var timeUnitOk bool
+
+	switch v := apiObject.(type) {
+	case *mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInnerNewRequestDurationConfigurationDeviceTimeout:
+		duration, durationOk = v.GetDurationOk()
+		timeUnit, timeUnitOk = v.GetTimeUnitOk()
+	case *mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInnerNewRequestDurationConfigurationTotalTimeout:
+		duration, durationOk = v.GetDurationOk()
+		timeUnit, timeUnitOk = v.GetTimeUnitOk()
+	default:
+		return types.ObjectNull(MFADevicePolicyMobileApplicationNewRequestDurationConfigurationTimeoutTFObjectTypes), nil
+	}
+
+	o := map[string]attr.Value{
+		"duration":  framework.Int32OkToTF(duration, durationOk),
+		"time_unit": framework.EnumOkToTF(timeUnit, timeUnitOk),
+	}
+
+	objValue, d := types.ObjectValue(MFADevicePolicyMobileApplicationNewRequestDurationConfigurationTimeoutTFObjectTypes, o)
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+// toStateMfaDevicePolicyMobileApplicationsIpPairingConfiguration flattens the PingID-only
+// mobile-application ip_pairing_configuration (any_ip_address / only_these_ip_addresses).
+func toStateMfaDevicePolicyMobileApplicationsIpPairingConfiguration(apiObject *mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInnerIpPairingConfiguration, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(MFADevicePolicyMobileIpPairingConfigurationTFObjectTypes), nil
+	}
+
+	var onlyTheseIpAddresses types.Set
+	if ipAddresses, addrOk := apiObject.GetOnlyTheseIpAddressesOk(); addrOk && len(ipAddresses) > 0 {
+		ipElements := make([]attr.Value, len(ipAddresses))
+		for i, ip := range ipAddresses {
+			ipElements[i] = types.StringValue(ip)
+		}
+
+		var d diag.Diagnostics
+		onlyTheseIpAddresses, d = types.SetValue(types.StringType, ipElements)
+		diags.Append(d...)
+	} else {
+		onlyTheseIpAddresses = types.SetNull(types.StringType)
+	}
+
+	o := map[string]attr.Value{
+		"any_ip_address":          framework.BoolOkToTF(apiObject.GetAnyIPAdressOk()),
+		"only_these_ip_addresses": onlyTheseIpAddresses,
+	}
+
+	objValue, d := types.ObjectValue(MFADevicePolicyMobileIpPairingConfigurationTFObjectTypes, o)
 	diags.Append(d...)
 
 	return objValue, diags
