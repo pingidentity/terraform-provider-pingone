@@ -1593,6 +1593,524 @@ func TestAccMFADevicePolicy_FIDO2_Disabled(t *testing.T) {
 	})
 }
 
+func TestAccMFADevicePolicy_Desktop_Full(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckRegionSupportsWorkforce(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             mfa.MFADevicePolicy_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMFADevicePolicyConfig_FullDesktop(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "policy_type", "PING_ONE_ID"),
+					resource.TestCheckResourceAttr(resourceFullName, "sms.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "voice.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "email.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "fido2.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.otp.failure.count", "5"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.otp.failure.cool_down.duration", "125"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.otp.failure.cool_down.time_unit", "SECONDS"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.pairing_disabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.pairing_key_lifetime.duration", "48"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.pairing_key_lifetime.time_unit", "HOURS"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.prompt_for_nickname_on_pairing", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
+				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccMFADevicePolicy_Desktop_Minimal(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckRegionSupportsWorkforce(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             mfa.MFADevicePolicy_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMFADevicePolicyConfig_MinimalDesktop(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "policy_type", "PING_ONE_ID"),
+					resource.TestCheckResourceAttr(resourceFullName, "sms.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "voice.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "email.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "fido2.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.otp.failure.count", "3"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.otp.failure.cool_down.duration", "2"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.otp.failure.cool_down.time_unit", "MINUTES"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.pairing_disabled", "false"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "desktop.pairing_key_lifetime"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "desktop.prompt_for_nickname_on_pairing"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "NONE"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccMFADevicePolicy_Desktop_Change(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckRegionSupportsWorkforce(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             mfa.MFADevicePolicy_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMFADevicePolicyConfig_FullDesktop(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "policy_type", "PING_ONE_ID"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.otp.failure.count", "5"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.otp.failure.cool_down.duration", "125"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.otp.failure.cool_down.time_unit", "SECONDS"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.pairing_disabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.pairing_key_lifetime.duration", "48"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.pairing_key_lifetime.time_unit", "HOURS"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.prompt_for_nickname_on_pairing", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.enabled", "false"),
+				),
+			},
+			{
+				Config: testAccMFADevicePolicyConfig_MinimalDesktop(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "policy_type", "PING_ONE_ID"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.otp.failure.count", "3"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.otp.failure.cool_down.duration", "2"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.otp.failure.cool_down.time_unit", "MINUTES"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.pairing_disabled", "false"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "desktop.pairing_key_lifetime"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "desktop.prompt_for_nickname_on_pairing"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.enabled", "false"),
+				),
+			},
+			{
+				Config: testAccMFADevicePolicyConfig_FullDesktop(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "policy_type", "PING_ONE_ID"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.otp.failure.count", "5"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.otp.failure.cool_down.duration", "125"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.otp.failure.cool_down.time_unit", "SECONDS"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.pairing_disabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.pairing_key_lifetime.duration", "48"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.pairing_key_lifetime.time_unit", "HOURS"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.prompt_for_nickname_on_pairing", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.enabled", "false"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccMFADevicePolicy_Yubikey_Full(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckRegionSupportsWorkforce(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             mfa.MFADevicePolicy_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMFADevicePolicyConfig_FullYubikey(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "policy_type", "PING_ONE_ID"),
+					resource.TestCheckResourceAttr(resourceFullName, "sms.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "voice.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "email.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "fido2.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.otp.failure.count", "5"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.otp.failure.cool_down.duration", "125"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.otp.failure.cool_down.time_unit", "SECONDS"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.pairing_disabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.pairing_key_lifetime.duration", "48"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.pairing_key_lifetime.time_unit", "HOURS"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.prompt_for_nickname_on_pairing", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
+				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccMFADevicePolicy_Yubikey_Minimal(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckRegionSupportsWorkforce(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             mfa.MFADevicePolicy_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMFADevicePolicyConfig_MinimalYubikey(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "policy_type", "PING_ONE_ID"),
+					resource.TestCheckResourceAttr(resourceFullName, "sms.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "voice.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "email.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "fido2.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.otp.failure.count", "3"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.otp.failure.cool_down.duration", "2"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.otp.failure.cool_down.time_unit", "MINUTES"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.pairing_disabled", "false"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "yubikey.pairing_key_lifetime"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "yubikey.prompt_for_nickname_on_pairing"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "NONE"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccMFADevicePolicy_Yubikey_Change(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckRegionSupportsWorkforce(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             mfa.MFADevicePolicy_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMFADevicePolicyConfig_FullYubikey(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "policy_type", "PING_ONE_ID"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.otp.failure.count", "5"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.otp.failure.cool_down.duration", "125"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.otp.failure.cool_down.time_unit", "SECONDS"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.pairing_disabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.pairing_key_lifetime.duration", "48"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.pairing_key_lifetime.time_unit", "HOURS"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.prompt_for_nickname_on_pairing", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.enabled", "false"),
+				),
+			},
+			{
+				Config: testAccMFADevicePolicyConfig_MinimalYubikey(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "policy_type", "PING_ONE_ID"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.otp.failure.count", "3"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.otp.failure.cool_down.duration", "2"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.otp.failure.cool_down.time_unit", "MINUTES"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.pairing_disabled", "false"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "yubikey.pairing_key_lifetime"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "yubikey.prompt_for_nickname_on_pairing"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.enabled", "false"),
+				),
+			},
+			{
+				Config: testAccMFADevicePolicyConfig_FullYubikey(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "policy_type", "PING_ONE_ID"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.otp.failure.count", "5"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.otp.failure.cool_down.duration", "125"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.otp.failure.cool_down.time_unit", "SECONDS"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.pairing_disabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.pairing_key_lifetime.duration", "48"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.pairing_key_lifetime.time_unit", "HOURS"),
+					resource.TestCheckResourceAttr(resourceFullName, "yubikey.prompt_for_nickname_on_pairing", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "desktop.enabled", "false"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccMFADevicePolicy_OathToken_Full(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             mfa.MFADevicePolicy_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMFADevicePolicyConfig_FullOathToken(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "policy_type", "PING_ONE_MFA"),
+					resource.TestCheckResourceAttr(resourceFullName, "sms.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "voice.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "email.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "fido2.enabled", "false"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "desktop"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "yubikey"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.otp.failure.count", "5"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.otp.failure.cool_down.duration", "125"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.otp.failure.cool_down.time_unit", "SECONDS"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.pairing_disabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.pairing_key_lifetime.duration", "48"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.pairing_key_lifetime.time_unit", "HOURS"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.prompt_for_nickname_on_pairing", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
+				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccMFADevicePolicy_OathToken_Minimal(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             mfa.MFADevicePolicy_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				// oath_token is omitted from the config entirely to exercise its
+				// schema-level default (AD4: enabled defaults to false).
+				Config: testAccMFADevicePolicyConfig_MinimalOathToken(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "policy_type", "PING_ONE_MFA"),
+					resource.TestCheckResourceAttr(resourceFullName, "sms.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "voice.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "email.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "fido2.enabled", "false"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "desktop"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "yubikey"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.otp.failure.count", "3"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.otp.failure.cool_down.duration", "2"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.otp.failure.cool_down.time_unit", "MINUTES"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.pairing_disabled", "false"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oath_token.pairing_key_lifetime"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.prompt_for_nickname_on_pairing", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "NONE"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccMFADevicePolicy_OathToken_Change(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_mfa_device_policy.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             mfa.MFADevicePolicy_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccMFADevicePolicyConfig_FullOathToken(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "policy_type", "PING_ONE_MFA"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.otp.failure.count", "5"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.otp.failure.cool_down.duration", "125"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.otp.failure.cool_down.time_unit", "SECONDS"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.pairing_disabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.pairing_key_lifetime.duration", "48"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.pairing_key_lifetime.time_unit", "HOURS"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.prompt_for_nickname_on_pairing", "true"),
+				),
+			},
+			{
+				Config: testAccMFADevicePolicyConfig_MinimalOathToken(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "policy_type", "PING_ONE_MFA"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.otp.failure.count", "3"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.otp.failure.cool_down.duration", "2"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.otp.failure.cool_down.time_unit", "MINUTES"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.pairing_disabled", "false"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oath_token.pairing_key_lifetime"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.prompt_for_nickname_on_pairing", "false"),
+				),
+			},
+			{
+				Config: testAccMFADevicePolicyConfig_FullOathToken(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "policy_type", "PING_ONE_MFA"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.otp.failure.count", "5"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.otp.failure.cool_down.duration", "125"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.otp.failure.cool_down.time_unit", "SECONDS"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.pairing_disabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.pairing_key_lifetime.duration", "48"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.pairing_key_lifetime.time_unit", "HOURS"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.prompt_for_nickname_on_pairing", "true"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccMFADevicePolicy_DataModel(t *testing.T) {
 	t.Parallel()
 
@@ -3272,6 +3790,326 @@ resource "pingone_mfa_device_policy" "%[2]s" {
 
   fido2 = {
     enabled = true
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccMFADevicePolicyConfig_FullDesktop(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_mfa_device_policy" "%[2]s" {
+  environment_id = data.pingone_environment.workforce_test.id
+  policy_type    = "PING_ONE_ID"
+
+  name = "%[3]s"
+
+  new_device_notification = "SMS_THEN_EMAIL"
+
+  sms = {
+    enabled = false
+  }
+
+  voice = {
+    enabled = false
+  }
+
+  email = {
+    enabled = false
+  }
+
+  mobile = {
+    enabled = false
+  }
+
+  totp = {
+    enabled = false
+  }
+
+  fido2 = {
+    enabled = false
+  }
+
+  desktop = {
+    enabled = true
+
+    otp = {
+      failure = {
+        count = 5
+
+        cool_down = {
+          duration  = 125
+          time_unit = "SECONDS"
+        }
+      }
+    }
+
+    pairing_disabled = true
+
+    pairing_key_lifetime = {
+      duration  = 48
+      time_unit = "HOURS"
+    }
+
+    prompt_for_nickname_on_pairing = true
+  }
+
+  yubikey = {
+    enabled = false
+  }
+
+}`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name)
+}
+
+func testAccMFADevicePolicyConfig_MinimalDesktop(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_mfa_device_policy" "%[2]s" {
+  environment_id = data.pingone_environment.workforce_test.id
+  policy_type    = "PING_ONE_ID"
+
+  name = "%[3]s"
+
+  sms = {
+    enabled = false
+  }
+
+  voice = {
+    enabled = false
+  }
+
+  email = {
+    enabled = false
+  }
+
+  mobile = {
+    enabled = false
+  }
+
+  totp = {
+    enabled = false
+  }
+
+  fido2 = {
+    enabled = false
+  }
+
+  desktop = {
+    enabled = true
+  }
+
+  yubikey = {
+    enabled = false
+  }
+
+}`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name)
+}
+
+func testAccMFADevicePolicyConfig_FullYubikey(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_mfa_device_policy" "%[2]s" {
+  environment_id = data.pingone_environment.workforce_test.id
+  policy_type    = "PING_ONE_ID"
+
+  name = "%[3]s"
+
+  new_device_notification = "SMS_THEN_EMAIL"
+
+  sms = {
+    enabled = false
+  }
+
+  voice = {
+    enabled = false
+  }
+
+  email = {
+    enabled = false
+  }
+
+  mobile = {
+    enabled = false
+  }
+
+  totp = {
+    enabled = false
+  }
+
+  fido2 = {
+    enabled = false
+  }
+
+  desktop = {
+    enabled = false
+  }
+
+  yubikey = {
+    enabled = true
+
+    otp = {
+      failure = {
+        count = 5
+
+        cool_down = {
+          duration  = 125
+          time_unit = "SECONDS"
+        }
+      }
+    }
+
+    pairing_disabled = true
+
+    pairing_key_lifetime = {
+      duration  = 48
+      time_unit = "HOURS"
+    }
+
+    prompt_for_nickname_on_pairing = true
+  }
+
+}`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name)
+}
+
+func testAccMFADevicePolicyConfig_MinimalYubikey(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_mfa_device_policy" "%[2]s" {
+  environment_id = data.pingone_environment.workforce_test.id
+  policy_type    = "PING_ONE_ID"
+
+  name = "%[3]s"
+
+  sms = {
+    enabled = false
+  }
+
+  voice = {
+    enabled = false
+  }
+
+  email = {
+    enabled = false
+  }
+
+  mobile = {
+    enabled = false
+  }
+
+  totp = {
+    enabled = false
+  }
+
+  fido2 = {
+    enabled = false
+  }
+
+  desktop = {
+    enabled = false
+  }
+
+  yubikey = {
+    enabled = true
+  }
+
+}`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name)
+}
+
+func testAccMFADevicePolicyConfig_FullOathToken(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_mfa_device_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  new_device_notification = "SMS_THEN_EMAIL"
+
+  sms = {
+    enabled = false
+  }
+
+  voice = {
+    enabled = false
+  }
+
+  email = {
+    enabled = false
+  }
+
+  mobile = {
+    enabled = false
+  }
+
+  totp = {
+    enabled = false
+  }
+
+  fido2 = {
+    enabled = false
+  }
+
+  oath_token = {
+    enabled = true
+
+    otp = {
+      failure = {
+        count = 5
+
+        cool_down = {
+          duration  = 125
+          time_unit = "SECONDS"
+        }
+      }
+    }
+
+    pairing_disabled = true
+
+    pairing_key_lifetime = {
+      duration  = 48
+      time_unit = "HOURS"
+    }
+
+    prompt_for_nickname_on_pairing = true
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccMFADevicePolicyConfig_MinimalOathToken(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_mfa_device_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+
+  sms = {
+    enabled = false
+  }
+
+  voice = {
+    enabled = false
+  }
+
+  email = {
+    enabled = false
+  }
+
+  mobile = {
+    enabled = false
+  }
+
+  totp = {
+    enabled = false
+  }
+
+  fido2 = {
+    enabled = false
   }
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
