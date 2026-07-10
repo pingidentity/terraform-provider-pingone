@@ -154,6 +154,13 @@ func TestAccMFADevicePolicy_SMS_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
+					// Backward compatibility (CDI-1259): a config that omits `policy_type` and the
+					// new PingID-only attributes must still plan/apply cleanly, with `policy_type`
+					// computed to `PING_ONE_MFA` and the PingID-only attributes null.
+					resource.TestCheckResourceAttr(resourceFullName, "policy_type", "PING_ONE_MFA"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "desktop"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "yubikey"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.enabled", "false"),
 				),
 			},
 			// Test importing the resource
@@ -227,7 +234,44 @@ func TestAccMFADevicePolicy_SMS_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "totp.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "fido2.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "NONE"),
+					// Backward compatibility (CDI-1259): a config that omits `policy_type` and the
+					// new PingID-only attributes must still plan/apply cleanly, with `policy_type`
+					// computed to `PING_ONE_MFA` and the PingID-only attributes null.
+					resource.TestCheckResourceAttr(resourceFullName, "policy_type", "PING_ONE_MFA"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "desktop"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "yubikey"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.enabled", "false"),
 				),
+			},
+			// Re-apply the same, pre-existing-shaped config a second time to prove there is no
+			// perpetual diff once `policy_type` is computed and stored in state (AC4 / Task 4's
+			// no-perpetual-diff guarantee, exercised end-to-end here against the real API).
+			{
+				Config: testAccMFADevicePolicyConfig_MinimalSMS(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "policy_type", "PING_ONE_MFA"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "desktop"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "yubikey"),
+					resource.TestCheckResourceAttr(resourceFullName, "oath_token.enabled", "false"),
+				),
+				ExpectNonEmptyPlan: false,
+			},
+			// Test importing the resource, confirming a clean round-trip for the computed
+			// `policy_type` and the null PingID-only attributes.
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
