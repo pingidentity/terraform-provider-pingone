@@ -2752,6 +2752,9 @@ func (r *MFADevicePolicyResource) ImportState(ctx context.Context, req resource.
 func (p *MFADevicePolicyResourceModel) expand(ctx context.Context, apiClient *management.APIClient) (*mfa.DeviceAuthenticationPolicy, diag.Diagnostics) {
 	var diags, d diag.Diagnostics
 
+	// Get policy type to handle divergences (client-side only, never sent to the API)
+	policyType := p.PolicyType.ValueString()
+
 	// SMS
 	var smsPlan MFADevicePolicySmsResourceModel
 	diags.Append(p.Sms.As(ctx, &smsPlan, basetypes.ObjectAsOptions{
@@ -2806,7 +2809,7 @@ func (p *MFADevicePolicyResourceModel) expand(ctx context.Context, apiClient *ma
 	if diags.HasError() {
 		return nil, diags
 	}
-	mobile, d := mobilePlan.expand(ctx, apiClient, p.EnvironmentId.ValueString())
+	mobile, d := mobilePlan.expand(ctx, apiClient, p.EnvironmentId.ValueString(), policyType)
 	diags.Append(d...)
 	if diags.HasError() {
 		return nil, diags
@@ -2872,6 +2875,68 @@ func (p *MFADevicePolicyResourceModel) expand(ctx context.Context, apiClient *ma
 		fido2 := fido2Plan.expand()
 
 		policy.SetFido2(*fido2)
+	}
+
+	// Desktop - only for PingID
+	if policyType == POLICY_TYPE_PINGID {
+		if !p.Desktop.IsNull() && !p.Desktop.IsUnknown() {
+			var desktopPlan MFADevicePolicyDesktopResourceModel
+			diags.Append(p.Desktop.As(ctx, &desktopPlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			desktop, d := desktopPlan.expand(ctx)
+			diags.Append(d...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			policy.SetDesktop(*desktop)
+		}
+
+		// Yubikey - only for PingID
+		if !p.Yubikey.IsNull() && !p.Yubikey.IsUnknown() {
+			var yubikeyPlan MFADevicePolicyYubikeyResourceModel
+			diags.Append(p.Yubikey.As(ctx, &yubikeyPlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			yubikey, d := yubikeyPlan.expand(ctx)
+			diags.Append(d...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			policy.SetYubikey(*yubikey)
+		}
+	}
+
+	// OathToken - both policy types (not gated on policy_type)
+	if !p.OathToken.IsNull() && !p.OathToken.IsUnknown() {
+		var oathTokenPlan MFADevicePolicyOathTokenResourceModel
+		diags.Append(p.OathToken.As(ctx, &oathTokenPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		oathToken, d := oathTokenPlan.expand(ctx)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		policy.SetOathToken(*oathToken)
 	}
 
 	// Authentication
@@ -3095,7 +3160,7 @@ func (p *MFADevicePolicyOfflineDeviceOtpResourceModel) expand(ctx context.Contex
 	return data, diags
 }
 
-func (p *MFADevicePolicyMobileResourceModel) expand(ctx context.Context, apiClient *management.APIClient, environmentId string) (*mfa.DeviceAuthenticationPolicyCommonMobile, diag.Diagnostics) {
+func (p *MFADevicePolicyMobileResourceModel) expand(ctx context.Context, apiClient *management.APIClient, environmentId, policyType string) (*mfa.DeviceAuthenticationPolicyCommonMobile, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	// Otp
@@ -3145,7 +3210,7 @@ func (p *MFADevicePolicyMobileResourceModel) expand(ctx context.Context, apiClie
 		applications := make([]mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInner, 0)
 
 		for applicationId, applicationPlan := range applicationsPlan {
-			application, d := applicationPlan.expand(ctx, apiClient, environmentId, applicationId)
+			application, d := applicationPlan.expand(ctx, apiClient, environmentId, applicationId, policyType)
 			diags.Append(d...)
 			if diags.HasError() {
 				return nil, diags
@@ -3190,7 +3255,7 @@ func (p *MFADevicePolicyFailureResourceModel) expand(ctx context.Context) (*mfa.
 	return data, diags
 }
 
-func (p *MFADevicePolicyMobileApplicationResourceModel) expand(ctx context.Context, apiClient *management.APIClient, environmentId, applicationId string) (*mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInner, diag.Diagnostics) {
+func (p *MFADevicePolicyMobileApplicationResourceModel) expand(ctx context.Context, apiClient *management.APIClient, environmentId, applicationId, policyType string) (*mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInner, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	application, d := checkApplicationForMobileApp(ctx, apiClient, environmentId, applicationId)
@@ -3377,6 +3442,82 @@ func (p *MFADevicePolicyMobileApplicationResourceModel) expand(ctx context.Conte
 				mfa.EnumTimeUnitPushTimeout(plan.TimeUnit.ValueString()),
 			),
 		)
+	}
+
+	// PingID-only mobile-application fields - only for PingID
+	if policyType == POLICY_TYPE_PINGID {
+		// Biometrics Enabled
+		if !p.BiometricsEnabled.IsNull() && !p.BiometricsEnabled.IsUnknown() {
+			data.SetBiometricsEnabled(p.BiometricsEnabled.ValueBool())
+		}
+
+		// New Request Duration Configuration
+		if !p.NewRequestDurationConfiguration.IsNull() && !p.NewRequestDurationConfiguration.IsUnknown() {
+			var nrdcPlan MFADevicePolicyMobileApplicationNewRequestDurationConfigurationResourceModel
+			diags.Append(p.NewRequestDurationConfiguration.As(ctx, &nrdcPlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			var deviceTimeoutPlan, totalTimeoutPlan MFADevicePolicyMobileApplicationNewRequestDurationConfigurationTimeoutResourceModel
+
+			diags.Append(nrdcPlan.DeviceTimeout.As(ctx, &deviceTimeoutPlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
+
+			diags.Append(nrdcPlan.TotalTimeout.As(ctx, &totalTimeoutPlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
+
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			deviceTimeout := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerNewRequestDurationConfigurationDeviceTimeout(
+				deviceTimeoutPlan.Duration.ValueInt32(),
+				mfa.EnumTimeUnitSeconds(deviceTimeoutPlan.TimeUnit.ValueString()),
+			)
+			totalTimeout := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerNewRequestDurationConfigurationTotalTimeout(
+				totalTimeoutPlan.Duration.ValueInt32(),
+				mfa.EnumTimeUnitSeconds(totalTimeoutPlan.TimeUnit.ValueString()),
+			)
+			newRequestDurationConfig := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerNewRequestDurationConfiguration(*deviceTimeout, *totalTimeout)
+			data.SetNewRequestDurationConfiguration(*newRequestDurationConfig)
+		}
+
+		// IP Pairing Configuration
+		if !p.IpPairingConfiguration.IsNull() && !p.IpPairingConfiguration.IsUnknown() {
+			ipConfig := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerIpPairingConfiguration()
+
+			ipConfigAttrs := p.IpPairingConfiguration.Attributes()
+
+			if anyIPAttr, exists := ipConfigAttrs["any_ip_address"]; exists {
+				if anyIPVal, ok := anyIPAttr.(types.Bool); ok && !anyIPVal.IsNull() && !anyIPVal.IsUnknown() {
+					ipConfig.SetAnyIPAdress(anyIPVal.ValueBool())
+				}
+			}
+
+			if ipListAttr, exists := ipConfigAttrs["only_these_ip_addresses"]; exists {
+				if ipListVal, ok := ipListAttr.(types.Set); ok && !ipListVal.IsNull() && !ipListVal.IsUnknown() {
+					var ipAddresses []string
+					diags.Append(ipListVal.ElementsAs(ctx, &ipAddresses, false)...)
+					if diags.HasError() {
+						return nil, diags
+					}
+
+					if len(ipAddresses) > 0 {
+						ipConfig.SetOnlyTheseIpAddresses(ipAddresses)
+					}
+				}
+			}
+
+			data.SetIpPairingConfiguration(*ipConfig)
+		}
 	}
 
 	return data, diags
