@@ -299,9 +299,10 @@ var (
 
 // Framework interfaces
 var (
-	_ resource.Resource                = &MFADevicePolicyResource{}
-	_ resource.ResourceWithConfigure   = &MFADevicePolicyResource{}
-	_ resource.ResourceWithImportState = &MFADevicePolicyResource{}
+	_ resource.Resource                   = &MFADevicePolicyResource{}
+	_ resource.ResourceWithConfigure      = &MFADevicePolicyResource{}
+	_ resource.ResourceWithImportState    = &MFADevicePolicyResource{}
+	_ resource.ResourceWithValidateConfig = &MFADevicePolicyResource{}
 )
 
 // New Object
@@ -2487,6 +2488,90 @@ func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttribute(descr
 				// Default: booldefault.StaticBool(false),
 			},
 		},
+	}
+}
+
+// ValidateConfig closes a gap left by the schema-level `Conflicts`/`IsRequiredIf`
+// path validators used on `desktop`, `yubikey`, and the PingID-only mobile
+// application fields (`biometrics_enabled`, `ip_pairing_configuration`,
+// `new_request_duration_configuration`). Those validators read `policy_type`'s
+// raw configuration value (see internal/framework/schemavalidator) and skip
+// their check entirely when that value is null - which is exactly what happens
+// when `policy_type` is omitted from HCL and left to resolve via its schema
+// default of `PING_ONE_MFA` (Optional + Computed, AD1/Amendment 1). Without
+// this check, a user who configures a PingID-only attribute without also
+// explicitly setting `policy_type = "PING_ONE_ID"` would get no error at
+// plan time, and `expand()` would silently drop the attribute rather than
+// sending it to the API. This method resolves the effective (post-default)
+// `policy_type` value from config and re-runs the same "conflicts with
+// PING_ONE_MFA" check that the schema validators would have performed had
+// `policy_type` been explicitly configured.
+func (r *MFADevicePolicyResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var data MFADevicePolicyResourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Resolve the effective policy type as it will exist on the plan once
+	// the schema default is applied. An explicit, non-null `policy_type` is
+	// already correctly handled by the schema's `ConflictsIfMatchesPathValue`/
+	// `IsRequiredIfMatchesPathValue` validators, so this method only needs to
+	// act when `policy_type` is omitted (null) from config.
+	if !data.PolicyType.IsNull() && !data.PolicyType.IsUnknown() {
+		return
+	}
+
+	conflictDetail := fmt.Sprintf(
+		"The argument cannot be defined if the value \"%s\" is present at the defined path: [policy_type]. `policy_type` was not explicitly configured and defaults to \"%s\".",
+		POLICY_TYPE_PINGONE_MFA, POLICY_TYPE_PINGONE_MFA,
+	)
+
+	if !data.Desktop.IsNull() && !data.Desktop.IsUnknown() {
+		resp.Diagnostics.AddAttributeError(path.Root("desktop"), "Invalid argument combination", conflictDetail)
+	}
+
+	if !data.Yubikey.IsNull() && !data.Yubikey.IsUnknown() {
+		resp.Diagnostics.AddAttributeError(path.Root("yubikey"), "Invalid argument combination", conflictDetail)
+	}
+
+	if data.Mobile.IsNull() || data.Mobile.IsUnknown() {
+		return
+	}
+
+	var mobileConfig MFADevicePolicyMobileResourceModel
+	resp.Diagnostics.Append(data.Mobile.As(ctx, &mobileConfig, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: false,
+	})...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if mobileConfig.Applications.IsNull() || mobileConfig.Applications.IsUnknown() {
+		return
+	}
+
+	applicationsConfig := make(map[string]MFADevicePolicyMobileApplicationResourceModel, len(mobileConfig.Applications.Elements()))
+	resp.Diagnostics.Append(mobileConfig.Applications.ElementsAs(ctx, &applicationsConfig, false)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	for applicationId, applicationConfig := range applicationsConfig {
+		basePath := path.Root("mobile").AtName("applications").AtMapKey(applicationId)
+
+		if !applicationConfig.BiometricsEnabled.IsNull() && !applicationConfig.BiometricsEnabled.IsUnknown() {
+			resp.Diagnostics.AddAttributeError(basePath.AtName("biometrics_enabled"), "Invalid argument combination", conflictDetail)
+		}
+
+		if !applicationConfig.IpPairingConfiguration.IsNull() && !applicationConfig.IpPairingConfiguration.IsUnknown() {
+			resp.Diagnostics.AddAttributeError(basePath.AtName("ip_pairing_configuration"), "Invalid argument combination", conflictDetail)
+		}
+
+		if !applicationConfig.NewRequestDurationConfiguration.IsNull() && !applicationConfig.NewRequestDurationConfiguration.IsUnknown() {
+			resp.Diagnostics.AddAttributeError(basePath.AtName("new_request_duration_configuration"), "Invalid argument combination", conflictDetail)
+		}
 	}
 }
 

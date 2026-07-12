@@ -1767,6 +1767,44 @@ func TestAccMFADevicePolicy_Desktop_Change(t *testing.T) {
 	})
 }
 
+// TestAccMFADevicePolicy_Desktop_NoPolicyTypeError guards against a regression of a
+// data-loss bug (CDI-1259 QA finding): PingID-only attributes (`desktop`, `yubikey`,
+// and the PingID-only mobile-application sub-fields) were silently accepted and
+// silently dropped - with no plan-time error - when `policy_type` was omitted from
+// configuration and left to resolve via its schema default of `PING_ONE_MFA`. This
+// happened because the schema's `ConflictsIfMatchesPathValue`/`IsRequiredIfMatchesPathValue`
+// validators read `policy_type`'s raw config value, which is null when omitted, and
+// skip their check on null. `ValidateConfig` on the resource now closes that gap by
+// resolving the effective (post-default) `policy_type` value and re-running the
+// conflict check. This test asserts a config that sets `desktop` without an explicit
+// `policy_type` now fails at plan time with a clear error, rather than silently
+// planning clean and dropping `desktop` on apply.
+func TestAccMFADevicePolicy_Desktop_NoPolicyTypeError(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             mfa.MFADevicePolicy_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccMFADevicePolicyConfig_DesktopNoPolicyTypeError(resourceName, name),
+				ExpectError: regexp.MustCompile("Invalid argument combination"),
+				PlanOnly:    true,
+			},
+		},
+	})
+}
+
 func TestAccMFADevicePolicy_Yubikey_Full(t *testing.T) {
 	t.Parallel()
 
@@ -3966,6 +4004,50 @@ resource "pingone_mfa_device_policy" "%[2]s" {
   }
 
 }`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name)
+}
+
+// testAccMFADevicePolicyConfig_DesktopNoPolicyTypeError deliberately omits `policy_type`
+// while setting `desktop` - the exact CDI-1259 QA-reported bypass scenario. It uses the
+// generic (non-Workforce) sandbox environment because the expected failure is a plan-time
+// config validation error raised before any PingID-specific entitlement would be needed.
+func testAccMFADevicePolicyConfig_DesktopNoPolicyTypeError(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_mfa_device_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  sms = {
+    enabled = false
+  }
+
+  voice = {
+    enabled = false
+  }
+
+  email = {
+    enabled = false
+  }
+
+  mobile = {
+    enabled = false
+  }
+
+  totp = {
+    enabled = false
+  }
+
+  fido2 = {
+    enabled = false
+  }
+
+  desktop = {
+    enabled = true
+  }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccMFADevicePolicyConfig_MinimalDesktop(resourceName, name string) string {
