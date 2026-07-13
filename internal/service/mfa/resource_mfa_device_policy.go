@@ -303,6 +303,7 @@ var (
 	_ resource.ResourceWithConfigure      = &MFADevicePolicyResource{}
 	_ resource.ResourceWithImportState    = &MFADevicePolicyResource{}
 	_ resource.ResourceWithValidateConfig = &MFADevicePolicyResource{}
+	_ resource.ResourceWithModifyPlan     = &MFADevicePolicyResource{}
 )
 
 // New Object
@@ -2572,6 +2573,87 @@ func (r *MFADevicePolicyResource) ValidateConfig(ctx context.Context, req resour
 		if !applicationConfig.NewRequestDurationConfiguration.IsNull() && !applicationConfig.NewRequestDurationConfiguration.IsUnknown() {
 			resp.Diagnostics.AddAttributeError(basePath.AtName("new_request_duration_configuration"), "Invalid argument combination", conflictDetail)
 		}
+	}
+}
+
+// ModifyPlan provides a best-effort, plan-time warning for a residual blind
+// spot in the `ValidateConfig` check above (and in the pre-existing
+// schema-level `...IfMatchesPathValue` validators): when the `mobile.applications`
+// map's key is derived from an unresolved resource attribute (e.g.
+// `(pingone_application.app1.id)`), the entire map value - including every
+// application's `biometrics_enabled`/`ip_pairing_configuration`/
+// `new_request_duration_configuration` sub-fields - is Unknown at both
+// config-validation and plan time, so it cannot be inspected here either.
+//
+// This is a Terraform Plugin Framework/protocol limitation, not something
+// fixable by restructuring the check: a Terraform map's value is Unknown as a
+// whole whenever any of its keys is Unknown (a map's identity depends on all
+// of its keys), and `ElementsAs`/`GetAttribute` on an Unknown map value cannot
+// yield per-element data. Investigation (see fix-qa-2 task summary) confirmed
+// this data-loss bug is NOT actually reachable end-to-end for this shape:
+// Terraform always re-runs `ValidateResourceConfig` immediately before
+// `PlanResourceChange`/`ApplyResourceChange` once the dependency (and thus the
+// map key) resolves to a known value - which happens on every real `terraform
+// apply`, including `apply` of a previously saved `plan -out` file. The
+// `ValidateConfig` method above therefore still catches and rejects the
+// unsafe combination before the API is ever called; the only observable gap
+// is that a `terraform plan` (or `validate`) run in isolation, before the
+// dependency has been created, cannot show the error yet. This method emits a
+// warning in that specific window so the risk is visible at plan time rather
+// than only at apply time.
+func (r *MFADevicePolicyResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	if req.Plan.Raw.IsNull() {
+		// Destroy plan - nothing to check.
+		return
+	}
+
+	var plan MFADevicePolicyResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Determine the effective policy type as it will exist once the schema
+	// default is applied. If it's unknown, we cannot yet tell whether the
+	// PING_ONE_MFA conflict would apply, so there is nothing further to warn
+	// about here.
+	if plan.PolicyType.IsUnknown() {
+		return
+	}
+
+	effectivePolicyType := POLICY_TYPE_PINGONE_MFA
+	if !plan.PolicyType.IsNull() {
+		effectivePolicyType = plan.PolicyType.ValueString()
+	}
+
+	if effectivePolicyType != POLICY_TYPE_PINGONE_MFA {
+		return
+	}
+
+	if plan.Mobile.IsNull() || plan.Mobile.IsUnknown() {
+		return
+	}
+
+	var mobilePlan MFADevicePolicyMobileResourceModel
+	resp.Diagnostics.Append(plan.Mobile.As(ctx, &mobilePlan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: false,
+	})...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if mobilePlan.Applications.IsUnknown() {
+		resp.Diagnostics.AddAttributeWarning(
+			path.Root("mobile").AtName("applications"),
+			"Unable to fully validate PingID-only mobile application settings until apply",
+			fmt.Sprintf(
+				"The `mobile.applications` map key depends on a value that is not yet known (for example, a resource attribute reference such as `(pingone_application.example.id)` for a resource not yet created), so its contents cannot be checked at plan time. "+
+					"If any application in this map sets `biometrics_enabled`, `ip_pairing_configuration`, or `new_request_duration_configuration`, and `policy_type` is (or defaults to) \"%s\", the configuration will be rejected with an \"Invalid argument combination\" error once the map key resolves - either later in this same `terraform apply`, or on the next `terraform plan`/`apply` after the referenced resource exists. "+
+					"To avoid this, explicitly set `policy_type = \"%s\"` if these PingID-only fields are intended to take effect.",
+				POLICY_TYPE_PINGONE_MFA, POLICY_TYPE_PINGID,
+			),
+		)
 	}
 }
 

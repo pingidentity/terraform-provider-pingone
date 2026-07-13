@@ -1805,6 +1805,54 @@ func TestAccMFADevicePolicy_Desktop_NoPolicyTypeError(t *testing.T) {
 	})
 }
 
+// TestAccMFADevicePolicy_Mobile_PingID_UnknownApplicationKey_NoPolicyTypeError guards
+// against a residual bypass of the CDI-1259 QA finding (QA fix cycle 2, Issue 1): when
+// the `mobile.applications` map key is a resource-attribute reference (e.g.
+// `(pingone_application.example.id)`, the idiomatic shape used by this resource's own
+// examples and by `TestAccMFADevicePolicy_Mobile_PingID_Full`/`_AnyIPAddress`), the map's
+// config value is Unknown at `ValidateConfig` time, since a Terraform map's value is
+// Unknown as a whole whenever any of its keys is unresolved. Neither `ValidateConfig` nor
+// the pre-existing schema-level `...IfMatchesPathValue` validators can inspect an Unknown
+// map's elements, so the PingID-only sub-field check cannot fire during that specific
+// window.
+//
+// This is provably NOT a data-loss bug in practice: Terraform always re-runs
+// ValidateResourceConfig immediately before PlanResourceChange/ApplyResourceChange once
+// the map key resolves to a known value, which happens on every real `terraform apply`
+// (including `apply` of a plan saved via `plan -out`) once `pingone_application.example`
+// has been created. This test exercises that real, full apply path (deliberately not
+// PlanOnly, since a plan run in isolation before the dependency exists cannot show the
+// error - see the ModifyPlan-emitted warning covering that narrower window) and asserts
+// that `biometrics_enabled` set on a PingID-only mobile application, with `policy_type`
+// omitted, is still rejected with "Invalid argument combination" by the time apply would
+// otherwise call the API - proving no silent data loss occurs for this configuration
+// shape.
+func TestAccMFADevicePolicy_Mobile_PingID_UnknownApplicationKey_NoPolicyTypeError(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckRegionSupportsWorkforce(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             mfa.MFADevicePolicy_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccMFADevicePolicyConfig_MobilePingIDUnknownApplicationKeyNoPolicyTypeError(resourceName, name),
+				ExpectError: regexp.MustCompile("Invalid argument combination"),
+			},
+		},
+	})
+}
+
 func TestAccMFADevicePolicy_Yubikey_Full(t *testing.T) {
 	t.Parallel()
 
@@ -4048,6 +4096,91 @@ resource "pingone_mfa_device_policy" "%[2]s" {
   }
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+// testAccMFADevicePolicyConfig_MobilePingIDUnknownApplicationKeyNoPolicyTypeError
+// reproduces the CDI-1259 QA fix cycle 2, Issue 1 scenario: the `mobile.applications` map
+// key is a resource-attribute reference (`pingone_application.<name>.id`), not a literal
+// string, so its value is Unknown until that application resource is created - the same
+// idiomatic shape used by this resource's own examples and by
+// `testAccMFADevicePolicyConfig_MinimalMobilePingID`/`_FullMobilePingID`. `policy_type` is
+// deliberately omitted, and `biometrics_enabled` is set on the (Unknown-keyed) application,
+// to confirm the PING_ONE_MFA-conflict check still fires by the time apply would otherwise
+// call the API, even though it cannot be evaluated at `ValidateConfig` time for this shape.
+func testAccMFADevicePolicyConfig_MobilePingIDUnknownApplicationKeyNoPolicyTypeError(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.workforce_test.id
+  name           = "%[3]s"
+  description    = "My test OIDC app for MFA Policy"
+
+  login_page_url = "https://www.pingidentity.com"
+
+  enabled = true
+
+  oidc_options = {
+    type                       = "NATIVE_APP"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
+
+    mobile_app = {
+      bundle_id    = "com.%[2]s.bundle"
+      package_name = "com.%[2]s.package"
+
+      passcode_refresh_seconds = 45
+
+      integrity_detection = {
+        enabled = false
+      }
+    }
+  }
+}
+
+resource "pingone_mfa_device_policy" "%[2]s" {
+  environment_id = data.pingone_environment.workforce_test.id
+
+  name = "%[3]s"
+
+  sms = {
+    enabled = false
+  }
+
+  voice = {
+    enabled = false
+  }
+
+  email = {
+    enabled = false
+  }
+
+  mobile = {
+    enabled = true
+
+    applications = {
+      (pingone_application.%[2]s.id) = {
+        biometrics_enabled = true
+
+        otp = {
+          enabled = true
+        }
+      }
+    }
+  }
+
+  totp = {
+    enabled = false
+  }
+
+  fido2 = {
+    enabled = false
+  }
+
+  # policy_type deliberately omitted - defaults to "PING_ONE_MFA", which conflicts
+  # with the PingID-only biometrics_enabled set above.
+
+}`, acctest.WorkforceV2SandboxEnvironment(), resourceName, name)
 }
 
 func testAccMFADevicePolicyConfig_MinimalDesktop(resourceName, name string) string {
