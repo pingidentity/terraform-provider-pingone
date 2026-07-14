@@ -1,3 +1,0 @@
-```release-note:enhancement
-`resource/pingone_mfa_device_policy`: Added `policy_type`, `desktop`, `yubikey`, and `oath_token` device method attributes, and the mobile application `biometrics_enabled`, `ip_pairing_configuration`, and `new_request_duration_configuration` sub-fields, for parity with `pingone_mfa_device_policy_default`
-```
