@@ -112,6 +112,7 @@ Read-Only:
 - `request_scopes_for_multiple_resources_enabled` (Boolean) A boolean that specifies whether the application can request scopes from multiple custom resources.
 - `require_signed_request_object` (Boolean) A boolean that indicates that the Java Web Token (JWT) for the [request query](https://openid.net/specs/openid-connect-core-1_0.html#RequestObject) parameter is required to be signed. If `false` or null, a signed request object is not required. Both `support_unsigned_request_object` and this property cannot be set to `true`.  Defaults to `false`.
 - `response_types` (Set of String) A list that specifies the code or token type returned by an authorization request.
+- `signing` (Attributes) The OIDC application token signing key settings. (see [below for nested schema](#nestedatt--oidc_options--signing))
 - `support_unsigned_request_object` (Boolean) A boolean that specifies whether the request query parameter JWT is allowed to be unsigned.
 - `target_link_uri` (String) The URI for the application.
 - `token_endpoint_auth_method` (String) A string that specifies the client authentication methods supported by the token endpoint.
@@ -177,6 +178,14 @@ Read-Only:
 - `verification_type` (String) The type of verification.
 
 
+
+
+<a id="nestedatt--oidc_options--signing"></a>
+### Nested Schema for `oidc_options.signing`
+
+Read-Only:
+
+- `key_rotation_policy_id` (String) The PingOne ID of the Key Rotation Policy used to sign application tokens.
 
 
 

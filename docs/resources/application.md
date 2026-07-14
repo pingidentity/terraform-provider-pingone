@@ -374,6 +374,7 @@ Optional:
 - `request_scopes_for_multiple_resources_enabled` (Boolean) A boolean that specifies whether the application can request scopes from multiple custom resources.  Defaults to `false`.
 - `require_signed_request_object` (Boolean) A boolean that indicates that the Java Web Token (JWT) for the [request query](https://openid.net/specs/openid-connect-core-1_0.html#RequestObject) parameter is required to be signed. If `false` or null, a signed request object is not required. Both `support_unsigned_request_object` and this property cannot be set to `true`.  Defaults to `false`.
 - `response_types` (Set of String) A list that specifies the code or token type returned by an authorization request.  Options are `CODE`, `ID_TOKEN`, `TOKEN`.  Note that `CODE` cannot be used in an authorization request with `TOKEN` or `ID_TOKEN` because PingOne does not currently support OIDC hybrid flows.
+- `signing` (Attributes) A single object that specifies the OIDC application token signing key settings. If omitted, application tokens are signed and verified by the PingOne default key at runtime. Applies to OIDC applications of type `WORKER`, `WEB_APP`, `NATIVE_APP`, `SINGLE_PAGE_APP`, and `CUSTOM_APP`. (see [below for nested schema](#nestedatt--oidc_options--signing))
 - `support_unsigned_request_object` (Boolean) A boolean that specifies whether the request query parameter JWT is allowed to be unsigned. If `false` or null, an unsigned request object is not allowed.  Defaults to `false`.
 - `target_link_uri` (String) The URI for the application. If specified, PingOne will redirect application users to this URI after a user is authenticated. In the PingOne admin console, this becomes the value of the `target_link_uri` parameter used for the Initiate Single Sign-On URL field.  Both `http://` and `https://` URLs are permitted as well as custom mobile native schema (e.g., `org.bxretail.app://target`).
 
@@ -450,6 +451,14 @@ Optional:
 - `verification_key` (String, Sensitive) Play Integrity verdict signature verification key from your Google Play Services account. This parameter must be provided if you have set `verification_type` to `INTERNAL`.  Conflicts with `service_account_credentials_json`.
 
 
+
+
+<a id="nestedatt--oidc_options--signing"></a>
+### Nested Schema for `oidc_options.signing`
+
+Required:
+
+- `key_rotation_policy_id` (String) A string that specifies the PingOne ID of the Key Rotation Policy (from certificate management) used to sign application tokens. Must be a valid PingOne Resource ID.
 
 
 

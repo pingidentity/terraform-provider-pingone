@@ -102,6 +102,7 @@ type applicationOIDCOptionsCommonModelV1 struct {
 	RequestScopesForMultipleResourcesEnabled      types.Bool   `tfsdk:"request_scopes_for_multiple_resources_enabled"`
 	RequireSignedRequestObject                    types.Bool   `tfsdk:"require_signed_request_object"`
 	ResponseTypes                                 types.Set    `tfsdk:"response_types"`
+	Signing                                       types.Object `tfsdk:"signing"`
 	SupportUnsignedRequestObject                  types.Bool   `tfsdk:"support_unsigned_request_object"`
 	TargetLinkUri                                 types.String `tfsdk:"target_link_uri"`
 	TokenEndpointAuthnMethod                      types.String `tfsdk:"token_endpoint_auth_method"`
@@ -126,6 +127,10 @@ type applicationCorsSettingsResourceModelV1 struct {
 
 type applicationOIDCCertificateBasedAuthenticationResourceModelV1 struct {
 	KeyId pingonetypes.ResourceIDValue `tfsdk:"key_id"`
+}
+
+type applicationOIDCSigningResourceModelV1 struct {
+	KeyRotationPolicyId pingonetypes.ResourceIDValue `tfsdk:"key_rotation_policy_id"`
 }
 
 type applicationOIDCMobileAppResourceModelV1 struct {
@@ -276,6 +281,7 @@ var (
 		"request_scopes_for_multiple_resources_enabled":      types.BoolType,
 		"require_signed_request_object":                      types.BoolType,
 		"response_types":                                     types.SetType{ElemType: types.StringType},
+		"signing":                                            types.ObjectType{AttrTypes: applicationOidcOptionsSigningTFObjectTypes},
 		"support_unsigned_request_object":                    types.BoolType,
 		"target_link_uri":                                    types.StringType,
 		"token_endpoint_auth_method":                         types.StringType,
@@ -325,6 +331,10 @@ var (
 
 	applicationOidcOptionsCertificateAuthenticationTFObjectTypes = map[string]attr.Type{
 		"key_id": pingonetypes.ResourceIDType{},
+	}
+
+	applicationOidcOptionsSigningTFObjectTypes = map[string]attr.Type{
+		"key_rotation_policy_id": pingonetypes.ResourceIDType{},
 	}
 
 	applicationSamlOptionsTFObjectTypes = map[string]attr.Type{
@@ -640,6 +650,14 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 
 	oidcOptionsMobileAppDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("A single object that specifies Mobile application integration settings for `%s` type applications.", management.ENUMAPPLICATIONTYPE_NATIVE_APP),
+	)
+
+	oidcOptionsSigningDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies the OIDC application token signing key settings. If omitted, application tokens are signed and verified by the PingOne default key at runtime. Applies to OIDC applications of type `WORKER`, `WEB_APP`, `NATIVE_APP`, `SINGLE_PAGE_APP`, and `CUSTOM_APP`.",
+	)
+
+	oidcOptionsSigningKeyRotationPolicyIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the PingOne ID of the Key Rotation Policy (from certificate management) used to sign application tokens. Must be a valid PingOne Resource ID.",
 	)
 
 	oidcOptionsMobileAppBundleIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -1312,6 +1330,22 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 								"key_id": schema.StringAttribute{
 									Description:         oidcOptionsCertificateBasedAuthenticationKeyIdDescription.Description,
 									MarkdownDescription: oidcOptionsCertificateBasedAuthenticationKeyIdDescription.MarkdownDescription,
+									Required:            true,
+
+									CustomType: pingonetypes.ResourceIDType{},
+								},
+							},
+						},
+
+						"signing": schema.SingleNestedAttribute{
+							Description:         oidcOptionsSigningDescription.Description,
+							MarkdownDescription: oidcOptionsSigningDescription.MarkdownDescription,
+							Optional:            true,
+
+							Attributes: map[string]schema.Attribute{
+								"key_rotation_policy_id": schema.StringAttribute{
+									Description:         oidcOptionsSigningKeyRotationPolicyIdDescription.Description,
+									MarkdownDescription: oidcOptionsSigningKeyRotationPolicyIdDescription.MarkdownDescription,
 									Required:            true,
 
 									CustomType: pingonetypes.ResourceIDType{},
@@ -2837,6 +2871,22 @@ func (p *applicationResourceModelV1) expandApplicationOIDC(ctx context.Context) 
 			}
 
 			data.SetKerberos(*management.NewApplicationOIDCAllOfKerberos(*management.NewApplicationOIDCAllOfKerberosKey(kerberosPlan.KeyId.ValueString())))
+		}
+
+		if !plan.Signing.IsNull() && !plan.Signing.IsUnknown() {
+			var signingPlan applicationOIDCSigningResourceModelV1
+
+			diags.Append(plan.Signing.As(ctx, &signingPlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			data.SetSigning(*management.NewApplicationOIDCAllOfSigning(
+				*management.NewApplicationOIDCAllOfSigningKeyRotationPolicy(signingPlan.KeyRotationPolicyId.ValueString()),
+			))
 		}
 
 		if !plan.SupportUnsignedRequestObject.IsNull() && !plan.SupportUnsignedRequestObject.IsUnknown() {

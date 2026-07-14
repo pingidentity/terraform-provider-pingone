@@ -414,6 +414,17 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 							},
 						},
 					},
+					"signing": schema.SingleNestedAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("The OIDC application token signing key settings.").Description,
+						Computed:    true,
+
+						Attributes: map[string]schema.Attribute{
+							"key_rotation_policy_id": schema.StringAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("The PingOne ID of the Key Rotation Policy used to sign application tokens.").Description,
+								Computed:    true,
+							},
+						},
+					},
 					"support_unsigned_request_object": schema.BoolAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the request query parameter JWT is allowed to be unsigned.").Description,
 						Computed:    true,
