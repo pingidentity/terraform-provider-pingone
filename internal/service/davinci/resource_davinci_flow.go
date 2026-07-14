@@ -175,6 +175,9 @@ func (m *davinciFlowResourceModel) getGraphDataElementsNodes() *types.Map {
 func (r *davinciFlowResource) isUpdateRequiredAfterCreate(plan, createResponse davinciFlowResourceModel) bool {
 	planNodes := plan.getGraphDataElementsNodes()
 	createResponseNodes := createResponse.getGraphDataElementsNodes()
+	if planNodes == nil || createResponseNodes == nil {
+		return false
+	}
 
 	// Check that the create returned all the nodes, but the content did not match the plan
 	return len(planNodes.Elements()) == len(createResponseNodes.Elements()) && !planNodes.Equal(createResponseNodes)
