@@ -1888,8 +1888,7 @@ func TestAccMFADevicePolicy_Yubikey_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "yubikey.otp.failure.cool_down.duration", "125"),
 					resource.TestCheckResourceAttr(resourceFullName, "yubikey.otp.failure.cool_down.time_unit", "SECONDS"),
 					resource.TestCheckResourceAttr(resourceFullName, "yubikey.pairing_disabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "yubikey.pairing_key_lifetime.duration", "48"),
-					resource.TestCheckResourceAttr(resourceFullName, "yubikey.pairing_key_lifetime.time_unit", "HOURS"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "yubikey.pairing_key_lifetime"),
 					resource.TestCheckResourceAttr(resourceFullName, "yubikey.prompt_for_nickname_on_pairing", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oath_token.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
@@ -1988,8 +1987,7 @@ func TestAccMFADevicePolicy_Yubikey_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "yubikey.otp.failure.cool_down.duration", "125"),
 					resource.TestCheckResourceAttr(resourceFullName, "yubikey.otp.failure.cool_down.time_unit", "SECONDS"),
 					resource.TestCheckResourceAttr(resourceFullName, "yubikey.pairing_disabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "yubikey.pairing_key_lifetime.duration", "48"),
-					resource.TestCheckResourceAttr(resourceFullName, "yubikey.pairing_key_lifetime.time_unit", "HOURS"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "yubikey.pairing_key_lifetime"),
 					resource.TestCheckResourceAttr(resourceFullName, "yubikey.prompt_for_nickname_on_pairing", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "desktop.enabled", "false"),
 				),
@@ -2017,8 +2015,7 @@ func TestAccMFADevicePolicy_Yubikey_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "yubikey.otp.failure.cool_down.duration", "125"),
 					resource.TestCheckResourceAttr(resourceFullName, "yubikey.otp.failure.cool_down.time_unit", "SECONDS"),
 					resource.TestCheckResourceAttr(resourceFullName, "yubikey.pairing_disabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "yubikey.pairing_key_lifetime.duration", "48"),
-					resource.TestCheckResourceAttr(resourceFullName, "yubikey.pairing_key_lifetime.time_unit", "HOURS"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "yubikey.pairing_key_lifetime"),
 					resource.TestCheckResourceAttr(resourceFullName, "yubikey.prompt_for_nickname_on_pairing", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "desktop.enabled", "false"),
 				),
@@ -2062,8 +2059,7 @@ func TestAccMFADevicePolicy_OathToken_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oath_token.otp.failure.cool_down.duration", "125"),
 					resource.TestCheckResourceAttr(resourceFullName, "oath_token.otp.failure.cool_down.time_unit", "SECONDS"),
 					resource.TestCheckResourceAttr(resourceFullName, "oath_token.pairing_disabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "oath_token.pairing_key_lifetime.duration", "48"),
-					resource.TestCheckResourceAttr(resourceFullName, "oath_token.pairing_key_lifetime.time_unit", "HOURS"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oath_token.pairing_key_lifetime"),
 					resource.TestCheckResourceAttr(resourceFullName, "oath_token.prompt_for_nickname_on_pairing", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
 				),
@@ -2161,8 +2157,7 @@ func TestAccMFADevicePolicy_OathToken_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oath_token.otp.failure.cool_down.duration", "125"),
 					resource.TestCheckResourceAttr(resourceFullName, "oath_token.otp.failure.cool_down.time_unit", "SECONDS"),
 					resource.TestCheckResourceAttr(resourceFullName, "oath_token.pairing_disabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "oath_token.pairing_key_lifetime.duration", "48"),
-					resource.TestCheckResourceAttr(resourceFullName, "oath_token.pairing_key_lifetime.time_unit", "HOURS"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oath_token.pairing_key_lifetime"),
 					resource.TestCheckResourceAttr(resourceFullName, "oath_token.prompt_for_nickname_on_pairing", "true"),
 				),
 			},
@@ -2188,8 +2183,7 @@ func TestAccMFADevicePolicy_OathToken_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oath_token.otp.failure.cool_down.duration", "125"),
 					resource.TestCheckResourceAttr(resourceFullName, "oath_token.otp.failure.cool_down.time_unit", "SECONDS"),
 					resource.TestCheckResourceAttr(resourceFullName, "oath_token.pairing_disabled", "true"),
-					resource.TestCheckResourceAttr(resourceFullName, "oath_token.pairing_key_lifetime.duration", "48"),
-					resource.TestCheckResourceAttr(resourceFullName, "oath_token.pairing_key_lifetime.time_unit", "HOURS"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "oath_token.pairing_key_lifetime"),
 					resource.TestCheckResourceAttr(resourceFullName, "oath_token.prompt_for_nickname_on_pairing", "true"),
 				),
 			},
@@ -2205,7 +2199,7 @@ func TestAccMFADevicePolicy_Mobile_PingID_Full(t *testing.T) {
 
 	name := resourceName
 
-	applicationFullName := fmt.Sprintf("pingone_application.%s", name)
+	applicationFullName := fmt.Sprintf("data.pingone_application.%s", name)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -2228,6 +2222,7 @@ func TestAccMFADevicePolicy_Mobile_PingID_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "mobile.applications.%", "1"),
 
+					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, applicationFullName, "mobile.applications.%s.type", "pingIdAppConfig"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, applicationFullName, "mobile.applications.%s.biometrics_enabled", "true"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, applicationFullName, "mobile.applications.%s.otp.enabled", "true"),
 					mfa.TestCheckMFADevicePolicyApplicationMapResourceAttr(resourceFullName, applicationFullName, "mobile.applications.%s.new_request_duration_configuration.device_timeout.duration", "30"),
@@ -2271,7 +2266,7 @@ func TestAccMFADevicePolicy_Mobile_PingID_AnyIPAddress(t *testing.T) {
 
 	name := resourceName
 
-	applicationFullName := fmt.Sprintf("pingone_application.%s", name)
+	applicationFullName := fmt.Sprintf("data.pingone_application.%s", name)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -4284,11 +4279,6 @@ resource "pingone_mfa_device_policy" "%[2]s" {
 
     pairing_disabled = true
 
-    pairing_key_lifetime = {
-      duration  = 48
-      time_unit = "HOURS"
-    }
-
     prompt_for_nickname_on_pairing = true
   }
 
@@ -4390,11 +4380,6 @@ resource "pingone_mfa_device_policy" "%[2]s" {
 
     pairing_disabled = true
 
-    pairing_key_lifetime = {
-      duration  = 48
-      time_unit = "HOURS"
-    }
-
     prompt_for_nickname_on_pairing = true
   }
 
@@ -4440,31 +4425,9 @@ func testAccMFADevicePolicyConfig_FullMobilePingID(resourceName, name string) st
 	return fmt.Sprintf(`
 		%[1]s
 
-resource "pingone_application" "%[2]s" {
+data "pingone_application" "%[2]s" {
   environment_id = data.pingone_environment.workforce_test.id
-  name           = "%[3]s"
-  description    = "My test OIDC app for MFA Policy"
-
-  login_page_url = "https://www.pingidentity.com"
-
-  enabled = true
-
-  oidc_options = {
-    type                       = "NATIVE_APP"
-    grant_types                = ["CLIENT_CREDENTIALS"]
-    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
-
-    mobile_app = {
-      bundle_id    = "com.%[2]s.bundle"
-      package_name = "com.%[2]s.package"
-
-      passcode_refresh_seconds = 45
-
-      integrity_detection = {
-        enabled = false
-      }
-    }
-  }
+  name           = "PingID Mobile"
 }
 
 resource "pingone_mfa_device_policy" "%[2]s" {
@@ -4489,7 +4452,9 @@ resource "pingone_mfa_device_policy" "%[2]s" {
     enabled = true
 
     applications = {
-      (pingone_application.%[2]s.id) = {
+      (data.pingone_application.%[2]s.id) = {
+
+        type = "pingIdAppConfig"
 
         biometrics_enabled = true
 
@@ -4539,31 +4504,9 @@ func testAccMFADevicePolicyConfig_MinimalMobilePingID(resourceName, name string)
 	return fmt.Sprintf(`
 		%[1]s
 
-resource "pingone_application" "%[2]s" {
+data "pingone_application" "%[2]s" {
   environment_id = data.pingone_environment.workforce_test.id
-  name           = "%[3]s"
-  description    = "My test OIDC app for MFA Policy"
-
-  login_page_url = "https://www.pingidentity.com"
-
-  enabled = true
-
-  oidc_options = {
-    type                       = "NATIVE_APP"
-    grant_types                = ["CLIENT_CREDENTIALS"]
-    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
-
-    mobile_app = {
-      bundle_id    = "com.%[2]s.bundle"
-      package_name = "com.%[2]s.package"
-
-      passcode_refresh_seconds = 45
-
-      integrity_detection = {
-        enabled = false
-      }
-    }
-  }
+  name           = "PingID Mobile"
 }
 
 resource "pingone_mfa_device_policy" "%[2]s" {
@@ -4588,7 +4531,9 @@ resource "pingone_mfa_device_policy" "%[2]s" {
     enabled = true
 
     applications = {
-      (pingone_application.%[2]s.id) = {
+      (data.pingone_application.%[2]s.id) = {
+
+        type = "pingIdAppConfig"
 
         otp = {
           enabled = true

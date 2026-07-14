@@ -35,6 +35,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/objectvalidator"
 	setvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/setvalidator"
+	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -104,6 +105,14 @@ type MFADevicePolicyOfflineDeviceResourceModel struct {
 	PromptForNicknameOnPairing types.Bool   `tfsdk:"prompt_for_nickname_on_pairing"`
 }
 
+// Yubikey and OathToken do not support pairing_key_lifetime - the API only honors that field for the desktop device type.
+type MFADevicePolicyYubikeyOathTokenResourceModel struct {
+	Enabled                    types.Bool   `tfsdk:"enabled"`
+	Otp                        types.Object `tfsdk:"otp"`
+	PairingDisabled            types.Bool   `tfsdk:"pairing_disabled"`
+	PromptForNicknameOnPairing types.Bool   `tfsdk:"prompt_for_nickname_on_pairing"`
+}
+
 type MFADevicePolicyOfflineDeviceOtpResourceModel struct {
 	Failure   types.Object `tfsdk:"failure"`
 	Lifetime  types.Object `tfsdk:"lifetime"`
@@ -156,6 +165,7 @@ type MFADevicePolicyMobileApplicationResourceModel struct {
 	PushLimit                       types.Object `tfsdk:"push_limit"`
 	PushTimeout                     types.Object `tfsdk:"push_timeout"`
 	NewRequestDurationConfiguration types.Object `tfsdk:"new_request_duration_configuration"`
+	Type                            types.String `tfsdk:"type"`
 }
 
 type MFADevicePolicyMobileApplicationAutoEnrolmentResourceModel struct {
@@ -191,6 +201,14 @@ var (
 	MFADevicePolicyOfflineDeviceTFObjectTypes = map[string]attr.Type{
 		"enabled":                        types.BoolType,
 		"otp":                            types.ObjectType{AttrTypes: MFADevicePolicyOfflineDeviceOtpTFObjectTypes},
+		"pairing_disabled":               types.BoolType,
+		"prompt_for_nickname_on_pairing": types.BoolType,
+	}
+
+	// Yubikey and OathToken do not support pairing_key_lifetime - the API only honors that field for the desktop device type.
+	MFADevicePolicyYubikeyOathTokenTFObjectTypes = map[string]attr.Type{
+		"enabled":                        types.BoolType,
+		"otp":                            types.ObjectType{AttrTypes: MFADevicePolicyCommonDeviceOtpTFObjectTypes},
 		"pairing_disabled":               types.BoolType,
 		"prompt_for_nickname_on_pairing": types.BoolType,
 	}
@@ -231,6 +249,7 @@ var (
 		"push_limit":                         types.ObjectType{AttrTypes: MFADevicePolicyMobileApplicationPushLimitTFObjectTypes},
 		"push_timeout":                       types.ObjectType{AttrTypes: MFADevicePolicyTimePeriodTFObjectTypes},
 		"new_request_duration_configuration": types.ObjectType{AttrTypes: MFADevicePolicyMobileApplicationNewRequestDurationConfigurationTFObjectTypes},
+		"type":                               types.StringType,
 	}
 
 	MFADevicePolicyMobileApplicationAutoEnrolmentTFObjectTypes = map[string]attr.Type{
@@ -388,7 +407,7 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 
 	// Default values for oath_token
 	oathTokenDefault := types.ObjectValueMust(
-		MFADevicePolicyCommonDeviceTFObjectTypes,
+		MFADevicePolicyYubikeyOathTokenTFObjectTypes,
 		map[string]attr.Value{
 			"enabled": types.BoolValue(false),
 			"otp": types.ObjectValueMust(
@@ -410,7 +429,6 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 				},
 			),
 			"pairing_disabled":               types.BoolValue(false),
-			"pairing_key_lifetime":           types.ObjectNull(MFADevicePolicyTimePeriodTFObjectTypes),
 			"prompt_for_nickname_on_pairing": types.BoolValue(false),
 		},
 	)
@@ -451,6 +469,10 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 
 	mobileApplicationsNewRequestDurationConfigurationTimeoutDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An integer that specifies the timeout duration in seconds.",
+	)
+
+	mobileApplicationsTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A string that specifies the application type. Only applicable when `policy_type` is `%s`. Must be set to `pingIdAppConfig`.", POLICY_TYPE_PINGID),
 	)
 
 	desktopDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -525,14 +547,6 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 		"A boolean that, when set to `true`, prevents users from pairing new Yubikey devices.",
 	)
 
-	yubikeyPairingKeyLifetimeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A single object that specifies pairing key lifetime settings for Yubikey devices.",
-	)
-
-	yubikeyPairingKeyLifetimeDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("An integer that defines the amount of time an issued pairing key can be used until it expires. Must be between %d minutes and %d hours.", pingidDevicePairingKeyLifetimeDurationMinMinutes, pingidDevicePairingKeyLifetimeDurationMaxHours),
-	)
-
 	oathTokenDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A single object that allows configuration of OATH token device authentication policy settings.",
 	)
@@ -565,13 +579,6 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 		"A boolean that, when set to `true`, prevents users from pairing new OATH token devices.",
 	)
 
-	oathTokenPairingKeyLifetimeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A single object that specifies pairing key lifetime settings for OATH token devices.",
-	)
-
-	oathTokenPairingKeyLifetimeDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("An integer that defines the amount of time an issued pairing key can be used until it expires. Must be between `%d` minutes and `%d` hours.", pingidDevicePairingKeyLifetimeDurationMinMinutes, pingidDevicePairingKeyLifetimeDurationMaxHours),
-	)
 	deviceSelectionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that defines the device selection method.",
 	).AllowedValuesEnum(mfa.AllowedEnumMFADevicePolicySelectionEnumValues).DefaultValue(string(mfa.ENUMMFADEVICEPOLICYSELECTION_DEFAULT_TO_FIRST))
@@ -1438,6 +1445,23 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 									},
 								},
 
+								"type": schema.StringAttribute{
+									Description:         mobileApplicationsTypeDescription.Description,
+									MarkdownDescription: mobileApplicationsTypeDescription.MarkdownDescription,
+									Optional:            true,
+
+									Validators: []validator.String{
+										stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+											types.StringValue(POLICY_TYPE_PINGID),
+											path.MatchRoot("policy_type"),
+										),
+										stringvalidatorinternal.ConflictsIfMatchesPathValue(
+											types.StringValue(POLICY_TYPE_PINGONE_MFA),
+											path.MatchRoot("policy_type"),
+										),
+									},
+								},
+
 								"ip_pairing_configuration": schema.SingleNestedAttribute{
 									Description:         mobileIpPairingConfigurationDescription.Description,
 									MarkdownDescription: mobileIpPairingConfigurationDescription.MarkdownDescription,
@@ -2090,51 +2114,6 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 						Default: booldefault.StaticBool(false),
 					},
 
-					"pairing_key_lifetime": schema.SingleNestedAttribute{
-						Description:         yubikeyPairingKeyLifetimeDescription.Description,
-						MarkdownDescription: yubikeyPairingKeyLifetimeDescription.MarkdownDescription,
-						Optional:            true,
-
-						Attributes: map[string]schema.Attribute{
-							"duration": schema.Int32Attribute{
-								Description:         yubikeyPairingKeyLifetimeDurationDescription.Description,
-								MarkdownDescription: yubikeyPairingKeyLifetimeDurationDescription.MarkdownDescription,
-								Required:            true,
-
-								Validators: []validator.Int32{
-									int32validator.Any(
-										int32validator.All(
-											int32validator.Between(pingidDevicePairingKeyLifetimeDurationMinMinutes, pingidDevicePairingKeyLifetimeDurationMaxMinutes),
-											int32validatorinternal.RegexMatchesPathValue(
-												regexp.MustCompile(`MINUTES`),
-												fmt.Sprintf("If `time_unit` is `MINUTES`, the allowed duration range is %d - %d.", pingidDevicePairingKeyLifetimeDurationMinMinutes, pingidDevicePairingKeyLifetimeDurationMaxMinutes),
-												path.MatchRelative().AtParent().AtName("time_unit"),
-											),
-										),
-										int32validator.All(
-											int32validator.Between(pingidDevicePairingKeyLifetimeDurationMinHours, pingidDevicePairingKeyLifetimeDurationMaxHours),
-											int32validatorinternal.RegexMatchesPathValue(
-												regexp.MustCompile(`HOURS`),
-												fmt.Sprintf("If `time_unit` is `HOURS`, the allowed duration range is %d - %d.", pingidDevicePairingKeyLifetimeDurationMinHours, pingidDevicePairingKeyLifetimeDurationMaxHours),
-												path.MatchRelative().AtParent().AtName("time_unit"),
-											),
-										),
-									),
-								},
-							},
-
-							"time_unit": schema.StringAttribute{
-								Description:         mobileApplicationsPairingKeyLifetimeTimeUnitDescription.Description,
-								MarkdownDescription: mobileApplicationsPairingKeyLifetimeTimeUnitDescription.MarkdownDescription,
-								Required:            true,
-
-								Validators: []validator.String{
-									stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumTimeUnitPairingKeyLifetimeEnumValues)...),
-								},
-							},
-						},
-					},
-
 					"prompt_for_nickname_on_pairing": schema.BoolAttribute{
 						Description:         promptForNicknameOnPairingDescription.Description,
 						MarkdownDescription: promptForNicknameOnPairingDescription.MarkdownDescription,
@@ -2259,51 +2238,6 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 						Computed:            true,
 
 						Default: booldefault.StaticBool(false),
-					},
-
-					"pairing_key_lifetime": schema.SingleNestedAttribute{
-						Description:         oathTokenPairingKeyLifetimeDescription.Description,
-						MarkdownDescription: oathTokenPairingKeyLifetimeDescription.MarkdownDescription,
-						Optional:            true,
-
-						Attributes: map[string]schema.Attribute{
-							"duration": schema.Int32Attribute{
-								Description:         oathTokenPairingKeyLifetimeDurationDescription.Description,
-								MarkdownDescription: oathTokenPairingKeyLifetimeDurationDescription.MarkdownDescription,
-								Required:            true,
-
-								Validators: []validator.Int32{
-									int32validator.Any(
-										int32validator.All(
-											int32validator.Between(pingidDevicePairingKeyLifetimeDurationMinMinutes, pingidDevicePairingKeyLifetimeDurationMaxMinutes),
-											int32validatorinternal.RegexMatchesPathValue(
-												regexp.MustCompile(`MINUTES`),
-												fmt.Sprintf("If `time_unit` is `MINUTES`, the allowed duration range is %d - %d.", pingidDevicePairingKeyLifetimeDurationMinMinutes, pingidDevicePairingKeyLifetimeDurationMaxMinutes),
-												path.MatchRelative().AtParent().AtName("time_unit"),
-											),
-										),
-										int32validator.All(
-											int32validator.Between(pingidDevicePairingKeyLifetimeDurationMinHours, pingidDevicePairingKeyLifetimeDurationMaxHours),
-											int32validatorinternal.RegexMatchesPathValue(
-												regexp.MustCompile(`HOURS`),
-												fmt.Sprintf("If `time_unit` is `HOURS`, the allowed duration range is %d - %d.", pingidDevicePairingKeyLifetimeDurationMinHours, pingidDevicePairingKeyLifetimeDurationMaxHours),
-												path.MatchRelative().AtParent().AtName("time_unit"),
-											),
-										),
-									),
-								},
-							},
-
-							"time_unit": schema.StringAttribute{
-								Description:         mobileApplicationsPairingKeyLifetimeTimeUnitDescription.Description,
-								MarkdownDescription: mobileApplicationsPairingKeyLifetimeTimeUnitDescription.MarkdownDescription,
-								Required:            true,
-
-								Validators: []validator.String{
-									stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumTimeUnitPairingKeyLifetimeEnumValues)...),
-								},
-							},
-						},
 					},
 
 					"prompt_for_nickname_on_pairing": schema.BoolAttribute{
@@ -3038,7 +2972,7 @@ func (p *MFADevicePolicyResourceModel) expand(ctx context.Context, apiClient *ma
 
 		// Yubikey - only for PingID
 		if !p.Yubikey.IsNull() && !p.Yubikey.IsUnknown() {
-			var yubikeyPlan MFADevicePolicyYubikeyResourceModel
+			var yubikeyPlan MFADevicePolicyYubikeyOathTokenResourceModel
 			diags.Append(p.Yubikey.As(ctx, &yubikeyPlan, basetypes.ObjectAsOptions{
 				UnhandledNullAsEmpty:    false,
 				UnhandledUnknownAsEmpty: false,
@@ -3047,7 +2981,7 @@ func (p *MFADevicePolicyResourceModel) expand(ctx context.Context, apiClient *ma
 				return nil, diags
 			}
 
-			yubikey, d := yubikeyPlan.expand(ctx)
+			yubikey, d := yubikeyPlan.expandPingIDDevice(ctx)
 			diags.Append(d...)
 			if diags.HasError() {
 				return nil, diags
@@ -3059,7 +2993,7 @@ func (p *MFADevicePolicyResourceModel) expand(ctx context.Context, apiClient *ma
 
 	// OathToken - both policy types (not gated on policy_type)
 	if !p.OathToken.IsNull() && !p.OathToken.IsUnknown() {
-		var oathTokenPlan MFADevicePolicyOathTokenResourceModel
+		var oathTokenPlan MFADevicePolicyYubikeyOathTokenResourceModel
 		diags.Append(p.OathToken.As(ctx, &oathTokenPlan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
@@ -3068,7 +3002,7 @@ func (p *MFADevicePolicyResourceModel) expand(ctx context.Context, apiClient *ma
 			return nil, diags
 		}
 
-		oathToken, d := oathTokenPlan.expand(ctx)
+		oathToken, d := oathTokenPlan.expandOathToken(ctx)
 		diags.Append(d...)
 		if diags.HasError() {
 			return nil, diags
@@ -3204,6 +3138,78 @@ func (p *MFADevicePolicyEmailResourceModel) expand(ctx context.Context) (*mfa.De
 func (p *MFADevicePolicyWhatsAppResourceModel) expand(ctx context.Context) (*mfa.DeviceAuthenticationPolicyOfflineDevice, diag.Diagnostics) {
 	data := MFADevicePolicyOfflineDeviceResourceModel(*p)
 	return data.expand(ctx)
+}
+
+// Yubikey does not support pairing_key_lifetime - the API only honors that field for the desktop device type.
+func (p *MFADevicePolicyYubikeyOathTokenResourceModel) expandPingIDDevice(ctx context.Context) (*mfa.DeviceAuthenticationPolicyPingIDDevice, diag.Diagnostics) {
+	var diags, d diag.Diagnostics
+
+	// OTP
+	var otpPlan MFADevicePolicyCommonDeviceOtpResourceModel
+	diags.Append(p.Otp.As(ctx, &otpPlan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: false,
+	})...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	otp, d := otpPlan.expand(ctx)
+	diags.Append(d...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	data := mfa.NewDeviceAuthenticationPolicyPingIDDevice(
+		p.Enabled.ValueBool(),
+		*otp,
+	)
+
+	if !p.PairingDisabled.IsNull() && !p.PairingDisabled.IsUnknown() {
+		data.SetPairingDisabled(p.PairingDisabled.ValueBool())
+	}
+
+	if !p.PromptForNicknameOnPairing.IsNull() && !p.PromptForNicknameOnPairing.IsUnknown() {
+		data.SetPromptForNicknameOnPairing(p.PromptForNicknameOnPairing.ValueBool())
+	}
+
+	return data, diags
+}
+
+// OathToken does not support pairing_key_lifetime - the API only honors that field for the desktop device type.
+func (p *MFADevicePolicyYubikeyOathTokenResourceModel) expandOathToken(ctx context.Context) (*mfa.DeviceAuthenticationPolicyOathToken, diag.Diagnostics) {
+	var diags, d diag.Diagnostics
+
+	// OTP
+	var otpPlan MFADevicePolicyCommonDeviceOtpResourceModel
+	diags.Append(p.Otp.As(ctx, &otpPlan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: false,
+	})...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	otp, d := otpPlan.expand(ctx)
+	diags.Append(d...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	data := mfa.NewDeviceAuthenticationPolicyOathToken(
+		p.Enabled.ValueBool(),
+		*otp,
+	)
+
+	if !p.PairingDisabled.IsNull() && !p.PairingDisabled.IsUnknown() {
+		data.SetPairingDisabled(p.PairingDisabled.ValueBool())
+	}
+
+	if !p.PromptForNicknameOnPairing.IsNull() && !p.PromptForNicknameOnPairing.IsUnknown() {
+		data.SetPromptForNicknameOnPairing(p.PromptForNicknameOnPairing.ValueBool())
+	}
+
+	return data, diags
 }
 
 func (p *MFADevicePolicyOfflineDeviceResourceModel) expand(ctx context.Context) (*mfa.DeviceAuthenticationPolicyOfflineDevice, diag.Diagnostics) {
@@ -3584,6 +3590,11 @@ func (p *MFADevicePolicyMobileApplicationResourceModel) expand(ctx context.Conte
 
 	// PingID-only mobile-application fields - only for PingID
 	if policyType == POLICY_TYPE_PINGID {
+		// Type - must be sent so the API returns the PingID-specific fields below
+		if !p.Type.IsNull() && !p.Type.IsUnknown() {
+			data.SetType(mfa.EnumPingIDApplicationType(p.Type.ValueString()))
+		}
+
 		// Biometrics Enabled
 		if !p.BiometricsEnabled.IsNull() && !p.BiometricsEnabled.IsUnknown() {
 			data.SetBiometricsEnabled(p.BiometricsEnabled.ValueBool())
@@ -3893,18 +3904,64 @@ func (p *MFADevicePolicyResourceModel) toState(apiObject *mfa.DeviceAuthenticati
 		p.Desktop, d = toStateMfaDevicePolicyPingIDDevice(apiObject.GetDesktopOk())
 		diags.Append(d...)
 
-		p.Yubikey, d = toStateMfaDevicePolicyPingIDDevice(apiObject.GetYubikeyOk())
+		p.Yubikey, d = toStateMfaDevicePolicyYubikey(apiObject.GetYubikeyOk())
 		diags.Append(d...)
 	} else {
 		p.Desktop = types.ObjectNull(MFADevicePolicyCommonDeviceTFObjectTypes)
-		p.Yubikey = types.ObjectNull(MFADevicePolicyCommonDeviceTFObjectTypes)
+		p.Yubikey = types.ObjectNull(MFADevicePolicyYubikeyOathTokenTFObjectTypes)
 	}
 
 	// OathToken - both policy types (not gated on policy_type)
-	p.OathToken, d = toStateMfaDevicePolicyOathToken(apiObject.GetOathTokenOk())
+	p.OathToken, d = toStateMfaDevicePolicyOathTokenNoLifetime(apiObject.GetOathTokenOk())
 	diags.Append(d...)
 
 	return diags
+}
+
+// Yubikey does not support pairing_key_lifetime - the API only honors that field for the desktop device type.
+func toStateMfaDevicePolicyYubikey(apiObject *mfa.DeviceAuthenticationPolicyPingIDDevice, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	tfObjType := types.ObjectType{AttrTypes: MFADevicePolicyYubikeyOathTokenTFObjectTypes}
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(tfObjType.AttrTypes), diags
+	}
+
+	otp, d := toStateMfaDevicePolicyPingIDDeviceOtp(apiObject.GetOtpOk())
+	diags.Append(d...)
+
+	objValue, d := types.ObjectValue(MFADevicePolicyYubikeyOathTokenTFObjectTypes, map[string]attr.Value{
+		"enabled":                        framework.BoolOkToTF(apiObject.GetEnabledOk()),
+		"otp":                            otp,
+		"pairing_disabled":               framework.BoolOkToTF(apiObject.GetPairingDisabledOk()),
+		"prompt_for_nickname_on_pairing": framework.BoolOkToTF(apiObject.GetPromptForNicknameOnPairingOk()),
+	})
+	diags.Append(d...)
+
+	return objValue, diags
+}
+
+// OathToken does not support pairing_key_lifetime - the API only honors that field for the desktop device type.
+func toStateMfaDevicePolicyOathTokenNoLifetime(apiObject *mfa.DeviceAuthenticationPolicyOathToken, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	tfObjType := types.ObjectType{AttrTypes: MFADevicePolicyYubikeyOathTokenTFObjectTypes}
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(tfObjType.AttrTypes), diags
+	}
+
+	otp, d := toStateMfaDevicePolicyPingIDDeviceOtp(apiObject.GetOtpOk())
+	diags.Append(d...)
+
+	objValue, d := types.ObjectValue(MFADevicePolicyYubikeyOathTokenTFObjectTypes, map[string]attr.Value{
+		"enabled":                        framework.BoolOkToTF(apiObject.GetEnabledOk()),
+		"otp":                            otp,
+		"pairing_disabled":               framework.BoolOkToTF(apiObject.GetPairingDisabledOk()),
+		"prompt_for_nickname_on_pairing": framework.BoolOkToTF(apiObject.GetPromptForNicknameOnPairingOk()),
+	})
+	diags.Append(d...)
+
+	return objValue, diags
 }
 
 func (p *MFADevicePolicyResourceModel) toStateCreate(apiObject *mfa.DeviceAuthenticationPolicyPostResponse) diag.Diagnostics {
@@ -4126,16 +4183,24 @@ func toStateMfaDevicePolicyMobileApplications(apiObject []mfa.DeviceAuthenticati
 	objectList := map[string]attr.Value{}
 	for _, application := range apiObject {
 
-		autoEnrolment, d := toStateMfaDevicePolicyMobileApplicationsAutoEnrolment(application.GetAutoEnrollmentOk())
-		diags.Append(d...)
-		if diags.HasError() {
-			return types.MapNull(tfObjType), diags
-		}
+		// auto_enrollment and device_authorization conflict with PingID - keep them null
+		var autoEnrolment types.Object
+		var deviceAuthorization types.Object
+		if isPingID {
+			autoEnrolment = types.ObjectNull(MFADevicePolicyMobileApplicationAutoEnrolmentTFObjectTypes)
+			deviceAuthorization = types.ObjectNull(MFADevicePolicyMobileApplicationDeviceAuthorizationTFObjectTypes)
+		} else {
+			autoEnrolment, d = toStateMfaDevicePolicyMobileApplicationsAutoEnrolment(application.GetAutoEnrollmentOk())
+			diags.Append(d...)
+			if diags.HasError() {
+				return types.MapNull(tfObjType), diags
+			}
 
-		deviceAuthorization, d := toStateMfaDevicePolicyMobileApplicationsDeviceAuthorization(application.GetDeviceAuthorizationOk())
-		diags.Append(d...)
-		if diags.HasError() {
-			return types.MapNull(tfObjType), diags
+			deviceAuthorization, d = toStateMfaDevicePolicyMobileApplicationsDeviceAuthorization(application.GetDeviceAuthorizationOk())
+			diags.Append(d...)
+			if diags.HasError() {
+				return types.MapNull(tfObjType), diags
+			}
 		}
 
 		otp, d := toStateMfaDevicePolicyMobileApplicationsOtp(application.GetOtpOk())
@@ -4162,19 +4227,16 @@ func toStateMfaDevicePolicyMobileApplications(apiObject []mfa.DeviceAuthenticati
 			return types.MapNull(tfObjType), diags
 		}
 
-		pushTimeout, d := toStateMfaDevicePolicyMobileApplicationsPushTimeout(application.GetPushTimeoutOk())
-		diags.Append(d...)
-		if diags.HasError() {
-			return types.MapNull(tfObjType), diags
-		}
-
 		// PingID-only mobile-application fields - populated for PingID, null for PingOne MFA
 		var biometricsEnabled types.Bool
 		var newRequestDurationConfiguration types.Object
 		var ipPairingConfiguration types.Object
+		var typeAttr types.String
+		var pushTimeout types.Object
 
 		if isPingID {
 			biometricsEnabled = framework.BoolOkToTF(application.GetBiometricsEnabledOk())
+			typeAttr = framework.EnumOkToTF(application.GetTypeOk())
 
 			newRequestDurationConfiguration, d = toStateMfaDevicePolicyMobileApplicationsNewRequestDurationConfiguration(application.GetNewRequestDurationConfigurationOk())
 			diags.Append(d...)
@@ -4187,10 +4249,20 @@ func toStateMfaDevicePolicyMobileApplications(apiObject []mfa.DeviceAuthenticati
 			if diags.HasError() {
 				return types.MapNull(tfObjType), diags
 			}
+
+			// push_timeout conflicts with PingID - keep it null
+			pushTimeout = types.ObjectNull(MFADevicePolicyTimePeriodTFObjectTypes)
 		} else {
 			biometricsEnabled = types.BoolNull()
+			typeAttr = types.StringNull()
 			newRequestDurationConfiguration = types.ObjectNull(MFADevicePolicyMobileApplicationNewRequestDurationConfigurationTFObjectTypes)
 			ipPairingConfiguration = types.ObjectNull(MFADevicePolicyMobileIpPairingConfigurationTFObjectTypes)
+
+			pushTimeout, d = toStateMfaDevicePolicyMobileApplicationsPushTimeout(application.GetPushTimeoutOk())
+			diags.Append(d...)
+			if diags.HasError() {
+				return types.MapNull(tfObjType), diags
+			}
 		}
 
 		o := map[string]attr.Value{
@@ -4198,6 +4270,7 @@ func toStateMfaDevicePolicyMobileApplications(apiObject []mfa.DeviceAuthenticati
 			"biometrics_enabled":                 biometricsEnabled,
 			"device_authorization":               deviceAuthorization,
 			"integrity_detection":                framework.EnumOkToTF(application.GetIntegrityDetectionOk()),
+			"type":                               typeAttr,
 			"ip_pairing_configuration":           ipPairingConfiguration,
 			"otp":                                otp,
 			"pairing_disabled":                   framework.BoolOkToTF(application.GetPairingDisabledOk()),
