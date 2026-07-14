@@ -2381,6 +2381,7 @@ func (p *applicationResourceModelV1) validate(ctx context.Context, allowUnknown 
 
 	if oidcPlan != nil {
 		diags.Append(oidcPlan.validateCertificateBasedAuthentication(allowUnknown)...)
+		diags.Append(oidcPlan.validateSigning(allowUnknown)...)
 		diags.Append(oidcPlan.validateWildcardInRedirectUri(ctx, allowUnknown)...)
 	}
 
@@ -2418,6 +2419,51 @@ func (p *applicationOIDCOptionsResourceModelV1) validateCertificateBasedAuthenti
 				path.Root("oidc_options").AtName("certificate_based_authentication"),
 				"Invalid configuration",
 				fmt.Sprintf("`certificate_based_authentication` can only be set with OIDC applications that have a `type` value of `%s`.", management.ENUMAPPLICATIONTYPE_NATIVE_APP),
+			)
+		}
+	}
+
+	return diags
+}
+
+func (p *applicationOIDCOptionsResourceModelV1) validateSigning(allowUnknown bool) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	if p.Signing.IsUnknown() && !allowUnknown {
+		diags.AddAttributeError(
+			path.Root("oidc_options").AtName("signing"),
+			"Invalid configuration",
+			"Current configuration is invalid as the `oidc_options.signing` value is unknown, cannot validate.",
+		)
+	}
+
+	allowedTypes := []management.EnumApplicationType{
+		management.ENUMAPPLICATIONTYPE_WORKER,
+		management.ENUMAPPLICATIONTYPE_WEB_APP,
+		management.ENUMAPPLICATIONTYPE_NATIVE_APP,
+		management.ENUMAPPLICATIONTYPE_SINGLE_PAGE_APP,
+		management.ENUMAPPLICATIONTYPE_CUSTOM_APP,
+	}
+
+	if !p.Signing.IsNull() && !p.Signing.IsUnknown() {
+		typeAllowed := false
+		for _, allowedType := range allowedTypes {
+			if p.Type.Equal(types.StringValue(string(allowedType))) {
+				typeAllowed = true
+				break
+			}
+		}
+
+		if !typeAllowed {
+			allowedStrs := make([]string, len(allowedTypes))
+			for i, allowedType := range allowedTypes {
+				allowedStrs[i] = fmt.Sprintf("`%s`", string(allowedType))
+			}
+
+			diags.AddAttributeError(
+				path.Root("oidc_options").AtName("signing"),
+				"Invalid configuration",
+				fmt.Sprintf("`signing` can only be set with OIDC applications that have a `type` value of one of %s.", strings.Join(allowedStrs, ", ")),
 			)
 		}
 	}
