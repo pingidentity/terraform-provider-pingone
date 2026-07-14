@@ -702,8 +702,8 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 	).AllowedValuesEnum(mfa.AllowedEnumTimeUnitPairingKeyLifetimeEnumValues)
 
 	durationTimeUnitSecondsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("A string that specifies the type of time unit for `duration`. Currently, the only permitted value is `%s`.", mfa.ENUMTIMEUNIT_SECONDS),
-	).DefaultValue(string(mfa.ENUMTIMEUNIT_SECONDS))
+		"A string that specifies the type of time unit for `duration`.",
+	).DefaultValue(string(mfa.ENUMTIMEUNIT_SECONDS)).AllowedValues(string(mfa.ENUMTIMEUNIT_SECONDS))
 
 	totpPairingDisabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that, when set to `true`, prevents users from pairing new devices with the TOTP method, though keeping it active in the policy for existing users. You can use this option if you want to phase out an existing authentication method but want to allow users to continue using the method for authentication for existing devices.",
