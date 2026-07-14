@@ -1,3 +1,0 @@
-```release-note:bug
-`resource/pingone_application`: Fixed an issue where updating an OIDC application reset its signing key rotation policy to the PingOne default key. Added the `oidc_options.signing.key_rotation_policy_id` attribute to configure and preserve the signing key rotation policy.
-```

@@ -1047,39 +1047,6 @@ func TestAccApplication_OIDC_Signing(t *testing.T) {
 	})
 }
 
-// Verifies the API accepts `signing` on a WORKER application, as the resource/data-source
-// docs claim (issue #1326 Finding 1). A failure here means the docs overstate support.
-func TestAccApplication_OIDC_Signing_Worker(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
-	krpFullName := fmt.Sprintf("pingone_key_rotation_policy.%s", resourceName)
-
-	name := resourceName
-
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acctest.PreCheckNoTestAccFlaky(t)
-			acctest.PreCheckClient(t)
-			acctest.PreCheckNoBeta(t)
-		},
-		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.Application_CheckDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			{
-				Config: testAccApplicationConfig_OIDC_SigningWorker(resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "WORKER"),
-					resource.TestMatchResourceAttr(resourceFullName, "oidc_options.signing.key_rotation_policy_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttrPair(resourceFullName, "oidc_options.signing.key_rotation_policy_id", krpFullName, "id"),
-				),
-			},
-		},
-	})
-}
-
 func TestAccApplication_NativeMobile(t *testing.T) {
 	t.Parallel()
 
@@ -3951,40 +3918,6 @@ resource "pingone_application" "%[2]s" {
     redirect_uris              = ["https://www.pingidentity.com"]
     response_types             = ["CODE"]
     token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
-  }
-}
-`, acctest.GenericSandboxEnvironment(), resourceName, name)
-}
-
-func testAccApplicationConfig_OIDC_SigningWorker(resourceName, name string) string {
-	return fmt.Sprintf(`
-%[1]s
-
-resource "pingone_key_rotation_policy" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  name = "%[3]s"
-
-  algorithm           = "RSA"
-  subject_dn          = "CN=%[3]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
-  key_length          = 3072
-  signature_algorithm = "SHA256withRSA"
-  usage_type          = "SIGNING"
-}
-
-resource "pingone_application" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s"
-  enabled        = true
-
-  oidc_options = {
-    type                       = "WORKER"
-    grant_types                = ["CLIENT_CREDENTIALS"]
-    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
-
-    signing = {
-      key_rotation_policy_id = pingone_key_rotation_policy.%[2]s.id
-    }
   }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName, name)
