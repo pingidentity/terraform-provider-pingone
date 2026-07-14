@@ -236,6 +236,7 @@ func applicationMobileAppOkToTF(ctx context.Context, apiObject *management.Appli
 		"huawei_package_name":      framework.StringOkToTF(apiObject.GetHuaweiPackageNameOk()),
 		"integrity_detection":      integrityDetection,
 		"package_name":             framework.StringOkToTF(apiObject.GetPackageNameOk()),
+		"passcode_grace_period":    framework.Int32OkToTF(apiObject.GetPasscodeGracePeriodOk()),
 		"passcode_refresh_seconds": types.Int32Null(),
 		"universal_app_link":       framework.StringOkToTF(apiObject.GetUriPrefixOk()),
 	}

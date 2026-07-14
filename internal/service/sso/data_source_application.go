@@ -445,6 +445,10 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 								Description: framework.SchemaAttributeDescriptionFromMarkdown("The package name associated with the application, for push notifications in native apps.").Description,
 								Computed:    true,
 							},
+							"passcode_grace_period": schema.Int32Attribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("To cover time synchronization issues, you can use this property to customize the grace period during which the passcode can still be used even after the passcode has been refreshed. The value of the parameter should be the number of windows to use (min `1`, max `10`). In this context, a window is equal to the passcode refresh period in either direction. For example, if you defined a passcode refresh duration of 30 seconds and a grace period of 2 windows, the passcode is valid for 150 seconds (from 60 seconds behind the time of issue until 60 seconds past the expiration time).").Description,
+								Computed:    true,
+							},
 							"passcode_refresh_seconds": schema.Int32Attribute{
 								Description: framework.SchemaAttributeDescriptionFromMarkdown("The amount of time a passcode should be displayed before being replaced with a new passcode.").Description,
 								Computed:    true,
