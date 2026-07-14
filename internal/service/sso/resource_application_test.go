@@ -527,6 +527,7 @@ func TestAccApplication_OIDCFullNative(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.package_name", fmt.Sprintf("com.%s.package", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.huawei_app_id", resourceName),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.huawei_package_name", fmt.Sprintf("com.%s.huaweipackage", resourceName)),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.passcode_grace_period", "3"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.passcode_refresh_seconds", "45"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.universal_app_link", "https://applink.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.enabled", "true"),
@@ -626,6 +627,7 @@ func TestAccApplication_OIDCMinimalNative(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app.universal_app_link"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.excluded_platforms.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.passcode_grace_period", "5"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.passcode_refresh_seconds", "30"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "external_link_options"),
@@ -704,6 +706,7 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.package_name", fmt.Sprintf("com.%s.package", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.huawei_app_id", resourceName),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.huawei_package_name", fmt.Sprintf("com.%s.huaweipackage", resourceName)),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.passcode_grace_period", "3"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.passcode_refresh_seconds", "45"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.universal_app_link", "https://applink.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.enabled", "true"),
@@ -760,6 +763,7 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app.universal_app_link"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.excluded_platforms.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.passcode_grace_period", "5"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.passcode_refresh_seconds", "30"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "external_link_options"),
@@ -810,6 +814,7 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.package_name", fmt.Sprintf("com.%s.package", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.huawei_app_id", resourceName),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.huawei_package_name", fmt.Sprintf("com.%s.huaweipackage", resourceName)),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.passcode_grace_period", "3"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.passcode_refresh_seconds", "45"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.universal_app_link", "https://applink.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.enabled", "true"),
@@ -980,6 +985,7 @@ func TestAccApplication_NativeMobile(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.package_name", fmt.Sprintf("com.%s.package", resourceName)),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.huawei_app_id", resourceName),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.huawei_package_name", fmt.Sprintf("com.%s.huaweipackage", resourceName)),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.passcode_grace_period", "3"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.passcode_refresh_seconds", "45"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.universal_app_link", "https://applink.com"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.enabled", "true"),
@@ -1000,6 +1006,7 @@ func TestAccApplication_NativeMobile(t *testing.T) {
 			resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app.package_name"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app.huawei_app_id"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app.huawei_package_name"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.passcode_grace_period", "5"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.passcode_refresh_seconds", "30"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app.universal_app_link"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.enabled", "false"),
@@ -1016,6 +1023,7 @@ func TestAccApplication_NativeMobile(t *testing.T) {
 			resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app.universal_app_link"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.enabled", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.excluded_platforms.#", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.passcode_grace_period", "5"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.passcode_refresh_seconds", "30"),
 		),
 	}
@@ -3869,6 +3877,7 @@ resource "pingone_application" "%[2]s" {
       huawei_app_id       = "%[2]s"
       huawei_package_name = "com.%[2]s.huaweipackage"
 
+      passcode_grace_period    = 3
       passcode_refresh_seconds = 45
 
       universal_app_link = "https://applink.com"
@@ -4077,6 +4086,7 @@ resource "pingone_application" "%[2]s" {
       huawei_app_id       = "%[2]s"
       huawei_package_name = "com.%[2]s.huaweipackage"
 
+      passcode_grace_period    = 3
       passcode_refresh_seconds = 45
 
       universal_app_link = "https://applink.com"
@@ -4143,6 +4153,7 @@ resource "pingone_application" "%[2]s" {
       huawei_app_id       = "%[2]s"
       huawei_package_name = "com.%[2]s.huaweipackage"
 
+      passcode_grace_period    = 3
       passcode_refresh_seconds = 45
 
       universal_app_link = "https://applink.com"
@@ -4189,6 +4200,7 @@ resource "pingone_application" "%[2]s" {
       huawei_app_id       = "%[2]s"
       huawei_package_name = "com.%[2]s.huaweipackage"
 
+      passcode_grace_period    = 3
       passcode_refresh_seconds = 45
 
       universal_app_link = "https://applink.com"
@@ -4231,6 +4243,7 @@ resource "pingone_application" "%[2]s" {
       huawei_app_id       = "%[2]s"
       huawei_package_name = "com.%[2]s.huaweipackage"
 
+      passcode_grace_period    = 3
       passcode_refresh_seconds = 45
 
       universal_app_link = "https://applink.com"
@@ -4270,6 +4283,7 @@ resource "pingone_application" "%[2]s" {
       huawei_app_id       = "%[2]s"
       huawei_package_name = "com.%[2]s.huaweipackage"
 
+      passcode_grace_period    = 3
       passcode_refresh_seconds = 45
 
       universal_app_link = "https://applink.com"

@@ -134,6 +134,7 @@ type applicationOIDCMobileAppResourceModelV1 struct {
 	HuaweiPackageName      types.String `tfsdk:"huawei_package_name"`
 	IntegrityDetection     types.Object `tfsdk:"integrity_detection"`
 	PackageName            types.String `tfsdk:"package_name"`
+	PasscodeGracePeriod    types.Int32  `tfsdk:"passcode_grace_period"`
 	PasscodeRefreshSeconds types.Int32  `tfsdk:"passcode_refresh_seconds"`
 	UniversalAppLink       types.String `tfsdk:"universal_app_link"`
 }
@@ -300,6 +301,7 @@ var (
 		"huawei_package_name":      types.StringType,
 		"integrity_detection":      types.ObjectType{AttrTypes: applicationOidcMobileAppIntegrityDetectionTFObjectTypes},
 		"package_name":             types.StringType,
+		"passcode_grace_period":    types.Int32Type,
 		"passcode_refresh_seconds": types.Int32Type,
 		"universal_app_link":       types.StringType,
 	}
@@ -657,6 +659,13 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 	oidcOptionsMobileAppHuaweiPackageNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The package name associated with the application, for push notifications in native apps. The value of this property is unique per environment, and once defined, is immutable.  Required with `huawei_app_id`.",
 	).RequiresReplace()
+
+	const oidcOptionsMobileAppPasscodeGracePeriodDefault = 5
+	const oidcOptionsMobileAppPasscodeGracePeriodMin = 1
+	const oidcOptionsMobileAppPasscodeGracePeriodMax = 10
+	oidcOptionsMobileAppPasscodeGracePeriodDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("To cover time synchronization issues, you can use this property to customize the grace period during which the passcode can still be used even after the passcode has been refreshed. The value of the parameter should be the number of windows to use (min `%d`, max `%d`). In this context, a window is equal to the passcode refresh period in either direction. For example, if you defined a passcode refresh duration of 30 seconds and a grace period of 2 windows, the passcode is valid for 150 seconds (from 60 seconds behind the time of issue until 60 seconds past the expiration time).", oidcOptionsMobileAppPasscodeGracePeriodMin, oidcOptionsMobileAppPasscodeGracePeriodMax),
+	).DefaultValue(oidcOptionsMobileAppPasscodeGracePeriodDefault)
 
 	const oidcOptionsMobileAppPasscodeRefreshSecondsDefault = 30
 	const oidcOptionsMobileAppPasscodeRefreshSecondsMin = 30
@@ -1387,6 +1396,19 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 											path.MatchRelative().AtParent().AtName("huawei_app_id"),
 											path.MatchRelative().AtParent().AtName("huawei_package_name"),
 										),
+									},
+								},
+
+								"passcode_grace_period": schema.Int32Attribute{
+									Description:         oidcOptionsMobileAppPasscodeGracePeriodDescription.Description,
+									MarkdownDescription: oidcOptionsMobileAppPasscodeGracePeriodDescription.MarkdownDescription,
+									Optional:            true,
+									Computed:            true,
+
+									Default: int32default.StaticInt32(oidcOptionsMobileAppPasscodeGracePeriodDefault),
+
+									Validators: []validator.Int32{
+										int32validator.Between(oidcOptionsMobileAppPasscodeGracePeriodMin, oidcOptionsMobileAppPasscodeGracePeriodMax),
 									},
 								},
 
@@ -2912,6 +2934,10 @@ func (p *applicationOIDCMobileAppResourceModelV1) expand(ctx context.Context) (*
 
 	if !p.PackageName.IsNull() && !p.PackageName.IsUnknown() {
 		data.SetPackageName(p.PackageName.ValueString())
+	}
+
+	if !p.PasscodeGracePeriod.IsNull() && !p.PasscodeGracePeriod.IsUnknown() {
+		data.SetPasscodeGracePeriod(p.PasscodeGracePeriod.ValueInt32())
 	}
 
 	if !p.PasscodeRefreshSeconds.IsNull() && !p.PasscodeRefreshSeconds.IsUnknown() {

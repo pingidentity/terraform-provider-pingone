@@ -546,6 +546,7 @@ resource "pingone_application" "%[2]s" {
       huawei_app_id       = "%[2]s"
       huawei_package_name = "com.%[2]s.huaweipackage"
 
+      passcode_grace_period    = 3
       passcode_refresh_seconds = 45
 
       universal_app_link = "https://applink.com"

@@ -144,6 +144,7 @@ Read-Only:
 - `huawei_package_name` (String) The package name associated with the application, for push notifications in native apps.
 - `integrity_detection` (Attributes) Mobile application integrity detection settings. (see [below for nested schema](#nestedatt--oidc_options--mobile_app--integrity_detection))
 - `package_name` (String) A string that specifies the package name associated with the application, for push notifications in native apps.
+- `passcode_grace_period` (Number) To cover time synchronization issues, you can use this property to customize the grace period during which the passcode can still be used even after the passcode has been refreshed. The value of the parameter should be the number of windows to use (min "1", max "10"). In this context, a window is equal to the passcode refresh period in either direction. For example, if you defined a passcode refresh duration of 30 seconds and a grace period of 2 windows, the passcode is valid for 150 seconds (from 60 seconds behind the time of issue until 60 seconds past the expiration time).
 - `passcode_refresh_seconds` (Number) The amount of time a passcode should be displayed before being replaced with a new passcode.
 - `universal_app_link` (String) A string that specifies a URI prefix that enables direct triggering of the mobile application when scanning a QR code.
 
