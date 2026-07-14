@@ -2492,21 +2492,11 @@ func (r *MFADevicePolicyResource) devicePolicyOfflineDeviceSchemaAttribute(descr
 	}
 }
 
-// ValidateConfig closes a gap left by the schema-level `Conflicts`/`IsRequiredIf`
-// path validators used on `desktop`, `yubikey`, and the PingID-only mobile
-// application fields (`biometrics_enabled`, `ip_pairing_configuration`,
-// `new_request_duration_configuration`). Those validators read `policy_type`'s
-// raw configuration value (see internal/framework/schemavalidator) and skip
-// their check entirely when that value is null - which is exactly what happens
-// when `policy_type` is omitted from HCL and left to resolve via its schema
-// default of `PING_ONE_MFA` (Optional + Computed, AD1/Amendment 1). Without
-// this check, a user who configures a PingID-only attribute without also
-// explicitly setting `policy_type = "PING_ONE_ID"` would get no error at
-// plan time, and `expand()` would silently drop the attribute rather than
-// sending it to the API. This method resolves the effective (post-default)
-// `policy_type` value from config and re-runs the same "conflicts with
-// PING_ONE_MFA" check that the schema validators would have performed had
-// `policy_type` been explicitly configured.
+// ValidateConfig rejects PingID-only fields (desktop, yubikey, and the PingID
+// mobile-application fields) when policy_type is omitted. The schema's
+// ...IfMatchesPathValue validators skip their check when policy_type is null,
+// which is the case when it's left to default to PING_ONE_MFA - so without this
+// method expand() would silently drop those fields instead of erroring.
 func (r *MFADevicePolicyResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	var data MFADevicePolicyResourceModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
@@ -2576,31 +2566,12 @@ func (r *MFADevicePolicyResource) ValidateConfig(ctx context.Context, req resour
 	}
 }
 
-// ModifyPlan provides a best-effort, plan-time warning for a residual blind
-// spot in the `ValidateConfig` check above (and in the pre-existing
-// schema-level `...IfMatchesPathValue` validators): when the `mobile.applications`
-// map's key is derived from an unresolved resource attribute (e.g.
-// `(pingone_application.app1.id)`), the entire map value - including every
-// application's `biometrics_enabled`/`ip_pairing_configuration`/
-// `new_request_duration_configuration` sub-fields - is Unknown at both
-// config-validation and plan time, so it cannot be inspected here either.
-//
-// This is a Terraform Plugin Framework/protocol limitation, not something
-// fixable by restructuring the check: a Terraform map's value is Unknown as a
-// whole whenever any of its keys is Unknown (a map's identity depends on all
-// of its keys), and `ElementsAs`/`GetAttribute` on an Unknown map value cannot
-// yield per-element data. Investigation (see fix-qa-2 task summary) confirmed
-// this data-loss bug is NOT actually reachable end-to-end for this shape:
-// Terraform always re-runs `ValidateResourceConfig` immediately before
-// `PlanResourceChange`/`ApplyResourceChange` once the dependency (and thus the
-// map key) resolves to a known value - which happens on every real `terraform
-// apply`, including `apply` of a previously saved `plan -out` file. The
-// `ValidateConfig` method above therefore still catches and rejects the
-// unsafe combination before the API is ever called; the only observable gap
-// is that a `terraform plan` (or `validate`) run in isolation, before the
-// dependency has been created, cannot show the error yet. This method emits a
-// warning in that specific window so the risk is visible at plan time rather
-// than only at apply time.
+// ModifyPlan emits a plan-time warning for the one gap ValidateConfig can't
+// cover: when a mobile.applications map key references an unresolved attribute,
+// the whole map value is Unknown and its per-element PingID-only fields can't be
+// inspected. This isn't a data-loss risk - Terraform re-runs config validation
+// once the key resolves (before any apply), so the unsafe combination is still
+// caught; the warning just surfaces it earlier for isolated plan/validate runs.
 func (r *MFADevicePolicyResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
 	if req.Plan.Raw.IsNull() {
 		// Destroy plan - nothing to check.
