@@ -3526,85 +3526,83 @@ func (p *MFADevicePolicyMobileApplicationResourceModel) expand(ctx context.Conte
 		)
 	}
 
-	// PingID-only mobile-application fields - only for PingID
-	if policyType == POLICY_TYPE_PINGID {
-		// Type - must be sent so the API returns the PingID-specific fields below
-		if !p.Type.IsNull() && !p.Type.IsUnknown() {
-			data.SetType(mfa.EnumPingIDApplicationType(p.Type.ValueString()))
+	// Type - only send for PingID policies; the API rejects it for PingOne MFA
+	// policies. Must be sent so the API returns the PingID-specific fields.
+	if policyType == POLICY_TYPE_PINGID && !p.Type.IsNull() && !p.Type.IsUnknown() {
+		data.SetType(mfa.EnumPingIDApplicationType(p.Type.ValueString()))
+	}
+
+	// Biometrics Enabled
+	if !p.BiometricsEnabled.IsNull() && !p.BiometricsEnabled.IsUnknown() {
+		data.SetBiometricsEnabled(p.BiometricsEnabled.ValueBool())
+	}
+
+	// New Request Duration Configuration
+	if !p.NewRequestDurationConfiguration.IsNull() && !p.NewRequestDurationConfiguration.IsUnknown() {
+		var nrdcPlan MFADevicePolicyMobileApplicationNewRequestDurationConfigurationResourceModel
+		diags.Append(p.NewRequestDurationConfiguration.As(ctx, &nrdcPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
 		}
 
-		// Biometrics Enabled
-		if !p.BiometricsEnabled.IsNull() && !p.BiometricsEnabled.IsUnknown() {
-			data.SetBiometricsEnabled(p.BiometricsEnabled.ValueBool())
+		var deviceTimeoutPlan, totalTimeoutPlan MFADevicePolicyMobileApplicationNewRequestDurationConfigurationTimeoutResourceModel
+
+		diags.Append(nrdcPlan.DeviceTimeout.As(ctx, &deviceTimeoutPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+
+		diags.Append(nrdcPlan.TotalTimeout.As(ctx, &totalTimeoutPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+
+		if diags.HasError() {
+			return nil, diags
 		}
 
-		// New Request Duration Configuration
-		if !p.NewRequestDurationConfiguration.IsNull() && !p.NewRequestDurationConfiguration.IsUnknown() {
-			var nrdcPlan MFADevicePolicyMobileApplicationNewRequestDurationConfigurationResourceModel
-			diags.Append(p.NewRequestDurationConfiguration.As(ctx, &nrdcPlan, basetypes.ObjectAsOptions{
-				UnhandledNullAsEmpty:    false,
-				UnhandledUnknownAsEmpty: false,
-			})...)
-			if diags.HasError() {
-				return nil, diags
+		deviceTimeout := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerNewRequestDurationConfigurationDeviceTimeout(
+			deviceTimeoutPlan.Duration.ValueInt32(),
+			mfa.EnumTimeUnitSeconds(deviceTimeoutPlan.TimeUnit.ValueString()),
+		)
+		totalTimeout := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerNewRequestDurationConfigurationTotalTimeout(
+			totalTimeoutPlan.Duration.ValueInt32(),
+			mfa.EnumTimeUnitSeconds(totalTimeoutPlan.TimeUnit.ValueString()),
+		)
+		newRequestDurationConfig := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerNewRequestDurationConfiguration(*deviceTimeout, *totalTimeout)
+		data.SetNewRequestDurationConfiguration(*newRequestDurationConfig)
+	}
+
+	// IP Pairing Configuration
+	if !p.IpPairingConfiguration.IsNull() && !p.IpPairingConfiguration.IsUnknown() {
+		ipConfig := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerIpPairingConfiguration()
+
+		ipConfigAttrs := p.IpPairingConfiguration.Attributes()
+
+		if anyIPAttr, exists := ipConfigAttrs["any_ip_address"]; exists {
+			if anyIPVal, ok := anyIPAttr.(types.Bool); ok && !anyIPVal.IsNull() && !anyIPVal.IsUnknown() {
+				ipConfig.SetAnyIPAdress(anyIPVal.ValueBool())
 			}
-
-			var deviceTimeoutPlan, totalTimeoutPlan MFADevicePolicyMobileApplicationNewRequestDurationConfigurationTimeoutResourceModel
-
-			diags.Append(nrdcPlan.DeviceTimeout.As(ctx, &deviceTimeoutPlan, basetypes.ObjectAsOptions{
-				UnhandledNullAsEmpty:    false,
-				UnhandledUnknownAsEmpty: false,
-			})...)
-
-			diags.Append(nrdcPlan.TotalTimeout.As(ctx, &totalTimeoutPlan, basetypes.ObjectAsOptions{
-				UnhandledNullAsEmpty:    false,
-				UnhandledUnknownAsEmpty: false,
-			})...)
-
-			if diags.HasError() {
-				return nil, diags
-			}
-
-			deviceTimeout := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerNewRequestDurationConfigurationDeviceTimeout(
-				deviceTimeoutPlan.Duration.ValueInt32(),
-				mfa.EnumTimeUnitSeconds(deviceTimeoutPlan.TimeUnit.ValueString()),
-			)
-			totalTimeout := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerNewRequestDurationConfigurationTotalTimeout(
-				totalTimeoutPlan.Duration.ValueInt32(),
-				mfa.EnumTimeUnitSeconds(totalTimeoutPlan.TimeUnit.ValueString()),
-			)
-			newRequestDurationConfig := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerNewRequestDurationConfiguration(*deviceTimeout, *totalTimeout)
-			data.SetNewRequestDurationConfiguration(*newRequestDurationConfig)
 		}
 
-		// IP Pairing Configuration
-		if !p.IpPairingConfiguration.IsNull() && !p.IpPairingConfiguration.IsUnknown() {
-			ipConfig := mfa.NewDeviceAuthenticationPolicyCommonMobileApplicationsInnerIpPairingConfiguration()
+		if ipListAttr, exists := ipConfigAttrs["only_these_ip_addresses"]; exists {
+			if ipListVal, ok := ipListAttr.(types.Set); ok && !ipListVal.IsNull() && !ipListVal.IsUnknown() {
+				var ipAddresses []string
+				diags.Append(ipListVal.ElementsAs(ctx, &ipAddresses, false)...)
+				if diags.HasError() {
+					return nil, diags
+				}
 
-			ipConfigAttrs := p.IpPairingConfiguration.Attributes()
-
-			if anyIPAttr, exists := ipConfigAttrs["any_ip_address"]; exists {
-				if anyIPVal, ok := anyIPAttr.(types.Bool); ok && !anyIPVal.IsNull() && !anyIPVal.IsUnknown() {
-					ipConfig.SetAnyIPAdress(anyIPVal.ValueBool())
+				if len(ipAddresses) > 0 {
+					ipConfig.SetOnlyTheseIpAddresses(ipAddresses)
 				}
 			}
-
-			if ipListAttr, exists := ipConfigAttrs["only_these_ip_addresses"]; exists {
-				if ipListVal, ok := ipListAttr.(types.Set); ok && !ipListVal.IsNull() && !ipListVal.IsUnknown() {
-					var ipAddresses []string
-					diags.Append(ipListVal.ElementsAs(ctx, &ipAddresses, false)...)
-					if diags.HasError() {
-						return nil, diags
-					}
-
-					if len(ipAddresses) > 0 {
-						ipConfig.SetOnlyTheseIpAddresses(ipAddresses)
-					}
-				}
-			}
-
-			data.SetIpPairingConfiguration(*ipConfig)
 		}
+
+		data.SetIpPairingConfiguration(*ipConfig)
 	}
 
 	return data, diags
