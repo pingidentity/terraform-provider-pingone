@@ -3,5 +3,5 @@
 ```
 
 ```release-note:bug
-`resource/pingone_mfa_device_policy_default`: Fixed `Provider produced inconsistent result after apply` error caused by the `yubikey.pairing_key_lifetime` and `oath_token.pairing_key_lifetime` attributes, which the API does not honor for those device types
+`resource/pingone_mfa_device_policy_default`: Removed unsupported `yubikey.pairing_key_lifetime` and `oath_token.pairing_key_lifetime` attributes
 ```
