@@ -106,7 +106,7 @@ type MFADevicePolicyDefaultTotpResourceModel struct {
 }
 
 type MFADevicePolicyDefaultMobileApplicationResourceModel struct {
-	AutoEnrollment                   types.Object `tfsdk:"auto_enrollment"`
+	AutoEnrollment                  types.Object `tfsdk:"auto_enrollment"`
 	BiometricsEnabled               types.Bool   `tfsdk:"biometrics_enabled"`
 	DeviceAuthorization             types.Object `tfsdk:"device_authorization"`
 	IntegrityDetection              types.String `tfsdk:"integrity_detection"`
