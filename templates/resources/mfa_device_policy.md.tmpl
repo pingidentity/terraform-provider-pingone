@@ -21,6 +21,12 @@ The following example configures and enables the Mobile Authenticator (using Pin
 
 {{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-mobile-authenticator.tf") }}
 
+## Example Usage - PingID Device Methods
+
+The following example sets `policy_type` to `PING_ONE_ID` and configures the PingID-specific `desktop`, `yubikey`, and `oath_token` device methods, together with the PingID-only mobile application sub-fields `biometrics_enabled`, `ip_pairing_configuration`, and `new_request_duration_configuration`.
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-pingid.tf") }}
+
 {{ .SchemaMarkdown | trimspace }}
 
 {{ if .HasImport -}}
