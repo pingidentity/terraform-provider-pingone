@@ -2437,12 +2437,13 @@ func (r *MFADevicePolicyResource) ValidateConfig(ctx context.Context, req resour
 		return
 	}
 
-	// Resolve the effective policy type as it will exist on the plan once
-	// the schema default is applied. An explicit, non-null `policy_type` is
-	// already correctly handled by the schema's `ConflictsIfMatchesPathValue`/
-	// `IsRequiredIfMatchesPathValue` validators, so this method only needs to
-	// act when `policy_type` is omitted (null) from config.
-	if !data.PolicyType.IsNull() && !data.PolicyType.IsUnknown() {
+	// Only act when `policy_type` is null (schema default PING_ONE_MFA applies).
+	// A known value is handled by schema validators; an unknown value cannot yet
+	// be resolved, so skip.
+	if data.PolicyType.IsUnknown() {
+		return
+	}
+	if !data.PolicyType.IsNull() {
 		return
 	}
 
