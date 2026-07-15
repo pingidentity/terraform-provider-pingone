@@ -3852,10 +3852,11 @@ func (p *MFADevicePolicyResourceModel) toState(apiObject *mfa.DeviceAuthenticati
 
 	var d diag.Diagnostics
 
-	// Infer the client-side-only policy_type discriminator from the API response
-	// (the API never returns policy_type; it is derived from the presence of
-	// PingID-specific fields, mirroring the _default resource's determinePolicyType).
-	policyType := determinePolicyType(apiObject)
+	// Determine policy type - either from plan/state or inferred from API
+	policyType := p.PolicyType.ValueString()
+	if policyType == "" {
+		policyType = determinePolicyType(apiObject)
+	}
 	p.PolicyType = types.StringValue(policyType)
 
 	p.Id = framework.PingOneResourceIDToTF(apiObject.GetId())
