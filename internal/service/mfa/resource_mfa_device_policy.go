@@ -153,7 +153,7 @@ type MFADevicePolicyMobileResourceModel struct {
 }
 
 type MFADevicePolicyMobileApplicationResourceModel struct {
-	AutoEnrolment                   types.Object `tfsdk:"auto_enrollment"`
+	AutoEnrollment                   types.Object `tfsdk:"auto_enrollment"`
 	BiometricsEnabled               types.Bool   `tfsdk:"biometrics_enabled"`
 	DeviceAuthorization             types.Object `tfsdk:"device_authorization"`
 	IntegrityDetection              types.String `tfsdk:"integrity_detection"`
@@ -168,7 +168,7 @@ type MFADevicePolicyMobileApplicationResourceModel struct {
 	Type                            types.String `tfsdk:"type"`
 }
 
-type MFADevicePolicyMobileApplicationAutoEnrolmentResourceModel struct {
+type MFADevicePolicyMobileApplicationAutoEnrollmentResourceModel struct {
 	Enabled types.Bool `tfsdk:"enabled"`
 }
 
@@ -237,7 +237,7 @@ var (
 	}
 
 	MFADevicePolicyMobileApplicationTFObjectTypes = map[string]attr.Type{
-		"auto_enrollment":                    types.ObjectType{AttrTypes: MFADevicePolicyMobileApplicationAutoEnrolmentTFObjectTypes},
+		"auto_enrollment":                    types.ObjectType{AttrTypes: MFADevicePolicyMobileApplicationAutoEnrollmentTFObjectTypes},
 		"biometrics_enabled":                 types.BoolType,
 		"device_authorization":               types.ObjectType{AttrTypes: MFADevicePolicyMobileApplicationDeviceAuthorizationTFObjectTypes},
 		"integrity_detection":                types.StringType,
@@ -252,7 +252,7 @@ var (
 		"type":                               types.StringType,
 	}
 
-	MFADevicePolicyMobileApplicationAutoEnrolmentTFObjectTypes = map[string]attr.Type{
+	MFADevicePolicyMobileApplicationAutoEnrollmentTFObjectTypes = map[string]attr.Type{
 		"enabled": types.BoolType,
 	}
 
@@ -3413,9 +3413,9 @@ func (p *MFADevicePolicyMobileApplicationResourceModel) expand(ctx context.Conte
 	)
 
 	// Auto enrollment
-	if !p.AutoEnrolment.IsNull() && !p.AutoEnrolment.IsUnknown() {
-		var plan MFADevicePolicyMobileApplicationAutoEnrolmentResourceModel
-		diags.Append(p.AutoEnrolment.As(ctx, &plan, basetypes.ObjectAsOptions{
+	if !p.AutoEnrollment.IsNull() && !p.AutoEnrollment.IsUnknown() {
+		var plan MFADevicePolicyMobileApplicationAutoEnrollmentResourceModel
+		diags.Append(p.AutoEnrollment.As(ctx, &plan, basetypes.ObjectAsOptions{
 			UnhandledNullAsEmpty:    false,
 			UnhandledUnknownAsEmpty: false,
 		})...)
@@ -4184,13 +4184,13 @@ func toStateMfaDevicePolicyMobileApplications(apiObject []mfa.DeviceAuthenticati
 	for _, application := range apiObject {
 
 		// auto_enrollment and device_authorization conflict with PingID - keep them null
-		var autoEnrolment types.Object
+		var autoEnrollment types.Object
 		var deviceAuthorization types.Object
 		if isPingID {
-			autoEnrolment = types.ObjectNull(MFADevicePolicyMobileApplicationAutoEnrolmentTFObjectTypes)
+			autoEnrollment = types.ObjectNull(MFADevicePolicyMobileApplicationAutoEnrollmentTFObjectTypes)
 			deviceAuthorization = types.ObjectNull(MFADevicePolicyMobileApplicationDeviceAuthorizationTFObjectTypes)
 		} else {
-			autoEnrolment, d = toStateMfaDevicePolicyMobileApplicationsAutoEnrolment(application.GetAutoEnrollmentOk())
+			autoEnrollment, d = toStateMfaDevicePolicyMobileApplicationsAutoEnrollment(application.GetAutoEnrollmentOk())
 			diags.Append(d...)
 			if diags.HasError() {
 				return types.MapNull(tfObjType), diags
@@ -4266,7 +4266,7 @@ func toStateMfaDevicePolicyMobileApplications(apiObject []mfa.DeviceAuthenticati
 		}
 
 		o := map[string]attr.Value{
-			"auto_enrollment":                    autoEnrolment,
+			"auto_enrollment":                    autoEnrollment,
 			"biometrics_enabled":                 biometricsEnabled,
 			"device_authorization":               deviceAuthorization,
 			"integrity_detection":                framework.EnumOkToTF(application.GetIntegrityDetectionOk()),
@@ -4293,18 +4293,18 @@ func toStateMfaDevicePolicyMobileApplications(apiObject []mfa.DeviceAuthenticati
 	return returnVar, diags
 }
 
-func toStateMfaDevicePolicyMobileApplicationsAutoEnrolment(apiObject *mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInnerAutoEnrollment, ok bool) (types.Object, diag.Diagnostics) {
+func toStateMfaDevicePolicyMobileApplicationsAutoEnrollment(apiObject *mfa.DeviceAuthenticationPolicyCommonMobileApplicationsInnerAutoEnrollment, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
-		return types.ObjectNull(MFADevicePolicyMobileApplicationAutoEnrolmentTFObjectTypes), nil
+		return types.ObjectNull(MFADevicePolicyMobileApplicationAutoEnrollmentTFObjectTypes), nil
 	}
 
 	o := map[string]attr.Value{
 		"enabled": framework.BoolOkToTF(apiObject.GetEnabledOk()),
 	}
 
-	objValue, d := types.ObjectValue(MFADevicePolicyMobileApplicationAutoEnrolmentTFObjectTypes, o)
+	objValue, d := types.ObjectValue(MFADevicePolicyMobileApplicationAutoEnrollmentTFObjectTypes, o)
 	diags.Append(d...)
 
 	return objValue, diags
