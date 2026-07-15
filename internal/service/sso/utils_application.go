@@ -150,6 +150,10 @@ func applicationOidcOptionsCommonToTF(ctx context.Context, apiObject *management
 	mobileApp, d := applicationMobileAppOkToTF(ctx, mobileAppObject, ok, mobileAppState)
 	diags.Append(d...)
 
+	signingObject, signingOk := apiObject.GetSigningOk()
+	signing, d := applicationOidcOptionsSigningOkToTF(signingObject, signingOk)
+	diags.Append(d...)
+
 	return map[string]attr.Value{
 		"additional_refresh_token_replay_protection_enabled": framework.BoolOkToTF(apiObject.GetAdditionalRefreshTokenReplayProtectionEnabledOk()),
 		"allow_wildcard_in_redirect_uris":                    framework.BoolOkToTF(apiObject.GetAllowWildcardInRedirectUrisOk()),
@@ -180,6 +184,7 @@ func applicationOidcOptionsCommonToTF(ctx context.Context, apiObject *management
 		"request_scopes_for_multiple_resources_enabled":      types.BoolValue(apiObject.GetRequestScopesForMultipleResourcesEnabled()),
 		"require_signed_request_object":                      framework.BoolOkToTF(apiObject.GetRequireSignedRequestObjectOk()),
 		"response_types":                                     framework.EnumSetOkToTF(apiObject.GetResponseTypesOk()),
+		"signing":                                            signing,
 		"support_unsigned_request_object":                    framework.BoolOkToTF(apiObject.GetSupportUnsignedRequestObjectOk()),
 		"target_link_uri":                                    framework.StringOkToTF(apiObject.GetTargetLinkUriOk()),
 		"token_endpoint_auth_method":                         framework.EnumOkToTF(apiObject.GetTokenEndpointAuthMethodOk()),
@@ -203,6 +208,27 @@ func applicationOidcOptionsCertificateBasedAuthenticationToTF(apiObject *managem
 	}
 
 	returnVar, d := types.ObjectValue(applicationOidcOptionsCertificateAuthenticationTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func applicationOidcOptionsSigningOkToTF(apiObject *management.ApplicationOIDCAllOfSigning, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(applicationOidcOptionsSigningTFObjectTypes), diags
+	}
+
+	attributesMap := map[string]attr.Value{
+		"key_rotation_policy_id": pingonetypes.ResourceIDValue{},
+	}
+
+	if v, ok := apiObject.GetKeyRotationPolicyOk(); ok {
+		attributesMap["key_rotation_policy_id"] = framework.PingOneResourceIDOkToTF(v.GetIdOk())
+	}
+
+	returnVar, d := types.ObjectValue(applicationOidcOptionsSigningTFObjectTypes, attributesMap)
 	diags.Append(d...)
 
 	return returnVar, diags
