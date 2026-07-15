@@ -472,7 +472,7 @@ Optional:
 <a id="nestedatt--oidc_options--signing"></a>
 ### Nested Schema for `oidc_options.signing`
 
-Required:
+Optional:
 
 - `key_rotation_policy_id` (String) A string that specifies the PingOne ID of the Key Rotation Policy (from certificate management) used to sign application tokens. Must be a valid PingOne Resource ID.
 

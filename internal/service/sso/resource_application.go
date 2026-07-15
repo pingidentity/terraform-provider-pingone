@@ -1341,12 +1341,14 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 							Description:         oidcOptionsSigningDescription.Description,
 							MarkdownDescription: oidcOptionsSigningDescription.MarkdownDescription,
 							Optional:            true,
+							Computed:            true,
 
 							Attributes: map[string]schema.Attribute{
 								"key_rotation_policy_id": schema.StringAttribute{
 									Description:         oidcOptionsSigningKeyRotationPolicyIdDescription.Description,
 									MarkdownDescription: oidcOptionsSigningKeyRotationPolicyIdDescription.MarkdownDescription,
-									Required:            true,
+									Optional:            true,
+									Computed:            true,
 
 									CustomType: pingonetypes.ResourceIDType{},
 								},
@@ -2381,7 +2383,7 @@ func (p *applicationResourceModelV1) validate(ctx context.Context, allowUnknown 
 
 	if oidcPlan != nil {
 		diags.Append(oidcPlan.validateCertificateBasedAuthentication(allowUnknown)...)
-		diags.Append(oidcPlan.validateSigning(allowUnknown)...)
+		diags.Append(oidcPlan.validateSigning()...)
 		diags.Append(oidcPlan.validateWildcardInRedirectUri(ctx, allowUnknown)...)
 	}
 
@@ -2426,16 +2428,8 @@ func (p *applicationOIDCOptionsResourceModelV1) validateCertificateBasedAuthenti
 	return diags
 }
 
-func (p *applicationOIDCOptionsResourceModelV1) validateSigning(allowUnknown bool) diag.Diagnostics {
+func (p *applicationOIDCOptionsResourceModelV1) validateSigning() diag.Diagnostics {
 	var diags diag.Diagnostics
-
-	if p.Signing.IsUnknown() && !allowUnknown {
-		diags.AddAttributeError(
-			path.Root("oidc_options").AtName("signing"),
-			"Invalid configuration",
-			"Current configuration is invalid as the `oidc_options.signing` value is unknown, cannot validate.",
-		)
-	}
 
 	allowedTypes := []management.EnumApplicationType{
 		management.ENUMAPPLICATIONTYPE_WORKER,
