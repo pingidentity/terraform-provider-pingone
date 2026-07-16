@@ -72,6 +72,18 @@ resource "pingone_davinci_flow" "%[2]s" {
                 "value": "[\n  {\n    \"children\": [\n      {\n        \"text\": \"This is an updated error, really\"\n      }\n    ]\n  }\n]"
               }
             })
+            outcomes = [
+              {
+                id = "submit"
+                label = "Submit"
+                result = "vqzhknt03d"
+              },
+              {
+                id = "submit"
+                label = "Sign On"
+                result = "0js65u63wx"
+              }
+            ]
           }
           position = {
             x = 700

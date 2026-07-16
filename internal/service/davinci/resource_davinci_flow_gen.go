@@ -318,6 +318,31 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 														stringvalidator.LengthAtLeast(1),
 													},
 												},
+												"outcomes": schema.ListNestedAttribute{
+													NestedObject: schema.NestedAttributeObject{
+														Attributes: map[string]schema.Attribute{
+															"id": schema.StringAttribute{
+																Required: true,
+																Validators: []validator.String{
+																	stringvalidator.LengthAtLeast(1),
+																},
+															},
+															"label": schema.StringAttribute{
+																Required: true,
+																Validators: []validator.String{
+																	stringvalidator.LengthAtLeast(1),
+																},
+															},
+															"result": schema.StringAttribute{
+																Required: true,
+																Validators: []validator.String{
+																	stringvalidator.LengthAtLeast(1),
+																},
+															},
+														},
+													},
+													Optional: true,
+												},
 												"properties": schema.StringAttribute{
 													CustomType: jsontypes.NormalizedType{},
 													Optional:   true,
@@ -839,6 +864,17 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 					nodesDataValue.Label = nodesDataAttrs["label"].(types.String).ValueStringPointer()
 					nodesDataValue.Name = nodesDataAttrs["name"].(types.String).ValueStringPointer()
 					nodesDataValue.NodeType = nodesDataAttrs["node_type"].(types.String).ValueString()
+					if !nodesDataAttrs["outcomes"].IsNull() && !nodesDataAttrs["outcomes"].IsUnknown() {
+						nodesDataValue.Outcomes = []pingone.DaVinciFlowGraphDataRequestElementsNodeDataOutcome{}
+						for _, outcomesElement := range nodesDataAttrs["outcomes"].(types.List).Elements() {
+							outcomesValue := pingone.DaVinciFlowGraphDataRequestElementsNodeDataOutcome{}
+							outcomesAttrs := outcomesElement.(types.Object).Attributes()
+							outcomesValue.Id = outcomesAttrs["id"].(types.String).ValueString()
+							outcomesValue.Label = outcomesAttrs["label"].(types.String).ValueString()
+							outcomesValue.Result = outcomesAttrs["result"].(types.String).ValueString()
+							nodesDataValue.Outcomes = append(nodesDataValue.Outcomes, outcomesValue)
+						}
+					}
 					if !nodesDataAttrs["properties"].IsNull() && !nodesDataAttrs["properties"].IsUnknown() {
 						var unmarshaled map[string]interface{}
 						err := json.Unmarshal([]byte(nodesDataAttrs["properties"].(jsontypes.Normalized).ValueString()), &unmarshaled)
@@ -1235,6 +1271,17 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 					nodesDataValue.Label = nodesDataAttrs["label"].(types.String).ValueStringPointer()
 					nodesDataValue.Name = nodesDataAttrs["name"].(types.String).ValueStringPointer()
 					nodesDataValue.NodeType = nodesDataAttrs["node_type"].(types.String).ValueString()
+					if !nodesDataAttrs["outcomes"].IsNull() && !nodesDataAttrs["outcomes"].IsUnknown() {
+						nodesDataValue.Outcomes = []pingone.DaVinciFlowGraphDataRequestElementsNodeDataOutcome{}
+						for _, outcomesElement := range nodesDataAttrs["outcomes"].(types.List).Elements() {
+							outcomesValue := pingone.DaVinciFlowGraphDataRequestElementsNodeDataOutcome{}
+							outcomesAttrs := outcomesElement.(types.Object).Attributes()
+							outcomesValue.Id = outcomesAttrs["id"].(types.String).ValueString()
+							outcomesValue.Label = outcomesAttrs["label"].(types.String).ValueString()
+							outcomesValue.Result = outcomesAttrs["result"].(types.String).ValueString()
+							nodesDataValue.Outcomes = append(nodesDataValue.Outcomes, outcomesValue)
+						}
+					}
 					if !nodesDataAttrs["properties"].IsNull() && !nodesDataAttrs["properties"].IsUnknown() {
 						var unmarshaled map[string]interface{}
 						err := json.Unmarshal([]byte(nodesDataAttrs["properties"].(jsontypes.Normalized).ValueString()), &unmarshaled)
@@ -1604,6 +1651,12 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 		"selected":   types.BoolType,
 	}
 	graphDataElementsEdgesElementType := types.ObjectType{AttrTypes: graphDataElementsEdgesAttrTypes}
+	graphDataElementsNodesDataOutcomesAttrTypes := map[string]attr.Type{
+		"id":     types.StringType,
+		"label":  types.StringType,
+		"result": types.StringType,
+	}
+	graphDataElementsNodesDataOutcomesElementType := types.ObjectType{AttrTypes: graphDataElementsNodesDataOutcomesAttrTypes}
 	graphDataElementsNodesDataAttrTypes := map[string]attr.Type{
 		"capability_class": types.StringType,
 		"capability_name":  types.StringType,
@@ -1613,6 +1666,7 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 		"label":            types.StringType,
 		"name":             types.StringType,
 		"node_type":        types.StringType,
+		"outcomes":         types.ListType{ElemType: graphDataElementsNodesDataOutcomesElementType},
 		"properties":       jsontypes.NormalizedType{},
 		"status":           types.StringType,
 		"type":             types.StringType,
@@ -1718,6 +1772,23 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 				graphDataElementsNodesDataPropertiesValue, diags = state.normalizeNodeDataProperties(graphDataElementsNodesResponseValue.Data.Id, plannedNodeDataProperties, graphDataElementsNodesResponseValue.Data.Properties)
 				respDiags.Append(diags...)
 			}
+			var graphDataElementsNodesDataOutcomesValue types.List
+			if graphDataElementsNodesResponseValue.Data.Outcomes == nil {
+				graphDataElementsNodesDataOutcomesValue = types.ListNull(graphDataElementsNodesDataOutcomesElementType)
+			} else {
+				var graphDataElementsNodesDataOutcomesValues []attr.Value
+				for _, outcomeResponseValue := range graphDataElementsNodesResponseValue.Data.Outcomes {
+					outcomeValue, diags := types.ObjectValue(graphDataElementsNodesDataOutcomesAttrTypes, map[string]attr.Value{
+						"id":     types.StringValue(outcomeResponseValue.Id),
+						"label":  types.StringValue(outcomeResponseValue.Label),
+						"result": types.StringValue(outcomeResponseValue.Result),
+					})
+					respDiags.Append(diags...)
+					graphDataElementsNodesDataOutcomesValues = append(graphDataElementsNodesDataOutcomesValues, outcomeValue)
+				}
+				graphDataElementsNodesDataOutcomesValue, diags = types.ListValue(graphDataElementsNodesDataOutcomesElementType, graphDataElementsNodesDataOutcomesValues)
+				respDiags.Append(diags...)
+			}
 			graphDataElementsNodesDataValue, diags := types.ObjectValue(graphDataElementsNodesDataAttrTypes, map[string]attr.Value{
 				"capability_class": types.StringPointerValue(graphDataElementsNodesResponseValue.Data.CapabilityClass),
 				"capability_name":  types.StringPointerValue(graphDataElementsNodesResponseValue.Data.CapabilityName),
@@ -1727,6 +1798,7 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 				"label":            types.StringPointerValue(graphDataElementsNodesResponseValue.Data.Label),
 				"name":             types.StringPointerValue(graphDataElementsNodesResponseValue.Data.Name),
 				"node_type":        types.StringValue(graphDataElementsNodesResponseValue.Data.NodeType),
+				"outcomes":         graphDataElementsNodesDataOutcomesValue,
 				"properties":       graphDataElementsNodesDataPropertiesValue,
 				"status":           types.StringPointerValue(graphDataElementsNodesResponseValue.Data.Status),
 				"type":             types.StringPointerValue(graphDataElementsNodesResponseValue.Data.Type),

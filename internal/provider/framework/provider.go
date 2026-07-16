@@ -391,7 +391,8 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 		)
 	}
 
-	apiClient, err := pingone.NewAPIClient(pingOneConfig)
+	// ctx gets cancelled after this method, so need to construct a new context for the client
+	apiClient, err := pingone.NewAPIClient(context.Background(), pingOneConfig)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Client failed to initialize",
