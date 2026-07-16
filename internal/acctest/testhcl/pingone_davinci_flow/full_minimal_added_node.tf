@@ -74,14 +74,14 @@ resource "pingone_davinci_flow" "%[2]s" {
             })
             outcomes = [
               {
-                id = "outcome1"
-                label = "outcome1"
-                result = "outcome1"
+                id = "submit"
+                label = "Submit"
+                result = "vqzhknt03d"
               },
               {
-                id = "outcome2"
-                label = "outcome2"
-                result = "outcome2"
+                id = "submit"
+                label = "Sign On"
+                result = "0js65u63wx"
               }
             ]
           }
