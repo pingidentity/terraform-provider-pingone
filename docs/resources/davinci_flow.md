@@ -1352,9 +1352,20 @@ Optional:
 - `id_unique` (String)
 - `label` (String)
 - `name` (String)
+- `outcomes` (Attributes List) (see [below for nested schema](#nestedatt--graph_data--elements--nodes--data--outcomes))
 - `properties` (String, Sensitive)
 - `status` (String)
 - `type` (String)
+
+<a id="nestedatt--graph_data--elements--nodes--data--outcomes"></a>
+### Nested Schema for `graph_data.elements.nodes.data.outcomes`
+
+Required:
+
+- `id` (String)
+- `label` (String)
+- `result` (String)
+
 
 
 <a id="nestedatt--graph_data--elements--nodes--position"></a>
