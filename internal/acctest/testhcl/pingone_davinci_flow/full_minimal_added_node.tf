@@ -72,6 +72,18 @@ resource "pingone_davinci_flow" "%[2]s" {
                 "value": "[\n  {\n    \"children\": [\n      {\n        \"text\": \"This is an updated error, really\"\n      }\n    ]\n  }\n]"
               }
             })
+            outcomes = [
+              {
+                id = "outcome1"
+                label = "outcome1"
+                result = "outcome1"
+              },
+              {
+                id = "outcome2"
+                label = "outcome2"
+                result = "outcome2"
+              }
+            ]
           }
           position = {
             x = 700
