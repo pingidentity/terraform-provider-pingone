@@ -3,7 +3,7 @@ SWEEP_DIR=./internal/sweep
 NAMESPACE=pingidentity
 PKG_NAME=pingone
 BINARY=terraform-provider-${NAME}
-VERSION=1.20.0
+VERSION=1.21.0
 OS_ARCH=linux_amd64
 BETA?=false
 
