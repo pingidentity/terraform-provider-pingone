@@ -260,7 +260,7 @@ jobs:
           go mod download
 
       - name: Install Ping CLI
-        run: go install github.com/pingidentity/pingcli@latest
+        run: go install github.com/pingidentity/pingcli@v0.8.4
         continue-on-error: false
 
       - name: Retrieve access token
