@@ -315,4 +315,9 @@ resource "pingone_davinci_connector_instance" "mfaUseCaseConnector" {
     type  = "string"
     value = var.mfausecaseconnector_property_user_id
   }
+  property {
+    name  = "yubiKey"
+    type  = "string"
+    value = var.mfausecaseconnector_property_yubi_key
+  }
 }
