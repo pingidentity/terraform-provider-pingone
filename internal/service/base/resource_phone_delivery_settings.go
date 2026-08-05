@@ -60,10 +60,12 @@ type PhoneDeliverySettingsProviderCustomResourceModel struct {
 }
 
 type PhoneDeliverySettingsProviderCustomAuthenticationResourceModel struct {
-	Method    types.String `tfsdk:"method"`
-	Password  types.String `tfsdk:"password"`
-	AuthToken types.String `tfsdk:"auth_token"`
-	Username  types.String `tfsdk:"username"`
+	Method     types.String `tfsdk:"method"`
+	Password   types.String `tfsdk:"password"`
+	PasswordWO types.String `tfsdk:"password_wo"`
+	AuthToken  types.String `tfsdk:"auth_token"`
+	Username   types.String `tfsdk:"username"`
+	UsernameWO types.String `tfsdk:"username_wo"`
 }
 
 type PhoneDeliverySettingsProviderCustomNumbersResourceModel struct {
@@ -121,10 +123,12 @@ var (
 	}
 
 	customAuthenticationTFObjectTypes = map[string]attr.Type{
-		"method":     types.StringType,
-		"password":   types.StringType,
-		"auth_token": types.StringType,
-		"username":   types.StringType,
+		"method":      types.StringType,
+		"password":    types.StringType,
+		"password_wo": types.StringType,
+		"auth_token":  types.StringType,
+		"username":    types.StringType,
+		"username_wo": types.StringType,
 	}
 
 	customNumbersTFObjectTypes = map[string]attr.Type{
@@ -375,6 +379,29 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 								Optional:            true,
 
 								Validators: []validator.String{
+									stringvalidator.ExactlyOneOf(
+										path.MatchRelative().AtParent().AtName("username"),
+										path.MatchRelative().AtParent().AtName("username_wo"),
+									),
+									stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+										types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_BASIC)),
+										path.MatchRelative().AtParent().AtName("method"),
+									),
+								},
+							},
+
+							"username_wo": schema.StringAttribute{
+								Description:         providerCustomAuthenticationUsernameDescription.Description,
+								MarkdownDescription: providerCustomAuthenticationUsernameDescription.MarkdownDescription,
+								Optional:            true,
+								WriteOnly:           true,
+								Sensitive:           true,
+
+								Validators: []validator.String{
+									stringvalidator.ExactlyOneOf(
+										path.MatchRelative().AtParent().AtName("username"),
+										path.MatchRelative().AtParent().AtName("username_wo"),
+									),
 									stringvalidatorinternal.IsRequiredIfMatchesPathValue(
 										types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_BASIC)),
 										path.MatchRelative().AtParent().AtName("method"),
@@ -389,6 +416,29 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 								Sensitive:           true,
 
 								Validators: []validator.String{
+									stringvalidator.ExactlyOneOf(
+										path.MatchRelative().AtParent().AtName("password"),
+										path.MatchRelative().AtParent().AtName("password_wo"),
+									),
+									stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+										types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_BASIC)),
+										path.MatchRelative().AtParent().AtName("method"),
+									),
+								},
+							},
+
+							"password_wo": schema.StringAttribute{
+								Description:         providerCustomAuthenticationPasswordDescription.Description,
+								MarkdownDescription: providerCustomAuthenticationPasswordDescription.MarkdownDescription,
+								Optional:            true,
+								Sensitive:           true,
+								WriteOnly:           true,
+
+								Validators: []validator.String{
+									stringvalidator.ExactlyOneOf(
+										path.MatchRelative().AtParent().AtName("password"),
+										path.MatchRelative().AtParent().AtName("password_wo"),
+									),
 									stringvalidatorinternal.IsRequiredIfMatchesPathValue(
 										types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_BASIC)),
 										path.MatchRelative().AtParent().AtName("method"),
@@ -1301,8 +1351,16 @@ func (p *PhoneDeliverySettingsResourceModel) expand(ctx context.Context, service
 			authentication.SetPassword(authenticationPlan.Password.ValueString())
 		}
 
+		if !authenticationPlan.PasswordWO.IsNull() && !authenticationPlan.PasswordWO.IsUnknown() {
+			authentication.SetPassword(authenticationPlan.PasswordWO.ValueString())
+		}
+
 		if !authenticationPlan.Username.IsNull() && !authenticationPlan.Username.IsUnknown() {
 			authentication.SetUsername(authenticationPlan.Username.ValueString())
+		}
+
+		if !authenticationPlan.UsernameWO.IsNull() && !authenticationPlan.UsernameWO.IsUnknown() {
+			authentication.SetUsername(authenticationPlan.UsernameWO.ValueString())
 		}
 
 		if !authenticationPlan.AuthToken.IsNull() && !authenticationPlan.AuthToken.IsUnknown() {
@@ -1708,14 +1766,17 @@ func phoneDeliverySettingsCustomAuthenticationOkToTF(planData *PhoneDeliverySett
 	}
 
 	objMap := map[string]attr.Value{
-		"method":     framework.EnumOkToTF(apiObject.GetMethodOk()),
-		"password":   types.StringNull(),
-		"auth_token": types.StringNull(),
-		"username":   framework.StringOkToTF(apiObject.GetUsernameOk()),
+		"method":      framework.EnumOkToTF(apiObject.GetMethodOk()),
+		"password":    types.StringNull(),
+		"password_wo": types.StringNull(),
+		"auth_token":  types.StringNull(),
+		"username":    framework.StringOkToTF(apiObject.GetUsernameOk()),
+		"username_wo": framework.StringOkToTF(apiObject.GetUsernameOk()),
 	}
 
 	if planData != nil {
 		objMap["password"] = planData.Password
+		objMap["password_wo"] = planData.PasswordWO
 		objMap["auth_token"] = planData.AuthToken
 	}
 
