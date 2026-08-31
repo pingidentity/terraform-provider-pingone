@@ -6,6 +6,11 @@ resource "pingone_davinci_connector_instance" "crowdStrikeConnector" {
   }
   name = "My awesome crowdStrikeConnector"
   property {
+    name  = "alertLimit"
+    type  = "string"
+    value = var.crowdstrikeconnector_property_alert_limit
+  }
+  property {
     name  = "baseURL"
     type  = "string"
     value = var.base_url
@@ -21,14 +26,14 @@ resource "pingone_davinci_connector_instance" "crowdStrikeConnector" {
     value = var.crowdstrikeconnector_property_client_secret
   }
   property {
+    name  = "deviceIdAlertRisk"
+    type  = "string"
+    value = var.crowdstrikeconnector_property_device_id_alert_risk
+  }
+  property {
     name  = "deviceIdDeviceManaged"
     type  = "string"
     value = var.crowdstrikeconnector_property_device_id_device_managed
-  }
-  property {
-    name  = "deviceIdIncidentScore"
-    type  = "string"
-    value = var.crowdstrikeconnector_property_device_id_incident_score
   }
   property {
     name  = "deviceIds"
@@ -49,11 +54,6 @@ resource "pingone_davinci_connector_instance" "crowdStrikeConnector" {
     name  = "filter"
     type  = "string"
     value = var.crowdstrikeconnector_property_filter
-  }
-  property {
-    name  = "incidentIds"
-    type  = "string"
-    value = var.crowdstrikeconnector_property_incident_ids
   }
   property {
     name  = "ip"

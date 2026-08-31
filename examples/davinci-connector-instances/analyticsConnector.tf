@@ -35,4 +35,14 @@ resource "pingone_davinci_connector_instance" "analyticsConnector" {
     type  = "string"
     value = var.analyticsconnector_property_should_continue_on_error
   }
+  property {
+    name  = "useCustomOutcomeStatus"
+    type  = "string"
+    value = var.analyticsconnector_property_use_custom_outcome_status
+  }
+  property {
+    name  = "useCustomOutcomeType"
+    type  = "string"
+    value = var.analyticsconnector_property_use_custom_outcome_type
+  }
 }

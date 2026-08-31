@@ -36,6 +36,11 @@ resource "pingone_davinci_connector_instance" "AccertifyConnector" {
     value = var.accertifyconnector_property_basic_auth_username
   }
   property {
+    name  = "brand"
+    type  = "string"
+    value = var.accertifyconnector_property_brand
+  }
+  property {
     name  = "devicePayload"
     type  = "string"
     value = var.accertifyconnector_property_device_payload

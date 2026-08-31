@@ -151,6 +151,16 @@ resource "pingone_davinci_connector_instance" "pingOneFormsConnector" {
     value = var.pingoneformsconnector_property_next_event
   }
   property {
+    name  = "pingIdDesktopCredentialCreationOptions"
+    type  = "string"
+    value = var.pingoneformsconnector_property_ping_id_desktop_credential_creation_options
+  }
+  property {
+    name  = "pingIdDesktopCredentialRequestOptions"
+    type  = "string"
+    value = var.pingoneformsconnector_property_ping_id_desktop_credential_request_options
+  }
+  property {
     name  = "pingidAgent"
     type  = "string"
     value = var.pingoneformsconnector_property_pingid_agent
@@ -226,9 +236,19 @@ resource "pingone_davinci_connector_instance" "pingOneFormsConnector" {
     value = var.pingoneformsconnector_property_return_url_label
   }
   property {
+    name  = "routeClientErrorsToFalseBranch"
+    type  = "string"
+    value = var.pingoneformsconnector_property_route_client_errors_to_false_branch
+  }
+  property {
     name  = "sectionLabelFido2"
     type  = "string"
     value = var.pingoneformsconnector_property_section_label_fido2
+  }
+  property {
+    name  = "sectionLabelPingIDDesktopApp"
+    type  = "string"
+    value = var.pingoneformsconnector_property_section_label_ping_iddesktop_app
   }
   property {
     name  = "showContinueButton"
