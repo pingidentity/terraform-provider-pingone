@@ -18355,6 +18355,7 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `message` (string): The message to show to the user. Console display name: "Message".
 * `mfaPolicyId` (string): The ID of the MFA Policy to use during flow execution, such as "aa4b3e81-cf7e-8685-4b7b-7ec89cfcf7c8". If this value is empty or invalid at runtime, the default MFA policy is used. Console display name: "MFA Policy ID".
 * `nextEvent` (string): Console display name: "".
+* `pingIdDesktopContinueUrl` (string): Continue URL returned by an upstream Out-of-Band Start node (oobStart.continueLink). Used by Safari to complete PingID Desktop registration/authentication via the macOS SSO Extension. Console display name: "PingID Desktop Continue URL".
 * `pingIdDesktopCredentialCreationOptions` (string): Select the pingIdDesktopCredentialCreationOptions variable from the PingOne MFA > Create Device capability. Console display name: "PingID Desktop Credential Creation Options".
 * `pingIdDesktopCredentialRequestOptions` (string): Select the pingIdDesktopCredentialRequestOptions variable from the PingOne MFA > Create Device Authentication capability. Console display name: "PingID Desktop Credential Request Options".
 * `pingidAgent` (string): When enabled, the Signals SDK collects attributes from the PingID Device Trust Agent. Console display name: "Enable PingID Agent".
@@ -18372,7 +18373,7 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `qrCodeSectionLabel` (string): Console display name: "QR Code".
 * `returnUrl` (string): When using the embedded flow player widget and an IdP/Social Login connector, provide a callback URL to return back to the application. Console display name: "Application Return URL".
 * `returnUrlLabel` (string): Console display name: "Social Login".
-* `routeClientErrorsToFalseBranch` (string): Route client-side errors (for example, NotAllowedError, AbortError, etc.) to the False branch in the error object. When disabled, errors are returned on the True branch as the buttonValue outcome. Console display name: "Route Client Errors to the False Branch".
+* `routeClientErrorsToFalseBranch` (string): When a client-side error (NotAllowedError, AbortError, etc.) occurs, the flow proceeds to the False branch and passes the error in the error object. When disabled, if a client-side error occurs, the flow proceeds to the True branch and passes the error as the buttonValue outcome. Console display name: "Route Client Errors to the False Branch".
 * `sectionLabelFido2` (string): Console display name: "FIDO2".
 * `sectionLabelPingIDDesktopApp` (string): Console display name: "PingID Desktop App".
 * `showContinueButton` (string): When enabled, the user interface includes a button that allows the user to continue the flow. Console display name: "".
@@ -18535,6 +18536,11 @@ resource "pingone_davinci_connector_instance" "pingOneFormsConnector" {
     name  = "nextEvent"
     type  = "string"
     value = var.pingoneformsconnector_property_next_event
+  }
+  property {
+    name  = "pingIdDesktopContinueUrl"
+    type  = "string"
+    value = var.pingoneformsconnector_property_ping_id_desktop_continue_url
   }
   property {
     name  = "pingIdDesktopCredentialCreationOptions"
@@ -34934,13 +34940,13 @@ Connector ID (`connector.id` in the resource): `httpConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `additionalFieldsName` (string): Console display name: "".
+* `additionalFieldsName` (string): Define a name for the field that contains the Additional Properties List, such as "additionalProperties". This setting does not apply when this capability is used in a subflow. Console display name: "Additional Properties Name".
 * `blockRedirects` (string): When enabled, DaVinci enhances the security of the flow by preventing the browser from automatically following redirects and an error occurs instead. Console display name: "Block Redirects".
 * `bodyHeaderText` (string): Form body title. Console display name: "".
 * `bodyParams` (string): Console display name: "Body Params".
 * `button` (string): Console display name: "Submit".
 * `challenge` (string): Console display name: "".
-* `claimsNameValuePairs` (string): Use this section to add additional fields to the response. Console display name: "Additional Fields in the Response".
+* `claimsNameValuePairs` (string): Define a list of values to include in the response. These values are contained in a single property. Console display name: "Additional Properties List".
 * `connectionId` (string): Console display name: "Select an OpenID token management connection for signed HTTP responses.".
 * `connectionInstanceId` (string): In advanced scenarios, it might be required to specify the Node ID of the UI node where polling in enabled. When a Node ID is not entered (default behavior), polling will continue on the current UI node. Console display name: "Node ID of the UI node (Optional)".
 * `contentSource` (string): Select the source of the HTML, CSS, & Script content. Console display name: "Content Source".
@@ -34956,14 +34962,14 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `delayTime` (string): Time to wait for response to be sent in milliseconds. Default: 50. Console display name: "Delay Time (ms)".
 * `description` (string): Console display name: "Add form fields that you would wish the user to populate.".
 * `enablePolling` (string): Console display name: "Enable Polling?".
-* `fieldValidation` (string): The flow will fail if the validation is failed. Console display name: "Validate the additional properties".
+* `fieldValidation` (string): When enabled, DaVinci validates the data types of the additional properties. This setting does not apply when this capability is used in a subflow. Console display name: "Validate the additional properties".
 * `formFieldsList` (string): Console display name: "".
 * `headers` (string): Console display name: "Headers".
 * `httpBody` (string): Console display name: "Body".
 * `httpHeaders` (string): Console display name: "".
 * `httpMethod` (string): Console display name: "HTTP Method".
 * `httpStatusCode` (string): Console display name: "".
-* `inputSchema` (string): Follow example for JSON schema. Console display name: "".
+* `inputSchema` (string): Define a standardized set of variables to use in your HTML using JSON schema. For details, see the HTTP connector documentation. Console display name: "".
 * `jsonString` (string): This property needs to be a properly formatted JSON value. It can contain DaVinci parameters, which will be replaced at runtime. If you are using DaVinci parameters that are of type 'string', you will need to put string quotes around it. Console display name: "HTTP Body (JSON)".
 * `keepOutputIfNotValid` (string): Console display name: "Keep API output if the validation failed".
 * `message` (string): Console display name: "".
@@ -34973,7 +34979,7 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `nextButtonText` (string): Console display name: "".
 * `nextEvent` (string): Console display name: "".
 * `outboundMtlsKey` (string): Select the client certificate used to make outbound mTLS connections. Console display name: "MTLS Support".
-* `outputSchema` (string): Follow example for JSON schema. Console display name: "".
+* `outputSchema` (string): Define an output schema. Console display name: "".
 * `outputSchemaError` (string): Follow example for JSON schema. Console display name: "".
 * `pollChallengeStatus` (string): Console display name: "".
 * `pollInterval` (string): Console display name: "".
@@ -34982,7 +34988,7 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `raw` (string): Input your raw request body. Console display name: "raw".
 * `recaptchaSecretKey` (string): The Secret Key from reCAPTCHA Admin dashboard. Console display name: "reCAPTCHA v2 Secret Key".
 * `recaptchaSiteKey` (string): The Site Key from reCAPTCHA Admin dashboard. Console display name: "reCAPTCHA v2 Site Key".
-* `returnRequestParameters` (string): Console display name: "".
+* `returnRequestParameters` (string): When enabled, the original request parameters are included in the response payload. Console display name: "Return Request Parameters".
 * `returnSuccess` (string): Return success or failure response. Console display name: "Return Success Response".
 * `showContinueButton` (string): Console display name: "".
 * `showFooter` (string): Console display name: "".
@@ -34994,7 +35000,7 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `unsafeIgnoreTLSErrors` (string): When enabled, the connector ignores TLS errors. Use this for testing in non-production environments. Console display name: "Ignore TLS Errors".
 * `url` (string): Console display name: "URL".
 * `useRecaptcha` (string): Add sk-component skrecaptcha to use this feature. Console display name: "Use Recaptcha Verification".
-* `validationRules` (string): Rules to check to validate form inputs. Console display name: "Form validation rules".
+* `validationRules` (string): Define validation rules for the form inputs, such as format, minimum length, or whether the input is required. Console display name: "Form Validation Rules".
 * `validity` (string): Expiry time in milliseconds. Default is 86400000 (1 day). Console display name: "Validity".
 * `whiteList` (string): Enter the hostname for the trusted sites that host your HTML. Note: Ensure that the content hosted on these sites can be trusted and that publishing safeguards are in place to prevent unexpected issues. Console display name: "Trusted Sites".
 
@@ -37694,471 +37700,6 @@ resource "pingone_davinci_connector_instance" "connectorJiraServiceDesk" {
 ```
 
 
-## Jumio
-
-Connector ID (`connector.id` in the resource): `jumioConnector`
-
-Properties (used under the `properties` block in the resource as a key in the JSON object):
-
-* `apiKey` (string): Console display name: "API Key".
-* `authDescription` (string): Console display name: "".
-* `authUrl` (string): Console display name: "Base URL for Authentication".
-* `authorizationTokenLifetime` (string): Console display name: "".
-* `baseColor` (string): Console display name: "".
-* `bgColor` (string): Console display name: "".
-* `callbackUrl` (string): Console display name: "Callback URL".
-* `clientSecret` (string): Console display name: "API Secret".
-* `connectorName` (string): Console display name: "".
-* `country` (string): ISO 3166-1 alpha-3 country code. Console display name: "Country Code".
-* `countryCode3` (string): Console display name: "".
-* `customCSS` (string): Console display name: "CSS".
-* `customDocumentCode` (string): Console display name: "".
-* `customHTML` (string): Console display name: "HTML Template".
-* `customScript` (string): Write custom JavaScript. Caution: Custom code is for advanced users only. Before using custom code, review the security risks in the DaVinci documentation by searching for "Using custom code safely". Console display name: "Script".
-* `description` (string): Console display name: "".
-* `details1` (string): Console display name: "".
-* `details2` (string): Console display name: "".
-* `doNotShowInIframe` (string): Console display name: "".
-* `docVerificationUrl` (string): Console display name: "".
-* `documentType` (string): Console display name: "".
-* `enableExtraction` (string): Console display name: "".
-* `headerImageUrl` (string): Console display name: "".
-* `htmlConfig` (string): Console display name: "".
-* `iconUrl` (string): Console display name: "".
-* `iconUrlPng` (string): Console display name: "".
-* `jumioIdTypes` (string): Console display name: "".
-* `locale` (string): Renders content in the specified language. Console display name: "Locale".
-* `merchantReportingCriteria` (string): Console display name: "".
-* `screen0Config` (string): Console display name: "".
-* `screen1Config` (string): Console display name: "".
-* `screen2Config` (string): Console display name: "".
-* `screen3Config` (string): Console display name: "".
-* `screen4Config` (string): Console display name: "".
-* `screen5Config` (string): Console display name: "".
-* `showCredAddedOn` (string): Console display name: "".
-* `showCredAddedVia` (string): Console display name: "".
-* `title` (string): Console display name: "".
-* `tokenLifetimeInMinutes` (number): Time in minutes until the authorization token expires. (minimum: 5, maximum: 86400). Console display name: "Token Lifetime in Minutes".
-* `toolTip` (string): Console display name: "".
-* `useCustomScreens` (string): Console display name: "Use Custom Screens".
-* `workflowId` (string): Console display name: "".
-
-
-Example:
-```terraform
-resource "pingone_davinci_connector_instance" "jumioConnector" {
-  environment_id = var.pingone_environment_id
-
-  connector = {
-    id = "jumioConnector"
-  }
-  name = "My awesome jumioConnector"
-  property {
-    name  = "apiKey"
-    type  = "string"
-    value = var.jumioconnector_property_api_key
-  }
-  property {
-    name  = "authDescription"
-    type  = "string"
-    value = var.jumioconnector_property_auth_description
-  }
-  property {
-    name  = "authUrl"
-    type  = "string"
-    value = var.jumioconnector_property_auth_url
-  }
-  property {
-    name  = "authorizationTokenLifetime"
-    type  = "string"
-    value = var.jumioconnector_property_authorization_token_lifetime
-  }
-  property {
-    name  = "baseColor"
-    type  = "string"
-    value = var.jumioconnector_property_base_color
-  }
-  property {
-    name  = "bgColor"
-    type  = "string"
-    value = var.jumioconnector_property_bg_color
-  }
-  property {
-    name  = "callbackUrl"
-    type  = "string"
-    value = var.jumioconnector_property_callback_url
-  }
-  property {
-    name  = "clientSecret"
-    type  = "string"
-    value = var.jumioconnector_property_client_secret
-  }
-  property {
-    name  = "connectorName"
-    type  = "string"
-    value = var.jumioconnector_property_connector_name
-  }
-  property {
-    name  = "country"
-    type  = "string"
-    value = var.jumioconnector_property_country
-  }
-  property {
-    name  = "countryCode3"
-    type  = "string"
-    value = var.jumioconnector_property_country_code3
-  }
-  property {
-    name  = "customCSS"
-    type  = "string"
-    value = var.jumioconnector_property_custom_css
-  }
-  property {
-    name  = "customDocumentCode"
-    type  = "string"
-    value = var.jumioconnector_property_custom_document_code
-  }
-  property {
-    name  = "customHTML"
-    type  = "string"
-    value = var.jumioconnector_property_custom_html
-  }
-  property {
-    name  = "customScript"
-    type  = "string"
-    value = var.jumioconnector_property_custom_script
-  }
-  property {
-    name  = "description"
-    type  = "string"
-    value = var.jumioconnector_property_description
-  }
-  property {
-    name  = "details1"
-    type  = "string"
-    value = var.jumioconnector_property_details1
-  }
-  property {
-    name  = "details2"
-    type  = "string"
-    value = var.jumioconnector_property_details2
-  }
-  property {
-    name  = "doNotShowInIframe"
-    type  = "string"
-    value = var.jumioconnector_property_do_not_show_in_iframe
-  }
-  property {
-    name  = "docVerificationUrl"
-    type  = "string"
-    value = var.jumioconnector_property_doc_verification_url
-  }
-  property {
-    name  = "documentType"
-    type  = "string"
-    value = var.jumioconnector_property_document_type
-  }
-  property {
-    name  = "enableExtraction"
-    type  = "string"
-    value = var.jumioconnector_property_enable_extraction
-  }
-  property {
-    name  = "headerImageUrl"
-    type  = "string"
-    value = var.jumioconnector_property_header_image_url
-  }
-  property {
-    name  = "htmlConfig"
-    type  = "string"
-    value = var.jumioconnector_property_html_config
-  }
-  property {
-    name  = "iconUrl"
-    type  = "string"
-    value = var.jumioconnector_property_icon_url
-  }
-  property {
-    name  = "iconUrlPng"
-    type  = "string"
-    value = var.jumioconnector_property_icon_url_png
-  }
-  property {
-    name  = "jumioIdTypes"
-    type  = "string"
-    value = var.jumioconnector_property_jumio_id_types
-  }
-  property {
-    name  = "locale"
-    type  = "string"
-    value = var.jumioconnector_property_locale
-  }
-  property {
-    name  = "merchantReportingCriteria"
-    type  = "string"
-    value = var.jumioconnector_property_merchant_reporting_criteria
-  }
-  property {
-    name  = "screen0Config"
-    type  = "string"
-    value = var.jumioconnector_property_screen0_config
-  }
-  property {
-    name  = "screen1Config"
-    type  = "string"
-    value = var.jumioconnector_property_screen1_config
-  }
-  property {
-    name  = "screen2Config"
-    type  = "string"
-    value = var.jumioconnector_property_screen2_config
-  }
-  property {
-    name  = "screen3Config"
-    type  = "string"
-    value = var.jumioconnector_property_screen3_config
-  }
-  property {
-    name  = "screen4Config"
-    type  = "string"
-    value = var.jumioconnector_property_screen4_config
-  }
-  property {
-    name  = "screen5Config"
-    type  = "string"
-    value = var.jumioconnector_property_screen5_config
-  }
-  property {
-    name  = "showCredAddedOn"
-    type  = "string"
-    value = var.jumioconnector_property_show_cred_added_on
-  }
-  property {
-    name  = "showCredAddedVia"
-    type  = "string"
-    value = var.jumioconnector_property_show_cred_added_via
-  }
-  property {
-    name  = "title"
-    type  = "string"
-    value = var.jumioconnector_property_title
-  }
-  property {
-    name  = "tokenLifetimeInMinutes"
-    type  = "number"
-    value = var.jumioconnector_property_token_lifetime_in_minutes
-  }
-  property {
-    name  = "toolTip"
-    type  = "string"
-    value = var.jumioconnector_property_tool_tip
-  }
-  property {
-    name  = "useCustomScreens"
-    type  = "string"
-    value = var.jumioconnector_property_use_custom_screens
-  }
-  property {
-    name  = "workflowId"
-    type  = "string"
-    value = var.jumioconnector_property_workflow_id
-  }
-}
-```
-
-
-## KBA
-
-Connector ID (`connector.id` in the resource): `kbaConnector`
-
-Properties (used under the `properties` block in the resource as a key in the JSON object):
-
-* `authDescription` (string): Console display name: "".
-* `bodyHeaderText` (string): Console display name: "".
-* `connectorName` (string): Console display name: "".
-* `description` (string): Console display name: "".
-* `details1` (string): Console display name: "".
-* `details2` (string): Console display name: "".
-* `formFieldsList` (string): Console display name: "".
-* `iconUrl` (string): Console display name: "".
-* `iconUrlPng` (string): Console display name: "".
-* `nextButtonText` (string): Console display name: "".
-* `nextEvent` (string): Console display name: "".
-* `parameters` (string): Console display name: "".
-* `screen0Config` (string): Console display name: "".
-* `screen1Config` (string): Console display name: "".
-* `screen2Config` (string): Console display name: "".
-* `showCredAddedOn` (string): Console display name: "".
-* `showCredAddedVia` (string): Console display name: "".
-* `title` (string): Console display name: "".
-* `toolTip` (string): Console display name: "".
-
-
-Example:
-```terraform
-resource "pingone_davinci_connector_instance" "kbaConnector" {
-  environment_id = var.pingone_environment_id
-
-  connector = {
-    id = "kbaConnector"
-  }
-  name = "My awesome kbaConnector"
-  property {
-    name  = "authDescription"
-    type  = "string"
-    value = var.kbaconnector_property_auth_description
-  }
-  property {
-    name  = "bodyHeaderText"
-    type  = "string"
-    value = var.kbaconnector_property_body_header_text
-  }
-  property {
-    name  = "connectorName"
-    type  = "string"
-    value = var.kbaconnector_property_connector_name
-  }
-  property {
-    name  = "description"
-    type  = "string"
-    value = var.kbaconnector_property_description
-  }
-  property {
-    name  = "details1"
-    type  = "string"
-    value = var.kbaconnector_property_details1
-  }
-  property {
-    name  = "details2"
-    type  = "string"
-    value = var.kbaconnector_property_details2
-  }
-  property {
-    name  = "formFieldsList"
-    type  = "string"
-    value = var.kbaconnector_property_form_fields_list
-  }
-  property {
-    name  = "iconUrl"
-    type  = "string"
-    value = var.kbaconnector_property_icon_url
-  }
-  property {
-    name  = "iconUrlPng"
-    type  = "string"
-    value = var.kbaconnector_property_icon_url_png
-  }
-  property {
-    name  = "nextButtonText"
-    type  = "string"
-    value = var.kbaconnector_property_next_button_text
-  }
-  property {
-    name  = "nextEvent"
-    type  = "string"
-    value = var.kbaconnector_property_next_event
-  }
-  property {
-    name  = "parameters"
-    type  = "string"
-    value = var.kbaconnector_property_parameters
-  }
-  property {
-    name  = "screen0Config"
-    type  = "string"
-    value = var.kbaconnector_property_screen0_config
-  }
-  property {
-    name  = "screen1Config"
-    type  = "string"
-    value = var.kbaconnector_property_screen1_config
-  }
-  property {
-    name  = "screen2Config"
-    type  = "string"
-    value = var.kbaconnector_property_screen2_config
-  }
-  property {
-    name  = "showCredAddedOn"
-    type  = "string"
-    value = var.kbaconnector_property_show_cred_added_on
-  }
-  property {
-    name  = "showCredAddedVia"
-    type  = "string"
-    value = var.kbaconnector_property_show_cred_added_via
-  }
-  property {
-    name  = "title"
-    type  = "string"
-    value = var.kbaconnector_property_title
-  }
-  property {
-    name  = "toolTip"
-    type  = "string"
-    value = var.kbaconnector_property_tool_tip
-  }
-}
-```
-
-
-## KF Kerberos Connector
-
-Connector ID (`connector.id` in the resource): `kfKerberosConnector`
-
-Properties (used under the `properties` block in the resource as a key in the JSON object):
-
-* `clientId` (string): The Client ID of your PingOne Worker application. Console display name: "Client ID".
-* `clientSecret` (string): The Client Secret of your PingOne Worker application. Console display name: "Client Secret".
-* `envId` (string): Your PingOne environment ID. Console display name: "Environment ID".
-* `gatewayId` (string): PingOne gateway ID to use referring to the LDAP gateway used for Kerberos authentication. Console display name: "PingOne Gateway Id".
-* `region` (string): The region in which your PingOne environment exists. Console display name: "Region".
-* `userTypeId` (string): PingOne gateway user type ID to use referring to the user type defined for the LDAP gateway. Console display name: "PingOne Gateway User Type Id".
-
-
-Example:
-```terraform
-resource "pingone_davinci_connector_instance" "kfKerberosConnector" {
-  environment_id = var.pingone_environment_id
-
-  connector = {
-    id = "kfKerberosConnector"
-  }
-  name = "My awesome kfKerberosConnector"
-  property {
-    name  = "clientId"
-    type  = "string"
-    value = var.kfkerberosconnector_property_client_id
-  }
-  property {
-    name  = "clientSecret"
-    type  = "string"
-    value = var.kfkerberosconnector_property_client_secret
-  }
-  property {
-    name  = "envId"
-    type  = "string"
-    value = var.kfkerberosconnector_property_env_id
-  }
-  property {
-    name  = "gatewayId"
-    type  = "string"
-    value = var.kfkerberosconnector_property_gateway_id
-  }
-  property {
-    name  = "region"
-    type  = "string"
-    value = var.kfkerberosconnector_property_region
-  }
-  property {
-    name  = "userTypeId"
-    type  = "string"
-    value = var.kfkerberosconnector_property_user_type_id
-  }
-}
-```
-
-
 ## KYXStart
 
 Connector ID (`connector.id` in the resource): `kyxstartConnector`
@@ -38199,153 +37740,6 @@ resource "pingone_davinci_connector_instance" "kyxstartConnector" {
     name  = "tenantName"
     type  = "string"
     value = var.kyxstartconnector_property_tenant_name
-  }
-}
-```
-
-
-## Kaizen Secure Voiz
-
-Connector ID (`connector.id` in the resource): `kaizenVoizConnector`
-
-Properties (used under the `properties` block in the resource as a key in the JSON object):
-
-* `apiUrl` (string): example: http://<server_root>/ksvvoiceservice/rest/service. Console display name: "".
-* `applicationName` (string): Console display name: "".
-* `authDescription` (string): Console display name: "".
-* `connectorName` (string): Console display name: "".
-* `description` (string): Console display name: "".
-* `details1` (string): Console display name: "".
-* `details2` (string): Console display name: "".
-* `iconUrl` (string): Console display name: "".
-* `iconUrlPng` (string): Console display name: "".
-* `mainHeaderText` (string): Console display name: "".
-* `nextButtonText` (string): Console display name: "".
-* `screen0Config` (string): Console display name: "".
-* `screen1Config` (string): Console display name: "".
-* `screen2Config` (string): Console display name: "".
-* `screen3Config` (string): Console display name: "".
-* `screen4Config` (string): Console display name: "".
-* `showCredAddedOn` (string): Console display name: "".
-* `showCredAddedVia` (string): Console display name: "".
-* `title` (string): Console display name: "".
-* `toolTip` (string): Console display name: "".
-* `voiceAccuracy` (string): Voice accuracy value between 0 to 100. Console display name: "".
-
-
-Example:
-```terraform
-resource "pingone_davinci_connector_instance" "kaizenVoizConnector" {
-  environment_id = var.pingone_environment_id
-
-  connector = {
-    id = "kaizenVoizConnector"
-  }
-  name = "My awesome kaizenVoizConnector"
-  property {
-    name  = "apiUrl"
-    type  = "string"
-    value = var.kaizenvoizconnector_property_api_url
-  }
-  property {
-    name  = "applicationName"
-    type  = "string"
-    value = var.kaizenvoizconnector_property_application_name
-  }
-  property {
-    name  = "authDescription"
-    type  = "string"
-    value = var.kaizenvoizconnector_property_auth_description
-  }
-  property {
-    name  = "connectorName"
-    type  = "string"
-    value = var.kaizenvoizconnector_property_connector_name
-  }
-  property {
-    name  = "description"
-    type  = "string"
-    value = var.kaizenvoizconnector_property_description
-  }
-  property {
-    name  = "details1"
-    type  = "string"
-    value = var.kaizenvoizconnector_property_details1
-  }
-  property {
-    name  = "details2"
-    type  = "string"
-    value = var.kaizenvoizconnector_property_details2
-  }
-  property {
-    name  = "iconUrl"
-    type  = "string"
-    value = var.kaizenvoizconnector_property_icon_url
-  }
-  property {
-    name  = "iconUrlPng"
-    type  = "string"
-    value = var.kaizenvoizconnector_property_icon_url_png
-  }
-  property {
-    name  = "mainHeaderText"
-    type  = "string"
-    value = var.kaizenvoizconnector_property_main_header_text
-  }
-  property {
-    name  = "nextButtonText"
-    type  = "string"
-    value = var.kaizenvoizconnector_property_next_button_text
-  }
-  property {
-    name  = "screen0Config"
-    type  = "string"
-    value = var.kaizenvoizconnector_property_screen0_config
-  }
-  property {
-    name  = "screen1Config"
-    type  = "string"
-    value = var.kaizenvoizconnector_property_screen1_config
-  }
-  property {
-    name  = "screen2Config"
-    type  = "string"
-    value = var.kaizenvoizconnector_property_screen2_config
-  }
-  property {
-    name  = "screen3Config"
-    type  = "string"
-    value = var.kaizenvoizconnector_property_screen3_config
-  }
-  property {
-    name  = "screen4Config"
-    type  = "string"
-    value = var.kaizenvoizconnector_property_screen4_config
-  }
-  property {
-    name  = "showCredAddedOn"
-    type  = "string"
-    value = var.kaizenvoizconnector_property_show_cred_added_on
-  }
-  property {
-    name  = "showCredAddedVia"
-    type  = "string"
-    value = var.kaizenvoizconnector_property_show_cred_added_via
-  }
-  property {
-    name  = "title"
-    type  = "string"
-    value = var.kaizenvoizconnector_property_title
-  }
-  property {
-    name  = "toolTip"
-    type  = "string"
-    value = var.kaizenvoizconnector_property_tool_tip
-  }
-  property {
-    name  = "voiceAccuracy"
-    type  = "string"
-    value = var.kaizenvoizconnector_property_voice_accuracy
   }
 }
 ```
@@ -45237,6 +44631,7 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `attestation` (string): A read-only string that specifies the public key and signed challenge used to complete registration and device activation. The attestation is generated by the browser as a response to a specific user action, such as a fingerprint scan or tap on a security key. Console display name: "Attestation".
 * `authTemplateName` (string): Indicates whether the notification is intended for a user authentication flow. Console display name: "Notification Type".
 * `authenticatingApplicationId` (string): The unique identifier for the mobile application used to authenticate a user. Console display name: "Application".
+* `backUpAuthentication` (boolean): When enabled, the capability creates a new Device Authentication with one-time device with no flow outcomes returned. Console display name: "Back Up Authentication".
 * `clientContext` (string): Additional attributes that can be passed to the mobile application during the authentication. Console display name: "Mobile Client Context".
 * `compatibility` (string): Console display name: "WebAuthn Browser Compatibility".
 * `customApplicationId` (string): Console display name: "Application ID".
@@ -45263,6 +44658,11 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `nickname` (string): A nickname that identifies this device. The device nickname is limited to 100 characters. Console display name: "Device Nickname".
 * `notificationPolicyId` (string): A unique identifier for the policy. Console display name: "Notification Policy".
 * `notificationSettings` (boolean): Show advanced fields for Notification Settings. Console display name: "Show advanced fields".
+* `oathResync` (boolean): Indicates if OATH token resync is permitted during registration. Console display name: "OATH Token Resync".
+* `oneTimeDeviceType` (string): The one-time device type. Console display name: "Device Type".
+* `oneTimeEmailDevice` (string): The email address to associate with the one-time device. Console display name: "Email".
+* `oneTimeSmsDevice` (string): The phone number to associate with the one-time SMS device. Console display name: "SMS Phone Number".
+* `oneTimeVoiceDevice` (string): The phone number to associate with the one-time Voice device. Console display name: "Voice Phone Number".
 * `origin` (string): The address of the server sending the initial registration challenge to the device. Console display name: "Origin".
 * `otp` (string): The one-time passcode (OTP) sent to the user. Console display name: "One-time Passcode".
 * `otpSettings` (boolean): Show advanced fields for OTP Settings. Console display name: "Show advanced fields".
@@ -45272,6 +44672,9 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `reason` (string): The reason that the authentication was canceled. 
 Possible values are SIGNOUT, CHANGE_DEVICE, ADD_DEVICE. Any other reason will get the value - DEFAULT. Console display name: "Reason For Cancellation
 ".
+* `rememberMeCookie` (string): The cookie that was generated when the remembered device was created. Console display name: "Remember Me Cookie".
+* `rememberMePayload` (string): Identify the device via a unique device ID combined with a digital signature that ensures information collected about the device has not been tampered with. Console display name: "Remember Me Payload".
+* `rememberMeSessionId` (string): The active PingOne session for the user. Console display name: "Remember Me Session ID".
 * `rpId` (string): If you define a Relying Party ID (RPID) here, it overrides the RPID defined in the FIDO policy in the PingOne admin console. Console display name: "Relying Party ID".
 * `rpName` (string): A string that specifies the relying party's human-readable display name. Console display name: "Relying Party Name".
 * `sectionLabelDeviceDetails` (string): Console display name: "Device Details".
@@ -45280,7 +44683,9 @@ Possible values are SIGNOUT, CHANGE_DEVICE, ADD_DEVICE. Any other reason will ge
 * `sectionLabelNotification` (string): Console display name: "Notification Settings".
 * `sectionLabelOtp` (string): Console display name: "OTP Settings".
 * `sectionLabelPush` (string): Console display name: "Push Settings".
+* `sectionLabelRememberMe` (string): Console display name: "Remember Me Settings".
 * `sectionLabelUserDetails` (string): Console display name: "User and Device Details".
+* `sectionLabelbackUpAuthentication` (string): Console display name: "BackUp Authentication".
 * `selectedDeviceOtp` (string): The one-time passcode (OTP) of the device used to authenticate. If the Device ID is not provided, the OTP is validated against all the applicable devices. Console display name: "One-time Passcode".
 * `serialNumber` (string): The unique identifier for the OATH token. Console display name: "Serial Number".
 * `setDeviceOrder` (string): Select how to set the device order. Console display name: "Set Device Order".
@@ -45340,6 +44745,11 @@ resource "pingone_davinci_connector_instance" "mfaUseCaseConnector" {
     name  = "authenticatingApplicationId"
     type  = "string"
     value = var.mfausecaseconnector_property_authenticating_application_id
+  }
+  property {
+    name  = "backUpAuthentication"
+    type  = "boolean"
+    value = var.mfausecaseconnector_property_back_up_authentication
   }
   property {
     name  = "clientContext"
@@ -45472,6 +44882,31 @@ resource "pingone_davinci_connector_instance" "mfaUseCaseConnector" {
     value = var.mfausecaseconnector_property_notification_settings
   }
   property {
+    name  = "oathResync"
+    type  = "boolean"
+    value = var.mfausecaseconnector_property_oath_resync
+  }
+  property {
+    name  = "oneTimeDeviceType"
+    type  = "string"
+    value = var.mfausecaseconnector_property_one_time_device_type
+  }
+  property {
+    name  = "oneTimeEmailDevice"
+    type  = "string"
+    value = var.mfausecaseconnector_property_one_time_email_device
+  }
+  property {
+    name  = "oneTimeSmsDevice"
+    type  = "string"
+    value = var.mfausecaseconnector_property_one_time_sms_device
+  }
+  property {
+    name  = "oneTimeVoiceDevice"
+    type  = "string"
+    value = var.mfausecaseconnector_property_one_time_voice_device
+  }
+  property {
     name  = "origin"
     type  = "string"
     value = var.mfausecaseconnector_property_origin
@@ -45505,6 +44940,21 @@ resource "pingone_davinci_connector_instance" "mfaUseCaseConnector" {
     name  = "reason"
     type  = "string"
     value = var.mfausecaseconnector_property_reason
+  }
+  property {
+    name  = "rememberMeCookie"
+    type  = "string"
+    value = var.mfausecaseconnector_property_remember_me_cookie
+  }
+  property {
+    name  = "rememberMePayload"
+    type  = "string"
+    value = var.mfausecaseconnector_property_remember_me_payload
+  }
+  property {
+    name  = "rememberMeSessionId"
+    type  = "string"
+    value = var.mfausecaseconnector_property_remember_me_session_id
   }
   property {
     name  = "rpId"
@@ -45547,9 +44997,19 @@ resource "pingone_davinci_connector_instance" "mfaUseCaseConnector" {
     value = var.mfausecaseconnector_property_section_label_push
   }
   property {
+    name  = "sectionLabelRememberMe"
+    type  = "string"
+    value = var.mfausecaseconnector_property_section_label_remember_me
+  }
+  property {
     name  = "sectionLabelUserDetails"
     type  = "string"
     value = var.mfausecaseconnector_property_section_label_user_details
+  }
+  property {
+    name  = "sectionLabelbackUpAuthentication"
+    type  = "string"
+    value = var.mfausecaseconnector_property_section_labelback_up_authentication
   }
   property {
     name  = "selectedDeviceOtp"
@@ -48178,237 +47638,6 @@ resource "pingone_davinci_connector_instance" "nudataConnector" {
     id = "nudataConnector"
   }
   name = "My awesome nudataConnector"
-}
-```
-
-
-## Nuance
-
-Connector ID (`connector.id` in the resource): `nuanceConnector`
-
-Properties (used under the `properties` block in the resource as a key in the JSON object):
-
-* `authDescription` (string): Console display name: "".
-* `configSetName` (string): The Config Set Name for accessing Nuance API. Console display name: "Config Set Name".
-* `connectorName` (string): Console display name: "".
-* `credId` (string): The Cred ID from the first attempt when retrying. Console display name: "Credential ID".
-* `customCSS` (string): Console display name: "CSS".
-* `customHTML` (string): Console display name: "HTML Template".
-* `customScript` (string): Write custom JavaScript. Caution: Custom code is for advanced users only. Before using custom code, review the security risks in the DaVinci documentation by searching for "Using custom code safely". Console display name: "Script".
-* `description` (string): Console display name: "".
-* `details1` (string): Console display name: "".
-* `details2` (string): Console display name: "".
-* `htmlConfig` (string): Console display name: "".
-* `iconUrl` (string): Console display name: "".
-* `iconUrlPng` (string): Console display name: "".
-* `mainHeaderText` (string): Console display name: "".
-* `nextButtonText` (string): Console display name: "".
-* `passphrase` (string): The phrase that is spoken in the audio url. Console display name: "Passphrase".
-* `passphrase1` (string): Passphrase that the user will need to speak for voice sample. Console display name: "Passphrase One".
-* `passphrase2` (string): Passphrase that the user will need to speak for voice sample. Console display name: "Passphrase Two".
-* `passphrase3` (string): Passphrase that the user will need to speak for voice sample. Console display name: "Passphrase Three".
-* `passphrase4` (string): Passphrase that the user will need to speak for voice sample. Console display name: "Passphrase Four".
-* `passphrase5` (string): Passphrase that the user will need to speak for voice sample. Console display name: "Passphrase Five".
-* `screen0Config` (string): Console display name: "".
-* `screen1Config` (string): Console display name: "".
-* `screen2Config` (string): Console display name: "".
-* `screen3Config` (string): Console display name: "".
-* `screen4Config` (string): Console display name: "".
-* `screen5Config` (string): Console display name: "".
-* `sessionId` (string): The Session ID from the first attempt when retrying. Console display name: "Session ID".
-* `showCredAddedOn` (string): Console display name: "".
-* `showCredAddedVia` (string): Console display name: "".
-* `title` (string): Console display name: "".
-* `toolTip` (string): Console display name: "".
-* `useCustomScreens` (string): Console display name: "Use Custom Screens".
-* `voiceUrl` (string): The URl of the Audio file in .wav format. Console display name: "Voice URL".
-* `voiceprintTag` (string): The Voiceprint Tag from the first attempt when retrying. Console display name: "Voiceprint Tag".
-
-
-Example:
-```terraform
-resource "pingone_davinci_connector_instance" "nuanceConnector" {
-  environment_id = var.pingone_environment_id
-
-  connector = {
-    id = "nuanceConnector"
-  }
-  name = "My awesome nuanceConnector"
-  property {
-    name  = "authDescription"
-    type  = "string"
-    value = var.nuanceconnector_property_auth_description
-  }
-  property {
-    name  = "configSetName"
-    type  = "string"
-    value = var.nuanceconnector_property_config_set_name
-  }
-  property {
-    name  = "connectorName"
-    type  = "string"
-    value = var.nuanceconnector_property_connector_name
-  }
-  property {
-    name  = "credId"
-    type  = "string"
-    value = var.nuanceconnector_property_cred_id
-  }
-  property {
-    name  = "customCSS"
-    type  = "string"
-    value = var.nuanceconnector_property_custom_css
-  }
-  property {
-    name  = "customHTML"
-    type  = "string"
-    value = var.nuanceconnector_property_custom_html
-  }
-  property {
-    name  = "customScript"
-    type  = "string"
-    value = var.nuanceconnector_property_custom_script
-  }
-  property {
-    name  = "description"
-    type  = "string"
-    value = var.nuanceconnector_property_description
-  }
-  property {
-    name  = "details1"
-    type  = "string"
-    value = var.nuanceconnector_property_details1
-  }
-  property {
-    name  = "details2"
-    type  = "string"
-    value = var.nuanceconnector_property_details2
-  }
-  property {
-    name  = "htmlConfig"
-    type  = "string"
-    value = var.nuanceconnector_property_html_config
-  }
-  property {
-    name  = "iconUrl"
-    type  = "string"
-    value = var.nuanceconnector_property_icon_url
-  }
-  property {
-    name  = "iconUrlPng"
-    type  = "string"
-    value = var.nuanceconnector_property_icon_url_png
-  }
-  property {
-    name  = "mainHeaderText"
-    type  = "string"
-    value = var.nuanceconnector_property_main_header_text
-  }
-  property {
-    name  = "nextButtonText"
-    type  = "string"
-    value = var.nuanceconnector_property_next_button_text
-  }
-  property {
-    name  = "passphrase"
-    type  = "string"
-    value = var.nuanceconnector_property_passphrase
-  }
-  property {
-    name  = "passphrase1"
-    type  = "string"
-    value = var.nuanceconnector_property_passphrase1
-  }
-  property {
-    name  = "passphrase2"
-    type  = "string"
-    value = var.nuanceconnector_property_passphrase2
-  }
-  property {
-    name  = "passphrase3"
-    type  = "string"
-    value = var.nuanceconnector_property_passphrase3
-  }
-  property {
-    name  = "passphrase4"
-    type  = "string"
-    value = var.nuanceconnector_property_passphrase4
-  }
-  property {
-    name  = "passphrase5"
-    type  = "string"
-    value = var.nuanceconnector_property_passphrase5
-  }
-  property {
-    name  = "screen0Config"
-    type  = "string"
-    value = var.nuanceconnector_property_screen0_config
-  }
-  property {
-    name  = "screen1Config"
-    type  = "string"
-    value = var.nuanceconnector_property_screen1_config
-  }
-  property {
-    name  = "screen2Config"
-    type  = "string"
-    value = var.nuanceconnector_property_screen2_config
-  }
-  property {
-    name  = "screen3Config"
-    type  = "string"
-    value = var.nuanceconnector_property_screen3_config
-  }
-  property {
-    name  = "screen4Config"
-    type  = "string"
-    value = var.nuanceconnector_property_screen4_config
-  }
-  property {
-    name  = "screen5Config"
-    type  = "string"
-    value = var.nuanceconnector_property_screen5_config
-  }
-  property {
-    name  = "sessionId"
-    type  = "string"
-    value = var.nuanceconnector_property_session_id
-  }
-  property {
-    name  = "showCredAddedOn"
-    type  = "string"
-    value = var.nuanceconnector_property_show_cred_added_on
-  }
-  property {
-    name  = "showCredAddedVia"
-    type  = "string"
-    value = var.nuanceconnector_property_show_cred_added_via
-  }
-  property {
-    name  = "title"
-    type  = "string"
-    value = var.nuanceconnector_property_title
-  }
-  property {
-    name  = "toolTip"
-    type  = "string"
-    value = var.nuanceconnector_property_tool_tip
-  }
-  property {
-    name  = "useCustomScreens"
-    type  = "string"
-    value = var.nuanceconnector_property_use_custom_screens
-  }
-  property {
-    name  = "voiceUrl"
-    type  = "string"
-    value = var.nuanceconnector_property_voice_url
-  }
-  property {
-    name  = "voiceprintTag"
-    type  = "string"
-    value = var.nuanceconnector_property_voiceprint_tag
-  }
 }
 ```
 
@@ -69911,6 +69140,7 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `currentPassword` (string): The user's current password. Console display name: "Current Password".
 * `customDataArray` (string): This input will overwrite the current metadata for the group. Console display name: "Metadata Properties".
 * `customDataText` (string): This input will overwrite the current metadata for the group. Console display name: "Metadata Properties".
+* `customFilter` (string): Console display name: "Custom Filter".
 * `customTemplateVariant` (string): You can enter a custom template name, or leave blank to use the default template. You can also enter a parameter from a previous connector, or any text. Console display name: "Custom Value".
 * `description` (string): The description of the group. Console display name: "Group Description".
 * `email` (string): Console display name: "Email".
@@ -70136,6 +69366,11 @@ resource "pingone_davinci_connector_instance" "pingOneSSOConnector" {
     name  = "customDataText"
     type  = "string"
     value = var.pingonessoconnector_property_custom_data_text
+  }
+  property {
+    name  = "customFilter"
+    type  = "string"
+    value = var.pingonessoconnector_property_custom_filter
   }
   property {
     name  = "customTemplateVariant"
@@ -71198,6 +70433,8 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `applyUpdate` (string): Array of one or more identifiers (UUIDs) of users whose credentials are in an update action state and should be updated. Console display name: "Apply Update for User ID(s)".
 * `clientId` (string): The Client ID of your PingOne Worker application. Console display name: "Client ID".
 * `clientSecret` (string): The Client Secret of your PingOne Worker application. Console display name: "Client Secret".
+* `credentialData` (string): Key-value pairs of credential data to include in the credential body (Map<String, Object>). Console display name: "Credential Data".
+* `credentialDataObject` (string): Pass a JSON object from a previous node as credential data. If provided, this takes priority over the key-value Credential Data field. Console display name: "Credential Data (Object)".
 * `credentialId` (string): Identifier (UUID) of the provisioned user credential. Console display name: "Credential ID".
 * `credentialTypeId` (string): Identifier (UUID) associated with the credential type. Console display name: "Credential Type ID".
 * `credentialsVerificationId` (string): Identifier (UUID) of the verification credential data. Console display name: "Credential Verification ID".
@@ -71219,6 +70456,7 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `requestedCredentials` (string): Requested Credentials. Variable Name =>credential type, value=>(comma separated keys). Console display name: "Requested Credentials".
 * `showPoweredBy` (string): Console display name: "".
 * `skipButtonPress` (string): Console display name: "".
+* `storeUntilIssued` (string): If enabled, the Credential data will be securely stored by the service until the Credential is issued to a wallet. The data will then be deleted. This should only be used for demo purposes, not intended for production use. Console display name: "Store Data Until Issued (DEMOS ONLY)".
 * `templateLocale` (string): Add a locale to allow localized notifications for end-users. ISO Language Codes are supported. Console display name: "Notification Locale".
 * `templateVariables` (string): If Custom variables are defined in the notification body, map them here. Console display name: "Notification Variables".
 * `templateVariant` (string): You can enter a custom template name, or leave blank to use the default template. You can also enter a parameter from a previous connector, or any text. Console display name: "Custom Value".
@@ -71263,6 +70501,16 @@ resource "pingone_davinci_connector_instance" "pingOneCredentialsConnector" {
     name  = "clientSecret"
     type  = "string"
     value = var.pingone_worker_app_client_secret
+  }
+  property {
+    name  = "credentialData"
+    type  = "string"
+    value = var.pingonecredentialsconnector_property_credential_data
+  }
+  property {
+    name  = "credentialDataObject"
+    type  = "string"
+    value = var.pingonecredentialsconnector_property_credential_data_object
   }
   property {
     name  = "credentialId"
@@ -71370,6 +70618,11 @@ resource "pingone_davinci_connector_instance" "pingOneCredentialsConnector" {
     value = var.pingonecredentialsconnector_property_skip_button_press
   }
   property {
+    name  = "storeUntilIssued"
+    type  = "string"
+    value = var.pingonecredentialsconnector_property_store_until_issued
+  }
+  property {
     name  = "templateLocale"
     type  = "string"
     value = var.pingonecredentialsconnector_property_template_locale
@@ -71450,6 +70703,7 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `oneTimeVoiceDevice` (string): The phone number to associate with the one-time Voice device. Console display name: "Voice Phone Number".
 * `origin` (string): The address of the server sending the initial registration challenge to the device. Console display name: "Origin".
 * `otp` (string): The one-time passcode (OTP) sent to the user. Console display name: "One-time Passcode".
+* `pairingKey` (string): The pairing key code handed to the DaVinci SDK to pair the mobile device. Console display name: "Pairing Key".
 * `pairingKeyId` (string): The unique identifier for the pairing key. Console display name: "Pairing Key ID".
 * `phone` (string): The phone number to associate with the device. Applies only to devices that use SMS and Voice SMS messages during authentication. Console display name: "Phone Number".
 * `policyFactsApplicationId` (string): The ID of the application being authenticated. Console display name: "Application Id".
@@ -71763,6 +71017,11 @@ resource "pingone_davinci_connector_instance" "pingOneMfaConnector" {
     name  = "otp"
     type  = "string"
     value = var.pingonemfaconnector_property_otp
+  }
+  property {
+    name  = "pairingKey"
+    type  = "string"
+    value = var.pingonemfaconnector_property_pairing_key
   }
   property {
     name  = "pairingKeyId"
@@ -72589,6 +71848,7 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `notifyEmail` (string): The email address to receive email notifications during verification. Console display name: "Notification Email Address".
 * `notifyPhone` (string): The phone number to receive SMS notifications during verification. Console display name: "Notification Phone Number".
 * `probeBiographic` (string): Use this section to add probe biographic fields. Console display name: "Probe Biographic Fields".
+* `redirectAuto` (string): Automatically redirect to the specified URL after document collection. Requires a configured Redirect URL. Cannot be set together with Redirect Message. Console display name: "Redirect Auto".
 * `redirectMessage` (string): Displayed after document collection and before redirecting to the specified URL. Requires a configured Redirect URL. Limited to 256 characters. Console display name: "Redirect Message".
 * `redirectUrl` (string): The Redirect URL where the user is returned to after document collection. Only secure (https://) URLs are allowed. Console display name: "Redirect URL".
 * `referenceImage` (string): Base64 encoded reference image for facial-comparison-only verify policy. Console display name: "Reference Image".
@@ -72723,6 +71983,11 @@ resource "pingone_davinci_connector_instance" "pingOneVerifyConnector" {
     name  = "probeBiographic"
     type  = "string"
     value = var.pingoneverifyconnector_property_probe_biographic
+  }
+  property {
+    name  = "redirectAuto"
+    type  = "string"
+    value = var.pingoneverifyconnector_property_redirect_auto
   }
   property {
     name  = "redirectMessage"
@@ -73496,165 +72761,6 @@ resource "pingone_davinci_connector_instance" "inveridConnector" {
     name  = "timeToLive"
     type  = "string"
     value = var.inveridconnector_property_time_to_live
-  }
-}
-```
-
-
-## SAML
-
-Connector ID (`connector.id` in the resource): `samlConnector`
-
-Properties (used under the `properties` block in the resource as a key in the JSON object):
-
-* `assertionLifeTimeInSeconds` (string): Console display name: "".
-* `authnContextClassRef` (string): Console display name: "".
-* `claimsMapping` (string): Console display name: "".
-* `claimsNameValuePairs` (string): Console display name: "".
-* `connectionId` (string): Console display name: "".
-* `digestAlgorithm` (string): Console display name: "".
-* `encryptAssertion` (string): Console display name: "".
-* `encryptionAlgorithm` (string): Console display name: "".
-* `includeAttributeNameFormat` (string): Console display name: "".
-* `keyEncryptionAlgorithm` (string): Console display name: "".
-* `nameId` (string): Console display name: "".
-* `nameIdFormat` (string): Console display name: "".
-* `nameIdNameQualifier` (string): Console display name: "".
-* `nameIdSPNameQualifier` (string): Console display name: "".
-* `nameIdSPProvidedID` (string): Console display name: "".
-* `samlResponseStatus` (string): Console display name: "".
-* `samlResponseStatusMessage` (string): Console display name: "".
-* `sessionIndex` (string): Console display name: "".
-* `signResponse` (string): Console display name: "".
-* `signatureAlgorithm` (string): Console display name: "".
-* `signatureNamespacePrefix` (string): Console display name: "".
-* `spCertForEncryption` (string): Console display name: "".
-* `typedAttributes` (string): Console display name: "".
-
-
-Example:
-```terraform
-resource "pingone_davinci_connector_instance" "samlConnector" {
-  environment_id = var.pingone_environment_id
-
-  connector = {
-    id = "samlConnector"
-  }
-  name = "My awesome samlConnector"
-  property {
-    name  = "assertionLifeTimeInSeconds"
-    type  = "string"
-    value = var.samlconnector_property_assertion_life_time_in_seconds
-  }
-  property {
-    name  = "authnContextClassRef"
-    type  = "string"
-    value = var.samlconnector_property_authn_context_class_ref
-  }
-  property {
-    name  = "claimsMapping"
-    type  = "string"
-    value = var.samlconnector_property_claims_mapping
-  }
-  property {
-    name  = "claimsNameValuePairs"
-    type  = "string"
-    value = var.samlconnector_property_claims_name_value_pairs
-  }
-  property {
-    name  = "connectionId"
-    type  = "string"
-    value = var.samlconnector_property_connection_id
-  }
-  property {
-    name  = "digestAlgorithm"
-    type  = "string"
-    value = var.samlconnector_property_digest_algorithm
-  }
-  property {
-    name  = "encryptAssertion"
-    type  = "string"
-    value = var.samlconnector_property_encrypt_assertion
-  }
-  property {
-    name  = "encryptionAlgorithm"
-    type  = "string"
-    value = var.samlconnector_property_encryption_algorithm
-  }
-  property {
-    name  = "includeAttributeNameFormat"
-    type  = "string"
-    value = var.samlconnector_property_include_attribute_name_format
-  }
-  property {
-    name  = "keyEncryptionAlgorithm"
-    type  = "string"
-    value = var.samlconnector_property_key_encryption_algorithm
-  }
-  property {
-    name  = "nameId"
-    type  = "string"
-    value = var.samlconnector_property_name_id
-  }
-  property {
-    name  = "nameIdFormat"
-    type  = "string"
-    value = var.samlconnector_property_name_id_format
-  }
-  property {
-    name  = "nameIdNameQualifier"
-    type  = "string"
-    value = var.samlconnector_property_name_id_name_qualifier
-  }
-  property {
-    name  = "nameIdSPNameQualifier"
-    type  = "string"
-    value = var.samlconnector_property_name_id_spname_qualifier
-  }
-  property {
-    name  = "nameIdSPProvidedID"
-    type  = "string"
-    value = var.samlconnector_property_name_id_spprovided_id
-  }
-  property {
-    name  = "samlResponseStatus"
-    type  = "string"
-    value = var.samlconnector_property_saml_response_status
-  }
-  property {
-    name  = "samlResponseStatusMessage"
-    type  = "string"
-    value = var.samlconnector_property_saml_response_status_message
-  }
-  property {
-    name  = "sessionIndex"
-    type  = "string"
-    value = var.samlconnector_property_session_index
-  }
-  property {
-    name  = "signResponse"
-    type  = "string"
-    value = var.samlconnector_property_sign_response
-  }
-  property {
-    name  = "signatureAlgorithm"
-    type  = "string"
-    value = var.samlconnector_property_signature_algorithm
-  }
-  property {
-    name  = "signatureNamespacePrefix"
-    type  = "string"
-    value = var.samlconnector_property_signature_namespace_prefix
-  }
-  property {
-    name  = "spCertForEncryption"
-    type  = "string"
-    value = var.samlconnector_property_sp_cert_for_encryption
-  }
-  property {
-    name  = "typedAttributes"
-    type  = "string"
-    value = var.samlconnector_property_typed_attributes
   }
 }
 ```
@@ -78752,129 +77858,6 @@ resource "pingone_davinci_connector_instance" "stringsConnector" {
     name  = "shouldTrim"
     type  = "string"
     value = var.stringsconnector_property_should_trim
-  }
-}
-```
-
-
-## Symantec VIP
-
-Connector ID (`connector.id` in the resource): `symc`
-
-Properties (used under the `properties` block in the resource as a key in the JSON object):
-
-* `authDescription` (string): Console display name: "".
-* `connectorName` (string): Console display name: "".
-* `description` (string): Console display name: "".
-* `details1` (string): Console display name: "".
-* `details2` (string): Console display name: "".
-* `iconUrl` (string): Console display name: "".
-* `iconUrlPng` (string): Console display name: "".
-* `pfxBase64` (string): Console display name: "".
-* `pfxPassword` (string): Console display name: "".
-* `pushLoginEnabled` (string): Console display name: "".
-* `screen0Config` (string): Console display name: "".
-* `screen1Config` (string): Console display name: "".
-* `screen2Config` (string): Console display name: "".
-* `showCredAddedOn` (string): Console display name: "".
-* `showCredAddedVia` (string): Console display name: "".
-* `title` (string): Console display name: "".
-* `toolTip` (string): Console display name: "".
-
-
-Example:
-```terraform
-resource "pingone_davinci_connector_instance" "symc" {
-  environment_id = var.pingone_environment_id
-
-  connector = {
-    id = "symc"
-  }
-  name = "My awesome symc"
-  property {
-    name  = "authDescription"
-    type  = "string"
-    value = var.symc_property_auth_description
-  }
-  property {
-    name  = "connectorName"
-    type  = "string"
-    value = var.symc_property_connector_name
-  }
-  property {
-    name  = "description"
-    type  = "string"
-    value = var.symc_property_description
-  }
-  property {
-    name  = "details1"
-    type  = "string"
-    value = var.symc_property_details1
-  }
-  property {
-    name  = "details2"
-    type  = "string"
-    value = var.symc_property_details2
-  }
-  property {
-    name  = "iconUrl"
-    type  = "string"
-    value = var.symc_property_icon_url
-  }
-  property {
-    name  = "iconUrlPng"
-    type  = "string"
-    value = var.symc_property_icon_url_png
-  }
-  property {
-    name  = "pfxBase64"
-    type  = "string"
-    value = var.symc_property_pfx_base64
-  }
-  property {
-    name  = "pfxPassword"
-    type  = "string"
-    value = var.symc_property_pfx_password
-  }
-  property {
-    name  = "pushLoginEnabled"
-    type  = "string"
-    value = var.symc_property_push_login_enabled
-  }
-  property {
-    name  = "screen0Config"
-    type  = "string"
-    value = var.symc_property_screen0_config
-  }
-  property {
-    name  = "screen1Config"
-    type  = "string"
-    value = var.symc_property_screen1_config
-  }
-  property {
-    name  = "screen2Config"
-    type  = "string"
-    value = var.symc_property_screen2_config
-  }
-  property {
-    name  = "showCredAddedOn"
-    type  = "string"
-    value = var.symc_property_show_cred_added_on
-  }
-  property {
-    name  = "showCredAddedVia"
-    type  = "string"
-    value = var.symc_property_show_cred_added_via
-  }
-  property {
-    name  = "title"
-    type  = "string"
-    value = var.symc_property_title
-  }
-  property {
-    name  = "toolTip"
-    type  = "string"
-    value = var.symc_property_tool_tip
   }
 }
 ```
