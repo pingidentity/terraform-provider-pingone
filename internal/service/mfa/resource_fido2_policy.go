@@ -286,6 +286,7 @@ func (r *FIDO2PolicyResource) Schema(ctx context.Context, req resource.SchemaReq
 
 			"default": schema.BoolAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that describes whether this policy should serve as the default FIDO policy.").Description,
+				Optional:    true,
 				Computed:    true,
 
 				PlanModifiers: []planmodifier.Bool{
