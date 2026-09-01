@@ -41,6 +41,11 @@ resource "pingone_davinci_connector_instance" "mfaUseCaseConnector" {
     value = var.mfausecaseconnector_property_authenticating_application_id
   }
   property {
+    name  = "backUpAuthentication"
+    type  = "boolean"
+    value = var.mfausecaseconnector_property_back_up_authentication
+  }
+  property {
     name  = "clientContext"
     type  = "string"
     value = var.mfausecaseconnector_property_client_context
@@ -171,6 +176,31 @@ resource "pingone_davinci_connector_instance" "mfaUseCaseConnector" {
     value = var.mfausecaseconnector_property_notification_settings
   }
   property {
+    name  = "oathResync"
+    type  = "boolean"
+    value = var.mfausecaseconnector_property_oath_resync
+  }
+  property {
+    name  = "oneTimeDeviceType"
+    type  = "string"
+    value = var.mfausecaseconnector_property_one_time_device_type
+  }
+  property {
+    name  = "oneTimeEmailDevice"
+    type  = "string"
+    value = var.mfausecaseconnector_property_one_time_email_device
+  }
+  property {
+    name  = "oneTimeSmsDevice"
+    type  = "string"
+    value = var.mfausecaseconnector_property_one_time_sms_device
+  }
+  property {
+    name  = "oneTimeVoiceDevice"
+    type  = "string"
+    value = var.mfausecaseconnector_property_one_time_voice_device
+  }
+  property {
     name  = "origin"
     type  = "string"
     value = var.mfausecaseconnector_property_origin
@@ -204,6 +234,21 @@ resource "pingone_davinci_connector_instance" "mfaUseCaseConnector" {
     name  = "reason"
     type  = "string"
     value = var.mfausecaseconnector_property_reason
+  }
+  property {
+    name  = "rememberMeCookie"
+    type  = "string"
+    value = var.mfausecaseconnector_property_remember_me_cookie
+  }
+  property {
+    name  = "rememberMePayload"
+    type  = "string"
+    value = var.mfausecaseconnector_property_remember_me_payload
+  }
+  property {
+    name  = "rememberMeSessionId"
+    type  = "string"
+    value = var.mfausecaseconnector_property_remember_me_session_id
   }
   property {
     name  = "rpId"
@@ -246,9 +291,19 @@ resource "pingone_davinci_connector_instance" "mfaUseCaseConnector" {
     value = var.mfausecaseconnector_property_section_label_push
   }
   property {
+    name  = "sectionLabelRememberMe"
+    type  = "string"
+    value = var.mfausecaseconnector_property_section_label_remember_me
+  }
+  property {
     name  = "sectionLabelUserDetails"
     type  = "string"
     value = var.mfausecaseconnector_property_section_label_user_details
+  }
+  property {
+    name  = "sectionLabelbackUpAuthentication"
+    type  = "string"
+    value = var.mfausecaseconnector_property_section_labelback_up_authentication
   }
   property {
     name  = "selectedDeviceOtp"
