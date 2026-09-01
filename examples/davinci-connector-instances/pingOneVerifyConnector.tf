@@ -111,6 +111,11 @@ resource "pingone_davinci_connector_instance" "pingOneVerifyConnector" {
     value = var.pingoneverifyconnector_property_probe_biographic
   }
   property {
+    name  = "redirectAuto"
+    type  = "string"
+    value = var.pingoneverifyconnector_property_redirect_auto
+  }
+  property {
     name  = "redirectMessage"
     type  = "string"
     value = var.pingoneverifyconnector_property_redirect_message

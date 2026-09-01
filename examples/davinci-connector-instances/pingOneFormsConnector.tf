@@ -151,6 +151,11 @@ resource "pingone_davinci_connector_instance" "pingOneFormsConnector" {
     value = var.pingoneformsconnector_property_next_event
   }
   property {
+    name  = "pingIdDesktopContinueUrl"
+    type  = "string"
+    value = var.pingoneformsconnector_property_ping_id_desktop_continue_url
+  }
+  property {
     name  = "pingIdDesktopCredentialCreationOptions"
     type  = "string"
     value = var.pingoneformsconnector_property_ping_id_desktop_credential_creation_options

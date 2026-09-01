@@ -146,6 +146,11 @@ resource "pingone_davinci_connector_instance" "pingOneSSOConnector" {
     value = var.pingonessoconnector_property_custom_data_text
   }
   property {
+    name  = "customFilter"
+    type  = "string"
+    value = var.pingonessoconnector_property_custom_filter
+  }
+  property {
     name  = "customTemplateVariant"
     type  = "string"
     value = var.pingonessoconnector_property_custom_template_variant

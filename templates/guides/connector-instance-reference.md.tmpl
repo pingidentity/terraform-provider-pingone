@@ -3638,6 +3638,7 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `message` (string): The message to show to the user. Console display name: "Message".
 * `mfaPolicyId` (string): The ID of the MFA Policy to use during flow execution, such as "aa4b3e81-cf7e-8685-4b7b-7ec89cfcf7c8". If this value is empty or invalid at runtime, the default MFA policy is used. Console display name: "MFA Policy ID".
 * `nextEvent` (string): Console display name: "".
+* `pingIdDesktopContinueUrl` (string): Continue URL returned by an upstream Out-of-Band Start node (oobStart.continueLink). Used by Safari to complete PingID Desktop registration/authentication via the macOS SSO Extension. Console display name: "PingID Desktop Continue URL".
 * `pingIdDesktopCredentialCreationOptions` (string): Select the pingIdDesktopCredentialCreationOptions variable from the PingOne MFA > Create Device capability. Console display name: "PingID Desktop Credential Creation Options".
 * `pingIdDesktopCredentialRequestOptions` (string): Select the pingIdDesktopCredentialRequestOptions variable from the PingOne MFA > Create Device Authentication capability. Console display name: "PingID Desktop Credential Request Options".
 * `pingidAgent` (string): When enabled, the Signals SDK collects attributes from the PingID Device Trust Agent. Console display name: "Enable PingID Agent".
@@ -3655,7 +3656,7 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `qrCodeSectionLabel` (string): Console display name: "QR Code".
 * `returnUrl` (string): When using the embedded flow player widget and an IdP/Social Login connector, provide a callback URL to return back to the application. Console display name: "Application Return URL".
 * `returnUrlLabel` (string): Console display name: "Social Login".
-* `routeClientErrorsToFalseBranch` (string): Route client-side errors (for example, NotAllowedError, AbortError, etc.) to the False branch in the error object. When disabled, errors are returned on the True branch as the buttonValue outcome. Console display name: "Route Client Errors to the False Branch".
+* `routeClientErrorsToFalseBranch` (string): When a client-side error (NotAllowedError, AbortError, etc.) occurs, the flow proceeds to the False branch and passes the error in the error object. When disabled, if a client-side error occurs, the flow proceeds to the True branch and passes the error as the buttonValue outcome. Console display name: "Route Client Errors to the False Branch".
 * `sectionLabelFido2` (string): Console display name: "FIDO2".
 * `sectionLabelPingIDDesktopApp` (string): Console display name: "PingID Desktop App".
 * `showContinueButton` (string): When enabled, the user interface includes a button that allows the user to continue the flow. Console display name: "".
@@ -6473,13 +6474,13 @@ Connector ID (`connector.id` in the resource): `httpConnector`
 
 Properties (used under the `properties` block in the resource as a key in the JSON object):
 
-* `additionalFieldsName` (string): Console display name: "".
+* `additionalFieldsName` (string): Define a name for the field that contains the Additional Properties List, such as "additionalProperties". This setting does not apply when this capability is used in a subflow. Console display name: "Additional Properties Name".
 * `blockRedirects` (string): When enabled, DaVinci enhances the security of the flow by preventing the browser from automatically following redirects and an error occurs instead. Console display name: "Block Redirects".
 * `bodyHeaderText` (string): Form body title. Console display name: "".
 * `bodyParams` (string): Console display name: "Body Params".
 * `button` (string): Console display name: "Submit".
 * `challenge` (string): Console display name: "".
-* `claimsNameValuePairs` (string): Use this section to add additional fields to the response. Console display name: "Additional Fields in the Response".
+* `claimsNameValuePairs` (string): Define a list of values to include in the response. These values are contained in a single property. Console display name: "Additional Properties List".
 * `connectionId` (string): Console display name: "Select an OpenID token management connection for signed HTTP responses.".
 * `connectionInstanceId` (string): In advanced scenarios, it might be required to specify the Node ID of the UI node where polling in enabled. When a Node ID is not entered (default behavior), polling will continue on the current UI node. Console display name: "Node ID of the UI node (Optional)".
 * `contentSource` (string): Select the source of the HTML, CSS, & Script content. Console display name: "Content Source".
@@ -6495,14 +6496,14 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `delayTime` (string): Time to wait for response to be sent in milliseconds. Default: 50. Console display name: "Delay Time (ms)".
 * `description` (string): Console display name: "Add form fields that you would wish the user to populate.".
 * `enablePolling` (string): Console display name: "Enable Polling?".
-* `fieldValidation` (string): The flow will fail if the validation is failed. Console display name: "Validate the additional properties".
+* `fieldValidation` (string): When enabled, DaVinci validates the data types of the additional properties. This setting does not apply when this capability is used in a subflow. Console display name: "Validate the additional properties".
 * `formFieldsList` (string): Console display name: "".
 * `headers` (string): Console display name: "Headers".
 * `httpBody` (string): Console display name: "Body".
 * `httpHeaders` (string): Console display name: "".
 * `httpMethod` (string): Console display name: "HTTP Method".
 * `httpStatusCode` (string): Console display name: "".
-* `inputSchema` (string): Follow example for JSON schema. Console display name: "".
+* `inputSchema` (string): Define a standardized set of variables to use in your HTML using JSON schema. For details, see the HTTP connector documentation. Console display name: "".
 * `jsonString` (string): This property needs to be a properly formatted JSON value. It can contain DaVinci parameters, which will be replaced at runtime. If you are using DaVinci parameters that are of type 'string', you will need to put string quotes around it. Console display name: "HTTP Body (JSON)".
 * `keepOutputIfNotValid` (string): Console display name: "Keep API output if the validation failed".
 * `message` (string): Console display name: "".
@@ -6512,7 +6513,7 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `nextButtonText` (string): Console display name: "".
 * `nextEvent` (string): Console display name: "".
 * `outboundMtlsKey` (string): Select the client certificate used to make outbound mTLS connections. Console display name: "MTLS Support".
-* `outputSchema` (string): Follow example for JSON schema. Console display name: "".
+* `outputSchema` (string): Define an output schema. Console display name: "".
 * `outputSchemaError` (string): Follow example for JSON schema. Console display name: "".
 * `pollChallengeStatus` (string): Console display name: "".
 * `pollInterval` (string): Console display name: "".
@@ -6521,7 +6522,7 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `raw` (string): Input your raw request body. Console display name: "raw".
 * `recaptchaSecretKey` (string): The Secret Key from reCAPTCHA Admin dashboard. Console display name: "reCAPTCHA v2 Secret Key".
 * `recaptchaSiteKey` (string): The Site Key from reCAPTCHA Admin dashboard. Console display name: "reCAPTCHA v2 Site Key".
-* `returnRequestParameters` (string): Console display name: "".
+* `returnRequestParameters` (string): When enabled, the original request parameters are included in the response payload. Console display name: "Return Request Parameters".
 * `returnSuccess` (string): Return success or failure response. Console display name: "Return Success Response".
 * `showContinueButton` (string): Console display name: "".
 * `showFooter` (string): Console display name: "".
@@ -6533,7 +6534,7 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `unsafeIgnoreTLSErrors` (string): When enabled, the connector ignores TLS errors. Use this for testing in non-production environments. Console display name: "Ignore TLS Errors".
 * `url` (string): Console display name: "URL".
 * `useRecaptcha` (string): Add sk-component skrecaptcha to use this feature. Console display name: "Use Recaptcha Verification".
-* `validationRules` (string): Rules to check to validate form inputs. Console display name: "Form validation rules".
+* `validationRules` (string): Define validation rules for the form inputs, such as format, minimum length, or whether the input is required. Console display name: "Form Validation Rules".
 * `validity` (string): Expiry time in milliseconds. Default is 86400000 (1 day). Console display name: "Validity".
 * `whiteList` (string): Enter the hostname for the trusted sites that host your HTML. Note: Ensure that the content hosted on these sites can be trusted and that publishing safeguards are in place to prevent unexpected issues. Console display name: "Trusted Sites".
 
@@ -7166,109 +7167,6 @@ Example:
 {{ tffile (printf "%s" "examples/davinci-connector-instances/connectorJiraServiceDesk.tf") }}
 
 
-## Jumio
-
-Connector ID (`connector.id` in the resource): `jumioConnector`
-
-Properties (used under the `properties` block in the resource as a key in the JSON object):
-
-* `apiKey` (string): Console display name: "API Key".
-* `authDescription` (string): Console display name: "".
-* `authUrl` (string): Console display name: "Base URL for Authentication".
-* `authorizationTokenLifetime` (string): Console display name: "".
-* `baseColor` (string): Console display name: "".
-* `bgColor` (string): Console display name: "".
-* `callbackUrl` (string): Console display name: "Callback URL".
-* `clientSecret` (string): Console display name: "API Secret".
-* `connectorName` (string): Console display name: "".
-* `country` (string): ISO 3166-1 alpha-3 country code. Console display name: "Country Code".
-* `countryCode3` (string): Console display name: "".
-* `customCSS` (string): Console display name: "CSS".
-* `customDocumentCode` (string): Console display name: "".
-* `customHTML` (string): Console display name: "HTML Template".
-* `customScript` (string): Write custom JavaScript. Caution: Custom code is for advanced users only. Before using custom code, review the security risks in the DaVinci documentation by searching for "Using custom code safely". Console display name: "Script".
-* `description` (string): Console display name: "".
-* `details1` (string): Console display name: "".
-* `details2` (string): Console display name: "".
-* `doNotShowInIframe` (string): Console display name: "".
-* `docVerificationUrl` (string): Console display name: "".
-* `documentType` (string): Console display name: "".
-* `enableExtraction` (string): Console display name: "".
-* `headerImageUrl` (string): Console display name: "".
-* `htmlConfig` (string): Console display name: "".
-* `iconUrl` (string): Console display name: "".
-* `iconUrlPng` (string): Console display name: "".
-* `jumioIdTypes` (string): Console display name: "".
-* `locale` (string): Renders content in the specified language. Console display name: "Locale".
-* `merchantReportingCriteria` (string): Console display name: "".
-* `screen0Config` (string): Console display name: "".
-* `screen1Config` (string): Console display name: "".
-* `screen2Config` (string): Console display name: "".
-* `screen3Config` (string): Console display name: "".
-* `screen4Config` (string): Console display name: "".
-* `screen5Config` (string): Console display name: "".
-* `showCredAddedOn` (string): Console display name: "".
-* `showCredAddedVia` (string): Console display name: "".
-* `title` (string): Console display name: "".
-* `tokenLifetimeInMinutes` (number): Time in minutes until the authorization token expires. (minimum: 5, maximum: 86400). Console display name: "Token Lifetime in Minutes".
-* `toolTip` (string): Console display name: "".
-* `useCustomScreens` (string): Console display name: "Use Custom Screens".
-* `workflowId` (string): Console display name: "".
-
-
-Example:
-{{ tffile (printf "%s" "examples/davinci-connector-instances/jumioConnector.tf") }}
-
-
-## KBA
-
-Connector ID (`connector.id` in the resource): `kbaConnector`
-
-Properties (used under the `properties` block in the resource as a key in the JSON object):
-
-* `authDescription` (string): Console display name: "".
-* `bodyHeaderText` (string): Console display name: "".
-* `connectorName` (string): Console display name: "".
-* `description` (string): Console display name: "".
-* `details1` (string): Console display name: "".
-* `details2` (string): Console display name: "".
-* `formFieldsList` (string): Console display name: "".
-* `iconUrl` (string): Console display name: "".
-* `iconUrlPng` (string): Console display name: "".
-* `nextButtonText` (string): Console display name: "".
-* `nextEvent` (string): Console display name: "".
-* `parameters` (string): Console display name: "".
-* `screen0Config` (string): Console display name: "".
-* `screen1Config` (string): Console display name: "".
-* `screen2Config` (string): Console display name: "".
-* `showCredAddedOn` (string): Console display name: "".
-* `showCredAddedVia` (string): Console display name: "".
-* `title` (string): Console display name: "".
-* `toolTip` (string): Console display name: "".
-
-
-Example:
-{{ tffile (printf "%s" "examples/davinci-connector-instances/kbaConnector.tf") }}
-
-
-## KF Kerberos Connector
-
-Connector ID (`connector.id` in the resource): `kfKerberosConnector`
-
-Properties (used under the `properties` block in the resource as a key in the JSON object):
-
-* `clientId` (string): The Client ID of your PingOne Worker application. Console display name: "Client ID".
-* `clientSecret` (string): The Client Secret of your PingOne Worker application. Console display name: "Client Secret".
-* `envId` (string): Your PingOne environment ID. Console display name: "Environment ID".
-* `gatewayId` (string): PingOne gateway ID to use referring to the LDAP gateway used for Kerberos authentication. Console display name: "PingOne Gateway Id".
-* `region` (string): The region in which your PingOne environment exists. Console display name: "Region".
-* `userTypeId` (string): PingOne gateway user type ID to use referring to the user type defined for the LDAP gateway. Console display name: "PingOne Gateway User Type Id".
-
-
-Example:
-{{ tffile (printf "%s" "examples/davinci-connector-instances/kfKerberosConnector.tf") }}
-
-
 ## KYXStart
 
 Connector ID (`connector.id` in the resource): `kyxstartConnector`
@@ -7283,39 +7181,6 @@ Properties (used under the `properties` block in the resource as a key in the JS
 
 Example:
 {{ tffile (printf "%s" "examples/davinci-connector-instances/kyxstartConnector.tf") }}
-
-
-## Kaizen Secure Voiz
-
-Connector ID (`connector.id` in the resource): `kaizenVoizConnector`
-
-Properties (used under the `properties` block in the resource as a key in the JSON object):
-
-* `apiUrl` (string): example: http://<server_root>/ksvvoiceservice/rest/service. Console display name: "".
-* `applicationName` (string): Console display name: "".
-* `authDescription` (string): Console display name: "".
-* `connectorName` (string): Console display name: "".
-* `description` (string): Console display name: "".
-* `details1` (string): Console display name: "".
-* `details2` (string): Console display name: "".
-* `iconUrl` (string): Console display name: "".
-* `iconUrlPng` (string): Console display name: "".
-* `mainHeaderText` (string): Console display name: "".
-* `nextButtonText` (string): Console display name: "".
-* `screen0Config` (string): Console display name: "".
-* `screen1Config` (string): Console display name: "".
-* `screen2Config` (string): Console display name: "".
-* `screen3Config` (string): Console display name: "".
-* `screen4Config` (string): Console display name: "".
-* `showCredAddedOn` (string): Console display name: "".
-* `showCredAddedVia` (string): Console display name: "".
-* `title` (string): Console display name: "".
-* `toolTip` (string): Console display name: "".
-* `voiceAccuracy` (string): Voice accuracy value between 0 to 100. Console display name: "".
-
-
-Example:
-{{ tffile (printf "%s" "examples/davinci-connector-instances/kaizenVoizConnector.tf") }}
 
 
 ## Keyless
@@ -8536,6 +8401,7 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `attestation` (string): A read-only string that specifies the public key and signed challenge used to complete registration and device activation. The attestation is generated by the browser as a response to a specific user action, such as a fingerprint scan or tap on a security key. Console display name: "Attestation".
 * `authTemplateName` (string): Indicates whether the notification is intended for a user authentication flow. Console display name: "Notification Type".
 * `authenticatingApplicationId` (string): The unique identifier for the mobile application used to authenticate a user. Console display name: "Application".
+* `backUpAuthentication` (boolean): When enabled, the capability creates a new Device Authentication with one-time device with no flow outcomes returned. Console display name: "Back Up Authentication".
 * `clientContext` (string): Additional attributes that can be passed to the mobile application during the authentication. Console display name: "Mobile Client Context".
 * `compatibility` (string): Console display name: "WebAuthn Browser Compatibility".
 * `customApplicationId` (string): Console display name: "Application ID".
@@ -8562,6 +8428,11 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `nickname` (string): A nickname that identifies this device. The device nickname is limited to 100 characters. Console display name: "Device Nickname".
 * `notificationPolicyId` (string): A unique identifier for the policy. Console display name: "Notification Policy".
 * `notificationSettings` (boolean): Show advanced fields for Notification Settings. Console display name: "Show advanced fields".
+* `oathResync` (boolean): Indicates if OATH token resync is permitted during registration. Console display name: "OATH Token Resync".
+* `oneTimeDeviceType` (string): The one-time device type. Console display name: "Device Type".
+* `oneTimeEmailDevice` (string): The email address to associate with the one-time device. Console display name: "Email".
+* `oneTimeSmsDevice` (string): The phone number to associate with the one-time SMS device. Console display name: "SMS Phone Number".
+* `oneTimeVoiceDevice` (string): The phone number to associate with the one-time Voice device. Console display name: "Voice Phone Number".
 * `origin` (string): The address of the server sending the initial registration challenge to the device. Console display name: "Origin".
 * `otp` (string): The one-time passcode (OTP) sent to the user. Console display name: "One-time Passcode".
 * `otpSettings` (boolean): Show advanced fields for OTP Settings. Console display name: "Show advanced fields".
@@ -8571,6 +8442,9 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `reason` (string): The reason that the authentication was canceled. 
 Possible values are SIGNOUT, CHANGE_DEVICE, ADD_DEVICE. Any other reason will get the value - DEFAULT. Console display name: "Reason For Cancellation
 ".
+* `rememberMeCookie` (string): The cookie that was generated when the remembered device was created. Console display name: "Remember Me Cookie".
+* `rememberMePayload` (string): Identify the device via a unique device ID combined with a digital signature that ensures information collected about the device has not been tampered with. Console display name: "Remember Me Payload".
+* `rememberMeSessionId` (string): The active PingOne session for the user. Console display name: "Remember Me Session ID".
 * `rpId` (string): If you define a Relying Party ID (RPID) here, it overrides the RPID defined in the FIDO policy in the PingOne admin console. Console display name: "Relying Party ID".
 * `rpName` (string): A string that specifies the relying party's human-readable display name. Console display name: "Relying Party Name".
 * `sectionLabelDeviceDetails` (string): Console display name: "Device Details".
@@ -8579,7 +8453,9 @@ Possible values are SIGNOUT, CHANGE_DEVICE, ADD_DEVICE. Any other reason will ge
 * `sectionLabelNotification` (string): Console display name: "Notification Settings".
 * `sectionLabelOtp` (string): Console display name: "OTP Settings".
 * `sectionLabelPush` (string): Console display name: "Push Settings".
+* `sectionLabelRememberMe` (string): Console display name: "Remember Me Settings".
 * `sectionLabelUserDetails` (string): Console display name: "User and Device Details".
+* `sectionLabelbackUpAuthentication` (string): Console display name: "BackUp Authentication".
 * `selectedDeviceOtp` (string): The one-time passcode (OTP) of the device used to authenticate. If the Device ID is not provided, the OTP is validated against all the applicable devices. Console display name: "One-time Passcode".
 * `serialNumber` (string): The unique identifier for the OATH token. Console display name: "Serial Number".
 * `setDeviceOrder` (string): Select how to set the device order. Console display name: "Set Device Order".
@@ -9133,53 +9009,6 @@ Connector ID (`connector.id` in the resource): `nudataConnector`
 
 Example:
 {{ tffile (printf "%s" "examples/davinci-connector-instances/nudataConnector.tf") }}
-
-
-## Nuance
-
-Connector ID (`connector.id` in the resource): `nuanceConnector`
-
-Properties (used under the `properties` block in the resource as a key in the JSON object):
-
-* `authDescription` (string): Console display name: "".
-* `configSetName` (string): The Config Set Name for accessing Nuance API. Console display name: "Config Set Name".
-* `connectorName` (string): Console display name: "".
-* `credId` (string): The Cred ID from the first attempt when retrying. Console display name: "Credential ID".
-* `customCSS` (string): Console display name: "CSS".
-* `customHTML` (string): Console display name: "HTML Template".
-* `customScript` (string): Write custom JavaScript. Caution: Custom code is for advanced users only. Before using custom code, review the security risks in the DaVinci documentation by searching for "Using custom code safely". Console display name: "Script".
-* `description` (string): Console display name: "".
-* `details1` (string): Console display name: "".
-* `details2` (string): Console display name: "".
-* `htmlConfig` (string): Console display name: "".
-* `iconUrl` (string): Console display name: "".
-* `iconUrlPng` (string): Console display name: "".
-* `mainHeaderText` (string): Console display name: "".
-* `nextButtonText` (string): Console display name: "".
-* `passphrase` (string): The phrase that is spoken in the audio url. Console display name: "Passphrase".
-* `passphrase1` (string): Passphrase that the user will need to speak for voice sample. Console display name: "Passphrase One".
-* `passphrase2` (string): Passphrase that the user will need to speak for voice sample. Console display name: "Passphrase Two".
-* `passphrase3` (string): Passphrase that the user will need to speak for voice sample. Console display name: "Passphrase Three".
-* `passphrase4` (string): Passphrase that the user will need to speak for voice sample. Console display name: "Passphrase Four".
-* `passphrase5` (string): Passphrase that the user will need to speak for voice sample. Console display name: "Passphrase Five".
-* `screen0Config` (string): Console display name: "".
-* `screen1Config` (string): Console display name: "".
-* `screen2Config` (string): Console display name: "".
-* `screen3Config` (string): Console display name: "".
-* `screen4Config` (string): Console display name: "".
-* `screen5Config` (string): Console display name: "".
-* `sessionId` (string): The Session ID from the first attempt when retrying. Console display name: "Session ID".
-* `showCredAddedOn` (string): Console display name: "".
-* `showCredAddedVia` (string): Console display name: "".
-* `title` (string): Console display name: "".
-* `toolTip` (string): Console display name: "".
-* `useCustomScreens` (string): Console display name: "Use Custom Screens".
-* `voiceUrl` (string): The URl of the Audio file in .wav format. Console display name: "Voice URL".
-* `voiceprintTag` (string): The Voiceprint Tag from the first attempt when retrying. Console display name: "Voiceprint Tag".
-
-
-Example:
-{{ tffile (printf "%s" "examples/davinci-connector-instances/nuanceConnector.tf") }}
 
 
 ## OIDC & OAuth IdP
@@ -12859,6 +12688,7 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `currentPassword` (string): The user's current password. Console display name: "Current Password".
 * `customDataArray` (string): This input will overwrite the current metadata for the group. Console display name: "Metadata Properties".
 * `customDataText` (string): This input will overwrite the current metadata for the group. Console display name: "Metadata Properties".
+* `customFilter` (string): Console display name: "Custom Filter".
 * `customTemplateVariant` (string): You can enter a custom template name, or leave blank to use the default template. You can also enter a parameter from a previous connector, or any text. Console display name: "Custom Value".
 * `description` (string): The description of the group. Console display name: "Group Description".
 * `email` (string): Console display name: "Email".
@@ -13107,6 +12937,8 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `applyUpdate` (string): Array of one or more identifiers (UUIDs) of users whose credentials are in an update action state and should be updated. Console display name: "Apply Update for User ID(s)".
 * `clientId` (string): The Client ID of your PingOne Worker application. Console display name: "Client ID".
 * `clientSecret` (string): The Client Secret of your PingOne Worker application. Console display name: "Client Secret".
+* `credentialData` (string): Key-value pairs of credential data to include in the credential body (Map<String, Object>). Console display name: "Credential Data".
+* `credentialDataObject` (string): Pass a JSON object from a previous node as credential data. If provided, this takes priority over the key-value Credential Data field. Console display name: "Credential Data (Object)".
 * `credentialId` (string): Identifier (UUID) of the provisioned user credential. Console display name: "Credential ID".
 * `credentialTypeId` (string): Identifier (UUID) associated with the credential type. Console display name: "Credential Type ID".
 * `credentialsVerificationId` (string): Identifier (UUID) of the verification credential data. Console display name: "Credential Verification ID".
@@ -13128,6 +12960,7 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `requestedCredentials` (string): Requested Credentials. Variable Name =>credential type, value=>(comma separated keys). Console display name: "Requested Credentials".
 * `showPoweredBy` (string): Console display name: "".
 * `skipButtonPress` (string): Console display name: "".
+* `storeUntilIssued` (string): If enabled, the Credential data will be securely stored by the service until the Credential is issued to a wallet. The data will then be deleted. This should only be used for demo purposes, not intended for production use. Console display name: "Store Data Until Issued (DEMOS ONLY)".
 * `templateLocale` (string): Add a locale to allow localized notifications for end-users. ISO Language Codes are supported. Console display name: "Notification Locale".
 * `templateVariables` (string): If Custom variables are defined in the notification body, map them here. Console display name: "Notification Variables".
 * `templateVariant` (string): You can enter a custom template name, or leave blank to use the default template. You can also enter a parameter from a previous connector, or any text. Console display name: "Custom Value".
@@ -13195,6 +13028,7 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `oneTimeVoiceDevice` (string): The phone number to associate with the one-time Voice device. Console display name: "Voice Phone Number".
 * `origin` (string): The address of the server sending the initial registration challenge to the device. Console display name: "Origin".
 * `otp` (string): The one-time passcode (OTP) sent to the user. Console display name: "One-time Passcode".
+* `pairingKey` (string): The pairing key code handed to the DaVinci SDK to pair the mobile device. Console display name: "Pairing Key".
 * `pairingKeyId` (string): The unique identifier for the pairing key. Console display name: "Pairing Key ID".
 * `phone` (string): The phone number to associate with the device. Applies only to devices that use SMS and Voice SMS messages during authentication. Console display name: "Phone Number".
 * `policyFactsApplicationId` (string): The ID of the application being authenticated. Console display name: "Application Id".
@@ -13404,6 +13238,7 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `notifyEmail` (string): The email address to receive email notifications during verification. Console display name: "Notification Email Address".
 * `notifyPhone` (string): The phone number to receive SMS notifications during verification. Console display name: "Notification Phone Number".
 * `probeBiographic` (string): Use this section to add probe biographic fields. Console display name: "Probe Biographic Fields".
+* `redirectAuto` (string): Automatically redirect to the specified URL after document collection. Requires a configured Redirect URL. Cannot be set together with Redirect Message. Console display name: "Redirect Auto".
 * `redirectMessage` (string): Displayed after document collection and before redirecting to the specified URL. Requires a configured Redirect URL. Limited to 256 characters. Console display name: "Redirect Message".
 * `redirectUrl` (string): The Redirect URL where the user is returned to after document collection. Only secure (https://) URLs are allowed. Console display name: "Redirect URL".
 * `referenceImage` (string): Base64 encoded reference image for facial-comparison-only verify policy. Console display name: "Reference Image".
@@ -13591,41 +13426,6 @@ Properties (used under the `properties` block in the resource as a key in the JS
 
 Example:
 {{ tffile (printf "%s" "examples/davinci-connector-instances/inveridConnector.tf") }}
-
-
-## SAML
-
-Connector ID (`connector.id` in the resource): `samlConnector`
-
-Properties (used under the `properties` block in the resource as a key in the JSON object):
-
-* `assertionLifeTimeInSeconds` (string): Console display name: "".
-* `authnContextClassRef` (string): Console display name: "".
-* `claimsMapping` (string): Console display name: "".
-* `claimsNameValuePairs` (string): Console display name: "".
-* `connectionId` (string): Console display name: "".
-* `digestAlgorithm` (string): Console display name: "".
-* `encryptAssertion` (string): Console display name: "".
-* `encryptionAlgorithm` (string): Console display name: "".
-* `includeAttributeNameFormat` (string): Console display name: "".
-* `keyEncryptionAlgorithm` (string): Console display name: "".
-* `nameId` (string): Console display name: "".
-* `nameIdFormat` (string): Console display name: "".
-* `nameIdNameQualifier` (string): Console display name: "".
-* `nameIdSPNameQualifier` (string): Console display name: "".
-* `nameIdSPProvidedID` (string): Console display name: "".
-* `samlResponseStatus` (string): Console display name: "".
-* `samlResponseStatusMessage` (string): Console display name: "".
-* `sessionIndex` (string): Console display name: "".
-* `signResponse` (string): Console display name: "".
-* `signatureAlgorithm` (string): Console display name: "".
-* `signatureNamespacePrefix` (string): Console display name: "".
-* `spCertForEncryption` (string): Console display name: "".
-* `typedAttributes` (string): Console display name: "".
-
-
-Example:
-{{ tffile (printf "%s" "examples/davinci-connector-instances/samlConnector.tf") }}
 
 
 ## SAML IdP
@@ -14739,35 +14539,6 @@ Properties (used under the `properties` block in the resource as a key in the JS
 
 Example:
 {{ tffile (printf "%s" "examples/davinci-connector-instances/stringsConnector.tf") }}
-
-
-## Symantec VIP
-
-Connector ID (`connector.id` in the resource): `symc`
-
-Properties (used under the `properties` block in the resource as a key in the JSON object):
-
-* `authDescription` (string): Console display name: "".
-* `connectorName` (string): Console display name: "".
-* `description` (string): Console display name: "".
-* `details1` (string): Console display name: "".
-* `details2` (string): Console display name: "".
-* `iconUrl` (string): Console display name: "".
-* `iconUrlPng` (string): Console display name: "".
-* `pfxBase64` (string): Console display name: "".
-* `pfxPassword` (string): Console display name: "".
-* `pushLoginEnabled` (string): Console display name: "".
-* `screen0Config` (string): Console display name: "".
-* `screen1Config` (string): Console display name: "".
-* `screen2Config` (string): Console display name: "".
-* `showCredAddedOn` (string): Console display name: "".
-* `showCredAddedVia` (string): Console display name: "".
-* `title` (string): Console display name: "".
-* `toolTip` (string): Console display name: "".
-
-
-Example:
-{{ tffile (printf "%s" "examples/davinci-connector-instances/symc.tf") }}
 
 
 ## TMT Analysis
