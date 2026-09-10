@@ -29,12 +29,15 @@ require (
 	github.com/patrickcping/pingone-go-sdk-v2 v0.14.14
 	github.com/patrickcping/pingone-go-sdk-v2/authorize v0.8.3
 	github.com/patrickcping/pingone-go-sdk-v2/credentials v0.12.1
-	github.com/patrickcping/pingone-go-sdk-v2/management v0.70.0
+	github.com/patrickcping/pingone-go-sdk-v2/management v0.71.0
 	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.25.1
 	github.com/patrickcping/pingone-go-sdk-v2/risk v0.22.0
 	github.com/patrickcping/pingone-go-sdk-v2/verify v0.11.2
 	github.com/pingidentity/pingone-go-client v0.12.0
 )
+
+// TEMPORARY: point at the local regenerated SDK for CDI-872 testing. Do not commit.
+replace github.com/patrickcping/pingone-go-sdk-v2/management => ../pingone-go-sdk-v2/management
 
 require (
 	4d63.com/gocheckcompilerdirectives v1.3.0 // indirect

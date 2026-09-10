@@ -50,6 +50,25 @@ resource "pingone_branding_theme" "my_awesome_theme" {
   body_text_color    = "#263956"
   link_text_color    = "#263956"
   button_color       = "#263956"
+
+  header = "<h1>Welcome to PingOne</h1>"
+
+  footer_text = "<p>Copyright © 2025 My Company</p>"
+
+  title_text_color     = "#686F77"
+  sub_title_text_color = "#686F77"
+  global_font          = "\"Helvetica Neue\", Helvetica, sans-serif"
+  logo_height          = "56px"
+
+  footer_localized = {
+    enabled          = true
+    default_language = "en"
+    content_type     = "HTML"
+    content = {
+      en = { input_text = "<p>Copyright © 2025 My Company</p>" }
+      fr = { input_text = "<p>Copyright © 2025 Ma Société</p>" }
+    }
+  }
 }
 ```
 
@@ -70,10 +89,54 @@ resource "pingone_branding_theme" "my_awesome_theme" {
 
 ### Optional
 
+- `application_background_color` (String) The application background color for the theme. It must be a valid hexadecimal color code.  Note that this property is not used by DaVinci forms.
 - `background_color` (String) The background color for the theme. It must be a valid hexadecimal color code.  Conflicts with `background_image`.
 - `background_image` (Attributes) A single object that specifies the HREF and ID for the background image.  Conflicts with `background_color`. (see [below for nested schema](#nestedatt--background_image))
+- `body_text_size` (String) The body text size for the theme.
+- `body_text_weight` (String) The body text weight for the theme (range from 100-900).
+- `button_border_color` (String) The button border color for the theme. It must be a valid hexadecimal color code.
+- `button_border_radius` (String) The button border radius for the theme (range from 0-25px).
+- `button_border_width` (String) The button border width for the theme (range from 0-4px).
+- `button_corner_radius` (String) The button corner radius for the theme (range from 0-25px).
+- `button_hover_state_border_color` (String) The button hover state border color for the theme. It must be a valid hexadecimal color code.
+- `button_hover_state_fill_color` (String) The button hover state fill color for the theme. It must be a valid hexadecimal color code.
+- `button_hover_state_text_color` (String) The button hover state text color for the theme. It must be a valid hexadecimal color code.
+- `button_text_size` (String) The button text size for the theme.
+- `button_text_weight` (String) The button text weight for the theme (range from 100-900).
+- `card_border_color` (String) The card border color for the theme. It must be a valid hexadecimal color code.
+- `card_border_width` (String) The card border width for the theme (range from 0-4px).
+- `card_corner_radius` (String) The card corner radius for the theme (range from 0-25px).
+- `card_horizontal_alignment` (String) The card horizontal alignment for the theme.
+- `card_shadow` (String) The card shadow for the theme.
+- `card_vertical_alignment` (String) The card vertical alignment for the theme.
+- `focus_rectangle_color` (String) The focus rectangle color for the theme. It must be a valid hexadecimal color code.
+- `footer_localized` (Attributes) The localization object to specify language translations for the form footer. (see [below for nested schema](#nestedatt--footer_localized))
 - `footer_text` (String) The text to be displayed in the footer of the branding theme.
+- `global_font` (String) The global font for the theme.  The default value is "Helvetica Neue, Helvetica, sans-serif".
+- `header` (String) The header for the theme.  For example, "<h1>Welcome to PingOne</h1>".
+- `header_background_color` (String) The header background color for the theme. It must be a valid hexadecimal color code.  Note that this property is not used by DaVinci forms.
+- `header_localized` (Attributes) The localization object to specify language translations for the form header. (see [below for nested schema](#nestedatt--header_localized))
+- `input_border_width` (String) The input border width for the theme (range from 0-4px).
+- `input_box_border_color` (String) The input box border color for the theme. It must be a valid hexadecimal color code.
+- `input_corner_radius` (String) The input corner radius for the theme (range from 0-25px).
+- `input_label_position` (String) The input label position for the theme.
+- `input_label_text_color` (String) The input label text color for the theme. It must be a valid hexadecimal color code.
+- `input_label_text_size` (String) The input label text size for the theme.
+- `input_label_text_weight` (String) The input label text weight for the theme (range from 100-900).
+- `input_value_text_color` (String) The input value text color for the theme. It must be a valid hexadecimal color code.
+- `input_value_text_size` (String) The input value text size for the theme.
+- `input_value_text_weight` (String) The input value text weight for the theme (range from 100-900).
+- `link_text_hover_color` (String) The link text hover color for the theme. It must be a valid hexadecimal color code.
+- `link_text_size` (String) The link text size for the theme.
+- `link_text_weight` (String) The link text weight for the theme (range from 100-900).
 - `logo` (Attributes) A single object that specifies the HREF and ID for the company logo, for this branding template.  If not set, the environment's default logo (set with the `pingone_branding_settings` resource) will be applied. (see [below for nested schema](#nestedatt--logo))
+- `logo_height` (String) The logo height assigned to the image (range from 0-100px).
+- `sub_title_text_color` (String) The subtitle text color for the theme. It must be a valid hexadecimal color code.
+- `sub_title_text_size` (String) The subtitle text size for the theme.
+- `sub_title_text_weight` (String) The subtitle text weight for the theme (range from 100-900).
+- `title_text_color` (String) The title text color for the theme. It must be a valid hexadecimal color code.
+- `title_text_size` (String) The title text size for the theme.
+- `title_text_weight` (String) The title text weight for the theme (range from 100-900).
 - `use_default_background` (Boolean) A boolean to specify that the background should be set to the theme template's default.  Defaults to `false`.
 
 ### Read-Only
@@ -88,6 +151,50 @@ Required:
 
 - `href` (String) The URL or fully qualified path to the background image file used for branding.  This can be retrieved from the `uploaded_image.href` parameter of the `pingone_image` resource.
 - `id` (String) The ID of the background image.  This can be retrieved from the `id` parameter of the `pingone_image` resource.  Must be a valid PingOne resource ID.
+
+
+<a id="nestedatt--footer_localized"></a>
+### Nested Schema for `footer_localized`
+
+Required:
+
+- `content` (Attributes Map) A map of language codes to the localized text for the language options.  The map key is the language code (for example, "en"). (see [below for nested schema](#nestedatt--footer_localized--content))
+- `content_type` (String) The content type for the localized text.  Options are `HTML`, `RichText`.
+- `default_language` (String) The localization language code for the footer's default language (for example, "en").
+
+Optional:
+
+- `enabled` (Boolean) Specifies whether localization is enabled for the footer.
+
+<a id="nestedatt--footer_localized--content"></a>
+### Nested Schema for `footer_localized.content`
+
+Required:
+
+- `input_text` (String) The footer text in the specified language.
+
+
+
+<a id="nestedatt--header_localized"></a>
+### Nested Schema for `header_localized`
+
+Required:
+
+- `content` (Attributes Map) A map of language codes to the localized text for the language options.  The map key is the language code (for example, "en"). (see [below for nested schema](#nestedatt--header_localized--content))
+- `content_type` (String) The content type for the localized text.  Options are `HTML`, `RichText`.
+- `default_language` (String) The localization language code for the header's default language (for example, "en").
+
+Optional:
+
+- `enabled` (Boolean) Specifies whether localization is enabled for the header.
+
+<a id="nestedatt--header_localized--content"></a>
+### Nested Schema for `header_localized.content`
+
+Required:
+
+- `input_text` (String) The header text in the specified language.
+
 
 
 <a id="nestedatt--logo"></a>
