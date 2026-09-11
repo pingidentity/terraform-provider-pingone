@@ -1,0 +1,7 @@
+```release-note:enhancement
+`resource/pingone_branding_theme`: Added configuration attributes to align with the API: `application_background_color`, `body_text_size`, `body_text_weight`, `button_border_color`, `button_border_width`, `button_corner_radius`, `button_hover_state_border_color`, `button_hover_state_fill_color`, `button_hover_state_text_color`, `button_text_size`, `button_text_weight`, `card_border_color`, `card_border_width`, `card_corner_radius`, `card_horizontal_alignment`, `card_shadow`, `card_vertical_alignment`, `focus_rectangle_color`, `footer_localized`, `global_font`, `header`, `header_background_color`, `header_localized`, `input_border_width`, `input_box_border_color`, `input_corner_radius`, `input_label_position`, `input_label_text_color`, `input_label_text_size`, `input_label_text_weight`, `input_value_text_color`, `input_value_text_size`, `input_value_text_weight`, `link_text_hover_color`, `link_text_size`, `link_text_weight`, `logo_height`, `sub_title_text_color`, `sub_title_text_size`, `sub_title_text_weight`, `title_text_color`, `title_text_size`, `title_text_weight`
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.70.0 => v0.71.0
+```
