@@ -168,6 +168,7 @@ func TestAccBrandingTheme_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "global_font", "\"Helvetica Neue\", Helvetica, sans-serif"),
 					resource.TestCheckResourceAttr(resourceFullName, "logo_height", "56px"),
 					resource.TestCheckResourceAttr(resourceFullName, "card_horizontal_alignment", "left"),
+					resource.TestCheckResourceAttr(resourceFullName, "card_logo_alignment", "left"),
 					resource.TestCheckResourceAttr(resourceFullName, "card_vertical_alignment", "center"),
 					resource.TestCheckResourceAttr(resourceFullName, "input_label_position", "float"),
 					resource.TestCheckResourceAttr(resourceFullName, "button_border_color", "#112233"),
@@ -318,6 +319,7 @@ func TestAccBrandingTheme_Minimal(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "header_localized"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "footer_localized"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "title_text_color"),
+					resource.TestCheckResourceAttr(resourceFullName, "card_logo_alignment", "center"),
 				),
 			},
 		},
@@ -582,6 +584,7 @@ resource "pingone_branding_theme" "%[2]s" {
   global_font                  = "\"Helvetica Neue\", Helvetica, sans-serif"
   logo_height                  = "56px"
   card_horizontal_alignment    = "left"
+  card_logo_alignment          = "left"
   card_vertical_alignment      = "center"
   input_label_position         = "float"
   header                       = "<h1>Welcome to PingOne</h1>"

@@ -17,6 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -76,6 +77,7 @@ type brandingThemeResourceModelV1 struct {
 	CardBorderWidth             types.String                 `tfsdk:"card_border_width"`
 	CardCornerRadius            types.String                 `tfsdk:"card_corner_radius"`
 	CardHorizontalAlignment     types.String                 `tfsdk:"card_horizontal_alignment"`
+	CardLogoAlignment           types.String                 `tfsdk:"card_logo_alignment"`
 	CardShadow                  types.String                 `tfsdk:"card_shadow"`
 	CardVerticalAlignment       types.String                 `tfsdk:"card_vertical_alignment"`
 	FocusRectangleColor         types.String                 `tfsdk:"focus_rectangle_color"`
@@ -539,6 +541,14 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 			"card_shadow": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("The card shadow for the theme.").Description,
 				Optional:    true,
+			},
+
+			"card_logo_alignment": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("The card logo alignment for the theme.").DefaultValue("center").Description,
+				Optional:    true,
+				Computed:    true,
+
+				Default: stringdefault.StaticString("center"),
 			},
 
 			"card_vertical_alignment": schema.StringAttribute{
@@ -1060,6 +1070,10 @@ func (p *brandingThemeResourceModelV1) expand(ctx context.Context) (*management.
 		configuration.SetCardHorizontalAlignment(p.CardHorizontalAlignment.ValueString())
 	}
 
+	if !p.CardLogoAlignment.IsNull() && !p.CardLogoAlignment.IsUnknown() {
+		configuration.SetCardLogoAlignment(p.CardLogoAlignment.ValueString())
+	}
+
 	if !p.CardShadow.IsNull() && !p.CardShadow.IsUnknown() {
 		configuration.SetCardShadow(p.CardShadow.ValueString())
 	}
@@ -1298,6 +1312,9 @@ func (p *brandingThemeResourceModelV1) toState(apiObject *management.BrandingThe
 		p.CardBorderWidth = framework.StringOkToTF(v.GetCardBorderWidthOk())
 		p.CardCornerRadius = framework.StringOkToTF(v.GetCardCornerRadiusOk())
 		p.CardHorizontalAlignment = framework.StringOkToTF(v.GetCardHorizontalAlignmentOk())
+		// The API always echoes cardLogoAlignment (defaulting to "center" when unset), so this
+		// is always known after read/create; the schema's static default covers the unset case.
+		p.CardLogoAlignment = framework.StringOkToTF(v.GetCardLogoAlignmentOk())
 		p.CardShadow = framework.StringOkToTF(v.GetCardShadowOk())
 		p.CardVerticalAlignment = framework.StringOkToTF(v.GetCardVerticalAlignmentOk())
 		p.FocusRectangleColor = framework.StringOkToTF(v.GetFocusRectangleColorOk())
@@ -1356,6 +1373,7 @@ func (p *brandingThemeResourceModelV1) toState(apiObject *management.BrandingThe
 		p.CardBorderWidth = types.StringNull()
 		p.CardCornerRadius = types.StringNull()
 		p.CardHorizontalAlignment = types.StringNull()
+		p.CardLogoAlignment = types.StringNull()
 		p.CardShadow = types.StringNull()
 		p.CardVerticalAlignment = types.StringNull()
 		p.FocusRectangleColor = types.StringNull()
