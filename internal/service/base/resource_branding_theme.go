@@ -66,7 +66,6 @@ type brandingThemeResourceModelV1 struct {
 	BodyTextWeight              types.String                 `tfsdk:"body_text_weight"`
 	ButtonBorderColor           types.String                 `tfsdk:"button_border_color"`
 	ButtonCornerRadius          types.String                 `tfsdk:"button_corner_radius"`
-	ButtonBorderRadius          types.String                 `tfsdk:"button_border_radius"`
 	ButtonBorderWidth           types.String                 `tfsdk:"button_border_width"`
 	ButtonHoverStateBorderColor types.String                 `tfsdk:"button_hover_state_border_color"`
 	ButtonHoverStateFillColor   types.String                 `tfsdk:"button_hover_state_fill_color"`
@@ -472,11 +471,6 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 
 			"button_corner_radius": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("The button corner radius for the theme (range from 0-25px).").Description,
-				Optional:    true,
-			},
-
-			"button_border_radius": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("The button border radius for the theme (range from 0-25px).").Description,
 				Optional:    true,
 			},
 
@@ -1026,10 +1020,6 @@ func (p *brandingThemeResourceModelV1) expand(ctx context.Context) (*management.
 		configuration.SetButtonCornerRadius(p.ButtonCornerRadius.ValueString())
 	}
 
-	if !p.ButtonBorderRadius.IsNull() && !p.ButtonBorderRadius.IsUnknown() {
-		configuration.SetButtonBorderRadius(p.ButtonBorderRadius.ValueString())
-	}
-
 	if !p.ButtonBorderWidth.IsNull() && !p.ButtonBorderWidth.IsUnknown() {
 		configuration.SetButtonBorderWidth(p.ButtonBorderWidth.ValueString())
 	}
@@ -1298,7 +1288,6 @@ func (p *brandingThemeResourceModelV1) toState(apiObject *management.BrandingThe
 		p.BodyTextWeight = framework.StringOkToTF(v.GetBodyTextWeightOk())
 		p.ButtonBorderColor = framework.StringOkToTF(v.GetButtonBorderColorOk())
 		p.ButtonCornerRadius = framework.StringOkToTF(v.GetButtonCornerRadiusOk())
-		p.ButtonBorderRadius = framework.StringOkToTF(v.GetButtonBorderRadiusOk())
 		p.ButtonBorderWidth = framework.StringOkToTF(v.GetButtonBorderWidthOk())
 		p.ButtonHoverStateBorderColor = framework.StringOkToTF(v.GetButtonHoverStateBorderColorOk())
 		p.ButtonHoverStateFillColor = framework.StringOkToTF(v.GetButtonHoverStateFillColorOk())
@@ -1357,7 +1346,6 @@ func (p *brandingThemeResourceModelV1) toState(apiObject *management.BrandingThe
 		p.BodyTextWeight = types.StringNull()
 		p.ButtonBorderColor = types.StringNull()
 		p.ButtonCornerRadius = types.StringNull()
-		p.ButtonBorderRadius = types.StringNull()
 		p.ButtonBorderWidth = types.StringNull()
 		p.ButtonHoverStateBorderColor = types.StringNull()
 		p.ButtonHoverStateFillColor = types.StringNull()

@@ -95,7 +95,6 @@ resource "pingone_branding_theme" "my_awesome_theme" {
 - `body_text_size` (String) The body text size for the theme.
 - `body_text_weight` (String) The body text weight for the theme (range from 100-900).
 - `button_border_color` (String) The button border color for the theme. It must be a valid hexadecimal color code.
-- `button_border_radius` (String) The button border radius for the theme (range from 0-25px).
 - `button_border_width` (String) The button border width for the theme (range from 0-4px).
 - `button_corner_radius` (String) The button corner radius for the theme (range from 0-25px).
 - `button_hover_state_border_color` (String) The button hover state border color for the theme. It must be a valid hexadecimal color code.

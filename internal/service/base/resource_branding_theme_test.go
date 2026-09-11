@@ -170,6 +170,32 @@ func TestAccBrandingTheme_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "card_horizontal_alignment", "left"),
 					resource.TestCheckResourceAttr(resourceFullName, "card_vertical_alignment", "center"),
 					resource.TestCheckResourceAttr(resourceFullName, "input_label_position", "float"),
+					resource.TestCheckResourceAttr(resourceFullName, "button_border_color", "#112233"),
+					resource.TestCheckResourceAttr(resourceFullName, "button_hover_state_border_color", "#223344"),
+					resource.TestCheckResourceAttr(resourceFullName, "button_hover_state_fill_color", "#334455"),
+					resource.TestCheckResourceAttr(resourceFullName, "button_hover_state_text_color", "#556677"),
+					resource.TestCheckResourceAttr(resourceFullName, "card_border_color", "#CACED3"),
+					resource.TestCheckResourceAttr(resourceFullName, "card_border_width", "2px"),
+					resource.TestCheckResourceAttr(resourceFullName, "card_corner_radius", "4px"),
+					resource.TestCheckResourceAttr(resourceFullName, "card_shadow", "0px 2px 0px 0px rgba(0,0,0,0.1)"),
+					resource.TestCheckResourceAttr(resourceFullName, "input_border_width", "1px"),
+					resource.TestCheckResourceAttr(resourceFullName, "input_box_border_color", "#667788"),
+					resource.TestCheckResourceAttr(resourceFullName, "input_corner_radius", "5px"),
+					resource.TestCheckResourceAttr(resourceFullName, "input_label_text_color", "#798087"),
+					resource.TestCheckResourceAttr(resourceFullName, "input_label_text_size", "14px"),
+					resource.TestCheckResourceAttr(resourceFullName, "input_label_text_weight", "500"),
+					resource.TestCheckResourceAttr(resourceFullName, "input_value_text_color", "#798087"),
+					resource.TestCheckResourceAttr(resourceFullName, "input_value_text_size", "13px"),
+					resource.TestCheckResourceAttr(resourceFullName, "input_value_text_weight", "600"),
+					resource.TestCheckResourceAttr(resourceFullName, "link_text_hover_color", "#007CBA"),
+					resource.TestCheckResourceAttr(resourceFullName, "link_text_size", "15px"),
+					resource.TestCheckResourceAttr(resourceFullName, "link_text_weight", "400"),
+					resource.TestCheckResourceAttr(resourceFullName, "sub_title_text_size", "15px"),
+					resource.TestCheckResourceAttr(resourceFullName, "sub_title_text_weight", "400"),
+					resource.TestCheckResourceAttr(resourceFullName, "title_text_size", "20px"),
+					resource.TestCheckResourceAttr(resourceFullName, "title_text_weight", "600"),
+					resource.TestCheckResourceAttr(resourceFullName, "button_text_size", "16px"),
+					resource.TestCheckResourceAttr(resourceFullName, "button_text_weight", "400"),
 				),
 			},
 			// Test importing the resource
@@ -226,6 +252,8 @@ func TestAccBrandingTheme_FullLocalized(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "header_localized.content.fr.input_text", "<h1>Bienvenue</h1>"),
 					resource.TestCheckResourceAttr(resourceFullName, "footer_localized.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "footer_localized.default_language", "en"),
+					resource.TestCheckResourceAttr(resourceFullName, "footer_localized.content_type", "HTML"),
+					resource.TestCheckResourceAttr(resourceFullName, "footer_localized.content.%", "1"),
 					resource.TestCheckResourceAttr(resourceFullName, "footer_localized.content.en.input_text", "<p>Copyright</p>"),
 				),
 			},
@@ -557,6 +585,33 @@ resource "pingone_branding_theme" "%[2]s" {
   card_vertical_alignment      = "center"
   input_label_position         = "float"
   header                       = "<h1>Welcome to PingOne</h1>"
+
+  button_border_color             = "#112233"
+  button_hover_state_border_color = "#223344"
+  button_hover_state_fill_color   = "#334455"
+  button_hover_state_text_color   = "#556677"
+  card_border_color               = "#CACED3"
+  card_border_width               = "2px"
+  card_corner_radius              = "4px"
+  card_shadow                     = "0px 2px 0px 0px rgba(0,0,0,0.1)"
+  input_border_width              = "1px"
+  input_box_border_color          = "#667788"
+  input_corner_radius             = "5px"
+  input_label_text_color          = "#798087"
+  input_label_text_size           = "14px"
+  input_label_text_weight         = "500"
+  input_value_text_color          = "#798087"
+  input_value_text_size           = "13px"
+  input_value_text_weight         = "600"
+  link_text_hover_color           = "#007CBA"
+  link_text_size                  = "15px"
+  link_text_weight                = "400"
+  sub_title_text_size             = "15px"
+  sub_title_text_weight           = "400"
+  title_text_size                 = "20px"
+  title_text_weight               = "600"
+  button_text_size                = "16px"
+  button_text_weight              = "400"
 
   // NOTE: header_localized / footer_localized are exercised in TestAccBrandingTheme_FullLocalized.
   // The PingOne API cannot remove these objects once set (see scratch/pingone-branding-theme-api-echo-issues.md),
