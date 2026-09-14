@@ -17,6 +17,11 @@ resource "pingone_application" "my_awesome_spa" {
   name           = "My Awesome Single Page App"
   enabled        = true
 
+  metadata = jsonencode({
+    "contact"    = "Kelly Johnson"
+    "department" = "Accounting"
+  })
+
   oidc_options = {
     type                       = "SINGLE_PAGE_APP"
     grant_types                = ["AUTHORIZATION_CODE"]
@@ -317,6 +322,7 @@ resource "pingone_application" "my_awesome_wsfed" {
 - `hidden_from_app_portal` (Boolean) A boolean to specify whether the application is hidden in the application portal despite the configured group access policy.  Defaults to `false`.
 - `icon` (Attributes) A single object that specifies settings for the application icon. (see [below for nested schema](#nestedatt--icon))
 - `login_page_url` (String) A string that specifies the custom login page URL for the application. If you set the `login_page_url` property for applications in an environment that sets a custom domain, the URL should include the top-level domain and at least one additional domain level. **Warning** To avoid issues with third-party cookies in some browsers, a custom domain must be used, giving your PingOne environment the same parent domain as your authentication application. For more information about custom domains, see Custom domains.  The provided URL is expected to use the `https://` schema.  The `http` schema is permitted where the host is `localhost` or `127.0.0.1`.
+- `metadata` (String) A JSON string that specifies a free-form metadata object of user-defined properties for the application, for example provided with `jsonencode({ ... })`.  The value must be a JSON object; arrays and scalar values are not accepted.  Metadata is stored and returned verbatim by the API.  Setting this value replaces any existing metadata, and removing it from configuration removes the application metadata.
 - `oidc_options` (Attributes) A single object that specifies OIDC/OAuth application specific settings.  Exactly one of the following must be defined: `external_link_options`, `oidc_options`, `saml_options`, `wsfed_options`.  If this object is added or removed, a replacement plan is triggered.  Parameters within the object are subject to their own immutability rules. (see [below for nested schema](#nestedatt--oidc_options))
 - `saml_options` (Attributes) A single object that specifies SAML application specific settings.  Exactly one of the following must be defined: `external_link_options`, `oidc_options`, `saml_options`, `wsfed_options`.  If this object is added or removed, a replacement plan is triggered.  Parameters within the object are subject to their own immutability rules. (see [below for nested schema](#nestedatt--saml_options))
 - `tags` (Set of String) An array of strings that specifies the list of labels associated with the application.  Options are `PING_FED_CONNECTION_INTEGRATION`.  Conflicts with `external_link_options`, `saml_options`, `wsfed_options`.

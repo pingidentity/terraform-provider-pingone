@@ -276,7 +276,133 @@ func TestAccApplication_OIDCMinimalWeb(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "external_link_options"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "wsfed_options"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "false"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "metadata"),
 				),
+			},
+		},
+	})
+}
+
+func TestAccApplication_OIDCMetadata(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             sso.Application_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Create with metadata
+			{
+				Config: testAccApplicationConfig_OIDC_Metadata(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "metadata", `{"cost_center":"engineering","tier":2}`),
+				),
+			},
+			// Update metadata values
+			{
+				Config: testAccApplicationConfig_OIDC_MetadataUpdated(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "metadata", `{"cost_center":"finance","owner":"platform-team"}`),
+				),
+			},
+			// Remove metadata from configuration (clears server-side)
+			{
+				Config: testAccApplicationConfig_OIDC_MinimalWeb(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckNoResourceAttr(resourceFullName, "metadata"),
+				),
+			},
+			// Re-add metadata
+			{
+				Config: testAccApplicationConfig_OIDC_Metadata(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "metadata", `{"cost_center":"engineering","tier":2}`),
+				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccApplication_OIDCMetadataEmpty(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             sso.Application_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Create with an explicitly empty metadata object
+			{
+				Config: testAccApplicationConfig_OIDC_MetadataEmpty(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "metadata", `{}`),
+				),
+			},
+			// Remove metadata from configuration
+			{
+				Config: testAccApplicationConfig_OIDC_MinimalWeb(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckNoResourceAttr(resourceFullName, "metadata"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccApplication_OIDCMetadataBadParameters(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             sso.Application_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccApplicationConfig_OIDC_MetadataInvalid(resourceName, name),
+				ExpectError: regexp.MustCompile(`must be a JSON object`),
 			},
 		},
 	})
@@ -3812,6 +3938,100 @@ resource "pingone_application" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
   enabled        = true
+
+  oidc_options = {
+    type                       = "WEB_APP"
+    grant_types                = ["REFRESH_TOKEN", "AUTHORIZATION_CODE"]
+    response_types             = ["CODE"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
+    redirect_uris              = ["https://www.pingidentity.com"]
+  }
+}
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationConfig_OIDC_Metadata(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  metadata = jsonencode({
+    cost_center = "engineering"
+    tier        = 2
+  })
+
+  oidc_options = {
+    type                       = "WEB_APP"
+    grant_types                = ["REFRESH_TOKEN", "AUTHORIZATION_CODE"]
+    response_types             = ["CODE"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
+    redirect_uris              = ["https://www.pingidentity.com"]
+  }
+}
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationConfig_OIDC_MetadataUpdated(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  metadata = jsonencode({
+    cost_center = "finance"
+    owner       = "platform-team"
+  })
+
+  oidc_options = {
+    type                       = "WEB_APP"
+    grant_types                = ["REFRESH_TOKEN", "AUTHORIZATION_CODE"]
+    response_types             = ["CODE"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
+    redirect_uris              = ["https://www.pingidentity.com"]
+  }
+}
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationConfig_OIDC_MetadataEmpty(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  metadata = jsonencode({})
+
+  oidc_options = {
+    type                       = "WEB_APP"
+    grant_types                = ["REFRESH_TOKEN", "AUTHORIZATION_CODE"]
+    response_types             = ["CODE"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
+    redirect_uris              = ["https://www.pingidentity.com"]
+  }
+}
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationConfig_OIDC_MetadataInvalid(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  metadata = jsonencode(["not-an-object"])
 
   oidc_options = {
     type                       = "WEB_APP"

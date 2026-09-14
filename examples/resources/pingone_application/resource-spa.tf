@@ -3,6 +3,11 @@ resource "pingone_application" "my_awesome_spa" {
   name           = "My Awesome Single Page App"
   enabled        = true
 
+  metadata = jsonencode({
+    "contact"    = "Kelly Johnson"
+    "department" = "Accounting"
+  })
+
   oidc_options = {
     type                       = "SINGLE_PAGE_APP"
     grant_types                = ["AUTHORIZATION_CODE"]

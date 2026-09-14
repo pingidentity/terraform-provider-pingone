@@ -61,6 +61,7 @@ type applicationResourceModelV1 struct {
 	OIDCOptions               types.Object                 `tfsdk:"oidc_options"`
 	SAMLOptions               types.Object                 `tfsdk:"saml_options"`
 	WSFedOptions              types.Object                 `tfsdk:"wsfed_options"`
+	Metadata                  jsontypes.Normalized         `tfsdk:"metadata"`
 }
 
 type applicationAccessControlGroupOptionsResourceModelV1 struct {
@@ -475,6 +476,10 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 	hiddenFromAppPortalDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean to specify whether the application is hidden in the application portal despite the configured group access policy.",
 	).DefaultValue(false)
+
+	metadataDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A JSON string that specifies a free-form metadata object of user-defined properties for the application, for example provided with `jsonencode({ ... })`.  The value must be a JSON object; arrays and scalar values are not accepted.  Metadata is stored and returned verbatim by the API.  Setting this value replaces any existing metadata, and removing it from configuration removes the application metadata.",
+	)
 
 	iconHrefDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the URL for the application icon.  Both `http://` and `https://` are permitted.",
@@ -897,6 +902,14 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 				Computed:            true,
 
 				Default: booldefault.StaticBool(false),
+			},
+
+			"metadata": schema.StringAttribute{
+				Description:         metadataDescription.Description,
+				MarkdownDescription: metadataDescription.MarkdownDescription,
+				Optional:            true,
+
+				CustomType: jsontypes.NormalizedType{},
 			},
 
 			"icon": schema.SingleNestedAttribute{
@@ -2176,6 +2189,24 @@ func (r *ApplicationResource) Create(ctx context.Context, req resource.CreateReq
 			fmt.Sprintf("Full response object: %v\n", resp),
 		)
 	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Metadata is a separate sub-resource, managed after the application exists
+	if !plan.Metadata.IsNull() && !plan.Metadata.IsUnknown() {
+		var metadataObject map[string]interface{}
+		resp.Diagnostics.Append(plan.Metadata.Unmarshal(&metadataObject)...)
+		if !resp.Diagnostics.HasError() {
+			resp.Diagnostics.Append(writeApplicationMetadata(
+				ctx, r.Client.ManagementAPIClient,
+				plan.EnvironmentId.ValueString(), applicationId, metadataObject,
+			)...)
+		}
+		if resp.Diagnostics.HasError() {
+			return
+		}
+	}
 
 	var response *management.ReadOneApplication200Response
 	resp.Diagnostics.Append(legacysdk.ParseResponse(
@@ -2199,6 +2230,19 @@ func (r *ApplicationResource) Create(ctx context.Context, req resource.CreateReq
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(state.toState(ctx, response)...)
+
+	metadataObject, d := readApplicationMetadata(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), applicationId)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	state.Metadata, d = framework.JSONNormalizedToTF(metadataObject)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -2242,8 +2286,21 @@ func (r *ApplicationResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
+	metadataObject, d := readApplicationMetadata(ctx, r.Client.ManagementAPIClient, data.EnvironmentId.ValueString(), data.Id.ValueString())
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(data.toState(ctx, response)...)
+
+	data.Metadata, d = framework.JSONNormalizedToTF(metadataObject)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -2259,6 +2316,13 @@ func (r *ApplicationResource) Update(ctx context.Context, req resource.UpdateReq
 
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Read Terraform prior state data into the model
+	var priorState applicationResourceModelV1
+	resp.Diagnostics.Append(req.State.Get(ctx, &priorState)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -2293,11 +2357,45 @@ func (r *ApplicationResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
+	// Metadata is a separate sub-resource.  A nil metadata object sends an empty
+	// PUT body, which removes the application metadata (documented API behavior)
+	planHasMetadata := !plan.Metadata.IsNull() && !plan.Metadata.IsUnknown()
+	priorHadMetadata := !priorState.Metadata.IsNull() && !priorState.Metadata.IsUnknown()
+
+	if planHasMetadata || priorHadMetadata {
+		var metadataObject map[string]interface{}
+		if planHasMetadata {
+			resp.Diagnostics.Append(plan.Metadata.Unmarshal(&metadataObject)...)
+		}
+		if !resp.Diagnostics.HasError() {
+			resp.Diagnostics.Append(writeApplicationMetadata(
+				ctx, r.Client.ManagementAPIClient,
+				plan.EnvironmentId.ValueString(), plan.Id.ValueString(), metadataObject,
+			)...)
+		}
+		if resp.Diagnostics.HasError() {
+			return
+		}
+	}
+
 	// Create the state to save
 	state = plan
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(state.toState(ctx, response)...)
+
+	metadataObject, d := readApplicationMetadata(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), plan.Id.ValueString())
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	state.Metadata, d = framework.JSONNormalizedToTF(metadataObject)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -2393,6 +2491,17 @@ func applicationWriteCustomError(r *http.Response, p1Error *model.P1Error) diag.
 
 func (p *applicationResourceModelV1) validate(ctx context.Context, allowUnknown bool) diag.Diagnostics {
 	var diags diag.Diagnostics
+
+	if !p.Metadata.IsNull() && !p.Metadata.IsUnknown() {
+		var metadataObject map[string]interface{}
+		if d := p.Metadata.Unmarshal(&metadataObject); d.HasError() {
+			diags.AddAttributeError(
+				path.Root("metadata"),
+				"Invalid configuration",
+				"Current configuration is invalid as the `metadata` value must be a JSON object, for example provided with `jsonencode({ ... })`.  Arrays and scalar values are not accepted.",
+			)
+		}
+	}
 
 	var oidcPlan *applicationOIDCOptionsResourceModelV1
 	diags.Append(p.OIDCOptions.As(ctx, &oidcPlan, basetypes.ObjectAsOptions{
