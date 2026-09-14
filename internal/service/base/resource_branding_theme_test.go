@@ -274,6 +274,15 @@ func TestAccBrandingTheme_FullLocalized(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
+			// Remove the localized blocks from config; currently the API does not remove these
+			// attributes when removed via a PUT
+			{
+				Config: testAccBrandingThemeConfig_Minimal(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckNoResourceAttr(resourceFullName, "header_localized"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "footer_localized"),
+				),
+			},
 		},
 	})
 }
