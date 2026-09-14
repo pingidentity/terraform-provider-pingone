@@ -106,7 +106,7 @@ resource "pingone_branding_theme" "my_awesome_theme" {
 - `card_border_width` (String) The card border width for the theme (range from 0-4px).
 - `card_corner_radius` (String) The card corner radius for the theme (range from 0-25px).
 - `card_horizontal_alignment` (String) The card horizontal alignment for the theme.
-- `card_logo_alignment` (String) The card logo alignment for the theme.  The API always returns a value for this property; when unset, the API resolves to the default "center".
+- `card_logo_alignment` (String) The card logo alignment for the theme.  Defaults to "center".
 - `card_shadow` (String) The card shadow for the theme.
 - `card_vertical_alignment` (String) The card vertical alignment for the theme.
 - `focus_rectangle_color` (String) The focus rectangle color for the theme. It must be a valid hexadecimal color code.
