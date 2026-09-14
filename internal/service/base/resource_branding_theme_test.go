@@ -222,10 +222,7 @@ func TestAccBrandingTheme_Full(t *testing.T) {
 	})
 }
 
-// TestAccBrandingTheme_FullLocalized exercises header_localized / footer_localized in
-// isolation: the PingOne API cannot remove these objects once configured (see
-// scratch/pingone-branding-theme-api-echo-issues.md), so the config is applied once and
-// never transitioned away from.
+// TestAccBrandingTheme_FullLocalized exercises header_localized / footer_localized
 func TestAccBrandingTheme_FullLocalized(t *testing.T) {
 	t.Parallel()
 
@@ -278,7 +275,7 @@ func TestAccBrandingTheme_FullLocalized(t *testing.T) {
 				ImportStateVerify: true,
 			},
 			// Remove the localized blocks from config; currently the API does not remove these
-			// attributes when removed via a PUT
+			// attributes when removed via a PUT, so the resource uses UseStateForUnknown
 			{
 				Config: testAccBrandingThemeConfig_Minimal(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
@@ -417,9 +414,6 @@ func TestAccBrandingTheme_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "link_text_color", "#8A7F06"),
 				),
 			},
-			// NOTE: no localized-to-unlocalized transition step here — the PingOne API cannot
-			// remove headerLocalized/footerLocalized once set (see scratch/pingone-branding-theme-api-echo-issues.md),
-			// so a config that removes the block would churn indefinitely.
 			{
 				Config: testAccBrandingThemeConfig_Full(resourceName, name, logo, background),
 				Check: resource.ComposeTestCheckFunc(
@@ -644,10 +638,6 @@ resource "pingone_branding_theme" "%[2]s" {
   title_text_weight               = "600"
   button_text_size                = "16px"
   button_text_weight              = "400"
-
-  // NOTE: header_localized / footer_localized are exercised in TestAccBrandingTheme_FullLocalized.
-  // The PingOne API cannot remove these objects once set (see scratch/pingone-branding-theme-api-echo-issues.md),
-  // so the full→minimal transitions below must not cross the localized boundary.
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, logo, background)
 }

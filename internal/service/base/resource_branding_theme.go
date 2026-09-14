@@ -766,6 +766,10 @@ func (r *BrandingThemeResource) ModifyPlan(ctx context.Context, req resource.Mod
 	// Derive the planned values for the PingOne Neo verification screen colors
 	// (background_outline_color, foreground_main_color, foreground_highlight_color) from
 	// button_color when they are not configured, matching the API behavior.
+	// The defaults are set here because otherwise the API can take a moment to actually
+	// set the default, where it is missing from the initial create response and some subsequent
+	// read responses, which causes issues with terraform diff logic. By setting the default
+	// directly we avoid that issue.
 	var plan brandingThemeResourceModelV1
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
@@ -1400,8 +1404,6 @@ func (p *brandingThemeResourceModelV1) toState(apiObject *management.BrandingThe
 		p.CardBorderWidth = framework.StringOkToTF(v.GetCardBorderWidthOk())
 		p.CardCornerRadius = framework.StringOkToTF(v.GetCardCornerRadiusOk())
 		p.CardHorizontalAlignment = framework.StringOkToTF(v.GetCardHorizontalAlignmentOk())
-		// The API always echoes cardLogoAlignment (defaulting to "center" when unset), so this
-		// is always known after read/create; the schema's static default covers the unset case.
 		p.CardLogoAlignment = framework.StringOkToTF(v.GetCardLogoAlignmentOk())
 		p.CardShadow = framework.StringOkToTF(v.GetCardShadowOk())
 		p.CardVerticalAlignment = framework.StringOkToTF(v.GetCardVerticalAlignmentOk())
