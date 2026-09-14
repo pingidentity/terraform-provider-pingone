@@ -55,6 +55,9 @@ type brandingThemeResourceModelV1 struct {
 	Logo                        types.Object                 `tfsdk:"logo"`
 	BackgroundImage             types.Object                 `tfsdk:"background_image"`
 	BackgroundColor             types.String                 `tfsdk:"background_color"`
+	BackgroundOutlineColor      types.String                 `tfsdk:"background_outline_color"`
+	ForegroundMainColor         types.String                 `tfsdk:"foreground_main_color"`
+	ForegroundHighlightColor    types.String                 `tfsdk:"foreground_highlight_color"`
 	UseDefaultBackground        types.Bool                   `tfsdk:"use_default_background"`
 	BodyTextColor               types.String                 `tfsdk:"body_text_color"`
 	ButtonColor                 types.String                 `tfsdk:"button_color"`
@@ -125,6 +128,7 @@ var (
 	_ resource.Resource                = &BrandingThemeResource{}
 	_ resource.ResourceWithConfigure   = &BrandingThemeResource{}
 	_ resource.ResourceWithImportState = &BrandingThemeResource{}
+	_ resource.ResourceWithModifyPlan  = &BrandingThemeResource{}
 )
 
 // New Object
@@ -283,6 +287,33 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 				Description:         backgroundColorDescription.Description,
 				MarkdownDescription: backgroundColorDescription.MarkdownDescription,
 				Optional:            true,
+			},
+
+			"background_outline_color": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("For PingOne Neo verification presentation screen, the outline color of background objects for the branding theme. It must be a valid hexadecimal color code.  When not configured, the API resolves this to the current `button_color` value.").Description,
+				Optional:    true,
+				Computed:    true,
+				Validators: []validator.String{
+					stringvalidator.RegexMatches(verify.HexColorCode, "Value must be a valid hex color code."),
+				},
+			},
+
+			"foreground_main_color": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("For PingOne Neo verification presentation screen, the outline color of the foreground object for the branding theme. It must be a valid hexadecimal color code.  When not configured, the API resolves this to the current `button_color` value.").Description,
+				Optional:    true,
+				Computed:    true,
+				Validators: []validator.String{
+					stringvalidator.RegexMatches(verify.HexColorCode, "Value must be a valid hex color code."),
+				},
+			},
+
+			"foreground_highlight_color": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("For PingOne Neo verification presentation screen, the highlight color of the foreground object for the branding theme. It must be a valid hexadecimal color code.  When not configured, the API resolves this to the current `button_color` value.").Description,
+				Optional:    true,
+				Computed:    true,
+				Validators: []validator.String{
+					stringvalidator.RegexMatches(verify.HexColorCode, "Value must be a valid hex color code."),
+				},
 			},
 
 			"use_default_background": schema.BoolAttribute{
@@ -727,6 +758,37 @@ func (r *BrandingThemeResource) Configure(ctx context.Context, req resource.Conf
 	}
 }
 
+func (r *BrandingThemeResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	if req.Plan.Raw.IsNull() {
+		return
+	}
+
+	// Derive the planned values for the PingOne Neo verification screen colors
+	// (background_outline_color, foreground_main_color, foreground_highlight_color) from
+	// button_color when they are not configured, matching the API behavior.
+	var plan brandingThemeResourceModelV1
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	changed := false
+	for _, p := range []*types.String{
+		&plan.BackgroundOutlineColor,
+		&plan.ForegroundMainColor,
+		&plan.ForegroundHighlightColor,
+	} {
+		if p.IsUnknown() && !plan.ButtonColor.IsUnknown() {
+			*p = plan.ButtonColor
+			changed = true
+		}
+	}
+
+	if changed {
+		resp.Diagnostics.Append(resp.Plan.Set(ctx, &plan)...)
+	}
+}
+
 func (r *BrandingThemeResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state brandingThemeResourceModelV1
 
@@ -1009,6 +1071,18 @@ func (p *brandingThemeResourceModelV1) expand(ctx context.Context) (*management.
 		configuration.SetBackgroundColor(backgroundColour)
 	}
 
+	if !p.BackgroundOutlineColor.IsNull() && !p.BackgroundOutlineColor.IsUnknown() {
+		configuration.SetBackgroundOutlineColor(p.BackgroundOutlineColor.ValueString())
+	}
+
+	if !p.ForegroundMainColor.IsNull() && !p.ForegroundMainColor.IsUnknown() {
+		configuration.SetForegroundMainColor(p.ForegroundMainColor.ValueString())
+	}
+
+	if !p.ForegroundHighlightColor.IsNull() && !p.ForegroundHighlightColor.IsUnknown() {
+		configuration.SetForegroundHighlightColor(p.ForegroundHighlightColor.ValueString())
+	}
+
 	if !p.FooterText.IsNull() && !p.FooterText.IsUnknown() {
 		configuration.SetFooter(p.FooterText.ValueString())
 	}
@@ -1283,6 +1357,9 @@ func (p *brandingThemeResourceModelV1) toState(apiObject *management.BrandingThe
 	if v, ok := apiObject.GetConfigurationOk(); ok {
 		p.Name = framework.StringOkToTF(v.GetNameOk())
 		p.BackgroundColor = framework.StringOkToTF(v.GetBackgroundColorOk())
+		p.BackgroundOutlineColor = framework.StringOkToTF(v.GetBackgroundOutlineColorOk())
+		p.ForegroundMainColor = framework.StringOkToTF(v.GetForegroundMainColorOk())
+		p.ForegroundHighlightColor = framework.StringOkToTF(v.GetForegroundHighlightColorOk())
 
 		if v1, ok := v.GetBackgroundTypeOk(); ok && *v1 == management.ENUMBRANDINGTHEMEBACKGROUNDTYPE_DEFAULT {
 			p.UseDefaultBackground = types.BoolValue(true)
@@ -1358,6 +1435,9 @@ func (p *brandingThemeResourceModelV1) toState(apiObject *management.BrandingThe
 	} else {
 		p.Name = types.StringNull()
 		p.BackgroundColor = types.StringNull()
+		p.BackgroundOutlineColor = types.StringNull()
+		p.ForegroundMainColor = types.StringNull()
+		p.ForegroundHighlightColor = types.StringNull()
 		p.UseDefaultBackground = types.BoolNull()
 		p.BodyTextColor = types.StringNull()
 		p.ButtonColor = types.StringNull()

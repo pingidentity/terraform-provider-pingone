@@ -150,6 +150,9 @@ func TestAccBrandingTheme_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "use_default_background", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "body_text_color", "#8620FF"),
 					resource.TestCheckResourceAttr(resourceFullName, "button_color", "#0CFFFB"),
+					resource.TestCheckResourceAttr(resourceFullName, "background_outline_color", "#335577"),
+					resource.TestCheckResourceAttr(resourceFullName, "foreground_main_color", "#224466"),
+					resource.TestCheckResourceAttr(resourceFullName, "foreground_highlight_color", "#556688"),
 					resource.TestCheckResourceAttr(resourceFullName, "button_text_color", "#FF6C6C"),
 					resource.TestCheckResourceAttr(resourceFullName, "card_color", "#0FFF39"),
 					resource.TestCheckResourceAttr(resourceFullName, "footer_text", "What do you call a can opener that doesn't work? A can't opener."),
@@ -320,6 +323,9 @@ func TestAccBrandingTheme_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "use_default_background", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "body_text_color", "#8620FF"),
 					resource.TestCheckResourceAttr(resourceFullName, "button_color", "#0CFFFB"),
+					resource.TestCheckResourceAttr(resourceFullName, "background_outline_color", "#0CFFFB"),
+					resource.TestCheckResourceAttr(resourceFullName, "foreground_main_color", "#0CFFFB"),
+					resource.TestCheckResourceAttr(resourceFullName, "foreground_highlight_color", "#0CFFFB"),
 					resource.TestCheckResourceAttr(resourceFullName, "button_text_color", "#FF6C6C"),
 					resource.TestCheckResourceAttr(resourceFullName, "card_color", "#0FFF39"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "footer_text"),
@@ -376,6 +382,9 @@ func TestAccBrandingTheme_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "use_default_background", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "body_text_color", "#8620FF"),
 					resource.TestCheckResourceAttr(resourceFullName, "button_color", "#0CFFFB"),
+					resource.TestCheckResourceAttr(resourceFullName, "background_outline_color", "#335577"),
+					resource.TestCheckResourceAttr(resourceFullName, "foreground_main_color", "#224466"),
+					resource.TestCheckResourceAttr(resourceFullName, "foreground_highlight_color", "#556688"),
 					resource.TestCheckResourceAttr(resourceFullName, "button_text_color", "#FF6C6C"),
 					resource.TestCheckResourceAttr(resourceFullName, "card_color", "#0FFF39"),
 					resource.TestCheckResourceAttr(resourceFullName, "footer_text", "What do you call a can opener that doesn't work? A can't opener."),
@@ -397,6 +406,9 @@ func TestAccBrandingTheme_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "use_default_background", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "body_text_color", "#8620FF"),
 					resource.TestCheckResourceAttr(resourceFullName, "button_color", "#0CFFFB"),
+					resource.TestCheckResourceAttr(resourceFullName, "background_outline_color", "#0CFFFB"),
+					resource.TestCheckResourceAttr(resourceFullName, "foreground_main_color", "#0CFFFB"),
+					resource.TestCheckResourceAttr(resourceFullName, "foreground_highlight_color", "#0CFFFB"),
 					resource.TestCheckResourceAttr(resourceFullName, "button_text_color", "#FF6C6C"),
 					resource.TestCheckResourceAttr(resourceFullName, "card_color", "#0FFF39"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "footer_text"),
@@ -424,6 +436,9 @@ func TestAccBrandingTheme_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "use_default_background", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "body_text_color", "#8620FF"),
 					resource.TestCheckResourceAttr(resourceFullName, "button_color", "#0CFFFB"),
+					resource.TestCheckResourceAttr(resourceFullName, "background_outline_color", "#335577"),
+					resource.TestCheckResourceAttr(resourceFullName, "foreground_main_color", "#224466"),
+					resource.TestCheckResourceAttr(resourceFullName, "foreground_highlight_color", "#556688"),
 					resource.TestCheckResourceAttr(resourceFullName, "button_text_color", "#FF6C6C"),
 					resource.TestCheckResourceAttr(resourceFullName, "card_color", "#0FFF39"),
 					resource.TestCheckResourceAttr(resourceFullName, "footer_text", "What do you call a can opener that doesn't work? A can't opener."),
@@ -579,6 +594,10 @@ resource "pingone_branding_theme" "%[2]s" {
   body_text_color    = "#8620FF"
   link_text_color    = "#8A7F06"
   button_color       = "#0CFFFB"
+
+  background_outline_color   = "#335577"
+  foreground_main_color      = "#224466"
+  foreground_highlight_color = "#556688"
 
   footer_text = "What do you call a can opener that doesn't work? A can't opener."
 

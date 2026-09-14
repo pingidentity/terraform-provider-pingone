@@ -92,6 +92,7 @@ resource "pingone_branding_theme" "my_awesome_theme" {
 - `application_background_color` (String) The application background color for the theme. It must be a valid hexadecimal color code.  Note that this property is not used by DaVinci forms.
 - `background_color` (String) The background color for the theme. It must be a valid hexadecimal color code.  Conflicts with `background_image`.
 - `background_image` (Attributes) A single object that specifies the HREF and ID for the background image.  Conflicts with `background_color`. (see [below for nested schema](#nestedatt--background_image))
+- `background_outline_color` (String) For PingOne Neo verification presentation screen, the outline color of background objects for the branding theme. It must be a valid hexadecimal color code.  When not configured, the API resolves this to the current "button_color" value.
 - `body_text_size` (String) The body text size for the theme.
 - `body_text_weight` (String) The body text weight for the theme (range from 100-900).
 - `button_border_color` (String) The button border color for the theme. It must be a valid hexadecimal color code.
@@ -112,6 +113,8 @@ resource "pingone_branding_theme" "my_awesome_theme" {
 - `focus_rectangle_color` (String) The focus rectangle color for the theme. It must be a valid hexadecimal color code.
 - `footer_localized` (Attributes) The localization object to specify language translations for the form footer. (see [below for nested schema](#nestedatt--footer_localized))
 - `footer_text` (String) The text to be displayed in the footer of the branding theme.
+- `foreground_highlight_color` (String) For PingOne Neo verification presentation screen, the highlight color of the foreground object for the branding theme. It must be a valid hexadecimal color code.  When not configured, the API resolves this to the current "button_color" value.
+- `foreground_main_color` (String) For PingOne Neo verification presentation screen, the outline color of the foreground object for the branding theme. It must be a valid hexadecimal color code.  When not configured, the API resolves this to the current "button_color" value.
 - `global_font` (String) The global font for the theme.  The default value is "Helvetica Neue, Helvetica, sans-serif".
 - `header` (String) The header for the theme.  For example, "<h1>Welcome to PingOne</h1>".
 - `header_background_color` (String) The header background color for the theme. It must be a valid hexadecimal color code.  Note that this property is not used by DaVinci forms.
