@@ -1053,6 +1053,10 @@ func davinciFlow_CheckComputedValuesFullMinimal(resourceName string) resource.Te
 		resource.TestCheckNoResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "input_schema"),
 		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "graph_data.elements.nodes.2pzouq7el7.data.connector_id", "errorConnector"),
 		resource.TestCheckNoResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "published_version"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.custom_timeout_error_screen_css", "body { background-color: #f0f0f0; }"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.custom_timeout_error_screen_html", "<div class=\"timeout-error\">The flow has timed out</div>"),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.custom_timeout_error_screen_message", "The session timed out. Please try again."),
+		resource.TestCheckResourceAttr(fmt.Sprintf("pingone_davinci_flow.%s", resourceName), "settings.use_custom_timeout_error_screen", "true"),
 	)
 }
 
