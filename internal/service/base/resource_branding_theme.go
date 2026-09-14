@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -370,6 +371,11 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 			"header_localized": schema.SingleNestedAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("The localization object to specify language translations for the form header.").Description,
 				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []planmodifier.Object{
+					// The API always maintains these localized values once set - they are not removed by setting to null
+					objectplanmodifier.UseStateForUnknown(),
+				},
 
 				Attributes: map[string]schema.Attribute{
 					"enabled": schema.BoolAttribute{
@@ -413,6 +419,11 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 			"footer_localized": schema.SingleNestedAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("The localization object to specify language translations for the form footer.").Description,
 				Optional:    true,
+				Computed:    true,
+				PlanModifiers: []planmodifier.Object{
+					// The API always maintains these localized values once set - they are not removed by setting to null
+					objectplanmodifier.UseStateForUnknown(),
+				},
 
 				Attributes: map[string]schema.Attribute{
 					"enabled": schema.BoolAttribute{

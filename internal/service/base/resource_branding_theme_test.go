@@ -279,8 +279,9 @@ func TestAccBrandingTheme_FullLocalized(t *testing.T) {
 			{
 				Config: testAccBrandingThemeConfig_Minimal(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckNoResourceAttr(resourceFullName, "header_localized"),
-					resource.TestCheckNoResourceAttr(resourceFullName, "footer_localized"),
+					// Existing value should be maintained in state
+					resource.TestCheckResourceAttrSet(resourceFullName, "header_localized.%"),
+					resource.TestCheckResourceAttrSet(resourceFullName, "footer_localized.%"),
 				),
 			},
 		},
