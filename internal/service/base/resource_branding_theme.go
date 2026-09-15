@@ -421,7 +421,7 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("The localization language code for the header's default language (for example, `en`).").Description,
 						Required:    true,
 						Validators: []validator.String{
-							stringvalidator.OneOf(verify.IsoList()...),
+							stringvalidator.OneOf(verify.FullIsoList()...),
 						},
 					},
 
@@ -472,7 +472,7 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("The localization language code for the footer's default language (for example, `en`).").Description,
 						Required:    true,
 						Validators: []validator.String{
-							stringvalidator.OneOf(verify.IsoList()...),
+							stringvalidator.OneOf(verify.FullIsoList()...),
 						},
 					},
 
