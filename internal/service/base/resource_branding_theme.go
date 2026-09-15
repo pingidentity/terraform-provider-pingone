@@ -420,6 +420,9 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 					"default_language": schema.StringAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("The localization language code for the header's default language (for example, `en`).").Description,
 						Required:    true,
+						Validators: []validator.String{
+							stringvalidator.OneOf(verify.IsoList()...),
+						},
 					},
 
 					"content_type": schema.StringAttribute{
@@ -468,6 +471,9 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 					"default_language": schema.StringAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("The localization language code for the footer's default language (for example, `en`).").Description,
 						Required:    true,
+						Validators: []validator.String{
+							stringvalidator.OneOf(verify.IsoList()...),
+						},
 					},
 
 					"content_type": schema.StringAttribute{
