@@ -36,4 +36,23 @@ resource "pingone_branding_theme" "my_awesome_theme" {
   body_text_color    = "#263956"
   link_text_color    = "#263956"
   button_color       = "#263956"
+
+  header = "<h1>Welcome to PingOne</h1>"
+
+  footer_text = "<p>Copyright © 2025 My Company</p>"
+
+  title_text_color     = "#686F77"
+  sub_title_text_color = "#686F77"
+  global_font          = "\"Helvetica Neue\", Helvetica, sans-serif"
+  logo_height          = "56px"
+
+  footer_localized = {
+    enabled          = true
+    default_language = "en"
+    content_type     = "HTML"
+    content = {
+      en = { input_text = "<p>Copyright © 2025 My Company</p>" }
+      fr = { input_text = "<p>Copyright © 2025 Ma Société</p>" }
+    }
+  }
 }
