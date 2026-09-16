@@ -337,9 +337,6 @@ func (p *ApplicationMetadataResourceModel) toState(apiObject *management.Applica
 		return diags
 	}
 
-	// The `environment_id` and `application_id` path parameters are set from the plan/state,
-	// and are not overridden from the API response.
-
 	p.Metadata, d = framework.JSONNormalizedOkToTF(apiObject.GetMetadataOk())
 	diags.Append(d...)
 
