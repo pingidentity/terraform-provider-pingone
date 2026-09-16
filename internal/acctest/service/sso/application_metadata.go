@@ -4,7 +4,6 @@ package sso
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -46,24 +45,5 @@ func ApplicationMetadata_RemovalDrift_PreConfig(ctx context.Context, apiClient *
 	_, _, err := apiClient.ApplicationMetadataApi.UpdateApplicationMetadata(ctx, environmentID, applicationID).ApplicationMetadata(*management.NewApplicationMetadata()).Execute()
 	if err != nil {
 		t.Fatalf("Failed to remove application metadata: %v", err)
-	}
-}
-
-func ApplicationMetadata_Change_PreConfig(ctx context.Context, apiClient *management.APIClient, t *testing.T, environmentID, applicationID, metadata string) {
-	if environmentID == "" || applicationID == "" {
-		t.Fatalf("One of environment ID or application ID cannot be determined. Environment ID: %s, Application ID: %s", environmentID, applicationID)
-	}
-
-	metadataObject := management.NewApplicationMetadata()
-
-	var metadataMap map[string]interface{}
-	if err := json.Unmarshal([]byte(metadata), &metadataMap); err != nil {
-		t.Fatalf("Failed to unmarshal metadata: %v", err)
-	}
-	metadataObject.SetMetadata(metadataMap)
-
-	_, _, err := apiClient.ApplicationMetadataApi.UpdateApplicationMetadata(ctx, environmentID, applicationID).ApplicationMetadata(*metadataObject).Execute()
-	if err != nil {
-		t.Fatalf("Failed to update application metadata: %v", err)
 	}
 }

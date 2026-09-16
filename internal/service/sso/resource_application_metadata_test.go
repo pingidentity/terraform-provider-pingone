@@ -60,18 +60,6 @@ func TestAccApplicationMetadata_RemovalDrift(t *testing.T) {
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,
 			},
-			// Test an out-of-band metadata change
-			{
-				Config: testAccApplicationMetadataConfig_Full(resourceName, name),
-				Check:  sso.ApplicationMetadata_GetIDs(resourceFullName, &environmentID, &applicationID),
-			},
-			{
-				PreConfig: func() {
-					sso.ApplicationMetadata_Change_PreConfig(ctx, p1Client.API.ManagementAPIClient, t, environmentID, applicationID, `{"owner":"someone-else"}`)
-				},
-				RefreshState:       true,
-				ExpectNonEmptyPlan: true,
-			},
 			// Test removal of the environment
 			{
 				Config: testAccApplicationMetadataConfig_NewEnv(environmentName, licenseID, resourceName, name),

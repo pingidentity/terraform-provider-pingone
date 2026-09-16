@@ -2,12 +2,12 @@
 page_title: "pingone_application_metadata Resource - terraform-provider-pingone"
 subcategory: "SSO"
 description: |-
-  Resource to create and manage custom metadata for an application in PingOne.  Metadata is a user-defined JSON object that is associated with the application, and can be removed by destroying this resource.
+  Resource to create and manage custom metadata for an application in PingOne.  Metadata is a user-defined JSON object that is associated with the application.
 ---
 
 # pingone_application_metadata (Resource)
 
-Resource to create and manage custom metadata for an application in PingOne.  Metadata is a user-defined JSON object that is associated with the application, and can be removed by destroying this resource.
+Resource to create and manage custom metadata for an application in PingOne.  Metadata is a user-defined JSON object that is associated with the application.
 
 ## Example Usage
 
@@ -36,9 +36,9 @@ resource "pingone_application_metadata" "example" {
 
 ### Required
 
-- `application_id` (String) The ID of the application to manage the metadata for. The value for `application_id` may come from the `id` attribute of the `pingone_application` resource or data source.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `application_id` (String) The ID of the application to manage the metadata for.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 - `environment_id` (String) The ID of the environment to manage the application metadata in.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
-- `metadata` (String) A JSON string that specifies user-defined custom metadata for the application.  The top level of the JSON must be an object (a map of key-value pairs).  If metadata is not included in the request, the existing application metadata will be removed; to remove application metadata, destroy this resource.
+- `metadata` (String) A JSON string that specifies user-defined custom metadata for the application.  The top level of the JSON must be an object (a map of key-value pairs).
 
 ## Import
 

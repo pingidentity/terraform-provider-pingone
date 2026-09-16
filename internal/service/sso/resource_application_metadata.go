@@ -4,7 +4,6 @@ package sso
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -13,7 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
@@ -52,7 +50,7 @@ func (r *ApplicationMetadataResource) Metadata(_ context.Context, req resource.M
 func (r *ApplicationMetadataResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
-		Description: "Resource to create and manage custom metadata for an application in PingOne.  Metadata is a user-defined JSON object that is associated with the application, and can be removed by destroying this resource.",
+		Description: "Resource to create and manage custom metadata for an application in PingOne.  Metadata is a user-defined JSON object that is associated with the application.",
 
 		Attributes: map[string]schema.Attribute{
 			"environment_id": framework.Attr_LinkID(
@@ -60,18 +58,14 @@ func (r *ApplicationMetadataResource) Schema(_ context.Context, _ resource.Schem
 			),
 
 			"application_id": framework.Attr_LinkID(
-				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the application to manage the metadata for. The value for `application_id` may come from the `id` attribute of the `pingone_application` resource or data source."),
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the application to manage the metadata for."),
 			),
 
 			"metadata": schema.StringAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A JSON string that specifies user-defined custom metadata for the application.  The top level of the JSON must be an object (a map of key-value pairs).  If metadata is not included in the request, the existing application metadata will be removed; to remove application metadata, destroy this resource.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A JSON string that specifies user-defined custom metadata for the application.  The top level of the JSON must be an object (a map of key-value pairs).").Description,
 				Required:    true,
 
 				CustomType: jsontypes.NormalizedType{},
-
-				Validators: []validator.String{
-					jsonObjectValidator{},
-				},
 			},
 		},
 	}
@@ -165,16 +159,6 @@ func (r *ApplicationMetadataResource) Read(ctx context.Context, req resource.Rea
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// Guard against corrupt state missing the identifier attributes, which would
-	// otherwise issue a GET against empty path segments.
-	if data.EnvironmentId.IsNull() || data.ApplicationId.IsNull() {
-		resp.Diagnostics.AddError(
-			"Missing resource identifiers",
-			"The environment ID or application ID is missing from the Terraform state.  The state for this resource appears to be corrupt; remove the resource from state and import it again.",
-		)
 		return
 	}
 
@@ -353,44 +337,11 @@ func (p *ApplicationMetadataResourceModel) toState(apiObject *management.Applica
 		return diags
 	}
 
-	// The API does not consistently echo the `environmentId` and `applicationId` properties
-	// on the PUT response, so only overwrite the plan/state values when the API returns them.
-	if v, ok := apiObject.GetEnvironmentIdOk(); ok && v != nil {
-		p.EnvironmentId = framework.PingOneResourceIDToTF(*v)
-	}
-
-	if v, ok := apiObject.GetApplicationIdOk(); ok && v != nil {
-		p.ApplicationId = framework.PingOneResourceIDToTF(*v)
-	}
+	// The `environment_id` and `application_id` path parameters are set from the plan/state,
+	// and are not overridden from the API response.
 
 	p.Metadata, d = framework.JSONNormalizedOkToTF(apiObject.GetMetadataOk())
 	diags.Append(d...)
 
 	return diags
-}
-
-// jsonObjectValidator validates that the string value is a JSON object at the top level.
-type jsonObjectValidator struct{}
-
-func (v jsonObjectValidator) Description(_ context.Context) string {
-	return "Ensure the string contains a JSON object value."
-}
-
-func (v jsonObjectValidator) MarkdownDescription(ctx context.Context) string {
-	return v.Description(ctx)
-}
-
-func (v jsonObjectValidator) ValidateString(_ context.Context, req validator.StringRequest, resp *validator.StringResponse) {
-	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
-		return
-	}
-
-	var jsonObject map[string]interface{}
-	if err := json.Unmarshal([]byte(req.ConfigValue.ValueString()), &jsonObject); err != nil {
-		resp.Diagnostics.AddAttributeError(
-			req.Path,
-			"Invalid JSON Object Value",
-			fmt.Sprintf("A string value was provided that is not a JSON object (a map of key-value pairs).\n\nGiven Value: %s\nError: %s", req.ConfigValue.ValueString(), err.Error()),
-		)
-	}
 }
