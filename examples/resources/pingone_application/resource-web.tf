@@ -1,3 +1,15 @@
+resource "pingone_key_rotation_policy" "my_awesome_key_rotation_policy" {
+  environment_id = pingone_environment.my_environment.id
+
+  name = "My Awesome Key Rotation Policy"
+
+  algorithm           = "RSA"
+  subject_dn          = "CN=awesomeness, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  key_length          = 4096
+  signature_algorithm = "SHA256withRSA"
+  usage_type          = "SIGNING"
+}
+
 resource "pingone_application" "my_awesome_web_app" {
   environment_id = pingone_environment.my_environment.id
   name           = "My Awesome Web App"
@@ -13,6 +25,10 @@ resource "pingone_application" "my_awesome_web_app" {
     include_x5t                                   = true
     op_session_check_enabled                      = true
     request_scopes_for_multiple_resources_enabled = true
+
+    signing = {
+      key_rotation_policy_id = pingone_key_rotation_policy.my_awesome_key_rotation_policy.id
+    }
   }
 }
 

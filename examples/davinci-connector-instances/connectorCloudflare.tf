@@ -26,6 +26,11 @@ resource "pingone_davinci_connector_instance" "connectorCloudflare" {
     value = var.connectorcloudflare_property_domain
   }
   property {
+    name  = "email"
+    type  = "string"
+    value = var.connectorcloudflare_property_email
+  }
+  property {
     name  = "endpoint"
     type  = "string"
     value = var.connectorcloudflare_property_endpoint

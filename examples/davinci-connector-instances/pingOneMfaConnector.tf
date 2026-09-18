@@ -261,6 +261,11 @@ resource "pingone_davinci_connector_instance" "pingOneMfaConnector" {
     value = var.pingonemfaconnector_property_otp
   }
   property {
+    name  = "pairingKey"
+    type  = "string"
+    value = var.pingonemfaconnector_property_pairing_key
+  }
+  property {
     name  = "pairingKeyId"
     type  = "string"
     value = var.pingonemfaconnector_property_pairing_key_id

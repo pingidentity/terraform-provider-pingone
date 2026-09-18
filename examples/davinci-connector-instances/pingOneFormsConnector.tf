@@ -86,6 +86,21 @@ resource "pingone_davinci_connector_instance" "pingOneFormsConnector" {
     value = var.pingoneformsconnector_property_form_data
   }
   property {
+    name  = "hyperlinkUrls"
+    type  = "string"
+    value = var.pingoneformsconnector_property_hyperlink_urls
+  }
+  property {
+    name  = "imageSectionLabel"
+    type  = "string"
+    value = var.pingoneformsconnector_property_image_section_label
+  }
+  property {
+    name  = "imageUrls"
+    type  = "string"
+    value = var.pingoneformsconnector_property_image_urls
+  }
+  property {
     name  = "innerCss"
     type  = "string"
     value = var.pingoneformsconnector_property_inner_css
@@ -134,6 +149,21 @@ resource "pingone_davinci_connector_instance" "pingOneFormsConnector" {
     name  = "nextEvent"
     type  = "string"
     value = var.pingoneformsconnector_property_next_event
+  }
+  property {
+    name  = "pingIdDesktopContinueUrl"
+    type  = "string"
+    value = var.pingoneformsconnector_property_ping_id_desktop_continue_url
+  }
+  property {
+    name  = "pingIdDesktopCredentialCreationOptions"
+    type  = "string"
+    value = var.pingoneformsconnector_property_ping_id_desktop_credential_creation_options
+  }
+  property {
+    name  = "pingIdDesktopCredentialRequestOptions"
+    type  = "string"
+    value = var.pingoneformsconnector_property_ping_id_desktop_credential_request_options
   }
   property {
     name  = "pingidAgent"
@@ -211,9 +241,19 @@ resource "pingone_davinci_connector_instance" "pingOneFormsConnector" {
     value = var.pingoneformsconnector_property_return_url_label
   }
   property {
+    name  = "routeClientErrorsToFalseBranch"
+    type  = "string"
+    value = var.pingoneformsconnector_property_route_client_errors_to_false_branch
+  }
+  property {
     name  = "sectionLabelFido2"
     type  = "string"
     value = var.pingoneformsconnector_property_section_label_fido2
+  }
+  property {
+    name  = "sectionLabelPingIDDesktopApp"
+    type  = "string"
+    value = var.pingoneformsconnector_property_section_label_ping_iddesktop_app
   }
   property {
     name  = "showContinueButton"

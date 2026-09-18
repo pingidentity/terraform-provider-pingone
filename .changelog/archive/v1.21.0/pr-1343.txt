@@ -1,0 +1,3 @@
+```release-note:enhancement
+`resource/pingone_application`: Added `oidc_options.signing.key_rotation_policy_id` attribute to allow configuration of the signing key rotation policy, fixing an issue where updates reset it to the PingOne default.
+```

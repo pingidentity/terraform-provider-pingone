@@ -1,0 +1,15 @@
+// Portal release notes fragment for v1.21.1
+// Prepend this block to asciidoc/modules/release_notes/pages/pingcli_release_notes.adoc
+
+[role="2026-09-02T12:00:00Z"]
+== {ping-cli} 1.21.1 (September 2, 2026)
+
+=== General
+[.ping_changetype-improved]#Improved#
+
+* bump `google.golang.org/grpc` v1.81.1 => v1.83.1
+* Update Connector Reference Guide (01 August 2026).
+* `resource/pingone_application_secret`: Documented a `lifecycle.ignore_changes` workaround for the `previous` attribute so that unmanaged expiry/removal of the previous secret by PingOne doesn't cause drift
+* Update Connector Reference Guide (01 September 2026).
+
+link:https://github.com/pingidentity/pingcli/releases/tag/v1.21.1[View release on GitHub^]

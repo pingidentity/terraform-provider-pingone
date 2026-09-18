@@ -27,6 +27,7 @@ resource "pingone_application" "my_awesome_native_app" {
       universal_app_link = "https://demo.bxretail.org"
 
       passcode_refresh_seconds = 30
+      passcode_grace_period    = 2
 
       integrity_detection = {
         enabled = true

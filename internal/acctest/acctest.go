@@ -384,7 +384,7 @@ func TestClient(ctx context.Context) (*pingone.APIClient, error) {
 	pingOneConfig := pingone.NewConfiguration(config)
 	pingOneConfig.UserAgent = framework.UserAgent("", GetProviderTestingVersion())
 
-	return pingone.NewAPIClient(pingOneConfig)
+	return pingone.NewAPIClient(ctx, pingOneConfig)
 
 }
 
@@ -402,7 +402,7 @@ func TestClientAccessToken(ctx context.Context) (*pingone.APIClient, error) {
 	pingOneConfig := pingone.NewConfiguration(config)
 	pingOneConfig.UserAgent = framework.UserAgent("", GetProviderTestingVersion())
 
-	return pingone.NewAPIClient(pingOneConfig)
+	return pingone.NewAPIClient(ctx, pingOneConfig)
 }
 
 func PreCheckTestClient(ctx context.Context, t *testing.T) *pingone.APIClient {

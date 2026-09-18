@@ -1,0 +1,3 @@
+```release-note:enhancement
+`resource/pingone_davinci_flow`: Added support for the `graph_data.elements.nodes.%.data.outcomes` field
+```

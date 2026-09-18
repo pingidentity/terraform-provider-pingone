@@ -1352,9 +1352,20 @@ Optional:
 - `id_unique` (String)
 - `label` (String)
 - `name` (String)
+- `outcomes` (Attributes List) (see [below for nested schema](#nestedatt--graph_data--elements--nodes--data--outcomes))
 - `properties` (String, Sensitive)
 - `status` (String)
 - `type` (String)
+
+<a id="nestedatt--graph_data--elements--nodes--data--outcomes"></a>
+### Nested Schema for `graph_data.elements.nodes.data.outcomes`
+
+Required:
+
+- `id` (String)
+- `label` (String)
+- `result` (String)
+
 
 
 <a id="nestedatt--graph_data--elements--nodes--position"></a>
@@ -1424,6 +1435,9 @@ Optional:
 - `custom_error_show_footer` (Boolean)
 - `custom_favicon_link` (String)
 - `custom_logo_urlselection` (Number)
+- `custom_timeout_error_screen_css` (String)
+- `custom_timeout_error_screen_html` (String)
+- `custom_timeout_error_screen_message` (String)
 - `custom_title` (String)
 - `default_error_screen_brand_logo` (Boolean)
 - `flow_http_timeout_in_seconds` (Number)
@@ -1441,6 +1455,7 @@ Optional:
 - `use_custom_css` (Boolean)
 - `use_custom_flow_player` (Boolean)
 - `use_custom_script` (Boolean)
+- `use_custom_timeout_error_screen` (Boolean)
 - `use_intermediate_loading_screen` (Boolean)
 - `validate_on_save` (Boolean)
 

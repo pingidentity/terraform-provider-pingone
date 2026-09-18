@@ -127,32 +127,36 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 	}
 	settingsJsLinksElementType := types.ObjectType{AttrTypes: settingsJsLinksAttrTypes}
 	settingsAttrTypes := map[string]attr.Type{
-		"csp":                                types.StringType,
-		"css":                                types.StringType,
-		"css_links":                          types.SetType{ElemType: types.StringType},
-		"custom_error_screen_brand_logo_url": types.StringType,
-		"custom_error_show_footer":           types.BoolType,
-		"custom_favicon_link":                types.StringType,
-		"custom_logo_urlselection":           types.Int32Type,
-		"custom_title":                       types.StringType,
-		"default_error_screen_brand_logo":    types.BoolType,
-		"flow_http_timeout_in_seconds":       types.Int32Type,
-		"flow_timeout_in_seconds":            types.Int32Type,
-		"intermediate_loading_screen_css":    types.StringType,
-		"intermediate_loading_screen_html":   types.StringType,
-		"js_custom_flow_player":              types.StringType,
-		"js_links":                           types.SetType{ElemType: settingsJsLinksElementType},
-		"log_level":                          types.Int32Type,
-		"preview_form_rendering_updates":     types.BoolType,
-		"require_authentication_to_initiate": types.BoolType,
-		"scrub_sensitive_info":               types.BoolType,
-		"sensitive_info_fields":              types.SetType{ElemType: types.StringType},
-		"use_csp":                            types.BoolType,
-		"use_custom_css":                     types.BoolType,
-		"use_custom_flow_player":             types.BoolType,
-		"use_custom_script":                  types.BoolType,
-		"use_intermediate_loading_screen":    types.BoolType,
-		"validate_on_save":                   types.BoolType,
+		"csp":                                 types.StringType,
+		"css":                                 types.StringType,
+		"css_links":                           types.SetType{ElemType: types.StringType},
+		"custom_error_screen_brand_logo_url":  types.StringType,
+		"custom_error_show_footer":            types.BoolType,
+		"custom_favicon_link":                 types.StringType,
+		"custom_logo_urlselection":            types.Int32Type,
+		"custom_timeout_error_screen_css":     types.StringType,
+		"custom_timeout_error_screen_html":    types.StringType,
+		"custom_timeout_error_screen_message": types.StringType,
+		"custom_title":                        types.StringType,
+		"default_error_screen_brand_logo":     types.BoolType,
+		"flow_http_timeout_in_seconds":        types.Int32Type,
+		"flow_timeout_in_seconds":             types.Int32Type,
+		"intermediate_loading_screen_css":     types.StringType,
+		"intermediate_loading_screen_html":    types.StringType,
+		"js_custom_flow_player":               types.StringType,
+		"js_links":                            types.SetType{ElemType: settingsJsLinksElementType},
+		"log_level":                           types.Int32Type,
+		"preview_form_rendering_updates":      types.BoolType,
+		"require_authentication_to_initiate":  types.BoolType,
+		"scrub_sensitive_info":                types.BoolType,
+		"sensitive_info_fields":               types.SetType{ElemType: types.StringType},
+		"use_csp":                             types.BoolType,
+		"use_custom_css":                      types.BoolType,
+		"use_custom_flow_player":              types.BoolType,
+		"use_custom_script":                   types.BoolType,
+		"use_custom_timeout_error_screen":     types.BoolType,
+		"use_intermediate_loading_screen":     types.BoolType,
+		"validate_on_save":                    types.BoolType,
 	}
 	resp.Schema = schema.Schema{
 		Description: "Resource to create and manage a DaVinci flow.",
@@ -317,6 +321,31 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 													Validators: []validator.String{
 														stringvalidator.LengthAtLeast(1),
 													},
+												},
+												"outcomes": schema.ListNestedAttribute{
+													NestedObject: schema.NestedAttributeObject{
+														Attributes: map[string]schema.Attribute{
+															"id": schema.StringAttribute{
+																Required: true,
+																Validators: []validator.String{
+																	stringvalidator.LengthAtLeast(1),
+																},
+															},
+															"label": schema.StringAttribute{
+																Required: true,
+																Validators: []validator.String{
+																	stringvalidator.LengthAtLeast(1),
+																},
+															},
+															"result": schema.StringAttribute{
+																Required: true,
+																Validators: []validator.String{
+																	stringvalidator.LengthAtLeast(1),
+																},
+															},
+														},
+													},
+													Optional: true,
 												},
 												"properties": schema.StringAttribute{
 													CustomType: jsontypes.NormalizedType{},
@@ -566,6 +595,15 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 					"custom_logo_urlselection": schema.Int32Attribute{
 						Optional: true,
 					},
+					"custom_timeout_error_screen_css": schema.StringAttribute{
+						Optional: true,
+					},
+					"custom_timeout_error_screen_html": schema.StringAttribute{
+						Optional: true,
+					},
+					"custom_timeout_error_screen_message": schema.StringAttribute{
+						Optional: true,
+					},
 					"custom_title": schema.StringAttribute{
 						Optional: true,
 					},
@@ -654,6 +692,9 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 					"use_custom_script": schema.BoolAttribute{
 						Optional: true,
 					},
+					"use_custom_timeout_error_screen": schema.BoolAttribute{
+						Optional: true,
+					},
 					"use_intermediate_loading_screen": schema.BoolAttribute{
 						Optional: true,
 					},
@@ -664,32 +705,36 @@ func (r *davinciFlowResource) Schema(ctx context.Context, req resource.SchemaReq
 				Optional: true,
 				Computed: true,
 				Default: objectdefault.StaticValue(types.ObjectValueMust(settingsAttrTypes, map[string]attr.Value{
-					"csp":                                types.StringNull(),
-					"css":                                types.StringNull(),
-					"css_links":                          types.SetNull(types.StringType),
-					"custom_error_screen_brand_logo_url": types.StringNull(),
-					"custom_error_show_footer":           types.BoolNull(),
-					"custom_favicon_link":                types.StringNull(),
-					"custom_logo_urlselection":           types.Int32Null(),
-					"custom_title":                       types.StringNull(),
-					"default_error_screen_brand_logo":    types.BoolNull(),
-					"flow_http_timeout_in_seconds":       types.Int32Null(),
-					"flow_timeout_in_seconds":            types.Int32Null(),
-					"intermediate_loading_screen_css":    types.StringNull(),
-					"intermediate_loading_screen_html":   types.StringNull(),
-					"js_custom_flow_player":              types.StringNull(),
-					"js_links":                           types.SetNull(settingsJsLinksElementType),
-					"log_level":                          types.Int32Value(4),
-					"preview_form_rendering_updates":     types.BoolNull(),
-					"require_authentication_to_initiate": types.BoolNull(),
-					"scrub_sensitive_info":               types.BoolNull(),
-					"sensitive_info_fields":              types.SetNull(types.StringType),
-					"use_csp":                            types.BoolNull(),
-					"use_custom_css":                     types.BoolNull(),
-					"use_custom_flow_player":             types.BoolNull(),
-					"use_custom_script":                  types.BoolNull(),
-					"use_intermediate_loading_screen":    types.BoolNull(),
-					"validate_on_save":                   types.BoolNull(),
+					"csp":                                 types.StringNull(),
+					"css":                                 types.StringNull(),
+					"css_links":                           types.SetNull(types.StringType),
+					"custom_error_screen_brand_logo_url":  types.StringNull(),
+					"custom_error_show_footer":            types.BoolNull(),
+					"custom_favicon_link":                 types.StringNull(),
+					"custom_logo_urlselection":            types.Int32Null(),
+					"custom_timeout_error_screen_css":     types.StringNull(),
+					"custom_timeout_error_screen_html":    types.StringNull(),
+					"custom_timeout_error_screen_message": types.StringNull(),
+					"custom_title":                        types.StringNull(),
+					"default_error_screen_brand_logo":     types.BoolNull(),
+					"flow_http_timeout_in_seconds":        types.Int32Null(),
+					"flow_timeout_in_seconds":             types.Int32Null(),
+					"intermediate_loading_screen_css":     types.StringNull(),
+					"intermediate_loading_screen_html":    types.StringNull(),
+					"js_custom_flow_player":               types.StringNull(),
+					"js_links":                            types.SetNull(settingsJsLinksElementType),
+					"log_level":                           types.Int32Value(4),
+					"preview_form_rendering_updates":      types.BoolNull(),
+					"require_authentication_to_initiate":  types.BoolNull(),
+					"scrub_sensitive_info":                types.BoolNull(),
+					"sensitive_info_fields":               types.SetNull(types.StringType),
+					"use_csp":                             types.BoolNull(),
+					"use_custom_css":                      types.BoolNull(),
+					"use_custom_flow_player":              types.BoolNull(),
+					"use_custom_script":                   types.BoolNull(),
+					"use_custom_timeout_error_screen":     types.BoolNull(),
+					"use_intermediate_loading_screen":     types.BoolNull(),
+					"validate_on_save":                    types.BoolNull(),
 				})),
 			},
 			"trigger": schema.SingleNestedAttribute{
@@ -839,6 +884,17 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 					nodesDataValue.Label = nodesDataAttrs["label"].(types.String).ValueStringPointer()
 					nodesDataValue.Name = nodesDataAttrs["name"].(types.String).ValueStringPointer()
 					nodesDataValue.NodeType = nodesDataAttrs["node_type"].(types.String).ValueString()
+					if !nodesDataAttrs["outcomes"].IsNull() && !nodesDataAttrs["outcomes"].IsUnknown() {
+						nodesDataValue.Outcomes = []pingone.DaVinciFlowGraphDataRequestElementsNodeDataOutcome{}
+						for _, outcomesElement := range nodesDataAttrs["outcomes"].(types.List).Elements() {
+							outcomesValue := pingone.DaVinciFlowGraphDataRequestElementsNodeDataOutcome{}
+							outcomesAttrs := outcomesElement.(types.Object).Attributes()
+							outcomesValue.Id = outcomesAttrs["id"].(types.String).ValueString()
+							outcomesValue.Label = outcomesAttrs["label"].(types.String).ValueString()
+							outcomesValue.Result = outcomesAttrs["result"].(types.String).ValueString()
+							nodesDataValue.Outcomes = append(nodesDataValue.Outcomes, outcomesValue)
+						}
+					}
 					if !nodesDataAttrs["properties"].IsNull() && !nodesDataAttrs["properties"].IsUnknown() {
 						var unmarshaled map[string]interface{}
 						err := json.Unmarshal([]byte(nodesDataAttrs["properties"].(jsontypes.Normalized).ValueString()), &unmarshaled)
@@ -1008,6 +1064,9 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 		}
 		settingsValue.CustomFaviconLink = settingsAttrs["custom_favicon_link"].(types.String).ValueStringPointer()
 		settingsValue.CustomLogoURLSelection = settingsAttrs["custom_logo_urlselection"].(types.Int32).ValueInt32Pointer()
+		settingsValue.CustomTimeoutErrorScreenCSS = settingsAttrs["custom_timeout_error_screen_css"].(types.String).ValueStringPointer()
+		settingsValue.CustomTimeoutErrorScreenHTML = settingsAttrs["custom_timeout_error_screen_html"].(types.String).ValueStringPointer()
+		settingsValue.CustomTimeoutErrorScreenMessage = settingsAttrs["custom_timeout_error_screen_message"].(types.String).ValueStringPointer()
 		settingsValue.CustomTitle = settingsAttrs["custom_title"].(types.String).ValueStringPointer()
 		if !settingsAttrs["default_error_screen_brand_logo"].IsNull() && !settingsAttrs["default_error_screen_brand_logo"].IsUnknown() {
 			settingsValue.DefaultErrorScreenBrandLogo = &pingone.DaVinciFlowSettingsRequestDefaultErrorScreenBrandLogo{
@@ -1087,6 +1146,9 @@ func (model *davinciFlowResourceModel) buildClientStructPost() (*pingone.DaVinci
 			settingsValue.UseCustomScript = &pingone.DaVinciFlowSettingsRequestUseCustomScript{
 				Bool: settingsAttrs["use_custom_script"].(types.Bool).ValueBoolPointer(),
 			}
+		}
+		if !settingsAttrs["use_custom_timeout_error_screen"].IsNull() && !settingsAttrs["use_custom_timeout_error_screen"].IsUnknown() {
+			settingsValue.UseCustomTimeoutErrorScreen = settingsAttrs["use_custom_timeout_error_screen"].(types.Bool).ValueBoolPointer()
 		}
 		if !settingsAttrs["use_intermediate_loading_screen"].IsNull() && !settingsAttrs["use_intermediate_loading_screen"].IsUnknown() {
 			settingsValue.UseIntermediateLoadingScreen = &pingone.DaVinciFlowSettingsRequestUseIntermediateLoadingScreen{
@@ -1235,6 +1297,17 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 					nodesDataValue.Label = nodesDataAttrs["label"].(types.String).ValueStringPointer()
 					nodesDataValue.Name = nodesDataAttrs["name"].(types.String).ValueStringPointer()
 					nodesDataValue.NodeType = nodesDataAttrs["node_type"].(types.String).ValueString()
+					if !nodesDataAttrs["outcomes"].IsNull() && !nodesDataAttrs["outcomes"].IsUnknown() {
+						nodesDataValue.Outcomes = []pingone.DaVinciFlowGraphDataRequestElementsNodeDataOutcome{}
+						for _, outcomesElement := range nodesDataAttrs["outcomes"].(types.List).Elements() {
+							outcomesValue := pingone.DaVinciFlowGraphDataRequestElementsNodeDataOutcome{}
+							outcomesAttrs := outcomesElement.(types.Object).Attributes()
+							outcomesValue.Id = outcomesAttrs["id"].(types.String).ValueString()
+							outcomesValue.Label = outcomesAttrs["label"].(types.String).ValueString()
+							outcomesValue.Result = outcomesAttrs["result"].(types.String).ValueString()
+							nodesDataValue.Outcomes = append(nodesDataValue.Outcomes, outcomesValue)
+						}
+					}
 					if !nodesDataAttrs["properties"].IsNull() && !nodesDataAttrs["properties"].IsUnknown() {
 						var unmarshaled map[string]interface{}
 						err := json.Unmarshal([]byte(nodesDataAttrs["properties"].(jsontypes.Normalized).ValueString()), &unmarshaled)
@@ -1404,6 +1477,9 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 		}
 		settingsValue.CustomFaviconLink = settingsAttrs["custom_favicon_link"].(types.String).ValueStringPointer()
 		settingsValue.CustomLogoURLSelection = settingsAttrs["custom_logo_urlselection"].(types.Int32).ValueInt32Pointer()
+		settingsValue.CustomTimeoutErrorScreenCSS = settingsAttrs["custom_timeout_error_screen_css"].(types.String).ValueStringPointer()
+		settingsValue.CustomTimeoutErrorScreenHTML = settingsAttrs["custom_timeout_error_screen_html"].(types.String).ValueStringPointer()
+		settingsValue.CustomTimeoutErrorScreenMessage = settingsAttrs["custom_timeout_error_screen_message"].(types.String).ValueStringPointer()
 		settingsValue.CustomTitle = settingsAttrs["custom_title"].(types.String).ValueStringPointer()
 		if !settingsAttrs["default_error_screen_brand_logo"].IsNull() && !settingsAttrs["default_error_screen_brand_logo"].IsUnknown() {
 			settingsValue.DefaultErrorScreenBrandLogo = &pingone.DaVinciFlowSettingsRequestDefaultErrorScreenBrandLogo{
@@ -1483,6 +1559,9 @@ func (model *davinciFlowResourceModel) buildClientStructPut() (*pingone.DaVinciF
 			settingsValue.UseCustomScript = &pingone.DaVinciFlowSettingsRequestUseCustomScript{
 				Bool: settingsAttrs["use_custom_script"].(types.Bool).ValueBoolPointer(),
 			}
+		}
+		if !settingsAttrs["use_custom_timeout_error_screen"].IsNull() && !settingsAttrs["use_custom_timeout_error_screen"].IsUnknown() {
+			settingsValue.UseCustomTimeoutErrorScreen = settingsAttrs["use_custom_timeout_error_screen"].(types.Bool).ValueBoolPointer()
 		}
 		if !settingsAttrs["use_intermediate_loading_screen"].IsNull() && !settingsAttrs["use_intermediate_loading_screen"].IsUnknown() {
 			settingsValue.UseIntermediateLoadingScreen = &pingone.DaVinciFlowSettingsRequestUseIntermediateLoadingScreen{
@@ -1604,6 +1683,12 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 		"selected":   types.BoolType,
 	}
 	graphDataElementsEdgesElementType := types.ObjectType{AttrTypes: graphDataElementsEdgesAttrTypes}
+	graphDataElementsNodesDataOutcomesAttrTypes := map[string]attr.Type{
+		"id":     types.StringType,
+		"label":  types.StringType,
+		"result": types.StringType,
+	}
+	graphDataElementsNodesDataOutcomesElementType := types.ObjectType{AttrTypes: graphDataElementsNodesDataOutcomesAttrTypes}
 	graphDataElementsNodesDataAttrTypes := map[string]attr.Type{
 		"capability_class": types.StringType,
 		"capability_name":  types.StringType,
@@ -1613,6 +1698,7 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 		"label":            types.StringType,
 		"name":             types.StringType,
 		"node_type":        types.StringType,
+		"outcomes":         types.ListType{ElemType: graphDataElementsNodesDataOutcomesElementType},
 		"properties":       jsontypes.NormalizedType{},
 		"status":           types.StringType,
 		"type":             types.StringType,
@@ -1718,6 +1804,23 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 				graphDataElementsNodesDataPropertiesValue, diags = state.normalizeNodeDataProperties(graphDataElementsNodesResponseValue.Data.Id, plannedNodeDataProperties, graphDataElementsNodesResponseValue.Data.Properties)
 				respDiags.Append(diags...)
 			}
+			var graphDataElementsNodesDataOutcomesValue types.List
+			if graphDataElementsNodesResponseValue.Data.Outcomes == nil {
+				graphDataElementsNodesDataOutcomesValue = types.ListNull(graphDataElementsNodesDataOutcomesElementType)
+			} else {
+				var graphDataElementsNodesDataOutcomesValues []attr.Value
+				for _, outcomeResponseValue := range graphDataElementsNodesResponseValue.Data.Outcomes {
+					outcomeValue, diags := types.ObjectValue(graphDataElementsNodesDataOutcomesAttrTypes, map[string]attr.Value{
+						"id":     types.StringValue(outcomeResponseValue.Id),
+						"label":  types.StringValue(outcomeResponseValue.Label),
+						"result": types.StringValue(outcomeResponseValue.Result),
+					})
+					respDiags.Append(diags...)
+					graphDataElementsNodesDataOutcomesValues = append(graphDataElementsNodesDataOutcomesValues, outcomeValue)
+				}
+				graphDataElementsNodesDataOutcomesValue, diags = types.ListValue(graphDataElementsNodesDataOutcomesElementType, graphDataElementsNodesDataOutcomesValues)
+				respDiags.Append(diags...)
+			}
 			graphDataElementsNodesDataValue, diags := types.ObjectValue(graphDataElementsNodesDataAttrTypes, map[string]attr.Value{
 				"capability_class": types.StringPointerValue(graphDataElementsNodesResponseValue.Data.CapabilityClass),
 				"capability_name":  types.StringPointerValue(graphDataElementsNodesResponseValue.Data.CapabilityName),
@@ -1727,6 +1830,7 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 				"label":            types.StringPointerValue(graphDataElementsNodesResponseValue.Data.Label),
 				"name":             types.StringPointerValue(graphDataElementsNodesResponseValue.Data.Name),
 				"node_type":        types.StringValue(graphDataElementsNodesResponseValue.Data.NodeType),
+				"outcomes":         graphDataElementsNodesDataOutcomesValue,
 				"properties":       graphDataElementsNodesDataPropertiesValue,
 				"status":           types.StringPointerValue(graphDataElementsNodesResponseValue.Data.Status),
 				"type":             types.StringPointerValue(graphDataElementsNodesResponseValue.Data.Type),
@@ -1896,32 +2000,36 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 	}
 	settingsJsLinksElementType := types.ObjectType{AttrTypes: settingsJsLinksAttrTypes}
 	settingsAttrTypes := map[string]attr.Type{
-		"csp":                                types.StringType,
-		"css":                                types.StringType,
-		"css_links":                          types.SetType{ElemType: types.StringType},
-		"custom_error_screen_brand_logo_url": types.StringType,
-		"custom_error_show_footer":           types.BoolType,
-		"custom_favicon_link":                types.StringType,
-		"custom_logo_urlselection":           types.Int32Type,
-		"custom_title":                       types.StringType,
-		"default_error_screen_brand_logo":    types.BoolType,
-		"flow_http_timeout_in_seconds":       types.Int32Type,
-		"flow_timeout_in_seconds":            types.Int32Type,
-		"intermediate_loading_screen_css":    types.StringType,
-		"intermediate_loading_screen_html":   types.StringType,
-		"js_custom_flow_player":              types.StringType,
-		"js_links":                           types.SetType{ElemType: settingsJsLinksElementType},
-		"log_level":                          types.Int32Type,
-		"preview_form_rendering_updates":     types.BoolType,
-		"require_authentication_to_initiate": types.BoolType,
-		"scrub_sensitive_info":               types.BoolType,
-		"sensitive_info_fields":              types.SetType{ElemType: types.StringType},
-		"use_csp":                            types.BoolType,
-		"use_custom_css":                     types.BoolType,
-		"use_custom_flow_player":             types.BoolType,
-		"use_custom_script":                  types.BoolType,
-		"use_intermediate_loading_screen":    types.BoolType,
-		"validate_on_save":                   types.BoolType,
+		"csp":                                 types.StringType,
+		"css":                                 types.StringType,
+		"css_links":                           types.SetType{ElemType: types.StringType},
+		"custom_error_screen_brand_logo_url":  types.StringType,
+		"custom_error_show_footer":            types.BoolType,
+		"custom_favicon_link":                 types.StringType,
+		"custom_logo_urlselection":            types.Int32Type,
+		"custom_timeout_error_screen_css":     types.StringType,
+		"custom_timeout_error_screen_html":    types.StringType,
+		"custom_timeout_error_screen_message": types.StringType,
+		"custom_title":                        types.StringType,
+		"default_error_screen_brand_logo":     types.BoolType,
+		"flow_http_timeout_in_seconds":        types.Int32Type,
+		"flow_timeout_in_seconds":             types.Int32Type,
+		"intermediate_loading_screen_css":     types.StringType,
+		"intermediate_loading_screen_html":    types.StringType,
+		"js_custom_flow_player":               types.StringType,
+		"js_links":                            types.SetType{ElemType: settingsJsLinksElementType},
+		"log_level":                           types.Int32Type,
+		"preview_form_rendering_updates":      types.BoolType,
+		"require_authentication_to_initiate":  types.BoolType,
+		"scrub_sensitive_info":                types.BoolType,
+		"sensitive_info_fields":               types.SetType{ElemType: types.StringType},
+		"use_csp":                             types.BoolType,
+		"use_custom_css":                      types.BoolType,
+		"use_custom_flow_player":              types.BoolType,
+		"use_custom_script":                   types.BoolType,
+		"use_custom_timeout_error_screen":     types.BoolType,
+		"use_intermediate_loading_screen":     types.BoolType,
+		"validate_on_save":                    types.BoolType,
 	}
 	var settingsValue types.Object
 	if response.Settings == nil {
@@ -2092,32 +2200,36 @@ func (state *davinciFlowResourceModel) readClientResponse(response *pingone.DaVi
 			settingsValidateOnSaveValue = types.BoolPointerValue(response.Settings.ValidateOnSave.Bool)
 		}
 		settingsValue, diags = types.ObjectValue(settingsAttrTypes, map[string]attr.Value{
-			"csp":                                types.StringPointerValue(response.Settings.Csp),
-			"css":                                types.StringPointerValue(response.Settings.Css),
-			"css_links":                          settingsCssLinksValue,
-			"custom_error_screen_brand_logo_url": types.StringPointerValue(response.Settings.CustomErrorScreenBrandLogoUrl),
-			"custom_error_show_footer":           settingsCustomErrorShowFooterValue,
-			"custom_favicon_link":                types.StringPointerValue(response.Settings.CustomFaviconLink),
-			"custom_logo_urlselection":           types.Int32PointerValue(response.Settings.CustomLogoURLSelection),
-			"custom_title":                       types.StringPointerValue(response.Settings.CustomTitle),
-			"default_error_screen_brand_logo":    settingsDefaultErrorScreenBrandLogoValue,
-			"flow_http_timeout_in_seconds":       types.Int32PointerValue(response.Settings.FlowHttpTimeoutInSeconds),
-			"flow_timeout_in_seconds":            flowTimeoutInSecondsValue,
-			"intermediate_loading_screen_css":    intermediateLoadingScreenCSSValue,
-			"intermediate_loading_screen_html":   intermediateLoadingScreenHTMLValue,
-			"js_custom_flow_player":              types.StringPointerValue(response.Settings.JsCustomFlowPlayer),
-			"js_links":                           settingsJsLinksValue,
-			"log_level":                          types.Int32PointerValue(response.Settings.LogLevel),
-			"preview_form_rendering_updates":     settingsPreviewFormRenderingUpdatesValue,
-			"require_authentication_to_initiate": settingsRequireAuthenticationToInitiateValue,
-			"scrub_sensitive_info":               settingsScrubSensitiveInfoValue,
-			"sensitive_info_fields":              settingsSensitiveInfoFieldsValue,
-			"use_csp":                            settingsUseCSPValue,
-			"use_custom_css":                     settingsUseCustomCSSValue,
-			"use_custom_flow_player":             settingsUseCustomFlowPlayerValue,
-			"use_custom_script":                  settingsUseCustomScriptValue,
-			"use_intermediate_loading_screen":    settingsUseIntermediateLoadingScreenValue,
-			"validate_on_save":                   settingsValidateOnSaveValue,
+			"csp":                                 types.StringPointerValue(response.Settings.Csp),
+			"css":                                 types.StringPointerValue(response.Settings.Css),
+			"css_links":                           settingsCssLinksValue,
+			"custom_error_screen_brand_logo_url":  types.StringPointerValue(response.Settings.CustomErrorScreenBrandLogoUrl),
+			"custom_error_show_footer":            settingsCustomErrorShowFooterValue,
+			"custom_favicon_link":                 types.StringPointerValue(response.Settings.CustomFaviconLink),
+			"custom_logo_urlselection":            types.Int32PointerValue(response.Settings.CustomLogoURLSelection),
+			"custom_timeout_error_screen_css":     types.StringPointerValue(response.Settings.CustomTimeoutErrorScreenCSS),
+			"custom_timeout_error_screen_html":    types.StringPointerValue(response.Settings.CustomTimeoutErrorScreenHTML),
+			"custom_timeout_error_screen_message": types.StringPointerValue(response.Settings.CustomTimeoutErrorScreenMessage),
+			"custom_title":                        types.StringPointerValue(response.Settings.CustomTitle),
+			"default_error_screen_brand_logo":     settingsDefaultErrorScreenBrandLogoValue,
+			"flow_http_timeout_in_seconds":        types.Int32PointerValue(response.Settings.FlowHttpTimeoutInSeconds),
+			"flow_timeout_in_seconds":             flowTimeoutInSecondsValue,
+			"intermediate_loading_screen_css":     intermediateLoadingScreenCSSValue,
+			"intermediate_loading_screen_html":    intermediateLoadingScreenHTMLValue,
+			"js_custom_flow_player":               types.StringPointerValue(response.Settings.JsCustomFlowPlayer),
+			"js_links":                            settingsJsLinksValue,
+			"log_level":                           types.Int32PointerValue(response.Settings.LogLevel),
+			"preview_form_rendering_updates":      settingsPreviewFormRenderingUpdatesValue,
+			"require_authentication_to_initiate":  settingsRequireAuthenticationToInitiateValue,
+			"scrub_sensitive_info":                settingsScrubSensitiveInfoValue,
+			"sensitive_info_fields":               settingsSensitiveInfoFieldsValue,
+			"use_csp":                             settingsUseCSPValue,
+			"use_custom_css":                      settingsUseCustomCSSValue,
+			"use_custom_flow_player":              settingsUseCustomFlowPlayerValue,
+			"use_custom_script":                   settingsUseCustomScriptValue,
+			"use_custom_timeout_error_screen":     types.BoolPointerValue(response.Settings.UseCustomTimeoutErrorScreen),
+			"use_intermediate_loading_screen":     settingsUseIntermediateLoadingScreenValue,
+			"validate_on_save":                    settingsValidateOnSaveValue,
 		})
 		respDiags.Append(diags...)
 	}

@@ -45,3 +45,5 @@ env*.sh
 .vscode/
 
 scratch/
+
+.polaris/

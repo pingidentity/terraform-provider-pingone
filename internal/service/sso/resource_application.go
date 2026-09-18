@@ -102,6 +102,7 @@ type applicationOIDCOptionsCommonModelV1 struct {
 	RequestScopesForMultipleResourcesEnabled      types.Bool   `tfsdk:"request_scopes_for_multiple_resources_enabled"`
 	RequireSignedRequestObject                    types.Bool   `tfsdk:"require_signed_request_object"`
 	ResponseTypes                                 types.Set    `tfsdk:"response_types"`
+	Signing                                       types.Object `tfsdk:"signing"`
 	SupportUnsignedRequestObject                  types.Bool   `tfsdk:"support_unsigned_request_object"`
 	TargetLinkUri                                 types.String `tfsdk:"target_link_uri"`
 	TokenEndpointAuthnMethod                      types.String `tfsdk:"token_endpoint_auth_method"`
@@ -128,12 +129,17 @@ type applicationOIDCCertificateBasedAuthenticationResourceModelV1 struct {
 	KeyId pingonetypes.ResourceIDValue `tfsdk:"key_id"`
 }
 
+type applicationOIDCSigningResourceModelV1 struct {
+	KeyRotationPolicyId pingonetypes.ResourceIDValue `tfsdk:"key_rotation_policy_id"`
+}
+
 type applicationOIDCMobileAppResourceModelV1 struct {
 	BundleId               types.String `tfsdk:"bundle_id"`
 	HuaweiAppId            types.String `tfsdk:"huawei_app_id"`
 	HuaweiPackageName      types.String `tfsdk:"huawei_package_name"`
 	IntegrityDetection     types.Object `tfsdk:"integrity_detection"`
 	PackageName            types.String `tfsdk:"package_name"`
+	PasscodeGracePeriod    types.Int32  `tfsdk:"passcode_grace_period"`
 	PasscodeRefreshSeconds types.Int32  `tfsdk:"passcode_refresh_seconds"`
 	UniversalAppLink       types.String `tfsdk:"universal_app_link"`
 }
@@ -276,6 +282,7 @@ var (
 		"request_scopes_for_multiple_resources_enabled":      types.BoolType,
 		"require_signed_request_object":                      types.BoolType,
 		"response_types":                                     types.SetType{ElemType: types.StringType},
+		"signing":                                            types.ObjectType{AttrTypes: applicationOidcOptionsSigningTFObjectTypes},
 		"support_unsigned_request_object":                    types.BoolType,
 		"target_link_uri":                                    types.StringType,
 		"token_endpoint_auth_method":                         types.StringType,
@@ -300,6 +307,7 @@ var (
 		"huawei_package_name":      types.StringType,
 		"integrity_detection":      types.ObjectType{AttrTypes: applicationOidcMobileAppIntegrityDetectionTFObjectTypes},
 		"package_name":             types.StringType,
+		"passcode_grace_period":    types.Int32Type,
 		"passcode_refresh_seconds": types.Int32Type,
 		"universal_app_link":       types.StringType,
 	}
@@ -325,6 +333,10 @@ var (
 
 	applicationOidcOptionsCertificateAuthenticationTFObjectTypes = map[string]attr.Type{
 		"key_id": pingonetypes.ResourceIDType{},
+	}
+
+	applicationOidcOptionsSigningTFObjectTypes = map[string]attr.Type{
+		"key_rotation_policy_id": pingonetypes.ResourceIDType{},
 	}
 
 	applicationSamlOptionsTFObjectTypes = map[string]attr.Type{
@@ -642,6 +654,14 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 		fmt.Sprintf("A single object that specifies Mobile application integration settings for `%s` type applications.", management.ENUMAPPLICATIONTYPE_NATIVE_APP),
 	)
 
+	oidcOptionsSigningDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A single object that specifies the OIDC application token signing key settings. If omitted, application tokens are signed and verified by the PingOne default key at runtime. Applies to OIDC applications of type `WORKER`, `WEB_APP`, `NATIVE_APP`, `SINGLE_PAGE_APP`, and `CUSTOM_APP`.",
+	)
+
+	oidcOptionsSigningKeyRotationPolicyIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the PingOne ID of the Key Rotation Policy (from certificate management) used to sign application tokens. Must be a valid PingOne Resource ID.",
+	)
+
 	oidcOptionsMobileAppBundleIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the bundle associated with the application, for push notifications in native apps. The value of the `bundle_id` property is unique per environment, and once defined, is immutable.",
 	).RequiresReplace()
@@ -657,6 +677,13 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 	oidcOptionsMobileAppHuaweiPackageNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The package name associated with the application, for push notifications in native apps. The value of this property is unique per environment, and once defined, is immutable.  Required with `huawei_app_id`.",
 	).RequiresReplace()
+
+	const oidcOptionsMobileAppPasscodeGracePeriodDefault = 5
+	const oidcOptionsMobileAppPasscodeGracePeriodMin = 1
+	const oidcOptionsMobileAppPasscodeGracePeriodMax = 10
+	oidcOptionsMobileAppPasscodeGracePeriodDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("To cover time synchronization issues, you can use this property to customize the grace period during which the passcode can still be used even after the passcode has been refreshed. The value of the parameter should be the number of windows to use (min `%d`, max `%d`). In this context, a window is equal to the passcode refresh period in either direction. For example, if you defined a passcode refresh duration of 30 seconds and a grace period of 2 windows, the passcode is valid for 150 seconds (from 60 seconds behind the time of issue until 60 seconds past the expiration time).", oidcOptionsMobileAppPasscodeGracePeriodMin, oidcOptionsMobileAppPasscodeGracePeriodMax),
+	).DefaultValue(oidcOptionsMobileAppPasscodeGracePeriodDefault)
 
 	const oidcOptionsMobileAppPasscodeRefreshSecondsDefault = 30
 	const oidcOptionsMobileAppPasscodeRefreshSecondsMin = 30
@@ -1319,6 +1346,24 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 							},
 						},
 
+						"signing": schema.SingleNestedAttribute{
+							Description:         oidcOptionsSigningDescription.Description,
+							MarkdownDescription: oidcOptionsSigningDescription.MarkdownDescription,
+							Optional:            true,
+							Computed:            true,
+
+							Attributes: map[string]schema.Attribute{
+								"key_rotation_policy_id": schema.StringAttribute{
+									Description:         oidcOptionsSigningKeyRotationPolicyIdDescription.Description,
+									MarkdownDescription: oidcOptionsSigningKeyRotationPolicyIdDescription.MarkdownDescription,
+									Optional:            true,
+									Computed:            true,
+
+									CustomType: pingonetypes.ResourceIDType{},
+								},
+							},
+						},
+
 						"mobile_app": schema.SingleNestedAttribute{
 							Description:         oidcOptionsMobileAppDescription.Description,
 							MarkdownDescription: oidcOptionsMobileAppDescription.MarkdownDescription,
@@ -1387,6 +1432,19 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 											path.MatchRelative().AtParent().AtName("huawei_app_id"),
 											path.MatchRelative().AtParent().AtName("huawei_package_name"),
 										),
+									},
+								},
+
+								"passcode_grace_period": schema.Int32Attribute{
+									Description:         oidcOptionsMobileAppPasscodeGracePeriodDescription.Description,
+									MarkdownDescription: oidcOptionsMobileAppPasscodeGracePeriodDescription.MarkdownDescription,
+									Optional:            true,
+									Computed:            true,
+
+									Default: int32default.StaticInt32(oidcOptionsMobileAppPasscodeGracePeriodDefault),
+
+									Validators: []validator.Int32{
+										int32validator.Between(oidcOptionsMobileAppPasscodeGracePeriodMin, oidcOptionsMobileAppPasscodeGracePeriodMax),
 									},
 								},
 
@@ -1978,7 +2036,7 @@ func resourceApplicationSchemaCorsSettings() schema.SingleNestedAttribute {
 		string(management.ENUMAPPLICATIONCORSSETTINGSBEHAVIOR_SPECIFIC_ORIGINS): "rejects all CORS requests except those listed in `origins`",
 	})
 
-	const originsMax = 20
+	const originsMax = 40
 	originsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("A set of strings that represent the origins from which CORS requests to the Authorization and Authentication APIs are allowed.  Each value must be a `http` or `https` URL without a path.  The host may be a domain name (including `localhost`), or an IPv4 address.  Subdomains may use the wildcard (`*`) to match any string.  Must be non-empty when `behavior` is `%s` and must be omitted or empty when `behavior` is `%s`.  Limited to %d values.", string(management.ENUMAPPLICATIONCORSSETTINGSBEHAVIOR_SPECIFIC_ORIGINS), string(management.ENUMAPPLICATIONCORSSETTINGSBEHAVIOR_NO_ORIGINS), originsMax),
 	)
@@ -2347,6 +2405,7 @@ func (p *applicationResourceModelV1) validate(ctx context.Context, allowUnknown 
 
 	if oidcPlan != nil {
 		diags.Append(oidcPlan.validateCertificateBasedAuthentication(allowUnknown)...)
+		diags.Append(oidcPlan.validateSigning()...)
 		diags.Append(oidcPlan.validateWildcardInRedirectUri(ctx, allowUnknown)...)
 	}
 
@@ -2384,6 +2443,43 @@ func (p *applicationOIDCOptionsResourceModelV1) validateCertificateBasedAuthenti
 				path.Root("oidc_options").AtName("certificate_based_authentication"),
 				"Invalid configuration",
 				fmt.Sprintf("`certificate_based_authentication` can only be set with OIDC applications that have a `type` value of `%s`.", management.ENUMAPPLICATIONTYPE_NATIVE_APP),
+			)
+		}
+	}
+
+	return diags
+}
+
+func (p *applicationOIDCOptionsResourceModelV1) validateSigning() diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	allowedTypes := []management.EnumApplicationType{
+		management.ENUMAPPLICATIONTYPE_WORKER,
+		management.ENUMAPPLICATIONTYPE_WEB_APP,
+		management.ENUMAPPLICATIONTYPE_NATIVE_APP,
+		management.ENUMAPPLICATIONTYPE_SINGLE_PAGE_APP,
+		management.ENUMAPPLICATIONTYPE_CUSTOM_APP,
+	}
+
+	if !p.Signing.IsNull() && !p.Signing.IsUnknown() {
+		typeAllowed := false
+		for _, allowedType := range allowedTypes {
+			if p.Type.Equal(types.StringValue(string(allowedType))) {
+				typeAllowed = true
+				break
+			}
+		}
+
+		if !typeAllowed {
+			allowedStrs := make([]string, len(allowedTypes))
+			for i, allowedType := range allowedTypes {
+				allowedStrs[i] = fmt.Sprintf("`%s`", string(allowedType))
+			}
+
+			diags.AddAttributeError(
+				path.Root("oidc_options").AtName("signing"),
+				"Invalid configuration",
+				fmt.Sprintf("`signing` can only be set with OIDC applications that have a `type` value of one of %s.", strings.Join(allowedStrs, ", ")),
 			)
 		}
 	}
@@ -2839,6 +2935,22 @@ func (p *applicationResourceModelV1) expandApplicationOIDC(ctx context.Context) 
 			data.SetKerberos(*management.NewApplicationOIDCAllOfKerberos(*management.NewApplicationOIDCAllOfKerberosKey(kerberosPlan.KeyId.ValueString())))
 		}
 
+		if !plan.Signing.IsNull() && !plan.Signing.IsUnknown() {
+			var signingPlan applicationOIDCSigningResourceModelV1
+
+			diags.Append(plan.Signing.As(ctx, &signingPlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			data.SetSigning(*management.NewApplicationOIDCAllOfSigning(
+				*management.NewApplicationOIDCAllOfSigningKeyRotationPolicy(signingPlan.KeyRotationPolicyId.ValueString()),
+			))
+		}
+
 		if !plan.SupportUnsignedRequestObject.IsNull() && !plan.SupportUnsignedRequestObject.IsUnknown() {
 			data.SetSupportUnsignedRequestObject(plan.SupportUnsignedRequestObject.ValueBool())
 		}
@@ -2912,6 +3024,10 @@ func (p *applicationOIDCMobileAppResourceModelV1) expand(ctx context.Context) (*
 
 	if !p.PackageName.IsNull() && !p.PackageName.IsUnknown() {
 		data.SetPackageName(p.PackageName.ValueString())
+	}
+
+	if !p.PasscodeGracePeriod.IsNull() && !p.PasscodeGracePeriod.IsUnknown() {
+		data.SetPasscodeGracePeriod(p.PasscodeGracePeriod.ValueInt32())
 	}
 
 	if !p.PasscodeRefreshSeconds.IsNull() && !p.PasscodeRefreshSeconds.IsUnknown() {

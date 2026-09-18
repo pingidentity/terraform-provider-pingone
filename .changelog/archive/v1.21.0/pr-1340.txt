@@ -1,0 +1,3 @@
+```release-note:bug
+`resource/pingone_davinci_flow`: Fixed a panic when creating a flow with only the name attribute configured.
+```

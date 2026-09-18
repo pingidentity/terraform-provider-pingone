@@ -890,7 +890,6 @@ Optional:
 - `enabled` (Boolean) A boolean that specifies whether the OATH token device method is enabled or disabled in the policy.
 - `otp` (Attributes) A single object that specifies OTP failure settings for OATH token devices. (see [below for nested schema](#nestedatt--oath_token--otp))
 - `pairing_disabled` (Boolean) A boolean that, when set to `true`, prevents users from pairing new OATH token devices.
-- `pairing_key_lifetime` (Attributes) A single object that specifies pairing key lifetime settings for OATH token devices. (see [below for nested schema](#nestedatt--oath_token--pairing_key_lifetime))
 - `prompt_for_nickname_on_pairing` (Boolean) A boolean that, when set to `true`, prompts users to provide nicknames for devices during pairing.
 
 <a id="nestedatt--oath_token--otp"></a>
@@ -917,15 +916,6 @@ Required:
 - `time_unit` (String) A string that specifies the type of time unit for `duration`.  Options are `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
 
 
-
-
-<a id="nestedatt--oath_token--pairing_key_lifetime"></a>
-### Nested Schema for `oath_token.pairing_key_lifetime`
-
-Required:
-
-- `duration` (Number) An integer that defines the amount of time an issued pairing key can be used until it expires. Must be between `1` minutes and `48` hours.
-- `time_unit` (String) A string that specifies the type of time unit for `duration`.  Options are `HOURS`, `MINUTES`.
 
 
 
@@ -1017,7 +1007,6 @@ Optional:
 
 - `otp` (Attributes) A single object that specifies OTP failure settings for Yubikey devices. (see [below for nested schema](#nestedatt--yubikey--otp))
 - `pairing_disabled` (Boolean) A boolean that, when set to `true`, prevents users from pairing new Yubikey devices.
-- `pairing_key_lifetime` (Attributes) A single object that specifies pairing key lifetime settings for Yubikey devices. (see [below for nested schema](#nestedatt--yubikey--pairing_key_lifetime))
 - `prompt_for_nickname_on_pairing` (Boolean) A boolean that, when set to `true`, prompts users to provide nicknames for devices during pairing.
 
 <a id="nestedatt--yubikey--otp"></a>
@@ -1042,17 +1031,6 @@ Required:
 
 - `duration` (Number) An integer that defines the duration (number of time units) the user is blocked after reaching the maximum number of passcode failures. Must be between `1` seconds and `30` minutes.
 - `time_unit` (String) A string that specifies the type of time unit for `duration`.  Options are `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
-
-
-
-
-<a id="nestedatt--yubikey--pairing_key_lifetime"></a>
-### Nested Schema for `yubikey.pairing_key_lifetime`
-
-Required:
-
-- `duration` (Number) An integer that defines the amount of time an issued pairing key can be used until it expires. Must be between 1 minutes and 48 hours.
-- `time_unit` (String) A string that specifies the type of time unit for `duration`.  Options are `HOURS`, `MINUTES`.
 
 ## Import
 

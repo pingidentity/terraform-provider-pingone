@@ -15,9 +15,13 @@ resource "pingone_davinci_flow" "%[2]s" {
   name = "%[2]s-simple"
   settings = {
     csp = "worker-src 'self' blob:; script-src 'self' https://cdn.jsdelivr.net https://code.jquery.com https://devsdk.singularkey.com http://cdnjs.cloudflare.com 'unsafe-inline' 'unsafe-eval';"
+    custom_timeout_error_screen_css = "body { background-color: #f0f0f0; }"
+    custom_timeout_error_screen_html = "<div class=\"timeout-error\">The flow has timed out</div>"
+    custom_timeout_error_screen_message = "The session timed out. Please try again."
     flow_http_timeout_in_seconds = 300
     log_level = 1
     use_custom_css = true
+    use_custom_timeout_error_screen = true
   }
   color = "#FFC8C1"
   graph_data = {

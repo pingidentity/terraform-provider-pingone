@@ -527,6 +527,7 @@ func TestAccApplication_OIDCFullNative(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.package_name", fmt.Sprintf("com.%s.package", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.huawei_app_id", resourceName),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.huawei_package_name", fmt.Sprintf("com.%s.huaweipackage", resourceName)),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.passcode_grace_period", "3"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.passcode_refresh_seconds", "45"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.universal_app_link", "https://applink.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.enabled", "true"),
@@ -626,6 +627,7 @@ func TestAccApplication_OIDCMinimalNative(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app.universal_app_link"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.excluded_platforms.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.passcode_grace_period", "5"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.passcode_refresh_seconds", "30"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "external_link_options"),
@@ -704,6 +706,7 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.package_name", fmt.Sprintf("com.%s.package", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.huawei_app_id", resourceName),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.huawei_package_name", fmt.Sprintf("com.%s.huaweipackage", resourceName)),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.passcode_grace_period", "3"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.passcode_refresh_seconds", "45"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.universal_app_link", "https://applink.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.enabled", "true"),
@@ -760,6 +763,7 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app.universal_app_link"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.excluded_platforms.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.passcode_grace_period", "5"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.passcode_refresh_seconds", "30"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "external_link_options"),
@@ -810,6 +814,7 @@ func TestAccApplication_OIDCNativeUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.package_name", fmt.Sprintf("com.%s.package", resourceName)),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.huawei_app_id", resourceName),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.huawei_package_name", fmt.Sprintf("com.%s.huaweipackage", resourceName)),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.passcode_grace_period", "3"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.passcode_refresh_seconds", "45"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.universal_app_link", "https://applink.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.enabled", "true"),
@@ -965,6 +970,88 @@ func TestAccApplication_NativeKerberos(t *testing.T) {
 	})
 }
 
+func TestAccApplication_OIDC_Signing(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
+	krpFullName := fmt.Sprintf("pingone_key_rotation_policy.%s", resourceName)
+
+	name := resourceName
+
+	withSigning := resource.TestStep{
+		Config: testAccApplicationConfig_OIDC_Signing(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestMatchResourceAttr(resourceFullName, "oidc_options.signing.key_rotation_policy_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestCheckResourceAttrPair(resourceFullName, "oidc_options.signing.key_rotation_policy_id", krpFullName, "id"),
+		),
+	}
+
+	// Issue #1326 regression: an unrelated update must not reset signing to the default
+	// key. Asserting the KRP pair (KRP unchanged across steps) proves the exact policy survived.
+	withSigningUpdated := resource.TestStep{
+		Config: testAccApplicationConfig_OIDC_SigningUpdate(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestMatchResourceAttr(resourceFullName, "oidc_options.signing.key_rotation_policy_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestCheckResourceAttrPair(resourceFullName, "oidc_options.signing.key_rotation_policy_id", krpFullName, "id"),
+		),
+	}
+
+	// Detaches signing from the app while the KRP resource is still declared, so
+	// the app PUT (which drops the KRP reference) applies before the KRP is destroyed.
+	withoutSigningKRPStillDeclared := resource.TestStep{
+		Config: testAccApplicationConfig_OIDC_SigningDetached(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.signing"),
+		),
+	}
+
+	withoutSigning := resource.TestStep{
+		Config: testAccApplicationConfig_OIDC_MinimalWeb(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.signing"),
+		),
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             sso.Application_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// `signing` on an unsupported application type is rejected at plan time
+			{
+				Config:      testAccApplicationConfig_OIDC_SigningInvalidType(resourceName, name),
+				ExpectError: regexp.MustCompile("Invalid configuration"),
+			},
+			withSigning,
+			withSigningUpdated,
+			withoutSigningKRPStillDeclared,
+			withoutSigning,
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
 func TestAccApplication_NativeMobile(t *testing.T) {
 	t.Parallel()
 
@@ -980,6 +1067,7 @@ func TestAccApplication_NativeMobile(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.package_name", fmt.Sprintf("com.%s.package", resourceName)),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.huawei_app_id", resourceName),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.huawei_package_name", fmt.Sprintf("com.%s.huaweipackage", resourceName)),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.passcode_grace_period", "3"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.passcode_refresh_seconds", "45"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.universal_app_link", "https://applink.com"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.enabled", "true"),
@@ -1000,6 +1088,7 @@ func TestAccApplication_NativeMobile(t *testing.T) {
 			resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app.package_name"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app.huawei_app_id"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app.huawei_package_name"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.passcode_grace_period", "5"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.passcode_refresh_seconds", "30"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app.universal_app_link"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.enabled", "false"),
@@ -1016,6 +1105,7 @@ func TestAccApplication_NativeMobile(t *testing.T) {
 			resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app.universal_app_link"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.enabled", "false"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.excluded_platforms.#", "0"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.passcode_grace_period", "5"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.passcode_refresh_seconds", "30"),
 		),
 	}
@@ -3733,6 +3823,152 @@ resource "pingone_application" "%[2]s" {
 }
 `, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
+
+func testAccApplicationConfig_OIDC_Signing(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+resource "pingone_key_rotation_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  algorithm           = "RSA"
+  subject_dn          = "CN=%[3]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  key_length          = 3072
+  signature_algorithm = "SHA256withRSA"
+  usage_type          = "SIGNING"
+}
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  oidc_options = {
+    type                       = "WEB_APP"
+    grant_types                = ["AUTHORIZATION_CODE"]
+    redirect_uris              = ["https://www.pingidentity.com"]
+    response_types             = ["CODE"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
+
+    signing = {
+      key_rotation_policy_id = pingone_key_rotation_policy.%[2]s.id
+    }
+  }
+}
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccApplicationConfig_OIDC_SigningUpdate(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+resource "pingone_key_rotation_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  algorithm           = "RSA"
+  subject_dn          = "CN=%[3]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  key_length          = 3072
+  signature_algorithm = "SHA256withRSA"
+  usage_type          = "SIGNING"
+}
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+  description    = "updated to force PUT"
+
+  oidc_options = {
+    type                       = "WEB_APP"
+    grant_types                = ["AUTHORIZATION_CODE"]
+    redirect_uris              = ["https://www.pingidentity.com"]
+    response_types             = ["CODE"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
+
+    signing = {
+      key_rotation_policy_id = pingone_key_rotation_policy.%[2]s.id
+    }
+  }
+}
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+// Keeps the KRP resource declared (but unreferenced) so the app PUT that drops
+// the KRP reference applies before the KRP itself is destroyed in a later step.
+func testAccApplicationConfig_OIDC_SigningDetached(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+resource "pingone_key_rotation_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  algorithm           = "RSA"
+  subject_dn          = "CN=%[3]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  key_length          = 3072
+  signature_algorithm = "SHA256withRSA"
+  usage_type          = "SIGNING"
+}
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  oidc_options = {
+    type                       = "WEB_APP"
+    grant_types                = ["AUTHORIZATION_CODE"]
+    redirect_uris              = ["https://www.pingidentity.com"]
+    response_types             = ["CODE"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
+  }
+}
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+// `signing` set on a SERVICE application, which does not support it, to exercise
+// the plan-time type validation.
+func testAccApplicationConfig_OIDC_SigningInvalidType(resourceName, name string) string {
+	return fmt.Sprintf(`
+%[1]s
+
+resource "pingone_key_rotation_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  algorithm           = "RSA"
+  subject_dn          = "CN=%[3]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  key_length          = 3072
+  signature_algorithm = "SHA256withRSA"
+  usage_type          = "SIGNING"
+}
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  oidc_options = {
+    type                       = "SERVICE"
+    grant_types                = ["AUTHORIZATION_CODE"]
+    redirect_uris              = ["https://www.pingidentity.com"]
+    response_types             = ["CODE"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
+
+    signing = {
+      key_rotation_policy_id = pingone_key_rotation_policy.%[2]s.id
+    }
+  }
+}
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
 func testAccApplicationConfig_OIDC_MinimalWeb_PrivateKeyJWT_JWKS(resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s
@@ -3869,6 +4105,7 @@ resource "pingone_application" "%[2]s" {
       huawei_app_id       = "%[2]s"
       huawei_package_name = "com.%[2]s.huaweipackage"
 
+      passcode_grace_period    = 3
       passcode_refresh_seconds = 45
 
       universal_app_link = "https://applink.com"
@@ -4077,6 +4314,7 @@ resource "pingone_application" "%[2]s" {
       huawei_app_id       = "%[2]s"
       huawei_package_name = "com.%[2]s.huaweipackage"
 
+      passcode_grace_period    = 3
       passcode_refresh_seconds = 45
 
       universal_app_link = "https://applink.com"
@@ -4143,6 +4381,7 @@ resource "pingone_application" "%[2]s" {
       huawei_app_id       = "%[2]s"
       huawei_package_name = "com.%[2]s.huaweipackage"
 
+      passcode_grace_period    = 3
       passcode_refresh_seconds = 45
 
       universal_app_link = "https://applink.com"
@@ -4189,6 +4428,7 @@ resource "pingone_application" "%[2]s" {
       huawei_app_id       = "%[2]s"
       huawei_package_name = "com.%[2]s.huaweipackage"
 
+      passcode_grace_period    = 3
       passcode_refresh_seconds = 45
 
       universal_app_link = "https://applink.com"
@@ -4231,6 +4471,7 @@ resource "pingone_application" "%[2]s" {
       huawei_app_id       = "%[2]s"
       huawei_package_name = "com.%[2]s.huaweipackage"
 
+      passcode_grace_period    = 3
       passcode_refresh_seconds = 45
 
       universal_app_link = "https://applink.com"
@@ -4270,6 +4511,7 @@ resource "pingone_application" "%[2]s" {
       huawei_app_id       = "%[2]s"
       huawei_package_name = "com.%[2]s.huaweipackage"
 
+      passcode_grace_period    = 3
       passcode_refresh_seconds = 45
 
       universal_app_link = "https://applink.com"

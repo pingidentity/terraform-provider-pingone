@@ -36,6 +36,16 @@ resource "pingone_davinci_connector_instance" "pingOneCredentialsConnector" {
     value = var.pingone_worker_app_client_secret
   }
   property {
+    name  = "credentialData"
+    type  = "string"
+    value = var.pingonecredentialsconnector_property_credential_data
+  }
+  property {
+    name  = "credentialDataObject"
+    type  = "string"
+    value = var.pingonecredentialsconnector_property_credential_data_object
+  }
+  property {
     name  = "credentialId"
     type  = "string"
     value = var.pingonecredentialsconnector_property_credential_id
@@ -139,6 +149,11 @@ resource "pingone_davinci_connector_instance" "pingOneCredentialsConnector" {
     name  = "skipButtonPress"
     type  = "string"
     value = var.pingonecredentialsconnector_property_skip_button_press
+  }
+  property {
+    name  = "storeUntilIssued"
+    type  = "string"
+    value = var.pingonecredentialsconnector_property_store_until_issued
   }
   property {
     name  = "templateLocale"

@@ -36,6 +36,11 @@ resource "pingone_davinci_connector_instance" "genericConnector" {
     value = var.genericconnector_property_skip_button_press
   }
   property {
+    name  = "tokenRefreshThreshold"
+    type  = "string"
+    value = var.genericconnector_property_token_refresh_threshold
+  }
+  property {
     name  = "username"
     type  = "string"
     value = var.genericconnector_property_username

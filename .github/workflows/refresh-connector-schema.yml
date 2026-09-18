@@ -9,13 +9,13 @@ jobs:
     name: generate schema
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-go@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
           go-version-file: 'go.mod'
       
       - name: Install Ping CLI
-        run: go install github.com/pingidentity/pingcli@latest
+        run: go install github.com/pingidentity/pingcli@v0.8.4
         continue-on-error: false
       
       - name: Generate Connector Schema

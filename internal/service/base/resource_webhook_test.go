@@ -136,11 +136,11 @@ func TestAccWebhook_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "protocol", "HTTPS"),
-					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_url", "https://localhost/"),
+					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_url", "https://api.bxretail.org"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_headers.%", "2"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_headers.Authorization", "Basic usernamepassword"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_headers.Content-Type", "application/json"),
-					resource.TestCheckResourceAttr(resourceFullName, "connection_details_url", "https://localhost/"),
+					resource.TestCheckResourceAttr(resourceFullName, "connection_details_url", "https://api.bxretail.org"),
 					resource.TestCheckResourceAttr(resourceFullName, "connection_details_headers.%", "2"),
 					resource.TestCheckResourceAttr(resourceFullName, "connection_details_headers.Authorization", "Basic usernamepassword"),
 					resource.TestCheckResourceAttr(resourceFullName, "connection_details_headers.Content-Type", "application/json"),
@@ -215,9 +215,9 @@ func TestAccWebhook_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "protocol", "HTTPS"),
-					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_url", "https://localhost/"),
+					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_url", "https://api.bxretail.org"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_headers.%", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "connection_details_url", "https://localhost/"),
+					resource.TestCheckResourceAttr(resourceFullName, "connection_details_url", "https://api.bxretail.org"),
 					resource.TestCheckResourceAttr(resourceFullName, "connection_details_headers.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "verify_tls_certificates", "true"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "tls_client_auth_key_pair_id"),
@@ -262,11 +262,11 @@ func TestAccWebhook_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "protocol", "HTTPS"),
-					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_url", "https://localhost/"),
+					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_url", "https://api.bxretail.org"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_headers.%", "2"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_headers.Authorization", "Basic usernamepassword"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_headers.Content-Type", "application/json"),
-					resource.TestCheckResourceAttr(resourceFullName, "connection_details_url", "https://localhost/"),
+					resource.TestCheckResourceAttr(resourceFullName, "connection_details_url", "https://api.bxretail.org"),
 					resource.TestCheckResourceAttr(resourceFullName, "connection_details_headers.%", "2"),
 					resource.TestCheckResourceAttr(resourceFullName, "connection_details_headers.Authorization", "Basic usernamepassword"),
 					resource.TestCheckResourceAttr(resourceFullName, "connection_details_headers.Content-Type", "application/json"),
@@ -304,9 +304,9 @@ func TestAccWebhook_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "protocol", "HTTPS"),
-					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_url", "https://localhost/"),
+					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_url", "https://api.bxretail.org"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_headers.%", "0"),
-					resource.TestCheckResourceAttr(resourceFullName, "connection_details_url", "https://localhost/"),
+					resource.TestCheckResourceAttr(resourceFullName, "connection_details_url", "https://api.bxretail.org"),
 					resource.TestCheckResourceAttr(resourceFullName, "connection_details_headers.%", "0"),
 					resource.TestCheckResourceAttr(resourceFullName, "verify_tls_certificates", "true"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "tls_client_auth_key_pair_id"),
@@ -335,11 +335,11 @@ func TestAccWebhook_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "protocol", "HTTPS"),
-					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_url", "https://localhost/"),
+					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_url", "https://api.bxretail.org"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_headers.%", "2"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_headers.Authorization", "Basic usernamepassword"),
 					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_headers.Content-Type", "application/json"),
-					resource.TestCheckResourceAttr(resourceFullName, "connection_details_url", "https://localhost/"),
+					resource.TestCheckResourceAttr(resourceFullName, "connection_details_url", "https://api.bxretail.org"),
 					resource.TestCheckResourceAttr(resourceFullName, "connection_details_headers.%", "2"),
 					resource.TestCheckResourceAttr(resourceFullName, "connection_details_headers.Authorization", "Basic usernamepassword"),
 					resource.TestCheckResourceAttr(resourceFullName, "connection_details_headers.Content-Type", "application/json"),
@@ -714,7 +714,7 @@ resource "pingone_webhook" "%[2]s" {
 
   name                   = "%[3]s"
   protocol               = "HTTPS"
-  connection_details_url = "tcp://localhost:1234"
+  connection_details_url = "tcp://api.bxretail.org:1234"
 
   filter_options = {
     included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
@@ -737,7 +737,7 @@ resource "pingone_webhook" "%[2]s" {
 
   name              = "%[3]s"
   protocol          = "HTTPS"
-  http_endpoint_url = "https://localhost/"
+  http_endpoint_url = "https://api.bxretail.org"
 
   filter_options = {
     included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
@@ -766,7 +766,7 @@ resource "pingone_webhook" "%[2]s" {
 
   name              = "%[3]s"
   protocol          = "HTTPS"
-  http_endpoint_url = "https://localhost/"
+  http_endpoint_url = "https://api.bxretail.org"
 
   filter_options = {
     included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
@@ -819,7 +819,7 @@ resource "pingone_webhook" "%[2]s" {
 
   name              = "%[3]s"
   protocol          = "TCP_IP"
-  http_endpoint_url = "https://localhost/"
+  http_endpoint_url = "https://api.bxretail.org"
 
   filter_options = {
     included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
@@ -842,7 +842,7 @@ resource "pingone_webhook" "%[2]s" {
 
   name                   = "%[3]s"
   protocol               = "TCP_IP"
-  connection_details_url = "tcp://localhost:1234"
+  connection_details_url = "tcp://api.bxretail.org:1234"
   format                 = "ACTIVITY"
 
   filter_options = {
@@ -866,7 +866,7 @@ resource "pingone_webhook" "%[2]s" {
 
   name                   = "%[3]s"
   protocol               = "TCP_IP"
-  connection_details_url = "tcp://localhost:1234"
+  connection_details_url = "tcp://api.bxretail.org:1234"
 
   filter_options = {
     included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
@@ -893,7 +893,7 @@ resource "pingone_webhook" "%[2]s" {
 
   name                   = "%[3]s"
   protocol               = "TCP_IP"
-  connection_details_url = "tcp://localhost:1234"
+  connection_details_url = "tcp://api.bxretail.org:1234"
 
   filter_options = {
     included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
@@ -922,7 +922,7 @@ resource "pingone_webhook" "%[2]s" {
 
   name                   = "%[3]s"
   protocol               = "TCP_IP"
-  connection_details_url = "tcp://localhost:1234"
+  connection_details_url = "tcp://api.bxretail.org:1234"
 
   filter_options = {
     included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
@@ -953,7 +953,7 @@ resource "pingone_webhook" "%[3]s" {
 
   name              = "%[4]s"
   enabled           = "true"
-  http_endpoint_url = "https://localhost/"
+  http_endpoint_url = "https://api.bxretail.org"
 
   format = "ACTIVITY"
 
@@ -1036,7 +1036,7 @@ resource "pingone_webhook" "%[2]s" {
   name              = "%[3]s"
   enabled           = false
   protocol          = "HTTPS"
-  http_endpoint_url = "https://localhost/"
+  http_endpoint_url = "https://api.bxretail.org"
 
   http_endpoint_headers = {
     Authorization = "Basic usernamepassword"
@@ -1079,7 +1079,7 @@ resource "pingone_webhook" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
   name              = "%[3]s"
-  http_endpoint_url = "https://localhost/"
+  http_endpoint_url = "https://api.bxretail.org"
 
   filter_options = {
     included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
@@ -1108,7 +1108,7 @@ resource "pingone_webhook" "%[3]s" {
 
   name              = "%[4]s"
   enabled           = "true"
-  http_endpoint_url = "https://localhost/"
+  http_endpoint_url = "https://api.bxretail.org"
 
   tls_client_auth_key_pair_id = pingone_key.%[3]s.id
 
@@ -1141,7 +1141,7 @@ resource "pingone_webhook" "%[3]s" {
 
   name              = "%[4]s"
   enabled           = "true"
-  http_endpoint_url = "https://localhost/"
+  http_endpoint_url = "https://api.bxretail.org"
 
   format = "ACTIVITY"
 
@@ -1223,7 +1223,7 @@ resource "pingone_webhook" "%[2]s" {
 
   name              = "%[3]s"
   enabled           = false
-  http_endpoint_url = "https://localhost/"
+  http_endpoint_url = "https://api.bxretail.org"
 
   format = "ACTIVITY"
 
@@ -1288,7 +1288,7 @@ resource "pingone_webhook" "%[2]s" {
 
   name              = "%[3]s"
   enabled           = false
-  http_endpoint_url = "https://localhost/"
+  http_endpoint_url = "https://api.bxretail.org"
 
   format = "ACTIVITY"
 
@@ -1311,7 +1311,7 @@ resource "pingone_webhook" "%[2]s" {
 
   name                   = "%[3]s"
   protocol               = "TCP_IP"
-  connection_details_url = "tcp://localhost:1234"
+  connection_details_url = "tcp://api.bxretail.org:1234"
 
   filter_options = {
     included_action_types = ["ACCOUNT.LINKED", "ACCOUNT.UNLINKED"]
@@ -1392,7 +1392,7 @@ resource "pingone_webhook" "%[2]s" {
   name                   = "%[3]s"
   enabled                = true
   protocol               = "TCP_IP"
-  connection_details_url = "tcp://localhost:1234"
+  connection_details_url = "tcp://api.bxretail.org:1234"
 
   verify_tls_certificates = false
 

@@ -1,0 +1,22 @@
+= Release Notes for v1.21.0
+:toc:
+:toclevels: 3
+:sectnums:
+
+Release Date: 2026-07-17
+
+== ENHANCEMENTS
+* link:https://github.com/pingidentity/terraform-provider-pingone/commit/76447246[76447246] `resource/pingone_risk_policy`: Added `mitigations`, `fallback`, and `targets` attributes to support mitigation-style risk policies (mutually exclusive with `overrides`) link:https://github.com/pingidentity/terraform-provider-pingone/pull/1327[#1327]
+* link:https://github.com/pingidentity/terraform-provider-pingone/commit/8e3bae60[8e3bae60] `resource/pingone_application`: Added support for `oidc_options.mobile_app.passcode_grace_period` link:https://github.com/pingidentity/terraform-provider-pingone/pull/1341[#1341]
+* link:https://github.com/pingidentity/terraform-provider-pingone/commit/8e3bae60[8e3bae60] `data-source/pingone_application`: Added support for `oidc_options.mobile_app.passcode_grace_period` link:https://github.com/pingidentity/terraform-provider-pingone/pull/1341[#1341]
+* link:https://github.com/pingidentity/terraform-provider-pingone/commit/1cd4a01f[1cd4a01f] `resource/pingone_application`: Added `oidc_options.signing.key_rotation_policy_id` attribute to allow configuration of the signing key rotation policy, fixing an issue where updates reset it to the PingOne default. link:https://github.com/pingidentity/terraform-provider-pingone/pull/1343[#1343]
+* link:https://github.com/pingidentity/terraform-provider-pingone/commit/df22bdaa[df22bdaa] `resource/pingone_mfa_device_policy`: Added `policy_type`, `desktop`, `yubikey`, and `oath_token` device method attributes, and the mobile application `biometrics_enabled`, `ip_pairing_configuration`, and `new_request_duration_configuration` sub-fields, for parity with `pingone_mfa_device_policy_default` link:https://github.com/pingidentity/terraform-provider-pingone/pull/1344[#1344]
+* link:https://github.com/pingidentity/terraform-provider-pingone/commit/f3a06383[f3a06383] `resource/pingone_davinci_flow`: Added support for the `graph_data.elements.nodes.%.data.outcomes` field link:https://github.com/pingidentity/terraform-provider-pingone/pull/1345[#1345]
+
+== BUG FIXES
+* link:https://github.com/pingidentity/terraform-provider-pingone/commit/e2a137f3[e2a137f3] `resource/pingone_davinci_flow`: Fixed a panic when creating a flow with only the name attribute configured. link:https://github.com/pingidentity/terraform-provider-pingone/pull/1340[#1340]
+* link:https://github.com/pingidentity/terraform-provider-pingone/commit/df22bdaa[df22bdaa] `resource/pingone_mfa_device_policy_default`: Removed unsupported `yubikey.pairing_key_lifetime` and `oath_token.pairing_key_lifetime` attributes link:https://github.com/pingidentity/terraform-provider-pingone/pull/1344[#1344]
+
+== NOTES
+* link:https://github.com/pingidentity/terraform-provider-pingone/commit/2d9b4a25[2d9b4a25] Update Connector Reference Guide (01 June 2026). link:https://github.com/pingidentity/terraform-provider-pingone/pull/1320[#1320]
+

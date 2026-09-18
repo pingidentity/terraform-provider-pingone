@@ -308,6 +308,8 @@ func TestAccDavinciConnectorInstance_ComplexProperties(t *testing.T) {
 				ImportStateIdFunc: importStateFunc(),
 				ImportState:       true,
 				ImportStateVerify: true,
+				// The API obfuscates sensitive properties, so we can't verify them here
+				ImportStateVerifyIgnore: []string{"properties"},
 			},
 			{
 				Config:  davinciConnectorInstance_PropertyDataTypesMixed_HCL(resourceName),

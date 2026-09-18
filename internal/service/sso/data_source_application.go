@@ -414,6 +414,17 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 							},
 						},
 					},
+					"signing": schema.SingleNestedAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("The OIDC application token signing key settings.").Description,
+						Computed:    true,
+
+						Attributes: map[string]schema.Attribute{
+							"key_rotation_policy_id": schema.StringAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("The PingOne ID of the Key Rotation Policy used to sign application tokens.").Description,
+								Computed:    true,
+							},
+						},
+					},
 					"support_unsigned_request_object": schema.BoolAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the request query parameter JWT is allowed to be unsigned.").Description,
 						Computed:    true,
@@ -443,6 +454,10 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 							},
 							"huawei_package_name": schema.StringAttribute{
 								Description: framework.SchemaAttributeDescriptionFromMarkdown("The package name associated with the application, for push notifications in native apps.").Description,
+								Computed:    true,
+							},
+							"passcode_grace_period": schema.Int32Attribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("To cover time synchronization issues, you can use this property to customize the grace period during which the passcode can still be used even after the passcode has been refreshed. The value of the parameter should be the number of windows to use (min `1`, max `10`). In this context, a window is equal to the passcode refresh period in either direction. For example, if you defined a passcode refresh duration of 30 seconds and a grace period of 2 windows, the passcode is valid for 150 seconds (from 60 seconds behind the time of issue until 60 seconds past the expiration time).").Description,
 								Computed:    true,
 							},
 							"passcode_refresh_seconds": schema.Int32Attribute{
@@ -773,7 +788,7 @@ func datasourceApplicationSchemaCorsSettings() schema.SingleNestedAttribute {
 	})
 
 	originsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A set of strings that represent the origins from which CORS requests to the Authorization and Authentication APIs are allowed.  Each value will be a `http` or `https` URL without a path.  The host may be a domain name (including `localhost`), or an IPv4 address.  Subdomains may use the wildcard (`*`) to match any string.  Is expected to be non-empty when `behavior` is `ALLOW_SPECIFIC_ORIGINS` and is expected to be omitted or empty when `behavior` is `ALLOW_NO_ORIGINS`.  Limited to 20 values.",
+		"A set of strings that represent the origins from which CORS requests to the Authorization and Authentication APIs are allowed.  Each value will be a `http` or `https` URL without a path.  The host may be a domain name (including `localhost`), or an IPv4 address.  Subdomains may use the wildcard (`*`) to match any string.  Is expected to be non-empty when `behavior` is `ALLOW_SPECIFIC_ORIGINS` and is expected to be omitted or empty when `behavior` is `ALLOW_NO_ORIGINS`.  Limited to 40 values.",
 	)
 
 	return schema.SingleNestedAttribute{

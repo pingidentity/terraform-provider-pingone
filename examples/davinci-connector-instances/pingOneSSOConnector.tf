@@ -146,6 +146,11 @@ resource "pingone_davinci_connector_instance" "pingOneSSOConnector" {
     value = var.pingonessoconnector_property_custom_data_text
   }
   property {
+    name  = "customFilter"
+    type  = "string"
+    value = var.pingonessoconnector_property_custom_filter
+  }
+  property {
     name  = "customTemplateVariant"
     type  = "string"
     value = var.pingonessoconnector_property_custom_template_variant
@@ -276,6 +281,11 @@ resource "pingone_davinci_connector_instance" "pingOneSSOConnector" {
     value = var.pingonessoconnector_property_member_group_relationship
   }
   property {
+    name  = "mfaStatus"
+    type  = "string"
+    value = var.pingonessoconnector_property_mfa_status
+  }
+  property {
     name  = "mobilePhone"
     type  = "string"
     value = var.pingonessoconnector_property_mobile_phone
@@ -401,14 +411,14 @@ resource "pingone_davinci_connector_instance" "pingOneSSOConnector" {
     value = var.pingonessoconnector_property_skip_button_press
   }
   property {
-    name  = "subFlowVersion"
-    type  = "string"
-    value = var.pingonessoconnector_property_sub_flow_version
-  }
-  property {
     name  = "subflow"
     type  = "string"
     value = var.pingonessoconnector_property_subflow
+  }
+  property {
+    name  = "subflowVersion"
+    type  = "string"
+    value = var.pingonessoconnector_property_subflow_version
   }
   property {
     name  = "templateLocale"
@@ -469,6 +479,11 @@ resource "pingone_davinci_connector_instance" "pingOneSSOConnector" {
     name  = "userIdentifierForFindUser"
     type  = "string"
     value = var.pingonessoconnector_property_user_identifier_for_find_user
+  }
+  property {
+    name  = "userInactivityDurationDays"
+    type  = "string"
+    value = var.pingonessoconnector_property_user_inactivity_duration_days
   }
   property {
     name  = "userLocale"

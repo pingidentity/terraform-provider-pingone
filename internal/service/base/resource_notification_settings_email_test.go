@@ -77,7 +77,7 @@ func TestAccNotificationSettingsEmail_SMTP_Full(t *testing.T) {
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-			resource.TestCheckResourceAttr(resourceFullName, "host", "smtp-example.pingidentity.com"),
+			resource.TestCheckResourceAttr(resourceFullName, "host", "pingidentity.com"),
 			resource.TestCheckResourceAttr(resourceFullName, "port", "25"),
 			resource.TestCheckResourceAttr(resourceFullName, "protocol", "SMTPS"),
 			resource.TestCheckResourceAttr(resourceFullName, "username", "smtpuser"),
@@ -268,7 +268,7 @@ func testAccNotificationSettingsEmail_SMTPConfig_Full(environmentName, licenseID
 resource "pingone_notification_settings_email" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
-  host     = "smtp-example.pingidentity.com"
+  host     = "pingidentity.com"
   port     = 25
   username = "smtpuser"
   password = "smtpuserpassword"
@@ -292,7 +292,7 @@ func testAccNotificationSettingsEmail_SMTPConfig_FromFull(environmentName, licen
 resource "pingone_notification_settings_email" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
-  host     = "smtp-example.pingidentity.com"
+  host     = "pingidentity.com"
   port     = 25
   username = "smtpuser"
   password = "smtpuserpassword"
@@ -311,7 +311,7 @@ func testAccNotificationSettingsEmail_SMTPConfig_FromMinimal(environmentName, li
 resource "pingone_notification_settings_email" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
-  host     = "smtp-example.pingidentity.com"
+  host     = "pingidentity.com"
   port     = 25
   username = "smtpuser"
   password = "smtpuserpassword"
@@ -329,7 +329,7 @@ func testAccNotificationSettingsEmail_SMTPConfig_ReplyToFull(environmentName, li
 resource "pingone_notification_settings_email" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
-  host     = "smtp-example.pingidentity.com"
+  host     = "pingidentity.com"
   port     = 25
   username = "smtpuser"
   password = "smtpuserpassword"
@@ -353,7 +353,7 @@ func testAccNotificationSettingsEmail_SMTPConfig_ReplyToMinimal(environmentName,
 resource "pingone_notification_settings_email" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
-  host     = "smtp-example.pingidentity.com"
+  host     = "pingidentity.com"
   port     = 25
   username = "smtpuser"
   password = "smtpuserpassword"
@@ -426,7 +426,7 @@ func TestAccNotificationSettingsEmail_CustomProvider_GET(t *testing.T) {
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-			resource.TestCheckResourceAttr(resourceFullName, "host", "smtp-example.pingidentity.com"),
+			resource.TestCheckResourceAttr(resourceFullName, "host", "pingidentity.com"),
 			resource.TestCheckResourceAttr(resourceFullName, "port", "25"),
 			resource.TestCheckResourceAttr(resourceFullName, "protocol", "SMTPS"),
 			resource.TestCheckResourceAttr(resourceFullName, "username", "smtpuser"),
@@ -618,7 +618,7 @@ func TestAccNotificationSettingsEmail_CustomProvider_POST_NoKeyValuesBody(t *tes
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-			resource.TestCheckResourceAttr(resourceFullName, "host", "smtp-example.pingidentity.com"),
+			resource.TestCheckResourceAttr(resourceFullName, "host", "pingidentity.com"),
 			resource.TestCheckResourceAttr(resourceFullName, "port", "25"),
 			resource.TestCheckResourceAttr(resourceFullName, "protocol", "SMTPS"),
 			resource.TestCheckResourceAttr(resourceFullName, "username", "smtpuser"),
@@ -811,7 +811,7 @@ func TestAccNotificationSettingsEmail_CustomProvider_POST_KeyValuesBody(t *testi
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-			resource.TestCheckResourceAttr(resourceFullName, "host", "smtp-example.pingidentity.com"),
+			resource.TestCheckResourceAttr(resourceFullName, "host", "pingidentity.com"),
 			resource.TestCheckResourceAttr(resourceFullName, "port", "25"),
 			resource.TestCheckResourceAttr(resourceFullName, "protocol", "SMTPS"),
 			resource.TestCheckResourceAttr(resourceFullName, "username", "smtpuser"),
@@ -1007,7 +1007,7 @@ func TestAccNotificationSettingsEmail_CustomProvider_POST_RawBody(t *testing.T) 
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-			resource.TestCheckResourceAttr(resourceFullName, "host", "smtp-example.pingidentity.com"),
+			resource.TestCheckResourceAttr(resourceFullName, "host", "pingidentity.com"),
 			resource.TestCheckResourceAttr(resourceFullName, "port", "25"),
 			resource.TestCheckResourceAttr(resourceFullName, "protocol", "SMTPS"),
 			resource.TestCheckResourceAttr(resourceFullName, "username", "smtpuser"),

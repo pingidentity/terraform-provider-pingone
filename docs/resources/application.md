@@ -48,6 +48,18 @@ resource "pingone_application_secret" "my_awesome_spa" {
 ## Example Usage - Web Application
 
 ```terraform
+resource "pingone_key_rotation_policy" "my_awesome_key_rotation_policy" {
+  environment_id = pingone_environment.my_environment.id
+
+  name = "My Awesome Key Rotation Policy"
+
+  algorithm           = "RSA"
+  subject_dn          = "CN=awesomeness, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  key_length          = 4096
+  signature_algorithm = "SHA256withRSA"
+  usage_type          = "SIGNING"
+}
+
 resource "pingone_application" "my_awesome_web_app" {
   environment_id = pingone_environment.my_environment.id
   name           = "My Awesome Web App"
@@ -63,6 +75,10 @@ resource "pingone_application" "my_awesome_web_app" {
     include_x5t                                   = true
     op_session_check_enabled                      = true
     request_scopes_for_multiple_resources_enabled = true
+
+    signing = {
+      key_rotation_policy_id = pingone_key_rotation_policy.my_awesome_key_rotation_policy.id
+    }
   }
 }
 
@@ -169,6 +185,7 @@ resource "pingone_application" "my_awesome_native_app" {
       universal_app_link = "https://demo.bxretail.org"
 
       passcode_refresh_seconds = 30
+      passcode_grace_period    = 2
 
       integrity_detection = {
         enabled = true
@@ -374,6 +391,7 @@ Optional:
 - `request_scopes_for_multiple_resources_enabled` (Boolean) A boolean that specifies whether the application can request scopes from multiple custom resources.  Defaults to `false`.
 - `require_signed_request_object` (Boolean) A boolean that indicates that the Java Web Token (JWT) for the [request query](https://openid.net/specs/openid-connect-core-1_0.html#RequestObject) parameter is required to be signed. If `false` or null, a signed request object is not required. Both `support_unsigned_request_object` and this property cannot be set to `true`.  Defaults to `false`.
 - `response_types` (Set of String) A list that specifies the code or token type returned by an authorization request.  Options are `CODE`, `ID_TOKEN`, `TOKEN`.  Note that `CODE` cannot be used in an authorization request with `TOKEN` or `ID_TOKEN` because PingOne does not currently support OIDC hybrid flows.
+- `signing` (Attributes) A single object that specifies the OIDC application token signing key settings. If omitted, application tokens are signed and verified by the PingOne default key at runtime. Applies to OIDC applications of type `WORKER`, `WEB_APP`, `NATIVE_APP`, `SINGLE_PAGE_APP`, and `CUSTOM_APP`. (see [below for nested schema](#nestedatt--oidc_options--signing))
 - `support_unsigned_request_object` (Boolean) A boolean that specifies whether the request query parameter JWT is allowed to be unsigned. If `false` or null, an unsigned request object is not allowed.  Defaults to `false`.
 - `target_link_uri` (String) The URI for the application. If specified, PingOne will redirect application users to this URI after a user is authenticated. In the PingOne admin console, this becomes the value of the `target_link_uri` parameter used for the Initiate Single Sign-On URL field.  Both `http://` and `https://` URLs are permitted as well as custom mobile native schema (e.g., `org.bxretail.app://target`).
 
@@ -398,7 +416,7 @@ Required:
 
 Optional:
 
-- `origins` (Set of String) A set of strings that represent the origins from which CORS requests to the Authorization and Authentication APIs are allowed.  Each value must be a `http` or `https` URL without a path.  The host may be a domain name (including `localhost`), or an IPv4 address.  Subdomains may use the wildcard (`*`) to match any string.  Must be non-empty when `behavior` is `ALLOW_SPECIFIC_ORIGINS` and must be omitted or empty when `behavior` is `ALLOW_NO_ORIGINS`.  Limited to 20 values.
+- `origins` (Set of String) A set of strings that represent the origins from which CORS requests to the Authorization and Authentication APIs are allowed.  Each value must be a `http` or `https` URL without a path.  The host may be a domain name (including `localhost`), or an IPv4 address.  Subdomains may use the wildcard (`*`) to match any string.  Must be non-empty when `behavior` is `ALLOW_SPECIFIC_ORIGINS` and must be omitted or empty when `behavior` is `ALLOW_NO_ORIGINS`.  Limited to 40 values.
 
 
 <a id="nestedatt--oidc_options--mobile_app"></a>
@@ -411,6 +429,7 @@ Optional:
 - `huawei_package_name` (String) The package name associated with the application, for push notifications in native apps. The value of this property is unique per environment, and once defined, is immutable.  Required with `huawei_app_id`.  This field is immutable and will trigger a replace plan if changed.
 - `integrity_detection` (Attributes) A single object that specifies mobile application integrity detection settings. (see [below for nested schema](#nestedatt--oidc_options--mobile_app--integrity_detection))
 - `package_name` (String) A string that specifies the package name associated with the application, for push notifications in native apps. The value of the `package_name` property is unique per environment, and once defined, is immutable.  This field is immutable and will trigger a replace plan if changed.
+- `passcode_grace_period` (Number) To cover time synchronization issues, you can use this property to customize the grace period during which the passcode can still be used even after the passcode has been refreshed. The value of the parameter should be the number of windows to use (min `1`, max `10`). In this context, a window is equal to the passcode refresh period in either direction. For example, if you defined a passcode refresh duration of 30 seconds and a grace period of 2 windows, the passcode is valid for 150 seconds (from 60 seconds behind the time of issue until 60 seconds past the expiration time).  Defaults to `5`.
 - `passcode_refresh_seconds` (Number) The amount of time a passcode should be displayed before being replaced with a new passcode - must be between `30` and `60` seconds.  Defaults to `30`.
 - `universal_app_link` (String) A string that specifies a URI prefix that enables direct triggering of the mobile application when scanning a QR code. The URI prefix can be set to a universal link with a valid value (which can be a URL address that starts with `HTTP://` or `HTTPS://`, such as `https://www.bxretail.org`), or an app schema, which is just a string and requires no special validation.
 
@@ -450,6 +469,14 @@ Optional:
 - `verification_key` (String, Sensitive) Play Integrity verdict signature verification key from your Google Play Services account. This parameter must be provided if you have set `verification_type` to `INTERNAL`.  Conflicts with `service_account_credentials_json`.
 
 
+
+
+<a id="nestedatt--oidc_options--signing"></a>
+### Nested Schema for `oidc_options.signing`
+
+Optional:
+
+- `key_rotation_policy_id` (String) A string that specifies the PingOne ID of the Key Rotation Policy (from certificate management) used to sign application tokens. Must be a valid PingOne Resource ID.
 
 
 
@@ -500,7 +527,7 @@ Required:
 
 Optional:
 
-- `origins` (Set of String) A set of strings that represent the origins from which CORS requests to the Authorization and Authentication APIs are allowed.  Each value must be a `http` or `https` URL without a path.  The host may be a domain name (including `localhost`), or an IPv4 address.  Subdomains may use the wildcard (`*`) to match any string.  Must be non-empty when `behavior` is `ALLOW_SPECIFIC_ORIGINS` and must be omitted or empty when `behavior` is `ALLOW_NO_ORIGINS`.  Limited to 20 values.
+- `origins` (Set of String) A set of strings that represent the origins from which CORS requests to the Authorization and Authentication APIs are allowed.  Each value must be a `http` or `https` URL without a path.  The host may be a domain name (including `localhost`), or an IPv4 address.  Subdomains may use the wildcard (`*`) to match any string.  Must be non-empty when `behavior` is `ALLOW_SPECIFIC_ORIGINS` and must be omitted or empty when `behavior` is `ALLOW_NO_ORIGINS`.  Limited to 40 values.
 
 
 <a id="nestedatt--saml_options--sp_encryption"></a>
@@ -590,7 +617,7 @@ Required:
 
 Optional:
 
-- `origins` (Set of String) A set of strings that represent the origins from which CORS requests to the Authorization and Authentication APIs are allowed.  Each value must be a `http` or `https` URL without a path.  The host may be a domain name (including `localhost`), or an IPv4 address.  Subdomains may use the wildcard (`*`) to match any string.  Must be non-empty when `behavior` is `ALLOW_SPECIFIC_ORIGINS` and must be omitted or empty when `behavior` is `ALLOW_NO_ORIGINS`.  Limited to 20 values.
+- `origins` (Set of String) A set of strings that represent the origins from which CORS requests to the Authorization and Authentication APIs are allowed.  Each value must be a `http` or `https` URL without a path.  The host may be a domain name (including `localhost`), or an IPv4 address.  Subdomains may use the wildcard (`*`) to match any string.  Must be non-empty when `behavior` is `ALLOW_SPECIFIC_ORIGINS` and must be omitted or empty when `behavior` is `ALLOW_NO_ORIGINS`.  Limited to 40 values.
 
 
 <a id="nestedatt--wsfed_options--kerberos"></a>
