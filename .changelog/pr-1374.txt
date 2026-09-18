@@ -3,13 +3,13 @@ bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` v0.12.1 => v0.13.0
 ```
 
 ```release-note:enhancement
-`resource/pingone_credential_type`: Added the computed `version` attribute (`id`, `number`, `uri`), exposing the current version of the credential type (distinct from the `metadata.version` attribute)
+`resource/pingone_credential_type`: Added computed `version` attribute (`id`, `number`, `uri`)
 ```
 
 ```release-note:new-data-source
-`data-source/pingone_credential_type_versions`: Added a new data source to retrieve the list of versions of a credential type (version number, creation time and version ID, newest first), with optional `filter` support (`version eq <number>`)
+`pingone_credential_type_versions`
 ```
 
 ```release-note:enhancement
-`data-source/pingone_credential_type`: Added the computed `version` attribute (`id`, `number`, `uri`), exposing the current version of the credential type (distinct from the `metadata.version` attribute)
+`data-source/pingone_credential_type`: Added computed `version` attribute (`id`, `number`, `uri`)
 ```

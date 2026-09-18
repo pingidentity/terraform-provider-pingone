@@ -159,7 +159,7 @@ Optional:
 
 Read-Only:
 
-- `version` (Number) Number version of this credential metadata.
+- `version` (Number) Version of this credential metadata.
 
 <a id="nestedatt--metadata--fields"></a>
 ### Nested Schema for `metadata.fields`

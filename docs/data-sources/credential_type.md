@@ -55,7 +55,7 @@ Read-Only:
 - `logo_image` (String) URL or fully qualified path to the image file used for the credential logo.
 - `name` (String) Name of the credential.
 - `text_color` (String) Color of the text to show on the credential.
-- `version` (Number) Number version of this credential metadata.
+- `version` (Number) Version of this credential metadata.
 
 <a id="nestedatt--metadata--fields"></a>
 ### Nested Schema for `metadata.fields`

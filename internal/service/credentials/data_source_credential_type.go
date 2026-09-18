@@ -204,7 +204,7 @@ func (r *CredentialTypeDataSource) Schema(ctx context.Context, req datasource.Sc
 						Computed:    true},
 
 					"version": schema.Int32Attribute{
-						Description: "Number version of this credential metadata.",
+						Description: "Version of this credential metadata.",
 						Computed:    true,
 					},
 
