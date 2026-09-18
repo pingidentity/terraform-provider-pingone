@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -29,6 +30,19 @@ type CredentialTypeVersionDataSourceModel struct {
 	CredentialTypeVersionId pingonetypes.ResourceIDValue `tfsdk:"credential_type_version_id"`
 	Number                  types.Int32                  `tfsdk:"number"`
 	CreatedAt               timetypes.RFC3339            `tfsdk:"created_at"`
+	Snapshot                types.Object                 `tfsdk:"snapshot"`
+}
+
+type CredentialTypeVersionSnapshotDataSourceModel struct {
+	Title              types.String      `tfsdk:"title"`
+	Description        types.String      `tfsdk:"description"`
+	CardType           types.String      `tfsdk:"card_type"`
+	CardDesignTemplate types.String      `tfsdk:"card_design_template"`
+	ManagementMode     types.String      `tfsdk:"management_mode"`
+	Metadata           types.Object      `tfsdk:"metadata"`
+	RevokeOnDelete     types.Bool        `tfsdk:"revoke_on_delete"`
+	CreatedAt          timetypes.RFC3339 `tfsdk:"created_at"`
+	UpdatedAt          timetypes.RFC3339 `tfsdk:"updated_at"`
 }
 
 // Framework interfaces
@@ -77,6 +91,160 @@ func (r *CredentialTypeVersionDataSource) Schema(ctx context.Context, req dataso
 				Computed:    true,
 
 				CustomType: timetypes.RFC3339Type{},
+			},
+
+			"snapshot": schema.SingleNestedAttribute{
+				Description: "The full credential type content as it was at this version.",
+				Computed:    true,
+
+				Attributes: map[string]schema.Attribute{
+					"title": schema.StringAttribute{
+						Description: "Title of the credential.",
+						Computed:    true,
+					},
+
+					"description": schema.StringAttribute{
+						Description: "A description of the credential type.",
+						Computed:    true,
+					},
+
+					"card_type": schema.StringAttribute{
+						Description: "A descriptor of the credential type. Can be non-identity types such as proof of employment or proof of insurance.",
+						Computed:    true,
+					},
+
+					"card_design_template": schema.StringAttribute{
+						Description: "An SVG formatted image containing placeholders for the credentials fields that need to be displayed in the image.",
+						Computed:    true,
+					},
+
+					"management_mode": schema.StringAttribute{
+						Description: "Specifies the management mode of the credential type.",
+						Computed:    true,
+					},
+
+					"revoke_on_delete": schema.BoolAttribute{
+						Description: "Specifies whether a user's issued verifiable credentials are automatically revoked when the credential type is deleted.",
+						Computed:    true,
+					},
+
+					"created_at": schema.StringAttribute{
+						Description: "Date and time the credential type version was created.",
+						Computed:    true,
+
+						CustomType: timetypes.RFC3339Type{},
+					},
+
+					"updated_at": schema.StringAttribute{
+						Description: "Date and time the object was updated. Can be null.",
+						Computed:    true,
+
+						CustomType: timetypes.RFC3339Type{},
+					},
+
+					"metadata": schema.SingleNestedAttribute{
+						Description: "An object that contains the names, data types, and other metadata related to the credentia",
+						Computed:    true,
+
+						Attributes: map[string]schema.Attribute{
+							"background_image": schema.StringAttribute{
+								Description: "URL or fully qualified path to the image file used for the credential background.",
+								Computed:    true,
+							},
+
+							"bg_opacity_percent": schema.Int32Attribute{
+								Description: "Percent opacity of the background image in the credential.",
+								Computed:    true,
+							},
+
+							"card_color": schema.StringAttribute{
+								Description: "Color to show on the credential.",
+								Computed:    true,
+							},
+
+							"columns": schema.Int32Attribute{
+								Description: "Number of columns to organize the fields displayed on the credential.",
+								Computed:    true,
+							},
+
+							"description": schema.StringAttribute{
+								Description: "Description of the credential.",
+								Computed:    true,
+							},
+
+							"logo_image": schema.StringAttribute{
+								Description: "URL or fully qualified path to the image file used for the credential logo.",
+								Computed:    true,
+							},
+
+							"name": schema.StringAttribute{
+								Description: "Name of the credential.",
+								Computed:    true,
+							},
+
+							"text_color": schema.StringAttribute{
+								Description: "Color of the text to show on the credential.",
+								Computed:    true,
+							},
+
+							"version": schema.Int32Attribute{
+								Description: "Version of this credential metadata.",
+								Computed:    true,
+							},
+
+							"fields": schema.ListNestedAttribute{
+								Description: "Array of objects representing the credential fields.",
+								Computed:    true,
+
+								NestedObject: schema.NestedAttributeObject{
+									Attributes: map[string]schema.Attribute{
+										"id": schema.StringAttribute{
+											Description: "Identifier of the field object.",
+											Computed:    true,
+
+											CustomType: pingonetypes.ResourceIDType{},
+										},
+
+										"type": schema.StringAttribute{
+											Description: "Type of data in the field.",
+											Computed:    true,
+										},
+
+										"title": schema.StringAttribute{
+											Description: "Descriptive text when showing the field.",
+											Computed:    true,
+										},
+
+										"file_support": schema.StringAttribute{
+											Description: "Specifies how an image is stored in the credential field.",
+											Computed:    true,
+										},
+
+										"is_visible": schema.BoolAttribute{
+											Description: "Specifies whether the field should be visible to viewers of the credential.",
+											Computed:    true,
+										},
+
+										"attribute": schema.StringAttribute{
+											Description: "Name of the PingOne Directory attribute. Present if field.type is Directory Attribute.",
+											Computed:    true,
+										},
+
+										"value": schema.StringAttribute{
+											Description: "The text to appear on the credential for a field.type of Alphanumeric Text.",
+											Computed:    true,
+										},
+
+										"required": schema.BoolAttribute{
+											Description: "Specifies whether the field is required for the credential.",
+											Computed:    true,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
 			},
 		},
 	}
@@ -165,5 +333,61 @@ func (p *CredentialTypeVersionDataSourceModel) toState(environmentID string, api
 	p.Number = framework.Int32OkToTF(apiObject.GetVersionOk())
 	p.CreatedAt = framework.TimeOkToTF(apiObject.GetCreatedAtOk())
 
+	snapshot, d := toStateCredentialTypeVersionSnapshot(apiObject.GetSnapshotOk())
+	diags.Append(d...)
+	p.Snapshot = snapshot
+
 	return diags
+}
+
+func toStateCredentialTypeVersionSnapshot(snapshot *credentials.CredentialType, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || snapshot == nil {
+		return types.ObjectNull(snapshotTFObjectTypes), diags
+	}
+
+	// core snapshot attributes
+	snapshotMap := map[string]attr.Value{
+		"title":                framework.StringOkToTF(snapshot.GetTitleOk()),
+		"description":          framework.StringOkToTF(snapshot.GetDescriptionOk()),
+		"card_type":            framework.StringOkToTF(snapshot.GetCardTypeOk()),
+		"card_design_template": framework.StringOkToTF(snapshot.GetCardDesignTemplateOk()),
+		"revoke_on_delete":     types.BoolNull(),
+		"created_at":           framework.TimeOkToTF(snapshot.GetCreatedAtOk()),
+		"updated_at":           framework.TimeOkToTF(snapshot.GetUpdatedAtOk()),
+	}
+
+	if v, ok := snapshot.GetManagementOk(); ok {
+		snapshotMap["management_mode"] = framework.EnumOkToTF(v.GetModeOk())
+	} else {
+		snapshotMap["management_mode"] = types.StringNull()
+	}
+
+	if v, ok := snapshot.GetOnDeleteOk(); ok {
+		snapshotMap["revoke_on_delete"] = framework.BoolOkToTF(v.GetRevokeIssuedCredentialsOk())
+	}
+
+	// snapshot metadata object
+	metadata, d := toStateMetadataDataSource(snapshot.GetMetadataOk())
+	diags.Append(d...)
+
+	snapshotMap["metadata"] = metadata
+
+	flattenedObj, d := types.ObjectValue(snapshotTFObjectTypes, snapshotMap)
+	diags.Append(d...)
+
+	return flattenedObj, diags
+}
+
+var snapshotTFObjectTypes = map[string]attr.Type{
+	"title":                types.StringType,
+	"description":          types.StringType,
+	"card_type":            types.StringType,
+	"card_design_template": types.StringType,
+	"management_mode":      types.StringType,
+	"metadata":             types.ObjectType{AttrTypes: metadataDataSourceServiceTFObjectTypes},
+	"revoke_on_delete":     types.BoolType,
+	"created_at":           timetypes.RFC3339Type{},
+	"updated_at":           timetypes.RFC3339Type{},
 }

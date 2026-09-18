@@ -33,3 +33,49 @@ data "pingone_credential_type_version" "example_by_version_id" {
 - `created_at` (String) Date and time the credential type version was created.
 - `id` (String) The ID of this resource.
 - `number` (Number) Version number of the credential type version.
+- `snapshot` (Attributes) The full credential type content as it was at this version. (see [below for nested schema](#nestedatt--snapshot))
+
+<a id="nestedatt--snapshot"></a>
+### Nested Schema for `snapshot`
+
+Read-Only:
+
+- `card_design_template` (String) An SVG formatted image containing placeholders for the credentials fields that need to be displayed in the image.
+- `card_type` (String) A descriptor of the credential type. Can be non-identity types such as proof of employment or proof of insurance.
+- `created_at` (String) Date and time the credential type version was created.
+- `description` (String) A description of the credential type.
+- `management_mode` (String) Specifies the management mode of the credential type.
+- `metadata` (Attributes) An object that contains the names, data types, and other metadata related to the credentia (see [below for nested schema](#nestedatt--snapshot--metadata))
+- `revoke_on_delete` (Boolean) Specifies whether a user's issued verifiable credentials are automatically revoked when the credential type is deleted.
+- `title` (String) Title of the credential.
+- `updated_at` (String) Date and time the object was updated. Can be null.
+
+<a id="nestedatt--snapshot--metadata"></a>
+### Nested Schema for `snapshot.metadata`
+
+Read-Only:
+
+- `background_image` (String) URL or fully qualified path to the image file used for the credential background.
+- `bg_opacity_percent` (Number) Percent opacity of the background image in the credential.
+- `card_color` (String) Color to show on the credential.
+- `columns` (Number) Number of columns to organize the fields displayed on the credential.
+- `description` (String) Description of the credential.
+- `fields` (Attributes List) Array of objects representing the credential fields. (see [below for nested schema](#nestedatt--snapshot--metadata--fields))
+- `logo_image` (String) URL or fully qualified path to the image file used for the credential logo.
+- `name` (String) Name of the credential.
+- `text_color` (String) Color of the text to show on the credential.
+- `version` (Number) Version of this credential metadata.
+
+<a id="nestedatt--snapshot--metadata--fields"></a>
+### Nested Schema for `snapshot.metadata.fields`
+
+Read-Only:
+
+- `attribute` (String) Name of the PingOne Directory attribute. Present if field.type is Directory Attribute.
+- `file_support` (String) Specifies how an image is stored in the credential field.
+- `id` (String) Identifier of the field object.
+- `is_visible` (Boolean) Specifies whether the field should be visible to viewers of the credential.
+- `required` (Boolean) Specifies whether the field is required for the credential.
+- `title` (String) Descriptive text when showing the field.
+- `type` (String) Type of data in the field.
+- `value` (String) The text to appear on the credential for a field.type of Alphanumeric Text.

@@ -51,6 +51,17 @@ func TestAccCredentialTypeVersionDataSource_ByIDFull(t *testing.T) {
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "credential_type_version_id", resourceFullName, "version.id"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "number", "1"),
 					resource.TestMatchResourceAttr(dataSourceFullName, "created_at", verify.RFC3339Regexp),
+					// snapshot: the full credential type content as it was at
+					// this version
+					resource.TestCheckResourceAttr(dataSourceFullName, "snapshot.title", name),
+					resource.TestCheckResourceAttr(dataSourceFullName, "snapshot.description", fmt.Sprintf("%s Example Description", name)),
+					resource.TestCheckResourceAttr(dataSourceFullName, "snapshot.card_type", name),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "snapshot.card_design_template", resourceFullName, "card_design_template"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "snapshot.management_mode", "AUTOMATED"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "snapshot.metadata.%", resourceFullName, "metadata.%"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "snapshot.metadata.fields.%", resourceFullName, "metadata.fields.%"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "snapshot.revoke_on_delete", "true"), // service default when the type omits onDelete
+					resource.TestMatchResourceAttr(dataSourceFullName, "snapshot.created_at", verify.RFC3339Regexp),
 				),
 			},
 			{
