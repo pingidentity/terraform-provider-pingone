@@ -1,0 +1,11 @@
+```release-note:enhancement
+`resource/pingone_credential_type`: Added the computed `version` attribute (`id`, `number`, `uri`), exposing the current version of the credential type (distinct from the `metadata.version` attribute)
+```
+
+```release-note:new-data-source
+`data-source/pingone_credential_type_versions`: Added a new data source to retrieve the list of versions of a credential type (version number, creation time and version ID, newest first), with optional `filter` support (`version eq <number>`)
+```
+
+```release-note:enhancement
+`data-source/pingone_credential_type`: Added the computed `version` attribute (`id`, `number`, `uri`), exposing the current version of the credential type (distinct from the `metadata.version` attribute)
+```
