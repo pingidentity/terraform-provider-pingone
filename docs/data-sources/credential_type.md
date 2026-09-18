@@ -39,6 +39,7 @@ data "pingone_credential_type" "example_by_id" {
 - `revoke_on_delete` (Boolean) Specifies whether a user's issued verifiable credentials are automatically revoked when the credential type is deleted.
 - `title` (String) Title of the credential.
 - `updated_at` (String) Date and time the object was updated. Can be null.
+- `version` (Attributes) Contains version data for this credential type. (see [below for nested schema](#nestedatt--version))
 
 <a id="nestedatt--metadata"></a>
 ### Nested Schema for `metadata`
@@ -54,7 +55,7 @@ Read-Only:
 - `logo_image` (String) URL or fully qualified path to the image file used for the credential logo.
 - `name` (String) Name of the credential.
 - `text_color` (String) Color of the text to show on the credential.
-- `version` (Number) Version of this credential.
+- `version` (Number) Number version of this credential metadata.
 
 <a id="nestedatt--metadata--fields"></a>
 ### Nested Schema for `metadata.fields`
@@ -69,3 +70,14 @@ Read-Only:
 - `title` (String) Descriptive text when showing the field.
 - `type` (String) Type of data in the field.
 - `value` (String) The text to appear on the credential for a field.type of Alphanumeric Text.
+
+
+
+<a id="nestedatt--version"></a>
+### Nested Schema for `version`
+
+Read-Only:
+
+- `id` (String) Identifier (UUID) of the credential type version.
+- `number` (Number) Version number of the credential type.
+- `uri` (String) URI to this version of the credential type.

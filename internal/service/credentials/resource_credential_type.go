@@ -1081,7 +1081,7 @@ func toStateFields(innerFields []credentials.CredentialTypeMetaDataFieldsInner, 
 	return fields, diags
 }
 
-func toStateVersion(version *credentials.CredentialTypeVersion, ok bool) (types.Object, diag.Diagnostics) {
+func toStateVersion(version *credentials.CredentialTypeVersionNumber, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || version == nil {

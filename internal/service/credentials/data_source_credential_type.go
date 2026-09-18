@@ -35,6 +35,7 @@ type CredentialTypeDataSourceModel struct {
 	ManagementMode     types.String                 `tfsdk:"management_mode"`
 	Metadata           types.Object                 `tfsdk:"metadata"`
 	RevokeOnDelete     types.Bool                   `tfsdk:"revoke_on_delete"`
+	Version            types.Object                 `tfsdk:"version"`
 	CreatedAt          timetypes.RFC3339            `tfsdk:"created_at"`
 	UpdatedAt          timetypes.RFC3339            `tfsdk:"updated_at"`
 }
@@ -203,7 +204,7 @@ func (r *CredentialTypeDataSource) Schema(ctx context.Context, req datasource.Sc
 						Computed:    true},
 
 					"version": schema.Int32Attribute{
-						Description: "Version of this credential.",
+						Description: "Number version of this credential metadata.",
 						Computed:    true,
 					},
 
@@ -248,6 +249,30 @@ func (r *CredentialTypeDataSource) Schema(ctx context.Context, req datasource.Sc
 								},
 							},
 						},
+					},
+				},
+			},
+
+			"version": schema.SingleNestedAttribute{
+				Description: "Contains version data for this credential type.",
+				Computed:    true,
+
+				Attributes: map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Description: "Identifier (UUID) of the credential type version.",
+						Computed:    true,
+
+						CustomType: pingonetypes.ResourceIDType{},
+					},
+
+					"number": schema.Int32Attribute{
+						Description: "Version number of the credential type.",
+						Computed:    true,
+					},
+
+					"uri": schema.StringAttribute{
+						Description: "URI to this version of the credential type.",
+						Computed:    true,
 					},
 				},
 			},
@@ -371,6 +396,11 @@ func (p *CredentialTypeDataSourceModel) toState(apiObject *credentials.Credentia
 	metadata, d := toStateMetadataDataSource(apiObject.GetMetadataOk())
 	diags.Append(d...)
 	p.Metadata = metadata
+
+	// credential version
+	version, d := toStateVersion(apiObject.GetVersionOk())
+	diags.Append(d...)
+	p.Version = version
 
 	return diags
 }
