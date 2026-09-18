@@ -10,6 +10,10 @@ bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` v0.12.1 => v0.13.0
 `pingone_credential_type_versions`
 ```
 
+```release-note:new-data-source
+`pingone_credential_type_version`
+```
+
 ```release-note:enhancement
 `data-source/pingone_credential_type`: Added computed `version` attribute (`id`, `number`, `uri`)
 ```
