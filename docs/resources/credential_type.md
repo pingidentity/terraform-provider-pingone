@@ -137,6 +137,7 @@ EOT
 - `id` (String) The ID of this resource.
 - `issuer_id` (String) The identifier (UUID) of the issuer of the credential, which is the `id` of the `credential_issuer_profile` defined in the `environment`.
 - `updated_at` (String) Date and time the object was updated. Can be null.
+- `version` (Attributes) Contains version data for this credential type. (see [below for nested schema](#nestedatt--version))
 
 <a id="nestedatt--metadata"></a>
 ### Nested Schema for `metadata`
@@ -158,7 +159,7 @@ Optional:
 
 Read-Only:
 
-- `version` (Number) Number version of this credential.
+- `version` (Number) Version of this credential metadata.
 
 <a id="nestedatt--metadata--fields"></a>
 ### Nested Schema for `metadata.fields`
@@ -179,6 +180,17 @@ Optional:
 Read-Only:
 
 - `id` (String) Identifier of the field formatted as `<fields.type> -> <fields.title>`.
+
+
+
+<a id="nestedatt--version"></a>
+### Nested Schema for `version`
+
+Read-Only:
+
+- `id` (String) Identifier (UUID) of the credential type version.
+- `number` (Number) Version number of the credential type.
+- `uri` (String) URI to this version of the credential type.
 
 ## Import
 

@@ -50,6 +50,7 @@ type CredentialTypeResourceModel struct {
 	Metadata           types.Object                 `tfsdk:"metadata"`
 	RevokeOnDelete     types.Bool                   `tfsdk:"revoke_on_delete"`
 	Title              types.String                 `tfsdk:"title"`
+	Version            types.Object                 `tfsdk:"version"`
 	CreatedAt          timetypes.RFC3339            `tfsdk:"created_at"`
 	UpdatedAt          timetypes.RFC3339            `tfsdk:"updated_at"`
 }
@@ -101,6 +102,12 @@ var (
 		"attribute":    types.StringType,
 		"value":        types.StringType,
 		"required":     types.BoolType,
+	}
+
+	versionTFObjectTypes = map[string]attr.Type{
+		"id":     pingonetypes.ResourceIDType{},
+		"number": types.Int32Type,
+		"uri":    types.StringType,
 	}
 )
 
@@ -382,7 +389,7 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 						},
 					},
 					"version": schema.Int32Attribute{
-						Description: "Number version of this credential.",
+						Description: "Version of this credential metadata.",
 						Computed:    true,
 					},
 
@@ -466,6 +473,27 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 				},
 			},
 
+			"version": schema.SingleNestedAttribute{
+				Description: "Contains version data for this credential type.",
+				Computed:    true,
+
+				Attributes: map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Description: "Identifier (UUID) of the credential type version.",
+						Computed:    true,
+						CustomType:  pingonetypes.ResourceIDType{},
+					},
+					"number": schema.Int32Attribute{
+						Description: "Version number of the credential type.",
+						Computed:    true,
+					},
+					"uri": schema.StringAttribute{
+						Description: "URI to this version of the credential type.",
+						Computed:    true,
+					},
+				},
+			},
+
 			"created_at": schema.StringAttribute{
 				Description: "Date and time the object was created.",
 				Computed:    true,
@@ -495,7 +523,6 @@ func (r *CredentialTypeResource) ValidateConfig(ctx context.Context, req resourc
 	}
 
 	resp.Diagnostics.Append(data.validate(ctx, true)...)
-
 }
 
 func (r *CredentialTypeResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
@@ -983,6 +1010,11 @@ func (p *CredentialTypeResourceModel) toState(apiObject *credentials.CredentialT
 	diags.Append(d...)
 	p.Metadata = metadata
 
+	// credential version
+	version, d := toStateVersion(apiObject.GetVersionOk())
+	diags.Append(d...)
+	p.Version = version
+
 	return diags
 }
 
@@ -1047,6 +1079,24 @@ func toStateFields(innerFields []credentials.CredentialTypeMetaDataFieldsInner, 
 	diags.Append(d...)
 
 	return fields, diags
+}
+
+func toStateVersion(version *credentials.CredentialTypeVersionNumber, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || version == nil {
+		return types.ObjectNull(versionTFObjectTypes), diags
+	}
+
+	versionMap := map[string]attr.Value{
+		"id":     framework.PingOneResourceIDOkToTF(version.GetIdOk()),
+		"number": framework.Int32OkToTF(version.GetNumberOk()),
+		"uri":    framework.StringOkToTF(version.GetUriOk()),
+	}
+	flattenedObj, d := types.ObjectValue(versionTFObjectTypes, versionMap)
+	diags.Append(d...)
+
+	return flattenedObj, diags
 }
 
 func credentialTypeRetryConditions(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {

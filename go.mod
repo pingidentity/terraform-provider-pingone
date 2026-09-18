@@ -28,7 +28,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/patrickcping/pingone-go-sdk-v2 v0.14.14
 	github.com/patrickcping/pingone-go-sdk-v2/authorize v0.8.3
-	github.com/patrickcping/pingone-go-sdk-v2/credentials v0.12.1
+	github.com/patrickcping/pingone-go-sdk-v2/credentials v0.13.0
 	github.com/patrickcping/pingone-go-sdk-v2/management v0.72.0
 	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.25.1
 	github.com/patrickcping/pingone-go-sdk-v2/risk v0.22.0

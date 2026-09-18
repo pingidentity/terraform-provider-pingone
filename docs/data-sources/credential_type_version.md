@@ -1,20 +1,21 @@
 ---
-page_title: "pingone_credential_type Data Source - terraform-provider-pingone"
+page_title: "pingone_credential_type_version Data Source - terraform-provider-pingone"
 subcategory: "Neo (Verify & Credentials)"
 description: |-
-  Datasource to retrieve a PingOne Credentials credential type by its Credential Type Id.
+  Datasource to retrieve a single version of a PingOne Credentials credential type by its version ID.
 ---
 
-# pingone_credential_type (Data Source)
+# pingone_credential_type_version (Data Source)
 
-Datasource to retrieve a PingOne Credentials credential type by its Credential Type Id.
+Datasource to retrieve a single version of a PingOne Credentials credential type by its version ID.
 
 ## Example Usage
 
 ```terraform
-data "pingone_credential_type" "example_by_id" {
-  environment_id     = var.environment_id
-  credential_type_id = var.credential_type_id
+data "pingone_credential_type_version" "example_by_version_id" {
+  environment_id             = var.environment_id
+  credential_type_id         = var.credential_type_id
+  credential_type_version_id = var.credential_type_version_id
 }
 ```
 
@@ -23,26 +24,34 @@ data "pingone_credential_type" "example_by_id" {
 
 ### Required
 
-- `credential_type_id` (String) Identifier (UUID) associated with the credential type.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
-- `environment_id` (String) PingOne environment identifier (UUID) in which the credential type exists.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `credential_type_id` (String) The ID of the credential type to retrieve the version for.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `credential_type_version_id` (String) The ID of the credential type version to retrieve.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
+- `environment_id` (String) The ID of the environment in which the credential type exists.  Must be a valid PingOne resource ID.  This field is immutable and will trigger a replace plan if changed.
 
 ### Read-Only
 
+- `created_at` (String) Date and time the credential type version was created.
+- `id` (String) The ID of this resource.
+- `number` (Number) Version number of the credential type version.
+- `snapshot` (Attributes) The full credential type content as it was at this version. (see [below for nested schema](#nestedatt--snapshot))
+
+<a id="nestedatt--snapshot"></a>
+### Nested Schema for `snapshot`
+
+Read-Only:
+
 - `card_design_template` (String) An SVG formatted image containing placeholders for the credentials fields that need to be displayed in the image.
 - `card_type` (String) A descriptor of the credential type. Can be non-identity types such as proof of employment or proof of insurance.
-- `created_at` (String) Date and time the object was created.
+- `created_at` (String) Date and time the credential type version was created.
 - `description` (String) A description of the credential type.
-- `id` (String) The ID of this resource.
-- `issuer_id` (String) Identifier (UUID) of the credential issuer.
 - `management_mode` (String) Specifies the management mode of the credential type.
-- `metadata` (Attributes) An object that contains the names, data types, and other metadata related to the credentia (see [below for nested schema](#nestedatt--metadata))
+- `metadata` (Attributes) An object that contains the names, data types, and other metadata related to the credentia (see [below for nested schema](#nestedatt--snapshot--metadata))
 - `revoke_on_delete` (Boolean) Specifies whether a user's issued verifiable credentials are automatically revoked when the credential type is deleted.
 - `title` (String) Title of the credential.
 - `updated_at` (String) Date and time the object was updated. Can be null.
-- `version` (Attributes) Contains version data for this credential type. (see [below for nested schema](#nestedatt--version))
 
-<a id="nestedatt--metadata"></a>
-### Nested Schema for `metadata`
+<a id="nestedatt--snapshot--metadata"></a>
+### Nested Schema for `snapshot.metadata`
 
 Read-Only:
 
@@ -51,14 +60,14 @@ Read-Only:
 - `card_color` (String) Color to show on the credential.
 - `columns` (Number) Number of columns to organize the fields displayed on the credential.
 - `description` (String) Description of the credential.
-- `fields` (Attributes List) Array of objects representing the credential fields. (see [below for nested schema](#nestedatt--metadata--fields))
+- `fields` (Attributes List) Array of objects representing the credential fields. (see [below for nested schema](#nestedatt--snapshot--metadata--fields))
 - `logo_image` (String) URL or fully qualified path to the image file used for the credential logo.
 - `name` (String) Name of the credential.
 - `text_color` (String) Color of the text to show on the credential.
 - `version` (Number) Version of this credential metadata.
 
-<a id="nestedatt--metadata--fields"></a>
-### Nested Schema for `metadata.fields`
+<a id="nestedatt--snapshot--metadata--fields"></a>
+### Nested Schema for `snapshot.metadata.fields`
 
 Read-Only:
 
@@ -70,14 +79,3 @@ Read-Only:
 - `title` (String) Descriptive text when showing the field.
 - `type` (String) Type of data in the field.
 - `value` (String) The text to appear on the credential for a field.type of Alphanumeric Text.
-
-
-
-<a id="nestedatt--version"></a>
-### Nested Schema for `version`
-
-Read-Only:
-
-- `id` (String) Identifier (UUID) of the credential type version.
-- `number` (Number) Version number of the credential type.
-- `uri` (String) URI to this version of the credential type.
