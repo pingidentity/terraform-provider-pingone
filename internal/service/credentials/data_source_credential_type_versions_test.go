@@ -52,14 +52,15 @@ func TestAccCredentialTypeVersionsDataSource_Full(t *testing.T) {
 				// Updating the credential type forces the service to save the
 				// previous version and bump version.number, so at least two
 				// versions should exist after this step. The list is returned
-				// newest first, so versions.0 is the pre-update version 1.
+				// newest first, so versions.0 is the current version 2 and
+				// versions.1 is the saved version 1.
 				Config: testAccCredentialTypeVersionsDataSource_Full(environmentName, licenseID, resourceName, fmt.Sprintf("%s Updated", name), ""),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(dataSourceFullName, "versions.0.id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(dataSourceFullName, "versions.0.number", "1"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "versions.0.number", "2"),
 					resource.TestMatchResourceAttr(dataSourceFullName, "versions.0.created_at", verify.RFC3339Regexp),
 					resource.TestMatchResourceAttr(dataSourceFullName, "versions.1.id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttr(dataSourceFullName, "versions.1.number", "2"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "versions.1.number", "1"),
 					resource.TestMatchResourceAttr(dataSourceFullName, "versions.1.created_at", verify.RFC3339Regexp),
 				),
 			},
