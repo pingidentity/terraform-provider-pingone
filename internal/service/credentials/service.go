@@ -31,6 +31,8 @@ func DataSources() []func() datasource.DataSource {
 		NewDigitalWalletApplicationsDataSource,
 		NewCredentialTypeDataSource,
 		NewCredentialTypesDataSource,
+		NewCredentialTypeVersionDataSource,
+		NewCredentialTypeVersionsDataSource,
 		NewCredentialIssuanceRuleDataSource,
 	}
 	dataSources = append(dataSources, BetaDataSources()...)
