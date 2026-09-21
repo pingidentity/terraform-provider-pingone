@@ -35,7 +35,7 @@ data "pingone_credential_type" "example_by_id" {
 - `id` (String) The ID of this resource.
 - `issuer_id` (String) Identifier (UUID) of the credential issuer.
 - `management_mode` (String) Specifies the management mode of the credential type.
-- `metadata` (Attributes) An object that contains the names, data types, and other metadata related to the credentia (see [below for nested schema](#nestedatt--metadata))
+- `metadata` (Attributes) Contains the names, data types, and other metadata related to the credential. (see [below for nested schema](#nestedatt--metadata))
 - `revoke_on_delete` (Boolean) Specifies whether a user's issued verifiable credentials are automatically revoked when the credential type is deleted.
 - `title` (String) Title of the credential.
 - `updated_at` (String) Date and time the object was updated. Can be null.

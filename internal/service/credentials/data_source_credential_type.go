@@ -160,7 +160,7 @@ func (r *CredentialTypeDataSource) Schema(ctx context.Context, req datasource.Sc
 			},
 
 			"metadata": schema.SingleNestedAttribute{
-				Description: "An object that contains the names, data types, and other metadata related to the credentia",
+				Description: "Contains the names, data types, and other metadata related to the credential.",
 				Computed:    true,
 
 				Attributes: map[string]schema.Attribute{

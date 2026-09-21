@@ -45,7 +45,7 @@ Read-Only:
 - `created_at` (String) Date and time the credential type version was created.
 - `description` (String) A description of the credential type.
 - `management_mode` (String) Specifies the management mode of the credential type.
-- `metadata` (Attributes) An object that contains the names, data types, and other metadata related to the credentia (see [below for nested schema](#nestedatt--snapshot--metadata))
+- `metadata` (Attributes) Contains the names, data types, and other metadata related to the credential. (see [below for nested schema](#nestedatt--snapshot--metadata))
 - `revoke_on_delete` (Boolean) Specifies whether a user's issued verifiable credentials are automatically revoked when the credential type is deleted.
 - `title` (String) Title of the credential.
 - `updated_at` (String) Date and time the object was updated. Can be null.
