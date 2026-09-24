@@ -1263,6 +1263,35 @@ func (r *PhoneDeliverySettingsResource) Create(ctx context.Context, req resource
 		response = createResponse
 	}
 
+	// The service computes some parameters (for example, `clientAuthenticationMethod` on the
+	// OAUTH2 authentication method) asynchronously, so they're absent from the create and
+	// update response bodies but present on read.  Read the resource back to populate state
+	// with the computed values.
+	if !plan.ProviderCustom.IsNull() && !plan.ProviderCustom.IsUnknown() {
+		if phoneDeliverySettingsId := parsePhoneDeliverySettingsId(response); phoneDeliverySettingsId != "" {
+			var readResponse *management.NotificationsSettingsPhoneDeliverySettings
+			resp.Diagnostics.Append(legacysdk.ParseResponse(
+				ctx,
+
+				func() (any, *http.Response, error) {
+					fO, fR, fErr := r.Client.ManagementAPIClient.PhoneDeliverySettingsApi.ReadOnePhoneDeliverySettings(ctx, plan.EnvironmentId.ValueString(), phoneDeliverySettingsId).Execute()
+					return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+				},
+				"ReadOnePhoneDeliverySettings",
+				legacysdk.DefaultCustomError,
+				sdk.DefaultCreateReadRetryable,
+				&readResponse,
+			)...)
+			if resp.Diagnostics.HasError() {
+				return
+			}
+
+			if readResponse != nil {
+				response = readResponse
+			}
+		}
+	}
+
 	// Create the state to save
 	state = plan
 
@@ -1716,6 +1745,22 @@ func (p *PhoneDeliverySettingsResourceModel) expand(ctx context.Context, service
 	}
 
 	return &data, diags
+}
+
+func parsePhoneDeliverySettingsId(apiObject *management.NotificationsSettingsPhoneDeliverySettings) string {
+	if apiObject == nil {
+		return ""
+	}
+
+	if v := apiObject.NotificationsSettingsPhoneDeliverySettingsCustom; v != nil {
+		return v.GetId()
+	}
+
+	if v := apiObject.NotificationsSettingsPhoneDeliverySettingsTwilioSyniverse; v != nil {
+		return v.GetId()
+	}
+
+	return ""
 }
 
 func parsePhoneDeliverySettingsNumbers(apiObject *management.NotificationsSettingsPhoneDeliverySettings) (string, []management.NotificationsSettingsPhoneDeliverySettingsCustomNumbers, diag.Diagnostics) {

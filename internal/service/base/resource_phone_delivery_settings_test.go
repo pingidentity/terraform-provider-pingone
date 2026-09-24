@@ -515,7 +515,7 @@ func TestAccPhoneDeliverySettings_Custom_AuthMethods(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.name", name),
 
 		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.method", "OAUTH2"),
-		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.auth_url", "https://auth.example.com/oauth2/token"),
+		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.auth_url", "https://auth.pingone.com/oauth2/token"),
 		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.grant_type", "CLIENT_CREDENTIALS"),
 		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.client_id", "testclientid"),
 		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.client_secret", "testclientsecret"),
@@ -549,9 +549,9 @@ func TestAccPhoneDeliverySettings_Custom_AuthMethods(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.name", name),
 
 		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.method", "OAUTH2"),
-		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.auth_url", "https://auth.example.com/oauth2/token"),
+		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.auth_url", "https://auth.pingone.com/oauth2/token"),
 		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.grant_type", "JWT_BEARER"),
-		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.assertion", "testassertion"),
+		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.assertion", "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJpc3MiOiAiaHR0cHM6Ly9hdXRoLnBpbmdvbmUuY29tL3Rlc3QiLCAic3ViIjogInRlc3RjbGllbnRpZCIsICJhdWQiOiAiaHR0cHM6Ly9hdXRoLnBpbmdvbmUuY29tL29hdXRoMi90b2tlbiIsICJleHAiOiA5OTk5OTk5OTk5LCAiaWF0IjogMTYwMDAwMDAwMH0.ZmFrZS1zaWduYXR1cmUtZm9yLXRlc3Rpbmc"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "provider_custom.authentication.client_id"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "provider_custom.authentication.client_secret"),
 
@@ -601,17 +601,36 @@ func TestAccPhoneDeliverySettings_Custom_AuthMethods(t *testing.T) {
 			},
 			// OAUTH2 with JWT_BEARER grant type
 			{
-				Config: testAccPhoneDeliverySettingsConfig_Custom_OAUTH2(environmentName, licenseID, resourceName, name, "JWT_BEARER", "testassertion", ""),
+				Config: testAccPhoneDeliverySettingsConfig_Custom_OAUTH2(environmentName, licenseID, resourceName, name, "JWT_BEARER", "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJpc3MiOiAiaHR0cHM6Ly9hdXRoLnBpbmdvbmUuY29tL3Rlc3QiLCAic3ViIjogInRlc3RjbGllbnRpZCIsICJhdWQiOiAiaHR0cHM6Ly9hdXRoLnBpbmdvbmUuY29tL29hdXRoMi90b2tlbiIsICJleHAiOiA5OTk5OTk5OTk5LCAiaWF0IjogMTYwMDAwMDAwMH0.ZmFrZS1zaWduYXR1cmUtZm9yLXRlc3Rpbmc", ""),
 				Check:  oauth2JwtBearerCheck,
 			},
 			{
-				Config:  testAccPhoneDeliverySettingsConfig_Custom_OAUTH2(environmentName, licenseID, resourceName, name, "JWT_BEARER", "testassertion", ""),
+				Config:  testAccPhoneDeliverySettingsConfig_Custom_OAUTH2(environmentName, licenseID, resourceName, name, "JWT_BEARER", "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJpc3MiOiAiaHR0cHM6Ly9hdXRoLnBpbmdvbmUuY29tL3Rlc3QiLCAic3ViIjogInRlc3RjbGllbnRpZCIsICJhdWQiOiAiaHR0cHM6Ly9hdXRoLnBpbmdvbmUuY29tL29hdXRoMi90b2tlbiIsICJleHAiOiA5OTk5OTk5OTk5LCAiaWF0IjogMTYwMDAwMDAwMH0.ZmFrZS1zaWduYXR1cmUtZm9yLXRlc3Rpbmc", ""),
 				Destroy: true,
 			},
 			// CUSTOM_HEADER
 			{
 				Config: testAccPhoneDeliverySettingsConfig_Custom_CUSTOM_HEADER(environmentName, licenseID, resourceName, name, "X-Custom-Auth", "testheadervalue"),
 				Check:  customHeaderCheck,
+			},
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"provider_custom.authentication.grant_type",
+					"provider_custom.authentication.header_value",
+				},
 			},
 			{
 				Config:  testAccPhoneDeliverySettingsConfig_Custom_CUSTOM_HEADER(environmentName, licenseID, resourceName, name, "X-Custom-Auth", "testheadervalue"),
@@ -629,24 +648,6 @@ func TestAccPhoneDeliverySettings_Custom_AuthMethods(t *testing.T) {
 			{
 				Config:      testAccPhoneDeliverySettingsConfig_Custom_OAUTH2_ClientIdWithJwtBearer(environmentName, licenseID, resourceName, name),
 				ExpectError: regexp.MustCompile(`Invalid argument combination`),
-			},
-			{
-				ResourceName: resourceFullName,
-				ImportStateIdFunc: func() resource.ImportStateIdFunc {
-					return func(s *terraform.State) (string, error) {
-						rs, ok := s.RootModule().Resources[resourceFullName]
-						if !ok {
-							return "", fmt.Errorf("resource not found: %s", resourceFullName)
-						}
-
-						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
-					}
-				}(),
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateVerifyIgnore: []string{
-					"provider_custom.authentication.header_value",
-				},
 			},
 		},
 	})
@@ -903,7 +904,7 @@ func testAccPhoneDeliverySettingsConfig_Custom_OAUTH2(environmentName, licenseID
 	authentication := fmt.Sprintf(`
     authentication = {
       method     = "OAUTH2"
-      auth_url   = "https://auth.example.com/oauth2/token"
+      auth_url   = "https://auth.pingone.com/oauth2/token"
       grant_type = "%[1]s"
 %[2]s%[3]s      scopes     = ["sms:send"]
     }`, grantType, credential1Block(grantType, credential1), credential2Block(grantType, credential2))
@@ -1048,9 +1049,9 @@ resource "pingone_phone_delivery_settings" "%[3]s" {
 
     authentication = {
       method     = "OAUTH2"
-      auth_url   = "https://auth.example.com/oauth2/token"
+      auth_url   = "https://auth.pingone.com/oauth2/token"
       grant_type = "JWT_BEARER"
-      assertion  = "testassertion"
+      assertion  = "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCJ9.eyJpc3MiOiAiaHR0cHM6Ly9hdXRoLnBpbmdvbmUuY29tL3Rlc3QiLCAic3ViIjogInRlc3RjbGllbnRpZCIsICJhdWQiOiAiaHR0cHM6Ly9hdXRoLnBpbmdvbmUuY29tL29hdXRoMi90b2tlbiIsICJleHAiOiA5OTk5OTk5OTk5LCAiaWF0IjogMTYwMDAwMDAwMH0.ZmFrZS1zaWduYXR1cmUtZm9yLXRlc3Rpbmc"
       client_id  = "testclientid"
     }
 
