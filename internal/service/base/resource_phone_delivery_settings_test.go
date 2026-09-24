@@ -496,6 +496,162 @@ func TestAccPhoneDeliverySettings_Custom(t *testing.T) {
 	})
 }
 
+func TestAccPhoneDeliverySettings_Custom_AuthMethods(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_phone_delivery_settings.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	name := resourceName
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	oauth2ClientCredentialsCheck := resource.ComposeTestCheckFunc(
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckResourceAttr(resourceFullName, "provider_type", "CUSTOM_PROVIDER"),
+		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.name", name),
+
+		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.method", "OAUTH2"),
+		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.auth_url", "https://auth.example.com/oauth2/token"),
+		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.grant_type", "CLIENT_CREDENTIALS"),
+		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.client_id", "testclientid"),
+		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.client_secret", "testclientsecret"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "provider_custom.authentication.assertion"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "provider_custom.authentication.username"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "provider_custom.authentication.password"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "provider_custom.authentication.auth_token"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "provider_custom.authentication.header_name"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "provider_custom.authentication.header_value"),
+		resource.TestMatchResourceAttr(resourceFullName, "provider_custom.authentication.client_authentication_method", regexp.MustCompile(`^(BASIC_AUTH_HEADER|BODY)$`)),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "provider_custom.authentication.scopes.*", "sms:send"),
+
+		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.requests.#", "1"),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "provider_custom.requests.*", map[string]string{
+			"delivery_method":     "SMS",
+			"method":              "POST",
+			"phone_number_format": "FULL",
+			"url":                 "https://pingdevops.com/fake-send-to-test",
+		}),
+
+		resource.TestCheckNoResourceAttr(resourceFullName, "provider_custom_twilio"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "provider_custom_syniverse"),
+		resource.TestMatchResourceAttr(resourceFullName, "created_at", verify.RFC3339Regexp),
+		resource.TestMatchResourceAttr(resourceFullName, "updated_at", verify.RFC3339Regexp),
+	)
+
+	oauth2JwtBearerCheck := resource.ComposeTestCheckFunc(
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckResourceAttr(resourceFullName, "provider_type", "CUSTOM_PROVIDER"),
+		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.name", name),
+
+		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.method", "OAUTH2"),
+		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.auth_url", "https://auth.example.com/oauth2/token"),
+		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.grant_type", "JWT_BEARER"),
+		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.assertion", "testassertion"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "provider_custom.authentication.client_id"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "provider_custom.authentication.client_secret"),
+
+		resource.TestCheckNoResourceAttr(resourceFullName, "provider_custom_twilio"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "provider_custom_syniverse"),
+		resource.TestMatchResourceAttr(resourceFullName, "updated_at", verify.RFC3339Regexp),
+	)
+
+	customHeaderCheck := resource.ComposeTestCheckFunc(
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckResourceAttr(resourceFullName, "provider_type", "CUSTOM_PROVIDER"),
+		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.name", name),
+
+		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.method", "CUSTOM_HEADER"),
+		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.header_name", "X-Custom-Auth"),
+		resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.header_value", "testheadervalue"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "provider_custom.authentication.username"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "provider_custom.authentication.password"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "provider_custom.authentication.auth_token"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "provider_custom.authentication.auth_url"),
+
+		resource.TestCheckNoResourceAttr(resourceFullName, "provider_custom_twilio"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "provider_custom_syniverse"),
+		resource.TestMatchResourceAttr(resourceFullName, "updated_at", verify.RFC3339Regexp),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckTestAccFlaky(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             base.PhoneDeliverySettings_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// OAUTH2 with CLIENT_CREDENTIALS grant type
+			{
+				Config: testAccPhoneDeliverySettingsConfig_Custom_OAUTH2(environmentName, licenseID, resourceName, name, "CLIENT_CREDENTIALS", "testclientid", "testclientsecret"),
+				Check:  oauth2ClientCredentialsCheck,
+			},
+			{
+				Config:  testAccPhoneDeliverySettingsConfig_Custom_OAUTH2(environmentName, licenseID, resourceName, name, "CLIENT_CREDENTIALS", "testclientid", "testclientsecret"),
+				Destroy: true,
+			},
+			// OAUTH2 with JWT_BEARER grant type
+			{
+				Config: testAccPhoneDeliverySettingsConfig_Custom_OAUTH2(environmentName, licenseID, resourceName, name, "JWT_BEARER", "testassertion", ""),
+				Check:  oauth2JwtBearerCheck,
+			},
+			{
+				Config:  testAccPhoneDeliverySettingsConfig_Custom_OAUTH2(environmentName, licenseID, resourceName, name, "JWT_BEARER", "testassertion", ""),
+				Destroy: true,
+			},
+			// CUSTOM_HEADER
+			{
+				Config: testAccPhoneDeliverySettingsConfig_Custom_CUSTOM_HEADER(environmentName, licenseID, resourceName, name, "X-Custom-Auth", "testheadervalue"),
+				Check:  customHeaderCheck,
+			},
+			{
+				Config:  testAccPhoneDeliverySettingsConfig_Custom_CUSTOM_HEADER(environmentName, licenseID, resourceName, name, "X-Custom-Auth", "testheadervalue"),
+				Destroy: true,
+			},
+			// Errors
+			{
+				Config:      testAccPhoneDeliverySettingsConfig_Custom_OAUTH2_MissingAuthUrl(environmentName, licenseID, resourceName, name),
+				ExpectError: regexp.MustCompile(`Missing required argument`),
+			},
+			{
+				Config:      testAccPhoneDeliverySettingsConfig_Custom_CUSTOM_HEADER_MissingHeaderValue(environmentName, licenseID, resourceName, name),
+				ExpectError: regexp.MustCompile(`Missing required argument`),
+			},
+			{
+				Config:      testAccPhoneDeliverySettingsConfig_Custom_OAUTH2_ClientIdWithJwtBearer(environmentName, licenseID, resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid argument combination`),
+			},
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"provider_custom.authentication.header_value",
+				},
+			},
+		},
+	})
+}
+
 func TestAccPhoneDeliverySettings_BadParameters(t *testing.T) {
 	t.Parallel()
 
@@ -729,6 +885,173 @@ resource "pingone_phone_delivery_settings" "%[3]s" {
     authentication = {
       method     = "BEARER"
       auth_token = "testtoken"
+    }
+
+    requests = [
+      {
+        delivery_method     = "SMS"
+        method              = "GET"
+        phone_number_format = "FULL"
+        url                 = "https://pingdevops.com/fake-send-to-test?to=$${to}&message=$${message}"
+      }
+    ]
+  }
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}
+
+func testAccPhoneDeliverySettingsConfig_Custom_OAUTH2(environmentName, licenseID, resourceName, name, grantType, credential1, credential2 string) string {
+	authentication := fmt.Sprintf(`
+    authentication = {
+      method     = "OAUTH2"
+      auth_url   = "https://auth.example.com/oauth2/token"
+      grant_type = "%[1]s"
+%[2]s%[3]s      scopes     = ["sms:send"]
+    }`, grantType, credential1Block(grantType, credential1), credential2Block(grantType, credential2))
+
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_phone_delivery_settings" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  provider_custom = {
+    name = "%[4]s"
+%[5]s
+
+    requests = [
+      {
+        body = jsonencode({
+          "to"      = "$${to}",
+          "from"    = "$${from}",
+          "message" = "$${message}"
+        })
+        delivery_method = "SMS"
+        headers = {
+          "content-type" = "application/json",
+        }
+        method              = "POST"
+        phone_number_format = "FULL"
+        url                 = "https://pingdevops.com/fake-send-to-test"
+      }
+    ]
+  }
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, authentication)
+}
+
+func credential1Block(grantType, credential1 string) string {
+	if grantType == "JWT_BEARER" {
+		return fmt.Sprintf("      assertion  = \"%[1]s\"\n", credential1)
+	}
+	return fmt.Sprintf("      client_id  = \"%[1]s\"\n", credential1)
+}
+
+func credential2Block(grantType, credential2 string) string {
+	if grantType == "JWT_BEARER" {
+		return ""
+	}
+	return fmt.Sprintf("      client_secret = \"%[1]s\"\n", credential2)
+}
+
+func testAccPhoneDeliverySettingsConfig_Custom_CUSTOM_HEADER(environmentName, licenseID, resourceName, name, headerName, headerValue string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_phone_delivery_settings" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  provider_custom = {
+    name = "%[4]s"
+
+    authentication = {
+      method       = "CUSTOM_HEADER"
+      header_name  = "%[5]s"
+      header_value = "%[6]s"
+    }
+
+    requests = [
+      {
+        delivery_method     = "SMS"
+        method              = "GET"
+        phone_number_format = "FULL"
+        url                 = "https://pingdevops.com/fake-send-to-test?to=$${to}&message=$${message}"
+      }
+    ]
+  }
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name, headerName, headerValue)
+}
+
+func testAccPhoneDeliverySettingsConfig_Custom_OAUTH2_MissingAuthUrl(environmentName, licenseID, resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_phone_delivery_settings" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  provider_custom = {
+    name = "%[4]s"
+
+    authentication = {
+      method        = "OAUTH2"
+      grant_type    = "CLIENT_CREDENTIALS"
+      client_id     = "testclientid"
+      client_secret = "testclientsecret"
+    }
+
+    requests = [
+      {
+        delivery_method     = "SMS"
+        method              = "GET"
+        phone_number_format = "FULL"
+        url                 = "https://pingdevops.com/fake-send-to-test?to=$${to}&message=$${message}"
+      }
+    ]
+  }
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}
+
+func testAccPhoneDeliverySettingsConfig_Custom_CUSTOM_HEADER_MissingHeaderValue(environmentName, licenseID, resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_phone_delivery_settings" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  provider_custom = {
+    name = "%[4]s"
+
+    authentication = {
+      method      = "CUSTOM_HEADER"
+      header_name = "X-Custom-Auth"
+    }
+
+    requests = [
+      {
+        delivery_method     = "SMS"
+        method              = "GET"
+        phone_number_format = "FULL"
+        url                 = "https://pingdevops.com/fake-send-to-test?to=$${to}&message=$${message}"
+      }
+    ]
+  }
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, name)
+}
+
+func testAccPhoneDeliverySettingsConfig_Custom_OAUTH2_ClientIdWithJwtBearer(environmentName, licenseID, resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_phone_delivery_settings" "%[3]s" {
+  environment_id = pingone_environment.%[2]s.id
+
+  provider_custom = {
+    name = "%[4]s"
+
+    authentication = {
+      method     = "OAUTH2"
+      auth_url   = "https://auth.example.com/oauth2/token"
+      grant_type = "JWT_BEARER"
+      assertion  = "testassertion"
+      client_id  = "testclientid"
     }
 
     requests = [
