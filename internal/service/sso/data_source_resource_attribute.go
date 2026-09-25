@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 
 	frameworkdiag "github.com/hashicorp/terraform-plugin-framework/diag"
@@ -237,4 +238,63 @@ func fetchResourceAttributeFromNameSDKFunc(ctx context.Context, apiClient *manag
 	}
 
 	return nil, initialHttpResponse, nil
+}
+
+// fetchResourceAttributeIDFromName returns the ID of the named resource attribute, or nil if it cannot be found.
+func fetchResourceAttributeIDFromName(ctx context.Context, apiClient *management.APIClient, environmentID, resourceID, resourceAttributeName string) (*string, frameworkdiag.Diagnostics) {
+	var diags frameworkdiag.Diagnostics
+
+	var returnVar *management.ResourceAttribute
+	diags.Append(legacysdk.ParseResponse(
+		ctx,
+
+		func() (any, *http.Response, error) {
+			return fetchResourceAttributeFromNameSDKFunc(ctx, apiClient, environmentID, resourceID, resourceAttributeName)
+		},
+		"ReadAllResourceAttributes",
+		legacysdk.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+		&returnVar,
+	)...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	if returnVar == nil {
+		return nil, diags
+	}
+
+	id := returnVar.GetId()
+
+	return &id, diags
+}
+
+// validateMappedClaimsIncludeSub validates that the `sub` resource attribute ID is included in the
+// `mappedClaims` property of the given resource scope on a custom resource, which the API requires
+// when `enableMappedClaims` is set to `true`.
+func validateMappedClaimsIncludeSub(ctx context.Context, apiClient *management.APIClient, environmentID, resourceID string, resourceScope *management.ResourceScope) frameworkdiag.Diagnostics {
+	var diags frameworkdiag.Diagnostics
+
+	subAttributeID, diags := fetchResourceAttributeIDFromName(ctx, apiClient, environmentID, resourceID, "sub")
+	if diags.HasError() {
+		return diags
+	}
+
+	if subAttributeID == nil {
+		diags.AddError(
+			"Invalid attribute value",
+			"Cannot find the `sub` resource attribute, which is required in `mapped_claims` when `enable_mapped_claims` is set to `true`.  Please check that the `sub` resource attribute exists for the resource.",
+		)
+		return diags
+	}
+
+	if !slices.Contains(resourceScope.GetMappedClaims(), *subAttributeID) {
+		diags.AddError(
+			"Invalid attribute value",
+			"When `enable_mapped_claims` is set to `true`, the `mapped_claims` property must include the ID of the `sub` resource attribute.  Please add the ID of the `sub` resource attribute to `mapped_claims`.",
+		)
+		return diags
+	}
+
+	return diags
 }

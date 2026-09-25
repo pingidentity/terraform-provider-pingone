@@ -43,6 +43,8 @@ resource "pingone_resource_scope_openid" "my_new_resource_scope" {
   mapped_claims = [
     pingone_resource_attribute.my_resource_attribute.id
   ]
+
+  enable_mapped_claims = true
 }
 ```
 
@@ -57,6 +59,7 @@ resource "pingone_resource_scope_openid" "my_new_resource_scope" {
 ### Optional
 
 - `description` (String) A description to apply to the resource scope.  The description can only be set when defining new scopes.
+- `enable_mapped_claims` (Boolean) A Boolean that enables attribute mapping in scopes to control the attributes included in access tokens.  If this property is not set or set to `false` (default), the access token includes all custom attribute claims.  When set to `true`, the access token includes only the claims mapped in the scope.
 - `mapped_claims` (Set of String) A set of custom resource attribute IDs.  This property does not control predefined OpenID Connect (OIDC) mappings, such as the `email` claim in the OIDC `email` scope or the `name` claim in the `profile` scope. You can create custom attributes, and these custom attributes can be added to `mapped_claims` and will display in the response.
 
 ### Read-Only
