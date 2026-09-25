@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -595,6 +596,18 @@ func TestAccPhoneDeliverySettings_Custom_AuthMethods(t *testing.T) {
 				Config: testAccPhoneDeliverySettingsConfig_Custom_OAUTH2(environmentName, licenseID, resourceName, name, "CLIENT_CREDENTIALS", "testclientid", "testclientsecret"),
 				Check:  oauth2ClientCredentialsCheck,
 			},
+			// In-place update (scopes change) exercises the Update-path read-back of
+			// service-computed parameters like client_authentication_method
+			{
+				Config: testAccPhoneDeliverySettingsConfig_Custom_OAUTH2_Scopes(environmentName, licenseID, resourceName, name, "CLIENT_CREDENTIALS", "testclientid", "testclientsecret", []string{"sms:send", "voice:send"}),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.method", "OAUTH2"),
+					resource.TestCheckResourceAttr(resourceFullName, "provider_custom.authentication.grant_type", "CLIENT_CREDENTIALS"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "provider_custom.authentication.scopes.*", "sms:send"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "provider_custom.authentication.scopes.*", "voice:send"),
+					resource.TestMatchResourceAttr(resourceFullName, "provider_custom.authentication.client_authentication_method", regexp.MustCompile(`^(BASIC_AUTH_HEADER|BODY)$`)),
+				),
+			},
 			{
 				Config:  testAccPhoneDeliverySettingsConfig_Custom_OAUTH2(environmentName, licenseID, resourceName, name, "CLIENT_CREDENTIALS", "testclientid", "testclientsecret"),
 				Destroy: true,
@@ -628,7 +641,6 @@ func TestAccPhoneDeliverySettings_Custom_AuthMethods(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateVerifyIgnore: []string{
-					"provider_custom.authentication.grant_type",
 					"provider_custom.authentication.header_value",
 				},
 			},
@@ -901,13 +913,22 @@ resource "pingone_phone_delivery_settings" "%[3]s" {
 }
 
 func testAccPhoneDeliverySettingsConfig_Custom_OAUTH2(environmentName, licenseID, resourceName, name, grantType, credential1, credential2 string) string {
+	return testAccPhoneDeliverySettingsConfig_Custom_OAUTH2_Scopes(environmentName, licenseID, resourceName, name, grantType, credential1, credential2, []string{"sms:send"})
+}
+
+func testAccPhoneDeliverySettingsConfig_Custom_OAUTH2_Scopes(environmentName, licenseID, resourceName, name, grantType, credential1, credential2 string, scopes []string) string {
+	scopesList := make([]string, 0, len(scopes))
+	for _, scope := range scopes {
+		scopesList = append(scopesList, fmt.Sprintf("%q", scope))
+	}
+
 	authentication := fmt.Sprintf(`
     authentication = {
       method     = "OAUTH2"
       auth_url   = "https://auth.pingone.com/oauth2/token"
       grant_type = "%[1]s"
-%[2]s%[3]s      scopes     = ["sms:send"]
-    }`, grantType, credential1Block(grantType, credential1), credential2Block(grantType, credential2))
+%[2]s%[3]s      scopes     = [%[4]s]
+    }`, grantType, credential1Block(grantType, credential1), credential2Block(grantType, credential2), strings.Join(scopesList, ", "))
 
 	return fmt.Sprintf(`
 	%[1]s

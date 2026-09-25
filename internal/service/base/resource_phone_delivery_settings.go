@@ -496,8 +496,14 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 
 								Default: stringdefault.StaticString(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHGRANTTYPE_CLIENT_CREDENTIALS)),
 
+								// grant_type is relevant only when method is OAUTH2; the API
+								// silently drops it for other methods, causing drift.
 								Validators: []validator.String{
 									stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumNotificationsSettingsPhoneDeliverySettingsCustomAuthGrantTypeEnumValues)...),
+									stringvalidatorinternal.ConflictsIfDoesNotMatchPathValue(
+										types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_OAUTH2)),
+										path.MatchRelative().AtParent().AtName("method"),
+									),
 								},
 							},
 
@@ -516,6 +522,10 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 										types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHGRANTTYPE_CLIENT_CREDENTIALS)),
 										path.MatchRelative().AtParent().AtName("grant_type"),
 									),
+									stringvalidatorinternal.ConflictsIfDoesNotMatchPathValue(
+										types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_OAUTH2)),
+										path.MatchRelative().AtParent().AtName("method"),
+									),
 								},
 							},
 
@@ -532,6 +542,10 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 									stringvalidatorinternal.ConflictsIfMatchesPathValue(
 										types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHGRANTTYPE_JWT_BEARER)),
 										path.MatchRelative().AtParent().AtName("grant_type"),
+									),
+									stringvalidatorinternal.ConflictsIfDoesNotMatchPathValue(
+										types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_OAUTH2)),
+										path.MatchRelative().AtParent().AtName("method"),
 									),
 								},
 							},
@@ -551,6 +565,10 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 										types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHGRANTTYPE_JWT_BEARER)),
 										path.MatchRelative().AtParent().AtName("grant_type"),
 									),
+									stringvalidatorinternal.ConflictsIfDoesNotMatchPathValue(
+										types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_OAUTH2)),
+										path.MatchRelative().AtParent().AtName("method"),
+									),
 								},
 							},
 
@@ -558,6 +576,15 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 								Description:         providerCustomAuthenticationScopesDescription.Description,
 								MarkdownDescription: providerCustomAuthenticationScopesDescription.MarkdownDescription,
 								Optional:            true,
+
+								// scopes is relevant only when method is OAUTH2; the API
+								// silently drops it for other methods, causing drift.
+								Validators: []validator.Set{
+									setvalidatorinternal.ConflictsIfDoesNotMatchPathValue(
+										types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_OAUTH2)),
+										path.MatchRelative().AtParent().AtName("method"),
+									),
+								},
 
 								ElementType: types.StringType,
 							},
@@ -1386,6 +1413,35 @@ func (r *PhoneDeliverySettingsResource) Update(ctx context.Context, req resource
 		return
 	}
 
+	// The service computes some parameters (for example, `clientAuthenticationMethod` on the
+	// OAUTH2 authentication method) asynchronously, so they're absent from the create and
+	// update response bodies but present on read.  Read the resource back to populate state
+	// with the computed values.
+	if !plan.ProviderCustom.IsNull() && !plan.ProviderCustom.IsUnknown() {
+		if phoneDeliverySettingsId := parsePhoneDeliverySettingsId(response); phoneDeliverySettingsId != "" {
+			var readResponse *management.NotificationsSettingsPhoneDeliverySettings
+			resp.Diagnostics.Append(legacysdk.ParseResponse(
+				ctx,
+
+				func() (any, *http.Response, error) {
+					fO, fR, fErr := r.Client.ManagementAPIClient.PhoneDeliverySettingsApi.ReadOnePhoneDeliverySettings(ctx, plan.EnvironmentId.ValueString(), phoneDeliverySettingsId).Execute()
+					return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+				},
+				"ReadOnePhoneDeliverySettings",
+				legacysdk.DefaultCustomError,
+				sdk.DefaultCreateReadRetryable,
+				&readResponse,
+			)...)
+			if resp.Diagnostics.HasError() {
+				return
+			}
+
+			if readResponse != nil {
+				response = readResponse
+			}
+		}
+	}
+
 	// Create the state to save
 	state = plan
 
@@ -2014,13 +2070,14 @@ func phoneDeliverySettingsCustomAuthenticationOkToTF(planData *PhoneDeliverySett
 		objMap["client_secret"] = planData.ClientSecret
 		objMap["header_value"] = planData.HeaderValue
 		objMap["assertion"] = planData.Assertion
+	}
 
-		// The service doesn't echo `grantType` back for non-OAUTH2 methods, while the
-		// schema default applies CLIENT_CREDENTIALS on every plan.  Carry the plan value
-		// over when the API response is empty to avoid a perpetual diff.
-		if grantTypeValue := framework.EnumOkToTF(apiObject.GetGrantTypeOk()); grantTypeValue.IsNull() && !planData.GrantType.IsNull() && !planData.GrantType.IsUnknown() {
-			objMap["grant_type"] = planData.GrantType
-		}
+	// The service doesn't echo `grantType` back for non-OAUTH2 methods, while the schema
+	// default applies CLIENT_CREDENTIALS on every plan.  Default the state value to
+	// CLIENT_CREDENTIALS when the API response is empty, to avoid a spurious diff after
+	// import and a perpetual diff on refresh.
+	if grantTypeValue := framework.EnumOkToTF(apiObject.GetGrantTypeOk()); grantTypeValue.IsNull() {
+		objMap["grant_type"] = types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHGRANTTYPE_CLIENT_CREDENTIALS))
 	}
 
 	returnVar, d := types.ObjectValue(customAuthenticationTFObjectTypes, objMap)
