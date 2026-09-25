@@ -21,6 +21,14 @@ description: |-
 
 {{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-custom-provider.tf") }}
 
+## Example Usage - Custom Provider with OAUTH2 Authentication
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-custom-provider-oauth2.tf") }}
+
+## Example Usage - Custom Provider with Custom Header
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-custom-provider-custom-header.tf") }}
+
 {{ .SchemaMarkdown | trimspace }}
 
 {{ if .HasImport -}}
