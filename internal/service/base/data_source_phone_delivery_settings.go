@@ -275,8 +275,9 @@ func (r *PhoneDeliverySettingsDataSource) Schema(ctx context.Context, req dataso
 							},
 
 							"username": schema.StringAttribute{
-								Description: providerCustomAuthenticationUsernameDescription.Description,
-								Computed:    true,
+								Description:         providerCustomAuthenticationUsernameDescription.Description,
+								MarkdownDescription: providerCustomAuthenticationUsernameDescription.MarkdownDescription,
+								Computed:            true,
 							},
 
 							"password": schema.StringAttribute{
@@ -407,18 +408,21 @@ func (r *PhoneDeliverySettingsDataSource) Schema(ctx context.Context, req dataso
 						NestedObject: schema.NestedAttributeObject{
 							Attributes: map[string]schema.Attribute{
 								"after_tag": schema.StringAttribute{
-									Description: providerCustomRequestsAfterTagDescription.Description,
-									Computed:    true,
+									Description:         providerCustomRequestsAfterTagDescription.Description,
+									MarkdownDescription: providerCustomRequestsAfterTagDescription.MarkdownDescription,
+									Computed:            true,
 								},
 
 								"before_tag": schema.StringAttribute{
-									Description: providerCustomRequestsBeforeTagDescription.Description,
-									Computed:    true,
+									Description:         providerCustomRequestsBeforeTagDescription.Description,
+									MarkdownDescription: providerCustomRequestsBeforeTagDescription.MarkdownDescription,
+									Computed:            true,
 								},
 
 								"body": schema.StringAttribute{
-									Description: providerCustomRequestsBodyDescription.Description,
-									Computed:    true,
+									Description:         providerCustomRequestsBodyDescription.Description,
+									MarkdownDescription: providerCustomRequestsBodyDescription.MarkdownDescription,
+									Computed:            true,
 								},
 
 								"delivery_method": schema.StringAttribute{

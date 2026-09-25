@@ -2048,13 +2048,15 @@ func phoneDeliverySettingsCustomAuthenticationOkToTF(planData *PhoneDeliverySett
 		return types.ObjectNull(customAuthenticationTFObjectTypes), diags
 	}
 
+	grantTypeValue := framework.EnumOkToTF(apiObject.GetGrantTypeOk())
+
 	objMap := map[string]attr.Value{
 		"method":                       framework.EnumOkToTF(apiObject.GetMethodOk()),
 		"password":                     types.StringNull(),
 		"auth_token":                   types.StringNull(),
 		"username":                     framework.StringOkToTF(apiObject.GetUsernameOk()),
 		"auth_url":                     framework.StringOkToTF(apiObject.GetAuthUrlOk()),
-		"grant_type":                   framework.EnumOkToTF(apiObject.GetGrantTypeOk()),
+		"grant_type":                   grantTypeValue,
 		"assertion":                    types.StringNull(),
 		"client_id":                    framework.StringOkToTF(apiObject.GetClientIdOk()),
 		"client_secret":                types.StringNull(),
@@ -2076,7 +2078,7 @@ func phoneDeliverySettingsCustomAuthenticationOkToTF(planData *PhoneDeliverySett
 	// default applies CLIENT_CREDENTIALS on every plan.  Default the state value to
 	// CLIENT_CREDENTIALS when the API response is empty, to avoid a spurious diff after
 	// import and a perpetual diff on refresh.
-	if grantTypeValue := framework.EnumOkToTF(apiObject.GetGrantTypeOk()); grantTypeValue.IsNull() {
+	if grantTypeValue.IsNull() {
 		objMap["grant_type"] = types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHGRANTTYPE_CLIENT_CREDENTIALS))
 	}
 

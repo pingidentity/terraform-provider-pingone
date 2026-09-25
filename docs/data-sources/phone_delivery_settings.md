@@ -93,7 +93,7 @@ Read-Only:
 - `method` (String) The custom provider account's authentication method.  Options are `BASIC` (`username` and `password` parameters are required to be set), `BEARER` (`token` parameter is required to be set), `CUSTOM_HEADER` (`header_name` and `header_value` parameters are required to be set), `OAUTH2` (`auth_url` parameter is required to be set.  `grant_type` defaults to `CLIENT_CREDENTIALS`, where `client_id` and `client_secret` parameters are required to be set, or `JWT_BEARER`, where `assertion` parameter is required to be set).
 - `password` (String, Sensitive) A string that specifies the password for the custom provider account. Required when `method` is `BASIC`.  This is a sensitive parameter and is not returned by the service.
 - `scopes` (Set of String) A set of strings that specifies the scopes to request in the access token from the authorization server, for example, `sms:send`, `voice:send`.
-- `username` (String) A string that specifies the username for the custom provider account. Required when "method" is "BASIC"
+- `username` (String) A string that specifies the username for the custom provider account. Required when `method` is `BASIC`
 
 
 <a id="nestedatt--provider_custom--numbers"></a>
@@ -114,9 +114,9 @@ Read-Only:
 
 Read-Only:
 
-- `after_tag` (String) For voice OTP notifications only.  A string that specifies a closing tag which is commonly used by custom providers for defining a pause between each number in the OTP number string.  Example value: "</Say> <Pause length="1"/>"
-- `before_tag` (String) For voice OTP notifications only.  A string that specifies an opening tag which is commonly used by custom providers for defining a pause between each number in the OTP number string.  Possible value: "<Say>".
-- `body` (String) Optional when the "method" is "POST".  A string that specifies the notification's request body. The body should include the "${to}" and "${message}" mandatory variables.
+- `after_tag` (String) For voice OTP notifications only.  A string that specifies a closing tag which is commonly used by custom providers for defining a pause between each number in the OTP number string.  Example value: `</Say> <Pause length="1"/>`
+- `before_tag` (String) For voice OTP notifications only.  A string that specifies an opening tag which is commonly used by custom providers for defining a pause between each number in the OTP number string.  Possible value: `<Say>`.
+- `body` (String) Optional when the `method` is `POST`.  A string that specifies the notification's request body. The body should include the `${to}` and `${message}` mandatory variables.
 - `delivery_method` (String) A string that specifies the notification's delivery method.  Options are `SMS`, `VOICE`.
 - `headers` (Map of String) A map of strings that specifies the notification's request headers, matching the format of the request body.
 - `method` (String) A string that specifies the type of HTTP request method.  Options are `GET`, `POST`.
