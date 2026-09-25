@@ -155,6 +155,7 @@ func TestAccResourceScopeOpenID_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckNoResourceAttr(resourceFullName, "description"),
 					resource.TestCheckResourceAttr(resourceFullName, "mapped_claims.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "enable_mapped_claims", "false"),
 				),
 			},
 		},
@@ -202,6 +203,7 @@ func TestAccResourceScopeOpenID_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckNoResourceAttr(resourceFullName, "description"),
 					resource.TestCheckResourceAttr(resourceFullName, "mapped_claims.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "enable_mapped_claims", "false"),
 				),
 			},
 			{
@@ -294,13 +296,34 @@ func TestAccResourceScopeOpenID_InvalidParameters(t *testing.T) {
 		CheckDestroy:             sso.ResourceScopeOpenID_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
+			// Restore a predefined scope description error path (description can only be set on new scopes)
 			{
-				Config:      testAccResourceScopeOpenIDConfig_Full(resourceName, name, "email"),
+				Config:      testAccResourceScopeOpenIDConfig_PredefinedWithDescription(resourceName, "email"),
 				ExpectError: regexp.MustCompile("Invalid attribute value"),
 			},
 			// Configure
 			{
 				Config: testAccResourceScopeOpenIDConfig_Minimal(resourceName, name),
+			},
+			// Test enable_mapped_claims = false with mapped_claims set
+			{
+				Config: testAccResourceScopeOpenIDConfig_EnableMappedClaimsFalse(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+					resource.TestCheckResourceAttr(resourceFullName, "mapped_claims.#", "2"),
+					resource.TestCheckResourceAttr(resourceFullName, "enable_mapped_claims", "false"),
+				),
+			},
+			// Test enable_mapped_claims = true without sub (valid on the OpenID Connect resource; the sub requirement applies only to custom resources)
+			{
+				Config: testAccResourceScopeOpenIDConfig_EnableMappedClaimsTrue(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+					resource.TestCheckResourceAttr(resourceFullName, "mapped_claims.#", "2"),
+					resource.TestCheckResourceAttr(resourceFullName, "enable_mapped_claims", "true"),
+				),
 			},
 			// Errors
 			{
@@ -398,6 +421,86 @@ resource "pingone_resource_scope_openid" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
   name = "%[3]s"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccResourceScopeOpenIDConfig_PredefinedWithDescription(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_resource_scope_openid" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name        = "%[3]s"
+  description = "My resource scope"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccResourceScopeOpenIDConfig_EnableMappedClaimsTrue(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_resource_attribute" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_type  = "OPENID_CONNECT"
+
+  name  = "%[3]s-1"
+  value = "$${user.name.given}"
+}
+
+resource "pingone_resource_attribute" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_type  = "OPENID_CONNECT"
+
+  name  = "%[3]s-2"
+  value = "$${user.name.family}"
+}
+
+resource "pingone_resource_scope_openid" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mapped_claims = [
+    pingone_resource_attribute.%[2]s-1.id,
+    pingone_resource_attribute.%[2]s-2.id
+  ]
+
+  enable_mapped_claims = true
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccResourceScopeOpenIDConfig_EnableMappedClaimsFalse(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_resource_attribute" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_type  = "OPENID_CONNECT"
+
+  name  = "%[3]s-1"
+  value = "$${user.name.given}"
+}
+
+resource "pingone_resource_attribute" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+  resource_type  = "OPENID_CONNECT"
+
+  name  = "%[3]s-2"
+  value = "$${user.name.family}"
+}
+
+resource "pingone_resource_scope_openid" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mapped_claims = [
+    pingone_resource_attribute.%[2]s-1.id,
+    pingone_resource_attribute.%[2]s-2.id
+  ]
+
+  enable_mapped_claims = false
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 

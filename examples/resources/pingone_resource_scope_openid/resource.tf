@@ -29,4 +29,6 @@ resource "pingone_resource_scope_openid" "my_new_resource_scope" {
   mapped_claims = [
     pingone_resource_attribute.my_resource_attribute.id
   ]
+
+  enable_mapped_claims = true
 }

@@ -27,12 +27,13 @@ import (
 type ResourceScopeOpenIDResource serviceClientType
 
 type ResourceScopeOpenIDResourceModel struct {
-	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
-	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
-	ResourceId    pingonetypes.ResourceIDValue `tfsdk:"resource_id"`
-	Name          types.String                 `tfsdk:"name"`
-	Description   types.String                 `tfsdk:"description"`
-	MappedClaims  types.Set                    `tfsdk:"mapped_claims"`
+	Id                 pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId      pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	ResourceId         pingonetypes.ResourceIDValue `tfsdk:"resource_id"`
+	Name               types.String                 `tfsdk:"name"`
+	Description        types.String                 `tfsdk:"description"`
+	MappedClaims       types.Set                    `tfsdk:"mapped_claims"`
+	EnableMappedClaims types.Bool                   `tfsdk:"enable_mapped_claims"`
 }
 
 // Framework interfaces
@@ -63,6 +64,10 @@ func (r *ResourceScopeOpenIDResource) Schema(ctx context.Context, req resource.S
 
 	mappedClaimsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A set of custom resource attribute IDs.  This property does not control predefined OpenID Connect (OIDC) mappings, such as the `email` claim in the OIDC `email` scope or the `name` claim in the `profile` scope. You can create custom attributes, and these custom attributes can be added to `mapped_claims` and will display in the response.",
+	)
+
+	enableMappedClaimsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A Boolean that enables attribute mapping in scopes to control the attributes included in access tokens.  If this property is not set or set to `false` (default), the access token includes all custom attribute claims.  When set to `true`, the access token includes only the claims mapped in the scope.",
 	)
 
 	resp.Schema = schema.Schema{
@@ -98,6 +103,13 @@ func (r *ResourceScopeOpenIDResource) Schema(ctx context.Context, req resource.S
 				Optional:            true,
 
 				ElementType: pingonetypes.ResourceIDType{},
+			},
+
+			"enable_mapped_claims": schema.BoolAttribute{
+				Description:         enableMappedClaimsDescription.Description,
+				MarkdownDescription: enableMappedClaimsDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
 			},
 
 			"resource_id": schema.StringAttribute{
@@ -368,7 +380,13 @@ func (r *ResourceScopeOpenIDResource) Delete(ctx context.Context, req resource.D
 			return
 		}
 
+		if resourceScope == nil {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+
 		resourceScope.SetMappedClaims([]string{})
+		resourceScope.SetEnableMappedClaims(false)
 
 		resp.Diagnostics.Append(legacysdk.ParseResponse(
 			ctx,
@@ -493,6 +511,16 @@ func (p *ResourceScopeOpenIDResourceModel) expand(ctx context.Context, apiClient
 		data.SetMappedClaims(mappedClaims)
 	}
 
+	if !p.EnableMappedClaims.IsNull() && !p.EnableMappedClaims.IsUnknown() {
+		data.SetEnableMappedClaims(p.EnableMappedClaims.ValueBool())
+
+	} else if !newScope {
+		// For predefined scopes the plan has omitted `enable_mapped_claims`; clear any value
+		// fetched with the scope so the API call doesn't carry it forward and cause a perpetual
+		// plan diff.  For new scopes this branch is unreachable (a fresh object carries no value),
+		// and omitting the attribute in the plan inherits the prior state value there.
+		data.SetEnableMappedClaims(false)
+	}
 	return data, diags
 }
 
@@ -532,7 +560,8 @@ func (p *ResourceScopeOpenIDResourceModel) toState(apiObject *management.Resourc
 
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
-	p.MappedClaims = framework.StringSetOkToTF(apiObject.GetMappedClaimsOk())
+	p.MappedClaims = framework.PingOneResourceIDSetOkToTF(apiObject.GetMappedClaimsOk())
+	p.EnableMappedClaims = framework.BoolOkToTF(apiObject.GetEnableMappedClaimsOk())
 
 	return diags
 }
