@@ -47,6 +47,10 @@ resource "pingone_davinci_flow" "%[2]s" {
       ]
     flow_timeout_in_seconds = 0
     require_authentication_to_initiate = false
+    custom_timeout_error_screen_css = "body { background-color: #f0f0f0; }"
+    custom_timeout_error_screen_html = "<div class=\"timeout-error\">The flow has timed out</div>"
+    custom_timeout_error_screen_message = "The session timed out. Please try again."
+    use_custom_timeout_error_screen = true
   }
   color = "#FFC8C1"
   graph_data = {

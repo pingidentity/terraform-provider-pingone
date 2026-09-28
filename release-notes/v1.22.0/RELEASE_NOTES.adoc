@@ -1,0 +1,12 @@
+// Portal release notes fragment for v1.22.0
+// Prepend this block to asciidoc/modules/release_notes/pages/pingcli_release_notes.adoc
+
+[role="2026-09-14T12:00:00Z"]
+== {ping-cli} 1.22.0 (September 14, 2026)
+
+=== General
+[.ping_changetype-improved]#Improved#
+
+* `resource/pingone_davinci_flow`: Added `settings.custom_timeout_error_screen_css`, `settings.custom_timeout_error_screen_html`, `settings.custom_timeout_error_screen_message`, and `settings.use_custom_timeout_error_screen` attributes.
+
+link:https://github.com/pingidentity/pingcli/releases/tag/v1.22.0[View release on GitHub^]
