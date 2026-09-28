@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
@@ -110,6 +111,8 @@ func (r *ResourceScopeOpenIDResource) Schema(ctx context.Context, req resource.S
 				MarkdownDescription: enableMappedClaimsDescription.MarkdownDescription,
 				Optional:            true,
 				Computed:            true,
+
+				Default: booldefault.StaticBool(false),
 			},
 
 			"resource_id": schema.StringAttribute{
@@ -513,13 +516,6 @@ func (p *ResourceScopeOpenIDResourceModel) expand(ctx context.Context, apiClient
 
 	if !p.EnableMappedClaims.IsNull() && !p.EnableMappedClaims.IsUnknown() {
 		data.SetEnableMappedClaims(p.EnableMappedClaims.ValueBool())
-
-	} else if !newScope {
-		// For predefined scopes the plan has omitted `enable_mapped_claims`; clear any value
-		// fetched with the scope so the API call doesn't carry it forward and cause a perpetual
-		// plan diff.  For new scopes this branch is unreachable (a fresh object carries no value),
-		// and omitting the attribute in the plan inherits the prior state value there.
-		data.SetEnableMappedClaims(false)
 	}
 	return data, diags
 }
