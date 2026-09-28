@@ -97,11 +97,11 @@ func (r *PhoneDeliverySettingsDataSource) Schema(ctx context.Context, req dataso
 	)
 
 	providerCustomAuthenticationPasswordDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("A string that specifies the password for the custom provider account. Required when `method` is `%s`.  This is a sensitive parameter and is not returned by the service.", management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_BASIC),
+		fmt.Sprintf("A string that specifies the password for the custom provider account. Required when `method` is `%s`", management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_BASIC),
 	)
 
 	providerCustomAuthenticationAuthTokenDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("A string that specifies the authentication token to use for the custom provider account. Required when `method` is `%s`.  This is a sensitive parameter and is not returned by the service.", management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_BEARER),
+		fmt.Sprintf("A string that specifies the authentication token to use for the custom provider account. Required when `method` is `%s`", management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_BEARER),
 	)
 
 	providerCustomAuthenticationAuthUrlDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -113,7 +113,7 @@ func (r *PhoneDeliverySettingsDataSource) Schema(ctx context.Context, req dataso
 	).AllowedValuesEnum(management.AllowedEnumNotificationsSettingsPhoneDeliverySettingsCustomAuthGrantTypeEnumValues).DefaultValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHGRANTTYPE_CLIENT_CREDENTIALS))
 
 	providerCustomAuthenticationAssertionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("A string that specifies the JWT assertion used to request the access token from the authorization server.  Must be a valid JWT. Required when `grant_type` is `%s`.  This is a sensitive parameter and is not returned by the service.", management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHGRANTTYPE_JWT_BEARER),
+		fmt.Sprintf("A string that specifies the JWT assertion used to request the access token from the authorization server.  Must be a valid JWT. Required when `grant_type` is `%s`", management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHGRANTTYPE_JWT_BEARER),
 	)
 
 	providerCustomAuthenticationClientIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -121,7 +121,7 @@ func (r *PhoneDeliverySettingsDataSource) Schema(ctx context.Context, req dataso
 	)
 
 	providerCustomAuthenticationClientSecretDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("A string that specifies the client secret used to request the access token from the authorization server. Required when `grant_type` is `%s`.  This is a sensitive parameter and is not returned by the service.", management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHGRANTTYPE_CLIENT_CREDENTIALS),
+		fmt.Sprintf("A string that specifies the client secret used to request the access token from the authorization server. Required when `grant_type` is `%s`", management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHGRANTTYPE_CLIENT_CREDENTIALS),
 	)
 
 	providerCustomAuthenticationScopesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -133,7 +133,7 @@ func (r *PhoneDeliverySettingsDataSource) Schema(ctx context.Context, req dataso
 	)
 
 	providerCustomAuthenticationHeaderValueDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("A string that specifies the value of the custom header used to authenticate requests to the custom provider. Required when `method` is `%s`.  This is a sensitive parameter and is not returned by the service.", management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_CUSTOM_HEADER),
+		fmt.Sprintf("A string that specifies the value of the custom header used to authenticate requests to the custom provider. Required when `method` is `%s`", management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_CUSTOM_HEADER),
 	)
 
 	providerCustomAuthenticationClientAuthenticationMethodDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -193,7 +193,7 @@ func (r *PhoneDeliverySettingsDataSource) Schema(ctx context.Context, req dataso
 	)
 
 	providerCustomTwilioAuthTokenDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The secret key of the Twilio account.  This is a sensitive parameter and is not returned by the service.",
+		"The secret key of the Twilio account.",
 	)
 
 	providerCustomTwilioSidDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -206,7 +206,7 @@ func (r *PhoneDeliverySettingsDataSource) Schema(ctx context.Context, req dataso
 	)
 
 	providerCustomSyniverseAuthTokenDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The secret key of the Syniverse account.  This is a sensitive parameter and is not returned by the service.",
+		"The secret key of the Syniverse account.",
 	)
 
 	resp.Schema = schema.Schema{
@@ -380,7 +380,7 @@ func (r *PhoneDeliverySettingsDataSource) Schema(ctx context.Context, req dataso
 								},
 
 								"selected": schema.BoolAttribute{
-									Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the number is currently available in the provider account.").Description,
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the number is currently selected for phone delivery.").Description,
 									Computed:    true,
 								},
 
@@ -493,7 +493,7 @@ func (r *PhoneDeliverySettingsDataSource) Schema(ctx context.Context, req dataso
 								},
 
 								"selected": schema.BoolAttribute{
-									Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the number is currently available in the provider account.").Description,
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the number is currently selected for phone delivery.").Description,
 									Computed:    true,
 								},
 
@@ -539,7 +539,7 @@ func (r *PhoneDeliverySettingsDataSource) Schema(ctx context.Context, req dataso
 								},
 
 								"selected": schema.BoolAttribute{
-									Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the number is currently available in the provider account.").Description,
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the number is currently selected for phone delivery.").Description,
 									Computed:    true,
 								},
 
@@ -587,7 +587,7 @@ func (r *PhoneDeliverySettingsDataSource) Schema(ctx context.Context, req dataso
 								},
 
 								"selected": schema.BoolAttribute{
-									Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the number is currently available in the provider account.").Description,
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the number is currently selected for phone delivery.").Description,
 									Computed:    true,
 								},
 
@@ -633,7 +633,7 @@ func (r *PhoneDeliverySettingsDataSource) Schema(ctx context.Context, req dataso
 								},
 
 								"selected": schema.BoolAttribute{
-									Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the number is currently available in the provider account.").Description,
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the number is currently selected for phone delivery.").Description,
 									Computed:    true,
 								},
 

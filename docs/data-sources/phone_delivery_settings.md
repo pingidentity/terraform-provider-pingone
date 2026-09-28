@@ -12,35 +12,15 @@ Datasource to retrieve phone delivery settings in a PingOne environment by ID or
 ## Example Usage
 
 ```terraform
-resource "pingone_phone_delivery_settings" "my_awesome_custom_provider" {
-  environment_id = var.environment_id
-
-  provider_custom = {
-    name = "My awesome custom notifications provider"
-
-    authentication = {
-      method     = "BEARER"
-      auth_token = var.custom_provider_auth_token
-    }
-
-    requests = [
-      {
-        delivery_method = "SMS"
-        method          = "GET"
-        url             = "https://api.my-sms-gateway.com/send-sms.json?to=$${to}&from=$${from}&message=$${message}"
-      }
-    ]
-  }
+data "pingone_phone_delivery_settings" "example_by_id" {
+  environment_id             = var.environment_id
+  phone_delivery_settings_id = var.phone_delivery_settings_id
 }
 
-data "pingone_phone_delivery_settings" "my_awesome_custom_provider" {
+data "pingone_phone_delivery_settings" "example_by_name" {
   environment_id = var.environment_id
 
   name = "My awesome custom notifications provider"
-
-  depends_on = [
-    pingone_phone_delivery_settings.my_awesome_custom_provider,
-  ]
 }
 ```
 
@@ -81,17 +61,17 @@ Read-Only:
 
 Read-Only:
 
-- `assertion` (String, Sensitive) A string that specifies the JWT assertion used to request the access token from the authorization server.  Must be a valid JWT. Required when `grant_type` is `JWT_BEARER`.  This is a sensitive parameter and is not returned by the service.
-- `auth_token` (String, Sensitive) A string that specifies the authentication token to use for the custom provider account. Required when `method` is `BEARER`.  This is a sensitive parameter and is not returned by the service.
+- `assertion` (String, Sensitive) A string that specifies the JWT assertion used to request the access token from the authorization server.  Must be a valid JWT. Required when `grant_type` is `JWT_BEARER`
+- `auth_token` (String, Sensitive) A string that specifies the authentication token to use for the custom provider account. Required when `method` is `BEARER`
 - `auth_url` (String) A string that specifies the URL of the authorization server that issues the access token for the custom provider account. Required when `method` is `OAUTH2`
 - `client_authentication_method` (String) A string that specifies the method used to send the OAuth 2.0 client credentials to the authorization server.  This is a read-only property computed by the service, relevant when `method` is `OAUTH2`.  Options are `BASIC_AUTH_HEADER`, `BODY`.
 - `client_id` (String) A string that specifies the client ID used to request the access token from the authorization server. Required when `grant_type` is `CLIENT_CREDENTIALS`
-- `client_secret` (String, Sensitive) A string that specifies the client secret used to request the access token from the authorization server. Required when `grant_type` is `CLIENT_CREDENTIALS`.  This is a sensitive parameter and is not returned by the service.
+- `client_secret` (String, Sensitive) A string that specifies the client secret used to request the access token from the authorization server. Required when `grant_type` is `CLIENT_CREDENTIALS`
 - `grant_type` (String) The grant type used to request the access token from the authorization server.  Relevant when `method` is `OAUTH2`.  Options are `CLIENT_CREDENTIALS`, `JWT_BEARER`.  Defaults to `CLIENT_CREDENTIALS`.
 - `header_name` (String) A string that specifies the name of the custom header used to authenticate requests to the custom provider. Required when `method` is `CUSTOM_HEADER`
-- `header_value` (String, Sensitive) A string that specifies the value of the custom header used to authenticate requests to the custom provider. Required when `method` is `CUSTOM_HEADER`.  This is a sensitive parameter and is not returned by the service.
+- `header_value` (String, Sensitive) A string that specifies the value of the custom header used to authenticate requests to the custom provider. Required when `method` is `CUSTOM_HEADER`
 - `method` (String) The custom provider account's authentication method.  Options are `BASIC` (`username` and `password` parameters are required to be set), `BEARER` (`token` parameter is required to be set), `CUSTOM_HEADER` (`header_name` and `header_value` parameters are required to be set), `OAUTH2` (`auth_url` parameter is required to be set.  `grant_type` defaults to `CLIENT_CREDENTIALS`, where `client_id` and `client_secret` parameters are required to be set, or `JWT_BEARER`, where `assertion` parameter is required to be set).
-- `password` (String, Sensitive) A string that specifies the password for the custom provider account. Required when `method` is `BASIC`.  This is a sensitive parameter and is not returned by the service.
+- `password` (String, Sensitive) A string that specifies the password for the custom provider account. Required when `method` is `BASIC`
 - `scopes` (Set of String) A set of strings that specifies the scopes to request in the access token from the authorization server, for example, `sms:send`, `voice:send`.
 - `username` (String) A string that specifies the username for the custom provider account. Required when `method` is `BASIC`
 
@@ -104,7 +84,7 @@ Read-Only:
 - `available` (Boolean) A boolean that specifies whether the number is currently available in the provider account.
 - `capabilities` (Set of String) A collection of the types of phone delivery service capabilities.  Options are `SMS`, `VOICE`.
 - `number` (String) A string that specifies the phone number, toll-free number or short code.
-- `selected` (Boolean) A boolean that specifies whether the number is currently available in the provider account.
+- `selected` (Boolean) A boolean that specifies whether the number is currently selected for phone delivery.
 - `supported_countries` (Set of String) Specifies the `number`'s supported countries for notification recipients, depending on the phone number type.  If an SMS template has an alphanumeric `sender` ID and also has short code, the `sender` ID will be used for destination countries that support both alphanumeric senders and short codes. For Unites States and Canada that don't support alphanumeric sender IDs, a short code will be used if both an alphanumeric sender and a short code are specified.
 - `type` (String) A string that specifies the type of phone number.  Options are `PHONE_NUMBER`, `SHORT_CODE`, `TOLL_FREE`.
 
@@ -130,7 +110,7 @@ Read-Only:
 
 Read-Only:
 
-- `auth_token` (String, Sensitive) The secret key of the Syniverse account.  This is a sensitive parameter and is not returned by the service.
+- `auth_token` (String, Sensitive) The secret key of the Syniverse account.
 - `selected_numbers` (Attributes Set) One or more objects that describe the numbers selected for phone delivery. (see [below for nested schema](#nestedatt--provider_custom_syniverse--selected_numbers))
 - `service_numbers` (Attributes Set) One or more objects that describe the numbers that are defined in the Syniverse service. (see [below for nested schema](#nestedatt--provider_custom_syniverse--service_numbers))
 
@@ -140,7 +120,7 @@ Read-Only:
 Read-Only:
 
 - `number` (String) A string that specifies the phone number, toll-free number or short code that has been configured in Syniverse.
-- `selected` (Boolean) A boolean that specifies whether the number is currently available in the provider account.
+- `selected` (Boolean) A boolean that specifies whether the number is currently selected for phone delivery.
 - `supported_countries` (Set of String) Specifies the `number`'s supported countries for notification recipients, depending on the phone number type.  If an SMS template has an alphanumeric `sender` ID and also has short code, the `sender` ID will be used for destination countries that support both alphanumeric senders and short codes. For Unites States and Canada that don't support alphanumeric sender IDs, a short code will be used if both an alphanumeric sender and a short code are specified.
 - `type` (String) A string that specifies the type of phone number.  Options are `PHONE_NUMBER`, `SHORT_CODE`, `TOLL_FREE`.
 
@@ -153,7 +133,7 @@ Read-Only:
 - `available` (Boolean) A boolean that specifies whether the number is currently available in the provider account.
 - `capabilities` (Set of String) A collection of the types of phone delivery service capabilities.  Options are `SMS`, `VOICE`.
 - `number` (String) A string that specifies the phone number, toll-free number or short code.
-- `selected` (Boolean) A boolean that specifies whether the number is currently available in the provider account.
+- `selected` (Boolean) A boolean that specifies whether the number is currently selected for phone delivery.
 - `supported_countries` (Set of String) Specifies the `number`'s supported countries for notification recipients, depending on the phone number type.  If an SMS template has an alphanumeric `sender` ID and also has short code, the `sender` ID will be used for destination countries that support both alphanumeric senders and short codes. For Unites States and Canada that don't support alphanumeric sender IDs, a short code will be used if both an alphanumeric sender and a short code are specified.
 - `type` (String) A string that specifies the type of phone number.  Options are `PHONE_NUMBER`, `SHORT_CODE`, `TOLL_FREE`.
 
@@ -164,7 +144,7 @@ Read-Only:
 
 Read-Only:
 
-- `auth_token` (String, Sensitive) The secret key of the Twilio account.  This is a sensitive parameter and is not returned by the service.
+- `auth_token` (String, Sensitive) The secret key of the Twilio account.
 - `selected_numbers` (Attributes Set) One or more objects that describe the numbers selected for phone delivery. (see [below for nested schema](#nestedatt--provider_custom_twilio--selected_numbers))
 - `service_numbers` (Attributes Set) One or more objects that describe the numbers that are defined in the Twilio service. (see [below for nested schema](#nestedatt--provider_custom_twilio--service_numbers))
 - `sid` (String) The public ID of the Twilio account.
@@ -175,7 +155,7 @@ Read-Only:
 Read-Only:
 
 - `number` (String) A string that specifies the phone number, toll-free number or short code that has been configured in Twilio.
-- `selected` (Boolean) A boolean that specifies whether the number is currently available in the provider account.
+- `selected` (Boolean) A boolean that specifies whether the number is currently selected for phone delivery.
 - `supported_countries` (Set of String) Specifies the `number`'s supported countries for notification recipients, depending on the phone number type.  If an SMS template has an alphanumeric `sender` ID and also has short code, the `sender` ID will be used for destination countries that support both alphanumeric senders and short codes. For Unites States and Canada that don't support alphanumeric sender IDs, a short code will be used if both an alphanumeric sender and a short code are specified.
 - `type` (String) A string that specifies the type of phone number.  Options are `PHONE_NUMBER`, `SHORT_CODE`, `TOLL_FREE`.
 
@@ -188,6 +168,6 @@ Read-Only:
 - `available` (Boolean) A boolean that specifies whether the number is currently available in the provider account.
 - `capabilities` (Set of String) A collection of the types of phone delivery service capabilities.  Options are `SMS`, `VOICE`.
 - `number` (String) A string that specifies the phone number, toll-free number or short code.
-- `selected` (Boolean) A boolean that specifies whether the number is currently available in the provider account.
+- `selected` (Boolean) A boolean that specifies whether the number is currently selected for phone delivery.
 - `supported_countries` (Set of String) Specifies the `number`'s supported countries for notification recipients, depending on the phone number type.  If an SMS template has an alphanumeric `sender` ID and also has short code, the `sender` ID will be used for destination countries that support both alphanumeric senders and short codes. For Unites States and Canada that don't support alphanumeric sender IDs, a short code will be used if both an alphanumeric sender and a short code are specified.
 - `type` (String) A string that specifies the type of phone number.  Options are `PHONE_NUMBER`, `SHORT_CODE`, `TOLL_FREE`.

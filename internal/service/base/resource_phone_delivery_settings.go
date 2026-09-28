@@ -199,6 +199,7 @@ var (
 	_ resource.Resource                = &PhoneDeliverySettingsResource{}
 	_ resource.ResourceWithConfigure   = &PhoneDeliverySettingsResource{}
 	_ resource.ResourceWithImportState = &PhoneDeliverySettingsResource{}
+	_ resource.ResourceWithModifyPlan  = &PhoneDeliverySettingsResource{}
 )
 
 // New Object
@@ -471,11 +472,6 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 								MarkdownDescription: providerCustomAuthenticationAuthUrlDescription.MarkdownDescription,
 								Optional:            true,
 
-								// auth_url is set if and only if method is OAUTH2.  The two
-								// validators enforce opposite halves of that biconditional:
-								// required-if catches method=OAUTH2 with no auth_url (API
-								// rejects it), and conflicts-if-not catches auth_url set with
-								// a different method (the API silently drops it, causing drift).
 								Validators: []validator.String{
 									stringvalidatorinternal.IsRequiredIfMatchesPathValue(
 										types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_OAUTH2)),
@@ -494,10 +490,11 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 								Optional:            true,
 								Computed:            true,
 
-								Default: stringdefault.StaticString(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHGRANTTYPE_CLIENT_CREDENTIALS)),
+								// grant_type is relevant only when method is OAUTH2.  A static
+								// schema default can't take that sibling attribute into
+								// account, so the CLIENT_CREDENTIALS default is applied
+								// conditionally in ModifyPlan instead.
 
-								// grant_type is relevant only when method is OAUTH2; the API
-								// silently drops it for other methods, causing drift.
 								Validators: []validator.String{
 									stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumNotificationsSettingsPhoneDeliverySettingsCustomAuthGrantTypeEnumValues)...),
 									stringvalidatorinternal.ConflictsIfDoesNotMatchPathValue(
@@ -577,8 +574,6 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 								MarkdownDescription: providerCustomAuthenticationScopesDescription.MarkdownDescription,
 								Optional:            true,
 
-								// scopes is relevant only when method is OAUTH2; the API
-								// silently drops it for other methods, causing drift.
 								Validators: []validator.Set{
 									setvalidatorinternal.ConflictsIfDoesNotMatchPathValue(
 										types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_OAUTH2)),
@@ -594,9 +589,6 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 								MarkdownDescription: providerCustomAuthenticationHeaderNameDescription.MarkdownDescription,
 								Optional:            true,
 
-								// header_name is set if and only if method is CUSTOM_HEADER.  The
-								// two validators enforce opposite halves of that biconditional,
-								// as with auth_url above.
 								Validators: []validator.String{
 									stringvalidatorinternal.IsRequiredIfMatchesPathValue(
 										types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_CUSTOM_HEADER)),
@@ -1211,6 +1203,31 @@ func (r *PhoneDeliverySettingsResource) Configure(ctx context.Context, req resou
 	}
 }
 
+// ModifyPlan applies a default of CLIENT_CREDENTIALS to `provider_custom.authentication.grant_type`
+// when `method` is OAUTH2 and `grant_type` isn't set.  This can't be expressed as a static schema
+// `Default`, because a schema default has no visibility of the sibling `method` attribute, and
+// `grant_type` isn't a valid parameter for any other method.
+func (r *PhoneDeliverySettingsResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	var plan *PhoneDeliverySettingsProviderCustomAuthenticationResourceModel
+	resp.Diagnostics.Append(resp.Plan.GetAttribute(ctx, path.Root("provider_custom").AtName("authentication"), &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if plan == nil || plan.Method.IsUnknown() || !plan.GrantType.IsUnknown() {
+		return
+	}
+
+	grantTypePath := path.Root("provider_custom").AtName("authentication").AtName("grant_type")
+
+	if plan.Method.Equal(types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_OAUTH2))) {
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, grantTypePath,
+			types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHGRANTTYPE_CLIENT_CREDENTIALS)))...)
+	} else {
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, grantTypePath, types.StringNull())...)
+	}
+}
+
 func (r *PhoneDeliverySettingsResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state PhoneDeliverySettingsResourceModel
 
@@ -1290,33 +1307,10 @@ func (r *PhoneDeliverySettingsResource) Create(ctx context.Context, req resource
 		response = createResponse
 	}
 
-	// The service computes some parameters (for example, `clientAuthenticationMethod` on the
-	// OAUTH2 authentication method) asynchronously, so they're absent from the create and
-	// update response bodies but present on read.  Read the resource back to populate state
-	// with the computed values.
-	if !plan.ProviderCustom.IsNull() && !plan.ProviderCustom.IsUnknown() {
-		if phoneDeliverySettingsId := parsePhoneDeliverySettingsId(response); phoneDeliverySettingsId != "" {
-			var readResponse *management.NotificationsSettingsPhoneDeliverySettings
-			resp.Diagnostics.Append(legacysdk.ParseResponse(
-				ctx,
-
-				func() (any, *http.Response, error) {
-					fO, fR, fErr := r.Client.ManagementAPIClient.PhoneDeliverySettingsApi.ReadOnePhoneDeliverySettings(ctx, plan.EnvironmentId.ValueString(), phoneDeliverySettingsId).Execute()
-					return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
-				},
-				"ReadOnePhoneDeliverySettings",
-				legacysdk.DefaultCustomError,
-				sdk.DefaultCreateReadRetryable,
-				&readResponse,
-			)...)
-			if resp.Diagnostics.HasError() {
-				return
-			}
-
-			if readResponse != nil {
-				response = readResponse
-			}
-		}
+	response, d = r.readBackComputedAuthenticationParams(ctx, plan, response)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	// Create the state to save
@@ -1372,6 +1366,47 @@ func (r *PhoneDeliverySettingsResource) Read(ctx context.Context, req resource.R
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// readBackComputedAuthenticationParams re-reads the phone delivery settings after a create or
+// update call.  The service computes some parameters (for example, `clientAuthenticationMethod`
+// on the OAUTH2 authentication method) asynchronously, so they're absent from the create and
+// update response bodies but present on read.  Reading the resource back after create/update
+// populates state with those computed values.
+func (r *PhoneDeliverySettingsResource) readBackComputedAuthenticationParams(ctx context.Context, plan PhoneDeliverySettingsResourceModel, response *management.NotificationsSettingsPhoneDeliverySettings) (*management.NotificationsSettingsPhoneDeliverySettings, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if plan.ProviderCustom.IsNull() || plan.ProviderCustom.IsUnknown() {
+		return response, diags
+	}
+
+	phoneDeliverySettingsId := parsePhoneDeliverySettingsId(response)
+	if phoneDeliverySettingsId == "" {
+		return response, diags
+	}
+
+	var readResponse *management.NotificationsSettingsPhoneDeliverySettings
+	diags.Append(legacysdk.ParseResponse(
+		ctx,
+
+		func() (any, *http.Response, error) {
+			fO, fR, fErr := r.Client.ManagementAPIClient.PhoneDeliverySettingsApi.ReadOnePhoneDeliverySettings(ctx, plan.EnvironmentId.ValueString(), phoneDeliverySettingsId).Execute()
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+		},
+		"ReadOnePhoneDeliverySettings",
+		legacysdk.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+		&readResponse,
+	)...)
+	if diags.HasError() {
+		return response, diags
+	}
+
+	if readResponse != nil {
+		response = readResponse
+	}
+
+	return response, diags
+}
+
 func (r *PhoneDeliverySettingsResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state PhoneDeliverySettingsResourceModel
 
@@ -1413,33 +1448,10 @@ func (r *PhoneDeliverySettingsResource) Update(ctx context.Context, req resource
 		return
 	}
 
-	// The service computes some parameters (for example, `clientAuthenticationMethod` on the
-	// OAUTH2 authentication method) asynchronously, so they're absent from the create and
-	// update response bodies but present on read.  Read the resource back to populate state
-	// with the computed values.
-	if !plan.ProviderCustom.IsNull() && !plan.ProviderCustom.IsUnknown() {
-		if phoneDeliverySettingsId := parsePhoneDeliverySettingsId(response); phoneDeliverySettingsId != "" {
-			var readResponse *management.NotificationsSettingsPhoneDeliverySettings
-			resp.Diagnostics.Append(legacysdk.ParseResponse(
-				ctx,
-
-				func() (any, *http.Response, error) {
-					fO, fR, fErr := r.Client.ManagementAPIClient.PhoneDeliverySettingsApi.ReadOnePhoneDeliverySettings(ctx, plan.EnvironmentId.ValueString(), phoneDeliverySettingsId).Execute()
-					return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
-				},
-				"ReadOnePhoneDeliverySettings",
-				legacysdk.DefaultCustomError,
-				sdk.DefaultCreateReadRetryable,
-				&readResponse,
-			)...)
-			if resp.Diagnostics.HasError() {
-				return
-			}
-
-			if readResponse != nil {
-				response = readResponse
-			}
-		}
+	response, d = r.readBackComputedAuthenticationParams(ctx, plan, response)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	// Create the state to save
@@ -2048,15 +2060,13 @@ func phoneDeliverySettingsCustomAuthenticationOkToTF(planData *PhoneDeliverySett
 		return types.ObjectNull(customAuthenticationTFObjectTypes), diags
 	}
 
-	grantTypeValue := framework.EnumOkToTF(apiObject.GetGrantTypeOk())
-
 	objMap := map[string]attr.Value{
 		"method":                       framework.EnumOkToTF(apiObject.GetMethodOk()),
 		"password":                     types.StringNull(),
 		"auth_token":                   types.StringNull(),
 		"username":                     framework.StringOkToTF(apiObject.GetUsernameOk()),
 		"auth_url":                     framework.StringOkToTF(apiObject.GetAuthUrlOk()),
-		"grant_type":                   grantTypeValue,
+		"grant_type":                   framework.EnumOkToTF(apiObject.GetGrantTypeOk()),
 		"assertion":                    types.StringNull(),
 		"client_id":                    framework.StringOkToTF(apiObject.GetClientIdOk()),
 		"client_secret":                types.StringNull(),
@@ -2072,14 +2082,6 @@ func phoneDeliverySettingsCustomAuthenticationOkToTF(planData *PhoneDeliverySett
 		objMap["client_secret"] = planData.ClientSecret
 		objMap["header_value"] = planData.HeaderValue
 		objMap["assertion"] = planData.Assertion
-	}
-
-	// The service doesn't echo `grantType` back for non-OAUTH2 methods, while the schema
-	// default applies CLIENT_CREDENTIALS on every plan.  Default the state value to
-	// CLIENT_CREDENTIALS when the API response is empty, to avoid a spurious diff after
-	// import and a perpetual diff on refresh.
-	if grantTypeValue.IsNull() {
-		objMap["grant_type"] = types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHGRANTTYPE_CLIENT_CREDENTIALS))
 	}
 
 	returnVar, d := types.ObjectValue(customAuthenticationTFObjectTypes, objMap)
