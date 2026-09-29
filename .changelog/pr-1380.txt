@@ -1,0 +1,7 @@
+```release-note:enhancement
+`resource/pingone_environment`: Added support for `Privilege` and `AdvancedIdentityCloud` to the `services.type` attribute. Also update the `tags` attribute to support the `AUTHENTICATION_MODE_AGENT` and `AUTHENTICATION_MODE_AGENTLESS` tags used by `Privilege`.
+```
+
+```release-note:enhancement
+`data-source/pingone_environment`: Added support for `Privilege` and `AdvancedIdentityCloud` to the `services.type` attribute. Also update the `tags` attribute to support the `AUTHENTICATION_MODE_AGENT` and `AUTHENTICATION_MODE_AGENTLESS` tags used by `Privilege`.
+```
