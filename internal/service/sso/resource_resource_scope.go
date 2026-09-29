@@ -18,6 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	customboolvalidator "github.com/pingidentity/terraform-provider-pingone/internal/framework/boolvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -113,6 +114,10 @@ func (r *ResourceScopeResource) Schema(ctx context.Context, req resource.SchemaR
 				Computed:            true,
 
 				Default: booldefault.StaticBool(false),
+
+				Validators: []validator.Bool{
+					customboolvalidator.AlsoRequiresIfTrue(path.MatchRoot("mapped_claims")),
+				},
 			},
 		},
 	}
@@ -433,14 +438,6 @@ func (p *ResourceScopeResourceModel) expand(ctx context.Context) (*management.Re
 
 	if !p.EnableMappedClaims.IsNull() && !p.EnableMappedClaims.IsUnknown() {
 		data.SetEnableMappedClaims(p.EnableMappedClaims.ValueBool())
-
-		if p.EnableMappedClaims.ValueBool() && (p.MappedClaims.IsNull() || p.MappedClaims.IsUnknown()) {
-			diags.AddError(
-				"Invalid attribute value",
-				"When `enable_mapped_claims` is set to `true`, the `mapped_claims` property must be set and include the ID of the `sub` resource attribute.  Please add the ID of the `sub` resource attribute to `mapped_claims`.",
-			)
-			return nil, diags
-		}
 	}
 
 	return data, diags
