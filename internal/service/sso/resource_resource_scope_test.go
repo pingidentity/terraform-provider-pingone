@@ -294,9 +294,11 @@ func TestAccResourceScope_InvalidParameters(t *testing.T) {
 				Config:      testAccResourceScopeConfig_ErrorResource(resourceName, name, "openid"),
 				ExpectError: regexp.MustCompile("Invalid resource"),
 			},
+			// The sub requirement is enforced by the API (400 REQUIRED_VALUE); the provider
+			// does not duplicate the check client-side.
 			{
 				Config:      testAccResourceScopeConfig_ErrorMappedClaimsNoSub(resourceName, name),
-				ExpectError: regexp.MustCompile("Invalid attribute value"),
+				ExpectError: regexp.MustCompile("sub attribute must be included in mapped attributes"),
 			},
 		},
 	})
