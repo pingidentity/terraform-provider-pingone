@@ -383,11 +383,6 @@ func (r *ResourceScopeOpenIDResource) Delete(ctx context.Context, req resource.D
 			return
 		}
 
-		if resourceScope == nil {
-			resp.State.RemoveResource(ctx)
-			return
-		}
-
 		resourceScope.SetMappedClaims([]string{})
 		resourceScope.SetEnableMappedClaims(false)
 
