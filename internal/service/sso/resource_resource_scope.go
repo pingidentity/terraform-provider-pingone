@@ -173,7 +173,7 @@ func (r *ResourceScopeResource) Create(ctx context.Context, req resource.CreateR
 	}
 
 	// Build the model for the API
-	resourceScope, d := plan.expand(ctx, r.Client.ManagementAPIClient)
+	resourceScope, d := plan.expand(ctx)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -297,7 +297,7 @@ func (r *ResourceScopeResource) Update(ctx context.Context, req resource.UpdateR
 	}
 
 	// Build the model for the API
-	resourceScope, d := plan.expand(ctx, r.Client.ManagementAPIClient)
+	resourceScope, d := plan.expand(ctx)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -405,7 +405,7 @@ func (r *ResourceScopeResource) ImportState(ctx context.Context, req resource.Im
 	}
 }
 
-func (p *ResourceScopeResourceModel) expand(ctx context.Context, apiClient *management.APIClient) (*management.ResourceScope, diag.Diagnostics) {
+func (p *ResourceScopeResourceModel) expand(ctx context.Context) (*management.ResourceScope, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	data := management.NewResourceScope(p.Name.ValueString())
@@ -434,21 +434,12 @@ func (p *ResourceScopeResourceModel) expand(ctx context.Context, apiClient *mana
 	if !p.EnableMappedClaims.IsNull() && !p.EnableMappedClaims.IsUnknown() {
 		data.SetEnableMappedClaims(p.EnableMappedClaims.ValueBool())
 
-		if p.EnableMappedClaims.ValueBool() {
-
-			if p.MappedClaims.IsNull() || p.MappedClaims.IsUnknown() {
-				diags.AddError(
-					"Invalid attribute value",
-					"When `enable_mapped_claims` is set to `true`, the `mapped_claims` property must be set and include the ID of the `sub` resource attribute.  Please add the ID of the `sub` resource attribute to `mapped_claims`.",
-				)
-				return nil, diags
-			}
-
-			d := validateMappedClaimsIncludeSub(ctx, apiClient, p.EnvironmentId.ValueString(), p.ResourceId.ValueString(), data)
-			diags.Append(d...)
-			if diags.HasError() {
-				return nil, diags
-			}
+		if p.EnableMappedClaims.ValueBool() && (p.MappedClaims.IsNull() || p.MappedClaims.IsUnknown()) {
+			diags.AddError(
+				"Invalid attribute value",
+				"When `enable_mapped_claims` is set to `true`, the `mapped_claims` property must be set and include the ID of the `sub` resource attribute.  Please add the ID of the `sub` resource attribute to `mapped_claims`.",
+			)
+			return nil, diags
 		}
 	}
 
