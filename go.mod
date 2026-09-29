@@ -26,10 +26,10 @@ require (
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.40.1
 	github.com/hashicorp/terraform-plugin-testing v1.16.0
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/patrickcping/pingone-go-sdk-v2 v0.14.14
+	github.com/patrickcping/pingone-go-sdk-v2 v0.14.15-0.20260929203443-3ff984c1d7ee
 	github.com/patrickcping/pingone-go-sdk-v2/authorize v0.8.3
 	github.com/patrickcping/pingone-go-sdk-v2/credentials v0.13.0
-	github.com/patrickcping/pingone-go-sdk-v2/management v0.73.0
+	github.com/patrickcping/pingone-go-sdk-v2/management v0.75.1-0.20260929203443-3ff984c1d7ee
 	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.25.1
 	github.com/patrickcping/pingone-go-sdk-v2/risk v0.22.0
 	github.com/patrickcping/pingone-go-sdk-v2/verify v0.11.2
