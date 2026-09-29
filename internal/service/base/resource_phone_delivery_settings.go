@@ -60,10 +60,19 @@ type PhoneDeliverySettingsProviderCustomResourceModel struct {
 }
 
 type PhoneDeliverySettingsProviderCustomAuthenticationResourceModel struct {
-	Method    types.String `tfsdk:"method"`
-	Password  types.String `tfsdk:"password"`
-	AuthToken types.String `tfsdk:"auth_token"`
-	Username  types.String `tfsdk:"username"`
+	Method                     types.String `tfsdk:"method"`
+	Password                   types.String `tfsdk:"password"`
+	AuthToken                  types.String `tfsdk:"auth_token"`
+	Username                   types.String `tfsdk:"username"`
+	AuthUrl                    types.String `tfsdk:"auth_url"`
+	GrantType                  types.String `tfsdk:"grant_type"`
+	Assertion                  types.String `tfsdk:"assertion"`
+	ClientId                   types.String `tfsdk:"client_id"`
+	ClientSecret               types.String `tfsdk:"client_secret"`
+	Scopes                     types.Set    `tfsdk:"scopes"`
+	HeaderName                 types.String `tfsdk:"header_name"`
+	HeaderValue                types.String `tfsdk:"header_value"`
+	ClientAuthenticationMethod types.String `tfsdk:"client_authentication_method"`
 }
 
 type PhoneDeliverySettingsProviderCustomNumbersResourceModel struct {
@@ -121,10 +130,19 @@ var (
 	}
 
 	customAuthenticationTFObjectTypes = map[string]attr.Type{
-		"method":     types.StringType,
-		"password":   types.StringType,
-		"auth_token": types.StringType,
-		"username":   types.StringType,
+		"assertion":                    types.StringType,
+		"auth_token":                   types.StringType,
+		"auth_url":                     types.StringType,
+		"client_authentication_method": types.StringType,
+		"client_id":                    types.StringType,
+		"client_secret":                types.StringType,
+		"grant_type":                   types.StringType,
+		"header_name":                  types.StringType,
+		"header_value":                 types.StringType,
+		"method":                       types.StringType,
+		"password":                     types.StringType,
+		"scopes":                       types.SetType{ElemType: types.StringType},
+		"username":                     types.StringType,
 	}
 
 	customNumbersTFObjectTypes = map[string]attr.Type{
@@ -181,6 +199,7 @@ var (
 	_ resource.Resource                = &PhoneDeliverySettingsResource{}
 	_ resource.ResourceWithConfigure   = &PhoneDeliverySettingsResource{}
 	_ resource.ResourceWithImportState = &PhoneDeliverySettingsResource{}
+	_ resource.ResourceWithModifyPlan  = &PhoneDeliverySettingsResource{}
 )
 
 // New Object
@@ -214,8 +233,10 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 	providerCustomAuthenticationMethodDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The custom provider account's authentication method.",
 	).AllowedValuesComplex(map[string]string{
-		string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_BASIC):  "`username` and `password` parameters are required to be set",
-		string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_BEARER): "`token` parameter is required to be set",
+		string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_BASIC):         "`username` and `password` parameters are required to be set",
+		string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_BEARER):        "`token` parameter is required to be set",
+		string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_OAUTH2):        "`auth_url` parameter is required to be set.  `grant_type` defaults to `CLIENT_CREDENTIALS`, where `client_id` and `client_secret` parameters are required to be set, or `JWT_BEARER`, where `assertion` parameter is required to be set",
+		string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_CUSTOM_HEADER): "`header_name` and `header_value` parameters are required to be set",
 	})
 
 	providerCustomAuthenticationUsernameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -229,6 +250,42 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 	providerCustomAuthenticationAuthTokenDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("A string that specifies the authentication token to use for the custom provider account. Required when `method` is `%s`", management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_BEARER),
 	)
+
+	providerCustomAuthenticationAuthUrlDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A string that specifies the URL of the authorization server that issues the access token for the custom provider account. Required when `method` is `%s`", management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_OAUTH2),
+	)
+
+	providerCustomAuthenticationGrantTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"The grant type used to request the access token from the authorization server.  Relevant when `method` is `OAUTH2`.",
+	).AllowedValuesEnum(management.AllowedEnumNotificationsSettingsPhoneDeliverySettingsCustomAuthGrantTypeEnumValues).DefaultValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHGRANTTYPE_CLIENT_CREDENTIALS))
+
+	providerCustomAuthenticationAssertionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A string that specifies the JWT assertion used to request the access token from the authorization server.  Must be a valid JWT. Required when `grant_type` is `%s`", management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHGRANTTYPE_JWT_BEARER),
+	)
+
+	providerCustomAuthenticationClientIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A string that specifies the client ID used to request the access token from the authorization server. Required when `grant_type` is `%s`", management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHGRANTTYPE_CLIENT_CREDENTIALS),
+	)
+
+	providerCustomAuthenticationClientSecretDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A string that specifies the client secret used to request the access token from the authorization server. Required when `grant_type` is `%s`", management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHGRANTTYPE_CLIENT_CREDENTIALS),
+	)
+
+	providerCustomAuthenticationScopesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A set of strings that specifies the scopes to request in the access token from the authorization server, for example, `sms:send`, `voice:send`.",
+	)
+
+	providerCustomAuthenticationHeaderNameDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A string that specifies the name of the custom header used to authenticate requests to the custom provider. Required when `method` is `%s`", management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_CUSTOM_HEADER),
+	)
+
+	providerCustomAuthenticationHeaderValueDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A string that specifies the value of the custom header used to authenticate requests to the custom provider. Required when `method` is `%s`", management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_CUSTOM_HEADER),
+	)
+
+	providerCustomAuthenticationClientAuthenticationMethodDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("A string that specifies the method used to send the OAuth 2.0 client credentials to the authorization server.  This is a read-only property computed by the service, relevant when `method` is `%s`.", management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_OAUTH2),
+	).AllowedValuesEnum(management.AllowedEnumNotificationsSettingsPhoneDeliverySettingsCustomAuthClientAuthenticationMethodEnumValues)
 
 	providerCustomNumbersCapabilitiesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A collection of the types of phone delivery service capabilities.",
@@ -408,6 +465,164 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 										path.MatchRelative().AtParent().AtName("method"),
 									),
 								},
+							},
+
+							"auth_url": schema.StringAttribute{
+								Description:         providerCustomAuthenticationAuthUrlDescription.Description,
+								MarkdownDescription: providerCustomAuthenticationAuthUrlDescription.MarkdownDescription,
+								Optional:            true,
+
+								Validators: []validator.String{
+									stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+										types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_OAUTH2)),
+										path.MatchRelative().AtParent().AtName("method"),
+									),
+									stringvalidatorinternal.ConflictsIfDoesNotMatchPathValue(
+										types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_OAUTH2)),
+										path.MatchRelative().AtParent().AtName("method"),
+									),
+								},
+							},
+
+							"grant_type": schema.StringAttribute{
+								Description:         providerCustomAuthenticationGrantTypeDescription.Description,
+								MarkdownDescription: providerCustomAuthenticationGrantTypeDescription.MarkdownDescription,
+								Optional:            true,
+								Computed:            true,
+
+								// grant_type is relevant only when method is OAUTH2.  A static
+								// schema default can't take that sibling attribute into
+								// account, so the CLIENT_CREDENTIALS default is applied
+								// conditionally in ModifyPlan instead.
+
+								Validators: []validator.String{
+									stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumNotificationsSettingsPhoneDeliverySettingsCustomAuthGrantTypeEnumValues)...),
+									stringvalidatorinternal.ConflictsIfDoesNotMatchPathValue(
+										types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_OAUTH2)),
+										path.MatchRelative().AtParent().AtName("method"),
+									),
+								},
+							},
+
+							"assertion": schema.StringAttribute{
+								Description:         providerCustomAuthenticationAssertionDescription.Description,
+								MarkdownDescription: providerCustomAuthenticationAssertionDescription.MarkdownDescription,
+								Optional:            true,
+								Sensitive:           true,
+
+								Validators: []validator.String{
+									stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+										types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHGRANTTYPE_JWT_BEARER)),
+										path.MatchRelative().AtParent().AtName("grant_type"),
+									),
+									stringvalidatorinternal.ConflictsIfMatchesPathValue(
+										types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHGRANTTYPE_CLIENT_CREDENTIALS)),
+										path.MatchRelative().AtParent().AtName("grant_type"),
+									),
+									stringvalidatorinternal.ConflictsIfDoesNotMatchPathValue(
+										types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_OAUTH2)),
+										path.MatchRelative().AtParent().AtName("method"),
+									),
+								},
+							},
+
+							"client_id": schema.StringAttribute{
+								Description:         providerCustomAuthenticationClientIdDescription.Description,
+								MarkdownDescription: providerCustomAuthenticationClientIdDescription.MarkdownDescription,
+								Optional:            true,
+
+								Validators: []validator.String{
+									stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+										types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHGRANTTYPE_CLIENT_CREDENTIALS)),
+										path.MatchRelative().AtParent().AtName("grant_type"),
+									),
+									stringvalidatorinternal.ConflictsIfMatchesPathValue(
+										types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHGRANTTYPE_JWT_BEARER)),
+										path.MatchRelative().AtParent().AtName("grant_type"),
+									),
+									stringvalidatorinternal.ConflictsIfDoesNotMatchPathValue(
+										types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_OAUTH2)),
+										path.MatchRelative().AtParent().AtName("method"),
+									),
+								},
+							},
+
+							"client_secret": schema.StringAttribute{
+								Description:         providerCustomAuthenticationClientSecretDescription.Description,
+								MarkdownDescription: providerCustomAuthenticationClientSecretDescription.MarkdownDescription,
+								Optional:            true,
+								Sensitive:           true,
+
+								Validators: []validator.String{
+									stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+										types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHGRANTTYPE_CLIENT_CREDENTIALS)),
+										path.MatchRelative().AtParent().AtName("grant_type"),
+									),
+									stringvalidatorinternal.ConflictsIfMatchesPathValue(
+										types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHGRANTTYPE_JWT_BEARER)),
+										path.MatchRelative().AtParent().AtName("grant_type"),
+									),
+									stringvalidatorinternal.ConflictsIfDoesNotMatchPathValue(
+										types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_OAUTH2)),
+										path.MatchRelative().AtParent().AtName("method"),
+									),
+								},
+							},
+
+							"scopes": schema.SetAttribute{
+								Description:         providerCustomAuthenticationScopesDescription.Description,
+								MarkdownDescription: providerCustomAuthenticationScopesDescription.MarkdownDescription,
+								Optional:            true,
+
+								Validators: []validator.Set{
+									setvalidatorinternal.ConflictsIfDoesNotMatchPathValue(
+										types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_OAUTH2)),
+										path.MatchRelative().AtParent().AtName("method"),
+									),
+								},
+
+								ElementType: types.StringType,
+							},
+
+							"header_name": schema.StringAttribute{
+								Description:         providerCustomAuthenticationHeaderNameDescription.Description,
+								MarkdownDescription: providerCustomAuthenticationHeaderNameDescription.MarkdownDescription,
+								Optional:            true,
+
+								Validators: []validator.String{
+									stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+										types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_CUSTOM_HEADER)),
+										path.MatchRelative().AtParent().AtName("method"),
+									),
+									stringvalidatorinternal.ConflictsIfDoesNotMatchPathValue(
+										types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_CUSTOM_HEADER)),
+										path.MatchRelative().AtParent().AtName("method"),
+									),
+								},
+							},
+
+							"header_value": schema.StringAttribute{
+								Description:         providerCustomAuthenticationHeaderValueDescription.Description,
+								MarkdownDescription: providerCustomAuthenticationHeaderValueDescription.MarkdownDescription,
+								Optional:            true,
+								Sensitive:           true,
+
+								Validators: []validator.String{
+									stringvalidatorinternal.IsRequiredIfMatchesPathValue(
+										types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_CUSTOM_HEADER)),
+										path.MatchRelative().AtParent().AtName("method"),
+									),
+									stringvalidatorinternal.ConflictsIfDoesNotMatchPathValue(
+										types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_CUSTOM_HEADER)),
+										path.MatchRelative().AtParent().AtName("method"),
+									),
+								},
+							},
+
+							"client_authentication_method": schema.StringAttribute{
+								Description:         providerCustomAuthenticationClientAuthenticationMethodDescription.Description,
+								MarkdownDescription: providerCustomAuthenticationClientAuthenticationMethodDescription.MarkdownDescription,
+								Computed:            true,
 							},
 						},
 					},
@@ -988,6 +1203,31 @@ func (r *PhoneDeliverySettingsResource) Configure(ctx context.Context, req resou
 	}
 }
 
+// ModifyPlan applies a default of CLIENT_CREDENTIALS to `provider_custom.authentication.grant_type`
+// when `method` is OAUTH2 and `grant_type` isn't set.  This can't be expressed as a static schema
+// `Default`, because a schema default has no visibility of the sibling `method` attribute, and
+// `grant_type` isn't a valid parameter for any other method.
+func (r *PhoneDeliverySettingsResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	var plan *PhoneDeliverySettingsProviderCustomAuthenticationResourceModel
+	resp.Diagnostics.Append(resp.Plan.GetAttribute(ctx, path.Root("provider_custom").AtName("authentication"), &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if plan == nil || plan.Method.IsUnknown() || !plan.GrantType.IsUnknown() {
+		return
+	}
+
+	grantTypePath := path.Root("provider_custom").AtName("authentication").AtName("grant_type")
+
+	if plan.Method.Equal(types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHMETHOD_OAUTH2))) {
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, grantTypePath,
+			types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSPHONEDELIVERYSETTINGSCUSTOMAUTHGRANTTYPE_CLIENT_CREDENTIALS)))...)
+	} else {
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, grantTypePath, types.StringNull())...)
+	}
+}
+
 func (r *PhoneDeliverySettingsResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, state PhoneDeliverySettingsResourceModel
 
@@ -1067,6 +1307,12 @@ func (r *PhoneDeliverySettingsResource) Create(ctx context.Context, req resource
 		response = createResponse
 	}
 
+	response, d = r.readBackComputedAuthenticationParams(ctx, plan, response)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	// Create the state to save
 	state = plan
 
@@ -1120,6 +1366,47 @@ func (r *PhoneDeliverySettingsResource) Read(ctx context.Context, req resource.R
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
+// readBackComputedAuthenticationParams re-reads the phone delivery settings after a create or
+// update call.  The service computes some parameters (for example, `clientAuthenticationMethod`
+// on the OAUTH2 authentication method) asynchronously, so they're absent from the create and
+// update response bodies but present on read.  Reading the resource back after create/update
+// populates state with those computed values.
+func (r *PhoneDeliverySettingsResource) readBackComputedAuthenticationParams(ctx context.Context, plan PhoneDeliverySettingsResourceModel, response *management.NotificationsSettingsPhoneDeliverySettings) (*management.NotificationsSettingsPhoneDeliverySettings, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if plan.ProviderCustom.IsNull() || plan.ProviderCustom.IsUnknown() {
+		return response, diags
+	}
+
+	phoneDeliverySettingsId := parsePhoneDeliverySettingsId(response)
+	if phoneDeliverySettingsId == "" {
+		return response, diags
+	}
+
+	var readResponse *management.NotificationsSettingsPhoneDeliverySettings
+	diags.Append(legacysdk.ParseResponse(
+		ctx,
+
+		func() (any, *http.Response, error) {
+			fO, fR, fErr := r.Client.ManagementAPIClient.PhoneDeliverySettingsApi.ReadOnePhoneDeliverySettings(ctx, plan.EnvironmentId.ValueString(), phoneDeliverySettingsId).Execute()
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+		},
+		"ReadOnePhoneDeliverySettings",
+		legacysdk.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+		&readResponse,
+	)...)
+	if diags.HasError() {
+		return response, diags
+	}
+
+	if readResponse != nil {
+		response = readResponse
+	}
+
+	return response, diags
+}
+
 func (r *PhoneDeliverySettingsResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state PhoneDeliverySettingsResourceModel
 
@@ -1157,6 +1444,12 @@ func (r *PhoneDeliverySettingsResource) Update(ctx context.Context, req resource
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	response, d = r.readBackComputedAuthenticationParams(ctx, plan, response)
+	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -1307,6 +1600,50 @@ func (p *PhoneDeliverySettingsResourceModel) expand(ctx context.Context, service
 
 		if !authenticationPlan.AuthToken.IsNull() && !authenticationPlan.AuthToken.IsUnknown() {
 			authentication.SetAuthToken(authenticationPlan.AuthToken.ValueString())
+		}
+
+		if !authenticationPlan.AuthUrl.IsNull() && !authenticationPlan.AuthUrl.IsUnknown() {
+			authentication.SetAuthUrl(authenticationPlan.AuthUrl.ValueString())
+		}
+
+		if !authenticationPlan.GrantType.IsNull() && !authenticationPlan.GrantType.IsUnknown() {
+			authentication.SetGrantType(management.EnumNotificationsSettingsPhoneDeliverySettingsCustomAuthGrantType(authenticationPlan.GrantType.ValueString()))
+		}
+
+		if !authenticationPlan.Assertion.IsNull() && !authenticationPlan.Assertion.IsUnknown() {
+			authentication.SetAssertion(authenticationPlan.Assertion.ValueString())
+		}
+
+		if !authenticationPlan.ClientId.IsNull() && !authenticationPlan.ClientId.IsUnknown() {
+			authentication.SetClientId(authenticationPlan.ClientId.ValueString())
+		}
+
+		if !authenticationPlan.ClientSecret.IsNull() && !authenticationPlan.ClientSecret.IsUnknown() {
+			authentication.SetClientSecret(authenticationPlan.ClientSecret.ValueString())
+		}
+
+		if !authenticationPlan.Scopes.IsNull() && !authenticationPlan.Scopes.IsUnknown() {
+			var scopesPlan []types.String
+			diags.Append(authenticationPlan.Scopes.ElementsAs(ctx, &scopesPlan, false)...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			scopesPlanStr, d := framework.TFTypeStringSliceToStringSlice(scopesPlan, path.Root("provider_custom").AtName("authentication").AtName("scopes"))
+			diags.Append(d...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			authentication.SetScopes(scopesPlanStr)
+		}
+
+		if !authenticationPlan.HeaderName.IsNull() && !authenticationPlan.HeaderName.IsUnknown() {
+			authentication.SetHeaderName(authenticationPlan.HeaderName.ValueString())
+		}
+
+		if !authenticationPlan.HeaderValue.IsNull() && !authenticationPlan.HeaderValue.IsUnknown() {
+			authentication.SetHeaderValue(authenticationPlan.HeaderValue.ValueString())
 		}
 
 		// Expand requests
@@ -1478,6 +1815,22 @@ func (p *PhoneDeliverySettingsResourceModel) expand(ctx context.Context, service
 	return &data, diags
 }
 
+func parsePhoneDeliverySettingsId(apiObject *management.NotificationsSettingsPhoneDeliverySettings) string {
+	if apiObject == nil {
+		return ""
+	}
+
+	if v := apiObject.NotificationsSettingsPhoneDeliverySettingsCustom; v != nil {
+		return v.GetId()
+	}
+
+	if v := apiObject.NotificationsSettingsPhoneDeliverySettingsTwilioSyniverse; v != nil {
+		return v.GetId()
+	}
+
+	return ""
+}
+
 func parsePhoneDeliverySettingsNumbers(apiObject *management.NotificationsSettingsPhoneDeliverySettings) (string, []management.NotificationsSettingsPhoneDeliverySettingsCustomNumbers, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -1609,7 +1962,7 @@ func (p *PhoneDeliverySettingsResourceModel) toState(ctx context.Context, apiObj
 			return diags
 		}
 
-		p.ProviderCustom, d = p.toStatePhoneDeliverySettingsProviderCustom(ctx, providerPlan, apiObject.NotificationsSettingsPhoneDeliverySettingsCustom)
+		p.ProviderCustom, d = toStatePhoneDeliverySettingsProviderCustom(ctx, providerPlan, apiObject.NotificationsSettingsPhoneDeliverySettingsCustom)
 		diags.Append(d...)
 	} else {
 		p.ProviderCustom = types.ObjectNull(customTFObjectTypes)
@@ -1625,7 +1978,7 @@ func (p *PhoneDeliverySettingsResourceModel) toState(ctx context.Context, apiObj
 			return diags
 		}
 
-		p.ProviderCustomTwilio, d = p.toStatePhoneDeliverySettingsProviderCustomTwilio(ctx, providerPlan, apiObject.NotificationsSettingsPhoneDeliverySettingsTwilioSyniverse)
+		p.ProviderCustomTwilio, d = toStatePhoneDeliverySettingsProviderCustomTwilio(ctx, providerPlan, apiObject.NotificationsSettingsPhoneDeliverySettingsTwilioSyniverse)
 		diags.Append(d...)
 	} else {
 		p.ProviderCustomTwilio = types.ObjectNull(twilioTFObjectTypes)
@@ -1641,7 +1994,7 @@ func (p *PhoneDeliverySettingsResourceModel) toState(ctx context.Context, apiObj
 			return diags
 		}
 
-		p.ProviderCustomSyniverse, d = p.toStatePhoneDeliverySettingsProviderCustomSyniverse(ctx, providerPlan, apiObject.NotificationsSettingsPhoneDeliverySettingsTwilioSyniverse)
+		p.ProviderCustomSyniverse, d = toStatePhoneDeliverySettingsProviderCustomSyniverse(ctx, providerPlan, apiObject.NotificationsSettingsPhoneDeliverySettingsTwilioSyniverse)
 		diags.Append(d...)
 	} else {
 		p.ProviderCustomSyniverse = types.ObjectNull(syniverseTFObjectTypes)
@@ -1650,7 +2003,7 @@ func (p *PhoneDeliverySettingsResourceModel) toState(ctx context.Context, apiObj
 	return diags
 }
 
-func (p *PhoneDeliverySettingsResourceModel) toStatePhoneDeliverySettingsProviderCustom(ctx context.Context, planData *PhoneDeliverySettingsProviderCustomResourceModel, apiObject *management.NotificationsSettingsPhoneDeliverySettingsCustom) (basetypes.ObjectValue, diag.Diagnostics) {
+func toStatePhoneDeliverySettingsProviderCustom(ctx context.Context, planData *PhoneDeliverySettingsProviderCustomResourceModel, apiObject *management.NotificationsSettingsPhoneDeliverySettingsCustom) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if apiObject == nil || apiObject.GetId() == "" {
@@ -1708,15 +2061,27 @@ func phoneDeliverySettingsCustomAuthenticationOkToTF(planData *PhoneDeliverySett
 	}
 
 	objMap := map[string]attr.Value{
-		"method":     framework.EnumOkToTF(apiObject.GetMethodOk()),
-		"password":   types.StringNull(),
-		"auth_token": types.StringNull(),
-		"username":   framework.StringOkToTF(apiObject.GetUsernameOk()),
+		"method":                       framework.EnumOkToTF(apiObject.GetMethodOk()),
+		"password":                     types.StringNull(),
+		"auth_token":                   types.StringNull(),
+		"username":                     framework.StringOkToTF(apiObject.GetUsernameOk()),
+		"auth_url":                     framework.StringOkToTF(apiObject.GetAuthUrlOk()),
+		"grant_type":                   framework.EnumOkToTF(apiObject.GetGrantTypeOk()),
+		"assertion":                    types.StringNull(),
+		"client_id":                    framework.StringOkToTF(apiObject.GetClientIdOk()),
+		"client_secret":                types.StringNull(),
+		"scopes":                       framework.StringSetOkToTF(apiObject.GetScopesOk()),
+		"header_name":                  framework.StringOkToTF(apiObject.GetHeaderNameOk()),
+		"header_value":                 types.StringNull(),
+		"client_authentication_method": framework.EnumOkToTF(apiObject.GetClientAuthenticationMethodOk()),
 	}
 
 	if planData != nil {
 		objMap["password"] = planData.Password
 		objMap["auth_token"] = planData.AuthToken
+		objMap["client_secret"] = planData.ClientSecret
+		objMap["header_value"] = planData.HeaderValue
+		objMap["assertion"] = planData.Assertion
 	}
 
 	returnVar, d := types.ObjectValue(customAuthenticationTFObjectTypes, objMap)
@@ -1793,7 +2158,7 @@ func phoneDeliverySettingsCustomRequestsOkToTF(apiObject []management.Notificati
 	return returnVar, diags
 }
 
-func (p *PhoneDeliverySettingsResourceModel) toStatePhoneDeliverySettingsProviderCustomTwilio(ctx context.Context, planData *PhoneDeliverySettingsProviderCustomTwilioResourceModel, apiObject *management.NotificationsSettingsPhoneDeliverySettingsTwilioSyniverse) (basetypes.ObjectValue, diag.Diagnostics) {
+func toStatePhoneDeliverySettingsProviderCustomTwilio(ctx context.Context, planData *PhoneDeliverySettingsProviderCustomTwilioResourceModel, apiObject *management.NotificationsSettingsPhoneDeliverySettingsTwilioSyniverse) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if apiObject == nil || apiObject.GetId() == "" {
@@ -1830,7 +2195,7 @@ func (p *PhoneDeliverySettingsResourceModel) toStatePhoneDeliverySettingsProvide
 	return objValue, diags
 }
 
-func (p *PhoneDeliverySettingsResourceModel) toStatePhoneDeliverySettingsProviderCustomSyniverse(ctx context.Context, planData *PhoneDeliverySettingsProviderCustomSyniverseResourceModel, apiObject *management.NotificationsSettingsPhoneDeliverySettingsTwilioSyniverse) (basetypes.ObjectValue, diag.Diagnostics) {
+func toStatePhoneDeliverySettingsProviderCustomSyniverse(ctx context.Context, planData *PhoneDeliverySettingsProviderCustomSyniverseResourceModel, apiObject *management.NotificationsSettingsPhoneDeliverySettingsTwilioSyniverse) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if apiObject == nil || apiObject.GetId() == "" {
