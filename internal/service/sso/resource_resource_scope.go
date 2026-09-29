@@ -62,7 +62,7 @@ func (r *ResourceScopeResource) Schema(ctx context.Context, req resource.SchemaR
 	const attrMinLength = 1
 
 	mappedClaimsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A set of custom resource attribute IDs.  This property does not control predefined OpenID Connect (OIDC) mappings, such as the `email` claim in the OIDC `email` scope or the `name` claim in the `profile` scope. You can create custom attributes, and these custom attributes can be added to `mapped_claims` and will display in the response.",
+		"A set of custom resource attribute IDs.  You can create custom attributes for the custom resource, and these custom attributes can be added to `mapped_claims` and will display in the response.",
 	)
 
 	enableMappedClaimsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
