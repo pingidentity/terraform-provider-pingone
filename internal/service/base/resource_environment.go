@@ -116,7 +116,6 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 	const emailAddressMaxLength = 5
 
 	const maximumServiceBookmarks = 5
-	const maximumServices = 13
 	const minimumServices = 1
 
 	typeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -376,7 +375,6 @@ func (r *EnvironmentResource) Schema(ctx context.Context, req resource.SchemaReq
 				},
 
 				Validators: []validator.Set{
-					setvalidator.SizeAtMost(maximumServices),
 					setvalidator.SizeAtLeast(minimumServices),
 				},
 			},
@@ -1294,13 +1292,24 @@ func (r *EnvironmentResource) environmentServicesValidateTags(ctx context.Contex
 				return diags
 			}
 
+			privilegeService, err := model.FindProductByAPICode(management.ENUMPRODUCTTYPE_ONE_PAM)
+			if err != nil {
+				diags.AddAttributeError(
+					path.Root("service").AtName("tags"),
+					"Cannot find Privilege product",
+					"In validating the configuration, the Privilege product could not be found.  This is always a bug in the provider.  Please report this issue to the provider maintainers.",
+				)
+
+				return diags
+			}
+
 			for _, service := range servicesPlan {
-				if !service.Type.Equal(types.StringValue(daVinciService.ProductCode)) {
+				if !service.Type.Equal(types.StringValue(daVinciService.ProductCode)) && !service.Type.Equal(types.StringValue(privilegeService.ProductCode)) {
 					if !service.Tags.IsNull() {
 						diags.AddAttributeError(
 							path.Root("service").AtName("tags"),
 							"Invalid configuration",
-							fmt.Sprintf("The `tags` parameter is only configurable where the `type` is set to `%s`.  Please unset the `tags` to an empty set or remove the `tags` parameter for the service.", daVinciService.ProductCode),
+							fmt.Sprintf("The `tags` parameter is only configurable where the `type` is set to `%s` or `%s`.  Please unset the `tags` to an empty set or remove the `tags` parameter for the service.", daVinciService.ProductCode, privilegeService.ProductCode),
 						)
 					}
 				}

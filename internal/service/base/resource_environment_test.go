@@ -344,7 +344,7 @@ func TestAccEnvironment_Services(t *testing.T) {
 	name := resourceName
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-	services1 := []string{`SSO`, `MFA`, `Risk`, `Verify`, `Credentials`, `APIIntelligence`, `Authorize`, `PingFederate`, `PingAccess`, `PingDirectory`, `PingAuthorize`, `PingCentral`}
+	services1 := []string{`SSO`, `MFA`, `Risk`, `Verify`, `Credentials`, `APIIntelligence`, `Authorize`, `PingFederate`, `PingAccess`, `PingDirectory`, `PingAuthorize`, `PingCentral`, `AdvancedIdentityCloud`}
 	services2 := []string{`SSO`, `MFA`, `Risk`, `Verify`}
 	services3 := []string{`SSO`, `MFA`, `Risk`, `Verify`, `PingFederate`, `PingAccess`, `PingDirectory`, `PingAuthorize`, `PingCentral`}
 
@@ -362,7 +362,7 @@ func TestAccEnvironment_Services(t *testing.T) {
 			{
 				Config: testAccEnvironmentConfig_DynamicServices(resourceName, name, licenseID, services1),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "services.#", "12"), // check all the custom services provision, except the WORKFORCE services
+					resource.TestCheckResourceAttr(resourceFullName, "services.#", "13"), // check all the custom services provision, except the WORKFORCE services
 				),
 			},
 			{
@@ -421,6 +421,17 @@ func TestAccEnvironment_ServicesTags(t *testing.T) {
 						"type":   "DaVinci",
 						"tags.#": "1",
 						"tags.0": "DAVINCI_MINIMAL",
+					}),
+				),
+			},
+			{
+				Config: testAccEnvironmentConfig_PrivilegeTags(resourceName, name, licenseID),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "services.#", "2"),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "services.*", map[string]string{
+						"type":   "Privilege",
+						"tags.#": "1",
+						"tags.0": "AUTHENTICATION_MODE_AGENTLESS",
 					}),
 				),
 			},
@@ -747,6 +758,24 @@ resource "pingone_environment" "%[1]s" {
     {
       type = "DaVinci"
       tags = ["DAVINCI_MINIMAL"]
+    }
+  ]
+}`, resourceName, name, licenseID)
+}
+
+func testAccEnvironmentConfig_PrivilegeTags(resourceName, name, licenseID string) string {
+	return fmt.Sprintf(`
+resource "pingone_environment" "%[1]s" {
+  name       = "%[2]s"
+  license_id = "%[3]s"
+
+  services = [
+    {
+      type = "SSO"
+    },
+    {
+      type = "Privilege"
+      tags = ["AUTHENTICATION_MODE_AGENTLESS"]
     }
   ]
 }`, resourceName, name, licenseID)
