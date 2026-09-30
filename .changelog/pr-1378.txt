@@ -1,0 +1,7 @@
+```release-note:enhancement
+Added the `mapped_claims` and `enable_mapped_claims` attributes to the `pingone_resource_scope` resource, and the `enable_mapped_claims` attribute to the `pingone_resource_scope_openid` resource, to manage mapped claims on resource scopes.
+```
+
+```release-note:enhancement
+Added the `enable_mapped_claims` attribute to the `pingone_resource_scope` data source.
+```
