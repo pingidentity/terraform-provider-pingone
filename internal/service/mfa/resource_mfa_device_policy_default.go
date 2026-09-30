@@ -405,11 +405,11 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 
 	blockDisabledUsersDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that, when set to `true`, ensures that users whose accounts have been disabled cannot authenticate with MFA.",
-	)
+	).DefaultValue(false)
 
 	blockUsersWithDisabledMfaDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that, when set to `false`, allows users to bypass MFA if their MFA setting has been disabled. By default, users with MFA disabled cannot authenticate.",
-	)
+	).DefaultValue(true)
 
 	updatedAtDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the time the resource was last updated.",
@@ -901,12 +901,18 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 				Description:         blockDisabledUsersDescription.Description,
 				MarkdownDescription: blockDisabledUsersDescription.MarkdownDescription,
 				Optional:            true,
+				Computed:            true,
+
+				Default: booldefault.StaticBool(false),
 			},
 
 			"block_users_with_disabled_mfa": schema.BoolAttribute{
 				Description:         blockUsersWithDisabledMfaDescription.Description,
 				MarkdownDescription: blockUsersWithDisabledMfaDescription.MarkdownDescription,
 				Optional:            true,
+				Computed:            true,
+
+				Default: booldefault.StaticBool(true),
 			},
 
 			"updated_at": schema.StringAttribute{

@@ -594,11 +594,11 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 
 	blockDisabledUsersDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that, when set to `true`, ensures that users whose accounts have been disabled cannot authenticate with MFA.",
-	)
+	).DefaultValue(false)
 
 	blockUsersWithDisabledMfaDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that, when set to `false`, allows users to bypass MFA if their MFA setting has been disabled. By default, users with MFA disabled cannot authenticate.",
-	)
+	).DefaultValue(true)
 
 	notificationsPolicyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A single object that specifies the notification policy to use for this MFA device policy. If not specified, the default notification policy for the environment will be used.",
@@ -852,12 +852,18 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 				Description:         blockDisabledUsersDescription.Description,
 				MarkdownDescription: blockDisabledUsersDescription.MarkdownDescription,
 				Optional:            true,
+				Computed:            true,
+
+				Default: booldefault.StaticBool(false),
 			},
 
 			"block_users_with_disabled_mfa": schema.BoolAttribute{
 				Description:         blockUsersWithDisabledMfaDescription.Description,
 				MarkdownDescription: blockUsersWithDisabledMfaDescription.MarkdownDescription,
 				Optional:            true,
+				Computed:            true,
+
+				Default: booldefault.StaticBool(true),
 			},
 
 			"notifications_policy": schema.SingleNestedAttribute{

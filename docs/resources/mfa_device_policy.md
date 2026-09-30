@@ -340,6 +340,8 @@ resource "pingone_environment" "my_environment" {
 ### Optional
 
 - `authentication` (Attributes) A single object that allows configuration of authentication settings in the device policy. (see [below for nested schema](#nestedatt--authentication))
+- `block_disabled_users` (Boolean) A boolean that, when set to `true`, ensures that users whose accounts have been disabled cannot authenticate with MFA.  Defaults to `false`.
+- `block_users_with_disabled_mfa` (Boolean) A boolean that, when set to `false`, allows users to bypass MFA if their MFA setting has been disabled. By default, users with MFA disabled cannot authenticate.  Defaults to `true`.
 - `desktop` (Attributes) A single object that allows configuration of PingID desktop device authentication policy settings. Only applicable when `policy_type` is `PING_ONE_ID`. (see [below for nested schema](#nestedatt--desktop))
 - `fido2` (Attributes) A single object that allows configuration of FIDO2 device authentication policy settings. (see [below for nested schema](#nestedatt--fido2))
 - `ignore_user_lock` (Boolean) A boolean that, when set to `true`, allows PingOne to skip the account lock check during MFA authentication.  Defaults to `false`.
