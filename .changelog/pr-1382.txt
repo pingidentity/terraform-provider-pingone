@@ -1,0 +1,11 @@
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.25.1 => v0.26.0
+```
+
+```release-note:enhancement
+`resource/pingone_mfa_device_policy`: Added `block_disabled_users` and `block_users_with_disabled_mfa` attributes to align with API.
+```
+
+```release-note:enhancement
+`resource/pingone_mfa_device_policy_default`: Added `block_disabled_users` and `block_users_with_disabled_mfa` attributes to align with API.
+```
