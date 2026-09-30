@@ -25,7 +25,6 @@ jobs:
         env:
           SLACK_NOTIFY_TO_CDI_JIRA_WEBHOOK: ${{ secrets.SLACK_NOTIFY_TO_CDI_JIRA_WEBHOOK }}
           ISSUE_TITLE: ${{ github.event.issue.title }}
-          ISSUE_BODY: ${{ github.event.issue.body }}
           REPOSITORY_NAME: ${{ github.repository }}
           GITHUB_EVENT_ISSUE_HTML_URL: ${{ github.event.issue.html_url }}
         run: |
@@ -33,12 +32,17 @@ jobs:
           import os
           import requests
           import json
+          import re
+          def sanitize(text):
+              # Escape Slack markup characters
+              return re.sub(r'[*_`~<>]', lambda m: '\\' + m.group(0), re.sub(r'<[^>]*>', '', text))
           headers = {'Content-Type': 'application/json'}
+          title = sanitize(os.environ['ISSUE_TITLE'])
           message = {
-              "text": f"New issue created in {os.environ['REPOSITORY_NAME']}: *{os.environ['ISSUE_TITLE']}*\n{os.environ['GITHUB_EVENT_ISSUE_HTML_URL']}",
+              "text": f"New issue created in {os.environ['REPOSITORY_NAME']}: *{title}*\n{os.environ['GITHUB_EVENT_ISSUE_HTML_URL']}",
               "REPOSITORY_NAME": os.environ['REPOSITORY_NAME'],
               "GITHUB_ISSUE": os.environ['GITHUB_EVENT_ISSUE_HTML_URL'],
-              "ISSUE_TITLE": os.environ['ISSUE_TITLE']
+              "ISSUE_TITLE": title
           }
           response = requests.post(os.environ['SLACK_NOTIFY_TO_CDI_JIRA_WEBHOOK'], headers=headers, data=json.dumps(message))
           EOF
