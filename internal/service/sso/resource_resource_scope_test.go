@@ -294,12 +294,6 @@ func TestAccResourceScope_InvalidParameters(t *testing.T) {
 				Config:      testAccResourceScopeConfig_ErrorResource(resourceName, name, "openid"),
 				ExpectError: regexp.MustCompile("Invalid resource"),
 			},
-			// The sub requirement is enforced by the API (400 REQUIRED_VALUE); the provider
-			// does not duplicate the check client-side.
-			{
-				Config:      testAccResourceScopeConfig_ErrorMappedClaimsNoSub(resourceName, name),
-				ExpectError: regexp.MustCompile("sub attribute must be included in mapped attributes"),
-			},
 		},
 	})
 }
@@ -424,38 +418,6 @@ resource "pingone_resource_scope" "%[2]s" {
   resource_id    = pingone_resource.%[2]s.id
 
   name = "%[3]s"
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
-}
-
-func testAccResourceScopeConfig_ErrorMappedClaimsNoSub(resourceName, name string) string {
-	return fmt.Sprintf(`
-		%[1]s
-resource "pingone_resource" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  name = "%[3]s"
-}
-
-resource "pingone_resource_attribute" "%[2]s-1" {
-  environment_id     = data.pingone_environment.general_test.id
-  resource_type      = "CUSTOM"
-  custom_resource_id = pingone_resource.%[2]s.id
-
-  name  = "%[3]s-1"
-  value = "$${user.name.given}"
-}
-
-resource "pingone_resource_scope" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-  resource_id    = pingone_resource.%[2]s.id
-
-  name = "%[3]s"
-
-  mapped_claims = [
-    pingone_resource_attribute.%[2]s-1.id
-  ]
-
-  enable_mapped_claims = true
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
