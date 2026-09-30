@@ -1,0 +1,11 @@
+```release-note:enhancement
+`resource/pingone_phone_delivery_settings`: The `provider_custom.authentication` block now supports the `OAUTH2` and `CUSTOM_HEADER` authentication methods, with new parameters `auth_url`, `grant_type`, `assertion`, `client_id`, `client_secret`, `scopes`, `header_name`, and `header_value`, and a read-only `client_authentication_method` parameter.
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.72.0 => v0.73.0
+```
+
+```release-note:new-data-source
+`pingone_phone_delivery_settings`
+```
