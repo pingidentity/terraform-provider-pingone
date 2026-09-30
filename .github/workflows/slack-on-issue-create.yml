@@ -28,7 +28,7 @@ jobs:
           REPOSITORY_NAME: ${{ github.repository }}
           GITHUB_EVENT_ISSUE_HTML_URL: ${{ github.event.issue.html_url }}
         run: |
-          python <<EOF
+          python <<'EOF'
           import os
           import requests
           import json
