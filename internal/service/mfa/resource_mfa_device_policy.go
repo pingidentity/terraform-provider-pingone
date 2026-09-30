@@ -45,26 +45,28 @@ import (
 type MFADevicePolicyResource serviceClientType
 
 type MFADevicePolicyResourceModel struct {
-	Id                    pingonetypes.ResourceIDValue `tfsdk:"id"`
-	EnvironmentId         pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
-	PolicyType            types.String                 `tfsdk:"policy_type"`
-	Name                  types.String                 `tfsdk:"name"`
-	Authentication        types.Object                 `tfsdk:"authentication"`
-	NewDeviceNotification types.String                 `tfsdk:"new_device_notification"`
-	IgnoreUserLock        types.Bool                   `tfsdk:"ignore_user_lock"`
-	NotificationsPolicy   types.Object                 `tfsdk:"notifications_policy"`
-	RememberMe            types.Object                 `tfsdk:"remember_me"`
-	Default               types.Bool                   `tfsdk:"default"`
-	Sms                   types.Object                 `tfsdk:"sms"`
-	Voice                 types.Object                 `tfsdk:"voice"`
-	Email                 types.Object                 `tfsdk:"email"`
-	WhatsApp              types.Object                 `tfsdk:"whats_app"`
-	Mobile                types.Object                 `tfsdk:"mobile"`
-	Totp                  types.Object                 `tfsdk:"totp"`
-	Fido2                 types.Object                 `tfsdk:"fido2"`
-	Desktop               types.Object                 `tfsdk:"desktop"`
-	Yubikey               types.Object                 `tfsdk:"yubikey"`
-	OathToken             types.Object                 `tfsdk:"oath_token"`
+	Id                        pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId             pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	PolicyType                types.String                 `tfsdk:"policy_type"`
+	Name                      types.String                 `tfsdk:"name"`
+	Authentication            types.Object                 `tfsdk:"authentication"`
+	NewDeviceNotification     types.String                 `tfsdk:"new_device_notification"`
+	IgnoreUserLock            types.Bool                   `tfsdk:"ignore_user_lock"`
+	BlockDisabledUsers        types.Bool                   `tfsdk:"block_disabled_users"`
+	BlockUsersWithDisabledMfa types.Bool                   `tfsdk:"block_users_with_disabled_mfa"`
+	NotificationsPolicy       types.Object                 `tfsdk:"notifications_policy"`
+	RememberMe                types.Object                 `tfsdk:"remember_me"`
+	Default                   types.Bool                   `tfsdk:"default"`
+	Sms                       types.Object                 `tfsdk:"sms"`
+	Voice                     types.Object                 `tfsdk:"voice"`
+	Email                     types.Object                 `tfsdk:"email"`
+	WhatsApp                  types.Object                 `tfsdk:"whats_app"`
+	Mobile                    types.Object                 `tfsdk:"mobile"`
+	Totp                      types.Object                 `tfsdk:"totp"`
+	Fido2                     types.Object                 `tfsdk:"fido2"`
+	Desktop                   types.Object                 `tfsdk:"desktop"`
+	Yubikey                   types.Object                 `tfsdk:"yubikey"`
+	OathToken                 types.Object                 `tfsdk:"oath_token"`
 }
 
 type MFADevicePolicyAuthenticationResourceModel struct {
@@ -590,6 +592,14 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 		"A boolean that, when set to `true`, allows PingOne to skip the account lock check during MFA authentication.",
 	).DefaultValue(false)
 
+	blockDisabledUsersDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that, when set to `true`, ensures that users whose accounts have been disabled cannot authenticate with MFA.",
+	)
+
+	blockUsersWithDisabledMfaDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that, when set to `false`, allows users to bypass MFA if their MFA setting has been disabled. By default, users with MFA disabled cannot authenticate.",
+	)
+
 	notificationsPolicyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A single object that specifies the notification policy to use for this MFA device policy. If not specified, the default notification policy for the environment will be used.",
 	)
@@ -836,6 +846,18 @@ func (r *MFADevicePolicyResource) Schema(ctx context.Context, req resource.Schem
 				Computed:            true,
 
 				Default: booldefault.StaticBool(false),
+			},
+
+			"block_disabled_users": schema.BoolAttribute{
+				Description:         blockDisabledUsersDescription.Description,
+				MarkdownDescription: blockDisabledUsersDescription.MarkdownDescription,
+				Optional:            true,
+			},
+
+			"block_users_with_disabled_mfa": schema.BoolAttribute{
+				Description:         blockUsersWithDisabledMfaDescription.Description,
+				MarkdownDescription: blockUsersWithDisabledMfaDescription.MarkdownDescription,
+				Optional:            true,
 			},
 
 			"notifications_policy": schema.SingleNestedAttribute{
@@ -2978,6 +3000,14 @@ func (p *MFADevicePolicyResourceModel) expand(ctx context.Context, apiClient *ma
 		policy.SetIgnoreUserLock(p.IgnoreUserLock.ValueBool())
 	}
 
+	if !p.BlockDisabledUsers.IsNull() && !p.BlockDisabledUsers.IsUnknown() {
+		policy.SetBlockDisabledUsers(p.BlockDisabledUsers.ValueBool())
+	}
+
+	if !p.BlockUsersWithDisabledMfa.IsNull() && !p.BlockUsersWithDisabledMfa.IsUnknown() {
+		policy.SetBlockUsersWithDisabledMfa(p.BlockUsersWithDisabledMfa.ValueBool())
+	}
+
 	if !p.NotificationsPolicy.IsNull() && !p.NotificationsPolicy.IsUnknown() {
 		var notificationsPolicyPlan MFADevicePolicyNotificationsPolicyResourceModel
 		diags.Append(p.NotificationsPolicy.As(ctx, &notificationsPolicyPlan, basetypes.ObjectAsOptions{
@@ -3805,6 +3835,10 @@ func (p *MFADevicePolicyResourceModel) toState(apiObject *mfa.DeviceAuthenticati
 	p.NewDeviceNotification = framework.EnumOkToTF(apiObject.GetNewDeviceNotificationOk())
 
 	p.IgnoreUserLock = framework.BoolOkToTF(apiObject.GetIgnoreUserLockOk())
+
+	p.BlockDisabledUsers = framework.BoolOkToTF(apiObject.GetBlockDisabledUsersOk())
+
+	p.BlockUsersWithDisabledMfa = framework.BoolOkToTF(apiObject.GetBlockUsersWithDisabledMfaOk())
 
 	p.NotificationsPolicy, d = toStateMfaDevicePolicyNotificationsPolicy(apiObject.GetNotificationsPolicyOk())
 	diags.Append(d...)
