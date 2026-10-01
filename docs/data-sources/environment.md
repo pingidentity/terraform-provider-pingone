@@ -48,8 +48,8 @@ Read-Only:
 - `bookmarks` (Attributes Set) A set of objects that specify custom bookmark links for the service. (see [below for nested schema](#nestedatt--services--bookmarks))
 - `console_url` (String) A custom console URL set for the service.  Generally used with services that are deployed separately to the PingOne SaaS service, such as `PingFederate`, `PingAccess`, `PingDirectory`, `PingAuthorize` and `PingCentral`.
 - `deployment` (Attributes) A single object that specifies the external resource associated with this product, containing state and settings related to the external resource. (see [below for nested schema](#nestedatt--services--deployment))
-- `tags` (Set of String) A set of tags applied upon environment creation.  Only configurable when the service `type` is `DaVinci`.  Options are `DAVINCI_MINIMAL`.
-- `type` (String) The service type applied to the environment.  Valid options are `APIIntelligence`, `Authorize`, `Credentials`, `DaVinci`, `MFA`, `PingAccess`, `PingAuthorize`, `PingCentral`, `PingDirectory`, `PingFederate`, `PingID`, `PingID-v2`, `Risk`, `SSO`, `Verify`.
+- `tags` (Set of String) A set of tags applied upon environment creation.  Only configurable when the service `type` is `DaVinci`.  Options are `AUTHENTICATION_MODE_AGENT`, `AUTHENTICATION_MODE_AGENTLESS`, `DAVINCI_MINIMAL`.
+- `type` (String) The service type applied to the environment.  Valid options are `APIIntelligence`, `AdvancedIdentityCloud`, `Authorize`, `Credentials`, `DaVinci`, `MFA`, `PingAccess`, `PingAuthorize`, `PingCentral`, `PingDirectory`, `PingFederate`, `PingID`, `PingID-v2`, `Privilege`, `Risk`, `SSO`, `Verify`.
 
 <a id="nestedatt--services--bookmarks"></a>
 ### Nested Schema for `services.bookmarks`

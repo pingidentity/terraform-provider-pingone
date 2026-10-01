@@ -68,7 +68,7 @@ resource "pingone_environment" "my_environment" {
 
 Required:
 
-- `type` (String) A string that specifies the service type to enable in the environment.  Options are `APIIntelligence`, `Authorize`, `Credentials`, `DaVinci`, `MFA`, `PingAccess`, `PingAuthorize`, `PingCentral`, `PingDirectory`, `PingFederate`, `PingID`, `PingID-v2`, `Risk`, `SSO`, `Verify`.
+- `type` (String) A string that specifies the service type to enable in the environment.  Options are `APIIntelligence`, `AdvancedIdentityCloud`, `Authorize`, `Credentials`, `DaVinci`, `MFA`, `PingAccess`, `PingAuthorize`, `PingCentral`, `PingDirectory`, `PingFederate`, `PingID`, `PingID-v2`, `Privilege`, `Risk`, `SSO`, `Verify`.
 
 Optional:
 
