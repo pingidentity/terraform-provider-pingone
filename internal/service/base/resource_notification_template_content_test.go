@@ -238,7 +238,7 @@ func TestAccNotificationTemplateContent_NewVariant(t *testing.T) {
 
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-	name := "verification_code_template"
+	name := "verification_code_new"
 	locale := "en"
 	variant := "My New Variant"
 

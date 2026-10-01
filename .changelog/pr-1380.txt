@@ -1,0 +1,19 @@
+```release-note:enhancement
+`resource/pingone_environment`: Added support for `Privilege` and `AdvancedIdentityCloud` to the `services.type` attribute. Also update the `tags` attribute to support the `AUTHENTICATION_MODE_AGENT` and `AUTHENTICATION_MODE_AGENTLESS` tags used by `Privilege`.
+```
+
+```release-note:enhancement
+`data-source/pingone_environment`: Added support for `Privilege` and `AdvancedIdentityCloud` to the `services.type` attribute. Also update the `tags` attribute to support the `AUTHENTICATION_MODE_AGENT` and `AUTHENTICATION_MODE_AGENTLESS` tags used by `Privilege`.
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2` v0.14.14 => v0.15.0
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.74.0 => v0.76.0
+```
+
+```release-note:note
+bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.25.1 => v0.26.0
+```

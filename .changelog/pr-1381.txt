@@ -1,0 +1,3 @@
+```release-note:enhancement
+`resource/pingone_notification_template_content`: Updated enum for `template_name` attribute for template names now supported by the API: `account_created`, `account_updated`, `password_change_admin`, `password_change_user`, `password_recovery_new`, and `verification_code_new`.
+```
