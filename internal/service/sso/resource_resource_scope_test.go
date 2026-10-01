@@ -147,6 +147,10 @@ func TestAccResourceScope_Full(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "My resource scope"),
+					resource.TestCheckResourceAttr(resourceFullName, "mapped_claims.#", "2"),
+					resource.TestMatchResourceAttr(resourceFullName, "mapped_claims.0", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "mapped_claims.1", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "enable_mapped_claims", "true"),
 				),
 			},
 			// Test importing the resource
@@ -195,6 +199,8 @@ func TestAccResourceScope_Minimal(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckNoResourceAttr(resourceFullName, "description"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "mapped_claims"),
+					resource.TestCheckResourceAttr(resourceFullName, "enable_mapped_claims", "false"),
 				),
 			},
 		},
@@ -227,6 +233,10 @@ func TestAccResourceScope_Change(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "My resource scope"),
+					resource.TestCheckResourceAttr(resourceFullName, "mapped_claims.#", "2"),
+					resource.TestMatchResourceAttr(resourceFullName, "mapped_claims.0", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "mapped_claims.1", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "enable_mapped_claims", "true"),
 				),
 			},
 			{
@@ -237,6 +247,8 @@ func TestAccResourceScope_Change(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckNoResourceAttr(resourceFullName, "description"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "mapped_claims"),
+					resource.TestCheckResourceAttr(resourceFullName, "enable_mapped_claims", "false"),
 				),
 			},
 			{
@@ -247,6 +259,10 @@ func TestAccResourceScope_Change(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceFullName, "resource_id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "name", name),
 					resource.TestCheckResourceAttr(resourceFullName, "description", "My resource scope"),
+					resource.TestCheckResourceAttr(resourceFullName, "mapped_claims.#", "2"),
+					resource.TestMatchResourceAttr(resourceFullName, "mapped_claims.0", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "mapped_claims.1", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "enable_mapped_claims", "true"),
 				),
 			},
 		},
@@ -353,12 +369,37 @@ resource "pingone_resource" "%[2]s" {
   name = "%[3]s"
 }
 
+resource "pingone_resource_attribute" "%[2]s-sub" {
+  environment_id     = data.pingone_environment.general_test.id
+  resource_type      = "CUSTOM"
+  custom_resource_id = pingone_resource.%[2]s.id
+
+  name  = "sub"
+  value = "$${user.id}"
+}
+
+resource "pingone_resource_attribute" "%[2]s-1" {
+  environment_id     = data.pingone_environment.general_test.id
+  resource_type      = "CUSTOM"
+  custom_resource_id = pingone_resource.%[2]s.id
+
+  name  = "%[3]s-1"
+  value = "$${user.name.given}"
+}
+
 resource "pingone_resource_scope" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   resource_id    = pingone_resource.%[2]s.id
 
   name        = "%[3]s"
   description = "My resource scope"
+
+  mapped_claims = [
+    pingone_resource_attribute.%[2]s-1.id,
+    pingone_resource_attribute.%[2]s-sub.id
+  ]
+
+  enable_mapped_claims = true
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 

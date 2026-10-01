@@ -28,16 +28,17 @@ import (
 type ResourceScopeDataSource serviceClientType
 
 type ResourceScopeDataSourceModel struct {
-	Id               pingonetypes.ResourceIDValue `tfsdk:"id"`
-	EnvironmentId    pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
-	ResourceType     types.String                 `tfsdk:"resource_type"`
-	ResourceId       pingonetypes.ResourceIDValue `tfsdk:"resource_id"`
-	CustomResourceId pingonetypes.ResourceIDValue `tfsdk:"custom_resource_id"`
-	ResourceScopeId  pingonetypes.ResourceIDValue `tfsdk:"resource_scope_id"`
-	Name             types.String                 `tfsdk:"name"`
-	Description      types.String                 `tfsdk:"description"`
-	SchemaAttributes types.Set                    `tfsdk:"schema_attributes"`
-	MappedClaims     types.Set                    `tfsdk:"mapped_claims"`
+	Id                 pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId      pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	ResourceType       types.String                 `tfsdk:"resource_type"`
+	ResourceId         pingonetypes.ResourceIDValue `tfsdk:"resource_id"`
+	CustomResourceId   pingonetypes.ResourceIDValue `tfsdk:"custom_resource_id"`
+	ResourceScopeId    pingonetypes.ResourceIDValue `tfsdk:"resource_scope_id"`
+	Name               types.String                 `tfsdk:"name"`
+	Description        types.String                 `tfsdk:"description"`
+	SchemaAttributes   types.Set                    `tfsdk:"schema_attributes"`
+	MappedClaims       types.Set                    `tfsdk:"mapped_claims"`
+	EnableMappedClaims types.Bool                   `tfsdk:"enable_mapped_claims"`
 }
 
 // Framework interfaces
@@ -85,7 +86,11 @@ func (r *ResourceScopeDataSource) Schema(ctx context.Context, req datasource.Sch
 	)
 
 	mappedClaimsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A list of custom resource attribute IDs. This property applies only for the resource with its type property set to `OPENID_CONNECT`. Moreover, this property does not display predefined OpenID Connect (OIDC) mappings, such as the `email` claim in the OIDC `email` scope or the `name` claim in the `profile` scope. You can create custom attributes, and these custom attributes can be added to `mapped_claims` and will display in the response.",
+		"A list of custom resource attribute IDs. This property applies only for the resource with its type property set to `OPENID_CONNECT` or `CUSTOM`. Moreover, this property does not display predefined OpenID Connect (OIDC) mappings, such as the `email` claim in the OIDC `email` scope or the `name` claim in the `profile` scope. You can create custom attributes, and these custom attributes can be added to `mapped_claims` and will display in the response.",
+	)
+
+	enableMappedClaimsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A Boolean that enables attribute mapping in scopes to control the attributes included in access tokens.  If this property is not set or set to `false` (default), the access token includes all custom attribute claims.  When set to `true`, the access token includes only the claims mapped in the scope.  When set to `true` for a custom resource, the `sub` resource attribute ID must be included in `mapped_claims`.",
 	)
 
 	resp.Schema = schema.Schema{
@@ -183,6 +188,12 @@ func (r *ResourceScopeDataSource) Schema(ctx context.Context, req datasource.Sch
 				Computed:            true,
 
 				ElementType: types.StringType,
+			},
+
+			"enable_mapped_claims": schema.BoolAttribute{
+				Description:         enableMappedClaimsDescription.Description,
+				MarkdownDescription: enableMappedClaimsDescription.MarkdownDescription,
+				Computed:            true,
 			},
 		},
 	}
@@ -304,6 +315,7 @@ func (p *ResourceScopeDataSourceModel) toState(apiObject *management.ResourceSco
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
 	p.SchemaAttributes = framework.StringSetOkToTF(apiObject.GetSchemaAttributesOk())
 	p.MappedClaims = framework.StringSetOkToTF(apiObject.GetMappedClaimsOk())
+	p.EnableMappedClaims = framework.BoolOkToTF(apiObject.GetEnableMappedClaimsOk())
 
 	return diags
 }

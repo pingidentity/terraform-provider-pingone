@@ -13,10 +13,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	customboolvalidator "github.com/pingidentity/terraform-provider-pingone/internal/framework/boolvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
@@ -29,11 +31,13 @@ type ResourceScopeResource serviceClientType
 var requestMutex sync.Mutex
 
 type ResourceScopeResourceModel struct {
-	Id            pingonetypes.ResourceIDValue `tfsdk:"id"`
-	EnvironmentId pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
-	ResourceId    pingonetypes.ResourceIDValue `tfsdk:"resource_id"`
-	Name          types.String                 `tfsdk:"name"`
-	Description   types.String                 `tfsdk:"description"`
+	Id                 pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId      pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	ResourceId         pingonetypes.ResourceIDValue `tfsdk:"resource_id"`
+	Name               types.String                 `tfsdk:"name"`
+	Description        types.String                 `tfsdk:"description"`
+	MappedClaims       types.Set                    `tfsdk:"mapped_claims"`
+	EnableMappedClaims types.Bool                   `tfsdk:"enable_mapped_claims"`
 }
 
 // Framework interfaces
@@ -57,6 +61,14 @@ func (r *ResourceScopeResource) Metadata(ctx context.Context, req resource.Metad
 func (r *ResourceScopeResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 
 	const attrMinLength = 1
+
+	mappedClaimsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A set of custom resource attribute IDs.  You can create custom attributes for the custom resource, and these custom attributes can be added to `mapped_claims` and will display in the response.",
+	)
+
+	enableMappedClaimsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A Boolean that enables attribute mapping in scopes to control the attributes included in access tokens.  If this property is not set or set to `false` (default), the access token includes all custom attribute claims.  When set to `true`, the access token includes only the claims mapped in the scope.  When set to `true`, the `sub` resource attribute ID must be included in `mapped_claims`.",
+	)
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -85,6 +97,27 @@ func (r *ResourceScopeResource) Schema(ctx context.Context, req resource.SchemaR
 			"description": schema.StringAttribute{
 				Description: framework.SchemaAttributeDescriptionFromMarkdown("A description to apply to the resource scope.").Description,
 				Optional:    true,
+			},
+
+			"mapped_claims": schema.SetAttribute{
+				Description:         mappedClaimsDescription.Description,
+				MarkdownDescription: mappedClaimsDescription.MarkdownDescription,
+				Optional:            true,
+
+				ElementType: pingonetypes.ResourceIDType{},
+			},
+
+			"enable_mapped_claims": schema.BoolAttribute{
+				Description:         enableMappedClaimsDescription.Description,
+				MarkdownDescription: enableMappedClaimsDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+
+				Default: booldefault.StaticBool(false),
+
+				Validators: []validator.Bool{
+					customboolvalidator.AlsoRequiresIfTrue(path.MatchRoot("mapped_claims")),
+				},
 			},
 		},
 	}
@@ -145,7 +178,11 @@ func (r *ResourceScopeResource) Create(ctx context.Context, req resource.CreateR
 	}
 
 	// Build the model for the API
-	resourceScope := plan.expand()
+	resourceScope, d := plan.expand(ctx)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// Run the API call
 	var resourceScopeResponse *management.ResourceScope
@@ -265,7 +302,11 @@ func (r *ResourceScopeResource) Update(ctx context.Context, req resource.UpdateR
 	}
 
 	// Build the model for the API
-	resourceScope := plan.expand()
+	resourceScope, d := plan.expand(ctx)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// Run the API call
 	var resourceScopeResponse *management.ResourceScope
@@ -369,16 +410,38 @@ func (r *ResourceScopeResource) ImportState(ctx context.Context, req resource.Im
 	}
 }
 
-func (p *ResourceScopeResourceModel) expand() *management.ResourceScope {
+func (p *ResourceScopeResourceModel) expand(ctx context.Context) (*management.ResourceScope, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
 	data := management.NewResourceScope(p.Name.ValueString())
 
 	if !p.Description.IsNull() && !p.Description.IsUnknown() {
 		data.SetDescription(p.Description.ValueString())
 	}
 
-	return data
-}
+	if !p.MappedClaims.IsNull() && !p.MappedClaims.IsUnknown() {
 
+		var plan []pingonetypes.ResourceIDValue
+		diags.Append(p.MappedClaims.ElementsAs(ctx, &plan, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		mappedClaims, d := framework.TFTypePingOneResourceIDSliceToStringSlice(plan, path.Root("mapped_claims"))
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		data.SetMappedClaims(mappedClaims)
+	}
+
+	if !p.EnableMappedClaims.IsNull() && !p.EnableMappedClaims.IsUnknown() {
+		data.SetEnableMappedClaims(p.EnableMappedClaims.ValueBool())
+	}
+
+	return data, diags
+}
 func (p *ResourceScopeResourceModel) validate(resource management.Resource) diag.Diagnostics {
 	var diags diag.Diagnostics
 
@@ -408,6 +471,8 @@ func (p *ResourceScopeResourceModel) toState(apiObject *management.ResourceScope
 	p.Id = framework.PingOneResourceIDOkToTF(apiObject.GetIdOk())
 	p.Name = framework.StringOkToTF(apiObject.GetNameOk())
 	p.Description = framework.StringOkToTF(apiObject.GetDescriptionOk())
+	p.MappedClaims = framework.PingOneResourceIDSetOkToTF(apiObject.GetMappedClaimsOk())
+	p.EnableMappedClaims = framework.BoolOkToTF(apiObject.GetEnableMappedClaimsOk())
 
 	return diags
 }
