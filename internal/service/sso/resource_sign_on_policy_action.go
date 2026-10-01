@@ -1819,7 +1819,7 @@ func flattenDiscoveryRulesInner(signOnPolicyActionIDFirstAllOfDiscoveryRules []m
 		if condition.GetValue() != "${identifier}" {
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Error,
-				Summary:  "`discovery_rule` has unknown field %s, but expecting value ${identifier}.  This is not supported in the provider.  Please raise an issue.",
+				Summary:  fmt.Sprintf("`discovery_rule` has unknown value %s, but expecting value ${identifier}.  This is not supported in the provider.  Please raise an issue.", condition.GetValue()),
 			})
 
 			return nil, diags

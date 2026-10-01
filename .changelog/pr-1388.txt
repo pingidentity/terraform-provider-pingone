@@ -3,5 +3,5 @@
 ```
 
 ```release-note:note
-`resource/pingone_sign_on_policy_action`: The `identifier_first.discovery_rule` block changed from an unordered set to an ordered list. Existing configurations will see a one-time in-place update to align the stored rule order with the configuration order; no resources are replaced.
+`resource/pingone_sign_on_policy_action`: The `identifier_first.discovery_rule` block changed from an unordered set to an ordered list. Existing configurations will see a one-time in-place update to align the stored rule order with the configuration order; no resources are replaced. Unlike a set, a list does not deduplicate identical `discovery_rule` blocks; duplicate rules are sent to PingOne as configured.
 ```
