@@ -1,0 +1,7 @@
+```release-note:bug
+`resource/pingone_sign_on_policy_action`: The `identifier_first.discovery_rule` block is now an ordered list. PingOne evaluates discovery rules in the order they are declared, and the provider previously modeled the block as an unordered set, making rule precedence nondeterministic when rule conditions overlapped.
+```
+
+```release-note:note
+`resource/pingone_sign_on_policy_action`: The `identifier_first.discovery_rule` block changed from an unordered set to an ordered list. Existing configurations will see a one-time in-place update to align the stored rule order with the configuration order; no resources are replaced.
+```
