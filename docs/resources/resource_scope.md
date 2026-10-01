@@ -22,11 +22,34 @@ resource "pingone_resource" "my_resource" {
   name = "My resource"
 }
 
+resource "pingone_resource_attribute" "my_resource_attribute" {
+  environment_id     = pingone_environment.my_environment.id
+  resource_type      = "CUSTOM"
+  custom_resource_id = pingone_resource.my_resource.id
+
+  name  = "exampleAttribute"
+  value = "$${user.name.given}"
+}
+
+data "pingone_resource_attribute" "my_sub_resource_attribute" {
+  environment_id = pingone_environment.my_environment.id
+  resource_id    = pingone_resource.my_resource.id
+
+  name = "sub"
+}
+
 resource "pingone_resource_scope" "my_resource_scope" {
   environment_id = pingone_environment.my_environment.id
   resource_id    = pingone_resource.my_resource.id
 
   name = "example_scope"
+
+  mapped_claims = [
+    data.pingone_resource_attribute.my_sub_resource_attribute.id,
+    pingone_resource_attribute.my_resource_attribute.id
+  ]
+
+  enable_mapped_claims = true
 }
 ```
 
@@ -42,6 +65,8 @@ resource "pingone_resource_scope" "my_resource_scope" {
 ### Optional
 
 - `description` (String) A description to apply to the resource scope.
+- `enable_mapped_claims` (Boolean) A Boolean that enables attribute mapping in scopes to control the attributes included in access tokens.  If this property is not set or set to `false` (default), the access token includes all custom attribute claims.  When set to `true`, the access token includes only the claims mapped in the scope.  When set to `true`, the `sub` resource attribute ID must be included in `mapped_claims`.
+- `mapped_claims` (Set of String) A set of custom resource attribute IDs.  You can create custom attributes for the custom resource, and these custom attributes can be added to `mapped_claims` and will display in the response.
 
 ### Read-Only
 

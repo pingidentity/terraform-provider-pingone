@@ -177,6 +177,7 @@ func TestAccResourceScopeDataSource_ByIDMappedClaims(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(dataSourceFullName, "schema_attributes.#", "0"),
 					resource.TestCheckResourceAttrPair(dataSourceFullName, "mapped_claims", resourceFullName, "mapped_claims"),
+					resource.TestCheckResourceAttrPair(dataSourceFullName, "enable_mapped_claims", resourceFullName, "enable_mapped_claims"),
 				),
 			},
 		},
@@ -336,10 +337,12 @@ resource "pingone_resource_scope_openid" "%[2]s" {
   description = "My resource scope"
 
   mapped_claims = [
+    pingone_resource_attribute.%[2]s-1.id,
     pingone_resource_attribute.%[2]s-2.id,
-    pingone_resource_attribute.%[2]s-3.id,
-    pingone_resource_attribute.%[2]s-1.id
+    pingone_resource_attribute.%[2]s-3.id
   ]
+
+  enable_mapped_claims = true
 }
 
 data "pingone_resource_scope" "%[2]s" {
