@@ -108,6 +108,8 @@ func TestAccMFADevicePolicyDefault_Full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "authentication.device_selection", "DEFAULT_TO_FIRST"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
 					resource.TestCheckResourceAttr(resourceFullName, "ignore_user_lock", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "block_disabled_users", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "block_users_with_disabled_mfa", "false"),
 					resource.TestMatchResourceAttr(resourceFullName, "notifications_policy.id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "updated_at", verify.RFC3339Regexp),
 					resource.TestCheckResourceAttr(resourceFullName, "remember_me.web.enabled", "true"),
@@ -207,6 +209,8 @@ func TestAccMFADevicePolicyDefault_Minimal(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "authentication.device_selection", "DEFAULT_TO_FIRST"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "NONE"),
 					resource.TestCheckResourceAttr(resourceFullName, "ignore_user_lock", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "block_disabled_users", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "block_users_with_disabled_mfa", "true"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "notifications_policy.id"),
 					resource.TestMatchResourceAttr(resourceFullName, "updated_at", verify.RFC3339Regexp),
 					resource.TestCheckResourceAttr(resourceFullName, "remember_me.web.enabled", "false"),
@@ -258,6 +262,8 @@ func TestAccMFADevicePolicyDefault_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "authentication.device_selection", "DEFAULT_TO_FIRST"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
 					resource.TestCheckResourceAttr(resourceFullName, "ignore_user_lock", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "block_disabled_users", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "block_users_with_disabled_mfa", "false"),
 					resource.TestMatchResourceAttr(resourceFullName, "notifications_policy.id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "remember_me.web.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "remember_me.web.life_time.duration", "60"),
@@ -270,6 +276,8 @@ func TestAccMFADevicePolicyDefault_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "authentication.device_selection", "DEFAULT_TO_FIRST"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "NONE"),
 					resource.TestCheckResourceAttr(resourceFullName, "ignore_user_lock", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "block_disabled_users", "false"),
+					resource.TestCheckResourceAttr(resourceFullName, "block_users_with_disabled_mfa", "true"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "notifications_policy.id"),
 					resource.TestCheckResourceAttr(resourceFullName, "remember_me.web.enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "remember_me.web.life_time.duration", "30"),
@@ -282,6 +290,8 @@ func TestAccMFADevicePolicyDefault_Change(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "authentication.device_selection", "DEFAULT_TO_FIRST"),
 					resource.TestCheckResourceAttr(resourceFullName, "new_device_notification", "SMS_THEN_EMAIL"),
 					resource.TestCheckResourceAttr(resourceFullName, "ignore_user_lock", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "block_disabled_users", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "block_users_with_disabled_mfa", "false"),
 					resource.TestCheckResourceAttrSet(resourceFullName, "notifications_policy.id"),
 					resource.TestCheckResourceAttr(resourceFullName, "remember_me.web.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "sms.enabled", "true"),
@@ -1127,6 +1137,9 @@ resource "pingone_mfa_device_policy_default" "%[3]s" {
 
   new_device_notification = "SMS_THEN_EMAIL"
   ignore_user_lock        = true
+
+  block_disabled_users          = true
+  block_users_with_disabled_mfa = false
 
   notifications_policy = {
     id = pingone_notification_policy.%[3]s.id

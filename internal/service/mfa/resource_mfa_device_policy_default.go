@@ -57,26 +57,28 @@ const (
 type MFADevicePolicyDefaultResource serviceClientType
 
 type MFADevicePolicyDefaultResourceModel struct {
-	Id                    pingonetypes.ResourceIDValue `tfsdk:"id"`
-	EnvironmentId         pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
-	PolicyType            types.String                 `tfsdk:"policy_type"`
-	Name                  types.String                 `tfsdk:"name"`
-	Authentication        types.Object                 `tfsdk:"authentication"`
-	NewDeviceNotification types.String                 `tfsdk:"new_device_notification"`
-	IgnoreUserLock        types.Bool                   `tfsdk:"ignore_user_lock"`
-	NotificationsPolicy   types.Object                 `tfsdk:"notifications_policy"`
-	RememberMe            types.Object                 `tfsdk:"remember_me"`
-	Sms                   types.Object                 `tfsdk:"sms"`
-	Voice                 types.Object                 `tfsdk:"voice"`
-	Email                 types.Object                 `tfsdk:"email"`
-	WhatsApp              types.Object                 `tfsdk:"whats_app"`
-	Mobile                types.Object                 `tfsdk:"mobile"`
-	Totp                  types.Object                 `tfsdk:"totp"`
-	Fido2                 types.Object                 `tfsdk:"fido2"`
-	Desktop               types.Object                 `tfsdk:"desktop"`
-	Yubikey               types.Object                 `tfsdk:"yubikey"`
-	OathToken             types.Object                 `tfsdk:"oath_token"`
-	UpdatedAt             timetypes.RFC3339            `tfsdk:"updated_at"`
+	Id                        pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId             pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	PolicyType                types.String                 `tfsdk:"policy_type"`
+	Name                      types.String                 `tfsdk:"name"`
+	Authentication            types.Object                 `tfsdk:"authentication"`
+	NewDeviceNotification     types.String                 `tfsdk:"new_device_notification"`
+	IgnoreUserLock            types.Bool                   `tfsdk:"ignore_user_lock"`
+	BlockDisabledUsers        types.Bool                   `tfsdk:"block_disabled_users"`
+	BlockUsersWithDisabledMfa types.Bool                   `tfsdk:"block_users_with_disabled_mfa"`
+	NotificationsPolicy       types.Object                 `tfsdk:"notifications_policy"`
+	RememberMe                types.Object                 `tfsdk:"remember_me"`
+	Sms                       types.Object                 `tfsdk:"sms"`
+	Voice                     types.Object                 `tfsdk:"voice"`
+	Email                     types.Object                 `tfsdk:"email"`
+	WhatsApp                  types.Object                 `tfsdk:"whats_app"`
+	Mobile                    types.Object                 `tfsdk:"mobile"`
+	Totp                      types.Object                 `tfsdk:"totp"`
+	Fido2                     types.Object                 `tfsdk:"fido2"`
+	Desktop                   types.Object                 `tfsdk:"desktop"`
+	Yubikey                   types.Object                 `tfsdk:"yubikey"`
+	OathToken                 types.Object                 `tfsdk:"oath_token"`
+	UpdatedAt                 timetypes.RFC3339            `tfsdk:"updated_at"`
 }
 
 type MFADevicePolicyCommonDeviceResourceModel struct {
@@ -400,6 +402,14 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 	ignoreUserLockDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that, when set to `true`, allows PingOne to skip the account lock check during MFA authentication.",
 	).DefaultValue(false)
+
+	blockDisabledUsersDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that, when set to `true`, ensures that users whose accounts have been disabled cannot authenticate with MFA.",
+	).DefaultValue(false)
+
+	blockUsersWithDisabledMfaDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that, when set to `false`, allows users to bypass MFA if their MFA setting has been disabled. By default, users with MFA disabled cannot authenticate.",
+	).DefaultValue(true)
 
 	updatedAtDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the time the resource was last updated.",
@@ -885,6 +895,24 @@ func (r *MFADevicePolicyDefaultResource) Schema(ctx context.Context, req resourc
 				Computed:            true,
 
 				Default: booldefault.StaticBool(false),
+			},
+
+			"block_disabled_users": schema.BoolAttribute{
+				Description:         blockDisabledUsersDescription.Description,
+				MarkdownDescription: blockDisabledUsersDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+
+				Default: booldefault.StaticBool(false),
+			},
+
+			"block_users_with_disabled_mfa": schema.BoolAttribute{
+				Description:         blockUsersWithDisabledMfaDescription.Description,
+				MarkdownDescription: blockUsersWithDisabledMfaDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+
+				Default: booldefault.StaticBool(true),
 			},
 
 			"updated_at": schema.StringAttribute{
@@ -3593,6 +3621,16 @@ func (p *MFADevicePolicyDefaultResourceModel) expand(ctx context.Context) (mfa.D
 		data.SetIgnoreUserLock(p.IgnoreUserLock.ValueBool())
 	}
 
+	// Block Disabled Users - both policy types
+	if !p.BlockDisabledUsers.IsNull() && !p.BlockDisabledUsers.IsUnknown() {
+		data.SetBlockDisabledUsers(p.BlockDisabledUsers.ValueBool())
+	}
+
+	// Block Users With Disabled Mfa - both policy types
+	if !p.BlockUsersWithDisabledMfa.IsNull() && !p.BlockUsersWithDisabledMfa.IsUnknown() {
+		data.SetBlockUsersWithDisabledMfa(p.BlockUsersWithDisabledMfa.ValueBool())
+	}
+
 	// NotificationsPolicy - both policy types
 	if !p.NotificationsPolicy.IsNull() && !p.NotificationsPolicy.IsUnknown() {
 		var notificationsPolicyPlan struct {
@@ -4114,6 +4152,10 @@ func (p *MFADevicePolicyDefaultResourceModel) toState(apiObject *mfa.DeviceAuthe
 	p.NewDeviceNotification = framework.EnumOkToTF(apiObject.GetNewDeviceNotificationOk())
 
 	p.IgnoreUserLock = framework.BoolOkToTF(apiObject.GetIgnoreUserLockOk())
+
+	p.BlockDisabledUsers = framework.BoolOkToTF(apiObject.GetBlockDisabledUsersOk())
+
+	p.BlockUsersWithDisabledMfa = framework.BoolOkToTF(apiObject.GetBlockUsersWithDisabledMfaOk())
 
 	p.UpdatedAt = framework.TimeOkToTF(apiObject.GetUpdatedAtOk())
 
