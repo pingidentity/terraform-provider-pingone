@@ -24,6 +24,7 @@ func Resources() []func() resource.Resource {
 
 func DataSources() []func() datasource.DataSource {
 	dataSources := []func() datasource.DataSource{
+		NewRiskPolicyDataSource,
 		NewRiskPredictorDataSource,
 		NewRiskPredictorsDataSource,
 	}
