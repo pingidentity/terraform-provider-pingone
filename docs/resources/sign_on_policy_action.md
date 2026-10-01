@@ -308,7 +308,7 @@ Optional:
 
 Optional:
 
-- `discovery_rule` (Block Set, Max: 100) One or more IDP discovery rules invoked when no user is associated with the user identifier. The condition on which this identity provider is used to authenticate the user is expressed using the PingOne policy condition language. (see [below for nested schema](#nestedblock--identifier_first--discovery_rule))
+- `discovery_rule` (Block List, Max: 100) One or more IDP discovery rules invoked when no user is associated with the user identifier. Rules are evaluated by PingOne in the order they are declared in the configuration, so overlapping rule conditions should be ordered from most specific to least specific. The condition on which this identity provider is used to authenticate the user is expressed using the PingOne policy condition language. (see [below for nested schema](#nestedblock--identifier_first--discovery_rule))
 - `recovery_enabled` (Boolean) A boolean that specifies whether account recovery features are active on the policy action. Defaults to `true`.
 
 <a id="nestedblock--identifier_first--discovery_rule"></a>

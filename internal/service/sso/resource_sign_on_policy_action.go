@@ -630,8 +630,8 @@ func expandSOPActionIDFirst(d *schema.ResourceData, sopPriority int32) (*managem
 			sopActionType.SetRecovery(*management.NewSignOnPolicyActionLoginAllOfRecovery(v1))
 		}
 
-		if v1, ok := vp["discovery_rule"].(*schema.Set); ok && v1 != nil && len(v1.List()) > 0 && v1.List()[0] != nil {
-			sopActionType.SetDiscoveryRules(expandSOPActionDiscoveryRules(v1.List()))
+		if v1, ok := vp["discovery_rule"].([]interface{}); ok && v1 != nil && len(v1) > 0 && v1[0] != nil {
+			sopActionType.SetDiscoveryRules(expandSOPActionDiscoveryRules(v1))
 		}
 
 	}
