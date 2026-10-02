@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -55,7 +56,11 @@ func sweepGroups(region string) error {
 		pagedIterator := apiClient.GroupsApi.ReadAllGroups(ctx, environment.GetId()).Execute()
 		for pageCursor, err := range pagedIterator {
 			if err != nil {
-				return fmt.Errorf("error getting groups: %s", err)
+				if pageCursor.HTTPResponse != nil && pageCursor.HTTPResponse.StatusCode == http.StatusNotFound {
+					log.Printf("Environment %s no longer exists, skipping group sweep: %s", environment.GetId(), err)
+					break
+				}
+				return fmt.Errorf("error getting groups for environment %s: %s", environment.GetId(), err)
 			}
 
 			if groups, ok := pageCursor.EntityArray.Embedded.GetGroupsOk(); ok {
@@ -100,7 +105,12 @@ func sweepPopulations(region string) error {
 		pagedIterator := apiClient.PopulationsApi.ReadAllPopulations(ctx, environment.GetId()).Execute()
 		for pageCursor, err := range pagedIterator {
 			if err != nil {
-				return fmt.Errorf("error getting populations: %s", err)
+				// Environment may have been deleted since listing; nothing to clean up
+				if pageCursor.HTTPResponse != nil && pageCursor.HTTPResponse.StatusCode == http.StatusNotFound {
+					log.Printf("Environment %s no longer exists, skipping population sweep: %s", environment.GetId(), err)
+					break
+				}
+				return fmt.Errorf("error getting populations for environment %s: %s", environment.GetId(), err)
 			}
 
 			if populations, ok := pageCursor.EntityArray.Embedded.GetPopulationsOk(); ok {
@@ -147,7 +157,12 @@ func sweepSOPs(region string) error {
 		pagedIterator := apiClient.SignOnPoliciesApi.ReadAllSignOnPolicies(ctx, environment.GetId()).Execute()
 		for pageCursor, err := range pagedIterator {
 			if err != nil {
-				return fmt.Errorf("error getting sign on policies: %s", err)
+				// Environment may have been deleted since listing; nothing to clean up
+				if pageCursor.HTTPResponse != nil && pageCursor.HTTPResponse.StatusCode == http.StatusNotFound {
+					log.Printf("Environment %s no longer exists, skipping sign-on policy sweep: %s", environment.GetId(), err)
+					break
+				}
+				return fmt.Errorf("error getting sign on policies for environment %s: %s", environment.GetId(), err)
 			}
 
 			if signOnPolicies, ok := pageCursor.EntityArray.Embedded.GetSignOnPoliciesOk(); ok {
