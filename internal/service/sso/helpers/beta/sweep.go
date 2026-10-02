@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sweep"
@@ -48,7 +49,11 @@ func sweepFFAppImportApplications(region string) error {
 					pagedIterator := apiClient.ApplicationsApi.ReadAllApplications(ctx, environment.GetId()).Execute()
 					for pageCursor, err := range pagedIterator {
 						if err != nil {
-							return fmt.Errorf("error getting applications: %s", err)
+							if pageCursor.HTTPResponse != nil && pageCursor.HTTPResponse.StatusCode == http.StatusNotFound {
+								log.Printf("Environment %s no longer exists, skipping application sweep: %s", environment.GetId(), err)
+								break
+							}
+							return fmt.Errorf("error getting applications for environment %s: %s", environment.GetId(), err)
 						}
 
 						if applications, ok := pageCursor.EntityArray.Embedded.GetApplicationsOk(); ok {
