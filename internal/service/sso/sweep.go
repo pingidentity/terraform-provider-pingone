@@ -105,7 +105,6 @@ func sweepPopulations(region string) error {
 		pagedIterator := apiClient.PopulationsApi.ReadAllPopulations(ctx, environment.GetId()).Execute()
 		for pageCursor, err := range pagedIterator {
 			if err != nil {
-				// Environment may have been deleted since listing; nothing to clean up
 				if pageCursor.HTTPResponse != nil && pageCursor.HTTPResponse.StatusCode == http.StatusNotFound {
 					log.Printf("Environment %s no longer exists, skipping population sweep: %s", environment.GetId(), err)
 					break
@@ -157,7 +156,6 @@ func sweepSOPs(region string) error {
 		pagedIterator := apiClient.SignOnPoliciesApi.ReadAllSignOnPolicies(ctx, environment.GetId()).Execute()
 		for pageCursor, err := range pagedIterator {
 			if err != nil {
-				// Environment may have been deleted since listing; nothing to clean up
 				if pageCursor.HTTPResponse != nil && pageCursor.HTTPResponse.StatusCode == http.StatusNotFound {
 					log.Printf("Environment %s no longer exists, skipping sign-on policy sweep: %s", environment.GetId(), err)
 					break
