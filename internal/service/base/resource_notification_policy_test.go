@@ -878,7 +878,7 @@ resource "pingone_notification_policy" "%[2]s" {
     conditions = [
       {
         delivery_methods = ["SMS", "VOICE"]
-        countries        = ["US", "CA"]
+        countries        = ["US", "CA", "SS"]
         fallback_chain = [{
           id = pingone_phone_delivery_settings.%[2]s_provider_1.id
         }]
