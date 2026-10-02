@@ -1,0 +1,3 @@
+```release-note:bug
+Fixed an issue where some valid ISO 3166 country codes were rejected by provider validation.
+```
