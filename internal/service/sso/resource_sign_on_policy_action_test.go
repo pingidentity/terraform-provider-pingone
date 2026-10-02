@@ -373,6 +373,74 @@ func TestAccSignOnPolicyAction_IDFirstAction(t *testing.T) {
 	})
 }
 
+func TestAccSignOnPolicyAction_IDFirstDiscoveryRuleOrdering(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_sign_on_policy_action.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             sso.SignOnPolicyAction_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Discovery rules are evaluated in order, so the provider must preserve the
+			// order in which they are declared (most specific to least specific).
+			{
+				Config: testAccSignOnPolicyActionConfig_IDFirstDiscoveryRuleOrdering(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "identifier_first.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "identifier_first.0.discovery_rule.#", "3"),
+					resource.TestCheckResourceAttr(resourceFullName, "identifier_first.0.discovery_rule.0.attribute_contains_text", "@specific.example.com"),
+					resource.TestMatchResourceAttr(resourceFullName, "identifier_first.0.discovery_rule.0.identity_provider_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "identifier_first.0.discovery_rule.1.attribute_contains_text", "@example.com"),
+					resource.TestMatchResourceAttr(resourceFullName, "identifier_first.0.discovery_rule.1.identity_provider_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "identifier_first.0.discovery_rule.2.attribute_contains_text", "@"),
+					resource.TestMatchResourceAttr(resourceFullName, "identifier_first.0.discovery_rule.2.identity_provider_id", verify.P1ResourceIDRegexpFullString),
+				),
+			},
+			// Reversing the declared order must result in an in-place update that
+			// reverses the rule order on the PingOne platform.
+			{
+				Config: testAccSignOnPolicyActionConfig_IDFirstDiscoveryRuleOrderingReversed(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "identifier_first.#", "1"),
+					resource.TestCheckResourceAttr(resourceFullName, "identifier_first.0.discovery_rule.#", "3"),
+					resource.TestCheckResourceAttr(resourceFullName, "identifier_first.0.discovery_rule.0.attribute_contains_text", "@"),
+					resource.TestMatchResourceAttr(resourceFullName, "identifier_first.0.discovery_rule.0.identity_provider_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "identifier_first.0.discovery_rule.1.attribute_contains_text", "@example.com"),
+					resource.TestMatchResourceAttr(resourceFullName, "identifier_first.0.discovery_rule.1.identity_provider_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "identifier_first.0.discovery_rule.2.attribute_contains_text", "@specific.example.com"),
+					resource.TestMatchResourceAttr(resourceFullName, "identifier_first.0.discovery_rule.2.identity_provider_id", verify.P1ResourceIDRegexpFullString),
+				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.Attributes["sign_on_policy_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
 func TestAccSignOnPolicyAction_MFAAction(t *testing.T) {
 	t.Parallel()
 
@@ -2461,6 +2529,116 @@ resource "pingone_sign_on_policy_action" "%[2]s" {
 
   identifier_first {}
 
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccSignOnPolicyActionConfig_IDFirstDiscoveryRuleOrdering(resourceName, name string) string {
+
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_identity_provider" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-1"
+
+  google = {
+    client_id     = "testclientid"
+    client_secret = "testclientsecret"
+  }
+}
+
+resource "pingone_identity_provider" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-2"
+
+  facebook = {
+    app_id     = "testclientid"
+    app_secret = "testclientsecret"
+  }
+}
+
+resource "pingone_sign_on_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+}
+
+resource "pingone_sign_on_policy_action" "%[2]s" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+
+  priority = 1
+
+  identifier_first {
+    recovery_enabled = false // we set this to false because the calculated default from the api is true
+    discovery_rule {
+      attribute_contains_text = "@specific.example.com"
+      identity_provider_id    = pingone_identity_provider.%[2]s-1.id
+    }
+    discovery_rule {
+      attribute_contains_text = "@example.com"
+      identity_provider_id    = pingone_identity_provider.%[2]s-2.id
+    }
+    discovery_rule {
+      attribute_contains_text = "@"
+      identity_provider_id    = pingone_identity_provider.%[2]s-1.id
+    }
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccSignOnPolicyActionConfig_IDFirstDiscoveryRuleOrderingReversed(resourceName, name string) string {
+
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_identity_provider" "%[2]s-1" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-1"
+
+  google = {
+    client_id     = "testclientid"
+    client_secret = "testclientsecret"
+  }
+}
+
+resource "pingone_identity_provider" "%[2]s-2" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s-2"
+
+  facebook = {
+    app_id     = "testclientid"
+    app_secret = "testclientsecret"
+  }
+}
+
+resource "pingone_sign_on_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+}
+
+resource "pingone_sign_on_policy_action" "%[2]s" {
+  environment_id    = data.pingone_environment.general_test.id
+  sign_on_policy_id = pingone_sign_on_policy.%[2]s.id
+
+  priority = 1
+
+  identifier_first {
+    recovery_enabled = false // we set this to false because the calculated default from the api is true
+    discovery_rule {
+      attribute_contains_text = "@"
+      identity_provider_id    = pingone_identity_provider.%[2]s-1.id
+    }
+    discovery_rule {
+      attribute_contains_text = "@example.com"
+      identity_provider_id    = pingone_identity_provider.%[2]s-2.id
+    }
+    discovery_rule {
+      attribute_contains_text = "@specific.example.com"
+      identity_provider_id    = pingone_identity_provider.%[2]s-1.id
+    }
+  }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
