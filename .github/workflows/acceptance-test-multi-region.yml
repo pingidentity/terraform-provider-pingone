@@ -74,11 +74,9 @@ jobs:
           make sweep
 
   # run acceptance tests in a matrix with Terraform core versions and regions
-  # TEMPORARY: test jobs disabled to verify sweeper changes in isolation (prepare/cleanup only)
   test:
     name: Acceptance Test ${{ matrix.region }}
     needs: [prepare]
-    if: false
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -150,11 +148,9 @@ jobs:
 
   # run acceptance tests in a matrix with Terraform core versions and regions
   # flaky flag set
-  # TEMPORARY: test jobs disabled to verify sweeper changes in isolation (prepare/cleanup only)
   test-flaky:
     name: Acceptance Test ${{ matrix.region }} (FLAKY)
     needs: [prepare]
-    if: false
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -233,7 +229,6 @@ jobs:
   test-access-token:
     name: Acceptance Test (Access Token) ${{ matrix.region }}
     needs: [prepare]
-    if: false
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -308,7 +303,6 @@ jobs:
     name: Clean up ${{ matrix.region }}
     needs: [test, test-flaky, test-access-token]
     runs-on: ubuntu-latest
-    # TEMPORARY: `always()` retained so cleanup still runs with the test jobs skipped
     if: always()
     strategy:
       fail-fast: false
