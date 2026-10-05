@@ -37016,6 +37016,249 @@ resource "pingone_davinci_connector_instance" "ideemConnector" {
 ```
 
 
+## Identity Verification
+
+Connector ID (`connector.id` in the resource): `verifyUseCaseConnector`
+
+Properties (used under the `properties` block in the resource as a key in the JSON object):
+
+* `aspectHeight` (number): Height of the aspect ratio. Console display name: "Aspect Height".
+* `aspectWidth` (number): Width of the aspect ratio. Console display name: "Aspect Width".
+* `biographic` (string): Use this section to add biographic fields. Console display name: "Identity Data".
+* `challenge` (string): Optional challenge. If not provided, a random challenge will be generated. Console display name: "Challenge".
+* `challengeId` (string): Required challenge. To be added to the output for polling in subsequent step. Console display name: "Challenge".
+* `colorPicker` (string): Select color. Console display name: "colorPicker".
+* `deviceOwnership` (boolean): Enable TransUnion TruValidate device ownership verification (US only). Requires phone and name in Identity Data. Console display name: "Device Ownership Verification".
+* `documentId` (string): ID of the data collected from user. Console display name: "Document ID".
+* `documentTypeName` (string): Type of the data collected. The document types accepted are determined by the transaction's policy requirements. Console display name: "Document Type".
+* `documentValue` (string): Base64 encoded jpeg or textual data collected from user. Console display name: "Document Value".
+* `isLastClientStep` (string): If isLastClientStep is false, the continueLink will be generated and added to the output, otherwise the link will not be added. Console display name: "Is Last Client Step".
+* `limit` (number): Number of transactions to return. Console display name: "limit".
+* `metadataType` (string): Type of the metadata. Select ALL to get all metadata. Console display name: "Metadata Type".
+* `notifyEmail` (string): The email address to receive email notifications during verification. Console display name: "Notification Email Address".
+* `notifyPhone` (string): The phone number to receive SMS notifications during verification. Console display name: "Notification Phone Number".
+* `probeBiographic` (string): Use this section to add probe biographic fields. Console display name: "Probe Biographic Fields".
+* `redirectMessage` (string): Displayed after document collection and before redirecting to the specified URL. Requires a configured Redirect URL. Limited to 256 characters. Console display name: "Redirect Message".
+* `redirectUrl` (string): The Redirect URL where the user is returned to after document collection. Only secure (https://) URLs are allowed. Console display name: "Redirect URL".
+* `sectionLabelNotification` (string): Console display name: "Notification Settings".
+* `sectionLabelVerification` (string): Console display name: "Verification Settings".
+* `sectionLabelVerifiedData` (string): Console display name: "Verification Results Data".
+* `selfieId` (string): ID of the selfie. Console display name: "Selfie ID".
+* `showAdvancedFields` (boolean): Show advanced fields. Console display name: "Show advanced fields".
+* `showAdvancedFieldsForMetaData` (boolean): Include metadata in the output. Enabling this will show additional fields related to metadata in the output. Console display name: "Include Metadata".
+* `showPoweredBy` (string): Console display name: "".
+* `skipButtonPress` (string): Console display name: "".
+* `transactionId` (string): The unique  identifier of the transaction. Console display name: "Transaction ID".
+* `verifiedType` (string): Select the verified types to be returned in the output. Console display name: "Verified Type(s)".
+* `verifyEmail` (string): The email address(es) to be verified for email-verification-required policy. Console display name: "Verification Email Address".
+* `verifyPhone` (string): The phone number(s) to be verified for phone-verification-required policy. Console display name: "Verification Phone Number".
+* `verifyPolicy` (string): Name of the verify policy. Console display name: "Verify Policy".
+* `verifyPolicyId` (string): ID of the verify policy. Console display name: "Verify Policy ID".
+* `verifyPolicyIdSelect` (string): The unique  identifier of the verify policy. Console display name: "Verify Policy ID".
+* `verifyPolicySelect` (string): Name of the verify policy. Console display name: "Verify Policy".
+* `verifyStatus` (string): Verify status of the user to be set. Console display name: "Verify Status".
+* `voiceSampleIndex` (number): voice sample index starting from 1. Console display name: "Voice Sample Index".
+* `webVerificationUrl` (string): web verification url. Console display name: "Web Verification URL".
+
+
+Example:
+```terraform
+resource "pingone_davinci_connector_instance" "verifyUseCaseConnector" {
+  environment_id = var.pingone_environment_id
+
+  connector = {
+    id = "verifyUseCaseConnector"
+  }
+  name = "My awesome verifyUseCaseConnector"
+  property {
+    name  = "aspectHeight"
+    type  = "number"
+    value = var.verifyusecaseconnector_property_aspect_height
+  }
+  property {
+    name  = "aspectWidth"
+    type  = "number"
+    value = var.verifyusecaseconnector_property_aspect_width
+  }
+  property {
+    name  = "biographic"
+    type  = "string"
+    value = var.verifyusecaseconnector_property_biographic
+  }
+  property {
+    name  = "challenge"
+    type  = "string"
+    value = var.verifyusecaseconnector_property_challenge
+  }
+  property {
+    name  = "challengeId"
+    type  = "string"
+    value = var.verifyusecaseconnector_property_challenge_id
+  }
+  property {
+    name  = "colorPicker"
+    type  = "string"
+    value = var.verifyusecaseconnector_property_color_picker
+  }
+  property {
+    name  = "deviceOwnership"
+    type  = "boolean"
+    value = var.verifyusecaseconnector_property_device_ownership
+  }
+  property {
+    name  = "documentId"
+    type  = "string"
+    value = var.verifyusecaseconnector_property_document_id
+  }
+  property {
+    name  = "documentTypeName"
+    type  = "string"
+    value = var.verifyusecaseconnector_property_document_type_name
+  }
+  property {
+    name  = "documentValue"
+    type  = "string"
+    value = var.verifyusecaseconnector_property_document_value
+  }
+  property {
+    name  = "isLastClientStep"
+    type  = "string"
+    value = var.verifyusecaseconnector_property_is_last_client_step
+  }
+  property {
+    name  = "limit"
+    type  = "number"
+    value = var.verifyusecaseconnector_property_limit
+  }
+  property {
+    name  = "metadataType"
+    type  = "string"
+    value = var.verifyusecaseconnector_property_metadata_type
+  }
+  property {
+    name  = "notifyEmail"
+    type  = "string"
+    value = var.verifyusecaseconnector_property_notify_email
+  }
+  property {
+    name  = "notifyPhone"
+    type  = "string"
+    value = var.verifyusecaseconnector_property_notify_phone
+  }
+  property {
+    name  = "probeBiographic"
+    type  = "string"
+    value = var.verifyusecaseconnector_property_probe_biographic
+  }
+  property {
+    name  = "redirectMessage"
+    type  = "string"
+    value = var.verifyusecaseconnector_property_redirect_message
+  }
+  property {
+    name  = "redirectUrl"
+    type  = "string"
+    value = var.verifyusecaseconnector_property_redirect_url
+  }
+  property {
+    name  = "sectionLabelNotification"
+    type  = "string"
+    value = var.verifyusecaseconnector_property_section_label_notification
+  }
+  property {
+    name  = "sectionLabelVerification"
+    type  = "string"
+    value = var.verifyusecaseconnector_property_section_label_verification
+  }
+  property {
+    name  = "sectionLabelVerifiedData"
+    type  = "string"
+    value = var.verifyusecaseconnector_property_section_label_verified_data
+  }
+  property {
+    name  = "selfieId"
+    type  = "string"
+    value = var.verifyusecaseconnector_property_selfie_id
+  }
+  property {
+    name  = "showAdvancedFields"
+    type  = "boolean"
+    value = var.verifyusecaseconnector_property_show_advanced_fields
+  }
+  property {
+    name  = "showAdvancedFieldsForMetaData"
+    type  = "boolean"
+    value = var.verifyusecaseconnector_property_show_advanced_fields_for_meta_data
+  }
+  property {
+    name  = "showPoweredBy"
+    type  = "string"
+    value = var.verifyusecaseconnector_property_show_powered_by
+  }
+  property {
+    name  = "skipButtonPress"
+    type  = "string"
+    value = var.verifyusecaseconnector_property_skip_button_press
+  }
+  property {
+    name  = "transactionId"
+    type  = "string"
+    value = var.verifyusecaseconnector_property_transaction_id
+  }
+  property {
+    name  = "verifiedType"
+    type  = "string"
+    value = var.verifyusecaseconnector_property_verified_type
+  }
+  property {
+    name  = "verifyEmail"
+    type  = "string"
+    value = var.verifyusecaseconnector_property_verify_email
+  }
+  property {
+    name  = "verifyPhone"
+    type  = "string"
+    value = var.verifyusecaseconnector_property_verify_phone
+  }
+  property {
+    name  = "verifyPolicy"
+    type  = "string"
+    value = var.verifyusecaseconnector_property_verify_policy
+  }
+  property {
+    name  = "verifyPolicyId"
+    type  = "string"
+    value = var.verifyusecaseconnector_property_verify_policy_id
+  }
+  property {
+    name  = "verifyPolicyIdSelect"
+    type  = "string"
+    value = var.verifyusecaseconnector_property_verify_policy_id_select
+  }
+  property {
+    name  = "verifyPolicySelect"
+    type  = "string"
+    value = var.verifyusecaseconnector_property_verify_policy_select
+  }
+  property {
+    name  = "verifyStatus"
+    type  = "string"
+    value = var.verifyusecaseconnector_property_verify_status
+  }
+  property {
+    name  = "voiceSampleIndex"
+    type  = "number"
+    value = var.verifyusecaseconnector_property_voice_sample_index
+  }
+  property {
+    name  = "webVerificationUrl"
+    type  = "string"
+    value = var.verifyusecaseconnector_property_web_verification_url
+  }
+}
+```
+
+
 ## Image
 
 Connector ID (`connector.id` in the resource): `imageConnector`
@@ -37852,7 +38095,7 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `dn` (string): The DN to perform the operation on. Console display name: "DN".
 * `entryAttributes` (string): The attributes that should be retrieved. If "Retrieve Operational Attributes" is true, "*" must be used in order to retrieve all user attributes. Otherwise, retrieving all user attributes can be done by leaving this field blank. Console display name: "Entry Attributes".
 * `envId` (string): Your PingOne environment ID. Console display name: "Environment ID".
-* `filter` (string): The criteria for defining matching entries in a search. Console display name: "Filter".
+* `filter` (string): The criteria for defining matching entries in a search. Values inserted from variables are escaped, so they are matched as literal text rather than as filter syntax. Console display name: "Filter".
 * `gatewayId` (string): Your PingOne LDAP gateway ID. Console display name: "Gateway ID".
 * `jsonAttributes` (string): Input attributes as a JSON object with the attribute names as the keys and the attribute values as the values. Multi-valued attributes may be provided as an array. Console display name: "Attributes".
 * `ldapUrl` (string): Console display name: "LDAP URL".
@@ -80660,9 +80903,9 @@ Properties (used under the `properties` block in the resource as a key in the JS
 * `errorReason` (string): Console display name: "".
 * `genericToken` (string): The JWT token to validate. Console display name: "".
 * `idTokenExpiry` (string): Console display name: "".
-* `publicKeyId` (string): A unique identifier for the public key, used to identify the correct key when multiple keys are in use or have been rotated. Used for tokens created with RS*, ES*, or PS* algorithms that use key IDs. Console display name: "Public Key ID".
-* `publicKeyJWTEndpointURL` (string): The JWKS endpoint for the public key associated with the private key that was used to create the JWT token, such as "https://yourcompany.com/.well-known/jwks.json". For tokens created with RS*, ES*, or PS* algorithms, you must provide the key here or in the Public Key PEM Contents field. Console display name: "Public Key JWKS Endpoint URL".
-* `publicKeyPEMContents` (string): The public key associated with the private key that was used to create the JWT token. The key must be in PEM format, which includes the `-----BEGIN PUBLIC KEY-----` and `-----END PUBLIC KEY-----` delimiters. For tokens created with RS*, ES*, or PS* algorithms, you must provide the key here or in the Public Key JWKS Endpoint URL. Console display name: "Public Key PEM Contents".
+* `publicKeyId` (string): A unique identifier for the public key, used to identify the correct key when multiple keys are in use or have been rotated. Required only for tokens created with RS*, ES*, or PS* algorithms that use key IDs; not used for HS* algorithms. Console display name: "Public Key ID".
+* `publicKeyJWTEndpointURL` (string): The JWKS endpoint for the public key associated with the private key that was used to create the JWT token, such as "https://yourcompany.com/.well-known/jwks.json". Required only for tokens created with RS*, ES*, or PS* algorithms; not used for HS* algorithms. Console display name: "Public Key JWKS Endpoint URL".
+* `publicKeyPEMContents` (string): The public key associated with the private key that was used to create the JWT token. The key must be in PEM format, which includes the `-----BEGIN PUBLIC KEY-----` and `-----END PUBLIC KEY-----` delimiters. Required only for tokens created with RS*, ES*, or PS* algorithms; not used for HS* algorithms. Console display name: "Public Key PEM Contents".
 * `publicKeyType` (string): Select whether to provide a key directly from DaVinci, by pasting a public key PEM file, or by pointing to a JWKS file by URL. Console display name: "Public Key Type".
 * `resolveToUser` (string): Console display name: "".
 * `secretKey` (string): The symmetric key used to create the JWT token. Required for tokens created with HS* algorithms. Console display name: "Secret Key".
