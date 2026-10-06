@@ -29,15 +29,12 @@ require (
 	github.com/patrickcping/pingone-go-sdk-v2 v0.15.0
 	github.com/patrickcping/pingone-go-sdk-v2/authorize v0.8.3
 	github.com/patrickcping/pingone-go-sdk-v2/credentials v0.13.0
-	github.com/patrickcping/pingone-go-sdk-v2/management v0.76.0
+	github.com/patrickcping/pingone-go-sdk-v2/management v0.77.0
 	github.com/patrickcping/pingone-go-sdk-v2/mfa v0.26.0
 	github.com/patrickcping/pingone-go-sdk-v2/risk v0.22.0
 	github.com/patrickcping/pingone-go-sdk-v2/verify v0.11.2
 	github.com/pingidentity/pingone-go-client v0.13.0
 )
-
-// TEMPORARY: local SDK change under test (CDI-1524). Remove before merge.
-replace github.com/patrickcping/pingone-go-sdk-v2/management => /Users/wesleymccollam/projects/devops/dev/pingone-go-sdk-v2/scratch/worktrees/pingOneNotificationSettingsEmailOauthClientCredentialsSupport/management
 
 require (
 	4d63.com/gocheckcompilerdirectives v1.3.0 // indirect
