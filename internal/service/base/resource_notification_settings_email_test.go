@@ -1117,3 +1117,209 @@ EOF
   ]
 }`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
+
+func TestAccNotificationSettingsEmail_CustomProvider_OAuth2(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_notification_settings_email.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	// Test switching to SMTP
+	smtpFullSwitchStep := resource.TestStep{
+		Config: testAccNotificationSettingsEmail_SMTPConfig_Full(environmentName, licenseID, resourceName),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestCheckResourceAttr(resourceFullName, "host", "pingidentity.com"),
+			resource.TestCheckResourceAttr(resourceFullName, "port", "25"),
+			resource.TestCheckResourceAttr(resourceFullName, "protocol", "SMTPS"),
+			resource.TestCheckResourceAttr(resourceFullName, "username", "smtpuser"),
+			resource.TestCheckResourceAttr(resourceFullName, "password", "smtpuserpassword"),
+			resource.TestCheckResourceAttr(resourceFullName, "from.email_address", "noreply@pingidentity.com"),
+			resource.TestCheckResourceAttr(resourceFullName, "from.name", "Stubbed From Address"),
+			resource.TestCheckResourceAttr(resourceFullName, "reply_to.email_address", "reply@pingidentity.com"),
+			resource.TestCheckResourceAttr(resourceFullName, "reply_to.name", "Stubbed Reply To Address"),
+		),
+	}
+
+	minimalStep := resource.TestStep{
+		Config: testAccNotificationSettingsEmail_CustomProviderConfig_OAuth2_Minimal(environmentName, licenseID, resourceName),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestCheckResourceAttr(resourceFullName, "custom_provider_name", "CustomProviderName"),
+			resource.TestCheckResourceAttr(resourceFullName, "protocol", "HTTP"),
+			resource.TestCheckResourceAttr(resourceFullName, "auth_url", "https://auth.pingone.com/oauth2/token"),
+			resource.TestCheckResourceAttr(resourceFullName, "client_id", "testclientid"),
+			resource.TestCheckResourceAttr(resourceFullName, "client_secret", "testclientsecret"),
+			resource.TestCheckResourceAttr(resourceFullName, "requests.#", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "requests.0.method", "POST"),
+			resource.TestCheckResourceAttr(resourceFullName, "requests.0.url", "https://api.pingidentity.com/send-email"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "from.name"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "reply_to.name"),
+			resource.TestCheckResourceAttr(resourceFullName, "requests.0.headers.Content-Type", "application/x-www-form-urlencoded"),
+			resource.TestCheckResourceAttr(resourceFullName, "requests.0.headers.subject", "${subject}"),
+			resource.TestCheckResourceAttr(resourceFullName, "requests.0.headers.reply-to", "${reply_to}"),
+			resource.TestCheckResourceAttr(resourceFullName, "requests.0.headers.from", "${from}"),
+			resource.TestCheckResourceAttr(resourceFullName, "requests.0.body", "to=${to}&message=${message}"),
+		),
+	}
+
+	minimalStepDestroy := resource.TestStep{
+		Config:  minimalStep.Config,
+		Destroy: true,
+	}
+
+	fullStep := resource.TestStep{
+		Config: testAccNotificationSettingsEmail_CustomProviderConfig_OAuth2_Full(environmentName, licenseID, resourceName),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+			resource.TestCheckResourceAttr(resourceFullName, "custom_provider_name", "UpdatedCustomProviderName"),
+			resource.TestCheckResourceAttr(resourceFullName, "protocol", "HTTP"),
+			resource.TestCheckResourceAttr(resourceFullName, "auth_url", "https://auth.pingone.com/updated-oauth2/token"),
+			resource.TestCheckResourceAttr(resourceFullName, "client_id", "updatedtestclientid"),
+			resource.TestCheckResourceAttr(resourceFullName, "client_secret", "updatedtestclientsecret"),
+			resource.TestCheckResourceAttr(resourceFullName, "from.name", "Updated Test Sender"),
+			resource.TestCheckResourceAttr(resourceFullName, "reply_to.name", "Updated Test Reply To"),
+			resource.TestCheckResourceAttr(resourceFullName, "requests.#", "1"),
+			resource.TestCheckResourceAttr(resourceFullName, "requests.0.method", "POST"),
+			resource.TestCheckResourceAttr(resourceFullName, "requests.0.url", "https://api.pingidentity.com/updated-send-email"),
+			resource.TestCheckResourceAttr(resourceFullName, "requests.0.headers.Content-Type", "application/x-www-form-urlencoded"),
+			resource.TestCheckResourceAttr(resourceFullName, "requests.0.headers.updated-subject", "updated-${subject}"),
+			resource.TestCheckResourceAttr(resourceFullName, "requests.0.headers.updated-reply-to", "updated-${reply_to}"),
+			resource.TestCheckResourceAttr(resourceFullName, "requests.0.headers.updated-from", "updated-${from}"),
+			resource.TestCheckResourceAttr(resourceFullName, "requests.0.body", "updated-to=${to}&message=${message}"),
+		),
+	}
+
+	fullStepDestroy := resource.TestStep{
+		Config:  fullStep.Config,
+		Destroy: true,
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             base.NotificationSettingsEmail_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			minimalStep,
+			smtpFullSwitchStep,
+			minimalStep,
+			minimalStepDestroy,
+			fullStep,
+			smtpFullSwitchStep,
+			minimalStep,
+			fullStep,
+			fullStepDestroy,
+			fullStep,
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
+						}
+
+						return rs.Primary.ID, nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"password",
+					"auth_token",
+					"client_secret",
+				},
+			},
+		},
+	})
+}
+
+func testAccNotificationSettingsEmail_CustomProviderConfig_OAuth2_Minimal(environmentName, licenseID, resourceName string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_notification_settings_email" "%[3]s" {
+  environment_id       = pingone_environment.%[2]s.id
+  custom_provider_name = "CustomProviderName"
+
+  auth_url      = "https://auth.pingone.com/oauth2/token"
+  client_id     = "testclientid"
+  client_secret = "testclientsecret"
+
+  protocol = "HTTP"
+
+  from = {
+    email_address = "no-reply@pingidentity.com"
+  }
+
+  reply_to = {
+    email_address = "reply@pingidentity.com"
+  }
+
+  requests = [
+    {
+      method = "POST"
+      headers = {
+        "Content-Type" = "application/x-www-form-urlencoded"
+        "subject"      = "$${subject}"
+        "reply-to"     = "$${reply_to}"
+        "from"         = "$${from}"
+      }
+      body = "to=$${to}&message=$${message}"
+      url  = "https://api.pingidentity.com/send-email"
+    }
+  ]
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+}
+
+func testAccNotificationSettingsEmail_CustomProviderConfig_OAuth2_Full(environmentName, licenseID, resourceName string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_notification_settings_email" "%[3]s" {
+  environment_id       = pingone_environment.%[2]s.id
+  custom_provider_name = "UpdatedCustomProviderName"
+
+  auth_url      = "https://auth.pingone.com/updated-oauth2/token"
+  client_id     = "updatedtestclientid"
+  client_secret = "updatedtestclientsecret"
+
+  protocol = "HTTP"
+
+  from = {
+    name          = "Updated Test Sender"
+    email_address = "updated-no-reply@pingidentity.com"
+  }
+
+  reply_to = {
+    name          = "Updated Test Reply To"
+    email_address = "updated-reply@pingidentity.com"
+  }
+
+  requests = [
+    {
+      method = "POST"
+      headers = {
+        "Content-Type"     = "application/x-www-form-urlencoded"
+        "updated-subject"  = "updated-$${subject}"
+        "updated-reply-to" = "updated-$${reply_to}"
+        "updated-from"     = "updated-$${from}"
+      }
+      body = "updated-to=$${to}&message=$${message}"
+      url  = "https://api.pingidentity.com/updated-send-email"
+    }
+  ]
+}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
+}

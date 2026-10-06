@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int32validator"
+	resourcevalidator "github.com/hashicorp/terraform-plugin-framework-validators/resourcevalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -43,6 +44,9 @@ type requestsModel struct {
 type notificationSettingsEmailResourceModelV1 struct {
 	Id                 pingonetypes.ResourceIDValue `tfsdk:"id"`
 	AuthToken          types.String                 `tfsdk:"auth_token"`
+	AuthUrl            types.String                 `tfsdk:"auth_url"`
+	ClientId           types.String                 `tfsdk:"client_id"`
+	ClientSecret       types.String                 `tfsdk:"client_secret"`
 	CustomProviderName types.String                 `tfsdk:"custom_provider_name"`
 	EnvironmentId      pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
 	From               types.Object                 `tfsdk:"from"`
@@ -70,14 +74,28 @@ var (
 
 // Framework interfaces
 var (
-	_ resource.Resource                = &NotificationSettingsEmailResource{}
-	_ resource.ResourceWithConfigure   = &NotificationSettingsEmailResource{}
-	_ resource.ResourceWithImportState = &NotificationSettingsEmailResource{}
+	_ resource.Resource                     = &NotificationSettingsEmailResource{}
+	_ resource.ResourceWithConfigure        = &NotificationSettingsEmailResource{}
+	_ resource.ResourceWithImportState      = &NotificationSettingsEmailResource{}
+	_ resource.ResourceWithConfigValidators = &NotificationSettingsEmailResource{}
 )
 
 // New Object
 func NewNotificationSettingsEmailResource() resource.Resource {
 	return &NotificationSettingsEmailResource{}
+}
+
+// ConfigValidators validates that exactly one authentication mode is configured
+// for the custom provider: Basic (`username`), Bearer (`auth_token`), or
+// OAuth 2.0 client credentials (`auth_url`).
+func (r *NotificationSettingsEmailResource) ConfigValidators(ctx context.Context) []resource.ConfigValidator {
+	return []resource.ConfigValidator{
+		resourcevalidator.ExactlyOneOf(
+			path.MatchRoot("username"),
+			path.MatchRoot("auth_token"),
+			path.MatchRoot("auth_url"),
+		),
+	}
 }
 
 // Metadata
@@ -210,10 +228,50 @@ func (r *NotificationSettingsEmailResource) Schema(ctx context.Context, req reso
 				Optional:    true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(attrMinLength),
-					stringvalidator.ExactlyOneOf(path.MatchRoot("username")),
 					stringvalidator.ConflictsWith(path.MatchRoot("host")),
 					stringvalidator.ConflictsWith(path.MatchRoot("username")),
 					stringvalidator.ConflictsWith(path.MatchRoot("password")),
+					stringvalidator.ConflictsWith(path.MatchRoot("auth_url")),
+					stringvalidator.ConflictsWith(path.MatchRoot("client_id")),
+					stringvalidator.ConflictsWith(path.MatchRoot("client_secret")),
+				},
+			},
+
+			"auth_url": schema.StringAttribute{
+				Description: "A string that specifies the URL of the authorization server that issues the access token for the email provider, when the Custom Provider is authenticated via OAuth 2.0 client credentials.",
+				Optional:    true,
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(attrMinLength),
+					stringvalidator.ConflictsWith(path.MatchRoot("host")),
+					stringvalidator.ConflictsWith(path.MatchRoot("username")),
+					stringvalidator.ConflictsWith(path.MatchRoot("password")),
+					stringvalidator.ConflictsWith(path.MatchRoot("auth_token")),
+					stringvalidator.AlsoRequires(path.MatchRoot("client_id"), path.MatchRoot("client_secret")),
+				},
+			},
+
+			"client_id": schema.StringAttribute{
+				Description: "A string that specifies the client ID used to request the access token from the authorization server, when the Custom Provider is authenticated via OAuth 2.0 client credentials.",
+				Optional:    true,
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(attrMinLength),
+					stringvalidator.ConflictsWith(path.MatchRoot("host")),
+					stringvalidator.ConflictsWith(path.MatchRoot("username")),
+					stringvalidator.ConflictsWith(path.MatchRoot("password")),
+					stringvalidator.ConflictsWith(path.MatchRoot("auth_token")),
+				},
+			},
+
+			"client_secret": schema.StringAttribute{
+				Description: "A string that specifies the client secret used to request the access token from the authorization server, when the Custom Provider is authenticated via OAuth 2.0 client credentials.",
+				Sensitive:   true,
+				Optional:    true,
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(attrMinLength),
+					stringvalidator.ConflictsWith(path.MatchRoot("host")),
+					stringvalidator.ConflictsWith(path.MatchRoot("username")),
+					stringvalidator.ConflictsWith(path.MatchRoot("password")),
+					stringvalidator.ConflictsWith(path.MatchRoot("auth_token")),
 				},
 			},
 
@@ -357,7 +415,7 @@ func (r *NotificationSettingsEmailResource) Create(ctx context.Context, req reso
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response)...)
+	resp.Diagnostics.Append(state.toState(response, plan.Password, plan.AuthToken, plan.ClientSecret)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -402,7 +460,7 @@ func (r *NotificationSettingsEmailResource) Read(ctx context.Context, req resour
 	}
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(data.toState(response)...)
+	resp.Diagnostics.Append(data.toState(response, data.Password, data.AuthToken, data.ClientSecret)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -451,7 +509,7 @@ func (r *NotificationSettingsEmailResource) Update(ctx context.Context, req reso
 	state = plan
 
 	// Save updated data into Terraform state
-	resp.Diagnostics.Append(state.toState(response)...)
+	resp.Diagnostics.Append(state.toState(response, plan.Password, plan.AuthToken, plan.ClientSecret)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -647,6 +705,11 @@ func (p *notificationSettingsEmailResourceModelV1) expand(ctx context.Context) (
 		} else if !p.AuthToken.IsNull() && !p.AuthToken.IsUnknown() {
 			authMethod.AuthToken = p.AuthToken.ValueStringPointer()
 			authMethod.Method = management.ENUMNOTIFICATIONSSETTINGSEMAILDELIVERYSETTINGSCUSTOMAUTHENTICATIONMETHOD_BEARER
+		} else if !p.AuthUrl.IsNull() && !p.AuthUrl.IsUnknown() && !p.ClientId.IsNull() && !p.ClientId.IsUnknown() && !p.ClientSecret.IsNull() && !p.ClientSecret.IsUnknown() {
+			authMethod.AuthUrl = p.AuthUrl.ValueStringPointer()
+			authMethod.ClientId = p.ClientId.ValueStringPointer()
+			authMethod.ClientSecret = p.ClientSecret.ValueStringPointer()
+			authMethod.Method = management.ENUMNOTIFICATIONSSETTINGSEMAILDELIVERYSETTINGSCUSTOMAUTHENTICATIONMETHOD_OAUTH2
 		}
 
 		data := management.NewNotificationsSettingsEmailDeliverySettingsCustom(
@@ -705,7 +768,10 @@ func (p *notificationSettingsEmailResourceModelV1) expand(ctx context.Context) (
 	return nil, diags
 }
 
-func (p *notificationSettingsEmailResourceModelV1) toState(apiObject *management.NotificationsSettingsEmailDeliverySettings) diag.Diagnostics {
+// toState maps the API object to state.  The service does not return secret
+// values (`password`, `auth_token`, `client_secret`), so the planned/state
+// values for those attributes are passed in to retain them.
+func (p *notificationSettingsEmailResourceModelV1) toState(apiObject *management.NotificationsSettingsEmailDeliverySettings, passwordValue, authTokenValue, clientSecretValue types.String) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if apiObject == nil {
@@ -748,8 +814,29 @@ func (p *notificationSettingsEmailResourceModelV1) toState(apiObject *management
 		p.Requests = types.SetNull(types.ObjectType{AttrTypes: reqAttrTypes})
 
 	case *management.NotificationsSettingsEmailDeliverySettingsCustom:
+		p.AuthToken = types.StringNull()
+		p.AuthUrl = types.StringNull()
+		p.ClientId = types.StringNull()
+		p.ClientSecret = types.StringNull()
+		p.Username = types.StringNull()
+		p.Password = types.StringNull()
+
 		if t.Authentication.Username != nil {
 			p.Username = framework.StringOkToTF(t.Authentication.GetUsernameOk())
+		}
+
+		p.AuthUrl = framework.StringOkToTF(t.Authentication.GetAuthUrlOk())
+		p.ClientId = framework.StringOkToTF(t.Authentication.GetClientIdOk())
+
+		// Secrets are not returned by the service, so retain the planned values
+		if p.Password.IsNull() {
+			p.Password = passwordValue
+		}
+		if p.AuthToken.IsNull() {
+			p.AuthToken = authTokenValue
+		}
+		if p.ClientSecret.IsNull() {
+			p.ClientSecret = clientSecretValue
 		}
 
 		p.CustomProviderName = framework.StringOkToTF(t.GetNameOk())
