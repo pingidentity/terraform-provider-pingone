@@ -221,8 +221,8 @@ func resourceSignOnPolicyActionSchema() map[string]*schema.Schema {
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"discovery_rule": {
-						Description: "One or more IDP discovery rules invoked when no user is associated with the user identifier. The condition on which this identity provider is used to authenticate the user is expressed using the PingOne policy condition language.",
-						Type:        schema.TypeSet,
+						Description: "One or more IDP discovery rules invoked when no user is associated with the user identifier. Rules are evaluated by PingOne in the order they are declared in the configuration. The condition on which this identity provider is used to authenticate the user is expressed using the PingOne policy condition language.",
+						Type:        schema.TypeList,
 						MaxItems:    100,
 						Optional:    true,
 						Elem: &schema.Resource{

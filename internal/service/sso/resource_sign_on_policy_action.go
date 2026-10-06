@@ -630,8 +630,8 @@ func expandSOPActionIDFirst(d *schema.ResourceData, sopPriority int32) (*managem
 			sopActionType.SetRecovery(*management.NewSignOnPolicyActionLoginAllOfRecovery(v1))
 		}
 
-		if v1, ok := vp["discovery_rule"].(*schema.Set); ok && v1 != nil && len(v1.List()) > 0 && v1.List()[0] != nil {
-			sopActionType.SetDiscoveryRules(expandSOPActionDiscoveryRules(v1.List()))
+		if v1, ok := vp["discovery_rule"].([]interface{}); ok && v1 != nil && len(v1) > 0 && v1[0] != nil {
+			sopActionType.SetDiscoveryRules(expandSOPActionDiscoveryRules(v1))
 		}
 
 	}
@@ -1819,7 +1819,7 @@ func flattenDiscoveryRulesInner(signOnPolicyActionIDFirstAllOfDiscoveryRules []m
 		if condition.GetValue() != "${identifier}" {
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Error,
-				Summary:  "`discovery_rule` has unknown field %s, but expecting value ${identifier}.  This is not supported in the provider.  Please raise an issue.",
+				Summary:  fmt.Sprintf("`discovery_rule` has unknown value %s, but expecting value ${identifier}.  This is not supported in the provider.  Please raise an issue.", condition.GetValue()),
 			})
 
 			return nil, diags
