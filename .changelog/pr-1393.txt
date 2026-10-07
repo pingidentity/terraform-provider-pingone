@@ -1,3 +1,3 @@
 ```release-note:enhancement
-`pingone_notification_settings_email` resource now supports OAuth 2.0 client credentials authentication (`auth_url`, `client_id`, `client_secret`) for custom email providers.
+`pingone_notification_settings_email` resource now supports OAuth 2.0 authentication (`auth_url`, `grant_type`, `client_id`, `client_secret`, `assertion`, `scopes`) and custom header authentication (`header_name`, `header_value`) for custom email providers.
 ```

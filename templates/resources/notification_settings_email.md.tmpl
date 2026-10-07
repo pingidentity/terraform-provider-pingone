@@ -23,6 +23,14 @@ description: |-
 
 {{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-custom-provider-oauth2.tf") }}
 
+## Example Usage - Custom Provider with OAuth 2.0 JWT Bearer
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-custom-provider-oauth2-jwt-bearer.tf") }}
+
+## Example Usage - Custom Provider with Custom Header Authentication
+
+{{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-custom-provider-custom-header.tf") }}
+
 {{ .SchemaMarkdown | trimspace }}
 
 ## Import

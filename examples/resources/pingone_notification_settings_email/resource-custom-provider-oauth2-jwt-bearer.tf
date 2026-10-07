@@ -6,12 +6,11 @@ resource "pingone_notification_settings_email" "my_awesome_custom_provider_setti
   environment_id       = pingone_environment.my_environment.id
   custom_provider_name = "My Custom Email Provider"
 
-  auth_url      = var.custom_provider_auth_url
-  grant_type    = "CLIENT_CREDENTIALS"
-  client_id     = var.custom_provider_client_id
-  client_secret = var.custom_provider_client_secret
-  scopes        = ["mail.send"]
-  protocol      = "HTTP"
+  auth_url   = var.custom_provider_auth_url
+  grant_type = "JWT_BEARER"
+  assertion  = var.custom_provider_jwt_assertion
+  scopes     = ["mail.send"]
+  protocol   = "HTTP"
 
   from = {
     name          = "From Services"
