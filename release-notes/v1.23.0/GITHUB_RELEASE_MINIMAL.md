@@ -30,11 +30,9 @@
 
 ### NOTES
 
-- bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.70.0 => v0.71.0
+- bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.70.0 => v0.76.0
 - bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` v0.12.1 => v0.13.0
-- bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.72.0 => v0.73.0
 - bump `github.com/patrickcping/pingone-go-sdk-v2` v0.14.14 => v0.15.0
-- bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.74.0 => v0.76.0
 - bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.25.1 => v0.26.0
 - Update Connector Reference Guide (01 October 2026).
 

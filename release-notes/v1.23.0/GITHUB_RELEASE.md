@@ -30,11 +30,9 @@
 
 ### NOTES
 
-[cabc353d](https://github.com/pingidentity/terraform-provider-pingone/commit/cabc353d) bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.70.0 => v0.71.0 [#1367](https://github.com/pingidentity/terraform-provider-pingone/pull/1367)
+[cabc353d](https://github.com/pingidentity/terraform-provider-pingone/commit/cabc353d) bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.70.0 => v0.76.0 [#1367](https://github.com/pingidentity/terraform-provider-pingone/pull/1367)
 [0cb4330f](https://github.com/pingidentity/terraform-provider-pingone/commit/0cb4330f) bump `github.com/patrickcping/pingone-go-sdk-v2/credentials` v0.12.1 => v0.13.0 [#1374](https://github.com/pingidentity/terraform-provider-pingone/pull/1374)
-[ca42a6bf](https://github.com/pingidentity/terraform-provider-pingone/commit/ca42a6bf) bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.72.0 => v0.73.0 [#1377](https://github.com/pingidentity/terraform-provider-pingone/pull/1377)
 [0ba6429b](https://github.com/pingidentity/terraform-provider-pingone/commit/0ba6429b) bump `github.com/patrickcping/pingone-go-sdk-v2` v0.14.14 => v0.15.0 [#1380](https://github.com/pingidentity/terraform-provider-pingone/pull/1380)
-[0ba6429b](https://github.com/pingidentity/terraform-provider-pingone/commit/0ba6429b) bump `github.com/patrickcping/pingone-go-sdk-v2/management` v0.74.0 => v0.76.0 [#1380](https://github.com/pingidentity/terraform-provider-pingone/pull/1380)
 [0ba6429b](https://github.com/pingidentity/terraform-provider-pingone/commit/0ba6429b) bump `github.com/patrickcping/pingone-go-sdk-v2/mfa` v0.25.1 => v0.26.0 [#1380](https://github.com/pingidentity/terraform-provider-pingone/pull/1380)
 [613965df](https://github.com/pingidentity/terraform-provider-pingone/commit/613965df) Update Connector Reference Guide (01 October 2026). [#1387](https://github.com/pingidentity/terraform-provider-pingone/pull/1387)
 
