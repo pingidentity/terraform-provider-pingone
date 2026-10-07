@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int32validator"
+	resourcevalidator "github.com/hashicorp/terraform-plugin-framework-validators/resourcevalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -41,19 +42,28 @@ type requestsModel struct {
 }
 
 type notificationSettingsEmailResourceModelV1 struct {
-	Id                 pingonetypes.ResourceIDValue `tfsdk:"id"`
-	AuthToken          types.String                 `tfsdk:"auth_token"`
-	CustomProviderName types.String                 `tfsdk:"custom_provider_name"`
-	EnvironmentId      pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
-	From               types.Object                 `tfsdk:"from"`
-	Host               types.String                 `tfsdk:"host"`
-	Password           types.String                 `tfsdk:"password"`
-	Protocol           types.String                 `tfsdk:"protocol"`
-	Port               types.Int32                  `tfsdk:"port"`
-	ProviderType       types.String                 `tfsdk:"provider_type"`
-	ReplyTo            types.Object                 `tfsdk:"reply_to"`
-	Requests           types.Set                    `tfsdk:"requests"`
-	Username           types.String                 `tfsdk:"username"`
+	Id                         pingonetypes.ResourceIDValue `tfsdk:"id"`
+	Assertion                  types.String                 `tfsdk:"assertion"`
+	AuthToken                  types.String                 `tfsdk:"auth_token"`
+	AuthUrl                    types.String                 `tfsdk:"auth_url"`
+	ClientAuthenticationMethod types.String                 `tfsdk:"client_authentication_method"`
+	ClientId                   types.String                 `tfsdk:"client_id"`
+	ClientSecret               types.String                 `tfsdk:"client_secret"`
+	CustomProviderName         types.String                 `tfsdk:"custom_provider_name"`
+	EnvironmentId              pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	From                       types.Object                 `tfsdk:"from"`
+	GrantType                  types.String                 `tfsdk:"grant_type"`
+	HeaderName                 types.String                 `tfsdk:"header_name"`
+	HeaderValue                types.String                 `tfsdk:"header_value"`
+	Host                       types.String                 `tfsdk:"host"`
+	Password                   types.String                 `tfsdk:"password"`
+	Protocol                   types.String                 `tfsdk:"protocol"`
+	Port                       types.Int32                  `tfsdk:"port"`
+	ProviderType               types.String                 `tfsdk:"provider_type"`
+	ReplyTo                    types.Object                 `tfsdk:"reply_to"`
+	Requests                   types.Set                    `tfsdk:"requests"`
+	Scopes                     types.Set                    `tfsdk:"scopes"`
+	Username                   types.String                 `tfsdk:"username"`
 }
 
 type emailSourceModelV1 struct {
@@ -70,14 +80,86 @@ var (
 
 // Framework interfaces
 var (
-	_ resource.Resource                = &NotificationSettingsEmailResource{}
-	_ resource.ResourceWithConfigure   = &NotificationSettingsEmailResource{}
-	_ resource.ResourceWithImportState = &NotificationSettingsEmailResource{}
+	_ resource.Resource                     = &NotificationSettingsEmailResource{}
+	_ resource.ResourceWithConfigure        = &NotificationSettingsEmailResource{}
+	_ resource.ResourceWithImportState      = &NotificationSettingsEmailResource{}
+	_ resource.ResourceWithConfigValidators = &NotificationSettingsEmailResource{}
+	_ resource.ResourceWithValidateConfig   = &NotificationSettingsEmailResource{}
 )
 
 // New Object
 func NewNotificationSettingsEmailResource() resource.Resource {
 	return &NotificationSettingsEmailResource{}
+}
+
+// ConfigValidators validates that exactly one authentication mode is configured:
+// Basic (`username`), Bearer (`auth_token`), OAuth 2.0 (`auth_url`) or
+// Custom Header (`header_name`).
+func (r *NotificationSettingsEmailResource) ConfigValidators(ctx context.Context) []resource.ConfigValidator {
+	return []resource.ConfigValidator{
+		resourcevalidator.ExactlyOneOf(
+			path.MatchRoot("username"),
+			path.MatchRoot("auth_token"),
+			path.MatchRoot("auth_url"),
+			path.MatchRoot("header_name"),
+		),
+	}
+}
+
+// ValidateConfig validates the OAuth 2.0 attributes that depend on the grant type.
+// `grant_type` defaults to `CLIENT_CREDENTIALS` in the service when omitted.
+func (r *NotificationSettingsEmailResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var data notificationSettingsEmailResourceModelV1
+
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if data.AuthUrl.IsNull() || data.AuthUrl.IsUnknown() || data.GrantType.IsUnknown() {
+		return
+	}
+
+	grantType := management.ENUMNOTIFICATIONSSETTINGSEMAILDELIVERYSETTINGSCUSTOMAUTHENTICATIONGRANTTYPE_CLIENT_CREDENTIALS
+	if !data.GrantType.IsNull() {
+		grantType = management.EnumNotificationsSettingsEmailDeliverySettingsCustomAuthenticationGrantType(data.GrantType.ValueString())
+	}
+
+	type attrValue struct {
+		name  string
+		value types.String
+	}
+
+	var required, forbidden []attrValue
+
+	switch grantType {
+	case management.ENUMNOTIFICATIONSSETTINGSEMAILDELIVERYSETTINGSCUSTOMAUTHENTICATIONGRANTTYPE_CLIENT_CREDENTIALS:
+		required = []attrValue{{"client_id", data.ClientId}, {"client_secret", data.ClientSecret}}
+		forbidden = []attrValue{{"assertion", data.Assertion}}
+	case management.ENUMNOTIFICATIONSSETTINGSEMAILDELIVERYSETTINGSCUSTOMAUTHENTICATIONGRANTTYPE_JWT_BEARER:
+		required = []attrValue{{"assertion", data.Assertion}}
+		forbidden = []attrValue{{"client_id", data.ClientId}, {"client_secret", data.ClientSecret}}
+	}
+
+	for _, a := range required {
+		if a.value.IsNull() {
+			resp.Diagnostics.AddAttributeError(
+				path.Root(a.name),
+				"Missing Attribute Configuration",
+				fmt.Sprintf("`%s` must be configured when `auth_url` is set and `grant_type` is `%s`.", a.name, grantType),
+			)
+		}
+	}
+
+	for _, a := range forbidden {
+		if !a.value.IsNull() && !a.value.IsUnknown() {
+			resp.Diagnostics.AddAttributeError(
+				path.Root(a.name),
+				"Invalid Attribute Combination",
+				fmt.Sprintf("`%s` cannot be configured when `grant_type` is `%s`.", a.name, grantType),
+			)
+		}
+	}
 }
 
 // Metadata
@@ -94,6 +176,10 @@ func (r *NotificationSettingsEmailResource) Schema(ctx context.Context, req reso
 	portDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An integer that specifies the port used by the organization's SMTP server to send emails (default: `465`). Note that the protocol used depends upon the port specified. If you specify port `25`, `587`, or `2525`, SMTP with `STARTTLS` is used. Otherwise, `SMTPS` is used.",
 	)
+
+	grantTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the grant type used to request the access token from the authorization server, when the Custom Provider is authenticated via OAuth 2.0.",
+	).AllowedValuesEnum(management.AllowedEnumNotificationsSettingsEmailDeliverySettingsCustomAuthenticationGrantTypeEnumValues).DefaultValue(string(management.ENUMNOTIFICATIONSSETTINGSEMAILDELIVERYSETTINGSCUSTOMAUTHENTICATIONGRANTTYPE_CLIENT_CREDENTIALS))
 
 	resp.Schema = schema.Schema{
 
@@ -210,10 +296,110 @@ func (r *NotificationSettingsEmailResource) Schema(ctx context.Context, req reso
 				Optional:    true,
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(attrMinLength),
-					stringvalidator.ExactlyOneOf(path.MatchRoot("username")),
 					stringvalidator.ConflictsWith(path.MatchRoot("host")),
 					stringvalidator.ConflictsWith(path.MatchRoot("username")),
 					stringvalidator.ConflictsWith(path.MatchRoot("password")),
+					stringvalidator.ConflictsWith(path.MatchRoot("auth_url")),
+					stringvalidator.ConflictsWith(path.MatchRoot("client_id")),
+					stringvalidator.ConflictsWith(path.MatchRoot("client_secret")),
+				},
+			},
+
+			"auth_url": schema.StringAttribute{
+				Description: "A string that specifies the URL of the authorization server that issues the access token for the email provider, when the Custom Provider is authenticated via OAuth 2.0.",
+				Optional:    true,
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(attrMinLength),
+					stringvalidator.ConflictsWith(path.MatchRoot("host")),
+					stringvalidator.ConflictsWith(path.MatchRoot("username")),
+					stringvalidator.ConflictsWith(path.MatchRoot("password")),
+					stringvalidator.ConflictsWith(path.MatchRoot("auth_token")),
+				},
+			},
+
+			"grant_type": schema.StringAttribute{
+				MarkdownDescription: grantTypeDescription.MarkdownDescription,
+				Description:         grantTypeDescription.Description,
+				Optional:            true,
+				Computed:            true,
+				Validators: []validator.String{
+					stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumNotificationsSettingsEmailDeliverySettingsCustomAuthenticationGrantTypeEnumValues)...),
+					stringvalidator.AlsoRequires(path.MatchRoot("auth_url")),
+				},
+			},
+
+			"client_id": schema.StringAttribute{
+				Description: "A string that specifies the client ID used to request the access token from the authorization server, when the Custom Provider is authenticated via OAuth 2.0.  Required when `grant_type` is `CLIENT_CREDENTIALS`.",
+				Optional:    true,
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(attrMinLength),
+					stringvalidator.ConflictsWith(path.MatchRoot("host")),
+					stringvalidator.ConflictsWith(path.MatchRoot("username")),
+					stringvalidator.ConflictsWith(path.MatchRoot("password")),
+					stringvalidator.ConflictsWith(path.MatchRoot("auth_token")),
+					stringvalidator.AlsoRequires(path.MatchRoot("auth_url")),
+				},
+			},
+
+			"client_secret": schema.StringAttribute{
+				Description: "A string that specifies the client secret used to request the access token from the authorization server, when the Custom Provider is authenticated via OAuth 2.0.  Required when `grant_type` is `CLIENT_CREDENTIALS`.",
+				Sensitive:   true,
+				Optional:    true,
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(attrMinLength),
+					stringvalidator.ConflictsWith(path.MatchRoot("host")),
+					stringvalidator.ConflictsWith(path.MatchRoot("username")),
+					stringvalidator.ConflictsWith(path.MatchRoot("password")),
+					stringvalidator.ConflictsWith(path.MatchRoot("auth_token")),
+					stringvalidator.AlsoRequires(path.MatchRoot("auth_url")),
+				},
+			},
+
+			"assertion": schema.StringAttribute{
+				Description: "A string that specifies the JWT assertion used to request the access token from the authorization server, when the Custom Provider is authenticated via OAuth 2.0.  Must be a valid JWT.  Required when `grant_type` is `JWT_BEARER`.",
+				Sensitive:   true,
+				Optional:    true,
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(attrMinLength),
+					stringvalidator.ConflictsWith(path.MatchRoot("host")),
+					stringvalidator.AlsoRequires(path.MatchRoot("auth_url")),
+				},
+			},
+
+			"scopes": schema.SetAttribute{
+				Description: "A set of strings that specifies the scopes to request in the access token from the authorization server (for example, `mail.send`), when the Custom Provider is authenticated via OAuth 2.0.",
+				Optional:    true,
+				ElementType: types.StringType,
+				Validators: []validator.Set{
+					setvalidator.SizeAtLeast(attrMinLength),
+					setvalidator.ValueStringsAre(stringvalidator.LengthAtLeast(attrMinLength)),
+					setvalidator.AlsoRequires(path.MatchRoot("auth_url")),
+				},
+			},
+
+			"client_authentication_method": schema.StringAttribute{
+				Description: "A string that specifies the method the service uses to send the OAuth 2.0 client credentials to the authorization server.  Returned by the service when the Custom Provider is authenticated via OAuth 2.0.",
+				Computed:    true,
+			},
+
+			"header_name": schema.StringAttribute{
+				Description: "A string that specifies the name of the custom header used to authenticate requests to the email provider, when the Custom Provider is authenticated via a custom header.",
+				Optional:    true,
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(attrMinLength),
+					stringvalidator.ConflictsWith(path.MatchRoot("host")),
+					stringvalidator.ConflictsWith(path.MatchRoot("password")),
+					stringvalidator.AlsoRequires(path.MatchRoot("header_value")),
+				},
+			},
+
+			"header_value": schema.StringAttribute{
+				Description: "A string that specifies the value of the custom header used to authenticate requests to the email provider, when the Custom Provider is authenticated via a custom header.",
+				Sensitive:   true,
+				Optional:    true,
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(attrMinLength),
+					stringvalidator.AlsoRequires(path.MatchRoot("header_name")),
 				},
 			},
 
@@ -647,6 +833,40 @@ func (p *notificationSettingsEmailResourceModelV1) expand(ctx context.Context) (
 		} else if !p.AuthToken.IsNull() && !p.AuthToken.IsUnknown() {
 			authMethod.AuthToken = p.AuthToken.ValueStringPointer()
 			authMethod.Method = management.ENUMNOTIFICATIONSSETTINGSEMAILDELIVERYSETTINGSCUSTOMAUTHENTICATIONMETHOD_BEARER
+		} else if !p.AuthUrl.IsNull() && !p.AuthUrl.IsUnknown() {
+			authMethod.AuthUrl = p.AuthUrl.ValueStringPointer()
+			authMethod.Method = management.ENUMNOTIFICATIONSSETTINGSEMAILDELIVERYSETTINGSCUSTOMAUTHENTICATIONMETHOD_OAUTH2
+
+			// `grant_type` is computed when not configured, so it is unknown in the plan and the service default applies
+			if !p.GrantType.IsNull() && !p.GrantType.IsUnknown() {
+				grantType := management.EnumNotificationsSettingsEmailDeliverySettingsCustomAuthenticationGrantType(p.GrantType.ValueString())
+				authMethod.GrantType = &grantType
+			}
+
+			if !p.ClientId.IsNull() && !p.ClientId.IsUnknown() {
+				authMethod.ClientId = p.ClientId.ValueStringPointer()
+			}
+
+			if !p.ClientSecret.IsNull() && !p.ClientSecret.IsUnknown() {
+				authMethod.ClientSecret = p.ClientSecret.ValueStringPointer()
+			}
+
+			if !p.Assertion.IsNull() && !p.Assertion.IsUnknown() {
+				authMethod.Assertion = p.Assertion.ValueStringPointer()
+			}
+
+			if !p.Scopes.IsNull() && !p.Scopes.IsUnknown() {
+				var scopes []string
+				diags.Append(p.Scopes.ElementsAs(ctx, &scopes, false)...)
+				if diags.HasError() {
+					return nil, diags
+				}
+				authMethod.Scopes = scopes
+			}
+		} else if !p.HeaderName.IsNull() && !p.HeaderName.IsUnknown() && !p.HeaderValue.IsNull() && !p.HeaderValue.IsUnknown() {
+			authMethod.HeaderName = p.HeaderName.ValueStringPointer()
+			authMethod.HeaderValue = p.HeaderValue.ValueStringPointer()
+			authMethod.Method = management.ENUMNOTIFICATIONSSETTINGSEMAILDELIVERYSETTINGSCUSTOMAUTHENTICATIONMETHOD_CUSTOM_HEADER
 		}
 
 		data := management.NewNotificationsSettingsEmailDeliverySettingsCustom(
@@ -742,15 +962,40 @@ func (p *notificationSettingsEmailResourceModelV1) toState(apiObject *management
 		diags.Append(d...)
 		p.ReplyTo = replyTo
 
+		p.Assertion = types.StringNull()
 		p.AuthToken = types.StringNull()
+		p.AuthUrl = types.StringNull()
+		p.ClientAuthenticationMethod = types.StringNull()
+		p.ClientId = types.StringNull()
+		p.ClientSecret = types.StringNull()
+		p.GrantType = types.StringNull()
+		p.HeaderName = types.StringNull()
+		p.HeaderValue = types.StringNull()
+		p.Scopes = types.SetNull(types.StringType)
 		p.CustomProviderName = types.StringNull()
 		p.ProviderType = types.StringNull()
 		p.Requests = types.SetNull(types.ObjectType{AttrTypes: reqAttrTypes})
 
 	case *management.NotificationsSettingsEmailDeliverySettingsCustom:
-		if t.Authentication.Username != nil {
-			p.Username = framework.StringOkToTF(t.Authentication.GetUsernameOk())
-		}
+		// The service does not return secret values, so the planned/state values are retained
+		password := p.Password
+		authToken := p.AuthToken
+		clientSecret := p.ClientSecret
+		assertion := p.Assertion
+		headerValue := p.HeaderValue
+
+		p.Username = framework.StringOkToTF(t.Authentication.GetUsernameOk())
+		p.Password = password
+		p.AuthToken = authToken
+		p.AuthUrl = framework.StringOkToTF(t.Authentication.GetAuthUrlOk())
+		p.GrantType = framework.EnumOkToTF(t.Authentication.GetGrantTypeOk())
+		p.ClientId = framework.StringOkToTF(t.Authentication.GetClientIdOk())
+		p.ClientSecret = clientSecret
+		p.Assertion = assertion
+		p.Scopes = framework.StringSetOkToTF(t.Authentication.GetScopesOk())
+		p.ClientAuthenticationMethod = framework.EnumOkToTF(t.Authentication.GetClientAuthenticationMethodOk())
+		p.HeaderName = framework.StringOkToTF(t.Authentication.GetHeaderNameOk())
+		p.HeaderValue = headerValue
 
 		p.CustomProviderName = framework.StringOkToTF(t.GetNameOk())
 		p.ProviderType = framework.EnumOkToTF(t.GetProviderOk())
