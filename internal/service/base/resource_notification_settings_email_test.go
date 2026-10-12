@@ -1335,6 +1335,7 @@ resource "pingone_notification_settings_email" "%[3]s" {
 }`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
+// Test values only, not real credentials: fabricated JWTs with placeholder claims and a signature that decodes to the literal `test-signature`.
 const (
 	testAccNotificationSettingsEmailJWTAssertion        = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ0ZXN0Y2xpZW50aWQiLCJzdWIiOiJ0ZXN0Y2xpZW50aWQiLCJhdWQiOiJodHRwczovL2F1dGgucGluZ29uZS5jb20vb2F1dGgyL3Rva2VuIiwiZXhwIjo0MTAyNDQ0ODAwfQ.dGVzdC1zaWduYXR1cmU"
 	testAccNotificationSettingsEmailJWTAssertionUpdated = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ1cGRhdGVkdGVzdGNsaWVudGlkIiwic3ViIjoidXBkYXRlZHRlc3RjbGllbnRpZCIsImF1ZCI6Imh0dHBzOi8vYXV0aC5waW5nb25lLmNvbS91cGRhdGVkLW9hdXRoMi90b2tlbiIsImV4cCI6NDEwMjQ0NDgwMH0.dGVzdC1zaWduYXR1cmU"
@@ -1590,6 +1591,10 @@ func TestAccNotificationSettingsEmail_CustomProvider_InvalidAuthentication(t *te
 			invalidStep(`
   auth_url   = "https://auth.pingone.com/oauth2/token"
   grant_type = "JWT_BEARER"
+`, missingAttribute),
+			// The default grant type (CLIENT_CREDENTIALS) requires `client_id` and `client_secret`
+			invalidStep(`
+  auth_url = "https://auth.pingone.com/oauth2/token"
 `, missingAttribute),
 			// The default grant type (CLIENT_CREDENTIALS) requires `client_secret`
 			invalidStep(`
