@@ -655,7 +655,7 @@ func (r *NotificationSettingsEmailResource) ImportState(ctx context.Context, req
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes["environment_id"])...)
 }
 
-// validateOAuth2Attributes validates the grant type dependent attributes, skipping when `auth_url` or `grant_type` isn't known.
+// validateOAuth2Attributes validates the grant type dependent attributes; skipped without a known `auth_url` (which `grant_type` already requires) or `grant_type`.
 func (p *notificationSettingsEmailResourceModelV1) validateOAuth2Attributes() diag.Diagnostics {
 	var diags diag.Diagnostics
 
