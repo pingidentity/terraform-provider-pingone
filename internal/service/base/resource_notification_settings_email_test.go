@@ -1627,6 +1627,11 @@ func TestAccNotificationSettingsEmail_CustomProvider_InvalidAuthentication(t *te
   client_id     = "testclientid"
   client_secret = "testclientsecret"
 `, regexp.MustCompile(`Invalid Attribute Value Match`)),
+			// `grant_type` requires `auth_url`
+			invalidStep(`
+  auth_token = "testauthtoken"
+  grant_type = "JWT_BEARER"
+`, invalidCombination),
 			// OAuth 2.0 attributes require `auth_url`
 			invalidStep(`
   auth_token = "testauthtoken"

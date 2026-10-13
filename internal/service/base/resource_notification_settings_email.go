@@ -655,11 +655,11 @@ func (r *NotificationSettingsEmailResource) ImportState(ctx context.Context, req
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes["environment_id"])...)
 }
 
-// validateOAuth2Attributes validates the grant type dependent attributes; skipped without a known `auth_url` (which `grant_type` already requires) or `grant_type`.
+// validateOAuth2Attributes validates the attributes that depend on `grant_type`, skipping when `grant_type` isn't known.
 func (p *notificationSettingsEmailResourceModelV1) validateOAuth2Attributes() diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	if p.AuthUrl.IsNull() || p.AuthUrl.IsUnknown() || p.GrantType.IsNull() || p.GrantType.IsUnknown() {
+	if p.GrantType.IsNull() || p.GrantType.IsUnknown() {
 		return diags
 	}
 
@@ -686,7 +686,7 @@ func (p *notificationSettingsEmailResourceModelV1) validateOAuth2Attributes() di
 			diags.AddAttributeError(
 				path.Root(a.name),
 				"Missing Attribute Configuration",
-				fmt.Sprintf("`%s` must be configured when `auth_url` is set and `grant_type` is `%s`.", a.name, grantType),
+				fmt.Sprintf("`%s` must be configured when `grant_type` is `%s`.", a.name, grantType),
 			)
 		}
 	}
