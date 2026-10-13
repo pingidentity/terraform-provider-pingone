@@ -169,16 +169,6 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "transaction.data_collection.timeout.time_unit", "MINUTES"),
 		resource.TestCheckResourceAttr(resourceFullName, "transaction.data_collection_only", "false"),
 
-		resource.TestCheckResourceAttr(resourceFullName, "voice.verify", "REQUIRED"),
-		resource.TestCheckResourceAttr(resourceFullName, "voice.enrollment", "true"),
-		resource.TestCheckResourceAttr(resourceFullName, "voice.comparison_threshold", "HIGH"),
-		resource.TestCheckResourceAttr(resourceFullName, "voice.liveness_threshold", "MEDIUM"),
-		resource.TestCheckResourceAttr(resourceFullName, "voice.text_dependent.samples", "4"),
-		resource.TestMatchResourceAttr(resourceFullName, "voice.text_dependent.voice_phrase_id", validation.P1ResourceIDRegexp),
-		resource.TestCheckResourceAttr(resourceFullName, "voice.reference_data.retain_original_recordings", "true"),
-		resource.TestCheckResourceAttr(resourceFullName, "voice.reference_data.update_on_reenrollment", "true"),
-		resource.TestCheckResourceAttr(resourceFullName, "voice.reference_data.update_on_verification", "true"),
-
 		resource.TestCheckResourceAttr(resourceFullName, "identity_record_matching.address.threshold", "LOW"),
 		resource.TestCheckResourceAttr(resourceFullName, "identity_record_matching.address.field_required", "false"),
 		resource.TestCheckResourceAttr(resourceFullName, "identity_record_matching.birth_date.threshold", "MEDIUM"),
@@ -239,16 +229,6 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "transaction.data_collection.timeout.time_unit", "MINUTES"),
 		resource.TestCheckResourceAttr(resourceFullName, "transaction.data_collection_only", "false"),
 
-		resource.TestCheckResourceAttr(resourceFullName, "voice.verify", "DISABLED"),
-		resource.TestCheckResourceAttr(resourceFullName, "voice.enrollment", "false"),
-		resource.TestCheckResourceAttr(resourceFullName, "voice.comparison_threshold", "MEDIUM"),
-		resource.TestCheckResourceAttr(resourceFullName, "voice.liveness_threshold", "MEDIUM"),
-		resource.TestCheckResourceAttr(resourceFullName, "voice.text_dependent.samples", "3"),
-		resource.TestCheckResourceAttr(resourceFullName, "voice.text_dependent.voice_phrase_id", "exceptional_experiences"),
-		resource.TestCheckResourceAttr(resourceFullName, "voice.reference_data.retain_original_recordings", "false"),
-		resource.TestCheckResourceAttr(resourceFullName, "voice.reference_data.update_on_reenrollment", "true"),
-		resource.TestCheckResourceAttr(resourceFullName, "voice.reference_data.update_on_verification", "true"),
-
 		resource.TestCheckNoResourceAttr(resourceFullName, "identity_record_matching"),
 
 		resource.TestMatchResourceAttr(resourceFullName, "created_at", validation.RFC3339Regexp),
@@ -298,16 +278,6 @@ func TestAccVerifyPolicy_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "transaction.data_collection.timeout.duration", "423"),
 		resource.TestCheckResourceAttr(resourceFullName, "transaction.data_collection.timeout.time_unit", "SECONDS"),
 		resource.TestCheckResourceAttr(resourceFullName, "transaction.data_collection_only", "true"),
-
-		resource.TestCheckResourceAttr(resourceFullName, "voice.verify", "REQUIRED"),
-		resource.TestCheckResourceAttr(resourceFullName, "voice.enrollment", "false"),
-		resource.TestCheckResourceAttr(resourceFullName, "voice.comparison_threshold", "LOW"),
-		resource.TestCheckResourceAttr(resourceFullName, "voice.liveness_threshold", "LOW"),
-		resource.TestCheckResourceAttr(resourceFullName, "voice.text_dependent.samples", "3"),
-		resource.TestCheckResourceAttr(resourceFullName, "voice.text_dependent.voice_phrase_id", "exceptional_experiences"),
-		resource.TestCheckResourceAttr(resourceFullName, "voice.reference_data.retain_original_recordings", "false"),
-		resource.TestCheckResourceAttr(resourceFullName, "voice.reference_data.update_on_reenrollment", "true"),
-		resource.TestCheckResourceAttr(resourceFullName, "voice.reference_data.update_on_verification", "true"),
 
 		resource.TestMatchResourceAttr(resourceFullName, "created_at", validation.RFC3339Regexp),
 		resource.TestMatchResourceAttr(resourceFullName, "updated_at", validation.RFC3339Regexp),
@@ -416,8 +386,7 @@ func TestAccVerifyPolicy_ValidationChecks(t *testing.T) {
 					`(.*Inappropriate value for attribute \"facial_comparison\".*)` +
 					`(.*Inappropriate value for attribute \"liveness\".*)` +
 					`(.*Inappropriate value for attribute \"email\".*)` +
-					`(.*Inappropriate value for attribute \"phone\".*)` +
-					`(.*Inappropriate value for attribute \"voice\".*)`),
+					`(.*Inappropriate value for attribute \"phone\".*)`),
 				Destroy: true,
 			},
 			{
@@ -530,11 +499,6 @@ func testAccVerifyPolicy_Full(resourceName, name string) string {
 	return fmt.Sprintf(`
 	%[1]s
 
-resource "pingone_verify_voice_phrase" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-  display_name   = "%[3]s"
-}
-
 resource "pingone_verify_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = "%[3]s"
@@ -626,24 +590,6 @@ resource "pingone_verify_policy" "%[2]s" {
     }
 
     data_collection_only = false
-  }
-
-  voice = {
-    verify               = "REQUIRED"
-    enrollment           = true
-    comparison_threshold = "HIGH"
-    liveness_threshold   = "MEDIUM"
-
-    text_dependent = {
-      samples         = "4"
-      voice_phrase_id = pingone_verify_voice_phrase.%[2]s.id
-    }
-
-    reference_data = {
-      retain_original_recordings = true
-      update_on_reenrollment     = true
-      update_on_verification     = true
-    }
   }
 
   identity_record_matching = {
@@ -793,14 +739,6 @@ resource "pingone_verify_policy" "%[2]s" {
     data_collection_only = true
   }
 
-  voice = {
-    verify               = "REQUIRED"
-    enrollment           = false
-    comparison_threshold = "LOW"
-    liveness_threshold   = "LOW"
-
-  }
-
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
@@ -833,8 +771,6 @@ resource "pingone_verify_policy" "%[2]s" {
   email = {}
 
   phone = {}
-
-  voice = {}
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
