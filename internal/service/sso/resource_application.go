@@ -655,7 +655,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 	)
 
 	oidcOptionsSigningDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A single object that specifies the OIDC application token signing key settings. If omitted, application tokens are signed and verified by the PingOne default key at runtime. Applies to OIDC applications of type `WORKER`, `WEB_APP`, `NATIVE_APP`, `SINGLE_PAGE_APP`, `CUSTOM_APP`, and `SERVICE`.",
+		"A single object that specifies the OIDC application token signing key settings. If omitted, application tokens are signed and verified by the PingOne default key at runtime.",
 	)
 
 	oidcOptionsSigningKeyRotationPolicyIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
