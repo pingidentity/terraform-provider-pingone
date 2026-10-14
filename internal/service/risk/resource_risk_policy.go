@@ -372,7 +372,7 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 	// Mitigations
 	policyMitigationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An ordered list of mitigation-style policy entries to apply to the policy. Each entry pairs a condition with a single mitigation action. Mutually exclusive with `overrides`. When this block is configured, a `fallback` block must also be configured.",
-	)
+	).AppendMarkdownString("The list must contain at least one entry.")
 
 	policyMitigationActionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the mitigation action to apply when the condition is met.",
@@ -955,6 +955,7 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 				},
 
 				Validators: []validator.List{
+					listvalidator.SizeAtLeast(attrMinLength),
 					listvalidator.ConflictsWith(
 						path.MatchRelative().AtParent().AtName("overrides"),
 					),

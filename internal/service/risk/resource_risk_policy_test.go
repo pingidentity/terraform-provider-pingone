@@ -1512,6 +1512,14 @@ func TestAccRiskPolicy_MitigationsValidation(t *testing.T) {
 				Config:      testAccRiskPolicyConfig_Mitigations_MismatchedActionPolicyID(resourceName, name),
 				ExpectError: regexp.MustCompile(`Invalid argument combination`),
 			},
+			{
+				Config:      testAccRiskPolicyConfig_Mitigations_Empty(resourceName, name),
+				ExpectError: regexp.MustCompile(`Attribute mitigations (list|set) must contain at least 1 elements`),
+			},
+			{
+				Config:      testAccRiskPolicyConfig_Mitigations_EmptyOverrides(resourceName, name),
+				ExpectError: regexp.MustCompile(`Attribute overrides (list|set) must contain at least 1 elements`),
+			},
 		},
 	})
 }
@@ -1840,6 +1848,70 @@ resource "pingone_risk_policy" "%[2]s" {
   fallback = {
     action = "DENY"
   }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRiskPolicyConfig_Mitigations_Empty(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  policy_scores = {
+    policy_threshold_medium = {
+      min_score = 35
+    }
+
+    policy_threshold_high = {
+      min_score = 70
+    }
+
+    predictors = [
+      {
+        compact_name = "ipRisk"
+        score        = 45
+      }
+    ]
+  }
+
+  mitigations = []
+
+  fallback = {
+    action = "DENY"
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRiskPolicyConfig_Mitigations_EmptyOverrides(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  policy_scores = {
+    policy_threshold_medium = {
+      min_score = 35
+    }
+
+    policy_threshold_high = {
+      min_score = 70
+    }
+
+    predictors = [
+      {
+        compact_name = "ipRisk"
+        score        = 45
+      }
+    ]
+  }
+
+  overrides = []
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
