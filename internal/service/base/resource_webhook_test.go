@@ -189,6 +189,60 @@ func TestAccWebhook_Full(t *testing.T) {
 	})
 }
 
+func TestAccWebhook_SensitiveHeaders(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_webhook.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             base.Webhook_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Create with credential-bearing headers. Sensitive attributes are
+			// still readable from state, so value round-trip remains assertable.
+			{
+				Config: testAccWebhookConfig_Full(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "http_endpoint_headers.Authorization", "Basic usernamepassword"),
+					// The Computed mirror must also carry the value and be schema-sensitive.
+					resource.TestCheckResourceAttr(resourceFullName, "connection_details_headers.Authorization", "Basic usernamepassword"),
+				),
+			},
+			// Re-apply identical config: marking the headers sensitive must NOT
+			// introduce perpetual drift, especially on the Computed mirror.
+			{
+				Config:   testAccWebhookConfig_Full(resourceName, name),
+				PlanOnly: true,
+			},
+			// Import must still round-trip the (now sensitive) headers cleanly.
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
 func TestAccWebhook_Minimal(t *testing.T) {
 	t.Parallel()
 

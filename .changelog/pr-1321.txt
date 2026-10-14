@@ -1,0 +1,3 @@
+```release-note:security
+`resource/pingone_webhook`: Marked the `http_endpoint_headers` and `connection_details_headers` fields as sensitive so their values (which commonly carry an `Authorization` credential) are redacted from plan and apply output.
+```

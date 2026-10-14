@@ -146,7 +146,7 @@ func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest
 	).DefaultValue("false")
 
 	httpEndpointHeaders := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A map that specifies the headers applied to the outbound request (for example, `Authorization` `Basic usernamepassword`. The purpose of these headers is for the HTTPS endpoint to authenticate the PingOne service, ensuring that the information from PingOne is from a trusted source. Requires `http_endpoint_url` to be set.",
+		"A map that specifies the headers applied to the outbound request (for example, `Authorization` `Basic usernamepassword`. The purpose of these headers is for the HTTPS endpoint to authenticate the PingOne service, ensuring that the information from PingOne is from a trusted source. Requires `http_endpoint_url` to be set. This field is marked as sensitive, as it commonly carries credentials, so its value is redacted from plan and apply output.",
 	)
 
 	httpEndpointUrlDescription := framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a valid HTTPS URL to which event messages are sent. Only one of `http_endpoint_url` or `connection_details_url` can be set.")
@@ -160,7 +160,7 @@ func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest
 	)
 
 	connectionDetailsHeadersDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The headers applied to the outbound request (for example: `\"Authorization\": \"Basic username:password\"`). The purpose of these headers is to authenticate the PingOne service, ensuring that the information from PingOne is from a trusted source. Similar to `http_endpoint.headers`, but not HTTPS-specific. Requires `connection_details_url` to be set. The API will automatically populate this field in state when using the 'HTTPS' protocol and setting the `http_endpoint_headers` field.",
+		"The headers applied to the outbound request (for example: `\"Authorization\": \"Basic username:password\"`). The purpose of these headers is to authenticate the PingOne service, ensuring that the information from PingOne is from a trusted source. Similar to `http_endpoint.headers`, but not HTTPS-specific. Requires `connection_details_url` to be set. The API will automatically populate this field in state when using the 'HTTPS' protocol and setting the `http_endpoint_headers` field. This field is marked as sensitive, as it commonly carries credentials, so its value is redacted from plan and apply output.",
 	)
 
 	verifyTlsCertificatesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -288,6 +288,9 @@ func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Description:         httpEndpointHeaders.Description,
 				MarkdownDescription: httpEndpointHeaders.MarkdownDescription,
 				Optional:            true,
+				// Commonly carries an `Authorization` credential, so mark sensitive
+				// to redact both prior and planned values in plan/apply output.
+				Sensitive: true,
 
 				ElementType: types.StringType,
 
@@ -314,6 +317,9 @@ func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Optional:            true,
 				// This will match the HTTP headers when http_endpoint_headers is set
 				Computed: true,
+				// Mirrors http_endpoint_headers, which commonly carries an
+				// `Authorization` credential, so mark sensitive to redact it.
+				Sensitive: true,
 
 				ElementType: types.StringType,
 
