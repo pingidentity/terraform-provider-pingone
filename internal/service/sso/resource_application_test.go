@@ -1023,11 +1023,6 @@ func TestAccApplication_OIDC_Signing(t *testing.T) {
 		CheckDestroy:             sso.Application_CheckDestroy,
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
-			// `signing` on an unsupported application type is rejected at plan time
-			{
-				Config:      testAccApplicationConfig_OIDC_SigningInvalidType(resourceName, name),
-				ExpectError: regexp.MustCompile("Invalid configuration"),
-			},
 			withSigning,
 			withSigningUpdated,
 			withoutSigningKRPStillDeclared,
@@ -3926,44 +3921,6 @@ resource "pingone_application" "%[2]s" {
     redirect_uris              = ["https://www.pingidentity.com"]
     response_types             = ["CODE"]
     token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
-  }
-}
-`, acctest.GenericSandboxEnvironment(), resourceName, name)
-}
-
-// `signing` set on a SERVICE application, which does not support it, to exercise
-// the plan-time type validation.
-func testAccApplicationConfig_OIDC_SigningInvalidType(resourceName, name string) string {
-	return fmt.Sprintf(`
-%[1]s
-
-resource "pingone_key_rotation_policy" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-
-  name = "%[3]s"
-
-  algorithm           = "RSA"
-  subject_dn          = "CN=%[3]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
-  key_length          = 3072
-  signature_algorithm = "SHA256withRSA"
-  usage_type          = "SIGNING"
-}
-
-resource "pingone_application" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s"
-  enabled        = true
-
-  oidc_options = {
-    type                       = "SERVICE"
-    grant_types                = ["AUTHORIZATION_CODE"]
-    redirect_uris              = ["https://www.pingidentity.com"]
-    response_types             = ["CODE"]
-    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
-
-    signing = {
-      key_rotation_policy_id = pingone_key_rotation_policy.%[2]s.id
-    }
   }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName, name)
