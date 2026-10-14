@@ -496,6 +496,12 @@ func (r *NotificationSettingsEmailResource) Create(ctx context.Context, req reso
 		return
 	}
 
+	response, d = r.readBackComputedAuthenticationParams(ctx, plan, response)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	// Create the state to save
 	state = plan
 
@@ -590,6 +596,12 @@ func (r *NotificationSettingsEmailResource) Update(ctx context.Context, req reso
 		return
 	}
 
+	response, d = r.readBackComputedAuthenticationParams(ctx, plan, response)
+	resp.Diagnostics.Append(d...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	// Create the state to save
 	state = plan
 
@@ -653,6 +665,43 @@ func (r *NotificationSettingsEmailResource) ImportState(ctx context.Context, req
 
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("environment_id"), attributes["environment_id"])...)
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), attributes["environment_id"])...)
+}
+
+// readBackComputedAuthenticationParams re-reads the email delivery settings after a create or
+// update call.  The service computes some parameters (for example, `clientAuthenticationMethod`
+// on the OAUTH2 authentication method) asynchronously, so they're absent from the create and
+// update response bodies but present on read.  Reading the resource back after create/update
+// populates state with those computed values.
+func (r *NotificationSettingsEmailResource) readBackComputedAuthenticationParams(ctx context.Context, plan notificationSettingsEmailResourceModelV1, response *management.NotificationsSettingsEmailDeliverySettings) (*management.NotificationsSettingsEmailDeliverySettings, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	// Only OAuth 2.0 authentication has service-computed parameters
+	if plan.AuthUrl.IsNull() || plan.AuthUrl.IsUnknown() {
+		return response, diags
+	}
+
+	var readResponse *management.NotificationsSettingsEmailDeliverySettings
+	diags.Append(legacysdk.ParseResponse(
+		ctx,
+
+		func() (any, *http.Response, error) {
+			fO, fR, fErr := r.Client.ManagementAPIClient.NotificationsSettingsSMTPApi.ReadEmailNotificationsSettings(ctx, plan.EnvironmentId.ValueString()).Execute()
+			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
+		},
+		"ReadEmailNotificationsSettings",
+		legacysdk.DefaultCustomError,
+		sdk.DefaultCreateReadRetryable,
+		&readResponse,
+	)...)
+	if diags.HasError() {
+		return response, diags
+	}
+
+	if readResponse != nil {
+		response = readResponse
+	}
+
+	return response, diags
 }
 
 // validateOAuth2Attributes validates the attributes that depend on `grant_type`, skipping when `grant_type` isn't known.
