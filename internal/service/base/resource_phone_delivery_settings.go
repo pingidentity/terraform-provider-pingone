@@ -1370,7 +1370,9 @@ func (r *PhoneDeliverySettingsResource) Read(ctx context.Context, req resource.R
 // update call.  The service computes some parameters (for example, `clientAuthenticationMethod`
 // on the OAUTH2 authentication method) asynchronously, so they're absent from the create and
 // update response bodies but present on read.  Reading the resource back after create/update
-// populates state with those computed values.
+// populates state with those computed values.  See TRIAGE-38095, which reports the same
+// behaviour on the email delivery settings API; the read-back can be removed once the create and
+// update responses include these parameters.
 func (r *PhoneDeliverySettingsResource) readBackComputedAuthenticationParams(ctx context.Context, plan PhoneDeliverySettingsResourceModel, response *management.NotificationsSettingsPhoneDeliverySettings) (*management.NotificationsSettingsPhoneDeliverySettings, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
