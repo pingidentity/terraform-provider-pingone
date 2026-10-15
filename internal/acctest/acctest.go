@@ -25,6 +25,7 @@ import (
 	"github.com/pingidentity/pingone-go-client/oauth2"
 	"github.com/pingidentity/pingone-go-client/pingone"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/pingcli"
 	"github.com/pingidentity/terraform-provider-pingone/internal/provider"
 )
 
@@ -128,6 +129,48 @@ func PreCheckAccessTokenClient(t *testing.T) {
 func PreCheckAccessTokenOnly(t *testing.T) {
 	if v := os.Getenv("TESTACC_ACCESS_TOKEN_AUTH"); v != "true" {
 		t.Skip("Skipping test because TESTACC_ACCESS_TOKEN_AUTH is not set to true")
+		return
+	}
+}
+
+func PreCheckPingCLIAuthClient(t *testing.T) {
+	if strings.TrimSpace(os.Getenv("PINGONE_REGION_CODE")) == "" {
+		t.Fatal("PINGONE_REGION_CODE is missing and must be set")
+	}
+
+	if v := strings.TrimSpace(os.Getenv("PINGONE_CLIENT_ID")); v != "" {
+		t.Fatal("PINGONE_CLIENT_ID must be unset when running Ping CLI authentication acceptance tests")
+	}
+
+	if v := strings.TrimSpace(os.Getenv("PINGONE_CLIENT_SECRET")); v != "" {
+		t.Fatal("PINGONE_CLIENT_SECRET must be unset when running Ping CLI authentication acceptance tests")
+	}
+
+	if v := strings.TrimSpace(os.Getenv("PINGONE_ENVIRONMENT_ID")); v != "" {
+		t.Fatal("PINGONE_ENVIRONMENT_ID must be unset when running Ping CLI authentication acceptance tests")
+	}
+
+	if v := strings.TrimSpace(os.Getenv("PINGONE_API_ACCESS_TOKEN")); v != "" {
+		t.Fatal("PINGONE_API_ACCESS_TOKEN must be unset when running Ping CLI authentication acceptance tests")
+	}
+
+	if strings.TrimSpace(os.Getenv("PINGCLI_PROFILE")) == "" {
+		t.Fatal("PINGCLI_PROFILE must be set to a Ping CLI profile with a current login session")
+	}
+
+	plan := pingcli.Plan{
+		ConfigProfile:   os.Getenv("PINGCLI_PROFILE"),
+		ConfigGrantType: os.Getenv(pingcli.EnvConfigGrantType),
+	}
+
+	if _, err := pingcli.Load(context.Background(), plan); err != nil {
+		t.Fatalf("unable to load a Ping CLI authentication session: %s", err)
+	}
+}
+
+func PreCheckPingCLIAuthOnly(t *testing.T) {
+	if v := os.Getenv("TESTACC_PINGCLI_AUTH"); v != "true" {
+		t.Skip("Skipping test because TESTACC_PINGCLI_AUTH is not set to true")
 		return
 	}
 }
@@ -396,6 +439,31 @@ func TestClientAccessToken(ctx context.Context) (*pingone.APIClient, error) {
 
 	// Allow client to parse the access token from the environment variable
 	config := clientconfig.NewConfiguration().
+		WithTopLevelDomain(regionTopLevelDomain).
+		WithStorageType(clientconfig.StorageTypeNone)
+
+	pingOneConfig := pingone.NewConfiguration(config)
+	pingOneConfig.UserAgent = framework.UserAgent("", GetProviderTestingVersion())
+
+	return pingone.NewAPIClient(ctx, pingOneConfig)
+}
+
+func TestClientPingCLI(ctx context.Context) (*pingone.APIClient, error) {
+	regionTopLevelDomain, ok := framework.RegionTopLevelDomainFromCode(strings.ToLower(os.Getenv("PINGONE_REGION_CODE")))
+	if !ok {
+		return nil, fmt.Errorf("invalid PINGONE_REGION_CODE: %s", os.Getenv("PINGONE_REGION_CODE"))
+	}
+
+	session, err := pingcli.Load(ctx, pingcli.Plan{
+		ConfigProfile:   os.Getenv("PINGCLI_PROFILE"),
+		ConfigGrantType: os.Getenv(pingcli.EnvConfigGrantType),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	config := clientconfig.NewConfiguration().
+		WithAccessToken(session.AccessToken).
 		WithTopLevelDomain(regionTopLevelDomain).
 		WithStorageType(clientconfig.StorageTypeNone)
 
