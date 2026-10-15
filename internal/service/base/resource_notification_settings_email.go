@@ -671,7 +671,8 @@ func (r *NotificationSettingsEmailResource) ImportState(ctx context.Context, req
 // update call.  The service computes some parameters (for example, `clientAuthenticationMethod`
 // on the OAUTH2 authentication method) asynchronously, so they're absent from the create and
 // update response bodies but present on read.  Reading the resource back after create/update
-// populates state with those computed values.
+// populates state with those computed values.  Workaround for TRIAGE-38095; the read-back can
+// be removed once the create and update responses include these parameters.
 func (r *NotificationSettingsEmailResource) readBackComputedAuthenticationParams(ctx context.Context, plan notificationSettingsEmailResourceModelV1, response *management.NotificationsSettingsEmailDeliverySettings) (*management.NotificationsSettingsEmailDeliverySettings, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -688,7 +689,7 @@ func (r *NotificationSettingsEmailResource) readBackComputedAuthenticationParams
 			fO, fR, fErr := r.Client.ManagementAPIClient.NotificationsSettingsSMTPApi.ReadEmailNotificationsSettings(ctx, plan.EnvironmentId.ValueString()).Execute()
 			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
 		},
-		"ReadEmailNotificationsSettings",
+		"ReadEmailNotificationsSettings-ReadBack",
 		legacysdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 		&readResponse,
