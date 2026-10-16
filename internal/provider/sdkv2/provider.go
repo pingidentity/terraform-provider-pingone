@@ -8,7 +8,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/patrickcping/pingone-go-sdk-v2/management"
@@ -61,17 +60,21 @@ func New(version string) func() *schema.Provider {
 					Optional:    true,
 					Description: "The access token used for provider resource management against the PingOne management API.  Default value can be set with the `PINGONE_API_ACCESS_TOKEN` environment variable.  Must provide only one of `api_access_token` (when obtaining the worker token outside of the provider) and `client_id` (when the provider should fetch the worker token during operations)." + pingcli.ConflictDescriptionSuffix,
 				},
-				pingcli.AttrConfigProfile: {
-					Type:          schema.TypeString,
+				pingcli.AttrUsePingCLIAuth: {
+					Type:          schema.TypeBool,
 					Optional:      true,
-					Description:   pingcli.DescriptionConfigProfile(),
+					Description:   pingcli.DescriptionUsePingCLIAuth(),
 					ConflictsWith: []string{"client_id", "client_secret", "environment_id", "api_access_token"},
 				},
-				pingcli.AttrConfigGrantType: {
-					Type:          schema.TypeString,
-					Optional:      true,
-					Description:   pingcli.DescriptionConfigGrantType(),
-					ConflictsWith: []string{"client_id", "client_secret", "environment_id", "api_access_token"},
+				pingcli.AttrPingCLIProfile: {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: pingcli.DescriptionPingCLIProfile(),
+				},
+				pingcli.AttrPingCLIGrantType: {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Description: pingcli.DescriptionPingCLIGrantType(),
 				},
 				"region_code": {
 					Type:        schema.TypeString,
@@ -251,23 +254,10 @@ func configure(version string) func(context.Context, *schema.ResourceData) (inte
 			regionCode = strings.TrimSpace(os.Getenv("PINGONE_REGION_CODE"))
 		}
 
-		for _, attribute := range []string{pingcli.AttrConfigProfile, pingcli.AttrConfigGrantType} {
-			if attributeIsUnknown(d, attribute) {
-				diags = append(diags, diag.Diagnostic{
-					Severity:      diag.Error,
-					Summary:       pingcli.UnknownValueSummary,
-					Detail:        pingcli.UnknownValueDetail(attribute),
-					AttributePath: cty.GetAttrPath(attribute),
-				})
-			}
-		}
-		if diags.HasError() {
-			return nil, diags
-		}
-
 		plan, problems := pingcli.Resolve(pingcli.Inputs{
-			ConfigProfile:    d.Get(pingcli.AttrConfigProfile).(string),
-			ConfigGrantType:  d.Get(pingcli.AttrConfigGrantType).(string),
+			UsePingCLIAuth:   d.Get(pingcli.AttrUsePingCLIAuth).(bool),
+			PingCLIProfile:   d.Get(pingcli.AttrPingCLIProfile).(string),
+			PingCLIGrantType: d.Get(pingcli.AttrPingCLIGrantType).(string),
 			RegionCode:       regionCode,
 			HasHCLCredential: config.ClientID != "" || config.ClientSecret != "" || config.EnvironmentID != "" || config.AccessToken != "",
 		}, os.Getenv)
@@ -280,7 +270,7 @@ func configure(version string) func(context.Context, *schema.ResourceData) (inte
 		}
 
 		if plan.Enabled {
-			session, err := pingcli.Authenticate(ctx, plan)
+			session, err := pingcli.Load(ctx, plan)
 			if err != nil {
 				return nil, append(diags, diagnosticFromError(err))
 			}

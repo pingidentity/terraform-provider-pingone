@@ -230,8 +230,7 @@ acctest.PreCheckCustomDomainSSL(t)
 
 **Ping CLI Authentication**
 ```go
-acctest.PreCheckPingCLIAuthOnly(t)             // Feature gate
-acctest.PreCheckPingCLIAuthClient(t)           // Session validation
+acctest.PreCheckPingCLIAuth(t)                 // Feature gate + session validation
 ```
 - **Gate Environment Variable**: `TESTACC_PINGCLI_AUTH=true`
 - **Local only**: these tests read a real OS keychain session created by `pingcli pingone auth login`, so they are skipped whenever `CI` is set and must never be added to a workflow

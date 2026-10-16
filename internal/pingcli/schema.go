@@ -10,20 +10,23 @@ import (
 
 // Attribute names in the provider schema.
 const (
-	AttrConfigProfile   = "config_profile"
-	AttrConfigGrantType = "config_grant_type"
+	AttrUsePingCLIAuth   = "use_pingcli_auth"
+	AttrPingCLIProfile   = "pingcli_profile"
+	AttrPingCLIGrantType = "pingcli_grant_type"
 )
 
 // Environment variables for the provider attributes. Ping CLI reads the same
 // names, so an exported Ping CLI setup is picked up automatically.
 const (
-	EnvConfigProfile   = "PINGCLI_PROFILE"
-	EnvConfigGrantType = "PINGCLI_PINGONE_AUTHENTICATION_TYPE"
+	EnvPingCLIProfile   = "PINGCLI_PROFILE"
+	EnvPingCLIGrantType = "PINGCLI_PINGONE_AUTHENTICATION_TYPE"
 )
 
-// ConflictEnvVars are the PingOne credential environment variables checked
-// when deciding whether Ping CLI authentication conflicts with an existing
-// credential setup. A slice, not named constants, to avoid gosec G101
+// DefaultProfile is the Ping CLI profile used when none is configured.
+const DefaultProfile = "default"
+
+// ConflictEnvVars are the PingOne credential environment variables that the
+// SDKs read directly. A slice, not named constants, to avoid gosec G101
 // flagging credential-looking identifiers.
 var ConflictEnvVars = []string{
 	"PINGONE_CLIENT_ID",
@@ -33,13 +36,13 @@ var ConflictEnvVars = []string{
 }
 
 // maskedEnvVars are the environment variables unset when Ping CLI
-// authentication is enabled: the credential variables above, which the SDKs
-// read directly, plus the new SDK's own grant type and token storage
-// variables. Those reach the SDK through envconfig after the provider builds
-// its configuration, so setting the builder values does not help: a
-// PINGONE_AUTH_GRANT_TYPE of client_credentials makes the SDK's token source
-// skip the static Ping CLI token, and the storage variables would redirect it
-// to the SDK's own keychain flow.
+// authentication is enabled: the credential variables above, plus the new
+// SDK's own grant type and token storage variables. Those reach the SDK
+// through envconfig after the provider builds its configuration, so setting
+// the builder values does not help: a PINGONE_AUTH_GRANT_TYPE of
+// client_credentials makes the SDK's token source skip the static Ping CLI
+// token, and the storage variables would redirect it to the SDK's own
+// keychain flow.
 var maskedEnvVars = append(slices.Clone(ConflictEnvVars),
 	"PINGONE_AUTH_GRANT_TYPE",
 	"PINGONE_STORAGE_TYPE",
@@ -56,36 +59,33 @@ func MaskCredentialEnv() {
 	}
 }
 
-// UnknownValueSummary and UnknownValueDetail report a Ping CLI attribute unknown
-// at configure time; treating it as unset could select the wrong session.
-const UnknownValueSummary = "Unknown Ping CLI configuration value"
-
-func UnknownValueDetail(attribute string) string {
+// DescriptionUsePingCLIAuth returns the provider attribute description, shared
+// by every muxed provider flavour so the schemas cannot drift apart.
+func DescriptionUsePingCLIAuth() string {
 	return fmt.Sprintf(
-		"The %s value is not known when the provider is configured, so the Ping CLI session cannot be selected.  Provider configuration cannot depend on values that are only known after apply; use a literal value, an input variable or the matching environment variable instead.",
-		attribute,
+		"Enable authentication with the access token that Ping CLI stores in the OS keychain after `%s`, instead of client credentials or an API access token.  The Ping CLI login must be performed with a worker application that has the PingOne roles Terraform requires.  Must not be configured with `client_id`, `client_secret`, `environment_id` or `api_access_token`.  Must be configured with `region_code` (or the `PINGONE_REGION_CODE` environment variable).",
+		"pingcli pingone auth login",
 	)
 }
 
-// DescriptionConfigProfile returns the provider attribute description, shared
+// DescriptionPingCLIProfile returns the provider attribute description, shared
 // by every muxed provider flavour so the schemas cannot drift apart.
-func DescriptionConfigProfile() string {
+func DescriptionPingCLIProfile() string {
 	return fmt.Sprintf(
-		"The Ping CLI profile whose keychain authentication session is used by the provider.  Setting this attribute makes the provider authenticate with the access token that Ping CLI stores in the OS keychain after `%s`, instead of requiring `client_id` and `client_secret`.  The session is looked up in the keychain by profile name; the Ping CLI configuration file is not read.  Note that Ping CLI stores an authentication session under the profile that was active when the login was performed, which may differ from the profile named with `--profile`.  Default value can be set with the `%s` environment variable.  Must not be configured with `client_id`, `client_secret`, `environment_id` or `api_access_token`.  Must be configured with `region_code` (or the `PINGONE_REGION_CODE` environment variable).",
-		"pingcli pingone auth login", EnvConfigProfile,
+		"The Ping CLI profile whose keychain authentication session is used when `%s` is enabled.  When unset, the Ping CLI default profile (`%s`) is used.  Default value can be set with the `%s` environment variable.",
+		AttrUsePingCLIAuth, DefaultProfile, EnvPingCLIProfile,
 	)
 }
 
-// DescriptionConfigGrantType returns the provider attribute description, shared
+// DescriptionPingCLIGrantType returns the provider attribute description, shared
 // by every muxed provider flavour so the schemas cannot drift apart.
-func DescriptionConfigGrantType() string {
+func DescriptionPingCLIGrantType() string {
 	return fmt.Sprintf(
-		"The grant type that Ping CLI used to log in, which is part of the keychain entry that stores the authentication session.  Options are `%s`, `%s` and `%s`.  When unset, the provider checks each grant type for the profile named by `%s` and uses the valid session that expires last; set this attribute when a profile holds sessions for more than one grant type.  Default value can be set with the `%s` environment variable.  Must not be configured with `client_id`, `client_secret`, `environment_id` or `api_access_token`.  Must be configured with `%s` (or the `%s` environment variable) and `region_code` (or the `PINGONE_REGION_CODE` environment variable).",
-		GrantTypeClientCredentials, GrantTypeAuthorizationCode, GrantTypeDeviceCode,
-		AttrConfigProfile, EnvConfigGrantType, AttrConfigProfile, EnvConfigProfile,
+		"The grant type that Ping CLI used to log in, used when `%s` is enabled.  Options are `%s`, `%s` and `%s`.  When unset, each grant type is checked for the profile and the valid session that expires last is used.  Default value can be set with the `%s` environment variable.",
+		AttrUsePingCLIAuth, GrantTypeClientCredentials, GrantTypeAuthorizationCode, GrantTypeDeviceCode, EnvPingCLIGrantType,
 	)
 }
 
 // ConflictDescriptionSuffix is appended to the descriptions of the credential
 // attributes in every flavour, so the docs and the validation rules agree.
-const ConflictDescriptionSuffix = "  Must not be configured with `config_profile` or `config_grant_type`."
+const ConflictDescriptionSuffix = "  Must not be configured with `use_pingcli_auth`."

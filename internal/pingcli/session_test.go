@@ -3,16 +3,14 @@
 package pingcli_test
 
 import (
-	"bytes"
 	"context"
 	"crypto/sha256"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-log/tflogtest"
 	"github.com/pingidentity/terraform-provider-pingone/internal/pingcli"
 	"github.com/zalando/go-keyring"
 )
@@ -51,7 +49,7 @@ func TestLoad_SingleEntrySession(t *testing.T) {
 	account := sessionAccount(t, pingcli.GrantTypeClientCredentials, "default")
 	seedKeychainSession(t, account, "test-access-token", time.Now().Add(time.Hour))
 
-	result, err := pingcli.Load(context.Background(), pingcli.Plan{ConfigProfile: "default"})
+	result, err := pingcli.Load(context.Background(), pingcli.Plan{PingCLIProfile: "default"})
 	if err != nil {
 		t.Fatalf("Load returned error: %v", err)
 	}
@@ -81,7 +79,7 @@ func TestLoad_FindsSessionForEveryGrantType(t *testing.T) {
 
 			seedKeychainSession(t, sessionAccount(t, grant, "dev"), "token-"+grant, time.Now().Add(time.Hour))
 
-			result, err := pingcli.Load(context.Background(), pingcli.Plan{ConfigProfile: "dev"})
+			result, err := pingcli.Load(context.Background(), pingcli.Plan{PingCLIProfile: "dev"})
 			if err != nil {
 				t.Fatalf("Load returned error: %v", err)
 			}
@@ -102,7 +100,7 @@ func TestLoad_PrefersLongestLivedSession(t *testing.T) {
 	seedKeychainSession(t, sessionAccount(t, pingcli.GrantTypeClientCredentials, "default"), "short-lived", time.Now().Add(10*time.Minute))
 	seedKeychainSession(t, sessionAccount(t, pingcli.GrantTypeDeviceCode, "default"), "long-lived", time.Now().Add(2*time.Hour))
 
-	result, err := pingcli.Load(context.Background(), pingcli.Plan{ConfigProfile: "default"})
+	result, err := pingcli.Load(context.Background(), pingcli.Plan{PingCLIProfile: "default"})
 	if err != nil {
 		t.Fatalf("Load returned error: %v", err)
 	}
@@ -118,7 +116,7 @@ func TestLoad_SkipsExpiredSessionWhenAnotherIsValid(t *testing.T) {
 	seedKeychainSession(t, sessionAccount(t, pingcli.GrantTypeClientCredentials, "default"), "expired-token", time.Now().Add(-time.Hour))
 	seedKeychainSession(t, sessionAccount(t, pingcli.GrantTypeAuthorizationCode, "default"), "valid-token", time.Now().Add(time.Hour))
 
-	result, err := pingcli.Load(context.Background(), pingcli.Plan{ConfigProfile: "default"})
+	result, err := pingcli.Load(context.Background(), pingcli.Plan{PingCLIProfile: "default"})
 	if err != nil {
 		t.Fatalf("Load returned error: %v", err)
 	}
@@ -134,7 +132,7 @@ func TestLoad_PinnedGrantTypeIgnoresOtherGrantTypes(t *testing.T) {
 	seedKeychainSession(t, sessionAccount(t, pingcli.GrantTypeClientCredentials, "default"), "short-lived", time.Now().Add(10*time.Minute))
 	seedKeychainSession(t, sessionAccount(t, pingcli.GrantTypeDeviceCode, "default"), "long-lived", time.Now().Add(2*time.Hour))
 
-	result, err := pingcli.Load(context.Background(), pingcli.Plan{ConfigProfile: "default", ConfigGrantType: pingcli.GrantTypeClientCredentials})
+	result, err := pingcli.Load(context.Background(), pingcli.Plan{PingCLIProfile: "default", PingCLIGrantType: pingcli.GrantTypeClientCredentials})
 	if err != nil {
 		t.Fatalf("Load returned error: %v", err)
 	}
@@ -152,7 +150,7 @@ func TestLoad_PinnedGrantTypeWithoutSession(t *testing.T) {
 
 	seedKeychainSession(t, sessionAccount(t, pingcli.GrantTypeDeviceCode, "default"), "device-token", time.Now().Add(time.Hour))
 
-	_, err := pingcli.Load(context.Background(), pingcli.Plan{ConfigProfile: "default", ConfigGrantType: pingcli.GrantTypeAuthorizationCode})
+	_, err := pingcli.Load(context.Background(), pingcli.Plan{PingCLIProfile: "default", PingCLIGrantType: pingcli.GrantTypeAuthorizationCode})
 	if err == nil {
 		t.Fatal("Load returned nil error, want a not-found error")
 	}
@@ -163,7 +161,7 @@ func TestLoad_PinnedGrantTypeWithoutSession(t *testing.T) {
 func TestLoad_UnsupportedGrantType(t *testing.T) {
 	keyring.MockInit()
 
-	_, err := pingcli.Load(context.Background(), pingcli.Plan{ConfigProfile: "default", ConfigGrantType: "password"})
+	_, err := pingcli.Load(context.Background(), pingcli.Plan{PingCLIProfile: "default", PingCLIGrantType: "password"})
 	if err == nil {
 		t.Fatal("Load returned nil error, want an unsupported grant type error")
 	}
@@ -176,7 +174,7 @@ func TestLoad_OtherProfileSessionIsIgnored(t *testing.T) {
 
 	seedKeychainSession(t, sessionAccount(t, pingcli.GrantTypeClientCredentials, "other"), "other-token", time.Now().Add(time.Hour))
 
-	_, err := pingcli.Load(context.Background(), pingcli.Plan{ConfigProfile: "dev"})
+	_, err := pingcli.Load(context.Background(), pingcli.Plan{PingCLIProfile: "dev"})
 	if err == nil {
 		t.Fatal("Load returned nil error, want a not-found error")
 	}
@@ -206,7 +204,7 @@ func TestLoad_SplitSession(t *testing.T) {
 		t.Fatalf("failed to seed split access entry: %v", err)
 	}
 
-	result, err := pingcli.Load(context.Background(), pingcli.Plan{ConfigProfile: "default"})
+	result, err := pingcli.Load(context.Background(), pingcli.Plan{PingCLIProfile: "default"})
 	if err != nil {
 		t.Fatalf("Load returned error: %v", err)
 	}
@@ -236,7 +234,7 @@ func TestLoad_SplitMarkerWithoutAccessEntry(t *testing.T) {
 		t.Fatalf("failed to seed split marker: %v", err)
 	}
 
-	_, err = pingcli.Load(context.Background(), pingcli.Plan{ConfigProfile: "default"})
+	_, err = pingcli.Load(context.Background(), pingcli.Plan{PingCLIProfile: "default"})
 	if err == nil {
 		t.Fatal("Load returned nil error, want a missing-access-entry error")
 	}
@@ -245,7 +243,7 @@ func TestLoad_SplitMarkerWithoutAccessEntry(t *testing.T) {
 func TestLoad_NoSession(t *testing.T) {
 	keyring.MockInit()
 
-	_, err := pingcli.Load(context.Background(), pingcli.Plan{ConfigProfile: "default"})
+	_, err := pingcli.Load(context.Background(), pingcli.Plan{PingCLIProfile: "default"})
 	if err == nil {
 		t.Fatal("Load returned nil error, want a not-found error")
 	}
@@ -259,7 +257,7 @@ func TestLoad_ExpiredSession(t *testing.T) {
 	account := sessionAccount(t, pingcli.GrantTypeClientCredentials, "default")
 	seedKeychainSession(t, account, "expired-token", time.Now().Add(-time.Hour))
 
-	_, err := pingcli.Load(context.Background(), pingcli.Plan{ConfigProfile: "default"})
+	_, err := pingcli.Load(context.Background(), pingcli.Plan{PingCLIProfile: "default"})
 	if err == nil {
 		t.Fatal("Load returned nil error, want an expired error")
 	}
@@ -284,7 +282,7 @@ func TestLoad_ZeroExpiryAccepted(t *testing.T) {
 		t.Fatalf("failed to seed keychain: %v", err)
 	}
 
-	result, err := pingcli.Load(context.Background(), pingcli.Plan{ConfigProfile: "default"})
+	result, err := pingcli.Load(context.Background(), pingcli.Plan{PingCLIProfile: "default"})
 	if err != nil {
 		t.Fatalf("Load returned error: %v", err)
 	}
@@ -302,13 +300,13 @@ func TestLoad_MissingProfile(t *testing.T) {
 		t.Fatal("Load returned nil error, want a missing-profile error")
 	}
 
-	assertErrorContains(t, err, "no Ping CLI profile was specified", "config_profile", "PINGCLI_PROFILE")
+	assertErrorContains(t, err, "no Ping CLI profile was specified", "pingcli_profile", "PINGCLI_PROFILE")
 }
 
 func TestLoad_ProfileWithUnsupportedCharacters(t *testing.T) {
 	keyring.MockInit()
 
-	_, err := pingcli.Load(context.Background(), pingcli.Plan{ConfigProfile: "../evil"})
+	_, err := pingcli.Load(context.Background(), pingcli.Plan{PingCLIProfile: "../evil"})
 	if err == nil {
 		t.Fatal("Load returned nil error, want an unsupported-characters error")
 	}
@@ -319,7 +317,7 @@ func TestLoad_ProfileWithUnsupportedCharacters(t *testing.T) {
 func TestLoad_KeychainUnavailable(t *testing.T) {
 	keyring.MockInitWithError(fmt.Errorf("keychain is locked"))
 
-	_, err := pingcli.Load(context.Background(), pingcli.Plan{ConfigProfile: "default"})
+	_, err := pingcli.Load(context.Background(), pingcli.Plan{PingCLIProfile: "default"})
 	if err == nil {
 		t.Fatal("Load returned nil error, want a keychain error")
 	}
@@ -333,7 +331,7 @@ func TestLoad_ErrorDoesNotContainToken(t *testing.T) {
 	account := sessionAccount(t, pingcli.GrantTypeClientCredentials, "default")
 	seedKeychainSession(t, account, "very-secret-token-value", time.Now().Add(-time.Hour))
 
-	_, err := pingcli.Load(context.Background(), pingcli.Plan{ConfigProfile: "default"})
+	_, err := pingcli.Load(context.Background(), pingcli.Plan{PingCLIProfile: "default"})
 	if err == nil {
 		t.Fatal("Load returned nil error, want an expired error")
 	}
@@ -377,34 +375,6 @@ func assertErrorContains(t *testing.T, err error, wants ...string) {
 	}
 }
 
-func TestLoad_LogsOnlyNonSecretClaims(t *testing.T) {
-	keyring.MockInit()
-
-	payload := base64.RawURLEncoding.EncodeToString([]byte(`{"sub":"user-1","client_id":"app-1","scope":"openid","jti":"j-1","secret_claim":"do-not-log"}`))
-	jwt := "eyJhbGciOiJub25lIn0." + payload + ".sig"
-
-	seedKeychainSession(t, sessionAccount(t, pingcli.GrantTypeDeviceCode, "default"), jwt, time.Now().Add(time.Hour))
-
-	var captured bytes.Buffer
-	ctx := tflogtest.RootLogger(context.Background(), &captured)
-
-	if _, err := pingcli.Load(ctx, pingcli.Plan{ConfigProfile: "default"}); err != nil {
-		t.Fatalf("Load returned error: %v", err)
-	}
-
-	logged := captured.String()
-	for _, want := range []string{"token_sub", "user-1", "token_client_id", "app-1", "token_jti", "j-1"} {
-		if !contains(logged, want) {
-			t.Errorf("debug log does not contain %q: %s", want, logged)
-		}
-	}
-	for _, unwanted := range []string{"do-not-log", jwt} {
-		if contains(logged, unwanted) {
-			t.Errorf("debug log must not contain %q", unwanted)
-		}
-	}
-}
-
 func TestLoad_UnrecognisedKeychainEntry(t *testing.T) {
 	keyring.MockInit()
 
@@ -414,7 +384,7 @@ func TestLoad_UnrecognisedKeychainEntry(t *testing.T) {
 		t.Fatalf("failed to seed keychain: %v", err)
 	}
 
-	_, err := pingcli.Load(context.Background(), pingcli.Plan{ConfigProfile: "default"})
+	_, err := pingcli.Load(context.Background(), pingcli.Plan{PingCLIProfile: "default"})
 	if err == nil {
 		t.Fatal("Load returned nil error, want an unrecognised format error")
 	}
@@ -432,8 +402,8 @@ func TestLoad_TrimsProfileAndGrantType(t *testing.T) {
 	// untrimmed environment values; Load must accept the same values the
 	// provider path does.
 	result, err := pingcli.Load(context.Background(), pingcli.Plan{
-		ConfigProfile:   " default ",
-		ConfigGrantType: " " + pingcli.GrantTypeClientCredentials + " ",
+		PingCLIProfile:   " default ",
+		PingCLIGrantType: " " + pingcli.GrantTypeClientCredentials + " ",
 	})
 	if err != nil {
 		t.Fatalf("Load returned error: %v", err)
@@ -442,4 +412,8 @@ func TestLoad_TrimsProfileAndGrantType(t *testing.T) {
 	if result.AccessToken != "trimmed-profile-token" {
 		t.Errorf("AccessToken = %q, want %q", result.AccessToken, "trimmed-profile-token")
 	}
+}
+
+func contains(haystack, needle string) bool {
+	return strings.Contains(haystack, needle)
 }

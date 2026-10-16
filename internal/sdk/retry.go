@@ -48,7 +48,6 @@ func RetryWrapper(ctx context.Context, timeout time.Duration, f framework.SDKInt
 
 	var resp interface{}
 	var r *http.Response
-	var notAuthorizedSince time.Time
 
 	err := retry.RetryContext(ctx, timeout, func() *retry.RetryError {
 		var err error
@@ -166,11 +165,6 @@ func RetryWrapper(ctx context.Context, timeout time.Duration, f framework.SDKInt
 			}
 
 			if ((errorModel != nil && errorModel.Id != nil) || r != nil) && (isRetryable(ctx, r, errorModel) || DefaultRetryable(ctx, r, errorModel)) {
-				if errorModel != nil && framework.SessionAuthorizationRetryExhausted(r, notAuthorizedPattern.MatchString(errorModel.GetMessage()), &notAuthorizedSince) {
-					tflog.Warn(ctx, "Insufficient PingOne privileges persisted for the Ping CLI session; not retrying further")
-					return retry.NonRetryableError(err)
-				}
-
 				tflog.Warn(ctx, "Retrying ... ")
 				return retry.RetryableError(err)
 			}

@@ -1,4 +1,4 @@
 provider "pingone" {
-  config_profile = "myprofile"
-  region_code    = "NA"
+  use_pingcli_auth = true
+  region_code      = "NA"
 }

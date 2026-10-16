@@ -9,7 +9,6 @@ package pingcli
 import (
 	"context"
 	"crypto/sha256"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -97,11 +96,11 @@ type splitMarker struct {
 func Load(ctx context.Context, plan Plan) (SessionResult, error) {
 	// Trim like Resolve does, so entry points that build a Plan directly (the
 	// acctest pre-checks) accept the same values as the provider path.
-	profile := strings.TrimSpace(plan.ConfigProfile)
+	profile := strings.TrimSpace(plan.PingCLIProfile)
 	if profile == "" {
 		return SessionResult{}, fmt.Errorf(
 			"no Ping CLI profile was specified; set %s in the provider configuration or the %s environment variable",
-			AttrConfigProfile, EnvConfigProfile,
+			AttrPingCLIProfile, EnvPingCLIProfile,
 		)
 	}
 	if !profileNamePattern.MatchString(profile) {
@@ -111,7 +110,7 @@ func Load(ctx context.Context, plan Plan) (SessionResult, error) {
 	}
 
 	candidates := grantTypes
-	if configGrantType := strings.TrimSpace(plan.ConfigGrantType); configGrantType != "" {
+	if configGrantType := strings.TrimSpace(plan.PingCLIGrantType); configGrantType != "" {
 		if !IsGrantType(configGrantType) {
 			return SessionResult{}, fmt.Errorf(
 				"the Ping CLI grant type '%s' is not supported; use one of %s, %s or %s",
@@ -165,18 +164,11 @@ func Load(ctx context.Context, plan Plan) (SessionResult, error) {
 
 	switch {
 	case found:
-		fields := map[string]any{
+		tflog.Debug(ctx, "Loaded Ping CLI authentication session", map[string]any{
 			"profile":    profile,
 			"grant_type": best.GrantType,
 			"expiry":     best.Expiry.Format(time.RFC3339),
-		}
-		for k, v := range tokenClaimsForLog(best.AccessToken) {
-			fields["token_"+k] = v
-		}
-
-		tflog.Debug(ctx, "Loaded Ping CLI authentication session", fields)
-
-		RegisterSessionToken(best.AccessToken)
+		})
 
 		return best, nil
 	case hardErr != nil:
@@ -196,10 +188,10 @@ func Load(ctx context.Context, plan Plan) (SessionResult, error) {
 			"the Ping CLI authentication session in the OS keychain for profile '%s' is empty or unreadable; run 'pingcli pingone auth login' to authenticate",
 			profile,
 		)
-	case plan.ConfigGrantType != "":
+	case plan.PingCLIGrantType != "":
 		return SessionResult{}, fmt.Errorf(
 			"no Ping CLI authentication session was found in the OS keychain for profile '%s' and grant type '%s'; run 'pingcli pingone auth login' to authenticate, and note that Ping CLI stores the session under the profile that was active when the login was performed",
-			profile, plan.ConfigGrantType,
+			profile, plan.PingCLIGrantType,
 		)
 	default:
 		return SessionResult{}, fmt.Errorf(
@@ -207,38 +199,6 @@ func Load(ctx context.Context, plan Plan) (SessionResult, error) {
 			profile,
 		)
 	}
-}
-
-// loggedClaims are the JWT claims safe to write to debug logs; they identify
-// the token's actor and application without exposing the token.
-var loggedClaims = []string{"sub", "client_id", "scope", "jti", "iat", "exp"}
-
-// tokenClaimsForLog returns the loggable claims of a JWT access token, or nil
-// when the token is opaque or unreadable.
-func tokenClaimsForLog(accessToken string) map[string]any {
-	parts := strings.Split(accessToken, ".")
-	if len(parts) != 3 {
-		return nil
-	}
-
-	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
-	if err != nil {
-		return nil
-	}
-
-	var claims map[string]any
-	if err := json.Unmarshal(payload, &claims); err != nil {
-		return nil
-	}
-
-	out := make(map[string]any, len(loggedClaims))
-	for _, name := range loggedClaims {
-		if v, ok := claims[name]; ok {
-			out[name] = v
-		}
-	}
-
-	return out
 }
 
 // sessionKey derives Ping CLI v1.x's session key:

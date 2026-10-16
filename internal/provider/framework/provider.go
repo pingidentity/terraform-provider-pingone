@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -52,8 +53,9 @@ type pingOneProviderModel struct {
 	ServiceEndpoints types.List   `tfsdk:"service_endpoints"`
 	GlobalOptions    types.List   `tfsdk:"global_options"`
 	HTTPProxy        types.String `tfsdk:"http_proxy"`
-	ConfigProfile    types.String `tfsdk:"config_profile"`
-	ConfigGrantType  types.String `tfsdk:"config_grant_type"`
+	UsePingCLIAuth   types.Bool   `tfsdk:"use_pingcli_auth"`
+	PingCLIProfile   types.String `tfsdk:"pingcli_profile"`
+	PingCLIGrantType types.String `tfsdk:"pingcli_grant_type"`
 }
 
 type pingOneProviderGlobalOptionsModel struct {
@@ -154,13 +156,13 @@ func (p *pingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest
 				Optional:            true,
 			},
 
-			pingcli.AttrConfigProfile: schema.StringAttribute{
-				Description:         pingcli.DescriptionConfigProfile(),
-				MarkdownDescription: pingcli.DescriptionConfigProfile(),
+			pingcli.AttrUsePingCLIAuth: schema.BoolAttribute{
+				Description:         pingcli.DescriptionUsePingCLIAuth(),
+				MarkdownDescription: pingcli.DescriptionUsePingCLIAuth(),
 				Optional:            true,
 
-				Validators: []validator.String{
-					stringvalidator.ConflictsWith(
+				Validators: []validator.Bool{
+					boolvalidator.ConflictsWith(
 						path.MatchRoot("client_id"),
 						path.MatchRoot("client_secret"),
 						path.MatchRoot("environment_id"),
@@ -169,19 +171,16 @@ func (p *pingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest
 				},
 			},
 
-			pingcli.AttrConfigGrantType: schema.StringAttribute{
-				Description:         pingcli.DescriptionConfigGrantType(),
-				MarkdownDescription: pingcli.DescriptionConfigGrantType(),
+			pingcli.AttrPingCLIProfile: schema.StringAttribute{
+				Description:         pingcli.DescriptionPingCLIProfile(),
+				MarkdownDescription: pingcli.DescriptionPingCLIProfile(),
 				Optional:            true,
+			},
 
-				Validators: []validator.String{
-					stringvalidator.ConflictsWith(
-						path.MatchRoot("client_id"),
-						path.MatchRoot("client_secret"),
-						path.MatchRoot("environment_id"),
-						path.MatchRoot("api_access_token"),
-					),
-				},
+			pingcli.AttrPingCLIGrantType: schema.StringAttribute{
+				Description:         pingcli.DescriptionPingCLIGrantType(),
+				MarkdownDescription: pingcli.DescriptionPingCLIGrantType(),
+				Optional:            true,
 			},
 
 			"region_code": schema.StringAttribute{
@@ -280,18 +279,6 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 		return
 	}
 
-	for attribute, value := range map[string]types.String{
-		pingcli.AttrConfigProfile:   data.ConfigProfile,
-		pingcli.AttrConfigGrantType: data.ConfigGrantType,
-	} {
-		if value.IsUnknown() {
-			resp.Diagnostics.AddAttributeError(path.Root(attribute), pingcli.UnknownValueSummary, pingcli.UnknownValueDetail(attribute))
-		}
-	}
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
 	// Set the defaults
 	tflog.Info(ctx, "[v6] Provider setting defaults..")
 
@@ -342,8 +329,9 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 	}
 
 	plan, problems := pingcli.Resolve(pingcli.Inputs{
-		ConfigProfile:    data.ConfigProfile.ValueString(),
-		ConfigGrantType:  data.ConfigGrantType.ValueString(),
+		UsePingCLIAuth:   !data.UsePingCLIAuth.IsNull() && data.UsePingCLIAuth.ValueBool(),
+		PingCLIProfile:   data.PingCLIProfile.ValueString(),
+		PingCLIGrantType: data.PingCLIGrantType.ValueString(),
 		RegionCode:       regionCode,
 		HasHCLCredential: !data.ClientID.IsNull() || !data.ClientSecret.IsNull() || !data.EnvironmentID.IsNull() || !data.APIAccessToken.IsNull(),
 	}, os.Getenv)
@@ -356,7 +344,7 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 	}
 
 	if plan.Enabled {
-		session, err := pingcli.Authenticate(ctx, plan)
+		session, err := pingcli.Load(ctx, plan)
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Unable to load Ping CLI authentication session",

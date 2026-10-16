@@ -35,8 +35,9 @@ func TestMuxProviderSchema(t *testing.T) {
 	}
 
 	found := map[string]bool{
-		"config_profile":    false,
-		"config_grant_type": false,
+		"use_pingcli_auth":   false,
+		"pingcli_profile":    false,
+		"pingcli_grant_type": false,
 	}
 
 	for _, attribute := range schemaResp.Provider.Block.Attributes {
