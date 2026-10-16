@@ -228,6 +228,19 @@ acctest.PreCheckCustomDomainSSL(t)
   - `PINGONE_DOMAIN_INTERMEDIATE_CERTIFICATE_PEM`
   - `PINGONE_DOMAIN_KEY_PEM`
 
+**Ping CLI Authentication**
+```go
+acctest.PreCheckPingCLIAuthOnly(t)             // Feature gate
+acctest.PreCheckPingCLIAuthClient(t)           // Session validation
+```
+- **Gate Environment Variable**: `TESTACC_PINGCLI_AUTH=true`
+- **Local only**: these tests read a real OS keychain session created by `pingcli pingone auth login`, so they are skipped whenever `CI` is set and must never be added to a workflow
+- **Required Environment Variables**:
+  - `PINGONE_REGION_CODE`
+  - `PINGONE_LICENSE_ID` (required by `acctest.PreCheckNewEnvironment`, used by tests that create a fresh environment)
+  - `PINGCLI_PROFILE` (the name of a Ping CLI profile with a current keychain session); optionally `PINGCLI_PINGONE_AUTHENTICATION_TYPE` to pin the grant type
+- **Must Be Unset**: `PINGONE_CLIENT_ID`, `PINGONE_CLIENT_SECRET`, `PINGONE_ENVIRONMENT_ID`, `PINGONE_API_ACCESS_TOKEN`
+
 #### **Pre-Check Usage Patterns**
 
 **Standard Test Pattern**

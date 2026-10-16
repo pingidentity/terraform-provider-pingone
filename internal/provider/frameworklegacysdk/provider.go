@@ -22,6 +22,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/pingcli"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/authorize"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/base"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/credentials"
@@ -54,6 +55,8 @@ type pingOneProviderModel struct {
 	ServiceEndpoints types.List   `tfsdk:"service_endpoints"`
 	GlobalOptions    types.List   `tfsdk:"global_options"`
 	HTTPProxy        types.String `tfsdk:"http_proxy"`
+	ConfigProfile    types.String `tfsdk:"config_profile"`
+	ConfigGrantType  types.String `tfsdk:"config_grant_type"`
 }
 
 type pingOneProviderGlobalOptionsModel struct {
@@ -77,19 +80,19 @@ func (p *pingOneProvider) Metadata(ctx context.Context, req provider.MetadataReq
 func (p *pingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
 
 	clientIDDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Client ID for the worker app client.  Default value can be set with the `PINGONE_CLIENT_ID` environment variable.  Must provide only one of `api_access_token` (when obtaining the worker token outside of the provider) and `client_id` (when the provider should fetch the worker token during operations).  Must be configured with `client_secret` and `environment_id`.",
+		"Client ID for the worker app client.  Default value can be set with the `PINGONE_CLIENT_ID` environment variable.  Must provide only one of `api_access_token` (when obtaining the worker token outside of the provider) and `client_id` (when the provider should fetch the worker token during operations).  Must be configured with `client_secret` and `environment_id`." + pingcli.ConflictDescriptionSuffix,
 	)
 
 	clientSecretDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Client secret for the worker app client.  Default value can be set with the `PINGONE_CLIENT_SECRET` environment variable.  Must be configured with `client_id` and `environment_id`.",
+		"Client secret for the worker app client.  Default value can be set with the `PINGONE_CLIENT_SECRET` environment variable.  Must be configured with `client_id` and `environment_id`." + pingcli.ConflictDescriptionSuffix,
 	)
 
 	environmentIDDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Environment ID for the worker app client.  Default value can be set with the `PINGONE_ENVIRONMENT_ID` environment variable.  Must be configured with `client_id` and `client_secret`.",
+		"Environment ID for the worker app client.  Default value can be set with the `PINGONE_ENVIRONMENT_ID` environment variable.  Must be configured with `client_id` and `client_secret`." + pingcli.ConflictDescriptionSuffix,
 	)
 
 	apiAccessTokenDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The access token used for provider resource management against the PingOne management API.  Default value can be set with the `PINGONE_API_ACCESS_TOKEN` environment variable.  Must provide only one of `api_access_token` (when obtaining the worker token outside of the provider) and `client_id` (when the provider should fetch the worker token during operations).",
+		"The access token used for provider resource management against the PingOne management API.  Default value can be set with the `PINGONE_API_ACCESS_TOKEN` environment variable.  Must provide only one of `api_access_token` (when obtaining the worker token outside of the provider) and `client_id` (when the provider should fetch the worker token during operations)." + pingcli.ConflictDescriptionSuffix,
 	)
 
 	regionCodeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -152,6 +155,36 @@ func (p *pingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest
 				Description:         apiAccessTokenDescription.Description,
 				MarkdownDescription: apiAccessTokenDescription.MarkdownDescription,
 				Optional:            true,
+			},
+
+			pingcli.AttrConfigProfile: schema.StringAttribute{
+				Description:         pingcli.DescriptionConfigProfile(),
+				MarkdownDescription: pingcli.DescriptionConfigProfile(),
+				Optional:            true,
+
+				Validators: []validator.String{
+					stringvalidator.ConflictsWith(
+						path.MatchRoot("client_id"),
+						path.MatchRoot("client_secret"),
+						path.MatchRoot("environment_id"),
+						path.MatchRoot("api_access_token"),
+					),
+				},
+			},
+
+			pingcli.AttrConfigGrantType: schema.StringAttribute{
+				Description:         pingcli.DescriptionConfigGrantType(),
+				MarkdownDescription: pingcli.DescriptionConfigGrantType(),
+				Optional:            true,
+
+				Validators: []validator.String{
+					stringvalidator.ConflictsWith(
+						path.MatchRoot("client_id"),
+						path.MatchRoot("client_secret"),
+						path.MatchRoot("environment_id"),
+						path.MatchRoot("api_access_token"),
+					),
+				},
 			},
 
 			"region_code": schema.StringAttribute{
@@ -250,6 +283,18 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 		return
 	}
 
+	for attribute, value := range map[string]types.String{
+		pingcli.AttrConfigProfile:   data.ConfigProfile,
+		pingcli.AttrConfigGrantType: data.ConfigGrantType,
+	} {
+		if value.IsUnknown() {
+			resp.Diagnostics.AddAttributeError(path.Root(attribute), pingcli.UnknownValueSummary, pingcli.UnknownValueDetail(attribute))
+		}
+	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	// Set the defaults
 	tflog.Info(ctx, "[v6] [legacy sdk] Provider setting defaults..")
 
@@ -337,6 +382,50 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 		config.UserAgentAppend = data.AppendUserAgent.ValueStringPointer()
 	} else if v := strings.TrimSpace(os.Getenv("PINGONE_TF_APPEND_USER_AGENT")); v != "" {
 		config.UserAgentAppend = &v
+	}
+
+	// Ping CLI authentication: resolve, load the keychain session and use it
+	// as the access token.
+	regionCode := ""
+	if config.RegionCode != nil {
+		regionCode = string(*config.RegionCode)
+	} else {
+		// Region codes are not handled automatically by the client
+		regionCode = strings.TrimSpace(os.Getenv("PINGONE_REGION_CODE"))
+	}
+
+	plan, problems := pingcli.Resolve(pingcli.Inputs{
+		ConfigProfile:    data.ConfigProfile.ValueString(),
+		ConfigGrantType:  data.ConfigGrantType.ValueString(),
+		RegionCode:       regionCode,
+		HasHCLCredential: config.ClientID != "" || config.ClientSecret != "" || config.EnvironmentID != "" || config.AccessToken != "",
+	}, os.Getenv)
+
+	for _, problem := range problems {
+		resp.Diagnostics.AddError(problem.Summary, problem.Detail)
+	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if plan.Enabled {
+		session, err := pingcli.Authenticate(ctx, plan)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Unable to load Ping CLI authentication session",
+				err.Error(),
+			)
+			return
+		}
+
+		// The configuration wins over exported credentials; the SDKs read those
+		// variables themselves, so drop them.
+		pingcli.MaskCredentialEnv()
+
+		config.AccessToken = session.AccessToken
+		config.ClientID = ""
+		config.ClientSecret = ""
+		config.EnvironmentID = ""
 	}
 
 	if resp.Diagnostics.HasError() {

@@ -1,0 +1,7 @@
+```release-note:enhancement
+provider: Added the `config_profile` and `config_grant_type` attributes (or the `PINGCLI_PROFILE` and `PINGCLI_PINGONE_AUTHENTICATION_TYPE` environment variables) so the provider can authenticate with the access token of a Ping CLI login session stored in the OS keychain, as an alternative to client credentials or `api_access_token`.
+```
+
+```release-note:new-guide
+Using Ping CLI authentication with the provider
+```

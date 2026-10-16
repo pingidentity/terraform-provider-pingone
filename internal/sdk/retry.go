@@ -24,23 +24,18 @@ import (
 
 type Retryable func(context.Context, *http.Response, *model.P1Error) bool
 
+var notAuthorizedPattern = regexp.MustCompile(`^The actor attempting to perform the request is not authorized.`)
+
 var (
 	DefaultRetryable = func(ctx context.Context, r *http.Response, p1error *model.P1Error) bool { return false }
 
 	DefaultCreateReadRetryable = func(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {
 
 		if p1error != nil {
-			var err error
-
 			// Permissions may not have propagated by this point
-			m, err := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage())
-			if err == nil && m {
+			if notAuthorizedPattern.MatchString(p1error.GetMessage()) {
 				tflog.Warn(ctx, "Insufficient PingOne privileges detected")
 				return true
-			}
-			if err != nil {
-				tflog.Warn(ctx, "Cannot match error string for retry")
-				return false
 			}
 
 		}
@@ -53,6 +48,7 @@ func RetryWrapper(ctx context.Context, timeout time.Duration, f framework.SDKInt
 
 	var resp interface{}
 	var r *http.Response
+	var notAuthorizedSince time.Time
 
 	err := retry.RetryContext(ctx, timeout, func() *retry.RetryError {
 		var err error
@@ -170,6 +166,11 @@ func RetryWrapper(ctx context.Context, timeout time.Duration, f framework.SDKInt
 			}
 
 			if ((errorModel != nil && errorModel.Id != nil) || r != nil) && (isRetryable(ctx, r, errorModel) || DefaultRetryable(ctx, r, errorModel)) {
+				if errorModel != nil && framework.SessionAuthorizationRetryExhausted(r, notAuthorizedPattern.MatchString(errorModel.GetMessage()), &notAuthorizedSince) {
+					tflog.Warn(ctx, "Insufficient PingOne privileges persisted for the Ping CLI session; not retrying further")
+					return retry.NonRetryableError(err)
+				}
+
 				tflog.Warn(ctx, "Retrying ... ")
 				return retry.RetryableError(err)
 			}
