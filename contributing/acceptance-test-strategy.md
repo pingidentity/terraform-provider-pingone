@@ -234,6 +234,7 @@ acctest.PreCheckPingCLIAuthOnly(t)             // Feature gate
 acctest.PreCheckPingCLIAuthClient(t)           // Session validation
 ```
 - **Gate Environment Variable**: `TESTACC_PINGCLI_AUTH=true`
+- **Local only**: these tests read a real OS keychain session created by `pingcli pingone auth login`, so they are skipped whenever `CI` is set and must never be added to a workflow
 - **Required Environment Variables**:
   - `PINGONE_REGION_CODE`
   - `PINGONE_LICENSE_ID` (required by `acctest.PreCheckNewEnvironment`, used by tests that create a fresh environment)

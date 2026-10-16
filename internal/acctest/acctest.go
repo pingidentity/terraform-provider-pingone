@@ -168,10 +168,24 @@ func PreCheckPingCLIAuthClient(t *testing.T) {
 	}
 }
 
+// pingCLIAuthSkipReason returns why the Ping CLI acceptance tests must be
+// skipped, or "" when they may run. They need a local OS keychain session, so
+// they never run when CI is set, whatever else is configured.
+func pingCLIAuthSkipReason(getenv func(string) string) string {
+	if getenv("TESTACC_PINGCLI_AUTH") != "true" {
+		return "TESTACC_PINGCLI_AUTH is not set to true"
+	}
+
+	if getenv("CI") != "" {
+		return "these tests need a local Ping CLI keychain session and never run in CI"
+	}
+
+	return ""
+}
+
 func PreCheckPingCLIAuthOnly(t *testing.T) {
-	if v := os.Getenv("TESTACC_PINGCLI_AUTH"); v != "true" {
-		t.Skip("Skipping test because TESTACC_PINGCLI_AUTH is not set to true")
-		return
+	if reason := pingCLIAuthSkipReason(os.Getenv); reason != "" {
+		t.Skip("Skipping test because " + reason)
 	}
 }
 
