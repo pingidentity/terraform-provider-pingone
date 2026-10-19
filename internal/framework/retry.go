@@ -19,6 +19,8 @@ import (
 
 type Retryable func(context.Context, *http.Response, *pingone.GeneralError) bool
 
+var notAuthorizedPattern = regexp.MustCompile(`^The request could not be completed. You do not have access to this resource.`)
+
 var (
 	DefaultRetryable = func(ctx context.Context, r *http.Response, p1error *pingone.GeneralError) bool { return false }
 
@@ -26,13 +28,9 @@ var (
 	DefaultCreateReadRetryable = func(ctx context.Context, r *http.Response, p1error *pingone.GeneralError) bool {
 		if p1error != nil {
 			// Permissions may not have propagated by this point
-			m, err := regexp.MatchString("^The request could not be completed. You do not have access to this resource.", p1error.GetMessage())
-			if err == nil && m {
+			if notAuthorizedPattern.MatchString(p1error.GetMessage()) {
 				tflog.Warn(ctx, "Insufficient PingOne privileges detected")
 				return true
-			}
-			if err != nil {
-				return false
 			}
 		}
 

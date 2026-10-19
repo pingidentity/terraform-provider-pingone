@@ -34,6 +34,7 @@ require (
 	github.com/patrickcping/pingone-go-sdk-v2/risk v0.22.0
 	github.com/patrickcping/pingone-go-sdk-v2/verify v0.11.2
 	github.com/pingidentity/pingone-go-client v0.13.0
+	github.com/zalando/go-keyring v0.2.8
 )
 
 require (
@@ -378,7 +379,6 @@ require (
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78 // indirect
 	github.com/yuin/goldmark v1.7.7 // indirect
 	github.com/yuin/goldmark-meta v1.1.0 // indirect
-	github.com/zalando/go-keyring v0.2.8 // indirect
 	github.com/zclconf/go-cty v1.18.1 // indirect
 	github.com/zclconf/go-cty-yaml v1.1.0 // indirect
 	gitlab.com/bosi/decorder v0.4.2 // indirect

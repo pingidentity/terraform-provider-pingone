@@ -24,23 +24,18 @@ import (
 
 type Retryable func(context.Context, *http.Response, *model.P1Error) bool
 
+var notAuthorizedPattern = regexp.MustCompile(`^The actor attempting to perform the request is not authorized.`)
+
 var (
 	DefaultRetryable = func(ctx context.Context, r *http.Response, p1error *model.P1Error) bool { return false }
 
 	DefaultCreateReadRetryable = func(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {
 
 		if p1error != nil {
-			var err error
-
 			// Permissions may not have propagated by this point
-			m, err := regexp.MatchString("^The actor attempting to perform the request is not authorized.", p1error.GetMessage())
-			if err == nil && m {
+			if notAuthorizedPattern.MatchString(p1error.GetMessage()) {
 				tflog.Warn(ctx, "Insufficient PingOne privileges detected")
 				return true
-			}
-			if err != nil {
-				tflog.Warn(ctx, "Cannot match error string for retry")
-				return false
 			}
 
 		}

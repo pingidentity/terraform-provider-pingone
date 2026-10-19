@@ -104,6 +104,28 @@ export PINGONE_REGION_CODE="AP | AU | CA | EU | NA | SG"
 terraform plan
 ```
 
+### Authenticate using a Ping CLI login session
+
+The provider can authenticate with the access token that [Ping CLI](https://github.com/pingidentity/pingcli) stores in the OS keychain when a Ping CLI login has been performed.  This avoids managing client credentials for Terraform use cases.
+
+```terraform
+provider "pingone" {
+  use_pingcli_auth = true
+  region_code      = "NA"
+}
+```
+
+```shell
+# Log in to PingOne with Ping CLI first, storing the authentication session in the OS keychain:
+pingcli pingone auth login
+
+# Then enable Ping CLI authentication (or set `use_pingcli_auth = true` in the provider configuration):
+export PINGONE_TF_USE_PINGCLI_AUTH=true
+export PINGONE_REGION_CODE="NA"
+```
+
+See the [Ping CLI authentication guide](./guides/pingcli-authentication.md) for details and constraints.
+
 ## Custom User Agent information
 
 The PingOne provider allows custom information to be appended to the default user agent string (that includes Terraform provider version information) by setting the `PINGONE_TF_APPEND_USER_AGENT` environment variable, or the `append_user_agent` provider parameter.  This can be useful when troubleshooting issues with Ping Identity Support, or adding context to HTTP requests.
@@ -138,10 +160,13 @@ provider "pingone" {
 
 ## Provider Schema Reference
 
-- `api_access_token` (String) The access token used for provider resource management against the PingOne management API.  Default value can be set with the `PINGONE_API_ACCESS_TOKEN` environment variable.  Must provide only one of `api_access_token` (when obtaining the worker token outside of the provider) and `client_id` (when the provider should fetch the worker token during operations).
-- `client_id` (String) Client ID for the worker app client.  Default value can be set with the `PINGONE_CLIENT_ID` environment variable.  Must provide only one of `api_access_token` (when obtaining the worker token outside of the provider) and `client_id` (when the provider should fetch the worker token during operations).  Must be configured with `client_secret` and `environment_id`.
-- `client_secret` (String) Client secret for the worker app client.  Default value can be set with the `PINGONE_CLIENT_SECRET` environment variable.  Must be configured with `client_id` and `environment_id`.
-- `environment_id` (String) Environment ID for the worker app client.  Default value can be set with the `PINGONE_ENVIRONMENT_ID` environment variable.  Must be configured with `client_id` and `client_secret`.
+- `api_access_token` (String) The access token used for provider resource management against the PingOne management API.  Default value can be set with the `PINGONE_API_ACCESS_TOKEN` environment variable.  Must provide only one of `api_access_token` (when obtaining the worker token outside of the provider) and `client_id` (when the provider should fetch the worker token during operations).  Must not be configured with `use_pingcli_auth`.
+- `client_id` (String) Client ID for the worker app client.  Default value can be set with the `PINGONE_CLIENT_ID` environment variable.  Must provide only one of `api_access_token` (when obtaining the worker token outside of the provider) and `client_id` (when the provider should fetch the worker token during operations).  Must be configured with `client_secret` and `environment_id`.  Must not be configured with `use_pingcli_auth`.
+- `client_secret` (String) Client secret for the worker app client.  Default value can be set with the `PINGONE_CLIENT_SECRET` environment variable.  Must be configured with `client_id` and `environment_id`.  Must not be configured with `use_pingcli_auth`.
+- `pingcli_grant_type` (String) The grant type that Ping CLI used to log in, used when `use_pingcli_auth` is enabled.  Options are `client_credentials`, `authorization_code` and `device_code`.  When unset, each grant type is checked for the profile and the valid session that expires last is used.  Default value can be set with the `PINGONE_TF_PINGCLI_GRANT_TYPE` environment variable.
+- `pingcli_profile` (String) The Ping CLI profile whose keychain authentication session is used when `use_pingcli_auth` is enabled.  When unset, the Ping CLI default profile (`default`) is used.  Default value can be set with the `PINGONE_TF_PINGCLI_PROFILE` environment variable.
+- `use_pingcli_auth` (Bool) Enable authentication with the access token that Ping CLI stores in the OS keychain after `pingcli pingone auth login`, instead of client credentials or an API access token.  The Ping CLI login must be performed with a worker application that has the PingOne roles Terraform requires.  Default value can be set with the `PINGONE_TF_USE_PINGCLI_AUTH` environment variable.  Must not be configured with `client_id`, `client_secret`, `environment_id` or `api_access_token`.  Must be configured with `region_code` (or the `PINGONE_REGION_CODE` environment variable).
+- `environment_id` (String) Environment ID for the worker app client.  Default value can be set with the `PINGONE_ENVIRONMENT_ID` environment variable.  Must be configured with `client_id` and `client_secret`.  Must not be configured with `use_pingcli_auth`.
 - `global_options` (Block List) A single block containing configuration items to override API behaviours in PingOne. (see [below for nested schema](#nestedblock--global_options))
 - `http_proxy` (String) Full URL for the http/https proxy service, for example `http://127.0.0.1:8090`.  Default value can be set with the `HTTP_PROXY` or `HTTPS_PROXY` environment variables.
 - `region_code` (String) The PingOne region to use, which selects the appropriate service endpoints.  Options are `AP` (for Asia-Pacific `.asia` tenants), `AU` (for Asia-Pacific `.com.au` tenants), `CA` (for Canada `.ca` tenants), `EU` (for Europe `.eu` tenants), `NA` (for North America `.com` tenants) and `SG` (for Singapore `.sg` tenants).  Default value can be set with the `PINGONE_REGION_CODE` environment variable.

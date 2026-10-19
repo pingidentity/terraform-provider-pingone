@@ -25,6 +25,7 @@ import (
 	"github.com/pingidentity/pingone-go-client/oauth2"
 	"github.com/pingidentity/pingone-go-client/pingone"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
+	"github.com/pingidentity/terraform-provider-pingone/internal/pingcli"
 	"github.com/pingidentity/terraform-provider-pingone/internal/provider"
 )
 
@@ -129,6 +130,61 @@ func PreCheckAccessTokenOnly(t *testing.T) {
 	if v := os.Getenv("TESTACC_ACCESS_TOKEN_AUTH"); v != "true" {
 		t.Skip("Skipping test because TESTACC_ACCESS_TOKEN_AUTH is not set to true")
 		return
+	}
+}
+
+// pingCLIAuthSkipReason returns why the Ping CLI acceptance tests must be
+// skipped, or "" when they may run. They need a local OS keychain session, so
+// they never run when CI is set, whatever else is configured.
+func pingCLIAuthSkipReason(getenv func(string) string) string {
+	if getenv("TESTACC_PINGCLI_AUTH") != "true" {
+		return "TESTACC_PINGCLI_AUTH is not set to true"
+	}
+
+	if getenv("CI") != "" {
+		return "these tests need a local Ping CLI keychain session and never run in CI"
+	}
+
+	return ""
+}
+
+// PreCheckPingCLIAuth is the single gate for the Ping CLI authentication
+// acceptance tests. It skips unless TESTACC_PINGCLI_AUTH=true and never runs in
+// CI (these tests need a local OS keychain session), then validates the session
+// itself so failures are reported before any Terraform runs.
+func PreCheckPingCLIAuth(t *testing.T) {
+	if reason := pingCLIAuthSkipReason(os.Getenv); reason != "" {
+		t.Skip("Skipping test because " + reason)
+	}
+
+	if strings.TrimSpace(os.Getenv("PINGONE_REGION_CODE")) == "" {
+		t.Fatal("PINGONE_REGION_CODE is missing and must be set")
+	}
+
+	// The test configurations have no provider block; the switch comes from the
+	// environment.
+	if use, err := pingcli.UsePingCLIAuthFromEnv(os.Getenv); err != nil || use == nil || !*use {
+		t.Fatalf("%s must be set to true to run the Ping CLI authentication acceptance tests", pingcli.EnvUsePingCLIAuth)
+	}
+
+	for _, name := range pingcli.ConflictEnvVars {
+		if strings.TrimSpace(os.Getenv(name)) != "" {
+			t.Fatalf("%s must be unset when running Ping CLI authentication acceptance tests", name)
+		}
+	}
+
+	profile := strings.TrimSpace(os.Getenv(pingcli.EnvPingCLIProfile))
+	if profile == "" {
+		profile = pingcli.DefaultProfile
+	}
+
+	plan := pingcli.Plan{
+		PingCLIProfile:   profile,
+		PingCLIGrantType: os.Getenv(pingcli.EnvPingCLIGrantType),
+	}
+
+	if _, err := pingcli.Load(context.Background(), plan); err != nil {
+		t.Fatalf("unable to load a Ping CLI authentication session: %s", err)
 	}
 }
 
@@ -396,6 +452,36 @@ func TestClientAccessToken(ctx context.Context) (*pingone.APIClient, error) {
 
 	// Allow client to parse the access token from the environment variable
 	config := clientconfig.NewConfiguration().
+		WithTopLevelDomain(regionTopLevelDomain).
+		WithStorageType(clientconfig.StorageTypeNone)
+
+	pingOneConfig := pingone.NewConfiguration(config)
+	pingOneConfig.UserAgent = framework.UserAgent("", GetProviderTestingVersion())
+
+	return pingone.NewAPIClient(ctx, pingOneConfig)
+}
+
+func TestClientPingCLI(ctx context.Context) (*pingone.APIClient, error) {
+	regionTopLevelDomain, ok := framework.RegionTopLevelDomainFromCode(strings.ToLower(os.Getenv("PINGONE_REGION_CODE")))
+	if !ok {
+		return nil, fmt.Errorf("invalid PINGONE_REGION_CODE: %s", os.Getenv("PINGONE_REGION_CODE"))
+	}
+
+	profile := strings.TrimSpace(os.Getenv(pingcli.EnvPingCLIProfile))
+	if profile == "" {
+		profile = pingcli.DefaultProfile
+	}
+
+	session, err := pingcli.Load(ctx, pingcli.Plan{
+		PingCLIProfile:   profile,
+		PingCLIGrantType: os.Getenv(pingcli.EnvPingCLIGrantType),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	config := clientconfig.NewConfiguration().
+		WithAccessToken(session.AccessToken).
 		WithTopLevelDomain(regionTopLevelDomain).
 		WithStorageType(clientconfig.StorageTypeNone)
 
