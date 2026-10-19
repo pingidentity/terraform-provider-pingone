@@ -106,7 +106,7 @@ terraform plan
 
 ### Authenticate using a Ping CLI login session
 
-The provider can authenticate with the access token that [Ping CLI](https://github.com/pingidentity/pingcli) stores in the OS keychain when a Ping CLI login has been performed.  This avoids the need to create a worker application and manage client credentials for Terraform use cases.
+The provider can authenticate with the access token that [Ping CLI](https://github.com/pingidentity/pingcli) stores in the OS keychain when a Ping CLI login has been performed.  This avoids managing client credentials for Terraform use cases.
 
 ```terraform
 provider "pingone" {

@@ -9,8 +9,6 @@ description: |-
 
 The provider can authenticate with the access token that [Ping CLI](https://github.com/pingidentity/pingcli) stores in the OS keychain after a Ping CLI login. This avoids managing client credentials for Terraform use cases.
 
--> Ping CLI authentication is an additional option. Authenticating with `client_id`, `client_secret` and `environment_id` (or `api_access_token`) is unchanged and remains fully supported.
-
 ## Prerequisites
 
 - Ping CLI v1.x installed.
@@ -50,7 +48,7 @@ provider "pingone" {
 - `pingcli_grant_type` (environment `PINGCLI_PINGONE_AUTHENTICATION_TYPE`) restricts the lookup to one grant type (`client_credentials`, `authorization_code` or `device_code`). When unset, each grant type is checked and the valid session that expires last is used.
 - `region_code` (environment `PINGONE_REGION_CODE`) is **required** in this mode.
 
-If `use_pingcli_auth` is set, `client_id`, `client_secret`, `environment_id` or `api_access_token` must not be set in the provider configuration, and credentials exported in the environment are ignored.
+If `use_pingcli_auth` is set, `client_id`, `client_secret`, `environment_id` or `api_access_token` must not be set in the provider configuration or exported as the matching `PINGONE_CLIENT_ID`, `PINGONE_CLIENT_SECRET`, `PINGONE_ENVIRONMENT_ID` or `PINGONE_API_ACCESS_TOKEN` environment variables.
 
 ## Behaviour and constraints
 
@@ -62,7 +60,7 @@ If `use_pingcli_auth` is set, `client_id`, `client_secret`, `environment_id` or 
 
 | Error | Cause | Fix |
 |---|---|---|
-| `Conflicting provider authentication configuration` | `use_pingcli_auth` is combined with credentials set in the provider configuration | Remove `use_pingcli_auth` to use credentials, or remove the credential attributes to use Ping CLI |
+| `Conflicting provider authentication configuration` | `use_pingcli_auth` is combined with credentials set in the provider configuration or in `PINGONE_*` environment variables | Remove `use_pingcli_auth` to use credentials, or remove the credential attributes and unset the environment variables to use Ping CLI |
 | `Invalid Ping CLI grant type` | `pingcli_grant_type` is not `client_credentials`, `authorization_code` or `device_code` | Use one of the supported grant types |
 | `Missing region code` | No `region_code` attribute or `PINGONE_REGION_CODE` environment variable | Set the region for the PingOne tenant |
 | `no Ping CLI authentication session was found in the OS keychain` | No session for the profile, or the session is under a different profile than expected | Run `pingcli pingone auth login`; note the session is stored under the profile active at login time |

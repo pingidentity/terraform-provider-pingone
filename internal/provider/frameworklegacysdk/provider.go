@@ -396,14 +396,7 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 			return
 		}
 
-		// The configuration wins over exported credentials; the SDKs read those
-		// variables themselves, so drop them.
-		pingcli.MaskCredentialEnv()
-
 		config.AccessToken = session.AccessToken
-		config.ClientID = ""
-		config.ClientSecret = ""
-		config.EnvironmentID = ""
 	}
 
 	if resp.Diagnostics.HasError() {

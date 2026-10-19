@@ -48,12 +48,29 @@ func Resolve(in Inputs, getenv func(string) string) (Plan, []Problem) {
 
 	var problems []Problem
 
-	if in.HasHCLCredential {
+	// The credential attributes also take their values from environment
+	// variables, so an exported credential is a conflict just like one in the
+	// configuration.
+	var envCredentials []string
+	for _, name := range ConflictEnvVars {
+		if strings.TrimSpace(getenv(name)) != "" {
+			envCredentials = append(envCredentials, name)
+		}
+	}
+
+	if in.HasHCLCredential || len(envCredentials) > 0 {
+		detail := "The provider cannot use both a Ping CLI authentication session and PingOne client credentials or an API access token.\n\n"
+		if in.HasHCLCredential {
+			detail += "Remove client_id, client_secret, environment_id and api_access_token from the provider configuration. "
+		}
+		if len(envCredentials) > 0 {
+			detail += "Unset the " + strings.Join(envCredentials, ", ") + " environment variable(s). "
+		}
+		detail += "Alternatively, unset " + AttrUsePingCLIAuth + " to authenticate with client credentials or an access token."
+
 		problems = append(problems, Problem{
 			Summary: "Conflicting provider authentication configuration",
-			Detail: "The provider cannot use both a Ping CLI authentication session and PingOne client credentials or an API access token.\n\n" +
-				"Unset " + AttrUsePingCLIAuth +
-				" to authenticate with client credentials or an access token, or remove client_id, client_secret, environment_id and api_access_token from the provider configuration to authenticate with Ping CLI.",
+			Detail:  detail,
 		})
 	}
 

@@ -353,14 +353,7 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 			return
 		}
 
-		// The configuration wins over exported credentials; the SDKs read those
-		// variables themselves, so drop them.
-		pingcli.MaskCredentialEnv()
-
 		config = config.WithAccessToken(session.AccessToken)
-		config = config.WithClientID("")
-		config = config.WithClientSecret("")
-		config = config.WithEnvironmentID("")
 	}
 
 	if !plan.Enabled && clientId != "" && clientSecret != "" {
@@ -438,6 +431,13 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 	}
 
 	pingOneConfig := pingone.NewConfiguration(config)
+
+	if plan.Enabled {
+		// NewConfiguration applies the SDK's own environment variables, including
+		// PINGONE_AUTH_GRANT_TYPE. A client_credentials grant type makes the SDK
+		// ignore the Ping CLI access token and request a new one instead.
+		pingOneConfig.Service.Auth.GrantType = nil
+	}
 
 	if !data.HTTPProxy.IsNull() {
 		v := data.HTTPProxy.ValueString()

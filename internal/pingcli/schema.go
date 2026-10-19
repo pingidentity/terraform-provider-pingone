@@ -2,11 +2,7 @@
 
 package pingcli
 
-import (
-	"fmt"
-	"os"
-	"slices"
-)
+import "fmt"
 
 // Attribute names in the provider schema.
 const (
@@ -25,38 +21,14 @@ const (
 // DefaultProfile is the Ping CLI profile used when none is configured.
 const DefaultProfile = "default"
 
-// ConflictEnvVars are the PingOne credential environment variables that the
-// SDKs read directly. A slice, not named constants, to avoid gosec G101
-// flagging credential-looking identifiers.
+// ConflictEnvVars are the PingOne credential environment variables that cannot
+// be combined with Ping CLI authentication. A slice, not named constants, to
+// avoid gosec G101 flagging credential-looking identifiers.
 var ConflictEnvVars = []string{
 	"PINGONE_CLIENT_ID",
 	"PINGONE_CLIENT_SECRET",
 	"PINGONE_ENVIRONMENT_ID",
 	"PINGONE_API_ACCESS_TOKEN",
-}
-
-// maskedEnvVars are the environment variables unset when Ping CLI
-// authentication is enabled: the credential variables above, plus the new
-// SDK's own grant type and token storage variables. Those reach the SDK
-// through envconfig after the provider builds its configuration, so setting
-// the builder values does not help: a PINGONE_AUTH_GRANT_TYPE of
-// client_credentials makes the SDK's token source skip the static Ping CLI
-// token, and the storage variables would redirect it to the SDK's own
-// keychain flow.
-var maskedEnvVars = append(slices.Clone(ConflictEnvVars),
-	"PINGONE_AUTH_GRANT_TYPE",
-	"PINGONE_STORAGE_TYPE",
-	"PINGONE_STORAGE_NAME",
-	"PINGONE_STORAGE_OPTIONS",
-	"PINGONE_STORAGE_OPTIONAL_SUFFIX",
-)
-
-// MaskCredentialEnv unsets maskedEnvVars in this process so the SDKs cannot
-// combine them with the Ping CLI token. The caller's shell is unaffected.
-func MaskCredentialEnv() {
-	for _, name := range maskedEnvVars {
-		_ = os.Unsetenv(name)
-	}
 }
 
 // DescriptionUsePingCLIAuth returns the provider attribute description, shared

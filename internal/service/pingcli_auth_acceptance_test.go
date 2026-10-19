@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
@@ -26,6 +25,9 @@ import (
 func TestAccPingCLIAuth_SDKv2Flavour(t *testing.T) {
 	t.Parallel()
 
+	environmentName := acctest.ResourceNameGenEnvironment()
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckPingCLIAuth(t)
@@ -36,11 +38,7 @@ func TestAccPingCLIAuth_SDKv2Flavour(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccPingCLIAuthHCL(`
-resource "pingone_language" "test" {
-  environment_id = pingone_environment.test.id
-  locale         = "de-DE"
-}`),
+				Config: testAccPingCLIAuthConfig_SDKv2(environmentName, licenseID),
 			},
 		},
 		CheckDestroy: testAccPingCLIAuthCheckDestroyEnvironment,
@@ -63,9 +61,10 @@ func TestAccPingCLIAuth_LegacyFrameworkFlavour(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccPingCLIAuthHCL(acctestlegacysdk.MinimalSandboxEnvironmentNoPopulation(environmentName, licenseID)),
+				Config: testAccPingCLIAuthConfig_Legacy(environmentName, licenseID),
 			},
 		},
+		CheckDestroy: testAccPingCLIAuthCheckDestroyEnvironment,
 	})
 }
 
@@ -85,24 +84,45 @@ func TestAccPingCLIAuth_FrameworkFlavour_DaVinciVariable(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccPingCLIAuthHCL(fmt.Sprintf(`
-%s
-
-resource "pingone_davinci_variable" "test" {
-  environment_id = pingone_environment.test.id
-  context        = "flowInstance"
-  data_type      = "string"
-  mutable        = true
-  name           = "%s"
-}`, acctestlegacysdk.MinimalSandboxEnvironmentNoPopulation(environmentName, licenseID), environmentName)),
+				Config: testAccPingCLIAuthConfig_Framework(environmentName, licenseID),
 			},
 		},
 		CheckDestroy: testAccPingCLIAuthCheckDestroyFramework,
 	})
 }
 
+func testAccPingCLIAuthConfig_SDKv2(environmentName, licenseID string) string {
+	return testAccPingCLIAuthHCL(fmt.Sprintf(`
+%[1]s
+
+resource "pingone_language" "test" {
+  environment_id = pingone_environment.%[2]s.id
+  locale         = "de-DE"
+}`, acctestlegacysdk.MinimalSandboxEnvironmentNoPopulation(environmentName, licenseID), environmentName))
+}
+
+func testAccPingCLIAuthConfig_Legacy(environmentName, licenseID string) string {
+	return testAccPingCLIAuthHCL(acctestlegacysdk.MinimalSandboxEnvironmentNoPopulation(environmentName, licenseID))
+}
+
+func testAccPingCLIAuthConfig_Framework(environmentName, licenseID string) string {
+	return testAccPingCLIAuthHCL(fmt.Sprintf(`
+%[1]s
+
+resource "pingone_davinci_variable" "test" {
+  environment_id = pingone_environment.%[2]s.id
+  context        = "flowInstance"
+  data_type      = "string"
+  mutable        = true
+  name           = "%[2]s"
+}`, acctestlegacysdk.MinimalSandboxEnvironmentNoPopulation(environmentName, licenseID), environmentName))
+}
+
 // testAccPingCLIAuthHCL enables Ping CLI authentication for the provider block.
 func testAccPingCLIAuthHCL(resources string) string {
+	// The provider block is required here: use_pingcli_auth has no environment
+	// variable equivalent.
+	//lintignore:AT004
 	return fmt.Sprintf(`
 provider "pingone" {
   use_pingcli_auth = true

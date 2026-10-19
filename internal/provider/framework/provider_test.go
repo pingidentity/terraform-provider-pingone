@@ -225,3 +225,21 @@ func TestFramework_Configure_CredentialModeUnaffected(t *testing.T) {
 		t.Fatal("configure returned nil error, want an error for missing credentials")
 	}
 }
+
+func TestFramework_Configure_PingCLIIgnoresGrantTypeEnvironmentVariable(t *testing.T) {
+	blankCredentialEnv(t)
+
+	seedPingCLISession(t, pingcli.GrantTypeClientCredentials, "default", "framework-token")
+
+	// The SDK reads PINGONE_AUTH_GRANT_TYPE itself, and a client_credentials
+	// value would make it ignore the Ping CLI access token.
+	t.Setenv("PINGONE_AUTH_GRANT_TYPE", "client_credentials")
+
+	err := configureProvider(t, map[string]string{
+		"region_code":      "NA",
+		"use_pingcli_auth": "true",
+	})
+	if err != nil {
+		t.Fatalf("configure returned error: %v", err)
+	}
+}

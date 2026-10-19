@@ -58,9 +58,16 @@ func TestResolve(t *testing.T) {
 			expectDetail: []string{"Conflicting provider authentication configuration"},
 		},
 		{
-			name:       "exported credential environment variables do not conflict",
+			name:         "exported credential environment variables conflict",
+			inputs:       pingcli.Inputs{UsePingCLIAuth: true, RegionCode: "EU"},
+			env:          map[string]string{"PINGONE_CLIENT_ID": "abc", "PINGONE_ENVIRONMENT_ID": "env", "PINGONE_API_ACCESS_TOKEN": "tok"},
+			expectPlan:   pingcli.Plan{Enabled: true, PingCLIProfile: "default"},
+			expectDetail: []string{"PINGONE_CLIENT_ID, PINGONE_ENVIRONMENT_ID, PINGONE_API_ACCESS_TOKEN"},
+		},
+		{
+			name:       "exported grant type and storage variables are not credentials",
 			inputs:     pingcli.Inputs{UsePingCLIAuth: true, RegionCode: "EU"},
-			env:        map[string]string{"PINGONE_CLIENT_ID": "abc", "PINGONE_ENVIRONMENT_ID": "env", "PINGONE_API_ACCESS_TOKEN": "tok"},
+			env:        map[string]string{"PINGONE_AUTH_GRANT_TYPE": "client_credentials", "PINGONE_STORAGE_TYPE": "NONE"},
 			expectPlan: pingcli.Plan{Enabled: true, PingCLIProfile: "default"},
 		},
 		{

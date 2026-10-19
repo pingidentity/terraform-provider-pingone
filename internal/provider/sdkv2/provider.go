@@ -275,14 +275,7 @@ func configure(version string) func(context.Context, *schema.ResourceData) (inte
 				return nil, append(diags, diagnosticFromError(err))
 			}
 
-			// The configuration wins over exported credentials; the SDKs read those
-			// variables themselves, so drop them.
-			pingcli.MaskCredentialEnv()
-
 			config.AccessToken = session.AccessToken
-			config.ClientID = ""
-			config.ClientSecret = ""
-			config.EnvironmentID = ""
 		}
 
 		client, err := config.APIClient(ctx, version)
