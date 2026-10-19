@@ -2,7 +2,11 @@
 
 package pingcli
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+	"strings"
+)
 
 // Attribute names in the provider schema.
 const (
@@ -12,8 +16,11 @@ const (
 )
 
 // Environment variables for the provider attributes. Ping CLI reads the same
-// names, so an exported Ping CLI setup is picked up automatically.
+// names for the profile and grant type, so an exported Ping CLI setup is picked
+// up automatically. The switch itself is specific to the provider, so it uses
+// the provider's PINGONE_TF_ prefix rather than Ping CLI's namespace.
 const (
+	EnvUsePingCLIAuth   = "PINGONE_TF_USE_PINGCLI_AUTH"
 	EnvPingCLIProfile   = "PINGCLI_PROFILE"
 	EnvPingCLIGrantType = "PINGCLI_PINGONE_AUTHENTICATION_TYPE"
 )
@@ -35,8 +42,8 @@ var ConflictEnvVars = []string{
 // by every muxed provider flavour so the schemas cannot drift apart.
 func DescriptionUsePingCLIAuth() string {
 	return fmt.Sprintf(
-		"Enable authentication with the access token that Ping CLI stores in the OS keychain after `%s`, instead of client credentials or an API access token.  The Ping CLI login must be performed with a worker application that has the PingOne roles Terraform requires.  Must not be configured with `client_id`, `client_secret`, `environment_id` or `api_access_token`.  Must be configured with `region_code` (or the `PINGONE_REGION_CODE` environment variable).",
-		"pingcli pingone auth login",
+		"Enable authentication with the access token that Ping CLI stores in the OS keychain after `%s`, instead of client credentials or an API access token.  The Ping CLI login must be performed with a worker application that has the PingOne roles Terraform requires.  Default value can be set with the `%s` environment variable.  Must not be configured with `client_id`, `client_secret`, `environment_id` or `api_access_token`.  Must be configured with `region_code` (or the `PINGONE_REGION_CODE` environment variable).",
+		"pingcli pingone auth login", EnvUsePingCLIAuth,
 	)
 }
 
@@ -61,3 +68,20 @@ func DescriptionPingCLIGrantType() string {
 // ConflictDescriptionSuffix is appended to the descriptions of the credential
 // attributes in every flavour, so the docs and the validation rules agree.
 const ConflictDescriptionSuffix = "  Must not be configured with `use_pingcli_auth`."
+
+// UsePingCLIAuthFromEnv reads the environment variable behind use_pingcli_auth.
+// It returns nil when the variable is unset or empty, so that the caller can
+// tell "not configured" from an explicit false.
+func UsePingCLIAuthFromEnv(getenv func(string) string) (*bool, error) {
+	v := strings.TrimSpace(getenv(EnvUsePingCLIAuth))
+	if v == "" {
+		return nil, nil
+	}
+
+	use, err := strconv.ParseBool(v)
+	if err != nil {
+		return nil, fmt.Errorf("the %s environment variable must be a boolean such as true or false, got '%s'", EnvUsePingCLIAuth, v)
+	}
+
+	return &use, nil
+}

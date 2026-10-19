@@ -371,8 +371,15 @@ func (p *pingOneProvider) Configure(ctx context.Context, req provider.ConfigureR
 		regionCode = strings.TrimSpace(os.Getenv("PINGONE_REGION_CODE"))
 	}
 
+	// An unset (or not yet known) value falls back to the environment variable.
+	var usePingCLIAuth *bool
+	if !data.UsePingCLIAuth.IsNull() && !data.UsePingCLIAuth.IsUnknown() {
+		v := data.UsePingCLIAuth.ValueBool()
+		usePingCLIAuth = &v
+	}
+
 	plan, problems := pingcli.Resolve(pingcli.Inputs{
-		UsePingCLIAuth:   !data.UsePingCLIAuth.IsNull() && data.UsePingCLIAuth.ValueBool(),
+		UsePingCLIAuth:   usePingCLIAuth,
 		PingCLIProfile:   data.PingCLIProfile.ValueString(),
 		PingCLIGrantType: data.PingCLIGrantType.ValueString(),
 		RegionCode:       regionCode,

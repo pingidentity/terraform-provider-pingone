@@ -12,7 +12,7 @@ The provider can authenticate with the access token that [Ping CLI](https://gith
 ## Prerequisites
 
 - Ping CLI v1.x installed.
-- A PingOne worker application with the PingOne roles Terraform requires. The application that Ping CLI logs in with must be a worker application: PingOne rejects management API calls from tokens of other application types, even for an organization admin. See the [PingOne provider setup guide](https://github.com/pingidentity/terraform-provider-pingone/blob/main/docs/index.md#authenticate-using-static-oauth-20-client-credentials-pingone-worker-application) for the application setup.
+- A PingOne worker application with the PingOne roles Terraform requires. The application that Ping CLI logs in with must be a worker application: PingOne rejects management API calls from tokens of other application types, with a "not authorized" (`ACCESS_FAILED`) error, even for an organization admin. See the [PingOne provider setup guide](https://github.com/pingidentity/terraform-provider-pingone/blob/main/docs/index.md#authenticate-using-static-oauth-20-client-credentials-pingone-worker-application) for the application setup.
 
 ## Step 1: Log in with Ping CLI
 
@@ -44,6 +44,7 @@ provider "pingone" {
 }
 ```
 
+- `use_pingcli_auth` (environment `PINGONE_TF_USE_PINGCLI_AUTH`) enables this mode. A value in the provider configuration takes precedence over the environment variable, so `use_pingcli_auth = false` turns it off even when the variable is `true`.
 - `pingcli_profile` (environment `PINGCLI_PROFILE`) selects the profile whose keychain session is used. When unset, the Ping CLI default profile (`default`) is used.
 - `pingcli_grant_type` (environment `PINGCLI_PINGONE_AUTHENTICATION_TYPE`) restricts the lookup to one grant type (`client_credentials`, `authorization_code` or `device_code`). When unset, each grant type is checked and the valid session that expires last is used.
 - `region_code` (environment `PINGONE_REGION_CODE`) is **required** in this mode.
@@ -55,16 +56,3 @@ If `use_pingcli_auth` is set, `client_id`, `client_secret`, `environment_id` or 
 - The provider reads the stored session; it never refreshes it and never writes to Ping CLI storage.
 - The token is static for the duration of the run. Applies that outlive the token lifetime fail with an authentication error, exactly as with `api_access_token` today. Run `pingcli pingone auth refresh` (or log in again) and re-run Terraform.
 - The feature is not usable on remote runners (for example Terraform Cloud) that have no local Ping CLI session or OS keychain.
-
-## Error reference
-
-| Error | Cause | Fix |
-|---|---|---|
-| `Conflicting provider authentication configuration` | `use_pingcli_auth` is combined with credentials set in the provider configuration or in `PINGONE_*` environment variables | Remove `use_pingcli_auth` to use credentials, or remove the credential attributes and unset the environment variables to use Ping CLI |
-| `Invalid Ping CLI grant type` | `pingcli_grant_type` is not `client_credentials`, `authorization_code` or `device_code` | Use one of the supported grant types |
-| `Missing region code` | No `region_code` attribute or `PINGONE_REGION_CODE` environment variable | Set the region for the PingOne tenant |
-| `no Ping CLI authentication session was found in the OS keychain` | No session for the profile, or the session is under a different profile than expected | Run `pingcli pingone auth login`; note the session is stored under the profile active at login time |
-| `has a format this provider does not recognise` | The keychain entry has neither an access token nor Ping CLI's split-session marker, for example because a newer Ping CLI changed the layout | Update the provider, or authenticate with client credentials or an access token instead |
-| `has expired` | The stored access token has passed its expiry (with a small safety margin) | Run `pingcli pingone auth refresh` or `pingcli pingone auth login` |
-| `The actor attempting to perform the request is not authorized` (`ACCESS_FAILED`) | The Ping CLI login's application is not a worker application, or it has no PingOne admin role for the environment being managed | Use a worker application for the Ping CLI login and assign it the needed admin roles, or log in with a different profile or grant type |
-| `failed to read the Ping CLI authentication session from the OS keychain` | The OS keychain is unavailable (for example headless Linux without a Secret Service) | Run where a keychain is available, or authenticate with client credentials or an access token instead |

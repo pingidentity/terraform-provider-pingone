@@ -105,7 +105,8 @@ func Load(ctx context.Context, plan Plan) (SessionResult, error) {
 	}
 	if !profileNamePattern.MatchString(profile) {
 		return SessionResult{}, fmt.Errorf(
-			"the Ping CLI profile name '%s' contains unsupported characters", profile,
+			"the Ping CLI profile name '%s' contains unsupported characters; a profile name can only contain letters, numbers, '-' and '_', so set %s or %s to a valid profile name",
+			profile, AttrPingCLIProfile, EnvPingCLIProfile,
 		)
 	}
 
@@ -172,7 +173,10 @@ func Load(ctx context.Context, plan Plan) (SessionResult, error) {
 
 		return best, nil
 	case hardErr != nil:
-		return SessionResult{}, fmt.Errorf("failed to read the Ping CLI authentication session from the OS keychain: %w", hardErr)
+		return SessionResult{}, fmt.Errorf(
+			"failed to read the Ping CLI authentication session from the OS keychain (%w); the provider only reads sessions stored in the OS keychain, so run Terraform where one is available, or authenticate with client credentials or an access token instead",
+			hardErr,
+		)
 	case expired:
 		return SessionResult{}, fmt.Errorf(
 			"the Ping CLI authentication session in the OS keychain for profile '%s' has expired; run 'pingcli pingone auth login' to authenticate again",

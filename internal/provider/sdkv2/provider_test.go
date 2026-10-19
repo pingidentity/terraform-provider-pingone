@@ -51,7 +51,7 @@ func blankCredentialEnv(t *testing.T) {
 	for _, name := range []string{
 		"PINGONE_CLIENT_ID", "PINGONE_CLIENT_SECRET", "PINGONE_ENVIRONMENT_ID",
 		"PINGONE_API_ACCESS_TOKEN", "PINGONE_REGION_CODE", "PINGONE_REGION",
-		"PINGCLI_PROFILE", "PINGCLI_PINGONE_AUTHENTICATION_TYPE", "PINGONE_AUTH_GRANT_TYPE",
+		"PINGCLI_PROFILE", "PINGCLI_PINGONE_AUTHENTICATION_TYPE", "PINGONE_AUTH_GRANT_TYPE", "PINGONE_TF_USE_PINGCLI_AUTH",
 		"PINGONE_STORAGE_TYPE", "PINGONE_STORAGE_NAME",
 	} {
 		t.Setenv(name, "placeholder")
@@ -80,10 +80,6 @@ func runConfigure(t *testing.T, raw map[string]any) (any, error) {
 	}
 
 	return client, firstErr
-}
-
-func contains(haystack, needle string) bool {
-	return strings.Contains(haystack, needle)
 }
 
 // The unit tests below cover the provider's own decisions around Ping CLI
@@ -123,7 +119,7 @@ func TestSDKv2Configure_PingCLIConflictWithHCLCredential(t *testing.T) {
 		t.Fatal("configure returned nil error, want a conflict error")
 	}
 
-	if !contains(err.Error(), "Conflicting provider authentication configuration") {
+	if !strings.Contains(err.Error(), "Conflicting provider authentication configuration") {
 		t.Errorf("error = %q, want a conflict message", err.Error())
 	}
 }
@@ -154,7 +150,7 @@ func assertCredentialModeSelected(t *testing.T, err error) {
 	}
 
 	for _, unwanted := range []string{"Conflicting provider authentication configuration", "Ping CLI", "Missing region code"} {
-		if contains(err.Error(), unwanted) {
+		if strings.Contains(err.Error(), unwanted) {
 			t.Fatalf("credentials configuration was handled as Ping CLI authentication: %v", err)
 		}
 	}
@@ -172,4 +168,40 @@ func TestSDKv2Configure_CredentialModeUnaffected(t *testing.T) {
 	if err == nil {
 		t.Fatal("configure returned nil error, want a validation error for missing credentials")
 	}
+}
+
+func TestSDKv2Configure_PingCLIEnabledByEnvironmentVariable(t *testing.T) {
+	blankCredentialEnv(t)
+
+	seedPingCLISession(t, pingcli.GrantTypeClientCredentials, "default", "env-enabled-token")
+	t.Setenv("PINGONE_TF_USE_PINGCLI_AUTH", "true")
+
+	client, err := runConfigure(t, map[string]any{
+		"region_code": "NA",
+	})
+	if err != nil {
+		t.Fatalf("configure returned error: %v", err)
+	}
+
+	if client == nil {
+		t.Fatal("configure returned nil client")
+	}
+}
+
+func TestSDKv2Configure_PingCLIAttributeBeatsEnvironmentVariable(t *testing.T) {
+	blankCredentialEnv(t)
+
+	seedPingCLISession(t, pingcli.GrantTypeClientCredentials, "default", "token")
+	t.Setenv("PINGONE_TF_USE_PINGCLI_AUTH", "true")
+
+	// An explicit false falls back to credentials mode, which has none here.
+	_, err := runConfigure(t, map[string]any{
+		"region_code":      "NA",
+		"use_pingcli_auth": false,
+	})
+	if err == nil {
+		t.Fatal("configure returned nil error, want an error for missing credentials")
+	}
+
+	assertCredentialModeSelected(t, err)
 }

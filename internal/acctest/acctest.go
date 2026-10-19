@@ -161,6 +161,12 @@ func PreCheckPingCLIAuth(t *testing.T) {
 		t.Fatal("PINGONE_REGION_CODE is missing and must be set")
 	}
 
+	// The test configurations have no provider block; the switch comes from the
+	// environment.
+	if use, err := pingcli.UsePingCLIAuthFromEnv(os.Getenv); err != nil || use == nil || !*use {
+		t.Fatalf("%s must be set to true to run the Ping CLI authentication acceptance tests", pingcli.EnvUsePingCLIAuth)
+	}
+
 	for _, name := range pingcli.ConflictEnvVars {
 		if strings.TrimSpace(os.Getenv(name)) != "" {
 			t.Fatalf("%s must be unset when running Ping CLI authentication acceptance tests", name)

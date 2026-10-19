@@ -116,17 +116,13 @@ func configureProvider(t *testing.T, values map[string]string) error {
 	return nil
 }
 
-func contains(haystack, needle string) bool {
-	return strings.Contains(haystack, needle)
-}
-
 func blankCredentialEnv(t *testing.T) {
 	t.Helper()
 
 	for _, name := range []string{
 		"PINGONE_CLIENT_ID", "PINGONE_CLIENT_SECRET", "PINGONE_ENVIRONMENT_ID",
 		"PINGONE_API_ACCESS_TOKEN", "PINGONE_REGION_CODE", "PINGONE_REGION",
-		"PINGCLI_PROFILE", "PINGCLI_PINGONE_AUTHENTICATION_TYPE", "PINGONE_AUTH_GRANT_TYPE",
+		"PINGCLI_PROFILE", "PINGCLI_PINGONE_AUTHENTICATION_TYPE", "PINGONE_AUTH_GRANT_TYPE", "PINGONE_TF_USE_PINGCLI_AUTH",
 		"PINGONE_STORAGE_TYPE", "PINGONE_STORAGE_NAME",
 	} {
 		// Unset, don't blank: the SDK's envconfig treats an empty-but-set variable
@@ -194,7 +190,7 @@ func TestFramework_Configure_PingCLIConflict(t *testing.T) {
 		t.Fatal("configure returned nil error, want a conflict error")
 	}
 
-	if !contains(err.Error(), "Conflicting provider authentication configuration") {
+	if !strings.Contains(err.Error(), "Conflicting provider authentication configuration") {
 		t.Errorf("error = %q, want a conflict message", err.Error())
 	}
 }
@@ -241,5 +237,39 @@ func TestFramework_Configure_PingCLIIgnoresGrantTypeEnvironmentVariable(t *testi
 	})
 	if err != nil {
 		t.Fatalf("configure returned error: %v", err)
+	}
+}
+
+func TestFramework_Configure_PingCLIEnabledByEnvironmentVariable(t *testing.T) {
+	blankCredentialEnv(t)
+
+	seedPingCLISession(t, pingcli.GrantTypeClientCredentials, "default", "env-enabled-token")
+	t.Setenv("PINGONE_TF_USE_PINGCLI_AUTH", "true")
+
+	err := configureProvider(t, map[string]string{
+		"region_code": "NA",
+	})
+	if err != nil {
+		t.Fatalf("configure returned error: %v", err)
+	}
+}
+
+func TestFramework_Configure_PingCLIAttributeBeatsEnvironmentVariable(t *testing.T) {
+	blankCredentialEnv(t)
+
+	seedPingCLISession(t, pingcli.GrantTypeClientCredentials, "default", "token")
+	t.Setenv("PINGONE_TF_USE_PINGCLI_AUTH", "true")
+
+	// An explicit false falls back to credentials mode, which has none here.
+	err := configureProvider(t, map[string]string{
+		"region_code":      "NA",
+		"use_pingcli_auth": "false",
+	})
+	if err == nil {
+		t.Fatal("configure returned nil error, want an error for missing credentials")
+	}
+
+	if strings.Contains(err.Error(), "Ping CLI") {
+		t.Errorf("error = %q, want credentials mode, not Ping CLI", err.Error())
 	}
 }

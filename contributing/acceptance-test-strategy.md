@@ -233,8 +233,9 @@ acctest.PreCheckCustomDomainSSL(t)
 acctest.PreCheckPingCLIAuth(t)                 // Feature gate + session validation
 ```
 - **Gate Environment Variable**: `TESTACC_PINGCLI_AUTH=true`
-- **Local only**: these tests read a real OS keychain session created by `pingcli pingone auth login`, so they are skipped whenever `CI` is set and must never be added to a workflow
+- **Local only**: the unit tests mock the keychain (`keyring.MockInit`) and run in CI as normal. These acceptance tests deliberately read the real OS keychain, to cover a session written by a real `pingcli pingone auth login`. CI runners have no OS keychain, and the CI Ping CLI login uses `file_system` storage, which the provider does not read, so the tests skip whenever `CI` is set
 - **Required Environment Variables**:
+  - `PINGONE_TF_USE_PINGCLI_AUTH=true` (the test configurations have no provider block, so this is what enables Ping CLI authentication)
   - `PINGONE_REGION_CODE`
   - `PINGONE_LICENSE_ID` (required by `acctest.PreCheckNewEnvironment`, used by tests that create a fresh environment)
   - `PINGCLI_PROFILE` (the name of a Ping CLI profile with a current keychain session); optionally `PINGCLI_PINGONE_AUTHENTICATION_TYPE` to pin the grant type

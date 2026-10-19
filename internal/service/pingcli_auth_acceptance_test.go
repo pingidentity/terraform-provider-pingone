@@ -16,11 +16,13 @@ import (
 )
 
 // The Ping CLI acceptance tests exercise the feature through a real keychain
-// session and environment, one per provider flavour:
+// session, one per provider flavour. Ping CLI authentication is enabled by the
+// PINGONE_TF_USE_PINGCLI_AUTH environment variable, so the configurations have
+// no provider block:
 //
-//	use_pingcli_auth + pingone_language  -> SDKv2 flavour
-//	use_pingcli_auth + pingone_environment (legacy SDK flavour)
-//	use_pingcli_auth + pingone_davinci_variable (new SDK framework flavour)
+//	pingone_language          -> SDKv2 flavour
+//	pingone_environment       -> legacy SDK flavour
+//	pingone_davinci_variable  -> new SDK framework flavour
 
 func TestAccPingCLIAuth_SDKv2Flavour(t *testing.T) {
 	t.Parallel()
@@ -92,21 +94,21 @@ func TestAccPingCLIAuth_FrameworkFlavour_DaVinciVariable(t *testing.T) {
 }
 
 func testAccPingCLIAuthConfig_SDKv2(environmentName, licenseID string) string {
-	return testAccPingCLIAuthHCL(fmt.Sprintf(`
+	return fmt.Sprintf(`
 %[1]s
 
 resource "pingone_language" "test" {
   environment_id = pingone_environment.%[2]s.id
   locale         = "de-DE"
-}`, acctestlegacysdk.MinimalSandboxEnvironmentNoPopulation(environmentName, licenseID), environmentName))
+}`, acctestlegacysdk.MinimalSandboxEnvironmentNoPopulation(environmentName, licenseID), environmentName)
 }
 
 func testAccPingCLIAuthConfig_Legacy(environmentName, licenseID string) string {
-	return testAccPingCLIAuthHCL(acctestlegacysdk.MinimalSandboxEnvironmentNoPopulation(environmentName, licenseID))
+	return acctestlegacysdk.MinimalSandboxEnvironmentNoPopulation(environmentName, licenseID)
 }
 
 func testAccPingCLIAuthConfig_Framework(environmentName, licenseID string) string {
-	return testAccPingCLIAuthHCL(fmt.Sprintf(`
+	return fmt.Sprintf(`
 %[1]s
 
 resource "pingone_davinci_variable" "test" {
@@ -115,21 +117,7 @@ resource "pingone_davinci_variable" "test" {
   data_type      = "string"
   mutable        = true
   name           = "%[2]s"
-}`, acctestlegacysdk.MinimalSandboxEnvironmentNoPopulation(environmentName, licenseID), environmentName))
-}
-
-// testAccPingCLIAuthHCL enables Ping CLI authentication for the provider block.
-func testAccPingCLIAuthHCL(resources string) string {
-	// The provider block is required here: use_pingcli_auth has no environment
-	// variable equivalent.
-	//lintignore:AT004
-	return fmt.Sprintf(`
-provider "pingone" {
-  use_pingcli_auth = true
-  region_code      = "%s"
-}
-
-%s`, os.Getenv("PINGONE_REGION_CODE"), resources)
+}`, acctestlegacysdk.MinimalSandboxEnvironmentNoPopulation(environmentName, licenseID), environmentName)
 }
 
 // testAccPingCLIAuthCheckDestroyEnvironment verifies the environment created by

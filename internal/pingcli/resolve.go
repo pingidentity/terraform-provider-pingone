@@ -7,8 +7,9 @@ import "strings"
 // Inputs carries the provider configuration values needed to decide whether
 // Ping CLI authentication is enabled.
 type Inputs struct {
-	// UsePingCLIAuth is the HCL value of use_pingcli_auth.
-	UsePingCLIAuth bool
+	// UsePingCLIAuth is the HCL value of use_pingcli_auth; nil when it is not
+	// configured, in which case the environment variable applies.
+	UsePingCLIAuth *bool
 	// PingCLIProfile is the HCL value of pingcli_profile (empty when unset).
 	PingCLIProfile string
 	// PingCLIGrantType is the HCL value of pingcli_grant_type (empty when
@@ -39,10 +40,22 @@ type Problem struct {
 	Detail  string
 }
 
-// Resolve decides whether Ping CLI authentication is enabled and validates the
+// Resolve decides whether Ping CLI authentication is enabled, from the
+// use_pingcli_auth attribute or else its environment variable, and validates the
 // settings. getenv is injectable for tests.
 func Resolve(in Inputs, getenv func(string) string) (Plan, []Problem) {
-	if !in.UsePingCLIAuth {
+	usePingCLIAuth := in.UsePingCLIAuth
+	if usePingCLIAuth == nil {
+		var err error
+		if usePingCLIAuth, err = UsePingCLIAuthFromEnv(getenv); err != nil {
+			return Plan{}, []Problem{{
+				Summary: "Invalid " + EnvUsePingCLIAuth + " environment variable",
+				Detail:  err.Error(),
+			}}
+		}
+	}
+
+	if usePingCLIAuth == nil || !*usePingCLIAuth {
 		return Plan{}, nil
 	}
 

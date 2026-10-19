@@ -131,14 +131,10 @@ func assertCredentialModeSelected(t *testing.T, err error) {
 	}
 
 	for _, unwanted := range []string{"Conflicting provider authentication configuration", "Ping CLI", "Missing region code"} {
-		if contains(err.Error(), unwanted) {
+		if strings.Contains(err.Error(), unwanted) {
 			t.Fatalf("credentials configuration was handled as Ping CLI authentication: %v", err)
 		}
 	}
-}
-
-func contains(haystack, needle string) bool {
-	return strings.Contains(haystack, needle)
 }
 
 func blankCredentialEnv(t *testing.T) {
@@ -147,7 +143,7 @@ func blankCredentialEnv(t *testing.T) {
 	for _, name := range []string{
 		"PINGONE_CLIENT_ID", "PINGONE_CLIENT_SECRET", "PINGONE_ENVIRONMENT_ID",
 		"PINGONE_API_ACCESS_TOKEN", "PINGONE_REGION_CODE", "PINGONE_REGION",
-		"PINGCLI_PROFILE", "PINGCLI_PINGONE_AUTHENTICATION_TYPE", "PINGONE_AUTH_GRANT_TYPE",
+		"PINGCLI_PROFILE", "PINGCLI_PINGONE_AUTHENTICATION_TYPE", "PINGONE_AUTH_GRANT_TYPE", "PINGONE_TF_USE_PINGCLI_AUTH",
 		"PINGONE_STORAGE_TYPE", "PINGONE_STORAGE_NAME",
 	} {
 		// Unset, don't blank: the SDK's envconfig treats an empty-but-set variable
@@ -214,7 +210,7 @@ func TestFrameworkLegacySDK_Configure_PingCLIConflict(t *testing.T) {
 		t.Fatal("configure returned nil error, want a conflict error")
 	}
 
-	if !contains(err.Error(), "Conflicting provider authentication configuration") {
+	if !strings.Contains(err.Error(), "Conflicting provider authentication configuration") {
 		t.Errorf("error = %q, want a conflict message", err.Error())
 	}
 }
@@ -229,5 +225,19 @@ func TestFrameworkLegacySDK_Configure_CredentialModeUnaffected(t *testing.T) {
 	})
 	if err == nil {
 		t.Fatal("configure returned nil error, want an error for missing credentials")
+	}
+}
+
+func TestFrameworkLegacySDK_Configure_PingCLIEnabledByEnvironmentVariable(t *testing.T) {
+	blankCredentialEnv(t)
+
+	seedPingCLISession(t, pingcli.GrantTypeClientCredentials, "default", "env-enabled-token")
+	t.Setenv("PINGONE_TF_USE_PINGCLI_AUTH", "true")
+
+	err := configureProvider(t, map[string]string{
+		"region_code": "NA",
+	})
+	if err != nil {
+		t.Fatalf("configure returned error: %v", err)
 	}
 }

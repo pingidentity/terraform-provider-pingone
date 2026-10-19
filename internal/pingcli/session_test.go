@@ -336,7 +336,7 @@ func TestLoad_ErrorDoesNotContainToken(t *testing.T) {
 		t.Fatal("Load returned nil error, want an expired error")
 	}
 
-	if got := err.Error(); contains(got, "very-secret-token-value") {
+	if got := err.Error(); strings.Contains(got, "very-secret-token-value") {
 		t.Errorf("error message contains the token: %q", got)
 	}
 }
@@ -369,7 +369,7 @@ func assertErrorContains(t *testing.T, err error, wants ...string) {
 	}
 
 	for _, want := range wants {
-		if !contains(err.Error(), want) {
+		if !strings.Contains(err.Error(), want) {
 			t.Errorf("error %q does not contain %q", err.Error(), want)
 		}
 	}
@@ -412,8 +412,4 @@ func TestLoad_TrimsProfileAndGrantType(t *testing.T) {
 	if result.AccessToken != "trimmed-profile-token" {
 		t.Errorf("AccessToken = %q, want %q", result.AccessToken, "trimmed-profile-token")
 	}
-}
-
-func contains(haystack, needle string) bool {
-	return strings.Contains(haystack, needle)
 }

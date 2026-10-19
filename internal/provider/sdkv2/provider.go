@@ -65,6 +65,16 @@ func New(version string) func() *schema.Provider {
 					Optional:      true,
 					Description:   pingcli.DescriptionUsePingCLIAuth(),
 					ConflictsWith: []string{"client_id", "client_secret", "environment_id", "api_access_token"},
+					// The environment variable applies only when the attribute is not
+					// configured, so an explicit false still wins.
+					DefaultFunc: func() (interface{}, error) {
+						use, err := pingcli.UsePingCLIAuthFromEnv(os.Getenv)
+						if err != nil || use == nil {
+							return nil, err
+						}
+
+						return *use, nil
+					},
 				},
 				pingcli.AttrPingCLIProfile: {
 					Type:        schema.TypeString,
@@ -254,8 +264,10 @@ func configure(version string) func(context.Context, *schema.ResourceData) (inte
 			regionCode = strings.TrimSpace(os.Getenv("PINGONE_REGION_CODE"))
 		}
 
+		usePingCLIAuth := d.Get(pingcli.AttrUsePingCLIAuth).(bool)
+
 		plan, problems := pingcli.Resolve(pingcli.Inputs{
-			UsePingCLIAuth:   d.Get(pingcli.AttrUsePingCLIAuth).(bool),
+			UsePingCLIAuth:   &usePingCLIAuth,
 			PingCLIProfile:   d.Get(pingcli.AttrPingCLIProfile).(string),
 			PingCLIGrantType: d.Get(pingcli.AttrPingCLIGrantType).(string),
 			RegionCode:       regionCode,
