@@ -300,7 +300,7 @@ func TestLoad_MissingProfile(t *testing.T) {
 		t.Fatal("Load returned nil error, want a missing-profile error")
 	}
 
-	assertErrorContains(t, err, "no Ping CLI profile was specified", "pingcli_profile", "PINGCLI_PROFILE")
+	assertErrorContains(t, err, "no Ping CLI profile was specified", "pingcli_profile", "PINGONE_TF_PINGCLI_PROFILE")
 }
 
 func TestLoad_ProfileWithUnsupportedCharacters(t *testing.T) {

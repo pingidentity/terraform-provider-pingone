@@ -45,8 +45,8 @@ provider "pingone" {
 ```
 
 - `use_pingcli_auth` (environment `PINGONE_TF_USE_PINGCLI_AUTH`) enables this mode. A value in the provider configuration takes precedence over the environment variable, so `use_pingcli_auth = false` turns it off even when the variable is `true`.
-- `pingcli_profile` (environment `PINGCLI_PROFILE`) selects the profile whose keychain session is used. When unset, the Ping CLI default profile (`default`) is used.
-- `pingcli_grant_type` (environment `PINGCLI_PINGONE_AUTHENTICATION_TYPE`) restricts the lookup to one grant type (`client_credentials`, `authorization_code` or `device_code`). When unset, each grant type is checked and the valid session that expires last is used.
+- `pingcli_profile` (environment `PINGONE_TF_PINGCLI_PROFILE`) selects the profile whose keychain session is used. When unset, the Ping CLI default profile (`default`) is used.
+- `pingcli_grant_type` (environment `PINGONE_TF_PINGCLI_GRANT_TYPE`) restricts the lookup to one grant type (`client_credentials`, `authorization_code` or `device_code`). When unset, each grant type is checked and the valid session that expires last is used.
 - `region_code` (environment `PINGONE_REGION_CODE`) is **required** in this mode.
 
 If `use_pingcli_auth` is set, `client_id`, `client_secret`, `environment_id` or `api_access_token` must not be set in the provider configuration or exported as the matching `PINGONE_CLIENT_ID`, `PINGONE_CLIENT_SECRET`, `PINGONE_ENVIRONMENT_ID` or `PINGONE_API_ACCESS_TOKEN` environment variables.

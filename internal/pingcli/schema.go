@@ -15,14 +15,13 @@ const (
 	AttrPingCLIGrantType = "pingcli_grant_type"
 )
 
-// Environment variables for the provider attributes. Ping CLI reads the same
-// names for the profile and grant type, so an exported Ping CLI setup is picked
-// up automatically. The switch itself is specific to the provider, so it uses
-// the provider's PINGONE_TF_ prefix rather than Ping CLI's namespace.
+// Environment variables for the provider attributes. Each one is the provider's
+// PINGONE_TF_ prefix followed by the attribute name in capitals, like the
+// provider's other provider-only variable, PINGONE_TF_APPEND_USER_AGENT.
 const (
 	EnvUsePingCLIAuth   = "PINGONE_TF_USE_PINGCLI_AUTH"
-	EnvPingCLIProfile   = "PINGCLI_PROFILE"
-	EnvPingCLIGrantType = "PINGCLI_PINGONE_AUTHENTICATION_TYPE"
+	EnvPingCLIProfile   = "PINGONE_TF_PINGCLI_PROFILE"
+	EnvPingCLIGrantType = "PINGONE_TF_PINGCLI_GRANT_TYPE"
 )
 
 // DefaultProfile is the Ping CLI profile used when none is configured.

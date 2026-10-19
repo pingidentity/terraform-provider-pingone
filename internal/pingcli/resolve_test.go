@@ -68,13 +68,13 @@ func TestResolve(t *testing.T) {
 		{
 			name:       "environment variables supply profile and grant type",
 			inputs:     pingcli.Inputs{UsePingCLIAuth: boolPtr(true), RegionCode: "EU"},
-			env:        map[string]string{"PINGCLI_PROFILE": "dev", "PINGCLI_PINGONE_AUTHENTICATION_TYPE": "authorization_code"},
+			env:        map[string]string{"PINGONE_TF_PINGCLI_PROFILE": "dev", "PINGONE_TF_PINGCLI_GRANT_TYPE": "authorization_code"},
 			expectPlan: pingcli.Plan{Enabled: true, PingCLIProfile: "dev", PingCLIGrantType: "authorization_code"},
 		},
 		{
 			name:       "HCL values win over environment variables",
 			inputs:     pingcli.Inputs{UsePingCLIAuth: boolPtr(true), PingCLIProfile: "hcl", PingCLIGrantType: "device_code", RegionCode: "EU"},
-			env:        map[string]string{"PINGCLI_PROFILE": "env", "PINGCLI_PINGONE_AUTHENTICATION_TYPE": "authorization_code"},
+			env:        map[string]string{"PINGONE_TF_PINGCLI_PROFILE": "env", "PINGONE_TF_PINGCLI_GRANT_TYPE": "authorization_code"},
 			expectPlan: pingcli.Plan{Enabled: true, PingCLIProfile: "hcl", PingCLIGrantType: "device_code"},
 		},
 		{
@@ -122,7 +122,7 @@ func TestResolve(t *testing.T) {
 		{
 			name:       "invalid grant type from the environment is an error",
 			inputs:     pingcli.Inputs{UsePingCLIAuth: boolPtr(true), RegionCode: "EU"},
-			env:        map[string]string{"PINGCLI_PINGONE_AUTHENTICATION_TYPE": "password"},
+			env:        map[string]string{"PINGONE_TF_PINGCLI_GRANT_TYPE": "password"},
 			expectPlan: pingcli.Plan{Enabled: true, PingCLIProfile: "default", PingCLIGrantType: "password"},
 			expectDetail: []string{
 				"Invalid Ping CLI grant type",

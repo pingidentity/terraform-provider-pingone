@@ -1,5 +1,5 @@
 ```release-note:enhancement
-provider: Added the `use_pingcli_auth` attribute (or the `PINGONE_TF_USE_PINGCLI_AUTH` environment variable), with the optional `pingcli_profile` and `pingcli_grant_type` attributes, or their `PINGCLI_PROFILE` and `PINGCLI_PINGONE_AUTHENTICATION_TYPE` environment variables, so the provider can authenticate with the access token of a Ping CLI login session stored in the OS keychain, as an alternative to client credentials or `api_access_token`.
+provider: Added the `use_pingcli_auth` attribute (or the `PINGONE_TF_USE_PINGCLI_AUTH` environment variable), with the optional `pingcli_profile` and `pingcli_grant_type` attributes, or their `PINGONE_TF_PINGCLI_PROFILE` and `PINGONE_TF_PINGCLI_GRANT_TYPE` environment variables, so the provider can authenticate with the access token of a Ping CLI login session stored in the OS keychain, as an alternative to client credentials or `api_access_token`.
 ```
 
 ```release-note:new-guide

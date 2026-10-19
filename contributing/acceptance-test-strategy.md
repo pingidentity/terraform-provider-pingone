@@ -238,7 +238,7 @@ acctest.PreCheckPingCLIAuth(t)                 // Feature gate + session validat
   - `PINGONE_TF_USE_PINGCLI_AUTH=true` (the test configurations have no provider block, so this is what enables Ping CLI authentication)
   - `PINGONE_REGION_CODE`
   - `PINGONE_LICENSE_ID` (required by `acctest.PreCheckNewEnvironment`, used by tests that create a fresh environment)
-  - `PINGCLI_PROFILE` (the name of a Ping CLI profile with a current keychain session); optionally `PINGCLI_PINGONE_AUTHENTICATION_TYPE` to pin the grant type
+  - `PINGONE_TF_PINGCLI_PROFILE` (the name of a Ping CLI profile with a current keychain session); optionally `PINGONE_TF_PINGCLI_GRANT_TYPE` to pin the grant type
 - **Must Be Unset**: `PINGONE_CLIENT_ID`, `PINGONE_CLIENT_SECRET`, `PINGONE_ENVIRONMENT_ID`, `PINGONE_API_ACCESS_TOKEN`
 
 #### **Pre-Check Usage Patterns**
