@@ -81,7 +81,8 @@ func (r *davinciApplicationsDataSource) Schema(ctx context.Context, req datasour
 									Computed: true,
 								},
 								"value": schema.StringAttribute{
-									Computed: true,
+									Computed:  true,
+									Sensitive: true,
 								},
 							},
 							Computed: true,
@@ -95,7 +96,8 @@ func (r *davinciApplicationsDataSource) Schema(ctx context.Context, req datasour
 						"oauth": schema.SingleNestedAttribute{
 							Attributes: map[string]schema.Attribute{
 								"client_secret": schema.StringAttribute{
-									Computed: true,
+									Computed:  true,
+									Sensitive: true,
 								},
 								"enforce_signed_request_openid": schema.BoolAttribute{
 									Computed: true,

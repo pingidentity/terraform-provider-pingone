@@ -140,6 +140,7 @@ func (p *pingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest
 				Description:         clientSecretDescription.Description,
 				MarkdownDescription: clientSecretDescription.MarkdownDescription,
 				Optional:            true,
+				Sensitive:           true,
 			},
 
 			"environment_id": schema.StringAttribute{
@@ -152,6 +153,7 @@ func (p *pingOneProvider) Schema(ctx context.Context, req provider.SchemaRequest
 				Description:         apiAccessTokenDescription.Description,
 				MarkdownDescription: apiAccessTokenDescription.MarkdownDescription,
 				Optional:            true,
+				Sensitive:           true,
 			},
 
 			"region_code": schema.StringAttribute{

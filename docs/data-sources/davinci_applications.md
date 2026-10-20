@@ -45,7 +45,7 @@ Read-Only:
 Read-Only:
 
 - `enabled` (Boolean)
-- `value` (String)
+- `value` (String, Sensitive)
 
 
 <a id="nestedatt--davinci_applications--oauth"></a>
@@ -53,7 +53,7 @@ Read-Only:
 
 Read-Only:
 
-- `client_secret` (String)
+- `client_secret` (String, Sensitive)
 - `enforce_signed_request_openid` (Boolean)
 - `grant_types` (Set of String) Options are `authorizationCode`, `clientCredentials`, `implicit`.
 - `logout_uris` (Set of String)
