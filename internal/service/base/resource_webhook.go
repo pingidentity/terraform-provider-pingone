@@ -288,6 +288,7 @@ func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Description:         httpEndpointHeaders.Description,
 				MarkdownDescription: httpEndpointHeaders.MarkdownDescription,
 				Optional:            true,
+				Sensitive:           true,
 
 				ElementType: types.StringType,
 
@@ -312,6 +313,7 @@ func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest
 				Description:         connectionDetailsHeadersDescription.Description,
 				MarkdownDescription: connectionDetailsHeadersDescription.MarkdownDescription,
 				Optional:            true,
+				Sensitive:           true,
 				// This will match the HTTP headers when http_endpoint_headers is set
 				Computed: true,
 

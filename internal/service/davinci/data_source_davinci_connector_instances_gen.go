@@ -94,6 +94,7 @@ func (r *davinciConnectorInstancesDataSource) Schema(ctx context.Context, req da
 						"properties": schema.StringAttribute{
 							CustomType: jsontypes.NormalizedType{},
 							Computed:   true,
+							Sensitive:  true,
 						},
 					},
 				},

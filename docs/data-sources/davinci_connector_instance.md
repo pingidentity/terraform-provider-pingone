@@ -32,7 +32,7 @@ data "pingone_davinci_connector_instance" "example" {
 - `id` (String) The ID of this data source.
 - `metadata` (Attributes) (see [below for nested schema](#nestedatt--metadata))
 - `name` (String)
-- `properties` (String)
+- `properties` (String, Sensitive)
 
 <a id="nestedatt--connector"></a>
 ### Nested Schema for `connector`

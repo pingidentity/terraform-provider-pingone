@@ -37,7 +37,7 @@ Read-Only:
 - `connector` (Attributes) (see [below for nested schema](#nestedatt--connector_instances--connector))
 - `id` (String)
 - `name` (String)
-- `properties` (String)
+- `properties` (String, Sensitive)
 
 <a id="nestedatt--connector_instances--connector"></a>
 ### Nested Schema for `connector_instances.connector`
