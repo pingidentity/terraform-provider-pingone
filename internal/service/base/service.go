@@ -61,6 +61,7 @@ func DataSources() []func() datasource.DataSource {
 		NewEnvironmentDataSource,
 		NewEnvironmentsDataSource,
 		NewGatewayDataSource,
+		NewKeyRotationPolicyDataSource,
 		NewLicenseDataSource,
 		NewLicensesDataSource,
 		NewNotificationPolicyDataSource,
