@@ -3,7 +3,7 @@
 package helpers
 
 import (
-	"github.com/patrickcping/pingone-go-sdk-v2/risk"
+	"github.com/pingidentity/pingone-go-sdk-v2/risk"
 )
 
 var (
