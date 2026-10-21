@@ -1307,12 +1307,6 @@ func (r *PhoneDeliverySettingsResource) Create(ctx context.Context, req resource
 		response = createResponse
 	}
 
-	response, d = r.readBackComputedAuthenticationParams(ctx, plan, response)
-	resp.Diagnostics.Append(d...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
 	// Create the state to save
 	state = plan
 
@@ -1366,49 +1360,6 @@ func (r *PhoneDeliverySettingsResource) Read(ctx context.Context, req resource.R
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-// readBackComputedAuthenticationParams re-reads the phone delivery settings after a create or
-// update call.  The service computes some parameters (for example, `clientAuthenticationMethod`
-// on the OAUTH2 authentication method) asynchronously, so they're absent from the create and
-// update response bodies but present on read.  Reading the resource back after create/update
-// populates state with those computed values.  See TRIAGE-38095, which reports the same
-// behaviour on the email delivery settings API; the read-back can be removed once the create and
-// update responses include these parameters.
-func (r *PhoneDeliverySettingsResource) readBackComputedAuthenticationParams(ctx context.Context, plan PhoneDeliverySettingsResourceModel, response *management.NotificationsSettingsPhoneDeliverySettings) (*management.NotificationsSettingsPhoneDeliverySettings, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if plan.ProviderCustom.IsNull() || plan.ProviderCustom.IsUnknown() {
-		return response, diags
-	}
-
-	phoneDeliverySettingsId := parsePhoneDeliverySettingsId(response)
-	if phoneDeliverySettingsId == "" {
-		return response, diags
-	}
-
-	var readResponse *management.NotificationsSettingsPhoneDeliverySettings
-	diags.Append(legacysdk.ParseResponse(
-		ctx,
-
-		func() (any, *http.Response, error) {
-			fO, fR, fErr := r.Client.ManagementAPIClient.PhoneDeliverySettingsApi.ReadOnePhoneDeliverySettings(ctx, plan.EnvironmentId.ValueString(), phoneDeliverySettingsId).Execute()
-			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, r.Client.ManagementAPIClient, plan.EnvironmentId.ValueString(), fO, fR, fErr)
-		},
-		"ReadOnePhoneDeliverySettings",
-		legacysdk.DefaultCustomError,
-		sdk.DefaultCreateReadRetryable,
-		&readResponse,
-	)...)
-	if diags.HasError() {
-		return response, diags
-	}
-
-	if readResponse != nil {
-		response = readResponse
-	}
-
-	return response, diags
-}
-
 func (r *PhoneDeliverySettingsResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state PhoneDeliverySettingsResourceModel
 
@@ -1446,12 +1397,6 @@ func (r *PhoneDeliverySettingsResource) Update(ctx context.Context, req resource
 		sdk.DefaultCreateReadRetryable,
 		&response,
 	)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	response, d = r.readBackComputedAuthenticationParams(ctx, plan, response)
-	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -1815,22 +1760,6 @@ func (p *PhoneDeliverySettingsResourceModel) expand(ctx context.Context, service
 	}
 
 	return &data, diags
-}
-
-func parsePhoneDeliverySettingsId(apiObject *management.NotificationsSettingsPhoneDeliverySettings) string {
-	if apiObject == nil {
-		return ""
-	}
-
-	if v := apiObject.NotificationsSettingsPhoneDeliverySettingsCustom; v != nil {
-		return v.GetId()
-	}
-
-	if v := apiObject.NotificationsSettingsPhoneDeliverySettingsTwilioSyniverse; v != nil {
-		return v.GetId()
-	}
-
-	return ""
 }
 
 func parsePhoneDeliverySettingsNumbers(apiObject *management.NotificationsSettingsPhoneDeliverySettings) (string, []management.NotificationsSettingsPhoneDeliverySettingsCustomNumbers, diag.Diagnostics) {
