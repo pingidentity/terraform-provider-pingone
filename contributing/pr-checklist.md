@@ -37,7 +37,7 @@ This checklist includes specific verification criteria marked with *Verification
   - *Verification*: 
     - No direct HTTP calls to PingOne APIs (check for `http.Client`, `http.Get`, `http.Post`, etc.)
     - Uses `framework.ParseResponse()` wrapper for SDK calls
-    - Imports from `github.com/patrickcping/pingone-go-sdk-v2/` packages
+    - Imports from `github.com/pingidentity/pingone-go-sdk-v2/` packages
 
 ### Code Quality
 

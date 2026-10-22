@@ -6,7 +6,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone"
+	"github.com/pingidentity/pingone-go-sdk-v2/pingone"
 )
 
 func ApplicationResource_RemovalDrift_PreConfig(ctx context.Context, apiClient *pingone.Client, t *testing.T, environmentID, resourceID string) {

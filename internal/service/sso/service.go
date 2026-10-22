@@ -5,7 +5,7 @@ package sso
 import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
-	"github.com/patrickcping/pingone-go-sdk-v2/pingone"
+	"github.com/pingidentity/pingone-go-sdk-v2/pingone"
 )
 
 type serviceClientType struct {
