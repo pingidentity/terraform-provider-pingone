@@ -8,7 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/pingidentity/pingone-go-sdk-v2/risk"
+	"github.com/pingidentity/pingone-go-sdk-legacy/risk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 )
 

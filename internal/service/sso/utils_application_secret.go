@@ -12,8 +12,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/pingidentity/pingone-go-sdk-v2/management"
-	"github.com/pingidentity/pingone-go-sdk-v2/pingone/model"
+	"github.com/pingidentity/pingone-go-sdk-legacy/management"
+	"github.com/pingidentity/pingone-go-sdk-legacy/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 )
 

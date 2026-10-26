@@ -18,7 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/pingidentity/pingone-go-sdk-v2/management"
+	"github.com/pingidentity/pingone-go-sdk-legacy/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	customboolvalidator "github.com/pingidentity/terraform-provider-pingone/internal/framework/boolvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"

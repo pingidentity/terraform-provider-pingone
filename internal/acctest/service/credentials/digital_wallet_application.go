@@ -9,7 +9,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
-	"github.com/pingidentity/pingone-go-sdk-v2/credentials"
+	"github.com/pingidentity/pingone-go-sdk-legacy/credentials"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 )

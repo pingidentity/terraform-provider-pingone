@@ -11,8 +11,8 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/pingidentity/pingone-go-sdk-v2/management"
-	"github.com/pingidentity/pingone-go-sdk-v2/pingone/model"
+	"github.com/pingidentity/pingone-go-sdk-legacy/management"
+	"github.com/pingidentity/pingone-go-sdk-legacy/pingone/model"
 	client "github.com/pingidentity/terraform-provider-pingone/internal/client"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"

@@ -12,13 +12,13 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
-	"github.com/pingidentity/pingone-go-sdk-v2/authorize"
-	"github.com/pingidentity/pingone-go-sdk-v2/credentials"
-	"github.com/pingidentity/pingone-go-sdk-v2/management"
-	"github.com/pingidentity/pingone-go-sdk-v2/mfa"
-	"github.com/pingidentity/pingone-go-sdk-v2/pingone/model"
-	"github.com/pingidentity/pingone-go-sdk-v2/risk"
-	"github.com/pingidentity/pingone-go-sdk-v2/verify"
+	"github.com/pingidentity/pingone-go-sdk-legacy/authorize"
+	"github.com/pingidentity/pingone-go-sdk-legacy/credentials"
+	"github.com/pingidentity/pingone-go-sdk-legacy/management"
+	"github.com/pingidentity/pingone-go-sdk-legacy/mfa"
+	"github.com/pingidentity/pingone-go-sdk-legacy/pingone/model"
+	"github.com/pingidentity/pingone-go-sdk-legacy/risk"
+	"github.com/pingidentity/pingone-go-sdk-legacy/verify"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 )
 
