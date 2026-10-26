@@ -3,7 +3,7 @@
 ```
 
 ```release-note:enhancement
-`data-source/pingone_environment`: Added support for `Recognize` to the `services.type` attribute, fixing "Cannot find PingOne product/service from code UNKNOWN" errors when reading environments with PingOne Recognize enabled.
+`data-source/pingone_environment`: Added support for `Recognize` to the `services.type` attribute.
 ```
 
 ```release-note:note
