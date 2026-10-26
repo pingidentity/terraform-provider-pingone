@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/pingidentity/pingone-go-sdk-v2/management"
+	"github.com/pingidentity/pingone-go-sdk-legacy/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 )

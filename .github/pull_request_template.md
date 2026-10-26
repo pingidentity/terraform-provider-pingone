@@ -28,13 +28,13 @@ _If contributing a partial or incomplete change (expecting the development team 
 <!--
 N/a
 
-- github.com/pingidentity/pingone-go-sdk-v2 v0.5.0
-- github.com/pingidentity/pingone-go-sdk-v2/authorize v0.5.0
-- github.com/pingidentity/pingone-go-sdk-v2/credentials v0.5.0
-- github.com/pingidentity/pingone-go-sdk-v2/management v0.5.0
-- github.com/pingidentity/pingone-go-sdk-v2/mfa v0.5.0
-- github.com/pingidentity/pingone-go-sdk-v2/risk v0.5.0
-- github.com/pingidentity/pingone-go-sdk-v2/verify v0.5.0
+- github.com/pingidentity/pingone-go-sdk-legacy v0.5.0
+- github.com/pingidentity/pingone-go-sdk-legacy/authorize v0.5.0
+- github.com/pingidentity/pingone-go-sdk-legacy/credentials v0.5.0
+- github.com/pingidentity/pingone-go-sdk-legacy/management v0.5.0
+- github.com/pingidentity/pingone-go-sdk-legacy/mfa v0.5.0
+- github.com/pingidentity/pingone-go-sdk-legacy/risk v0.5.0
+- github.com/pingidentity/pingone-go-sdk-legacy/verify v0.5.0
 -->
 
 ## Testing

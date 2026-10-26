@@ -67,17 +67,17 @@ provider_installation {
 
 ## Local SDK Changes
 
-Occasionally, development may include changes to the [PingOne GO SDK](https://github.com/pingidentity/pingone-go-sdk-v2). If you'd like to develop this provider locally using a local, modified version of the SDK, this can be achieved by adding a `replace` directive in the `go.mod` file.  For example, the start of the `go.mod` file may look like the following example, where the local cloned SDK is in the `../pingone-go` relative path, and we substitute the `management` module:
+Occasionally, development may include changes to the [PingOne GO SDK](https://github.com/pingidentity/pingone-go-sdk-legacy). If you'd like to develop this provider locally using a local, modified version of the SDK, this can be achieved by adding a `replace` directive in the `go.mod` file.  For example, the start of the `go.mod` file may look like the following example, where the local cloned SDK is in the `../pingone-go` relative path, and we substitute the `management` module:
 
 ```
 module github.com/pingidentity/terraform-provider-pingone
 
 go 1.23.3
 
-replace github.com/pingidentity/pingone-go-sdk-v2/management => ../pingone-go-sdk-v2/management
+replace github.com/pingidentity/pingone-go-sdk-legacy/management => ../pingone-go-sdk-v2/management
 
 require (
-	github.com/pingidentity/pingone-go-sdk-v2/management v0.x.x
+	github.com/pingidentity/pingone-go-sdk-legacy/management v0.x.x
   
   ...
 )

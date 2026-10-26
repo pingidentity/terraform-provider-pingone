@@ -2,7 +2,7 @@
 
 package client
 
-import "github.com/pingidentity/pingone-go-sdk-v2/management"
+import "github.com/pingidentity/pingone-go-sdk-legacy/management"
 
 type Config struct {
 	ClientID             string

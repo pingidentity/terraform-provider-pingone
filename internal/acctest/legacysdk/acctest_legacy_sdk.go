@@ -8,7 +8,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/pingidentity/pingone-go-sdk-v2/management"
+	"github.com/pingidentity/pingone-go-sdk-legacy/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 	legacyclient "github.com/pingidentity/terraform-provider-pingone/internal/client"
 )

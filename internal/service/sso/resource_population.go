@@ -12,9 +12,9 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
-	"github.com/pingidentity/pingone-go-sdk-v2/management"
-	"github.com/pingidentity/pingone-go-sdk-v2/pingone"
-	"github.com/pingidentity/pingone-go-sdk-v2/pingone/model"
+	"github.com/pingidentity/pingone-go-sdk-legacy/management"
+	"github.com/pingidentity/pingone-go-sdk-legacy/pingone"
+	"github.com/pingidentity/pingone-go-sdk-legacy/pingone/model"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"

@@ -6,7 +6,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/pingidentity/pingone-go-sdk-v2/pingone"
+	"github.com/pingidentity/pingone-go-sdk-legacy/pingone"
 )
 
 type Client struct {
