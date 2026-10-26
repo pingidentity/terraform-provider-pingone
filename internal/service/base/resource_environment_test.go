@@ -389,6 +389,15 @@ func TestAccEnvironment_Services(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "services.#", "9"), // check they can be un-defaulted
 				),
 			},
+			{
+				Config: testAccEnvironmentConfig_RecognizeServices(resourceName, name, licenseID),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "services.#", "3"),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "services.*", map[string]string{
+						"type": "Recognize",
+					}),
+				),
+			},
 		},
 	})
 }
@@ -776,6 +785,27 @@ resource "pingone_environment" "%[1]s" {
     {
       type = "Privilege"
       tags = ["AUTHENTICATION_MODE_AGENTLESS"]
+    }
+  ]
+}`, resourceName, name, licenseID)
+}
+
+func testAccEnvironmentConfig_RecognizeServices(resourceName, name, licenseID string) string {
+	return fmt.Sprintf(`
+resource "pingone_environment" "%[1]s" {
+  name       = "%[2]s"
+  license_id = "%[3]s"
+
+  services = [
+    {
+      type = "SSO"
+    },
+    {
+      type = "Recognize"
+    },
+    {
+      type = "DaVinci"
+      tags = ["DAVINCI_MINIMAL"]
     }
   ]
 }`, resourceName, name, licenseID)
