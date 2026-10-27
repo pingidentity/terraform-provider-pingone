@@ -1,0 +1,15 @@
+```release-note:enhancement
+`resource/pingone_environment`: Added support for `Recognize` to the `services.type` attribute.
+```
+
+```release-note:enhancement
+`data-source/pingone_environment`: Added support for `Recognize` to the `services.type` attribute.
+```
+
+```release-note:note
+bump `github.com/pingidentity/pingone-go-sdk-legacy` v0.17.0 => v0.18.0
+```
+
+```release-note:note
+bump `github.com/pingidentity/pingone-go-sdk-legacy/management` v0.79.0 => v0.80.0
+```

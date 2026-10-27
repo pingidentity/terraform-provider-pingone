@@ -344,7 +344,7 @@ func TestAccEnvironment_Services(t *testing.T) {
 	name := resourceName
 	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
-	services1 := []string{`SSO`, `MFA`, `Risk`, `Verify`, `Credentials`, `APIIntelligence`, `Authorize`, `PingFederate`, `PingAccess`, `PingDirectory`, `PingAuthorize`, `PingCentral`, `AdvancedIdentityCloud`}
+	services1 := []string{`SSO`, `MFA`, `Risk`, `Verify`, `Credentials`, `APIIntelligence`, `Authorize`, `PingFederate`, `PingAccess`, `PingDirectory`, `PingAuthorize`, `PingCentral`, `AdvancedIdentityCloud`, `Recognize`}
 	services2 := []string{`SSO`, `MFA`, `Risk`, `Verify`}
 	services3 := []string{`SSO`, `MFA`, `Risk`, `Verify`, `PingFederate`, `PingAccess`, `PingDirectory`, `PingAuthorize`, `PingCentral`}
 
@@ -362,7 +362,7 @@ func TestAccEnvironment_Services(t *testing.T) {
 			{
 				Config: testAccEnvironmentConfig_DynamicServices(resourceName, name, licenseID, services1),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceFullName, "services.#", "13"), // check all the custom services provision, except the WORKFORCE services
+					resource.TestCheckResourceAttr(resourceFullName, "services.#", "14"), // check all the custom services provision, except the WORKFORCE services
 				),
 			},
 			{
