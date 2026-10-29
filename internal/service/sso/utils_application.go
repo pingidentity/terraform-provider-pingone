@@ -26,6 +26,7 @@ func applicationExternalLinkOptionsToTF(apiObject *management.ApplicationExterna
 	}
 
 	attributesMap := map[string]attr.Value{
+		"external_id":   framework.StringOkToTF(apiObject.GetExternalIdOk()),
 		"home_page_url": framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
 	}
 
@@ -166,6 +167,7 @@ func applicationOidcOptionsCommonToTF(ctx context.Context, apiObject *management
 		"grant_types":                                        framework.EnumSetOkToTF(apiObject.GetGrantTypesOk()),
 		"home_page_url":                                      framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
 		"idp_signoff":                                        framework.BoolOkToTF(apiObject.GetIdpSignoffOk()),
+		"include_typ":                                        framework.BoolOkToTF(apiObject.GetIncludeTypOk()),
 		"include_x5t":                                        framework.BoolOkToTF(apiObject.GetIncludeX5tOk()),
 		"initiate_login_uri":                                 framework.StringOkToTF(apiObject.GetInitiateLoginUriOk()),
 		"jwks_url":                                           framework.StringOkToTF(apiObject.GetJwksUrlOk()),
@@ -184,6 +186,7 @@ func applicationOidcOptionsCommonToTF(ctx context.Context, apiObject *management
 		"request_scopes_for_multiple_resources_enabled":      types.BoolValue(apiObject.GetRequestScopesForMultipleResourcesEnabled()),
 		"require_signed_request_object":                      framework.BoolOkToTF(apiObject.GetRequireSignedRequestObjectOk()),
 		"response_types":                                     framework.EnumSetOkToTF(apiObject.GetResponseTypesOk()),
+		"skip_token_session_validation":                      framework.BoolOkToTF(apiObject.GetSkipTokenSessionValidationOk()),
 		"signing":                                            signing,
 		"support_unsigned_request_object":                    framework.BoolOkToTF(apiObject.GetSupportUnsignedRequestObjectOk()),
 		"target_link_uri":                                    framework.StringOkToTF(apiObject.GetTargetLinkUriOk()),
@@ -402,26 +405,27 @@ func applicationSamlOptionsToTF(apiObject *management.ApplicationSAML) (types.Ob
 	diags.Append(d...)
 
 	attributesMap := map[string]attr.Value{
-		"acs_urls":                         framework.StringSetOkToTF(apiObject.GetAcsUrlsOk()),
-		"assertion_duration":               framework.Int32OkToTF(apiObject.GetAssertionDurationOk()),
-		"assertion_signed_enabled":         framework.BoolOkToTF(apiObject.GetAssertionSignedOk()),
-		"cors_settings":                    corsSettings,
-		"enable_requested_authn_context":   framework.BoolOkToTF(apiObject.GetEnableRequestedAuthnContextOk()),
-		"home_page_url":                    framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
-		"idp_signing_key":                  idpSigningKey,
-		"default_target_url":               framework.StringOkToTF(apiObject.GetDefaultTargetUrlOk()),
-		"nameid_format":                    framework.StringOkToTF(apiObject.GetNameIdFormatOk()),
-		"response_is_signed":               framework.BoolOkToTF(apiObject.GetResponseSignedOk()),
-		"session_not_on_or_after_duration": framework.Int32OkToTF(apiObject.GetSessionNotOnOrAfterDurationOk()),
-		"slo_binding":                      framework.EnumOkToTF(apiObject.GetSloBindingOk()),
-		"slo_endpoint":                     framework.StringOkToTF(apiObject.GetSloEndpointOk()),
-		"slo_response_endpoint":            framework.StringOkToTF(apiObject.GetSloResponseEndpointOk()),
-		"slo_window":                       framework.Int32OkToTF(apiObject.GetSloWindowOk()),
-		"sp_encryption":                    spEncryption,
-		"sp_entity_id":                     framework.StringOkToTF(apiObject.GetSpEntityIdOk()),
-		"sp_verification":                  spVerification,
-		"type":                             typeValue,
-		"virtual_server_id_settings":       virtualServerIdSettings,
+		"acs_urls":                 framework.StringSetOkToTF(apiObject.GetAcsUrlsOk()),
+		"assertion_duration":       framework.Int32OkToTF(apiObject.GetAssertionDurationOk()),
+		"assertion_signed_enabled": framework.BoolOkToTF(apiObject.GetAssertionSignedOk()),
+		"cors_settings":            corsSettings,
+		"enable_always_accept_acs_url_in_signed_authn_request": framework.BoolOkToTF(apiObject.GetEnableAlwaysAcceptAcsUrlInSignedAuthnRequestOk()),
+		"enable_requested_authn_context":                       framework.BoolOkToTF(apiObject.GetEnableRequestedAuthnContextOk()),
+		"home_page_url":                                        framework.StringOkToTF(apiObject.GetHomePageUrlOk()),
+		"idp_signing_key":                                      idpSigningKey,
+		"default_target_url":                                   framework.StringOkToTF(apiObject.GetDefaultTargetUrlOk()),
+		"nameid_format":                                        framework.StringOkToTF(apiObject.GetNameIdFormatOk()),
+		"response_is_signed":                                   framework.BoolOkToTF(apiObject.GetResponseSignedOk()),
+		"session_not_on_or_after_duration":                     framework.Int32OkToTF(apiObject.GetSessionNotOnOrAfterDurationOk()),
+		"slo_binding":                                          framework.EnumOkToTF(apiObject.GetSloBindingOk()),
+		"slo_endpoint":                                         framework.StringOkToTF(apiObject.GetSloEndpointOk()),
+		"slo_response_endpoint":                                framework.StringOkToTF(apiObject.GetSloResponseEndpointOk()),
+		"slo_window":                                           framework.Int32OkToTF(apiObject.GetSloWindowOk()),
+		"sp_encryption":                                        spEncryption,
+		"sp_entity_id":                                         framework.StringOkToTF(apiObject.GetSpEntityIdOk()),
+		"sp_verification":                                      spVerification,
+		"type":                                                 typeValue,
+		"virtual_server_id_settings":                           virtualServerIdSettings,
 	}
 
 	returnVar, d := types.ObjectValue(applicationSamlOptionsTFObjectTypes, attributesMap)
@@ -566,16 +570,40 @@ func applicationWsfedOptionsToTF(apiObject *management.ApplicationWSFED) (types.
 	kerberos, d := applicationWsfedKerberosOkToTF(apiObject.GetKerberosOk())
 	diags.Append(d...)
 
+	validIssuanceCertificates := types.SetNull(types.ObjectType{AttrTypes: applicationWsfedOptionsValidIssuanceCertificateTFObjectTypes})
+	if certificates, ok := apiObject.GetValidIssuanceCertificatesOk(); ok && certificates != nil {
+		certificateValues := make([]attr.Value, 0, len(certificates))
+		for _, certificate := range certificates {
+			certificateValue, d := types.ObjectValue(applicationWsfedOptionsValidIssuanceCertificateTFObjectTypes, map[string]attr.Value{
+				"certificate_id": framework.PingOneResourceIDOkToTF(certificate.GetIdOk()),
+			})
+			diags.Append(d...)
+			certificateValues = append(certificateValues, certificateValue)
+		}
+
+		certificatesSet, d := types.SetValue(types.ObjectType{AttrTypes: applicationWsfedOptionsValidIssuanceCertificateTFObjectTypes}, certificateValues)
+		diags.Append(d...)
+		validIssuanceCertificates = certificatesSet
+	}
+
 	attributesMap := map[string]attr.Value{
+		"assertion_duration":             framework.Int32OkToTF(apiObject.GetAssertionDurationOk()),
 		"audience_restriction":           framework.StringOkToTF(apiObject.GetAudienceRestrictionOk()),
 		"cors_settings":                  corsSettings,
 		"domain_name":                    framework.StringOkToTF(apiObject.GetDomainNameOk()),
+		"hybrid_join_device_attribute":   framework.StringOkToTF(apiObject.GetHybridJoinDeviceAttributeOk()),
 		"idp_signing_key":                idpSigningKey,
 		"kerberos":                       kerberos,
 		"reply_url":                      framework.StringOkToTF(apiObject.GetReplyUrlOk()),
 		"slo_endpoint":                   framework.StringOkToTF(apiObject.GetSloEndpointOk()),
+		"sts_token_type":                 framework.StringOkToTF(apiObject.GetStsTokenTypeOk()),
 		"subject_name_identifier_format": framework.EnumOkToTF(apiObject.GetSubjectNameIdentifierFormatOk()),
 		"type":                           framework.EnumOkToTF(apiObject.GetTypeOk()),
+		"use_mex13":                      framework.BoolOkToTF(apiObject.GetUseMex13Ok()),
+		"user_attribute_username_match":  framework.StringOkToTF(apiObject.GetUserAttributeUsernameMatchOk()),
+		"user_attribute_x509_match":      framework.StringOkToTF(apiObject.GetUserAttributeX509MatchOk()),
+		"valid_issuance_certificates":    validIssuanceCertificates,
+		"ws_trust_version":               framework.StringOkToTF(apiObject.GetWsTrustVersionOk()),
 	}
 
 	returnVar, d := types.ObjectValue(applicationWsfedOptionsTFObjectTypes, attributesMap)

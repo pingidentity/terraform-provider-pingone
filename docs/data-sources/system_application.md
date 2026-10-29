@@ -52,6 +52,8 @@ data "pingone_system_application" "example_by_id" {
 - `hidden_from_app_portal` (Boolean) A boolean to specify whether the application is hidden in the application portal despite the configured group access policy.
 - `icon` (Attributes) The HREF and the ID for the application icon. (see [below for nested schema](#nestedatt--icon))
 - `id` (String) The ID of this resource.
+- `logout_type` (String) A string that specifies the logout type for the application. Options are "OIDC_RP_INITIATED" (the default) and "SAML2_SLO".
+- `manage_devices_via_my_account_enabled` (Boolean) A boolean that specifies whether PingID users can manage their devices using the MyAccount app. Applicable only when the "type" is "PING_ONE_SELF_SERVICE".
 - `name` (String) The name of the system application.
 - `pkce_enforcement` (String) A string that specifies how PKCE request parameters are handled on the authorize request.
 - `protocol` (String) A string that specifies the protocol used by the application.
