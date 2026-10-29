@@ -259,15 +259,58 @@ func applicationMobileAppOkToTF(ctx context.Context, apiObject *management.Appli
 	integrityDetection, d := applicationMobileAppIntegrityDetectionOkToTF(ctx, integrityDetectionObj, ok, integrityDetectionState)
 	diags.Append(d...)
 
+	allowAuthenticationDeviceLockedObj, allowAuthenticationDeviceLockedOk := apiObject.GetAllowAuthenticationDeviceLockedOk()
+	allowAuthenticationDeviceLocked, d := applicationMobileAppEnabledToggleOkToTF(allowAuthenticationDeviceLockedObj, allowAuthenticationDeviceLockedOk, "allow_authentication_device_locked")
+	diags.Append(d...)
+
+	allowUnPairAndChangeDeviceFromAppObj, allowUnPairAndChangeDeviceFromAppOk := apiObject.GetAllowUnPairAndChangeDeviceFromAppOk()
+	allowUnPairAndChangeDeviceFromApp, d := applicationMobileAppEnabledToggleOkToTF(allowUnPairAndChangeDeviceFromAppObj, allowUnPairAndChangeDeviceFromAppOk, "allow_un_pair_and_change_device_from_app")
+	diags.Append(d...)
+
+	mobileAppSecurityPinRequireObj, mobileAppSecurityPinRequireOk := apiObject.GetMobileAppSecurityPinRequireOk()
+	mobileAppSecurityPinRequire, d := applicationMobileAppSecurityPinRequireOkToTF(mobileAppSecurityPinRequireObj, mobileAppSecurityPinRequireOk)
+	diags.Append(d...)
+
+	mobileDeviceBiometricsSettingObj, mobileDeviceBiometricsSettingOk := apiObject.GetMobileDeviceBiometricsSettingOk()
+	mobileDeviceBiometricsSetting, d := applicationMobileAppBiometricsSettingOkToTF(mobileDeviceBiometricsSettingObj, mobileDeviceBiometricsSettingOk)
+	diags.Append(d...)
+
+	notifyOptionalMobileVersionUpdatesObj, notifyOptionalMobileVersionUpdatesOk := apiObject.GetNotifyOptionalMobileVersionUpdatesOk()
+	notifyOptionalMobileVersionUpdates, d := applicationMobileAppVersionUpdatesOkToTF(notifyOptionalMobileVersionUpdatesObj, notifyOptionalMobileVersionUpdatesOk, "notify_optional_mobile_version_updates")
+	diags.Append(d...)
+
+	notifyRequireMobileVersionUpdatesObj, notifyRequireMobileVersionUpdatesOk := apiObject.GetNotifyRequireMobileVersionUpdatesOk()
+	notifyRequireMobileVersionUpdates, d := applicationMobileAppVersionUpdatesOkToTF(notifyRequireMobileVersionUpdatesObj, notifyRequireMobileVersionUpdatesOk, "notify_require_mobile_version_updates")
+	diags.Append(d...)
+
+	otpPushNotificationEnabledObj, otpPushNotificationEnabledOk := apiObject.GetOtpPushNotificationEnabledOk()
+	otpPushNotificationEnabled, d := applicationMobileAppEnabledToggleOkToTF(otpPushNotificationEnabledObj, otpPushNotificationEnabledOk, "otp_push_notification_enabled")
+	diags.Append(d...)
+
+	showAuthenticationInformationObj, showAuthenticationInformationOk := apiObject.GetShowAuthenticationInformationOk()
+	showAuthenticationInformation, d := applicationMobileAppEnabledToggleOkToTF(showAuthenticationInformationObj, showAuthenticationInformationOk, "show_authentication_information")
+	diags.Append(d...)
+
 	attributesMap := map[string]attr.Value{
-		"bundle_id":                framework.StringOkToTF(apiObject.GetBundleIdOk()),
-		"huawei_app_id":            framework.StringOkToTF(apiObject.GetHuaweiAppIdOk()),
-		"huawei_package_name":      framework.StringOkToTF(apiObject.GetHuaweiPackageNameOk()),
-		"integrity_detection":      integrityDetection,
-		"package_name":             framework.StringOkToTF(apiObject.GetPackageNameOk()),
-		"passcode_grace_period":    framework.Int32OkToTF(apiObject.GetPasscodeGracePeriodOk()),
-		"passcode_refresh_seconds": types.Int32Null(),
-		"universal_app_link":       framework.StringOkToTF(apiObject.GetUriPrefixOk()),
+		"allow_authentication_device_locked":       allowAuthenticationDeviceLocked,
+		"allow_un_pair_and_change_device_from_app": allowUnPairAndChangeDeviceFromApp,
+		"apple_team_id":                          framework.StringOkToTF(apiObject.GetAppleTeamIdOk()),
+		"bundle_id":                              framework.StringOkToTF(apiObject.GetBundleIdOk()),
+		"huawei_app_id":                          framework.StringOkToTF(apiObject.GetHuaweiAppIdOk()),
+		"huawei_package_name":                    framework.StringOkToTF(apiObject.GetHuaweiPackageNameOk()),
+		"integrity_detection":                    integrityDetection,
+		"mobile_app_security_pin_require":        mobileAppSecurityPinRequire,
+		"mobile_device_biometrics_setting":       mobileDeviceBiometricsSetting,
+		"notify_optional_mobile_version_updates": notifyOptionalMobileVersionUpdates,
+		"notify_require_mobile_version_updates":  notifyRequireMobileVersionUpdates,
+		"otp_push_notification_enabled":          otpPushNotificationEnabled,
+		"package_name":                           framework.StringOkToTF(apiObject.GetPackageNameOk()),
+		"passcode_grace_period":                  framework.Int32OkToTF(apiObject.GetPasscodeGracePeriodOk()),
+		"passcode_refresh_seconds":               types.Int32Null(),
+		"ping_id_settings":                       framework.BoolOkToTF(apiObject.GetPingIDSettingsOk()),
+		"push":                                   applicationMobileAppPushOkToTF(apiObject.GetPushOk()),
+		"show_authentication_information":        showAuthenticationInformation,
+		"universal_app_link":                     framework.StringOkToTF(apiObject.GetUriPrefixOk()),
 	}
 
 	if v, ok := apiObject.GetPasscodeRefreshDurationOk(); ok && v != nil {
@@ -315,11 +358,16 @@ func applicationMobileAppIntegrityDetectionOkToTF(ctx context.Context, apiObject
 	googlePlay, d := applicationMobileAppIntegrityDetectionGooglePlayOkToTF(googlePlayObject, ok, googlePlayState)
 	diags.Append(d...)
 
+	appleAppAttestSettingsObj, appleAppAttestSettingsOk := apiObject.GetAppleAppAttestSettingsOk()
+	appleAppAttestSettings, d := applicationMobileAppAppleAppAttestSettingsOkToTF(appleAppAttestSettingsObj, appleAppAttestSettingsOk)
+	diags.Append(d...)
+
 	attributesMap := map[string]attr.Value{
-		"cache_duration":     cacheDuration,
-		"enabled":            types.BoolNull(),
-		"excluded_platforms": framework.EnumSetOkToTF(apiObject.GetExcludedPlatformsOk()),
-		"google_play":        googlePlay,
+		"apple_app_attest_settings": appleAppAttestSettings,
+		"cache_duration":            cacheDuration,
+		"enabled":                   types.BoolNull(),
+		"excluded_platforms":        framework.EnumSetOkToTF(apiObject.GetExcludedPlatformsOk()),
+		"google_play":               googlePlay,
 	}
 
 	if v, ok := apiObject.GetModeOk(); ok {
@@ -349,6 +397,154 @@ func applicationMobileAppIntegrityDetectionCacheDurationOkToTF(apiObject *manage
 	}
 
 	returnVar, d := types.ObjectValue(applicationOidcMobileAppIntegrityDetectionCacheDurationTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func applicationMobileAppAppleAppAttestSettingsOkToTF(apiObject *management.ApplicationOIDCAllOfMobileIntegrityDetectionAppleAppAttestSettings, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(applicationOidcMobileAppAppleAppAttestSettingsTFObjectTypes), diags
+	}
+
+	attributesMap := map[string]attr.Value{
+		"enabled": framework.BoolOkToTF(apiObject.GetEnabledOk()),
+	}
+
+	returnVar, d := types.ObjectValue(applicationOidcMobileAppAppleAppAttestSettingsTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func applicationMobileAppEnabledToggleOkToTF(apiObject any, ok bool, attributeName string) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(applicationOidcMobileAppEnabledToggleTFObjectTypes), diags
+	}
+
+	type enabledGetter interface {
+		GetEnabled() bool
+		GetEnabledOk() (*bool, bool)
+	}
+
+	toggle, okToggle := apiObject.(enabledGetter)
+	if !okToggle {
+		diags.AddError(
+			"Unsupported enabled toggle type",
+			fmt.Sprintf("The generated SDK type for attribute `%s` does not implement the enabled toggle getters.  Please report this to the provider maintainers.", attributeName),
+		)
+		return types.ObjectNull(applicationOidcMobileAppEnabledToggleTFObjectTypes), diags
+	}
+
+	attributesMap := map[string]attr.Value{
+		"enabled": framework.BoolOkToTF(toggle.GetEnabledOk()),
+	}
+
+	returnVar, d := types.ObjectValue(applicationOidcMobileAppEnabledToggleTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func applicationMobileAppPushOkToTF(apiObject *management.ApplicationOIDCAllOfMobilePush, ok bool) types.Object {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(applicationOidcMobileAppPushTFObjectTypes)
+	}
+
+	numberMatching := types.ObjectNull(applicationOidcMobileAppPushNumberMatchingTFObjectTypes)
+	if numberMatchingObj, okNumberMatching := apiObject.GetNumberMatchingOk(); okNumberMatching && numberMatchingObj != nil {
+		numberMatchingValue, d := types.ObjectValue(applicationOidcMobileAppPushNumberMatchingTFObjectTypes, map[string]attr.Value{
+			"type": framework.EnumOkToTF(numberMatchingObj.GetTypeOk()),
+		})
+		diags.Append(d...)
+		numberMatching = numberMatchingValue
+	}
+
+	returnVar, d := types.ObjectValue(applicationOidcMobileAppPushTFObjectTypes, map[string]attr.Value{
+		"number_matching": numberMatching,
+	})
+	diags.Append(d...)
+
+	return returnVar
+}
+
+func applicationMobileAppSecurityPinRequireOkToTF(apiObject *management.ApplicationOIDCAllOfMobileMobileAppSecurityPinRequire, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(applicationOidcMobileAppSecurityPinRequireTFObjectTypes), diags
+	}
+
+	attributesMap := map[string]attr.Value{
+		"enabled":                 framework.BoolOkToTF(apiObject.GetEnabledOk()),
+		"require_for_all_devices": framework.BoolOkToTF(apiObject.GetRequireForAllDevicesOk()),
+		"security_pin_digit":      framework.EnumOkToTF(apiObject.GetSecurityPinDigitOk()),
+	}
+
+	returnVar, d := types.ObjectValue(applicationOidcMobileAppSecurityPinRequireTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func applicationMobileAppBiometricsSettingOkToTF(apiObject *management.ApplicationOIDCAllOfMobileMobileDeviceBiometricsSetting, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(applicationOidcMobileAppBiometricsSettingTFObjectTypes), diags
+	}
+
+	attributesMap := map[string]attr.Value{
+		"device_passcode_fallback_enabled": framework.BoolOkToTF(apiObject.GetDevicePasscodeFallbackEnabledOk()),
+		"face_id_consent_enabled":          framework.BoolOkToTF(apiObject.GetFaceIdConsentEnabledOk()),
+		"notification_actions_enabled":     framework.BoolOkToTF(apiObject.GetNotificationActionsEnabledOk()),
+		"required":                         framework.BoolOkToTF(apiObject.GetRequiredOk()),
+	}
+
+	returnVar, d := types.ObjectValue(applicationOidcMobileAppBiometricsSettingTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func applicationMobileAppVersionUpdatesOkToTF(apiObject any, ok bool, attributeName string) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(applicationOidcMobileAppVersionUpdatesTFObjectTypes), diags
+	}
+
+	type versionUpdatesGetter interface {
+		GetEnabled() bool
+		GetEnabledOk() (*bool, bool)
+		GetAndroid() string
+		GetAndroidOk() (*string, bool)
+		GetIos() string
+		GetIosOk() (*string, bool)
+	}
+
+	updates, okUpdates := apiObject.(versionUpdatesGetter)
+	if !okUpdates {
+		diags.AddError(
+			"Unsupported version updates type",
+			fmt.Sprintf("The generated SDK type for attribute `%s` does not implement the version updates getters.  Please report this to the provider maintainers.", attributeName),
+		)
+		return types.ObjectNull(applicationOidcMobileAppVersionUpdatesTFObjectTypes), diags
+	}
+
+	attributesMap := map[string]attr.Value{
+		"android": framework.StringOkToTF(updates.GetAndroidOk()),
+		"enabled": framework.BoolOkToTF(updates.GetEnabledOk()),
+		"ios":     framework.StringOkToTF(updates.GetIosOk()),
+	}
+
+	returnVar, d := types.ObjectValue(applicationOidcMobileAppVersionUpdatesTFObjectTypes, attributesMap)
 	diags.Append(d...)
 
 	return returnVar, diags

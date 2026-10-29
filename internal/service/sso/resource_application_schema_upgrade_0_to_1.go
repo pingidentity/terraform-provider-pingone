@@ -961,13 +961,23 @@ func (p *applicationOIDCOptionsResourceModelV0) schemaUpgradeMobileAppV0toV1(ctx
 		diags.Append(d...)
 
 		upgradedStateData := applicationOIDCMobileAppResourceModelV1{
-			BundleId:               priorStateData[0].BundleId,
-			HuaweiAppId:            priorStateData[0].HuaweiAppId,
-			HuaweiPackageName:      priorStateData[0].HuaweiPackageName,
-			IntegrityDetection:     integrityDetection,
-			PackageName:            priorStateData[0].PackageName,
-			PasscodeRefreshSeconds: priorStateData[0].PasscodeRefreshSeconds,
-			UniversalAppLink:       priorStateData[0].UniversalAppLink,
+			AllowAuthenticationDeviceLocked:    types.ObjectNull(applicationOidcMobileAppEnabledToggleTFObjectTypes),
+			AllowUnPairAndChangeDeviceFromApp:  types.ObjectNull(applicationOidcMobileAppEnabledToggleTFObjectTypes),
+			AppleTeamId:                        types.StringNull(),
+			BundleId:                           priorStateData[0].BundleId,
+			HuaweiAppId:                        priorStateData[0].HuaweiAppId,
+			HuaweiPackageName:                  priorStateData[0].HuaweiPackageName,
+			IntegrityDetection:                 integrityDetection,
+			MobileAppSecurityPinRequire:        types.ObjectNull(applicationOidcMobileAppSecurityPinRequireTFObjectTypes),
+			MobileDeviceBiometricsSetting:      types.ObjectNull(applicationOidcMobileAppBiometricsSettingTFObjectTypes),
+			NotifyOptionalMobileVersionUpdates: types.ObjectNull(applicationOidcMobileAppVersionUpdatesTFObjectTypes),
+			NotifyRequireMobileVersionUpdates:  types.ObjectNull(applicationOidcMobileAppVersionUpdatesTFObjectTypes),
+			OtpPushNotificationEnabled:         types.ObjectNull(applicationOidcMobileAppEnabledToggleTFObjectTypes),
+			PackageName:                        priorStateData[0].PackageName,
+			PasscodeRefreshSeconds:             priorStateData[0].PasscodeRefreshSeconds,
+			PingIdSettings:                     types.BoolNull(),
+			ShowAuthenticationInformation:      types.ObjectNull(applicationOidcMobileAppEnabledToggleTFObjectTypes),
+			UniversalAppLink:                   priorStateData[0].UniversalAppLink,
 		}
 
 		returnVar, d := types.ObjectValueFrom(ctx, attributeTypes, upgradedStateData)
@@ -1006,10 +1016,11 @@ func (p *applicationOIDCMobileAppResourceModelV0) schemaUpgradeIntegrityDetectio
 		diags.Append(d...)
 
 		upgradedStateData := applicationOIDCMobileAppIntegrityDetectionResourceModelV1{
-			CacheDuration:     cacheDuration,
-			Enabled:           priorStateData[0].Enabled,
-			ExcludedPlatforms: priorStateData[0].ExcludedPlatforms,
-			GooglePlay:        googlePlay,
+			AppleAppAttestSettings: types.ObjectNull(applicationOidcMobileAppAppleAppAttestSettingsTFObjectTypes),
+			CacheDuration:          cacheDuration,
+			Enabled:                priorStateData[0].Enabled,
+			ExcludedPlatforms:      priorStateData[0].ExcludedPlatforms,
+			GooglePlay:             googlePlay,
 		}
 
 		returnVar, d := types.ObjectValueFrom(ctx, attributeTypes, upgradedStateData)
