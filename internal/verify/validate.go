@@ -24,9 +24,6 @@ var IPv4IPv6Regexp = regexp.MustCompile(fmt.Sprintf(`%s|%s`, IPv4RegexpFull.Stri
 var HexColorCode = regexp.MustCompile(`^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$`)
 
 var IsDomain = regexp.MustCompile(`^(?:[\w-]+\.)+[a-z]{2,}$`)
-var urlRegexStringWithoutProtocol = `(?:(?:[\w-]+\.)+[a-z]{2,}|localhost)(?:\:[\d]{1,})*(?:\/(?:[\w.-]|%[\da-fA-F]{2})+)*(?:\/(?:[\w\:.-]|%[\da-fA-F]{2})+)?\/?(?:\?.*)?$`
-var IsURLWithHTTPorHTTPS = regexp.MustCompile(fmt.Sprintf(`^http[s]{0,1}:\/\/%s`, urlRegexStringWithoutProtocol))
-var IsURLWithHTTPS = regexp.MustCompile(fmt.Sprintf(`^https:\/\/%s`, urlRegexStringWithoutProtocol))
 var IsTwoCharCountryCode = regexp.MustCompile(`^[A-Z]{2}$`)
 var IsHostname = regexp.MustCompile(`^(?:[\w-]+\.)+[a-z]{2,}(?:\/[\w-]+)*(?:\/[\w.-]+)?\/?(?:\?.*)?$`)
 

@@ -26,6 +26,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
+	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
@@ -246,7 +247,7 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 						MarkdownDescription: logoHrefDescription.MarkdownDescription,
 						Required:            true,
 						Validators: []validator.String{
-							stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
+							stringvalidatorinternal.IsURLWithHTTPSValidator(),
 						},
 					},
 				},
@@ -277,7 +278,7 @@ func (r *BrandingThemeResource) Schema(ctx context.Context, req resource.SchemaR
 						MarkdownDescription: backgroundImageHrefDescription.MarkdownDescription,
 						Required:            true,
 						Validators: []validator.String{
-							stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
+							stringvalidatorinternal.IsURLWithHTTPSValidator(),
 						},
 					},
 				},

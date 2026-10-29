@@ -835,7 +835,7 @@ func (r *PhoneDeliverySettingsResource) Schema(ctx context.Context, req resource
 												path.MatchRelative().AtParent().AtName("method"),
 											),
 										),
-										stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "URL must be a valid HTTPS URL"),
+										stringvalidatorinternal.IsURLWithHTTPSValidator(),
 									},
 								},
 							},
