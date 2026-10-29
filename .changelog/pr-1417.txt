@@ -1,0 +1,3 @@
+```release-note:bug
+Fixed an issue where schema validation would reject valid URLs containing percent-encoded characters.
+```

@@ -283,7 +283,7 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 						Description: "The URL or fully qualified path to the image file used for the credential background.  This can be retrieved from the `uploaded_image.href` parameter of the `pingone_image` resource.  Image size must not exceed 50 KB.",
 						Optional:    true,
 						Validators: []validator.String{
-							stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
+							customstringvalidator.IsURLWithHTTPSValidator(),
 							customstringvalidator.IsRequiredIfRegexMatchesPathValue(
 								regexp.MustCompile(`\${backgroundImage}`),
 								"The metadata.background_image argument is required because the ${backgroundImage} element is defined in the card_design_template.",
@@ -346,7 +346,7 @@ func (r *CredentialTypeResource) Schema(ctx context.Context, req resource.Schema
 						Optional:    true,
 
 						Validators: []validator.String{
-							stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
+							customstringvalidator.IsURLWithHTTPSValidator(),
 							customstringvalidator.IsRequiredIfRegexMatchesPathValue(
 								regexp.MustCompile(`\${logoImage}`),
 								"The metadata.logo_image argument is required because the ${logoImage} element is defined in the card_design_template.",

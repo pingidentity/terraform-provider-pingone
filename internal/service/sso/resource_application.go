@@ -35,6 +35,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	listvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/listvalidator"
 	objectplanmodifierinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectplanmodifier"
+	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/sso/helpers/beta"
@@ -917,7 +918,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						Required:            true,
 
 						Validators: []validator.String{
-							stringvalidator.RegexMatches(verify.IsURLWithHTTPorHTTPS, "Value must be a valid URL with `http://` or `https://` prefix."),
+							stringvalidatorinternal.IsURLWithHTTPorHTTPSValidator(),
 						},
 					},
 				},
@@ -959,7 +960,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						Required:            true,
 
 						Validators: []validator.String{
-							stringvalidator.RegexMatches(verify.IsURLWithHTTPorHTTPS, "Value must be a valid URL with `http://` or `https://` prefix."),
+							stringvalidatorinternal.IsURLWithHTTPorHTTPSValidator(),
 						},
 					},
 				},
@@ -1619,7 +1620,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						Optional:    true,
 
 						Validators: []validator.String{
-							stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Expected value to have a url with schema of \"https\"."),
+							stringvalidatorinternal.IsURLWithHTTPSValidator(),
 						},
 					},
 
@@ -1718,7 +1719,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						Optional:    true,
 
 						Validators: []validator.String{
-							stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Expected value to have a url with schema of \"https\"."),
+							stringvalidatorinternal.IsURLWithHTTPSValidator(),
 						},
 					},
 
@@ -1728,7 +1729,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						Optional:            true,
 
 						Validators: []validator.String{
-							stringvalidator.RegexMatches(verify.IsURLWithHTTPorHTTPS, "Expected value to have a url with schema of \"http\" or \"https\"."),
+							stringvalidatorinternal.IsURLWithHTTPorHTTPSValidator(),
 						},
 					},
 
@@ -1972,14 +1973,14 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						Required:    true,
 						Description: "The URL that the replying party (such as, Office365) uses to accept submissions of RequestSecurityTokenResponse messages that are a result of SSO requests.",
 						Validators: []validator.String{
-							stringvalidator.RegexMatches(verify.IsURLWithHTTPorHTTPS, "Expected value to have a url with schema of \"http\" or \"https\"."),
+							stringvalidatorinternal.IsURLWithHTTPorHTTPSValidator(),
 						},
 					},
 					"slo_endpoint": schema.StringAttribute{
 						Optional:    true,
 						Description: "The single logout endpoint URL.",
 						Validators: []validator.String{
-							stringvalidator.RegexMatches(verify.IsURLWithHTTPorHTTPS, "Expected value to have a url with schema of \"http\" or \"https\"."),
+							stringvalidatorinternal.IsURLWithHTTPorHTTPSValidator(),
 						},
 					},
 					"subject_name_identifier_format": schema.StringAttribute{
