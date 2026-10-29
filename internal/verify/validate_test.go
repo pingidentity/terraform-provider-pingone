@@ -37,6 +37,8 @@ func TestIsURLWithHTTPS(t *testing.T) {
 		{name: "ftp scheme", value: "ftp://www.my-test-domain.com", wantErr: true},
 		{name: "no scheme", value: "www.my-test-domain.com", wantErr: true},
 		{name: "no host", value: "https:///path", wantErr: true},
+		{name: "no host, port only", value: "https://:3000/path", wantErr: true},
+		{name: "no host, userinfo and port only", value: "https://user@:3000/path", wantErr: true},
 		{name: "empty", value: "", wantErr: true},
 		{name: "invalid port", value: "https://example.com:port/path", wantErr: true},
 		{name: "invalid percent escape", value: "https://example.com/%zz", wantErr: true},

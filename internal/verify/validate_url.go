@@ -39,7 +39,7 @@ func IsURLWithSchemes(value string, schemes ...string) error {
 		return fmt.Errorf("value is not a valid URL: %w", err)
 	}
 
-	if u.Host == "" {
+	if u.Hostname() == "" {
 		return fmt.Errorf("URL does not include a host, got: %s", value)
 	}
 
