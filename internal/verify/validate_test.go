@@ -31,6 +31,7 @@ var (
 		"my-test-domain.%s/path-1.2.3/",
 		"my-test-domain.%s:3000/path-1.2.3/",
 		"my-test-domain.%s/path-1.2.3/path-1.2.3/path-1.2.3/path-1.2.3/path-1.2.3/path-1.2.3/path-1.2.3/",
+		"my-test-domain.%s/path/with-%%25-encoding",
 	}
 
 	tlds = []string{
