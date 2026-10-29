@@ -23,8 +23,10 @@ resource "pingone_application" "my_awesome_web_app" {
     redirect_uris              = ["https://my-website.com"]
 
     include_x5t                                   = true
+    include_typ                                   = true
     op_session_check_enabled                      = true
     request_scopes_for_multiple_resources_enabled = true
+    skip_token_session_validation                 = true
 
     signing = {
       key_rotation_policy_id = pingone_key_rotation_policy.my_awesome_key_rotation_policy.id

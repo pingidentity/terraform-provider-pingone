@@ -38,15 +38,17 @@ import (
 type SystemApplicationResource serviceClientType
 
 type systemApplicationResourceModel struct {
-	Id                        pingonetypes.ResourceIDValue `tfsdk:"id"`
-	EnvironmentId             pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
-	Type                      types.String                 `tfsdk:"type"`
-	Name                      types.String                 `tfsdk:"name"`
-	Enabled                   types.Bool                   `tfsdk:"enabled"`
-	AccessControlRoleType     types.String                 `tfsdk:"access_control_role_type"`
-	AccessControlGroupOptions types.Object                 `tfsdk:"access_control_group_options"`
-	ApplyDefaultTheme         types.Bool                   `tfsdk:"apply_default_theme"`
-	EnableDefaultThemeFooter  types.Bool                   `tfsdk:"enable_default_theme_footer"`
+	Id                               pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId                    pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	Type                             types.String                 `tfsdk:"type"`
+	Name                             types.String                 `tfsdk:"name"`
+	Enabled                          types.Bool                   `tfsdk:"enabled"`
+	AccessControlRoleType            types.String                 `tfsdk:"access_control_role_type"`
+	AccessControlGroupOptions        types.Object                 `tfsdk:"access_control_group_options"`
+	ApplyDefaultTheme                types.Bool                   `tfsdk:"apply_default_theme"`
+	EnableDefaultThemeFooter         types.Bool                   `tfsdk:"enable_default_theme_footer"`
+	LogoutType                       types.String                 `tfsdk:"logout_type"`
+	ManageDevicesViaMyAccountEnabled types.Bool                   `tfsdk:"manage_devices_via_my_account_enabled"`
 }
 
 type applicationAccessControlGroupOptionsResourceModel struct {
@@ -113,6 +115,17 @@ func (r *SystemApplicationResource) Schema(ctx context.Context, req resource.Sch
 
 	enableDefaultThemeFooterDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether to show the default theme footer on the self-service application. Configurable only when the `type` is `PING_ONE_SELF_SERVICE` and `apply_default_theme` is also `true`.",
+	)
+
+	logoutTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the logout type for the application. Configurable only when the `type` is `PING_ONE_SELF_SERVICE` or `PING_ONE_PORTAL`.",
+	).AllowedValues(
+		"OIDC_RP_INITIATED",
+		"SAML2_SLO",
+	).DefaultValue("OIDC_RP_INITIATED")
+
+	manageDevicesViaMyAccountEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether PingID users can manage their devices using the MyAccount app. When set to `true`, this also adds the MyAccount app to all PingID policies that already include Device Management. Configurable only when the `type` is `PING_ONE_SELF_SERVICE`.",
 	)
 
 	resp.Schema = schema.Schema{
@@ -217,6 +230,31 @@ func (r *SystemApplicationResource) Schema(ctx context.Context, req resource.Sch
 				Description:         enableDefaultThemeFooterDescription.Description,
 				MarkdownDescription: enableDefaultThemeFooterDescription.MarkdownDescription,
 				Optional:            true,
+
+				Validators: []validator.Bool{
+					boolvalidatorinternal.ConflictsIfMatchesPathValue(
+						types.StringValue(string(management.ENUMAPPLICATIONTYPE_PING_ONE_PORTAL)),
+						path.MatchRoot("type"),
+					),
+				},
+			},
+
+			"logout_type": schema.StringAttribute{
+				Description:         logoutTypeDescription.Description,
+				MarkdownDescription: logoutTypeDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
+
+				Validators: []validator.String{
+					stringvalidator.OneOf("OIDC_RP_INITIATED", "SAML2_SLO"),
+				},
+			},
+
+			"manage_devices_via_my_account_enabled": schema.BoolAttribute{
+				Description:         manageDevicesViaMyAccountEnabledDescription.Description,
+				MarkdownDescription: manageDevicesViaMyAccountEnabledDescription.MarkdownDescription,
+				Optional:            true,
+				Computed:            true,
 
 				Validators: []validator.Bool{
 					boolvalidatorinternal.ConflictsIfMatchesPathValue(
@@ -594,6 +632,10 @@ func (p *systemApplicationResourceModel) expand(ctx context.Context, apiClient *
 			updateApplication.SetApplyDefaultTheme(p.ApplyDefaultTheme.ValueBool())
 		}
 
+		if !p.LogoutType.IsNull() && !p.LogoutType.IsUnknown() {
+			updateApplication.SetLogoutType(p.LogoutType.ValueString())
+		}
+
 		data.ApplicationPingOnePortal = updateApplication
 
 		var ok bool
@@ -632,6 +674,14 @@ func (p *systemApplicationResourceModel) expand(ctx context.Context, apiClient *
 
 		if !p.EnableDefaultThemeFooter.IsNull() && !p.EnableDefaultThemeFooter.IsUnknown() {
 			updateApplication.SetEnableDefaultThemeFooter(p.EnableDefaultThemeFooter.ValueBool())
+		}
+
+		if !p.LogoutType.IsNull() && !p.LogoutType.IsUnknown() {
+			updateApplication.SetLogoutType(p.LogoutType.ValueString())
+		}
+
+		if !p.ManageDevicesViaMyAccountEnabled.IsNull() && !p.ManageDevicesViaMyAccountEnabled.IsUnknown() {
+			updateApplication.SetManageDevicesViaMyAccountEnabled(p.ManageDevicesViaMyAccountEnabled.ValueBool())
 		}
 
 		data.ApplicationPingOneSelfService = updateApplication
@@ -677,6 +727,8 @@ func (p *systemApplicationResourceModel) toState(apiObject *management.ReadOneAp
 
 		p.ApplyDefaultTheme = framework.BoolOkToTF(apiObject.ApplicationPingOnePortal.GetApplyDefaultThemeOk())
 		p.EnableDefaultThemeFooter = types.BoolNull()
+		p.LogoutType = framework.StringOkToTF(apiObject.ApplicationPingOnePortal.GetLogoutTypeOk())
+		p.ManageDevicesViaMyAccountEnabled = types.BoolNull()
 	}
 
 	if apiObject.ApplicationPingOneSelfService != nil {
@@ -692,6 +744,8 @@ func (p *systemApplicationResourceModel) toState(apiObject *management.ReadOneAp
 
 		p.ApplyDefaultTheme = framework.BoolOkToTF(apiObject.ApplicationPingOneSelfService.GetApplyDefaultThemeOk())
 		p.EnableDefaultThemeFooter = framework.BoolOkToTF(apiObject.ApplicationPingOneSelfService.GetEnableDefaultThemeFooterOk())
+		p.LogoutType = framework.StringOkToTF(apiObject.ApplicationPingOneSelfService.GetLogoutTypeOk())
+		p.ManageDevicesViaMyAccountEnabled = framework.BoolOkToTF(apiObject.ApplicationPingOneSelfService.GetManageDevicesViaMyAccountEnabledOk())
 	}
 
 	p.Id = framework.PingOneResourceIDToTF(apiObjectCommon.GetId())

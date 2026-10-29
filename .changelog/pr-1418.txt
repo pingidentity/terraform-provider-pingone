@@ -1,0 +1,23 @@
+```release-note:enhancement
+`resource/pingone_application`: Added `include_typ` and `skip_token_session_validation` attributes to the `oidc_options` block, added support for the `AI_AGENT` application type, and added `hybrid_join_device_attribute`, `sts_token_type`, `use_mex13`, `user_attribute_username_match`, `user_attribute_x509_match`, `valid_issuance_certificates`, `assertion_duration`, and `ws_trust_version` attributes to the `wsfed_options` block.
+```
+
+```release-note:enhancement
+`data-source/pingone_application`: Added `include_typ` and `skip_token_session_validation` attributes to the `oidc_options` block, and added `hybrid_join_device_attribute`, `sts_token_type`, `use_mex13`, `user_attribute_username_match`, `user_attribute_x509_match`, `valid_issuance_certificates`, `assertion_duration`, and `ws_trust_version` attributes to the `wsfed_options` block.
+```
+
+```release-note:enhancement
+`resource/pingone_application`: Added `external_id` attribute to the `external_link_options` block and an `enable_always_accept_acs_url_in_signed_authn_request` attribute to the `saml_options` block.
+```
+
+```release-note:enhancement
+`data-source/pingone_application`: Added `external_id` attribute to the `external_link_options` block and an `enable_always_accept_acs_url_in_signed_authn_request` attribute to the `saml_options` block.
+```
+
+```release-note:enhancement
+`resource/pingone_system_application`: Added `logout_type` and `manage_devices_via_my_account_enabled` attributes.
+```
+
+```release-note:enhancement
+`data-source/pingone_system_application`: Added `logout_type` and `manage_devices_via_my_account_enabled` attributes.
+```

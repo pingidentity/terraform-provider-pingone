@@ -69,6 +69,7 @@ type applicationAccessControlGroupOptionsResourceModelV1 struct {
 }
 
 type applicationExternalLinkOptionsResourceModelV1 struct {
+	ExternalId  types.String `tfsdk:"external_id"`
 	HomePageUrl types.String `tfsdk:"home_page_url"`
 }
 
@@ -84,6 +85,7 @@ type applicationOIDCOptionsCommonModelV1 struct {
 	GrantTypes                                    types.Set    `tfsdk:"grant_types"`
 	HomePageUrl                                   types.String `tfsdk:"home_page_url"`
 	IdpSignoff                                    types.Bool   `tfsdk:"idp_signoff"`
+	IncludeTyp                                    types.Bool   `tfsdk:"include_typ"`
 	IncludeX5t                                    types.Bool   `tfsdk:"include_x5t"`
 	InitiateLoginUri                              types.String `tfsdk:"initiate_login_uri"`
 	Jwks                                          types.String `tfsdk:"jwks"`
@@ -102,6 +104,7 @@ type applicationOIDCOptionsCommonModelV1 struct {
 	RequestScopesForMultipleResourcesEnabled      types.Bool   `tfsdk:"request_scopes_for_multiple_resources_enabled"`
 	RequireSignedRequestObject                    types.Bool   `tfsdk:"require_signed_request_object"`
 	ResponseTypes                                 types.Set    `tfsdk:"response_types"`
+	SkipTokenSessionValidation                    types.Bool   `tfsdk:"skip_token_session_validation"`
 	Signing                                       types.Object `tfsdk:"signing"`
 	SupportUnsignedRequestObject                  types.Bool   `tfsdk:"support_unsigned_request_object"`
 	TargetLinkUri                                 types.String `tfsdk:"target_link_uri"`
@@ -151,6 +154,12 @@ type applicationOIDCMobileAppIntegrityDetectionResourceModelV1 struct {
 	GooglePlay        types.Object `tfsdk:"google_play"`
 }
 
+type applicationOIDCMobileAppVersionUpdatesResourceModelV1 struct {
+	Android types.String `tfsdk:"android"`
+	Enabled types.Bool   `tfsdk:"enabled"`
+	Ios     types.String `tfsdk:"ios"`
+}
+
 type applicationOIDCMobileAppIntegrityDetectionCacheDurationResourceModelV1 struct {
 	Amount types.Int32  `tfsdk:"amount"`
 	Units  types.String `tfsdk:"units"`
@@ -164,26 +173,27 @@ type applicationOIDCMobileAppIntegrityDetectionGooglePlayResourceModelV1 struct 
 }
 
 type applicationSAMLOptionsResourceModelV1 struct {
-	AcsUrls                     types.Set    `tfsdk:"acs_urls"`
-	AssertionDuration           types.Int32  `tfsdk:"assertion_duration"`
-	AssertionSignedEnabled      types.Bool   `tfsdk:"assertion_signed_enabled"`
-	CorsSettings                types.Object `tfsdk:"cors_settings"`
-	DefaultTargetUrl            types.String `tfsdk:"default_target_url"`
-	EnableRequestedAuthnContext types.Bool   `tfsdk:"enable_requested_authn_context"`
-	HomePageUrl                 types.String `tfsdk:"home_page_url"`
-	IdpSigningKey               types.Object `tfsdk:"idp_signing_key"`
-	NameIdFormat                types.String `tfsdk:"nameid_format"`
-	ResponseIsSigned            types.Bool   `tfsdk:"response_is_signed"`
-	SessionNotOnOrAfterDuration types.Int32  `tfsdk:"session_not_on_or_after_duration"`
-	SloBinding                  types.String `tfsdk:"slo_binding"`
-	SloEndpoint                 types.String `tfsdk:"slo_endpoint"`
-	SloResponseEndpoint         types.String `tfsdk:"slo_response_endpoint"`
-	SloWindow                   types.Int32  `tfsdk:"slo_window"`
-	SpEncryption                types.Object `tfsdk:"sp_encryption"`
-	SpEntityId                  types.String `tfsdk:"sp_entity_id"`
-	SpVerification              types.Object `tfsdk:"sp_verification"`
-	Type                        types.String `tfsdk:"type"`
-	VirtualServerIdSettings     types.Object `tfsdk:"virtual_server_id_settings"`
+	AcsUrls                                      types.Set    `tfsdk:"acs_urls"`
+	AssertionDuration                            types.Int32  `tfsdk:"assertion_duration"`
+	AssertionSignedEnabled                       types.Bool   `tfsdk:"assertion_signed_enabled"`
+	CorsSettings                                 types.Object `tfsdk:"cors_settings"`
+	DefaultTargetUrl                             types.String `tfsdk:"default_target_url"`
+	EnableAlwaysAcceptAcsUrlInSignedAuthnRequest types.Bool   `tfsdk:"enable_always_accept_acs_url_in_signed_authn_request"`
+	EnableRequestedAuthnContext                  types.Bool   `tfsdk:"enable_requested_authn_context"`
+	HomePageUrl                                  types.String `tfsdk:"home_page_url"`
+	IdpSigningKey                                types.Object `tfsdk:"idp_signing_key"`
+	NameIdFormat                                 types.String `tfsdk:"nameid_format"`
+	ResponseIsSigned                             types.Bool   `tfsdk:"response_is_signed"`
+	SessionNotOnOrAfterDuration                  types.Int32  `tfsdk:"session_not_on_or_after_duration"`
+	SloBinding                                   types.String `tfsdk:"slo_binding"`
+	SloEndpoint                                  types.String `tfsdk:"slo_endpoint"`
+	SloResponseEndpoint                          types.String `tfsdk:"slo_response_endpoint"`
+	SloWindow                                    types.Int32  `tfsdk:"slo_window"`
+	SpEncryption                                 types.Object `tfsdk:"sp_encryption"`
+	SpEntityId                                   types.String `tfsdk:"sp_entity_id"`
+	SpVerification                               types.Object `tfsdk:"sp_verification"`
+	Type                                         types.String `tfsdk:"type"`
+	VirtualServerIdSettings                      types.Object `tfsdk:"virtual_server_id_settings"`
 }
 
 type applicationOptionsIdpSigningKeyResourceModelV1 struct {
@@ -216,15 +226,23 @@ type applicationSAMLOptionsVirtualServerIdSettingsVirtualServerIdsResourceModelV
 }
 
 type applicationWSFedOptionsResourceModelV1 struct {
+	AssertionDuration           types.Int32  `tfsdk:"assertion_duration"`
 	AudienceRestriction         types.String `tfsdk:"audience_restriction"`
 	CorsSettings                types.Object `tfsdk:"cors_settings"`
 	DomainName                  types.String `tfsdk:"domain_name"`
+	HybridJoinDeviceAttribute   types.String `tfsdk:"hybrid_join_device_attribute"`
 	IdpSigningKey               types.Object `tfsdk:"idp_signing_key"`
 	Kerberos                    types.Object `tfsdk:"kerberos"`
 	ReplyUrl                    types.String `tfsdk:"reply_url"`
 	SloEndpoint                 types.String `tfsdk:"slo_endpoint"`
+	StsTokenType                types.String `tfsdk:"sts_token_type"`
 	SubjectNameIdentifierFormat types.String `tfsdk:"subject_name_identifier_format"`
 	Type                        types.String `tfsdk:"type"`
+	UseMex13                    types.Bool   `tfsdk:"use_mex13"`
+	UserAttributeX509Match      types.String `tfsdk:"user_attribute_x509_match"`
+	ValidIssuanceCertificates   types.Set    `tfsdk:"valid_issuance_certificates"`
+	WsTrustVersion              types.String `tfsdk:"ws_trust_version"`
+	UserAttributeUsernameMatch  types.String `tfsdk:"user_attribute_username_match"`
 }
 
 type applicationWSFedKerberosResourceModelV1 struct {
@@ -239,6 +257,10 @@ type applicationWSFedKerberosGatewayResourceModelV1 struct {
 
 type applicationWSFedGatewayUserTypeRersourceModelV1 struct {
 	Id pingonetypes.ResourceIDValue `tfsdk:"id"`
+}
+
+type applicationWSFedOptionsValidIssuanceCertificateResourceModelV1 struct {
+	CertificateId pingonetypes.ResourceIDValue `tfsdk:"certificate_id"`
 }
 
 var (
@@ -264,6 +286,7 @@ var (
 		"grant_types":                                        types.SetType{ElemType: types.StringType},
 		"home_page_url":                                      types.StringType,
 		"idp_signoff":                                        types.BoolType,
+		"include_typ":                                        types.BoolType,
 		"include_x5t":                                        types.BoolType,
 		"initiate_login_uri":                                 types.StringType,
 		"jwks_url":                                           types.StringType,
@@ -283,6 +306,7 @@ var (
 		"require_signed_request_object":                      types.BoolType,
 		"response_types":                                     types.SetType{ElemType: types.StringType},
 		"signing":                                            types.ObjectType{AttrTypes: applicationOidcOptionsSigningTFObjectTypes},
+		"skip_token_session_validation":                      types.BoolType,
 		"support_unsigned_request_object":                    types.BoolType,
 		"target_link_uri":                                    types.StringType,
 		"token_endpoint_auth_method":                         types.StringType,
@@ -340,14 +364,15 @@ var (
 	}
 
 	applicationSamlOptionsTFObjectTypes = map[string]attr.Type{
-		"acs_urls":                         types.SetType{ElemType: types.StringType},
-		"assertion_duration":               types.Int32Type,
-		"assertion_signed_enabled":         types.BoolType,
-		"cors_settings":                    types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes},
-		"enable_requested_authn_context":   types.BoolType,
-		"home_page_url":                    types.StringType,
-		"idp_signing_key":                  types.ObjectType{AttrTypes: applicationIdpSigningKeyTFObjectTypes},
-		"default_target_url":               types.StringType,
+		"acs_urls":                       types.SetType{ElemType: types.StringType},
+		"assertion_duration":             types.Int32Type,
+		"assertion_signed_enabled":       types.BoolType,
+		"cors_settings":                  types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes},
+		"enable_requested_authn_context": types.BoolType,
+		"home_page_url":                  types.StringType,
+		"idp_signing_key":                types.ObjectType{AttrTypes: applicationIdpSigningKeyTFObjectTypes},
+		"default_target_url":             types.StringType,
+		"enable_always_accept_acs_url_in_signed_authn_request": types.BoolType,
 		"nameid_format":                    types.StringType,
 		"response_is_signed":               types.BoolType,
 		"session_not_on_or_after_duration": types.Int32Type,
@@ -387,6 +412,7 @@ var (
 	}
 
 	applicationExternalLinkOptionsTFObjectTypes = map[string]attr.Type{
+		"external_id":   types.StringType,
 		"home_page_url": types.StringType,
 	}
 
@@ -396,15 +422,27 @@ var (
 	}
 
 	applicationWsfedOptionsTFObjectTypes = map[string]attr.Type{
+		"assertion_duration":             types.Int32Type,
 		"audience_restriction":           types.StringType,
 		"cors_settings":                  types.ObjectType{AttrTypes: applicationCorsSettingsTFObjectTypes},
 		"domain_name":                    types.StringType,
+		"hybrid_join_device_attribute":   types.StringType,
 		"idp_signing_key":                types.ObjectType{AttrTypes: applicationIdpSigningKeyTFObjectTypes},
 		"kerberos":                       types.ObjectType{AttrTypes: applicationWsfedOptionsKerberosTFObjectTypes},
 		"reply_url":                      types.StringType,
 		"slo_endpoint":                   types.StringType,
+		"sts_token_type":                 types.StringType,
 		"subject_name_identifier_format": types.StringType,
 		"type":                           types.StringType,
+		"use_mex13":                      types.BoolType,
+		"user_attribute_username_match":  types.StringType,
+		"user_attribute_x509_match":      types.StringType,
+		"valid_issuance_certificates":    types.SetType{ElemType: types.ObjectType{AttrTypes: applicationWsfedOptionsValidIssuanceCertificateTFObjectTypes}},
+		"ws_trust_version":               types.StringType,
+	}
+
+	applicationWsfedOptionsValidIssuanceCertificateTFObjectTypes = map[string]attr.Type{
+		"certificate_id": pingonetypes.ResourceIDType{},
 	}
 
 	applicationWsfedOptionsKerberosTFObjectTypes = map[string]attr.Type{
@@ -503,6 +541,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 		string(management.ENUMAPPLICATIONTYPE_WORKER),
 		string(management.ENUMAPPLICATIONTYPE_CUSTOM_APP),
 		string(management.ENUMAPPLICATIONTYPE_SERVICE),
+		string(management.ENUMAPPLICATIONTYPE_AI_AGENT),
 	).RequiresReplace()
 
 	oidcOptionsHomePageURLDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -535,6 +574,10 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 
 	oidcOptionsIdpSignoffDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean flag to allow signoff without access to the session token cookie.",
+	).DefaultValue(false)
+
+	oidcOptionsIncludeTypDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether tokens signed for this application include the `typ` header with a value of `at+jwt`, regardless of whether the intended audience is the UserInfo endpoint, PingOne APIs, or custom resources. This specifies the JWT as an OAuth 2.0 access token for increased security. On March 2, 2027, PingOne will always include the `typ` header with a value of `at+jwt` when minting access token for the UserInfo endpoint, PingOne APIs, or custom resources.",
 	).DefaultValue(false)
 
 	oidcOptionsIncludeX5tDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -642,6 +685,10 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 		"A boolean that indicates that the Java Web Token (JWT) for the [request query](https://openid.net/specs/openid-connect-core-1_0.html#RequestObject) parameter is required to be signed. If `false` or null, a signed request object is not required. Both `support_unsigned_request_object` and this property cannot be set to `true`.",
 	).DefaultValue(false)
 
+	oidcOptionsSkipTokenSessionValidationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that indicates whether the session associated with an access token or a refresh token should be taken into consideration when PingOne needs to determine the validity of the token. When set to `true`, PingOne ignores the session status, allowing the use of a valid token even if the user session has expired. By default, this property's value is set to `false`, which invalidates the token (regardless of the token's validity) if the user session is invalid.",
+	).DefaultValue(false)
+
 	oidcOptionsCertificateBasedAuthenticationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("A single object that specifies Certificate based authentication settings. This parameter block can only be set where the application's `type` parameter is set to `%s`.", management.ENUMAPPLICATIONTYPE_NATIVE_APP),
 	)
@@ -653,6 +700,20 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 	oidcOptionsMobileAppDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("A single object that specifies Mobile application integration settings for `%s` type applications.", management.ENUMAPPLICATIONTYPE_NATIVE_APP),
 	)
+
+	const wsfedOptionsValidIssuanceCertificatesMax = 10
+
+	const wsfedOptionsAssertionDurationDefault = 300
+	const wsfedOptionsAssertionDurationMin = 300
+	const wsfedOptionsAssertionDurationMax = 3932100
+
+	wsfedOptionsAssertionDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		fmt.Sprintf("An integer that specifies the assertion validity duration in seconds. The default value is %[1]d seconds (5 minutes). Valid values are between %[2]d and %[3]d.", wsfedOptionsAssertionDurationDefault, wsfedOptionsAssertionDurationMin, wsfedOptionsAssertionDurationMax),
+	).DefaultValue(wsfedOptionsAssertionDurationDefault)
+
+	wsfedOptionsWsTrustVersionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the WS-Trust (Web Services Trust) version to use.",
+	).AllowedValues("1.2", "1.3")
 
 	oidcOptionsSigningDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A single object that specifies the OIDC application token signing key settings. If omitted, application tokens are signed and verified by the PingOne default key at runtime.",
@@ -953,6 +1014,10 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 				Optional:            true,
 
 				Attributes: map[string]schema.Attribute{
+					"external_id": schema.StringAttribute{
+						Description: "For `PORTAL_LINK_APP` type applications, an external ID that can be used for the application in contexts such as targeted risk policies. Note that `PORTAL_LINK_APP` applications that do not have an external ID specified are not displayed in the list of applications when defining a targeted risk policy in the admin console.",
+						Optional:    true,
+					},
 					"home_page_url": schema.StringAttribute{
 						Description:         externalLinkOptionsHomePageURLDescription.Description,
 						MarkdownDescription: externalLinkOptionsHomePageURLDescription.MarkdownDescription,
@@ -1003,6 +1068,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 									string(management.ENUMAPPLICATIONTYPE_WORKER),
 									string(management.ENUMAPPLICATIONTYPE_CUSTOM_APP),
 									string(management.ENUMAPPLICATIONTYPE_SERVICE),
+									string(management.ENUMAPPLICATIONTYPE_AI_AGENT),
 								),
 							},
 						},
@@ -1072,6 +1138,15 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						"include_x5t": schema.BoolAttribute{
 							Description:         oidcOptionsIncludeX5tDescription.Description,
 							MarkdownDescription: oidcOptionsIncludeX5tDescription.MarkdownDescription,
+							Optional:            true,
+							Computed:            true,
+
+							Default: booldefault.StaticBool(false),
+						},
+
+						"include_typ": schema.BoolAttribute{
+							Description:         oidcOptionsIncludeTypDescription.Description,
+							MarkdownDescription: oidcOptionsIncludeTypDescription.MarkdownDescription,
 							Optional:            true,
 							Computed:            true,
 
@@ -1160,6 +1235,15 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 									stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationOIDCResponseTypeEnumValues)...),
 								),
 							},
+						},
+
+						"skip_token_session_validation": schema.BoolAttribute{
+							Description:         oidcOptionsSkipTokenSessionValidationDescription.Description,
+							MarkdownDescription: oidcOptionsSkipTokenSessionValidationDescription.MarkdownDescription,
+							Optional:            true,
+							Computed:            true,
+
+							Default: booldefault.StaticBool(false),
 						},
 
 						"token_endpoint_auth_method": schema.StringAttribute{
@@ -1670,6 +1754,14 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						Optional:            true,
 					},
 
+					"enable_always_accept_acs_url_in_signed_authn_request": schema.BoolAttribute{
+						Description: "A boolean that specifies that when a service provider (SP) specifies an ACS URL in its AuthnRequest, and signs the AuthnRequest, then assuming the identity provider (IdP) can validate the signature, the IdP can accept the ACS URL as valid. This is so, regardless of whether the ACS URL is specified in `acs_urls` as an allowable ACS URL. Enabling this setting is useful when an SP generates ACS URLs dynamically.",
+						Optional:    true,
+						Computed:    true,
+
+						Default: booldefault.StaticBool(false),
+					},
+
 					"enable_requested_authn_context": schema.BoolAttribute{
 						Description:         samlOptionsEnableRequestedAuthnContextDescription.Description,
 						MarkdownDescription: samlOptionsEnableRequestedAuthnContextDescription.MarkdownDescription,
@@ -1888,6 +1980,19 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 				Optional:            true,
 
 				Attributes: map[string]schema.Attribute{
+					"assertion_duration": schema.Int32Attribute{
+						Description:         wsfedOptionsAssertionDurationDescription.Description,
+						MarkdownDescription: wsfedOptionsAssertionDurationDescription.MarkdownDescription,
+						Optional:            true,
+						Computed:            true,
+
+						Default: int32default.StaticInt32(wsfedOptionsAssertionDurationDefault),
+
+						Validators: []validator.Int32{
+							int32validator.Between(wsfedOptionsAssertionDurationMin, wsfedOptionsAssertionDurationMax),
+						},
+					},
+
 					"audience_restriction": schema.StringAttribute{
 						Optional:            true,
 						Computed:            true,
@@ -1902,6 +2007,10 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						Validators: []validator.String{
 							stringvalidator.RegexMatches(verify.IsDomain, "Must be a valid domain name"),
 						},
+					},
+					"hybrid_join_device_attribute": schema.StringAttribute{
+						Description: "Required for Entra ID hybrid join. The value must be the name of a custom user attribute that an administrator has created.",
+						Optional:    true,
 					},
 					"idp_signing_key": schema.SingleNestedAttribute{
 						Description: "Contains the information about the signing of requests by the identity provider (IdP).",
@@ -1982,6 +2091,16 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 							stringvalidator.RegexMatches(verify.IsURLWithHTTPorHTTPS, "Expected value to have a url with schema of \"http\" or \"https\"."),
 						},
 					},
+					"sts_token_type": schema.StringAttribute{
+						Description: "The type of token to use. Valid values are `http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV1.1` (corresponds to SAML 1.1 in the admin console, not suitable for Entra ID hybrid join) and `urn:oasis:names:tc:SAML:1.0:assertion` (corresponds to SAML 1.1 for Office 365 in the admin console, required for Entra ID hybrid join).",
+						Optional:    true,
+						Validators: []validator.String{
+							stringvalidator.OneOf(
+								"http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV1.1",
+								"urn:oasis:names:tc:SAML:1.0:assertion",
+							),
+						},
+					},
 					"subject_name_identifier_format": schema.StringAttribute{
 						Optional:            true,
 						Description:         "The format to use for the SubjectNameIdentifier element. Options are \"urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified\", \"urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress\".",
@@ -2002,6 +2121,46 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 								"WEB_APP",
 								"CUSTOM_APP",
 							),
+						},
+					},
+					"use_mex13": schema.BoolAttribute{
+						Description: "Must be `true` to enable Entra ID hybrid join. After it's set to `true`, update Entra ID to use the new metadata exchange endpoint.",
+						Optional:    true,
+					},
+					"user_attribute_username_match": schema.StringAttribute{
+						Description: "Specifies the PingOne user attribute used to match the username from a Security Token Service (STS) request to an existing user profile. By default, PingOne matches the username against the user's email address. Configure this setting if the username in the token is the user's user principal name (`userPrincipalName` attribute in Active Directory) but it differs from their email address (`mail` attribute in Active Directory), or if the username is something other than the user's user principal name or email address. When specifying a PingOne custom user attribute, the attribute must be configured as a unique, enabled, single-valued string attribute of schema type `CUSTOM`.",
+						Optional:    true,
+					},
+					"user_attribute_x509_match": schema.StringAttribute{
+						Description: "The user attribute to match against the user information in the X.509 certificate. Supports Microsoft Windows primary refresh token (PRT) operations when users log on to their Windows devices, or unlock their locked Windows devices, using PingID. If this setting isn't specified, Windows PRT operations are still supported, but only when users log on to (or unlock) their Windows devices using their username and password.",
+						Optional:    true,
+					},
+					"valid_issuance_certificates": schema.SetNestedAttribute{
+						Description: "Contains the list of valid issuance certificate IDs for the application. A maximum of 10 certificate IDs can be specified. Supports Microsoft Windows primary refresh token (PRT) operations when users log on to their Windows devices, or unlock their locked Windows devices, using PingID. If this setting isn't specified, Windows PRT operations are still supported, but only when users log on to (or unlock) their Windows devices using their username and password.",
+						Optional:    true,
+
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"certificate_id": schema.StringAttribute{
+									Description: "The ID of the certificate key pair. The key must have a usage type of `ISSUANCE`. Must be a valid PingOne resource ID.",
+									Required:    true,
+									CustomType:  pingonetypes.ResourceIDType{},
+								},
+							},
+						},
+
+						Validators: []validator.Set{
+							setvalidator.SizeAtMost(wsfedOptionsValidIssuanceCertificatesMax),
+						},
+					},
+
+					"ws_trust_version": schema.StringAttribute{
+						Description:         wsfedOptionsWsTrustVersionDescription.Description,
+						MarkdownDescription: wsfedOptionsWsTrustVersionDescription.MarkdownDescription,
+						Optional:            true,
+
+						Validators: []validator.String{
+							stringvalidator.OneOf("1.2", "1.3"),
 						},
 					},
 				},
@@ -2733,6 +2892,10 @@ func (p *applicationResourceModelV1) expandApplicationOIDC(ctx context.Context) 
 			data.SetIncludeX5t(plan.IncludeX5t.ValueBool())
 		}
 
+		if !plan.IncludeTyp.IsNull() && !plan.IncludeTyp.IsUnknown() {
+			data.SetIncludeTyp(plan.IncludeTyp.ValueBool())
+		}
+
 		if !plan.OpSessionCheckEnabled.IsNull() && !plan.OpSessionCheckEnabled.IsUnknown() {
 			data.SetOpSessionCheckEnabled(plan.OpSessionCheckEnabled.ValueBool())
 		}
@@ -2773,6 +2936,10 @@ func (p *applicationResourceModelV1) expandApplicationOIDC(ctx context.Context) 
 				obj = append(obj, management.EnumApplicationOIDCResponseType(v))
 			}
 			data.SetResponseTypes(obj)
+		}
+
+		if !plan.SkipTokenSessionValidation.IsNull() && !plan.SkipTokenSessionValidation.IsUnknown() {
+			data.SetSkipTokenSessionValidation(plan.SkipTokenSessionValidation.ValueBool())
 		}
 
 		if !plan.ParRequirement.IsNull() && !plan.ParRequirement.IsUnknown() {
@@ -3116,6 +3283,76 @@ func (p *applicationOIDCMobileAppIntegrityDetectionResourceModelV1) expand(ctx c
 	return data, diags
 }
 
+// expandNotifyOptionalMobileVersionUpdates converts a single-nested PingID
+// optional version update object into the SDK model.
+func (p *applicationOIDCMobileAppResourceModelV1) expandNotifyOptionalMobileVersionUpdates(ctx context.Context, object types.Object) (*management.ApplicationOIDCAllOfMobileNotifyOptionalMobileVersionUpdates, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if object.IsNull() || object.IsUnknown() {
+		return nil, diags
+	}
+
+	var plan applicationOIDCMobileAppVersionUpdatesResourceModelV1
+	diags.Append(object.As(ctx, &plan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: false,
+	})...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	data := management.NewApplicationOIDCAllOfMobileNotifyOptionalMobileVersionUpdates()
+
+	if !plan.Enabled.IsNull() && !plan.Enabled.IsUnknown() {
+		data.SetEnabled(plan.Enabled.ValueBool())
+	}
+
+	if !plan.Android.IsNull() && !plan.Android.IsUnknown() {
+		data.SetAndroid(plan.Android.ValueString())
+	}
+
+	if !plan.Ios.IsNull() && !plan.Ios.IsUnknown() {
+		data.SetIos(plan.Ios.ValueString())
+	}
+
+	return data, diags
+}
+
+// expandNotifyRequireMobileVersionUpdates converts a single-nested PingID
+// required version update object into the SDK model.
+func (p *applicationOIDCMobileAppResourceModelV1) expandNotifyRequireMobileVersionUpdates(ctx context.Context, object types.Object) (*management.ApplicationOIDCAllOfMobileNotifyRequireMobileVersionUpdates, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if object.IsNull() || object.IsUnknown() {
+		return nil, diags
+	}
+
+	var plan applicationOIDCMobileAppVersionUpdatesResourceModelV1
+	diags.Append(object.As(ctx, &plan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: false,
+	})...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	data := management.NewApplicationOIDCAllOfMobileNotifyRequireMobileVersionUpdates()
+
+	if !plan.Enabled.IsNull() && !plan.Enabled.IsUnknown() {
+		data.SetEnabled(plan.Enabled.ValueBool())
+	}
+
+	if !plan.Android.IsNull() && !plan.Android.IsUnknown() {
+		data.SetAndroid(plan.Android.ValueString())
+	}
+
+	if !plan.Ios.IsNull() && !plan.Ios.IsUnknown() {
+		data.SetIos(plan.Ios.ValueString())
+	}
+
+	return data, diags
+}
+
 func (p *applicationResourceModelV1) expandApplicationSAML(ctx context.Context) (*management.ApplicationSAML, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -3215,6 +3452,10 @@ func (p *applicationResourceModelV1) expandApplicationSAML(ctx context.Context) 
 
 		if !plan.EnableRequestedAuthnContext.IsNull() && !plan.EnableRequestedAuthnContext.IsUnknown() {
 			data.SetEnableRequestedAuthnContext(plan.EnableRequestedAuthnContext.ValueBool())
+		}
+
+		if !plan.EnableAlwaysAcceptAcsUrlInSignedAuthnRequest.IsNull() && !plan.EnableAlwaysAcceptAcsUrlInSignedAuthnRequest.IsUnknown() {
+			data.SetEnableAlwaysAcceptAcsUrlInSignedAuthnRequest(plan.EnableAlwaysAcceptAcsUrlInSignedAuthnRequest.ValueBool())
 		}
 
 		if !plan.DefaultTargetUrl.IsNull() && !plan.DefaultTargetUrl.IsUnknown() {
@@ -3396,6 +3637,9 @@ func (p *applicationResourceModelV1) expandApplicationExternalLink(ctx context.C
 		data.AccessControl = applicationCommon.AccessControl
 		data.HiddenFromAppPortal = applicationCommon.HiddenFromAppPortal
 
+		if !plan.ExternalId.IsNull() && !plan.ExternalId.IsUnknown() {
+			data.SetExternalId(plan.ExternalId.ValueString())
+		}
 	}
 
 	return data, diags
@@ -3452,6 +3696,10 @@ func (p *applicationResourceModelV1) expandApplicationWSFed(ctx context.Context)
 		data.HiddenFromAppPortal = applicationCommon.HiddenFromAppPortal
 
 		// WS-Fed specific options
+		if !plan.AssertionDuration.IsNull() && !plan.AssertionDuration.IsUnknown() {
+			data.SetAssertionDuration(plan.AssertionDuration.ValueInt32())
+		}
+
 		if !plan.AudienceRestriction.IsNull() && !plan.AudienceRestriction.IsUnknown() {
 			data.SetAudienceRestriction(plan.AudienceRestriction.ValueString())
 		}
@@ -3477,6 +3725,10 @@ func (p *applicationResourceModelV1) expandApplicationWSFed(ctx context.Context)
 
 		if !plan.DomainName.IsNull() && !plan.DomainName.IsUnknown() {
 			data.SetDomainName(plan.DomainName.ValueString())
+		}
+
+		if !plan.HybridJoinDeviceAttribute.IsNull() && !plan.HybridJoinDeviceAttribute.IsUnknown() {
+			data.SetHybridJoinDeviceAttribute(plan.HybridJoinDeviceAttribute.ValueString())
 		}
 
 		if !plan.Kerberos.IsNull() && !plan.Kerberos.IsUnknown() {
@@ -3506,12 +3758,48 @@ func (p *applicationResourceModelV1) expandApplicationWSFed(ctx context.Context)
 			data.SetSloEndpoint(plan.SloEndpoint.ValueString())
 		}
 
+		if !plan.StsTokenType.IsNull() && !plan.StsTokenType.IsUnknown() {
+			data.SetStsTokenType(plan.StsTokenType.ValueString())
+		}
+
 		if !plan.SubjectNameIdentifierFormat.IsNull() && !plan.SubjectNameIdentifierFormat.IsUnknown() {
 			data.SetSubjectNameIdentifierFormat(management.EnumApplicationWSFEDSubjectNameIdentifierFormat(plan.SubjectNameIdentifierFormat.ValueString()))
 		}
 
 		if !plan.Type.IsNull() && !plan.Type.IsUnknown() {
 			data.SetType(management.EnumApplicationType(plan.Type.ValueString()))
+		}
+
+		if !plan.UseMex13.IsNull() && !plan.UseMex13.IsUnknown() {
+			data.SetUseMex13(plan.UseMex13.ValueBool())
+		}
+
+		if !plan.UserAttributeUsernameMatch.IsNull() && !plan.UserAttributeUsernameMatch.IsUnknown() {
+			data.SetUserAttributeUsernameMatch(plan.UserAttributeUsernameMatch.ValueString())
+		}
+
+		if !plan.UserAttributeX509Match.IsNull() && !plan.UserAttributeX509Match.IsUnknown() {
+			data.SetUserAttributeX509Match(plan.UserAttributeX509Match.ValueString())
+		}
+
+		if !plan.WsTrustVersion.IsNull() && !plan.WsTrustVersion.IsUnknown() {
+			data.SetWsTrustVersion(plan.WsTrustVersion.ValueString())
+		}
+
+		if !plan.ValidIssuanceCertificates.IsNull() && !plan.ValidIssuanceCertificates.IsUnknown() {
+			var certificatesPlan []applicationWSFedOptionsValidIssuanceCertificateResourceModelV1
+			diags.Append(plan.ValidIssuanceCertificates.ElementsAs(ctx, &certificatesPlan, false)...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			certificates := make([]management.ApplicationWSFEDAllOfValidIssuanceCertificates, 0)
+
+			for _, certificatePlan := range certificatesPlan {
+				certificates = append(certificates, *management.NewApplicationWSFEDAllOfValidIssuanceCertificates(certificatePlan.CertificateId.ValueString()))
+			}
+
+			data.SetValidIssuanceCertificates(certificates)
 		}
 	}
 

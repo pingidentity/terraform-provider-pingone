@@ -24,9 +24,16 @@ resource "pingone_application" "my_awesome_wsfed" {
     slo_endpoint                   = "https://example.com/slo"
     subject_name_identifier_format = "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified"
 
+    # Entra ID hybrid join (limited access feature)
+    hybrid_join_device_attribute  = "deviceAuthenticatorId"
+    sts_token_type                = "urn:oasis:names:tc:SAML:1.0:assertion"
+    use_mex13                     = true
+    user_attribute_username_match = "userName"
+
     idp_signing_key = {
       key_id    = pingone_key.my_awesome_key.id
       algorithm = pingone_key.my_awesome_key.signature_algorithm
     }
   }
 }
+

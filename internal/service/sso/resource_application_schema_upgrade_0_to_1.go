@@ -773,6 +773,7 @@ func (p *applicationResourceModelV0) schemaUpgradeExternalLinkOptionsV0toV1(ctx 
 		}
 
 		upgradedStateData := applicationExternalLinkOptionsResourceModelV1{
+			ExternalId:  types.StringNull(),
 			HomePageUrl: priorStateData[0].HomePageUrl,
 		}
 
@@ -831,6 +832,7 @@ func (p *applicationResourceModelV0) schemaUpgradeOIDCOptionsV0toV1(ctx context.
 				GrantTypes:                                    priorStateData[0].GrantTypes,
 				HomePageUrl:                                   priorStateData[0].HomePageUrl,
 				IncludeX5t:                                    types.BoolNull(),
+				IncludeTyp:                                    types.BoolNull(),
 				InitiateLoginUri:                              priorStateData[0].InitiateLoginUri,
 				Jwks:                                          priorStateData[0].Jwks,
 				JwksUrl:                                       priorStateData[0].JwksUrl,
@@ -847,6 +849,7 @@ func (p *applicationResourceModelV0) schemaUpgradeOIDCOptionsV0toV1(ctx context.
 				RequestScopesForMultipleResourcesEnabled:      types.BoolNull(),
 				RequireSignedRequestObject:                    priorStateData[0].RequireSignedRequestObject,
 				ResponseTypes:                                 priorStateData[0].ResponseTypes,
+				SkipTokenSessionValidation:                    types.BoolNull(),
 				SupportUnsignedRequestObject:                  priorStateData[0].SupportUnsignedRequestObject,
 				TargetLinkUri:                                 priorStateData[0].TargetLinkUri,
 				TokenEndpointAuthnMethod:                      priorStateData[0].TokenEndpointAuthnMethod,
@@ -1121,24 +1124,25 @@ func (p *applicationResourceModelV0) schemaUpgradeSAMLOptionsV0toV1(ctx context.
 		diags.Append(d...)
 
 		upgradedStateData := applicationSAMLOptionsResourceModelV1{
-			AcsUrls:                     priorStateData[0].AcsUrls,
-			AssertionDuration:           priorStateData[0].AssertionDuration,
-			AssertionSignedEnabled:      priorStateData[0].AssertionSignedEnabled,
-			CorsSettings:                corsSettings,
-			EnableRequestedAuthnContext: priorStateData[0].EnableRequestedAuthnContext,
-			HomePageUrl:                 priorStateData[0].HomePageUrl,
-			IdpSigningKey:               idpSigningKey,
-			DefaultTargetUrl:            priorStateData[0].DefaultTargetUrl,
-			NameIdFormat:                priorStateData[0].NameIdFormat,
-			ResponseIsSigned:            priorStateData[0].ResponseIsSigned,
-			SloBinding:                  priorStateData[0].SloBinding,
-			SloEndpoint:                 priorStateData[0].SloEndpoint,
-			SloResponseEndpoint:         priorStateData[0].SloResponseEndpoint,
-			SloWindow:                   priorStateData[0].SloWindow,
-			SpEncryption:                spEncryption,
-			SpEntityId:                  priorStateData[0].SpEntityId,
-			SpVerification:              spVerification,
-			Type:                        priorStateData[0].Type,
+			AcsUrls:                priorStateData[0].AcsUrls,
+			AssertionDuration:      priorStateData[0].AssertionDuration,
+			AssertionSignedEnabled: priorStateData[0].AssertionSignedEnabled,
+			CorsSettings:           corsSettings,
+			EnableAlwaysAcceptAcsUrlInSignedAuthnRequest: types.BoolNull(),
+			EnableRequestedAuthnContext:                  priorStateData[0].EnableRequestedAuthnContext,
+			HomePageUrl:                                  priorStateData[0].HomePageUrl,
+			IdpSigningKey:                                idpSigningKey,
+			DefaultTargetUrl:                             priorStateData[0].DefaultTargetUrl,
+			NameIdFormat:                                 priorStateData[0].NameIdFormat,
+			ResponseIsSigned:                             priorStateData[0].ResponseIsSigned,
+			SloBinding:                                   priorStateData[0].SloBinding,
+			SloEndpoint:                                  priorStateData[0].SloEndpoint,
+			SloResponseEndpoint:                          priorStateData[0].SloResponseEndpoint,
+			SloWindow:                                    priorStateData[0].SloWindow,
+			SpEncryption:                                 spEncryption,
+			SpEntityId:                                   priorStateData[0].SpEntityId,
+			SpVerification:                               spVerification,
+			Type:                                         priorStateData[0].Type,
 		}
 
 		returnVar, d := types.ObjectValueFrom(ctx, attributeTypes, upgradedStateData)
