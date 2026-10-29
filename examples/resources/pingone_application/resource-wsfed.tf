@@ -24,36 +24,9 @@ resource "pingone_application" "my_awesome_wsfed" {
     slo_endpoint                   = "https://example.com/slo"
     subject_name_identifier_format = "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified"
 
-    # Entra ID hybrid join (limited access feature)
-    hybrid_join_device_attribute  = "deviceAuthenticatorId"
-    sts_token_type                = "urn:oasis:names:tc:SAML:1.0:assertion"
-    use_mex13                     = true
-    user_attribute_username_match = "userName"
-
-    # Windows Login passwordless (PingID PRT) support
-    user_attribute_x509_match = "mail"
-
-    valid_issuance_certificates = [
-      {
-        certificate_id = pingone_key.my_awesome_issuance_key.id
-      },
-    ]
-
     idp_signing_key = {
       key_id    = pingone_key.my_awesome_key.id
       algorithm = pingone_key.my_awesome_key.signature_algorithm
     }
   }
-}
-
-resource "pingone_key" "my_awesome_issuance_key" {
-  environment_id = pingone_environment.my_environment.id
-
-  name                = "Example Issuance Key"
-  algorithm           = "RSA"
-  key_length          = 2048
-  signature_algorithm = "SHA256withRSA"
-  usage_type          = "ISSUANCE"
-  subject_dn          = "CN=Example Issuance Key, OU=BX Retail, O=BX Retail, L=, ST=, C=US"
-  validity_period     = 365
 }

@@ -15,7 +15,6 @@ resource "pingone_application" "my_awesome_native_app" {
     ]
 
     include_x5t                                   = true
-    include_typ                                   = true
     op_session_check_enabled                      = true
     request_scopes_for_multiple_resources_enabled = true
 
@@ -32,10 +31,6 @@ resource "pingone_application" "my_awesome_native_app" {
 
       integrity_detection = {
         enabled = true
-
-        apple_app_attest_settings = {
-          enabled = true
-        }
 
         cache_duration = {
           amount = 24
