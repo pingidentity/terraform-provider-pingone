@@ -709,7 +709,7 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 				Description: "A single object that specifies WS-Fed application specific settings.",
 				Computed:    true,
 
-				Attributes: map[string]schema.Attribute{ //
+				Attributes: map[string]schema.Attribute{
 					"assertion_duration": schema.Int32Attribute{
 						Computed:    true,
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the assertion validity duration in seconds.").Description,
