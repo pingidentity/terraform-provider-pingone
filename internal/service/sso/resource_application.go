@@ -1530,6 +1530,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 							Description:         oidcOptionsMobileAppDescription.Description,
 							MarkdownDescription: oidcOptionsMobileAppDescription.MarkdownDescription,
 							Optional:            true,
+							Computed:            true,
 
 							Attributes: map[string]schema.Attribute{
 								"allow_authentication_device_locked": schema.SingleNestedAttribute{

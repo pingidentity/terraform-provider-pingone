@@ -1069,7 +1069,9 @@ func TestAccApplication_NativeMobile(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.passcode_grace_period", "3"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.passcode_refresh_seconds", "45"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.universal_app_link", "https://applink.com"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.apple_team_id", "ABC123DEFG"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.enabled", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.push.number_matching.type", "ENTER_MANUALLY"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.excluded_platforms.0", "IOS"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.cache_duration.amount", "30"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.cache_duration.units", "HOURS"),
@@ -1083,6 +1085,9 @@ func TestAccApplication_NativeMobile(t *testing.T) {
 	withMobileTestStepMinimal := resource.TestStep{
 		Config: testAccApplicationConfig_OIDC_NativeMobile_Minimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app.apple_team_id"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app.ping_id_settings"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app.push"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app.bundle_id"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app.package_name"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app.huawei_app_id"),
@@ -1193,6 +1198,7 @@ func TestAccApplication_NativeMobile_IntegrityDetection(t *testing.T) {
 		Config: testAccApplicationConfig_OIDC_NativeMobile_IntegrityDetection_Minimal(resourceName, name, googleJsonKey),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.enabled", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.apple_app_attest_settings.enabled", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.excluded_platforms.#", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.cache_duration.amount", "30"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.cache_duration.units", "MINUTES"),
@@ -1284,121 +1290,6 @@ func TestAccApplication_NativeMobile_IntegrityDetection(t *testing.T) {
 			},
 		},
 	})
-}
-
-func TestAccApplication_NativeMobile_NewFields(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
-
-	name := resourceName
-
-	fullCheck := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-		resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "NATIVE_APP"),
-		resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.apple_team_id", "ABC123DEFG"),
-		resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.enabled", "true"),
-		resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.excluded_platforms.0", "GOOGLE"),
-		resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.cache_duration.amount", "60"),
-		resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.apple_app_attest_settings.enabled", "true"),
-		resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.push.number_matching.type", "ENTER_MANUALLY"),
-	)
-
-	minimalCheck := resource.ComposeTestCheckFunc(
-		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-		resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "NATIVE_APP"),
-		resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app.apple_team_id"),
-		resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app.push"),
-	)
-
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acctest.PreCheckNoTestAccFlaky(t)
-			acctest.PreCheckClient(t)
-			acctest.PreCheckNoBeta(t)
-		},
-		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             sso.Application_CheckDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			// Full
-			{
-				Config: testAccApplicationConfig_OIDC_NativeMobile_NewFields_Full(resourceName),
-				Check:  fullCheck,
-			},
-			// Minimal (fields removed)
-			{
-				Config: testAccApplicationConfig_OIDC_NativeMobile_Minimal(resourceName, name),
-				Check:  minimalCheck,
-			},
-			// Back to full
-			{
-				Config: testAccApplicationConfig_OIDC_NativeMobile_NewFields_Full(resourceName),
-				Check:  fullCheck,
-			},
-			// Test importing the resource
-			{
-				Config:       testAccApplicationConfig_OIDC_NativeMobile_NewFields_Full(resourceName),
-				ResourceName: resourceFullName,
-				ImportStateIdFunc: func() resource.ImportStateIdFunc {
-					return func(s *terraform.State) (string, error) {
-						rs, ok := s.RootModule().Resources[resourceFullName]
-						if !ok {
-							return "", fmt.Errorf("resource not found: %s", resourceFullName)
-						}
-
-						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
-					}
-				}(),
-				ImportState:       true,
-				ImportStateVerify: true,
-			},
-		},
-	})
-}
-
-func testAccApplicationConfig_OIDC_NativeMobile_NewFields_Full(resourceName string) string {
-	return fmt.Sprintf(`
-		%[1]s
-
-resource "pingone_application" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-  name           = "%[2]s"
-  enabled        = true
-
-  oidc_options = {
-    type                       = "NATIVE_APP"
-    grant_types                = ["CLIENT_CREDENTIALS"]
-    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
-
-    mobile_app = {
-      apple_team_id = "ABC123DEFG"
-
-      integrity_detection = {
-        enabled            = true
-        excluded_platforms = ["GOOGLE"]
-
-        cache_duration = {
-          amount = 60
-          units  = "MINUTES"
-        }
-
-        apple_app_attest_settings = {
-          enabled = true
-        }
-      }
-
-      push = {
-        number_matching = {
-          type = "ENTER_MANUALLY"
-        }
-      }
-    }
-  }
-}`, acctest.GenericSandboxEnvironment(), resourceName)
 }
 
 func TestAccApplication_OIDCFullCustom(t *testing.T) {
@@ -4462,6 +4353,8 @@ resource "pingone_application" "%[2]s" {
 
       universal_app_link = "https://applink.com"
 
+      apple_team_id = "ABC123DEFG"
+
       integrity_detection = {
         enabled = true
 
@@ -4476,6 +4369,12 @@ resource "pingone_application" "%[2]s" {
           verification_type = "INTERNAL"
           decryption_key    = "decryptionkeydoesnotexist"
           verification_key  = "verificationkeydoesnotexist"
+        }
+      }
+
+      push = {
+        number_matching = {
+          type = "ENTER_MANUALLY"
         }
       }
     }
@@ -4581,6 +4480,10 @@ resource "pingone_application" "%[2]s" {
 
         cache_duration = {
           amount = 30
+        }
+
+        apple_app_attest_settings = {
+          enabled = true
         }
 
         google_play = {
