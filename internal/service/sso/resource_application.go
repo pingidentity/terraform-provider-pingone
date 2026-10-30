@@ -2928,6 +2928,10 @@ func (p *applicationResourceModelV1) expandApplicationOIDC(ctx context.Context) 
 
 		if !plan.SkipTokenSessionValidation.IsNull() && !plan.SkipTokenSessionValidation.IsUnknown() {
 			data.SetSkipTokenSessionValidation(plan.SkipTokenSessionValidation.ValueBool())
+		} else {
+			// The SDK constructor defaults this field to false; unset it when
+			// the plan value is null so the API default (omitted) applies.
+			data.SkipTokenSessionValidation = nil
 		}
 
 		if !plan.ParRequirement.IsNull() && !plan.ParRequirement.IsUnknown() {

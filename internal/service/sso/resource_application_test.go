@@ -3842,8 +3842,10 @@ resource "pingone_application" "%[2]s" {
     idp_signoff = true
 
     include_x5t                                   = true
+    include_typ                                   = true
     op_session_check_enabled                      = false
     request_scopes_for_multiple_resources_enabled = true
+    skip_token_session_validation                 = true
 
     par_requirement = "OPTIONAL"
     par_timeout     = 60
