@@ -1148,9 +1148,6 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 							Description:         oidcOptionsIncludeTypDescription.Description,
 							MarkdownDescription: oidcOptionsIncludeTypDescription.MarkdownDescription,
 							Optional:            true,
-							Computed:            true,
-
-							Default: booldefault.StaticBool(false),
 						},
 
 						"initiate_login_uri": schema.StringAttribute{
@@ -1241,9 +1238,6 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 							Description:         oidcOptionsSkipTokenSessionValidationDescription.Description,
 							MarkdownDescription: oidcOptionsSkipTokenSessionValidationDescription.MarkdownDescription,
 							Optional:            true,
-							Computed:            true,
-
-							Default: booldefault.StaticBool(false),
 						},
 
 						"token_endpoint_auth_method": schema.StringAttribute{
@@ -1757,9 +1751,6 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 					"enable_always_accept_acs_url_in_signed_authn_request": schema.BoolAttribute{
 						Description: "A boolean that specifies that when a service provider (SP) specifies an ACS URL in its AuthnRequest, and signs the AuthnRequest, then assuming the identity provider (IdP) can validate the signature, the IdP can accept the ACS URL as valid. This is so, regardless of whether the ACS URL is specified in `acs_urls` as an allowable ACS URL. Enabling this setting is useful when an SP generates ACS URLs dynamically.",
 						Optional:    true,
-						Computed:    true,
-
-						Default: booldefault.StaticBool(false),
 					},
 
 					"enable_requested_authn_context": schema.BoolAttribute{
