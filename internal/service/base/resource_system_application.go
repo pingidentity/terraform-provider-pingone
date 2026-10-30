@@ -31,6 +31,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
+	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
 )
 
@@ -119,10 +120,7 @@ func (r *SystemApplicationResource) Schema(ctx context.Context, req resource.Sch
 
 	logoutTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the logout type for the application. Configurable only when the `type` is `PING_ONE_SELF_SERVICE` or `PING_ONE_PORTAL`.",
-	).AllowedValues(
-		"OIDC_RP_INITIATED",
-		"SAML2_SLO",
-	).DefaultValue("OIDC_RP_INITIATED")
+	).AllowedValuesEnum(management.AllowedEnumApplicationLogoutTypeEnumValues).DefaultValue(string(management.ENUMAPPLICATIONLOGOUTTYPE_OIDC_RP_INITIATED))
 
 	manageDevicesViaMyAccountEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether PingID users can manage their devices using the MyAccount app. When set to `true`, this also adds the MyAccount app to all PingID policies that already include Device Management. Configurable only when the `type` is `PING_ONE_SELF_SERVICE`.",
@@ -246,7 +244,7 @@ func (r *SystemApplicationResource) Schema(ctx context.Context, req resource.Sch
 				Computed:            true,
 
 				Validators: []validator.String{
-					stringvalidator.OneOf("OIDC_RP_INITIATED", "SAML2_SLO"),
+					stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationLogoutTypeEnumValues)...),
 				},
 			},
 
@@ -633,7 +631,7 @@ func (p *systemApplicationResourceModel) expand(ctx context.Context, apiClient *
 		}
 
 		if !p.LogoutType.IsNull() && !p.LogoutType.IsUnknown() {
-			updateApplication.SetLogoutType(p.LogoutType.ValueString())
+			updateApplication.SetLogoutType(management.EnumApplicationLogoutType(p.LogoutType.ValueString()))
 		}
 
 		data.ApplicationPingOnePortal = updateApplication
@@ -677,7 +675,7 @@ func (p *systemApplicationResourceModel) expand(ctx context.Context, apiClient *
 		}
 
 		if !p.LogoutType.IsNull() && !p.LogoutType.IsUnknown() {
-			updateApplication.SetLogoutType(p.LogoutType.ValueString())
+			updateApplication.SetLogoutType(management.EnumApplicationLogoutType(p.LogoutType.ValueString()))
 		}
 
 		if !p.ManageDevicesViaMyAccountEnabled.IsNull() && !p.ManageDevicesViaMyAccountEnabled.IsUnknown() {
@@ -727,7 +725,7 @@ func (p *systemApplicationResourceModel) toState(apiObject *management.ReadOneAp
 
 		p.ApplyDefaultTheme = framework.BoolOkToTF(apiObject.ApplicationPingOnePortal.GetApplyDefaultThemeOk())
 		p.EnableDefaultThemeFooter = types.BoolNull()
-		p.LogoutType = framework.StringOkToTF(apiObject.ApplicationPingOnePortal.GetLogoutTypeOk())
+		p.LogoutType = framework.EnumOkToTF(apiObject.ApplicationPingOnePortal.GetLogoutTypeOk())
 		p.ManageDevicesViaMyAccountEnabled = types.BoolNull()
 	}
 
@@ -744,7 +742,7 @@ func (p *systemApplicationResourceModel) toState(apiObject *management.ReadOneAp
 
 		p.ApplyDefaultTheme = framework.BoolOkToTF(apiObject.ApplicationPingOneSelfService.GetApplyDefaultThemeOk())
 		p.EnableDefaultThemeFooter = framework.BoolOkToTF(apiObject.ApplicationPingOneSelfService.GetEnableDefaultThemeFooterOk())
-		p.LogoutType = framework.StringOkToTF(apiObject.ApplicationPingOneSelfService.GetLogoutTypeOk())
+		p.LogoutType = framework.EnumOkToTF(apiObject.ApplicationPingOneSelfService.GetLogoutTypeOk())
 		p.ManageDevicesViaMyAccountEnabled = framework.BoolOkToTF(apiObject.ApplicationPingOneSelfService.GetManageDevicesViaMyAccountEnabledOk())
 	}
 

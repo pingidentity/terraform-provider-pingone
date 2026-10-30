@@ -596,14 +596,14 @@ func applicationWsfedOptionsToTF(apiObject *management.ApplicationWSFED) (types.
 		"kerberos":                       kerberos,
 		"reply_url":                      framework.StringOkToTF(apiObject.GetReplyUrlOk()),
 		"slo_endpoint":                   framework.StringOkToTF(apiObject.GetSloEndpointOk()),
-		"sts_token_type":                 framework.StringOkToTF(apiObject.GetStsTokenTypeOk()),
+		"sts_token_type":                 framework.EnumOkToTF(apiObject.GetStsTokenTypeOk()),
 		"subject_name_identifier_format": framework.EnumOkToTF(apiObject.GetSubjectNameIdentifierFormatOk()),
 		"type":                           framework.EnumOkToTF(apiObject.GetTypeOk()),
 		"use_mex13":                      framework.BoolOkToTF(apiObject.GetUseMex13Ok()),
 		"user_attribute_username_match":  framework.StringOkToTF(apiObject.GetUserAttributeUsernameMatchOk()),
 		"user_attribute_x509_match":      framework.StringOkToTF(apiObject.GetUserAttributeX509MatchOk()),
 		"valid_issuance_certificates":    validIssuanceCertificates,
-		"ws_trust_version":               framework.StringOkToTF(apiObject.GetWsTrustVersionOk()),
+		"ws_trust_version":               framework.EnumOkToTF(apiObject.GetWsTrustVersionOk()),
 	}
 
 	returnVar, d := types.ObjectValue(applicationWsfedOptionsTFObjectTypes, attributesMap)
