@@ -13,6 +13,8 @@ description: |-
 
 ~> The provider will error if custom content has already been configured for a template / locale combination where the variant isn't configured, and template / locale / variant combination where the variant is configured.  Please ensure that before creation with this resource, the desired combinations have their default text restored first.  See [Editing a notification](https://docs.pingidentity.com/r/en-us/pingone/p1_c_edit_notification) for more details.
 
+~> The predefined default content of a template is read-only and cannot be modified or deleted in PingOne.  If the default content is imported into this resource, any update will error and any destroy will remove the resource from Terraform state only.  To customize a notification, create a new `pingone_notification_template_content` resource for the template, locale and (optional) variant combination instead of importing and updating the default content.
+
 {{ if .HasExample -}}
 ## Example Usage
 

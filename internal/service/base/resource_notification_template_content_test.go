@@ -11,6 +11,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/pingidentity/pingone-go-sdk-legacy/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
@@ -778,6 +779,120 @@ func TestAccNotificationTemplateContent_Voice(t *testing.T) {
 			{
 				Config:      testAccNotificationTemplateContentConfig_DefaultVariant_Voice_Full(environmentName, licenseID, resourceName, template.Invalid, locale),
 				ExpectError: regexp.MustCompile(`The configured delivery method does not apply to the selected template.`),
+			},
+		},
+	})
+}
+
+func TestAccNotificationTemplateContent_ReadOnlyDefaultContent(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_notification_template_content.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	name := "strong_authentication"
+	locale := "en"
+
+	var environmentID, contentID string
+	var originalContent *management.TemplateContent
+
+	var p1Client *client.Client
+	var ctx = context.Background()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoBeta(t)
+			p1Client = acctestlegacysdk.PreCheckTestClient(ctx, t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             base.NotificationTemplateContent_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Bootstrap the environment
+			{
+				Config: acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID),
+				Check:  base.Environment_GetIDs(fmt.Sprintf("pingone_environment.%s", environmentName), &environmentID),
+			},
+			// Import the predefined default content for the template and locale
+			{
+				ResourceName: resourceFullName,
+				Config:       testAccNotificationTemplateContentConfig_DefaultVariant_Push_Minimal(environmentName, licenseID, resourceName, name, locale),
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						contentID = base.NotificationTemplateContent_GetDefaultContentID(ctx, p1Client.API.ManagementAPIClient, t, environmentID, name, locale, management.ENUMTEMPLATECONTENTDELIVERYMETHOD_PUSH)
+						var err error
+						originalContent, _, err = p1Client.API.ManagementAPIClient.NotificationsTemplatesApi.ReadOneContent(ctx, environmentID, management.EnumTemplateName(name), contentID).Execute()
+						if err != nil {
+							return "", err
+						}
+
+						return fmt.Sprintf("%s/%s/%s", environmentID, name, contentID), nil
+					}
+				}(),
+				ImportState:        true,
+				ImportStatePersist: true,
+				ImportStateVerify:  false,
+				ImportStateCheck: func(states []*terraform.InstanceState) error {
+
+					for _, s := range states {
+						if s.Attributes["template_name"] != name {
+							continue
+						}
+
+						if s.Attributes["locale"] != locale {
+							return fmt.Errorf("expected %s to be imported for locale %s, got locale=%s", resourceFullName, locale, s.Attributes["locale"])
+						}
+
+						if s.Attributes["default"] != "true" {
+							return fmt.Errorf("expected %s to be imported as the default content, got default=%s", resourceFullName, s.Attributes["default"])
+						}
+						if s.Attributes["push.body"] == "" || s.Attributes["push.title"] == "" {
+							return fmt.Errorf("expected %s to contain push content", resourceFullName)
+						}
+
+						return nil
+					}
+
+					return fmt.Errorf("resource %s not found in imported state", resourceFullName)
+				},
+			},
+			// Attempting to update the imported default content must fail with a friendly error
+			{
+				Config:      testAccNotificationTemplateContentConfig_DefaultVariant_Push_Full(environmentName, licenseID, resourceName, name, locale),
+				ExpectError: regexp.MustCompile("The default notification template content cannot be modified."),
+			},
+			// Remove only the imported resource and check the same default content is unchanged.
+			{
+				Config: acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID),
+				Check: func(s *terraform.State) error {
+					if _, ok := s.RootModule().Resources[resourceFullName]; ok {
+						return fmt.Errorf("resource %s still exists in state", resourceFullName)
+					}
+					environment, ok := s.RootModule().Resources["pingone_environment."+environmentName]
+					if !ok || environment.Primary.ID != environmentID {
+						return fmt.Errorf("environment changed while removing %s", resourceFullName)
+					}
+
+					content, _, err := p1Client.API.ManagementAPIClient.NotificationsTemplatesApi.ReadOneContent(ctx, environmentID, management.EnumTemplateName(name), contentID).Execute()
+					if err != nil {
+						return err
+					}
+					if content.TemplateContentPush == nil || originalContent.TemplateContentPush == nil {
+						return fmt.Errorf("expected default push content %s to remain", contentID)
+					}
+					actual, original := content.TemplateContentPush, originalContent.TemplateContentPush
+					if actual.GetId() != contentID || !actual.GetDefault() || actual.GetBody() != original.GetBody() || actual.GetTitle() != original.GetTitle() || actual.GetPushCategory() != original.GetPushCategory() {
+						return fmt.Errorf("default push content %s was modified", contentID)
+					}
+					return nil
+				},
 			},
 		},
 	})

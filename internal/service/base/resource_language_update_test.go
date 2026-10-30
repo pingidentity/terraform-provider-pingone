@@ -234,6 +234,116 @@ func TestAccLanguageUpdate_SystemDefined(t *testing.T) {
 	})
 }
 
+func TestAccLanguageUpdate_SystemDefault(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_language_update.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	var environmentID, languageID string
+	var p1Client *client.Client
+	ctx := context.Background()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoBeta(t)
+			p1Client = acctestlegacysdk.PreCheckTestClient(ctx, t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             base.LanguageUpdate_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// English is already enabled and default in a new environment.
+			{
+				Config: testAccLanguageUpdateConfig_SystemDefined(environmentName, licenseID, resourceName, "en", true, true),
+				Check: resource.ComposeTestCheckFunc(
+					base.LanguageUpdate_GetIDs(resourceFullName, &environmentID, &languageID),
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "locale", "en"),
+					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "default", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "customer_added", "false"),
+				),
+			},
+			// Re-applying the same configuration must remain idempotent.
+			{
+				Config: testAccLanguageUpdateConfig_SystemDefined(environmentName, licenseID, resourceName, "en", true, true),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "default", "true"),
+				),
+			},
+			// The default "en" language cannot be un-defaulted directly.
+			{
+				Config:      testAccLanguageUpdateConfig_SystemDefined(environmentName, licenseID, resourceName, "en", true, false),
+				ExpectError: regexp.MustCompile("The default language cannot be un-defaulted"),
+			},
+			// Recover the default configuration.
+			{
+				Config: testAccLanguageUpdateConfig_SystemDefined(environmentName, licenseID, resourceName, "en", true, true),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "default", "true"),
+				),
+			},
+			// Remove only the update resource and verify the original language survives.
+			{
+				Config: acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID),
+				Check: func(s *terraform.State) error {
+					if _, ok := s.RootModule().Resources[resourceFullName]; ok {
+						return fmt.Errorf("resource %s still exists in state", resourceFullName)
+					}
+					environment, ok := s.RootModule().Resources["pingone_environment."+environmentName]
+					if !ok || environment.Primary.ID != environmentID {
+						return fmt.Errorf("environment changed while removing %s", resourceFullName)
+					}
+
+					language, _, err := p1Client.API.ManagementAPIClient.LanguagesApi.ReadOneLanguage(ctx, environmentID, languageID).Execute()
+					if err != nil {
+						return err
+					}
+					if language.GetId() != languageID || !language.GetEnabled() || !language.GetDefault() {
+						return fmt.Errorf("original language %s is no longer enabled and default", languageID)
+					}
+					return nil
+				},
+			},
+			{
+				Config: testAccLanguageUpdateConfig_SystemDefined(environmentName, licenseID, resourceName, "en", true, true),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "locale", "en"),
+					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "default", "true"),
+				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
 func TestAccLanguageUpdate_Change(t *testing.T) {
 	t.Parallel()
 
