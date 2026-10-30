@@ -342,6 +342,10 @@ Required:
 
 - `home_page_url` (String) A string that specifies the custom home page URL for the application.  Both `http://` and `https://` URLs are permitted.
 
+Optional:
+
+- `external_id` (String) For `PORTAL_LINK_APP` type applications, an external ID that can be used for the application in contexts such as targeted risk policies. Note that `PORTAL_LINK_APP` applications that do not have an external ID specified are not displayed in the list of applications when defining a targeted risk policy in the admin console.
+
 
 <a id="nestedatt--icon"></a>
 ### Nested Schema for `icon`
@@ -359,7 +363,7 @@ Required:
 
 - `grant_types` (Set of String) A list that specifies the grant type for the authorization request.  Options are `AUTHORIZATION_CODE`, `CIBA`, `CLIENT_CREDENTIALS`, `DEVICE_CODE`, `IMPLICIT`, `REFRESH_TOKEN`, `TOKEN_EXCHANGE`.
 - `token_endpoint_auth_method` (String) A string that specifies the client authentication methods supported by the token endpoint.  Options are `CLIENT_SECRET_BASIC`, `CLIENT_SECRET_JWT`, `CLIENT_SECRET_POST`, `NONE`, `PRIVATE_KEY_JWT`.  When `PRIVATE_KEY_JWT` is configured, either `jwks` or `jwks_url` must also be configured.
-- `type` (String) A string that specifies the type associated with the application.  Options are `CUSTOM_APP`, `NATIVE_APP`, `SERVICE`, `SINGLE_PAGE_APP`, `WEB_APP`, `WORKER`.  This field is immutable and will trigger a replace plan if changed.
+- `type` (String) A string that specifies the type associated with the application.  Options are `AI_AGENT`, `CUSTOM_APP`, `NATIVE_APP`, `SERVICE`, `SINGLE_PAGE_APP`, `WEB_APP`, `WORKER`.  This field is immutable and will trigger a replace plan if changed.
 
 Optional:
 
@@ -373,6 +377,7 @@ Optional:
 - `device_timeout` (Number) An integer that specifies the length of time (in seconds) that the `userCode` and `deviceCode` returned by the `/device_authorization` endpoint are valid. This property is required only for applications in which the `grant_types` property is set to `DEVICE_CODE`. The default value is `600` seconds. It can have a value of no more than `3600` seconds (min/max=`1`/`3600`).
 - `home_page_url` (String) A string that specifies the custom home page URL for the application.  The provided URL is expected to use the `https://` schema.  The `http` schema is permitted where the host is `localhost` or `127.0.0.1`.
 - `idp_signoff` (Boolean) A boolean flag to allow signoff without access to the session token cookie.  Defaults to `false`.
+- `include_typ` (Boolean) A boolean that specifies whether tokens signed for this application include the `typ` header with a value of `at+jwt`, regardless of whether the intended audience is the UserInfo endpoint, PingOne APIs, or custom resources. This specifies the JWT as an OAuth 2.0 access token for increased security. On March 2, 2027, PingOne will always include the `typ` header with a value of `at+jwt` when minting access token for the UserInfo endpoint, PingOne APIs, or custom resources.  Defaults to `false`.
 - `include_x5t` (Boolean) A boolean that specifies whether tokens signed for this application include the `x5t` signature header in the signed JWT.  Defaults to `false`.
 - `initiate_login_uri` (String) A string that specifies the URI to use for third-parties to begin the sign-on process for the application. If specified, PingOne redirects users to this URI to initiate SSO to PingOne. The application is responsible for implementing the relevant OIDC flow when the initiate login URI is requested. This property is required if you want the application to appear in the PingOne Application Portal. See the OIDC specification section of [Initiating Login from a Third Party](https://openid.net/specs/openid-connect-core-1_0.html#ThirdPartyInitiatedLogin) for more information.  The provided URL is expected to use the `https://` schema.  The `http` schema is permitted where the host is `localhost` or `127.0.0.1`.
 - `jwks` (String) A string that specifies a JWKS string that validates the signature of signed JWTs for applications that use the `PRIVATE_KEY_JWT` option for the `token_endpoint_auth_method`. This property is required when `token_endpoint_auth_method` is `PRIVATE_KEY_JWT` and the `jwks_url` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-private_key_jwt-jwks-string). This property is also required if the optional `request` property JWT on the authorize endpoint is signed using the RS256 (or RS384, RS512) signing algorithm and the `jwks_url` property is empty. For more infornmation about signing the `request` property JWT, see [Create a request property JWT](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-request-property-jwt).  Conflicts with `jwks_url`.
@@ -392,6 +397,7 @@ Optional:
 - `require_signed_request_object` (Boolean) A boolean that indicates that the Java Web Token (JWT) for the [request query](https://openid.net/specs/openid-connect-core-1_0.html#RequestObject) parameter is required to be signed. If `false` or null, a signed request object is not required. Both `support_unsigned_request_object` and this property cannot be set to `true`.  Defaults to `false`.
 - `response_types` (Set of String) A list that specifies the code or token type returned by an authorization request.  Options are `CODE`, `ID_TOKEN`, `TOKEN`.  Note that `CODE` cannot be used in an authorization request with `TOKEN` or `ID_TOKEN` because PingOne does not currently support OIDC hybrid flows.
 - `signing` (Attributes) A single object that specifies the OIDC application token signing key settings. If omitted, application tokens are signed and verified by the PingOne default key at runtime. (see [below for nested schema](#nestedatt--oidc_options--signing))
+- `skip_token_session_validation` (Boolean) A boolean that indicates whether the session associated with an access token or a refresh token should be taken into consideration when PingOne needs to determine the validity of the token. When set to `true`, PingOne ignores the session status, allowing the use of a valid token even if the user session has expired. By default, this property's value is set to `false`, which invalidates the token (regardless of the token's validity) if the user session is invalid.  Defaults to `false`.
 - `support_unsigned_request_object` (Boolean) A boolean that specifies whether the request query parameter JWT is allowed to be unsigned. If `false` or null, an unsigned request object is not allowed.  Defaults to `false`.
 - `target_link_uri` (String) The URI for the application. If specified, PingOne will redirect application users to this URI after a user is authenticated. In the PingOne admin console, this becomes the value of the `target_link_uri` parameter used for the Initiate Single Sign-On URL field.  Both `http://` and `https://` URLs are permitted as well as custom mobile native schema (e.g., `org.bxretail.app://target`).
 
@@ -495,6 +501,7 @@ Optional:
 - `assertion_signed_enabled` (Boolean) A boolean that specifies whether the SAML assertion itself should be signed.  Defaults to `true`.
 - `cors_settings` (Attributes) A single object that allows customization of how the Authorization and Authentication APIs interact with CORS requests that reference the application. If omitted, the application allows CORS requests from any origin except for operations that expose sensitive information (e.g. `/as/authorize` and `/as/token`).  This is legacy behavior, and it is recommended that applications migrate to include specific CORS settings. (see [below for nested schema](#nestedatt--saml_options--cors_settings))
 - `default_target_url` (String) A string that specfies a default URL used as the `RelayState` parameter by the IdP to deep link into the application after authentication. This value can be overridden by the `applicationUrl` query parameter for [GET Identity Provider Initiated SSO](https://apidocs.pingidentity.com/pingone/platform/v1/api/#get-identity-provider-initiated-sso). Although both of these parameters are generally URLs, because they are used as deep links, this is not enforced. If neither `defaultTargetUrl` nor `applicationUrl` is specified during a SAML authentication flow, no `RelayState` value is supplied to the application. The `defaultTargetUrl` (or the `applicationUrl`) value is passed to the SAML application’s ACS URL as a separate `RelayState` key value (not within the SAMLResponse key value).
+- `enable_always_accept_acs_url_in_signed_authn_request` (Boolean) A boolean that specifies that when a service provider (SP) specifies an ACS URL in its AuthnRequest, and signs the AuthnRequest, then assuming the identity provider (IdP) can validate the signature, the IdP can accept the ACS URL as valid. This is so, regardless of whether the ACS URL is specified in `acs_urls` as an allowable ACS URL. Enabling this setting is useful when an SP generates ACS URLs dynamically.
 - `enable_requested_authn_context` (Boolean) A boolean that specifies whether `requestedAuthnContext` is taken into account in policy decision-making.
 - `home_page_url` (String) A string that specifies the custom home page URL for the application.
 - `nameid_format` (String) A string that specifies the format of the Subject NameID attibute in the SAML assertion.
@@ -593,11 +600,19 @@ Required:
 
 Optional:
 
+- `assertion_duration` (Number) An integer that specifies the assertion validity duration in seconds. The default value is 300 seconds (5 minutes). Valid values are between 300 and 3932100.  Defaults to `300`.
 - `audience_restriction` (String) The service provider ID. The default value is `urn:federation:MicrosoftOnline`.
 - `cors_settings` (Attributes) A single object that allows customization of how the Authorization and Authentication APIs interact with CORS requests that reference the application. If omitted, the application allows CORS requests from any origin except for operations that expose sensitive information (e.g. `/as/authorize` and `/as/token`).  This is legacy behavior, and it is recommended that applications migrate to include specific CORS settings. (see [below for nested schema](#nestedatt--wsfed_options--cors_settings))
+- `hybrid_join_device_attribute` (String) Required for Entra ID hybrid join. The value must be the name of a custom user attribute that an administrator has created.
 - `kerberos` (Attributes) The Kerberos authentication settings. Leave this out of the configuration to disable Kerberos authentication. (see [below for nested schema](#nestedatt--wsfed_options--kerberos))
 - `slo_endpoint` (String) The single logout endpoint URL.
+- `sts_token_type` (String) The type of token to use. Valid values are `http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV1.1` (corresponds to SAML 1.1 in the admin console, not suitable for Entra ID hybrid join) and `urn:oasis:names:tc:SAML:1.0:assertion` (corresponds to SAML 1.1 for Office 365 in the admin console, required for Entra ID hybrid join).
 - `subject_name_identifier_format` (String) The format to use for the SubjectNameIdentifier element. Options are `urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified`, `urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress`.
+- `use_mex13` (Boolean) Must be `true` to enable Entra ID hybrid join. After it's set to `true`, update Entra ID to use the new metadata exchange endpoint.
+- `user_attribute_username_match` (String) Specifies the PingOne user attribute used to match the username from a Security Token Service (STS) request to an existing user profile. By default, PingOne matches the username against the user's email address. Configure this setting if the username in the token is the user's user principal name (`userPrincipalName` attribute in Active Directory) but it differs from their email address (`mail` attribute in Active Directory), or if the username is something other than the user's user principal name or email address. When specifying a PingOne custom user attribute, the attribute must be configured as a unique, enabled, single-valued string attribute of schema type `CUSTOM`.
+- `user_attribute_x509_match` (String) The user attribute to match against the user information in the X.509 certificate. Supports Microsoft Windows primary refresh token (PRT) operations when users log on to their Windows devices, or unlock their locked Windows devices, using PingID. If this setting isn't specified, Windows PRT operations are still supported, but only when users log on to (or unlock) their Windows devices using their username and password.
+- `valid_issuance_certificates` (Attributes Set) Contains the list of valid issuance certificate IDs for the application. A maximum of 10 certificate IDs can be specified. Supports Microsoft Windows primary refresh token (PRT) operations when users log on to their Windows devices, or unlock their locked Windows devices, using PingID. If this setting isn't specified, Windows PRT operations are still supported, but only when users log on to (or unlock) their Windows devices using their username and password. (see [below for nested schema](#nestedatt--wsfed_options--valid_issuance_certificates))
+- `ws_trust_version` (String) A string that specifies the WS-Trust (Web Services Trust) version to use.  Options are `1.2`, `1.3`.
 
 <a id="nestedatt--wsfed_options--idp_signing_key"></a>
 ### Nested Schema for `wsfed_options.idp_signing_key`
@@ -645,6 +660,16 @@ Optional:
 Optional:
 
 - `id` (String) The UUID of a user type in the list of `userTypes` for the LDAP gateway. Must be a valid PingOne resource ID.
+
+
+
+
+<a id="nestedatt--wsfed_options--valid_issuance_certificates"></a>
+### Nested Schema for `wsfed_options.valid_issuance_certificates`
+
+Required:
+
+- `certificate_id` (String) The ID of the certificate key pair. The key must have a usage type of `ISSUANCE`. Must be a valid PingOne resource ID.
 
 ## Import
 

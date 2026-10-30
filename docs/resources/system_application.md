@@ -49,6 +49,8 @@ resource "pingone_system_application" "pingone_self_service" {
 - `access_control_role_type` (String) A string that specifies the user role required to access the application. A user is an admin user if they have one or more of the following roles assigned: `Organization Admin`, `Environment Admin`, `Identity Data Admin`, or `Client Application Developer`.  Options are `ADMIN_USERS_ONLY`.
 - `apply_default_theme` (Boolean) A boolean that specifies whether to apply the default theme to the Self-Service or PingOne Portal application.  Defaults to `false`.
 - `enable_default_theme_footer` (Boolean) A boolean that specifies whether to show the default theme footer on the self-service application. Configurable only when the `type` is `PING_ONE_SELF_SERVICE` and `apply_default_theme` is also `true`.
+- `logout_type` (String) A string that specifies the logout type for the application. Configurable only when the `type` is `PING_ONE_SELF_SERVICE` or `PING_ONE_PORTAL`.  Options are `OIDC_RP_INITIATED`, `SAML2_SLO`.  Defaults to `OIDC_RP_INITIATED`.
+- `manage_devices_via_my_account_enabled` (Boolean) A boolean that specifies whether PingID users can manage their devices using the MyAccount app. When set to `true`, this also adds the MyAccount app to all PingID policies that already include Device Management. Configurable only when the `type` is `PING_ONE_SELF_SERVICE`.
 
 ### Read-Only
 

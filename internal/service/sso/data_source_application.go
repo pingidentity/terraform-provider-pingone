@@ -134,6 +134,10 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 		"A boolean that specifies whether tokens signed for this application include the `x5t` signature header in the signed JWT.",
 	)
 
+	oidcOptionsIncludeTypDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A boolean that specifies whether tokens signed for this application include the `typ` header with a value of `at+jwt`, regardless of whether the intended audience is the UserInfo endpoint, PingOne APIs, or custom resources. This specifies the JWT as an OAuth 2.0 access token for increased security. On March 2, 2027, PingOne will always include the `typ` header with a value of `at+jwt` when minting access token for the UserInfo endpoint, PingOne APIs, or custom resources.",
+	)
+
 	oidcAdditionalRefreshTokenReplayProtectionEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that, when set to `true`, if you attempt to reuse the refresh token, the authorization server immediately revokes the reused refresh token, as well as all descendant tokens.",
 	).DefaultValue("true")
@@ -257,6 +261,10 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 				Computed:    true,
 
 				Attributes: map[string]schema.Attribute{
+					"external_id": schema.StringAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("For `PORTAL_LINK_APP` type applications, an external ID that can be used for the application in contexts such as targeted risk policies.").Description,
+						Computed:    true,
+					},
 					"home_page_url": schema.StringAttribute{
 						Description:         externalLinkHomePageURLDescription.Description,
 						MarkdownDescription: externalLinkHomePageURLDescription.MarkdownDescription,
@@ -311,6 +319,11 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 						MarkdownDescription: oidcOptionsIncludeX5tDescription.MarkdownDescription,
 						Computed:            true,
 					},
+					"include_typ": schema.BoolAttribute{
+						Description:         oidcOptionsIncludeTypDescription.Description,
+						MarkdownDescription: oidcOptionsIncludeTypDescription.MarkdownDescription,
+						Computed:            true,
+					},
 					"initiate_login_uri": schema.StringAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the URI to use for third-parties to begin the sign-on process for the application.").Description,
 						Computed:    true,
@@ -342,6 +355,10 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 					"response_types": schema.SetAttribute{
 						Description: framework.SchemaAttributeDescriptionFromMarkdown("A list that specifies the code or token type returned by an authorization request.").Description,
 						ElementType: types.StringType,
+						Computed:    true,
+					},
+					"skip_token_session_validation": schema.BoolAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that indicates whether the session associated with an access token or a refresh token should be taken into consideration when PingOne needs to determine the validity of the token. When set to `true`, PingOne ignores the session status, allowing the use of a valid token even if the user session has expired. By default, this property's value is set to `false`, which invalidates the token (regardless of the token's validity) if the user session is invalid.").Description,
 						Computed:    true,
 					},
 					"token_endpoint_auth_method": schema.StringAttribute{
@@ -577,6 +594,10 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 							},
 						},
 					},
+					"enable_always_accept_acs_url_in_signed_authn_request": schema.BoolAttribute{
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies that when a service provider (SP) specifies an ACS URL in its AuthnRequest, and signs the AuthnRequest, then assuming the identity provider (IdP) can validate the signature, the IdP can accept the ACS URL as valid, regardless of whether the ACS URL is specified in `acs_urls`.").Description,
+						Computed:    true,
+					},
 					"enable_requested_authn_context": schema.BoolAttribute{
 						Description:         samlEnableRequestedAuthnContextDescription.Description,
 						MarkdownDescription: samlEnableRequestedAuthnContextDescription.MarkdownDescription,
@@ -688,7 +709,11 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 				Description: "A single object that specifies WS-Fed application specific settings.",
 				Computed:    true,
 
-				Attributes: map[string]schema.Attribute{ //
+				Attributes: map[string]schema.Attribute{
+					"assertion_duration": schema.Int32Attribute{
+						Computed:    true,
+						Description: framework.SchemaAttributeDescriptionFromMarkdown("An integer that specifies the assertion validity duration in seconds.").Description,
+					},
 					"audience_restriction": schema.StringAttribute{
 						Computed:            true,
 						Description:         "The service provider ID. The default value is \"urn:federation:MicrosoftOnline\".",
@@ -698,6 +723,10 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 					"domain_name": schema.StringAttribute{
 						Computed:    true,
 						Description: "The federated domain name (for example, the Azure custom domain).",
+					},
+					"hybrid_join_device_attribute": schema.StringAttribute{
+						Computed:    true,
+						Description: "Required for Entra ID hybrid join. The value must be the name of a custom user attribute that an administrator has created.",
 					},
 					"idp_signing_key": schema.SingleNestedAttribute{
 						Description: "Contains the information about the signing of requests by the identity provider (IdP).",
@@ -758,15 +787,49 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 						Computed:    true,
 						Description: "The single logout endpoint URL.",
 					},
+					"sts_token_type": schema.StringAttribute{
+						Computed:    true,
+						Description: "The type of token to use. Valid values are `http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV1.1` (corresponds to SAML 1.1 in the admin console, not suitable for Entra ID hybrid join) and `urn:oasis:names:tc:SAML:1.0:assertion` (corresponds to SAML 1.1 for Office 365 in the admin console, required for Entra ID hybrid join).",
+					},
 					"subject_name_identifier_format": schema.StringAttribute{
 						Computed:            true,
 						Description:         "The format to use for the SubjectNameIdentifier element. Options are \"urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified\", \"urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress\".",
 						MarkdownDescription: "The format to use for the SubjectNameIdentifier element. Options are `urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified`, `urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress`.",
 					},
+					"use_mex13": schema.BoolAttribute{
+						Computed:    true,
+						Description: "Must be `true` to enable Entra ID hybrid join. After it's set to `true`, update Entra ID to use the new metadata exchange endpoint.",
+					},
+					"user_attribute_username_match": schema.StringAttribute{
+						Computed:    true,
+						Description: "Specifies the PingOne user attribute used to match the username from a Security Token Service (STS) request to an existing user profile. By default, PingOne matches the username against the user's email address.",
+					},
+					"user_attribute_x509_match": schema.StringAttribute{
+						Computed:    true,
+						Description: "The user attribute to match against the user information in the X.509 certificate. Supports Microsoft Windows primary refresh token (PRT) operations when users log on to their Windows devices, or unlock their locked Windows devices, using PingID.",
+					},
+					"valid_issuance_certificates": schema.SetNestedAttribute{
+						Description: "Contains the list of valid issuance certificate IDs for the application. A maximum of 10 certificate IDs can be specified.",
+						Computed:    true,
+
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"certificate_id": schema.StringAttribute{
+									Description: "The ID of the certificate key pair. The key must have a usage type of `ISSUANCE`.",
+									Computed:    true,
+									CustomType:  pingonetypes.ResourceIDType{},
+								},
+							},
+						},
+					},
 					"type": schema.StringAttribute{
 						Computed:            true,
 						Description:         "A string that specifies the type associated with the application. This is a required property. Options are \"WEB_APP\", \"NATIVE_APP\", \"SINGLE_PAGE_APP\", \"WORKER\", \"SERVICE\", \"CUSTOM_APP\", \"PORTAL_LINK_APP\".",
 						MarkdownDescription: "A string that specifies the type associated with the application. This is a required property. Options are `WEB_APP`, `NATIVE_APP`, `SINGLE_PAGE_APP`, `WORKER`, `SERVICE`, `CUSTOM_APP`, `PORTAL_LINK_APP`.",
+					},
+					"ws_trust_version": schema.StringAttribute{
+						Computed:    true,
+						Description: "The WS-Trust (Web Services Trust) version to use. Options are `1.2` and `1.3`.",
 					},
 				},
 			},
