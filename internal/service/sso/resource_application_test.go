@@ -163,8 +163,10 @@ func TestAccApplication_OIDCFullWeb(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.idp_signoff", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.include_x5t", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.include_typ", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.op_session_check_enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.request_scopes_for_multiple_resources_enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.skip_token_session_validation", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.redirect_uris.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://pingidentity.com"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://www.pingidentity.com"),
@@ -379,8 +381,10 @@ func TestAccApplication_OIDCWebUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.pkce_enforcement", "OPTIONAL"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.idp_signoff", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.include_x5t", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.include_typ", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.op_session_check_enabled", "false"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.request_scopes_for_multiple_resources_enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.skip_token_session_validation", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.redirect_uris.#", "2"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://pingidentity.com"),
 					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.redirect_uris.*", "https://www.pingidentity.com"),
@@ -1851,6 +1855,60 @@ func TestAccApplication_OIDCFullService(t *testing.T) {
 	})
 }
 
+func TestAccApplication_OIDCFullAIAgent(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_application.%s", resourceName)
+
+	name := resourceName
+
+	data, _ := os.ReadFile("../../acctest/test_assets/image/image-logo.gif")
+	image := base64.StdEncoding.EncodeToString(data)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			// acctest.PreCheckNoBeta(t) // should be re-enabled on completion of CDI-631
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             sso.Application_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccApplicationConfig_OIDC_AIAgent(resourceName, name, image),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+					resource.TestCheckResourceAttr(resourceFullName, "enabled", "true"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.type", "AI_AGENT"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.grant_types.#", "1"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "oidc_options.grant_types.*", "CLIENT_CREDENTIALS"),
+					resource.TestCheckResourceAttr(resourceFullName, "oidc_options.token_endpoint_auth_method", "CLIENT_SECRET_POST"),
+				),
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
 func TestAccApplication_OIDCMinimalService(t *testing.T) {
 	t.Parallel()
 
@@ -3089,6 +3147,7 @@ func TestAccApplication_SAMLFull(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.default_target_url", "https://www.pingidentity.com/relaystate"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.idp_signing_key.algorithm", "SHA384withECDSA"),
 					resource.TestMatchResourceAttr(resourceFullName, "saml_options.idp_signing_key.key_id", verify.P1ResourceIDRegexpFullString),
+					resource.TestCheckResourceAttr(resourceFullName, "saml_options.enable_always_accept_acs_url_in_signed_authn_request", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.enable_requested_authn_context", "true"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.nameid_format", "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"),
 					resource.TestCheckResourceAttr(resourceFullName, "saml_options.response_is_signed", "true"),
@@ -3325,6 +3384,7 @@ func TestAccApplication_ExternalLinkFull(t *testing.T) {
 					resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "saml_options"),
 					resource.TestCheckNoResourceAttr(resourceFullName, "wsfed_options"),
+					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.external_id", "my-external-id"),
 					resource.TestCheckResourceAttr(resourceFullName, "external_link_options.home_page_url", "https://www.pingidentity.com"),
 					resource.TestCheckResourceAttr(resourceFullName, "hidden_from_app_portal", "true"),
 				),
@@ -3598,10 +3658,19 @@ func testAccApplicationConfig_WSFed_FullCheck(resourceFullName, name string) res
 		resource.TestMatchResourceAttr(resourceFullName, "wsfed_options.kerberos.gateways.0.id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "wsfed_options.kerberos.gateways.0.type", "LDAP"),
 		resource.TestMatchResourceAttr(resourceFullName, "wsfed_options.kerberos.gateways.0.user_type.id", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckResourceAttr(resourceFullName, "wsfed_options.assertion_duration", "3600"),
+		resource.TestCheckResourceAttr(resourceFullName, "wsfed_options.hybrid_join_device_attribute", "deviceAuthenticatorId"),
 		resource.TestCheckResourceAttr(resourceFullName, "wsfed_options.reply_url", "https://example.com"),
 		resource.TestCheckResourceAttr(resourceFullName, "wsfed_options.slo_endpoint", "https://example.com/slo"),
+		resource.TestCheckResourceAttr(resourceFullName, "wsfed_options.sts_token_type", "urn:oasis:names:tc:SAML:1.0:assertion"),
 		resource.TestCheckResourceAttr(resourceFullName, "wsfed_options.subject_name_identifier_format", "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"),
 		resource.TestCheckResourceAttr(resourceFullName, "wsfed_options.type", "WEB_APP"),
+		resource.TestCheckResourceAttr(resourceFullName, "wsfed_options.use_mex13", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "wsfed_options.user_attribute_username_match", "userName"),
+		resource.TestCheckResourceAttr(resourceFullName, "wsfed_options.user_attribute_x509_match", "mail"),
+		resource.TestCheckResourceAttr(resourceFullName, "wsfed_options.valid_issuance_certificates.#", "1"),
+		resource.TestMatchResourceAttr(resourceFullName, "wsfed_options.valid_issuance_certificates.0.certificate_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckResourceAttr(resourceFullName, "wsfed_options.ws_trust_version", "1.3"),
 	)
 }
 
@@ -3773,8 +3842,10 @@ resource "pingone_application" "%[2]s" {
     idp_signoff = true
 
     include_x5t                                   = true
+    include_typ                                   = true
     op_session_check_enabled                      = false
     request_scopes_for_multiple_resources_enabled = true
+    skip_token_session_validation                 = true
 
     par_requirement = "OPTIONAL"
     par_timeout     = 60
@@ -4650,6 +4721,35 @@ resource "pingone_application" "%[2]s" {
 `, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
+func testAccApplicationConfig_OIDC_AIAgent(resourceName, name, image string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_image" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  image_file_base64 = "%[3]s"
+}
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[2]s"
+
+  icon = {
+    id   = pingone_image.%[2]s.id
+    href = pingone_image.%[2]s.uploaded_image.href
+  }
+
+  enabled = true
+
+  oidc_options = {
+    type                       = "AI_AGENT"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_POST"
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, image)
+}
+
 func testAccApplicationConfig_OIDC_FullService(resourceName, name, image string) string {
 	return fmt.Sprintf(`
 		%[1]s
@@ -5125,6 +5225,7 @@ resource "pingone_application" "%[3]s" {
       key_id    = pingone_key.%[3]s.id
       algorithm = pingone_key.%[3]s.signature_algorithm
     }
+    enable_always_accept_acs_url_in_signed_authn_request = true
     enable_requested_authn_context   = true
     nameid_format                    = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
     response_is_signed               = true
@@ -5343,6 +5444,7 @@ resource "pingone_application" "%[3]s" {
       key_id    = pingone_key.%[3]s.id
       algorithm = pingone_key.%[3]s.signature_algorithm
     }
+    enable_always_accept_acs_url_in_signed_authn_request = true
     enable_requested_authn_context   = true
     nameid_format                    = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
     response_is_signed               = true
@@ -5470,6 +5572,7 @@ resource "pingone_application" "%[3]s" {
       key_id    = pingone_key.%[3]s.id
       algorithm = pingone_key.%[3]s.signature_algorithm
     }
+    enable_always_accept_acs_url_in_signed_authn_request = true
     enable_requested_authn_context   = true
     nameid_format                    = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
     response_is_signed               = true
@@ -5556,6 +5659,7 @@ resource "pingone_application" "%[2]s" {
   enabled = true
 
   external_link_options = {
+    external_id   = "my-external-id"
     home_page_url = "https://www.pingidentity.com"
   }
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, image)
@@ -5628,6 +5732,18 @@ resource "pingone_key" "%[3]s" {
   signature_algorithm = "SHA384withECDSA"
   subject_dn          = "CN=%[4]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
   usage_type          = "SIGNING"
+  validity_period     = 365
+}
+
+resource "pingone_key" "%[3]s-issuance" {
+  environment_id = %[2]s
+
+  name                = "%[4]s-issuance"
+  algorithm           = "RSA"
+  key_length          = 2048
+  signature_algorithm = "SHA256withRSA"
+  subject_dn          = "CN=%[4]s-issuance, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  usage_type          = "ISSUANCE"
   validity_period     = 365
 }
 
@@ -5764,6 +5880,22 @@ resource "pingone_application" "%[3]s" {
         }
       ]
     }
+	  
+    assertion_duration            = 3600
+    hybrid_join_device_attribute  = "deviceAuthenticatorId"
+    sts_token_type                = "urn:oasis:names:tc:SAML:1.0:assertion"
+    use_mex13                     = true
+    user_attribute_username_match = "userName"
+    user_attribute_x509_match     = "mail"
+
+    valid_issuance_certificates = [
+      {
+        certificate_id = pingone_key.%[3]s-issuance.id
+      },
+    ]
+
+    ws_trust_version = "1.3"
+
     reply_url                      = "https://example.com"
     slo_endpoint                   = "https://example.com/slo"
     subject_name_identifier_format = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
@@ -5793,6 +5925,18 @@ resource "pingone_key" "%[3]s" {
   signature_algorithm = "SHA384withECDSA"
   subject_dn          = "CN=%[4]s, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
   usage_type          = "SIGNING"
+  validity_period     = 365
+}
+
+resource "pingone_key" "%[3]s-issuance" {
+  environment_id = %[2]s
+
+  name                = "%[4]s-issuance"
+  algorithm           = "RSA"
+  key_length          = 2048
+  signature_algorithm = "SHA256withRSA"
+  subject_dn          = "CN=%[4]s-issuance, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  usage_type          = "ISSUANCE"
   validity_period     = 365
 }
 

@@ -197,6 +197,12 @@ type applicationOIDCMobileAppPushNumberMatchingResourceModelV1 struct {
 	Type types.String `tfsdk:"type"`
 }
 
+type applicationOIDCMobileAppVersionUpdatesResourceModelV1 struct {
+	Android types.String `tfsdk:"android"`
+	Enabled types.Bool   `tfsdk:"enabled"`
+	Ios     types.String `tfsdk:"ios"`
+}
+
 type applicationOIDCMobileAppIntegrityDetectionCacheDurationResourceModelV1 struct {
 	Amount types.Int32  `tfsdk:"amount"`
 	Units  types.String `tfsdk:"units"`
@@ -1232,7 +1238,6 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 							Description:         oidcOptionsIncludeTypDescription.Description,
 							MarkdownDescription: oidcOptionsIncludeTypDescription.MarkdownDescription,
 							Optional:            true,
-							Computed:            true,
 						},
 
 						"initiate_login_uri": schema.StringAttribute{
@@ -1323,7 +1328,6 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 							Description:         oidcOptionsSkipTokenSessionValidationDescription.Description,
 							MarkdownDescription: oidcOptionsSkipTokenSessionValidationDescription.MarkdownDescription,
 							Optional:            true,
-							Computed:            true,
 						},
 
 						"token_endpoint_auth_method": schema.StringAttribute{
