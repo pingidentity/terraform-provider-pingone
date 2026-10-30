@@ -5878,7 +5878,7 @@ resource "pingone_application" "%[3]s" {
         }
       ]
     }
-    # New application fields
+	  
     assertion_duration            = 3600
     hybrid_join_device_attribute  = "deviceAuthenticatorId"
     sts_token_type                = "urn:oasis:names:tc:SAML:1.0:assertion"
