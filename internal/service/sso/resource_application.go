@@ -1233,8 +1233,6 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 							MarkdownDescription: oidcOptionsIncludeTypDescription.MarkdownDescription,
 							Optional:            true,
 							Computed:            true,
-
-							Default: booldefault.StaticBool(false),
 						},
 
 						"initiate_login_uri": schema.StringAttribute{
@@ -1326,8 +1324,6 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 							MarkdownDescription: oidcOptionsSkipTokenSessionValidationDescription.MarkdownDescription,
 							Optional:            true,
 							Computed:            true,
-
-							Default: booldefault.StaticBool(false),
 						},
 
 						"token_endpoint_auth_method": schema.StringAttribute{
@@ -1549,8 +1545,6 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 											Description: framework.SchemaAttributeDescriptionFromMarkdown("Set to `true` if you want to allow users to authenticate from the lock screen if they using Android 10.0 or earlier.").Description,
 											Optional:    true,
 											Computed:    true,
-
-											Default: booldefault.StaticBool(false),
 										},
 									},
 								},
@@ -1565,8 +1559,6 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 											Description: framework.SchemaAttributeDescriptionFromMarkdown("Set to `true` if you want to allow users to unpair or change device from the PingID mobile app.").Description,
 											Optional:    true,
 											Computed:    true,
-
-											Default: booldefault.StaticBool(false),
 										},
 									},
 								},
@@ -1654,24 +1646,18 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 											Description: framework.SchemaAttributeDescriptionFromMarkdown("Set to `true` if you want to require the user to enter a security PIN to access the PingID mobile app.").Description,
 											Optional:    true,
 											Computed:    true,
-
-											Default: booldefault.StaticBool(false),
 										},
 
 										"require_for_all_devices": schema.BoolAttribute{
 											Description: framework.SchemaAttributeDescriptionFromMarkdown("If `mobile_app_security_pin_require.enabled` is set to `true`, then by default, the PIN is required only if a device PIN or biometrics have not been defined for the device. Set `require_for_all_devices` to `true` if you want to require PIN use for all devices.").Description,
 											Optional:    true,
 											Computed:    true,
-
-											Default: booldefault.StaticBool(false),
 										},
 
 										"security_pin_digit": schema.StringAttribute{
 											Description: framework.SchemaAttributeDescriptionFromMarkdown("If `mobile_app_security_pin_require.enabled` is set to `true`, then by default, a six-digit security PIN is required. To specify that a four-digit PIN is sufficient, set `security_pin_digit` to `FOUR_DIGIT`. Use `SIX_DIGIT` to specify that a six-digit PIN is required.").Description,
 											Optional:    true,
 											Computed:    true,
-
-											Default: stringdefault.StaticString("SIX_DIGIT"),
 
 											Validators: []validator.String{
 												stringvalidator.OneOf("FOUR_DIGIT", "SIX_DIGIT"),
@@ -1690,32 +1676,24 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 											Description: framework.SchemaAttributeDescriptionFromMarkdown("If you have allowed biometric authentication methods in the MFA policy, then by default, the user is required to use a biometric method with PingID if one is available on their device. If you want to specify that users can authenticate with the PingID mobile app only if they have a biometric method configured, set `required` to `true`.").Description,
 											Optional:    true,
 											Computed:    true,
-
-											Default: booldefault.StaticBool(false),
 										},
 
 										"device_passcode_fallback_enabled": schema.BoolAttribute{
 											Description: framework.SchemaAttributeDescriptionFromMarkdown("Set to `true` if you want to allow iOS users to authenticate using the device passcode if biometric authentication fails.").Description,
 											Optional:    true,
 											Computed:    true,
-
-											Default: booldefault.StaticBool(false),
 										},
 
 										"face_id_consent_enabled": schema.BoolAttribute{
 											Description: framework.SchemaAttributeDescriptionFromMarkdown("For iOS devices, set to `true` if you want to prevent users with FaceID defined from authenticating by mistake. When set to `true`, the user is prompted to consent explicitly before each face scan is taken.").Description,
 											Optional:    true,
 											Computed:    true,
-
-											Default: booldefault.StaticBool(false),
 										},
 
 										"notification_actions_enabled": schema.BoolAttribute{
 											Description: framework.SchemaAttributeDescriptionFromMarkdown("Set to `true` if you want to allow users to approve notification requests from their device's lock screen.").Description,
 											Optional:    true,
 											Computed:    true,
-
-											Default: booldefault.StaticBool(false),
 										},
 									},
 								},
@@ -1730,8 +1708,6 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 											Description: framework.SchemaAttributeDescriptionFromMarkdown("Set to `true` if you want to notify your users that there is a newer version of the PingID app available if they want to update. The notification is displayed as soon as the user opens the app. When set to `true`, you must provide a value for `android`, `ios`, or both.").Description,
 											Optional:    true,
 											Computed:    true,
-
-											Default: booldefault.StaticBool(false),
 										},
 
 										"android": schema.StringAttribute{
@@ -1756,8 +1732,6 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 											Description: framework.SchemaAttributeDescriptionFromMarkdown("Set to `true` if you want to require a minimum version of the PingID app and notify the user that they must update the app if they are using an older version. The notification is displayed as soon as the user opens the app. When set to `true`, you must provide a value for `android`, `ios`, or both.").Description,
 											Optional:    true,
 											Computed:    true,
-
-											Default: booldefault.StaticBool(false),
 										},
 
 										"android": schema.StringAttribute{
@@ -1782,8 +1756,6 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 											Description: framework.SchemaAttributeDescriptionFromMarkdown("Set to `true` if you want users to receive a push notification during authentication that they can tap to open the PingID app.").Description,
 											Optional:    true,
 											Computed:    true,
-
-											Default: booldefault.StaticBool(false),
 										},
 									},
 								},
@@ -1839,8 +1811,6 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 											Description: framework.SchemaAttributeDescriptionFromMarkdown("Set to `true` if you want push notifications to include a map that displays the location of the user requesting access.").Description,
 											Optional:    true,
 											Computed:    true,
-
-											Default: booldefault.StaticBool(false),
 										},
 									},
 								},
@@ -1899,8 +1869,6 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 													Description: framework.SchemaAttributeDescriptionFromMarkdown("Set to `true` if you have enabled device integrity checking for your iOS app and you want to use Apple App Attest for the check. If the value is set to `true`, you must also include a value for `apple_team_id`.").Description,
 													Optional:    true,
 													Computed:    true,
-
-													Default: booldefault.StaticBool(false),
 												},
 											},
 										},
@@ -2092,9 +2060,6 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 					"enable_always_accept_acs_url_in_signed_authn_request": schema.BoolAttribute{
 						Description: "A boolean that specifies that when a service provider (SP) specifies an ACS URL in its AuthnRequest, and signs the AuthnRequest, then assuming the identity provider (IdP) can validate the signature, the IdP can accept the ACS URL as valid. This is so, regardless of whether the ACS URL is specified in `acs_urls` as an allowable ACS URL. Enabling this setting is useful when an SP generates ACS URLs dynamically.",
 						Optional:    true,
-						Computed:    true,
-
-						Default: booldefault.StaticBool(false),
 					},
 
 					"enable_requested_authn_context": schema.BoolAttribute{
