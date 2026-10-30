@@ -797,7 +797,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 
 	wsfedOptionsWsTrustVersionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the WS-Trust (Web Services Trust) version to use.",
-	).AllowedValues("1.2", "1.3")
+	).AllowedValuesEnum(management.AllowedEnumApplicationWSFEDWsTrustVersionEnumValues)
 
 	oidcOptionsSigningDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A single object that specifies the OIDC application token signing key settings. If omitted, application tokens are signed and verified by the PingOne default key at runtime.",
@@ -2430,10 +2430,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						Description: "The type of token to use. Valid values are `http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV1.1` (corresponds to SAML 1.1 in the admin console, not suitable for Entra ID hybrid join) and `urn:oasis:names:tc:SAML:1.0:assertion` (corresponds to SAML 1.1 for Office 365 in the admin console, required for Entra ID hybrid join).",
 						Optional:    true,
 						Validators: []validator.String{
-							stringvalidator.OneOf(
-								"http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV1.1",
-								"urn:oasis:names:tc:SAML:1.0:assertion",
-							),
+							stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationWSFEDStsTokenTypeEnumValues)...),
 						},
 					},
 					"subject_name_identifier_format": schema.StringAttribute{
@@ -2495,7 +2492,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						Optional:            true,
 
 						Validators: []validator.String{
-							stringvalidator.OneOf("1.2", "1.3"),
+							stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationWSFEDWsTrustVersionEnumValues)...),
 						},
 					},
 				},
@@ -4313,7 +4310,7 @@ func (p *applicationResourceModelV1) expandApplicationWSFed(ctx context.Context)
 		}
 
 		if !plan.StsTokenType.IsNull() && !plan.StsTokenType.IsUnknown() {
-			data.SetStsTokenType(plan.StsTokenType.ValueString())
+			data.SetStsTokenType(management.EnumApplicationWSFEDStsTokenType(plan.StsTokenType.ValueString()))
 		}
 
 		if !plan.SubjectNameIdentifierFormat.IsNull() && !plan.SubjectNameIdentifierFormat.IsUnknown() {
@@ -4337,7 +4334,7 @@ func (p *applicationResourceModelV1) expandApplicationWSFed(ctx context.Context)
 		}
 
 		if !plan.WsTrustVersion.IsNull() && !plan.WsTrustVersion.IsUnknown() {
-			data.SetWsTrustVersion(plan.WsTrustVersion.ValueString())
+			data.SetWsTrustVersion(management.EnumApplicationWSFEDWsTrustVersion(plan.WsTrustVersion.ValueString()))
 		}
 
 		if !plan.ValidIssuanceCertificates.IsNull() && !plan.ValidIssuanceCertificates.IsUnknown() {

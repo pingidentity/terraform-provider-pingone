@@ -438,7 +438,7 @@ func (p *systemApplicationDataSourceModel) toState(apiObject *management.ReadOne
 		p.TokenEndpointAuthMethod = framework.EnumOkToTF(apiObject.ApplicationPingOnePortal.GetTokenEndpointAuthMethodOk())
 		p.ApplyDefaultTheme = framework.BoolOkToTF(apiObject.ApplicationPingOnePortal.GetApplyDefaultThemeOk())
 		p.EnableDefaultThemeFooter = types.BoolNull()
-		p.LogoutType = framework.StringOkToTF(apiObject.ApplicationPingOnePortal.GetLogoutTypeOk())
+		p.LogoutType = framework.EnumOkToTF(apiObject.ApplicationPingOnePortal.GetLogoutTypeOk())
 		p.ManageDevicesViaMyAccountEnabled = types.BoolNull()
 	}
 
@@ -460,7 +460,7 @@ func (p *systemApplicationDataSourceModel) toState(apiObject *management.ReadOne
 		p.TokenEndpointAuthMethod = framework.EnumOkToTF(apiObject.ApplicationPingOneSelfService.GetTokenEndpointAuthMethodOk())
 		p.ApplyDefaultTheme = framework.BoolOkToTF(apiObject.ApplicationPingOneSelfService.GetApplyDefaultThemeOk())
 		p.EnableDefaultThemeFooter = framework.BoolOkToTF(apiObject.ApplicationPingOneSelfService.GetEnableDefaultThemeFooterOk())
-		p.LogoutType = framework.StringOkToTF(apiObject.ApplicationPingOneSelfService.GetLogoutTypeOk())
+		p.LogoutType = framework.EnumOkToTF(apiObject.ApplicationPingOneSelfService.GetLogoutTypeOk())
 		p.ManageDevicesViaMyAccountEnabled = framework.BoolOkToTF(apiObject.ApplicationPingOneSelfService.GetManageDevicesViaMyAccountEnabledOk())
 	}
 
