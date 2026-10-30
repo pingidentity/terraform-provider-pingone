@@ -1,0 +1,7 @@
+```release-note:bug
+`resource/pingone_language_update`: Fix updates to an already-default language, allow state-only removal of default English, and provide an actionable error when unsetting default English.
+```
+
+```release-note:bug
+`resource/pingone_notification_template_content`: Return a clear error when updating the read-only default template content, and remove only the resource from Terraform state when destroying the default content.
+```

@@ -9,6 +9,10 @@ description: |-
 
 {{ .Description | trimspace }}
 
+~> An environment must always have a default language.  Setting `default = false` on a non-English default language resets the default to `en`.  To unset `default` on `en` itself, first set `default = true` on another language.  Keep resource addresses stable when switching defaults; moving a language between resources can cause conflicting updates during creation and destruction.
+
+~> Destroying a `pingone_language_update` resource that manages `en` while it is the environment default removes the resource from Terraform state only; the language remains enabled and set as the default in PingOne.
+
 ## Example Usage - Customer Defined Language
 
 {{ tffile (printf "%s%s%s" "examples/resources/" .Name "/resource-customer.tf") }}

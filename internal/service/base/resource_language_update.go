@@ -155,6 +155,18 @@ func resourceLanguageUpdateUpdate(ctx context.Context, d *schema.ResourceData, m
 		return diags
 	}
 
+	if resp == nil {
+		if d.IsNewResource() {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "Cannot create language update",
+				Detail:   fmt.Sprintf("The language %s was not found in environment %s. Ensure `language_id` references an existing language in that environment before creating this resource.", d.Get("language_id").(string), d.Get("environment_id").(string)),
+			})
+		}
+		d.SetId("")
+		return diags
+	}
+
 	language := resp.(*management.Language)
 
 	diags = updateLanguageEnabledDefaultSequence(ctx, apiClient, d.Get("environment_id").(string), d.Id(), *language, d.Get("enabled").(bool), d.Get("default").(bool), false)
@@ -192,6 +204,17 @@ func resourceLanguageUpdateDelete(ctx context.Context, d *schema.ResourceData, m
 	}
 
 	language := resp.(*management.Language)
+
+	// Keep English enabled when it is the fallback default; only remove Terraform state.
+	if language.GetDefault() && language.GetLocale() == "en" {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Warning,
+			Summary:  "The default language cannot be deleted",
+			Detail:   fmt.Sprintf("The language %s is the default language for the environment %s and cannot be disabled or un-defaulted.  The resource has been removed from Terraform state, but the language remains enabled and set as the default in PingOne.", d.Id(), d.Get("environment_id").(string)),
+		})
+
+		return diags
+	}
 
 	// If enabled, then disable it
 	if language.GetEnabled() {
@@ -283,6 +306,17 @@ func updateLanguageEnabledDefaultSequence(ctx context.Context, apiClient *manage
 	}
 
 	if language.GetDefault() && !defaultValue {
+
+		if language.GetLocale() == "en" {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "The default language cannot be un-defaulted",
+				Detail:   fmt.Sprintf("The language %s (locale \"en\") is the default language for the environment %s and cannot be un-defaulted directly.  Set `default = true` on another pingone_language_update resource first, then set `default = false` on this resource.", languageID, environmentID),
+			})
+
+			return diags
+		}
+
 		// Need to reset default back to en here
 		diags = resetDefaultLanguage(ctx, apiClient, environmentID, warnOnNotFound)
 		if diags.HasError() {
@@ -290,8 +324,14 @@ func updateLanguageEnabledDefaultSequence(ctx context.Context, apiClient *manage
 		}
 	}
 
+	// Preserve an existing default: PingOne rejects unsetting it before selecting another.
+	preserveDefault := language.GetDefault() && defaultValue
+	if preserveDefault && language.GetEnabled() == enabled {
+		return diags
+	}
+
 	language.SetEnabled(enabled)
-	language.SetDefault(false)
+	language.SetDefault(preserveDefault)
 
 	errorFunction := sdk.DefaultCustomError
 	if warnOnNotFound {
@@ -320,7 +360,7 @@ func updateLanguageEnabledDefaultSequence(ctx context.Context, apiClient *manage
 				},
 				"UpdateLanguage-UpdateSequence1",
 				errorFunction,
-				nil,
+				retryLanguageDefault,
 			)
 			diags = append(diags, d...)
 			if diags.HasError() {
@@ -368,8 +408,8 @@ func updateLanguageEnabledDefaultSequence(ctx context.Context, apiClient *manage
 	if err != nil {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  "Cannot find enable language",
-			Detail:   fmt.Sprintf("The language %s for environment %s cannot be enabled: %s", languageID, environmentID, err),
+			Summary:  "Unable to update language",
+			Detail:   fmt.Sprintf("The language %s for environment %s could not be updated to enabled=%t, default=%t: %s", languageID, environmentID, enabled, defaultValue, err),
 		})
 
 		return diags
@@ -381,7 +421,7 @@ func updateLanguageEnabledDefaultSequence(ctx context.Context, apiClient *manage
 
 	languageResponse := response.(*management.Language)
 
-	if defaultValue && languageResponse.Enabled {
+	if defaultValue && languageResponse.Enabled && !preserveDefault {
 
 		language.SetDefault(true)
 
@@ -394,7 +434,7 @@ func updateLanguageEnabledDefaultSequence(ctx context.Context, apiClient *manage
 			},
 			"UpdateLanguage-UpdateSequence2",
 			errorFunction,
-			retryLanguageUpdateSequence2,
+			retryLanguageDefault,
 		)
 		if diags.HasError() {
 			return diags
@@ -406,7 +446,7 @@ func updateLanguageEnabledDefaultSequence(ctx context.Context, apiClient *manage
 
 }
 
-var retryLanguageUpdateSequence2 = func(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {
+var retryLanguageDefault = func(ctx context.Context, r *http.Response, p1error *model.P1Error) bool {
 
 	if p1error != nil {
 
