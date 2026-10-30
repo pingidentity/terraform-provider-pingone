@@ -1198,7 +1198,6 @@ func TestAccApplication_NativeMobile_IntegrityDetection(t *testing.T) {
 		Config: testAccApplicationConfig_OIDC_NativeMobile_IntegrityDetection_Minimal(resourceName, name, googleJsonKey),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.enabled", "true"),
-			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.apple_app_attest_settings.enabled", "true"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.excluded_platforms.#", "0"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.cache_duration.amount", "30"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.cache_duration.units", "MINUTES"),
@@ -1206,6 +1205,19 @@ func TestAccApplication_NativeMobile_IntegrityDetection(t *testing.T) {
 			resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.google_play.verification_key"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.google_play.decryption_key"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.google_play.service_account_credentials_json", googleJsonKey),
+		),
+	}
+
+	testStepAppleAppAttest := resource.TestStep{
+		Config: testAccApplicationConfig_OIDC_NativeMobile_IntegrityDetection_AppleAppAttest(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.enabled", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.excluded_platforms.0", "GOOGLE"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.cache_duration.amount", "60"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.cache_duration.units", "MINUTES"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.apple_app_attest_settings.enabled", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.apple_team_id", "ABC123DEFG"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.google_play.#", "0"),
 		),
 	}
 
@@ -1276,6 +1288,8 @@ func TestAccApplication_NativeMobile_IntegrityDetection(t *testing.T) {
 				Config:  testAccApplicationConfig_OIDC_NativeMobile_IntegrityDetection_ExcludeIOS(resourceName, name),
 				Destroy: true,
 			},
+			// Apple attest
+			testStepAppleAppAttest,
 			// Change
 			testStepFull,
 			testStepMinimal,
@@ -4482,10 +4496,6 @@ resource "pingone_application" "%[2]s" {
           amount = 30
         }
 
-        apple_app_attest_settings = {
-          enabled = true
-        }
-
         google_play = {
           verification_type                = "GOOGLE"
           service_account_credentials_json = jsonencode(%[4]s)
@@ -4495,6 +4505,42 @@ resource "pingone_application" "%[2]s" {
   }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName, name, googleJsonKey)
+}
+
+func testAccApplicationConfig_OIDC_NativeMobile_IntegrityDetection_AppleAppAttest(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  oidc_options = {
+    type                       = "NATIVE_APP"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
+
+    mobile_app = {
+      apple_team_id = "ABC123DEFG"
+
+      integrity_detection = {
+        enabled            = true
+        excluded_platforms = ["GOOGLE"]
+
+        cache_duration = {
+          amount = 60
+          units  = "MINUTES"
+        }
+
+        apple_app_attest_settings = {
+          enabled = true
+        }
+      }
+    }
+  }
+}
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationConfig_OIDC_NativeMobile_IntegrityDetection_ExcludeGoogle(resourceName, name string) string {
