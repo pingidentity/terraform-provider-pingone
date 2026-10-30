@@ -5928,6 +5928,18 @@ resource "pingone_key" "%[3]s" {
   validity_period     = 365
 }
 
+resource "pingone_key" "%[3]s-issuance" {
+  environment_id = %[2]s
+
+  name                = "%[4]s-issuance"
+  algorithm           = "RSA"
+  key_length          = 2048
+  signature_algorithm = "SHA256withRSA"
+  subject_dn          = "CN=%[4]s-issuance, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  usage_type          = "ISSUANCE"
+  validity_period     = 365
+}
+
 resource "pingone_application" "%[3]s" {
   environment_id = %[2]s
   name           = "%[4]s"

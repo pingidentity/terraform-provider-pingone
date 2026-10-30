@@ -910,6 +910,18 @@ resource "pingone_key" "%[3]s" {
   validity_period     = 365
 }
 
+resource "pingone_key" "%[3]s-issuance" {
+  environment_id = pingone_environment.%[2]s.id
+
+  name                = "%[4]s-issuance"
+  algorithm           = "RSA"
+  key_length          = 2048
+  signature_algorithm = "SHA256withRSA"
+  subject_dn          = "CN=%[4]s-issuance, OU=Ping Identity, O=Ping Identity, L=, ST=, C=US"
+  usage_type          = "ISSUANCE"
+  validity_period     = 365
+}
+
 resource "pingone_image" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
 
@@ -1043,6 +1055,21 @@ resource "pingone_application" "%[3]s" {
         }
       ]
     }
+    assertion_duration            = 3600
+    hybrid_join_device_attribute  = "deviceAuthenticatorId"
+    sts_token_type                = "urn:oasis:names:tc:SAML:1.0:assertion"
+    use_mex13                     = true
+    user_attribute_username_match = "userName"
+    user_attribute_x509_match     = "mail"
+
+    valid_issuance_certificates = [
+      {
+        certificate_id = pingone_key.%[3]s-issuance.id
+      },
+    ]
+
+    ws_trust_version = "1.3"
+
     reply_url                      = "https://example.com"
     slo_endpoint                   = "https://example.com/slo"
     subject_name_identifier_format = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
