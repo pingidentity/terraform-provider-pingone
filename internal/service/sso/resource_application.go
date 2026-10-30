@@ -1530,13 +1530,11 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 							Description:         oidcOptionsMobileAppDescription.Description,
 							MarkdownDescription: oidcOptionsMobileAppDescription.MarkdownDescription,
 							Optional:            true,
-							Computed:            true,
 
 							Attributes: map[string]schema.Attribute{
 								"allow_authentication_device_locked": schema.SingleNestedAttribute{
 									Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies whether users can authenticate from the lock screen (Android 10.0 or earlier).").Description,
 									Optional:    true,
-									Computed:    true,
 
 									Attributes: map[string]schema.Attribute{
 										"enabled": schema.BoolAttribute{
@@ -1550,7 +1548,6 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 								"allow_un_pair_and_change_device_from_app": schema.SingleNestedAttribute{
 									Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies whether users can unpair or change device from the PingID mobile app.").Description,
 									Optional:    true,
-									Computed:    true,
 
 									Attributes: map[string]schema.Attribute{
 										"enabled": schema.BoolAttribute{
@@ -1637,7 +1634,6 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 								"mobile_app_security_pin_require": schema.SingleNestedAttribute{
 									Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies whether the user must enter a security PIN to access the PingID mobile app.").Description,
 									Optional:    true,
-									Computed:    true,
 
 									Attributes: map[string]schema.Attribute{
 										"enabled": schema.BoolAttribute{
@@ -1649,7 +1645,6 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 										"require_for_all_devices": schema.BoolAttribute{
 											Description: framework.SchemaAttributeDescriptionFromMarkdown("If `mobile_app_security_pin_require.enabled` is set to `true`, then by default, the PIN is required only if a device PIN or biometrics have not been defined for the device. Set `require_for_all_devices` to `true` if you want to require PIN use for all devices.").Description,
 											Optional:    true,
-											Computed:    true,
 										},
 
 										"security_pin_digit": schema.StringAttribute{
@@ -1666,31 +1661,26 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 								"mobile_device_biometrics_setting": schema.SingleNestedAttribute{
 									Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies the biometric authentication settings for the PingID mobile app.").Description,
 									Optional:    true,
-									Computed:    true,
 
 									Attributes: map[string]schema.Attribute{
 										"required": schema.BoolAttribute{
 											Description: framework.SchemaAttributeDescriptionFromMarkdown("If you have allowed biometric authentication methods in the MFA policy, then by default, the user is required to use a biometric method with PingID if one is available on their device. If you want to specify that users can authenticate with the PingID mobile app only if they have a biometric method configured, set `required` to `true`.").Description,
 											Optional:    true,
-											Computed:    true,
 										},
 
 										"device_passcode_fallback_enabled": schema.BoolAttribute{
 											Description: framework.SchemaAttributeDescriptionFromMarkdown("Set to `true` if you want to allow iOS users to authenticate using the device passcode if biometric authentication fails.").Description,
 											Optional:    true,
-											Computed:    true,
 										},
 
 										"face_id_consent_enabled": schema.BoolAttribute{
 											Description: framework.SchemaAttributeDescriptionFromMarkdown("For iOS devices, set to `true` if you want to prevent users with FaceID defined from authenticating by mistake. When set to `true`, the user is prompted to consent explicitly before each face scan is taken.").Description,
 											Optional:    true,
-											Computed:    true,
 										},
 
 										"notification_actions_enabled": schema.BoolAttribute{
 											Description: framework.SchemaAttributeDescriptionFromMarkdown("Set to `true` if you want to allow users to approve notification requests from their device's lock screen.").Description,
 											Optional:    true,
-											Computed:    true,
 										},
 									},
 								},
@@ -1698,7 +1688,6 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 								"notify_optional_mobile_version_updates": schema.SingleNestedAttribute{
 									Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies whether users are notified that a newer version of the PingID app is available.").Description,
 									Optional:    true,
-									Computed:    true,
 
 									Attributes: map[string]schema.Attribute{
 										"enabled": schema.BoolAttribute{
@@ -1722,7 +1711,6 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 								"notify_require_mobile_version_updates": schema.SingleNestedAttribute{
 									Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies whether a minimum version of the PingID app is required.").Description,
 									Optional:    true,
-									Computed:    true,
 
 									Attributes: map[string]schema.Attribute{
 										"enabled": schema.BoolAttribute{
@@ -1746,7 +1734,6 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 								"otp_push_notification_enabled": schema.SingleNestedAttribute{
 									Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies whether users receive a push notification during authentication that they can tap to open the PingID app.").Description,
 									Optional:    true,
-									Computed:    true,
 
 									Attributes: map[string]schema.Attribute{
 										"enabled": schema.BoolAttribute{
@@ -1801,7 +1788,6 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 								"show_authentication_information": schema.SingleNestedAttribute{
 									Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies whether push notifications include a map that displays the location of the user requesting access.").Description,
 									Optional:    true,
-									Computed:    true,
 
 									Attributes: map[string]schema.Attribute{
 										"enabled": schema.BoolAttribute{
@@ -1815,13 +1801,11 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 								"push": schema.SingleNestedAttribute{
 									Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies push notification settings for the application.").Description,
 									Optional:    true,
-									Computed:    true,
 
 									Attributes: map[string]schema.Attribute{
 										"number_matching": schema.SingleNestedAttribute{
 											Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies the number matching settings used in MFA policies where number matching has been enabled.").Description,
 											Optional:    true,
-											Computed:    true,
 
 											Attributes: map[string]schema.Attribute{
 												"type": schema.StringAttribute{
@@ -1859,7 +1843,6 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 										"apple_app_attest_settings": schema.SingleNestedAttribute{
 											Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies the Apple App Attest settings for device integrity checking on iOS applications.").Description,
 											Optional:    true,
-											Computed:    true,
 
 											Attributes: map[string]schema.Attribute{
 												"enabled": schema.BoolAttribute{

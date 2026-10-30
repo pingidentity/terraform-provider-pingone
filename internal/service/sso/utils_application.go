@@ -260,11 +260,11 @@ func applicationMobileAppOkToTF(ctx context.Context, apiObject *management.Appli
 	diags.Append(d...)
 
 	allowAuthenticationDeviceLockedObj, allowAuthenticationDeviceLockedOk := apiObject.GetAllowAuthenticationDeviceLockedOk()
-	allowAuthenticationDeviceLocked, d := applicationMobileAppEnabledToggleOkToTF(allowAuthenticationDeviceLockedObj, allowAuthenticationDeviceLockedOk, "allow_authentication_device_locked")
+	allowAuthenticationDeviceLocked, d := applicationMobileAppAllowAuthenticationDeviceLockedOkToTF(allowAuthenticationDeviceLockedObj, allowAuthenticationDeviceLockedOk)
 	diags.Append(d...)
 
 	allowUnPairAndChangeDeviceFromAppObj, allowUnPairAndChangeDeviceFromAppOk := apiObject.GetAllowUnPairAndChangeDeviceFromAppOk()
-	allowUnPairAndChangeDeviceFromApp, d := applicationMobileAppEnabledToggleOkToTF(allowUnPairAndChangeDeviceFromAppObj, allowUnPairAndChangeDeviceFromAppOk, "allow_un_pair_and_change_device_from_app")
+	allowUnPairAndChangeDeviceFromApp, d := applicationMobileAppAllowUnPairAndChangeDeviceFromAppOkToTF(allowUnPairAndChangeDeviceFromAppObj, allowUnPairAndChangeDeviceFromAppOk)
 	diags.Append(d...)
 
 	mobileAppSecurityPinRequireObj, mobileAppSecurityPinRequireOk := apiObject.GetMobileAppSecurityPinRequireOk()
@@ -276,19 +276,19 @@ func applicationMobileAppOkToTF(ctx context.Context, apiObject *management.Appli
 	diags.Append(d...)
 
 	notifyOptionalMobileVersionUpdatesObj, notifyOptionalMobileVersionUpdatesOk := apiObject.GetNotifyOptionalMobileVersionUpdatesOk()
-	notifyOptionalMobileVersionUpdates, d := applicationMobileAppVersionUpdatesOkToTF(notifyOptionalMobileVersionUpdatesObj, notifyOptionalMobileVersionUpdatesOk, "notify_optional_mobile_version_updates")
+	notifyOptionalMobileVersionUpdates, d := applicationMobileAppNotifyOptionalMobileVersionUpdatesOkToTF(notifyOptionalMobileVersionUpdatesObj, notifyOptionalMobileVersionUpdatesOk)
 	diags.Append(d...)
 
 	notifyRequireMobileVersionUpdatesObj, notifyRequireMobileVersionUpdatesOk := apiObject.GetNotifyRequireMobileVersionUpdatesOk()
-	notifyRequireMobileVersionUpdates, d := applicationMobileAppVersionUpdatesOkToTF(notifyRequireMobileVersionUpdatesObj, notifyRequireMobileVersionUpdatesOk, "notify_require_mobile_version_updates")
+	notifyRequireMobileVersionUpdates, d := applicationMobileAppNotifyRequireMobileVersionUpdatesOkToTF(notifyRequireMobileVersionUpdatesObj, notifyRequireMobileVersionUpdatesOk)
 	diags.Append(d...)
 
 	otpPushNotificationEnabledObj, otpPushNotificationEnabledOk := apiObject.GetOtpPushNotificationEnabledOk()
-	otpPushNotificationEnabled, d := applicationMobileAppEnabledToggleOkToTF(otpPushNotificationEnabledObj, otpPushNotificationEnabledOk, "otp_push_notification_enabled")
+	otpPushNotificationEnabled, d := applicationMobileAppOtpPushNotificationEnabledOkToTF(otpPushNotificationEnabledObj, otpPushNotificationEnabledOk)
 	diags.Append(d...)
 
 	showAuthenticationInformationObj, showAuthenticationInformationOk := apiObject.GetShowAuthenticationInformationOk()
-	showAuthenticationInformation, d := applicationMobileAppEnabledToggleOkToTF(showAuthenticationInformationObj, showAuthenticationInformationOk, "show_authentication_information")
+	showAuthenticationInformation, d := applicationMobileAppShowAuthenticationInformationOkToTF(showAuthenticationInformationObj, showAuthenticationInformationOk)
 	diags.Append(d...)
 
 	attributesMap := map[string]attr.Value{
@@ -419,37 +419,6 @@ func applicationMobileAppAppleAppAttestSettingsOkToTF(apiObject *management.Appl
 	return returnVar, diags
 }
 
-func applicationMobileAppEnabledToggleOkToTF(apiObject any, ok bool, attributeName string) (types.Object, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if !ok || apiObject == nil {
-		return types.ObjectNull(applicationOidcMobileAppEnabledToggleTFObjectTypes), diags
-	}
-
-	type enabledGetter interface {
-		GetEnabled() bool
-		GetEnabledOk() (*bool, bool)
-	}
-
-	toggle, okToggle := apiObject.(enabledGetter)
-	if !okToggle {
-		diags.AddError(
-			"Unsupported enabled toggle type",
-			fmt.Sprintf("The generated SDK type for attribute `%s` does not implement the enabled toggle getters.  Please report this to the provider maintainers.", attributeName),
-		)
-		return types.ObjectNull(applicationOidcMobileAppEnabledToggleTFObjectTypes), diags
-	}
-
-	attributesMap := map[string]attr.Value{
-		"enabled": framework.BoolOkToTF(toggle.GetEnabledOk()),
-	}
-
-	returnVar, d := types.ObjectValue(applicationOidcMobileAppEnabledToggleTFObjectTypes, attributesMap)
-	diags.Append(d...)
-
-	return returnVar, diags
-}
-
 func applicationMobileAppPushOkToTF(apiObject *management.ApplicationOIDCAllOfMobilePush, ok bool) types.Object {
 	var diags diag.Diagnostics
 
@@ -472,6 +441,112 @@ func applicationMobileAppPushOkToTF(apiObject *management.ApplicationOIDCAllOfMo
 	diags.Append(d...)
 
 	return returnVar
+}
+
+func applicationMobileAppAllowAuthenticationDeviceLockedOkToTF(apiObject *management.ApplicationOIDCAllOfMobileAllowAuthenticationDeviceLocked, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(applicationOidcMobileAppEnabledToggleTFObjectTypes), diags
+	}
+
+	attributesMap := map[string]attr.Value{
+		"enabled": framework.BoolOkToTF(apiObject.GetEnabledOk()),
+	}
+
+	returnVar, d := types.ObjectValue(applicationOidcMobileAppEnabledToggleTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func applicationMobileAppAllowUnPairAndChangeDeviceFromAppOkToTF(apiObject *management.ApplicationOIDCAllOfMobileAllowUnPairAndChangeDeviceFromApp, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(applicationOidcMobileAppEnabledToggleTFObjectTypes), diags
+	}
+
+	attributesMap := map[string]attr.Value{
+		"enabled": framework.BoolOkToTF(apiObject.GetEnabledOk()),
+	}
+
+	returnVar, d := types.ObjectValue(applicationOidcMobileAppEnabledToggleTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func applicationMobileAppOtpPushNotificationEnabledOkToTF(apiObject *management.ApplicationOIDCAllOfMobileOtpPushNotificationEnabled, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(applicationOidcMobileAppEnabledToggleTFObjectTypes), diags
+	}
+
+	attributesMap := map[string]attr.Value{
+		"enabled": framework.BoolOkToTF(apiObject.GetEnabledOk()),
+	}
+
+	returnVar, d := types.ObjectValue(applicationOidcMobileAppEnabledToggleTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func applicationMobileAppShowAuthenticationInformationOkToTF(apiObject *management.ApplicationOIDCAllOfMobileShowAuthenticationInformation, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(applicationOidcMobileAppEnabledToggleTFObjectTypes), diags
+	}
+
+	attributesMap := map[string]attr.Value{
+		"enabled": framework.BoolOkToTF(apiObject.GetEnabledOk()),
+	}
+
+	returnVar, d := types.ObjectValue(applicationOidcMobileAppEnabledToggleTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func applicationMobileAppNotifyOptionalMobileVersionUpdatesOkToTF(apiObject *management.ApplicationOIDCAllOfMobileNotifyOptionalMobileVersionUpdates, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(applicationOidcMobileAppVersionUpdatesTFObjectTypes), diags
+	}
+
+	attributesMap := map[string]attr.Value{
+		"android": framework.StringOkToTF(apiObject.GetAndroidOk()),
+		"enabled": framework.BoolOkToTF(apiObject.GetEnabledOk()),
+		"ios":     framework.StringOkToTF(apiObject.GetIosOk()),
+	}
+
+	returnVar, d := types.ObjectValue(applicationOidcMobileAppVersionUpdatesTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func applicationMobileAppNotifyRequireMobileVersionUpdatesOkToTF(apiObject *management.ApplicationOIDCAllOfMobileNotifyRequireMobileVersionUpdates, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(applicationOidcMobileAppVersionUpdatesTFObjectTypes), diags
+	}
+
+	attributesMap := map[string]attr.Value{
+		"android": framework.StringOkToTF(apiObject.GetAndroidOk()),
+		"enabled": framework.BoolOkToTF(apiObject.GetEnabledOk()),
+		"ios":     framework.StringOkToTF(apiObject.GetIosOk()),
+	}
+
+	returnVar, d := types.ObjectValue(applicationOidcMobileAppVersionUpdatesTFObjectTypes, attributesMap)
+	diags.Append(d...)
+
+	return returnVar, diags
 }
 
 func applicationMobileAppSecurityPinRequireOkToTF(apiObject *management.ApplicationOIDCAllOfMobileMobileAppSecurityPinRequire, ok bool) (types.Object, diag.Diagnostics) {
@@ -508,43 +583,6 @@ func applicationMobileAppBiometricsSettingOkToTF(apiObject *management.Applicati
 	}
 
 	returnVar, d := types.ObjectValue(applicationOidcMobileAppBiometricsSettingTFObjectTypes, attributesMap)
-	diags.Append(d...)
-
-	return returnVar, diags
-}
-
-func applicationMobileAppVersionUpdatesOkToTF(apiObject any, ok bool, attributeName string) (types.Object, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if !ok || apiObject == nil {
-		return types.ObjectNull(applicationOidcMobileAppVersionUpdatesTFObjectTypes), diags
-	}
-
-	type versionUpdatesGetter interface {
-		GetEnabled() bool
-		GetEnabledOk() (*bool, bool)
-		GetAndroid() string
-		GetAndroidOk() (*string, bool)
-		GetIos() string
-		GetIosOk() (*string, bool)
-	}
-
-	updates, okUpdates := apiObject.(versionUpdatesGetter)
-	if !okUpdates {
-		diags.AddError(
-			"Unsupported version updates type",
-			fmt.Sprintf("The generated SDK type for attribute `%s` does not implement the version updates getters.  Please report this to the provider maintainers.", attributeName),
-		)
-		return types.ObjectNull(applicationOidcMobileAppVersionUpdatesTFObjectTypes), diags
-	}
-
-	attributesMap := map[string]attr.Value{
-		"android": framework.StringOkToTF(updates.GetAndroidOk()),
-		"enabled": framework.BoolOkToTF(updates.GetEnabledOk()),
-		"ios":     framework.StringOkToTF(updates.GetIosOk()),
-	}
-
-	returnVar, d := types.ObjectValue(applicationOidcMobileAppVersionUpdatesTFObjectTypes, attributesMap)
 	diags.Append(d...)
 
 	return returnVar, diags
