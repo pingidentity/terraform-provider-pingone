@@ -1655,10 +1655,9 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 										"security_pin_digit": schema.StringAttribute{
 											Description: framework.SchemaAttributeDescriptionFromMarkdown("If `mobile_app_security_pin_require.enabled` is set to `true`, then by default, a six-digit security PIN is required. To specify that a four-digit PIN is sufficient, set `security_pin_digit` to `FOUR_DIGIT`. Use `SIX_DIGIT` to specify that a six-digit PIN is required.").Description,
 											Optional:    true,
-											Computed:    true,
 
 											Validators: []validator.String{
-												stringvalidator.OneOf("FOUR_DIGIT", "SIX_DIGIT"),
+												stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumMobileAppSecurityPinDigitEnumValues)...),
 											},
 										},
 									},

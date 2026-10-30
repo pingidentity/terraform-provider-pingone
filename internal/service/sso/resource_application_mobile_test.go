@@ -65,7 +65,7 @@ func TestAccApplication_NativeMobile_NewFields(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Full
 			{
-				Config: testAccApplicationConfig_OIDC_NativeMobile_NewFields_Full(resourceName, name),
+				Config: testAccApplicationConfig_OIDC_NativeMobile_NewFields_Full(resourceName),
 				Check:  fullCheck,
 			},
 			// Minimal (fields removed)
@@ -75,12 +75,12 @@ func TestAccApplication_NativeMobile_NewFields(t *testing.T) {
 			},
 			// Back to full
 			{
-				Config: testAccApplicationConfig_OIDC_NativeMobile_NewFields_Full(resourceName, name),
+				Config: testAccApplicationConfig_OIDC_NativeMobile_NewFields_Full(resourceName),
 				Check:  fullCheck,
 			},
 			// Test importing the resource
 			{
-				Config:       testAccApplicationConfig_OIDC_NativeMobile_NewFields_Full(resourceName, name),
+				Config:       testAccApplicationConfig_OIDC_NativeMobile_NewFields_Full(resourceName),
 				ResourceName: resourceFullName,
 				ImportStateIdFunc: func() resource.ImportStateIdFunc {
 					return func(s *terraform.State) (string, error) {
@@ -99,7 +99,7 @@ func TestAccApplication_NativeMobile_NewFields(t *testing.T) {
 	})
 }
 
-func testAccApplicationConfig_OIDC_NativeMobile_NewFields_Full(resourceName, name string) string {
+func testAccApplicationConfig_OIDC_NativeMobile_NewFields_Full(resourceName string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
