@@ -3796,8 +3796,6 @@ func (p *applicationOIDCMobileAppIntegrityDetectionResourceModelV1) expand(ctx c
 	return data, diags
 }
 
-// expandNotifyOptionalMobileVersionUpdates converts a single-nested PingID
-// optional version update object into the SDK model.
 func (p *applicationOIDCMobileAppResourceModelV1) expandNotifyOptionalMobileVersionUpdates(ctx context.Context, object types.Object) (*management.ApplicationOIDCAllOfMobileNotifyOptionalMobileVersionUpdates, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -3831,8 +3829,6 @@ func (p *applicationOIDCMobileAppResourceModelV1) expandNotifyOptionalMobileVers
 	return data, diags
 }
 
-// expandNotifyRequireMobileVersionUpdates converts a single-nested PingID
-// required version update object into the SDK model.
 func (p *applicationOIDCMobileAppResourceModelV1) expandNotifyRequireMobileVersionUpdates(ctx context.Context, object types.Object) (*management.ApplicationOIDCAllOfMobileNotifyRequireMobileVersionUpdates, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
