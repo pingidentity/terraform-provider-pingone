@@ -456,6 +456,8 @@ resource "pingone_application" "%[2]s" {
     refresh_token_type                                 = "JSON_WEB_TOKEN"
     additional_refresh_token_replay_protection_enabled = false
     idp_signoff                                        = true
+    include_typ                                        = true
+    skip_token_session_validation                      = true
 
     home_page_url      = "https://www.pingidentity.com"
     initiate_login_uri = "https://www.pingidentity.com/initiate"
