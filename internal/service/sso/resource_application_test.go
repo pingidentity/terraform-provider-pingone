@@ -1069,7 +1069,9 @@ func TestAccApplication_NativeMobile(t *testing.T) {
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.passcode_grace_period", "3"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.passcode_refresh_seconds", "45"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.universal_app_link", "https://applink.com"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.apple_team_id", "ABC123DEFG"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.enabled", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.push.number_matching.type", "ENTER_MANUALLY"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.excluded_platforms.0", "IOS"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.cache_duration.amount", "30"),
 			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.cache_duration.units", "HOURS"),
@@ -1083,6 +1085,9 @@ func TestAccApplication_NativeMobile(t *testing.T) {
 	withMobileTestStepMinimal := resource.TestStep{
 		Config: testAccApplicationConfig_OIDC_NativeMobile_Minimal(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app.apple_team_id"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app.ping_id_settings"),
+			resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app.push"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app.bundle_id"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app.package_name"),
 			resource.TestCheckNoResourceAttr(resourceFullName, "oidc_options.mobile_app.huawei_app_id"),
@@ -1203,6 +1208,19 @@ func TestAccApplication_NativeMobile_IntegrityDetection(t *testing.T) {
 		),
 	}
 
+	testStepAppleAppAttest := resource.TestStep{
+		Config: testAccApplicationConfig_OIDC_NativeMobile_IntegrityDetection_AppleAppAttest(resourceName, name),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.enabled", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.excluded_platforms.0", "GOOGLE"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.cache_duration.amount", "60"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.cache_duration.units", "MINUTES"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.apple_app_attest_settings.enabled", "true"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.apple_team_id", "ABC123DEFG"),
+			resource.TestCheckResourceAttr(resourceFullName, "oidc_options.mobile_app.integrity_detection.google_play.#", "0"),
+		),
+	}
+
 	excludeGoogle := resource.TestStep{
 		Config: testAccApplicationConfig_OIDC_NativeMobile_IntegrityDetection_ExcludeGoogle(resourceName, name),
 		Check: resource.ComposeTestCheckFunc(
@@ -1270,6 +1288,8 @@ func TestAccApplication_NativeMobile_IntegrityDetection(t *testing.T) {
 				Config:  testAccApplicationConfig_OIDC_NativeMobile_IntegrityDetection_ExcludeIOS(resourceName, name),
 				Destroy: true,
 			},
+			// Apple attest
+			testStepAppleAppAttest,
 			// Change
 			testStepFull,
 			testStepMinimal,
@@ -1877,7 +1897,7 @@ func TestAccApplication_OIDCFullAIAgent(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_OIDC_AIAgent(resourceName, name, image),
+				Config: testAccApplicationConfig_OIDC_AIAgent(resourceName, image),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -4347,6 +4367,8 @@ resource "pingone_application" "%[2]s" {
 
       universal_app_link = "https://applink.com"
 
+      apple_team_id = "ABC123DEFG"
+
       integrity_detection = {
         enabled = true
 
@@ -4361,6 +4383,12 @@ resource "pingone_application" "%[2]s" {
           verification_type = "INTERNAL"
           decryption_key    = "decryptionkeydoesnotexist"
           verification_key  = "verificationkeydoesnotexist"
+        }
+      }
+
+      push = {
+        number_matching = {
+          type = "ENTER_MANUALLY"
         }
       }
     }
@@ -4477,6 +4505,42 @@ resource "pingone_application" "%[2]s" {
   }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName, name, googleJsonKey)
+}
+
+func testAccApplicationConfig_OIDC_NativeMobile_IntegrityDetection_AppleAppAttest(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_application" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = true
+
+  oidc_options = {
+    type                       = "NATIVE_APP"
+    grant_types                = ["CLIENT_CREDENTIALS"]
+    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
+
+    mobile_app = {
+      apple_team_id = "ABC123DEFG"
+
+      integrity_detection = {
+        enabled            = true
+        excluded_platforms = ["GOOGLE"]
+
+        cache_duration = {
+          amount = 60
+          units  = "MINUTES"
+        }
+
+        apple_app_attest_settings = {
+          enabled = true
+        }
+      }
+    }
+  }
+}
+`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
 func testAccApplicationConfig_OIDC_NativeMobile_IntegrityDetection_ExcludeGoogle(resourceName, name string) string {
@@ -4721,7 +4785,7 @@ resource "pingone_application" "%[2]s" {
 `, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccApplicationConfig_OIDC_AIAgent(resourceName, name, image string) string {
+func testAccApplicationConfig_OIDC_AIAgent(resourceName, image string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -5226,14 +5290,14 @@ resource "pingone_application" "%[3]s" {
       algorithm = pingone_key.%[3]s.signature_algorithm
     }
     enable_always_accept_acs_url_in_signed_authn_request = true
-    enable_requested_authn_context   = true
-    nameid_format                    = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
-    response_is_signed               = true
-    session_not_on_or_after_duration = 64
-    slo_binding                      = "HTTP_REDIRECT"
-    slo_endpoint                     = "https://www.pingidentity.com/sloendpoint"
-    slo_response_endpoint            = "https://www.pingidentity.com/sloresponseendpoint"
-    slo_window                       = 3
+    enable_requested_authn_context                       = true
+    nameid_format                                        = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+    response_is_signed                                   = true
+    session_not_on_or_after_duration                     = 64
+    slo_binding                                          = "HTTP_REDIRECT"
+    slo_endpoint                                         = "https://www.pingidentity.com/sloendpoint"
+    slo_response_endpoint                                = "https://www.pingidentity.com/sloresponseendpoint"
+    slo_window                                           = 3
 
     default_target_url = "https://www.pingidentity.com/relaystate"
 
@@ -5445,14 +5509,14 @@ resource "pingone_application" "%[3]s" {
       algorithm = pingone_key.%[3]s.signature_algorithm
     }
     enable_always_accept_acs_url_in_signed_authn_request = true
-    enable_requested_authn_context   = true
-    nameid_format                    = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
-    response_is_signed               = true
-    session_not_on_or_after_duration = 64
-    slo_binding                      = "HTTP_REDIRECT"
-    slo_endpoint                     = "https://www.pingidentity.com/sloendpoint"
-    slo_response_endpoint            = "https://www.pingidentity.com/sloresponseendpoint"
-    slo_window                       = 3
+    enable_requested_authn_context                       = true
+    nameid_format                                        = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+    response_is_signed                                   = true
+    session_not_on_or_after_duration                     = 64
+    slo_binding                                          = "HTTP_REDIRECT"
+    slo_endpoint                                         = "https://www.pingidentity.com/sloendpoint"
+    slo_response_endpoint                                = "https://www.pingidentity.com/sloresponseendpoint"
+    slo_window                                           = 3
 
     default_target_url = "https://www.pingidentity.com/relaystate"
 
@@ -5573,14 +5637,14 @@ resource "pingone_application" "%[3]s" {
       algorithm = pingone_key.%[3]s.signature_algorithm
     }
     enable_always_accept_acs_url_in_signed_authn_request = true
-    enable_requested_authn_context   = true
-    nameid_format                    = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
-    response_is_signed               = true
-    session_not_on_or_after_duration = 64
-    slo_binding                      = "HTTP_REDIRECT"
-    slo_endpoint                     = "https://www.pingidentity.com/sloendpoint"
-    slo_response_endpoint            = "https://www.pingidentity.com/sloresponseendpoint"
-    slo_window                       = 3
+    enable_requested_authn_context                       = true
+    nameid_format                                        = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+    response_is_signed                                   = true
+    session_not_on_or_after_duration                     = 64
+    slo_binding                                          = "HTTP_REDIRECT"
+    slo_endpoint                                         = "https://www.pingidentity.com/sloendpoint"
+    slo_response_endpoint                                = "https://www.pingidentity.com/sloresponseendpoint"
+    slo_window                                           = 3
 
     default_target_url = "https://www.pingidentity.com/relaystate"
 
@@ -5880,7 +5944,7 @@ resource "pingone_application" "%[3]s" {
         }
       ]
     }
-	  
+
     assertion_duration            = 3600
     hybrid_join_device_attribute  = "deviceAuthenticatorId"
     sts_token_type                = "urn:oasis:names:tc:SAML:1.0:assertion"

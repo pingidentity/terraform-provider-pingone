@@ -137,27 +137,64 @@ type applicationOIDCSigningResourceModelV1 struct {
 }
 
 type applicationOIDCMobileAppResourceModelV1 struct {
-	BundleId               types.String `tfsdk:"bundle_id"`
-	HuaweiAppId            types.String `tfsdk:"huawei_app_id"`
-	HuaweiPackageName      types.String `tfsdk:"huawei_package_name"`
-	IntegrityDetection     types.Object `tfsdk:"integrity_detection"`
-	PackageName            types.String `tfsdk:"package_name"`
-	PasscodeGracePeriod    types.Int32  `tfsdk:"passcode_grace_period"`
-	PasscodeRefreshSeconds types.Int32  `tfsdk:"passcode_refresh_seconds"`
-	UniversalAppLink       types.String `tfsdk:"universal_app_link"`
+	AllowAuthenticationDeviceLocked    types.Object `tfsdk:"allow_authentication_device_locked"`
+	AllowUnPairAndChangeDeviceFromApp  types.Object `tfsdk:"allow_un_pair_and_change_device_from_app"`
+	AppleTeamId                        types.String `tfsdk:"apple_team_id"`
+	BundleId                           types.String `tfsdk:"bundle_id"`
+	HuaweiAppId                        types.String `tfsdk:"huawei_app_id"`
+	HuaweiPackageName                  types.String `tfsdk:"huawei_package_name"`
+	IntegrityDetection                 types.Object `tfsdk:"integrity_detection"`
+	MobileAppSecurityPinRequire        types.Object `tfsdk:"mobile_app_security_pin_require"`
+	MobileDeviceBiometricsSetting      types.Object `tfsdk:"mobile_device_biometrics_setting"`
+	NotifyOptionalMobileVersionUpdates types.Object `tfsdk:"notify_optional_mobile_version_updates"`
+	NotifyRequireMobileVersionUpdates  types.Object `tfsdk:"notify_require_mobile_version_updates"`
+	OtpPushNotificationEnabled         types.Object `tfsdk:"otp_push_notification_enabled"`
+	PackageName                        types.String `tfsdk:"package_name"`
+	PasscodeGracePeriod                types.Int32  `tfsdk:"passcode_grace_period"`
+	Push                               types.Object `tfsdk:"push"`
+	PasscodeRefreshSeconds             types.Int32  `tfsdk:"passcode_refresh_seconds"`
+	PingIdSettings                     types.Bool   `tfsdk:"ping_id_settings"`
+	ShowAuthenticationInformation      types.Object `tfsdk:"show_authentication_information"`
+	UniversalAppLink                   types.String `tfsdk:"universal_app_link"`
 }
 
 type applicationOIDCMobileAppIntegrityDetectionResourceModelV1 struct {
-	CacheDuration     types.Object `tfsdk:"cache_duration"`
-	Enabled           types.Bool   `tfsdk:"enabled"`
-	ExcludedPlatforms types.Set    `tfsdk:"excluded_platforms"`
-	GooglePlay        types.Object `tfsdk:"google_play"`
+	AppleAppAttestSettings types.Object `tfsdk:"apple_app_attest_settings"`
+	CacheDuration          types.Object `tfsdk:"cache_duration"`
+	Enabled                types.Bool   `tfsdk:"enabled"`
+	ExcludedPlatforms      types.Set    `tfsdk:"excluded_platforms"`
+	GooglePlay             types.Object `tfsdk:"google_play"`
+}
+
+type applicationOIDCMobileAppEnabledToggleResourceModelV1 struct {
+	Enabled types.Bool `tfsdk:"enabled"`
+}
+
+type applicationOIDCMobileAppSecurityPinRequireResourceModelV1 struct {
+	Enabled              types.Bool   `tfsdk:"enabled"`
+	RequireForAllDevices types.Bool   `tfsdk:"require_for_all_devices"`
+	SecurityPinDigit     types.String `tfsdk:"security_pin_digit"`
+}
+
+type applicationOIDCMobileAppBiometricsSettingResourceModelV1 struct {
+	DevicePasscodeFallbackEnabled types.Bool `tfsdk:"device_passcode_fallback_enabled"`
+	FaceIdConsentEnabled          types.Bool `tfsdk:"face_id_consent_enabled"`
+	NotificationActionsEnabled    types.Bool `tfsdk:"notification_actions_enabled"`
+	Required                      types.Bool `tfsdk:"required"`
 }
 
 type applicationOIDCMobileAppVersionUpdatesResourceModelV1 struct {
 	Android types.String `tfsdk:"android"`
 	Enabled types.Bool   `tfsdk:"enabled"`
 	Ios     types.String `tfsdk:"ios"`
+}
+
+type applicationOIDCMobileAppPushResourceModelV1 struct {
+	NumberMatching types.Object `tfsdk:"number_matching"`
+}
+
+type applicationOIDCMobileAppPushNumberMatchingResourceModelV1 struct {
+	Type types.String `tfsdk:"type"`
 }
 
 type applicationOIDCMobileAppIntegrityDetectionCacheDurationResourceModelV1 struct {
@@ -326,21 +363,68 @@ var (
 	)
 
 	applicationOidcMobileAppTFObjectTypes = map[string]attr.Type{
-		"bundle_id":                types.StringType,
-		"huawei_app_id":            types.StringType,
-		"huawei_package_name":      types.StringType,
-		"integrity_detection":      types.ObjectType{AttrTypes: applicationOidcMobileAppIntegrityDetectionTFObjectTypes},
-		"package_name":             types.StringType,
-		"passcode_grace_period":    types.Int32Type,
-		"passcode_refresh_seconds": types.Int32Type,
-		"universal_app_link":       types.StringType,
+		"allow_authentication_device_locked":       types.ObjectType{AttrTypes: applicationOidcMobileAppEnabledToggleTFObjectTypes},
+		"allow_un_pair_and_change_device_from_app": types.ObjectType{AttrTypes: applicationOidcMobileAppEnabledToggleTFObjectTypes},
+		"apple_team_id":                          types.StringType,
+		"bundle_id":                              types.StringType,
+		"huawei_app_id":                          types.StringType,
+		"huawei_package_name":                    types.StringType,
+		"integrity_detection":                    types.ObjectType{AttrTypes: applicationOidcMobileAppIntegrityDetectionTFObjectTypes},
+		"mobile_app_security_pin_require":        types.ObjectType{AttrTypes: applicationOidcMobileAppSecurityPinRequireTFObjectTypes},
+		"mobile_device_biometrics_setting":       types.ObjectType{AttrTypes: applicationOidcMobileAppBiometricsSettingTFObjectTypes},
+		"notify_optional_mobile_version_updates": types.ObjectType{AttrTypes: applicationOidcMobileAppVersionUpdatesTFObjectTypes},
+		"notify_require_mobile_version_updates":  types.ObjectType{AttrTypes: applicationOidcMobileAppVersionUpdatesTFObjectTypes},
+		"otp_push_notification_enabled":          types.ObjectType{AttrTypes: applicationOidcMobileAppEnabledToggleTFObjectTypes},
+		"package_name":                           types.StringType,
+		"passcode_grace_period":                  types.Int32Type,
+		"passcode_refresh_seconds":               types.Int32Type,
+		"ping_id_settings":                       types.BoolType,
+		"push":                                   types.ObjectType{AttrTypes: applicationOidcMobileAppPushTFObjectTypes},
+		"show_authentication_information":        types.ObjectType{AttrTypes: applicationOidcMobileAppEnabledToggleTFObjectTypes},
+		"universal_app_link":                     types.StringType,
+	}
+
+	applicationOidcMobileAppPushTFObjectTypes = map[string]attr.Type{
+		"number_matching": types.ObjectType{AttrTypes: applicationOidcMobileAppPushNumberMatchingTFObjectTypes},
+	}
+
+	applicationOidcMobileAppPushNumberMatchingTFObjectTypes = map[string]attr.Type{
+		"type": types.StringType,
+	}
+
+	applicationOidcMobileAppEnabledToggleTFObjectTypes = map[string]attr.Type{
+		"enabled": types.BoolType,
+	}
+
+	applicationOidcMobileAppSecurityPinRequireTFObjectTypes = map[string]attr.Type{
+		"enabled":                 types.BoolType,
+		"require_for_all_devices": types.BoolType,
+		"security_pin_digit":      types.StringType,
+	}
+
+	applicationOidcMobileAppBiometricsSettingTFObjectTypes = map[string]attr.Type{
+		"device_passcode_fallback_enabled": types.BoolType,
+		"face_id_consent_enabled":          types.BoolType,
+		"notification_actions_enabled":     types.BoolType,
+		"required":                         types.BoolType,
+	}
+
+	applicationOidcMobileAppVersionUpdatesTFObjectTypes = map[string]attr.Type{
+		"android": types.StringType,
+		"enabled": types.BoolType,
+		"ios":     types.StringType,
 	}
 
 	applicationOidcMobileAppIntegrityDetectionTFObjectTypes = map[string]attr.Type{
-		"cache_duration":     types.ObjectType{AttrTypes: applicationOidcMobileAppIntegrityDetectionCacheDurationTFObjectTypes},
-		"enabled":            types.BoolType,
-		"excluded_platforms": types.SetType{ElemType: types.StringType},
-		"google_play":        types.ObjectType{AttrTypes: applicationOidcMobileAppIntegrityDetectionGooglePlayTFObjectTypes},
+		"apple_app_attest_settings": types.ObjectType{AttrTypes: applicationOidcMobileAppAppleAppAttestSettingsTFObjectTypes},
+		"cache_duration":            types.ObjectType{AttrTypes: applicationOidcMobileAppIntegrityDetectionCacheDurationTFObjectTypes},
+		"enabled":                   types.BoolType,
+		"excluded_platforms":        types.SetType{ElemType: types.StringType},
+		"google_play":               types.ObjectType{AttrTypes: applicationOidcMobileAppIntegrityDetectionGooglePlayTFObjectTypes},
+	}
+
+	applicationOidcMobileAppAppleAppAttestSettingsTFObjectTypes = map[string]attr.Type{
+		"enabled": types.BoolType,
 	}
 
 	applicationOidcMobileAppIntegrityDetectionCacheDurationTFObjectTypes = map[string]attr.Type{
@@ -1449,6 +1533,41 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 							Computed:            true,
 
 							Attributes: map[string]schema.Attribute{
+								"allow_authentication_device_locked": schema.SingleNestedAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies whether users can authenticate from the lock screen (Android 10.0 or earlier).").Description,
+									Optional:    true,
+
+									Attributes: map[string]schema.Attribute{
+										"enabled": schema.BoolAttribute{
+											Description: framework.SchemaAttributeDescriptionFromMarkdown("Set to `true` if you want to allow users to authenticate from the lock screen if they using Android 10.0 or earlier.").Description,
+											Optional:    true,
+											Computed:    true,
+										},
+									},
+								},
+
+								"allow_un_pair_and_change_device_from_app": schema.SingleNestedAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies whether users can unpair or change device from the PingID mobile app.").Description,
+									Optional:    true,
+
+									Attributes: map[string]schema.Attribute{
+										"enabled": schema.BoolAttribute{
+											Description: framework.SchemaAttributeDescriptionFromMarkdown("Set to `true` if you want to allow users to unpair or change device from the PingID mobile app.").Description,
+											Optional:    true,
+											Computed:    true,
+										},
+									},
+								},
+
+								"apple_team_id": schema.StringAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("If you set `integrity_detection.apple_app_attest_settings.enabled` to `true` to use Apple App Attest for device integrity checking, you must also set `apple_team_id` to the Team ID from your Apple Developer account.").Description,
+									Optional:    true,
+
+									Validators: []validator.String{
+										stringvalidator.LengthAtLeast(1),
+									},
+								},
+
 								"bundle_id": schema.StringAttribute{
 									Description:         oidcOptionsMobileAppBundleIdDescription.Description,
 									MarkdownDescription: oidcOptionsMobileAppBundleIdDescription.MarkdownDescription,
@@ -1513,6 +1632,119 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 									},
 								},
 
+								"mobile_app_security_pin_require": schema.SingleNestedAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies whether the user must enter a security PIN to access the PingID mobile app.").Description,
+									Optional:    true,
+
+									Attributes: map[string]schema.Attribute{
+										"enabled": schema.BoolAttribute{
+											Description: framework.SchemaAttributeDescriptionFromMarkdown("Set to `true` if you want to require the user to enter a security PIN to access the PingID mobile app.").Description,
+											Optional:    true,
+											Computed:    true,
+										},
+
+										"require_for_all_devices": schema.BoolAttribute{
+											Description: framework.SchemaAttributeDescriptionFromMarkdown("If `mobile_app_security_pin_require.enabled` is set to `true`, then by default, the PIN is required only if a device PIN or biometrics have not been defined for the device. Set `require_for_all_devices` to `true` if you want to require PIN use for all devices.").Description,
+											Optional:    true,
+										},
+
+										"security_pin_digit": schema.StringAttribute{
+											Description: framework.SchemaAttributeDescriptionFromMarkdown("If `mobile_app_security_pin_require.enabled` is set to `true`, then by default, a six-digit security PIN is required. To specify that a four-digit PIN is sufficient, set `security_pin_digit` to `FOUR_DIGIT`. Use `SIX_DIGIT` to specify that a six-digit PIN is required.").Description,
+											Optional:    true,
+
+											Validators: []validator.String{
+												stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumMobileAppSecurityPinDigitEnumValues)...),
+											},
+										},
+									},
+								},
+
+								"mobile_device_biometrics_setting": schema.SingleNestedAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies the biometric authentication settings for the PingID mobile app.").Description,
+									Optional:    true,
+
+									Attributes: map[string]schema.Attribute{
+										"required": schema.BoolAttribute{
+											Description: framework.SchemaAttributeDescriptionFromMarkdown("If you have allowed biometric authentication methods in the MFA policy, then by default, the user is required to use a biometric method with PingID if one is available on their device. If you want to specify that users can authenticate with the PingID mobile app only if they have a biometric method configured, set `required` to `true`.").Description,
+											Optional:    true,
+										},
+
+										"device_passcode_fallback_enabled": schema.BoolAttribute{
+											Description: framework.SchemaAttributeDescriptionFromMarkdown("Set to `true` if you want to allow iOS users to authenticate using the device passcode if biometric authentication fails.").Description,
+											Optional:    true,
+										},
+
+										"face_id_consent_enabled": schema.BoolAttribute{
+											Description: framework.SchemaAttributeDescriptionFromMarkdown("For iOS devices, set to `true` if you want to prevent users with FaceID defined from authenticating by mistake. When set to `true`, the user is prompted to consent explicitly before each face scan is taken.").Description,
+											Optional:    true,
+										},
+
+										"notification_actions_enabled": schema.BoolAttribute{
+											Description: framework.SchemaAttributeDescriptionFromMarkdown("Set to `true` if you want to allow users to approve notification requests from their device's lock screen.").Description,
+											Optional:    true,
+										},
+									},
+								},
+
+								"notify_optional_mobile_version_updates": schema.SingleNestedAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies whether users are notified that a newer version of the PingID app is available.").Description,
+									Optional:    true,
+
+									Attributes: map[string]schema.Attribute{
+										"enabled": schema.BoolAttribute{
+											Description: framework.SchemaAttributeDescriptionFromMarkdown("Set to `true` if you want to notify your users that there is a newer version of the PingID app available if they want to update. The notification is displayed as soon as the user opens the app. When set to `true`, you must provide a value for `android`, `ios`, or both.").Description,
+											Optional:    true,
+											Computed:    true,
+										},
+
+										"android": schema.StringAttribute{
+											Description: framework.SchemaAttributeDescriptionFromMarkdown("If `enabled` is set to `true`, use `android` to specify the version of the app that you want to notify Android device users about. Set the value to `latest` if you want to always notify users about the latest version of the PingID app that is available.").Description,
+											Optional:    true,
+										},
+
+										"ios": schema.StringAttribute{
+											Description: framework.SchemaAttributeDescriptionFromMarkdown("If `enabled` is set to `true`, use `ios` to specify the version of the app that you want to notify iOS device users about. Set the value to `latest` if you want to always notify users about the latest version of the PingID app that is available.").Description,
+											Optional:    true,
+										},
+									},
+								},
+
+								"notify_require_mobile_version_updates": schema.SingleNestedAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies whether a minimum version of the PingID app is required.").Description,
+									Optional:    true,
+
+									Attributes: map[string]schema.Attribute{
+										"enabled": schema.BoolAttribute{
+											Description: framework.SchemaAttributeDescriptionFromMarkdown("Set to `true` if you want to require a minimum version of the PingID app and notify the user that they must update the app if they are using an older version. The notification is displayed as soon as the user opens the app. When set to `true`, you must provide a value for `android`, `ios`, or both.").Description,
+											Optional:    true,
+											Computed:    true,
+										},
+
+										"android": schema.StringAttribute{
+											Description: framework.SchemaAttributeDescriptionFromMarkdown("If `enabled` is set to `true`, use `android` to specify the minimum version of the app that you want to require on Android devices. Set the value to `latest` if you want to require your users to always be running the latest version of the PingID app.").Description,
+											Optional:    true,
+										},
+
+										"ios": schema.StringAttribute{
+											Description: framework.SchemaAttributeDescriptionFromMarkdown("If `enabled` is set to `true`, use `ios` to specify the minimum version of the app that you want to require on iOS devices. Set the value to `latest` if you want to require your users to always be running the latest version of the PingID app.").Description,
+											Optional:    true,
+										},
+									},
+								},
+
+								"otp_push_notification_enabled": schema.SingleNestedAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies whether users receive a push notification during authentication that they can tap to open the PingID app.").Description,
+									Optional:    true,
+
+									Attributes: map[string]schema.Attribute{
+										"enabled": schema.BoolAttribute{
+											Description: framework.SchemaAttributeDescriptionFromMarkdown("Set to `true` if you want users to receive a push notification during authentication that they can tap to open the PingID app.").Description,
+											Optional:    true,
+											Computed:    true,
+										},
+									},
+								},
+
 								"passcode_grace_period": schema.Int32Attribute{
 									Description:         oidcOptionsMobileAppPasscodeGracePeriodDescription.Description,
 									MarkdownDescription: oidcOptionsMobileAppPasscodeGracePeriodDescription.MarkdownDescription,
@@ -1549,6 +1781,51 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 									},
 								},
 
+								"ping_id_settings": schema.BoolAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the PingID mobile app settings are managed for this application. Required to be `true` when updating PingID application settings.").Description,
+									Optional:    true,
+								},
+
+								"show_authentication_information": schema.SingleNestedAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies whether push notifications include a map that displays the location of the user requesting access.").Description,
+									Optional:    true,
+
+									Attributes: map[string]schema.Attribute{
+										"enabled": schema.BoolAttribute{
+											Description: framework.SchemaAttributeDescriptionFromMarkdown("Set to `true` if you want push notifications to include a map that displays the location of the user requesting access.").Description,
+											Optional:    true,
+											Computed:    true,
+										},
+									},
+								},
+
+								"push": schema.SingleNestedAttribute{
+									Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies push notification settings for the application.").Description,
+									Optional:    true,
+
+									Attributes: map[string]schema.Attribute{
+										"number_matching": schema.SingleNestedAttribute{
+											Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies the number matching settings used in MFA policies where number matching has been enabled.").Description,
+											Optional:    true,
+
+											Attributes: map[string]schema.Attribute{
+												"type": schema.StringAttribute{
+													Description: framework.SchemaAttributeDescriptionFromMarkdown("If you enabled number-matching authentication in the MFA policy, specifies whether users should select the displayed number from a group of three numbers, or whether you want to require users to actually enter the number that was shown. Options are `SELECT_NUMBER` (default) and `ENTER_MANUALLY`.").Description,
+													Optional:    true,
+													Computed:    true,
+
+													Validators: []validator.String{
+														stringvalidator.OneOf(
+															string(management.ENUMAPPLICATIONPUSHNUMBERMATCHINGTYPE_SELECT_NUMBER),
+															string(management.ENUMAPPLICATIONPUSHNUMBERMATCHINGTYPE_ENTER_MANUALLY),
+														),
+													},
+												},
+											},
+										},
+									},
+								},
+
 								"integrity_detection": schema.SingleNestedAttribute{
 									Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies mobile application integrity detection settings.").Description,
 									Optional:    true,
@@ -1562,6 +1839,19 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 											Computed:            true,
 
 											Default: booldefault.StaticBool(false),
+										},
+
+										"apple_app_attest_settings": schema.SingleNestedAttribute{
+											Description: framework.SchemaAttributeDescriptionFromMarkdown("A single object that specifies the Apple App Attest settings for device integrity checking on iOS applications.").Description,
+											Optional:    true,
+
+											Attributes: map[string]schema.Attribute{
+												"enabled": schema.BoolAttribute{
+													Description: framework.SchemaAttributeDescriptionFromMarkdown("Set to `true` if you have enabled device integrity checking for your iOS app and you want to use Apple App Attest for the check. If the value is set to `true`, you must also include a value for `apple_team_id`.").Description,
+													Optional:    true,
+													Computed:    true,
+												},
+											},
 										},
 
 										"excluded_platforms": schema.SetAttribute{
@@ -3107,6 +3397,48 @@ func (p *applicationOIDCMobileAppResourceModelV1) expand(ctx context.Context) (*
 
 	data := management.NewApplicationOIDCAllOfMobile()
 
+	if !p.AllowAuthenticationDeviceLocked.IsNull() && !p.AllowAuthenticationDeviceLocked.IsUnknown() {
+		var togglePlan applicationOIDCMobileAppEnabledToggleResourceModelV1
+		diags.Append(p.AllowAuthenticationDeviceLocked.As(ctx, &togglePlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		toggle := management.NewApplicationOIDCAllOfMobileAllowAuthenticationDeviceLocked()
+
+		if !togglePlan.Enabled.IsNull() && !togglePlan.Enabled.IsUnknown() {
+			toggle.SetEnabled(togglePlan.Enabled.ValueBool())
+		}
+
+		data.SetAllowAuthenticationDeviceLocked(*toggle)
+	}
+
+	if !p.AllowUnPairAndChangeDeviceFromApp.IsNull() && !p.AllowUnPairAndChangeDeviceFromApp.IsUnknown() {
+		var togglePlan applicationOIDCMobileAppEnabledToggleResourceModelV1
+		diags.Append(p.AllowUnPairAndChangeDeviceFromApp.As(ctx, &togglePlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		toggle := management.NewApplicationOIDCAllOfMobileAllowUnPairAndChangeDeviceFromApp()
+
+		if !togglePlan.Enabled.IsNull() && !togglePlan.Enabled.IsUnknown() {
+			toggle.SetEnabled(togglePlan.Enabled.ValueBool())
+		}
+
+		data.SetAllowUnPairAndChangeDeviceFromApp(*toggle)
+	}
+
+	if !p.AppleTeamId.IsNull() && !p.AppleTeamId.IsUnknown() {
+		data.SetAppleTeamId(p.AppleTeamId.ValueString())
+	}
+
 	if !p.BundleId.IsNull() && !p.BundleId.IsUnknown() {
 		data.SetBundleId(p.BundleId.ValueString())
 	}
@@ -3143,6 +3475,130 @@ func (p *applicationOIDCMobileAppResourceModelV1) expand(ctx context.Context) (*
 		data.SetPackageName(p.PackageName.ValueString())
 	}
 
+	if !p.MobileAppSecurityPinRequire.IsNull() && !p.MobileAppSecurityPinRequire.IsUnknown() {
+		var pinPlan applicationOIDCMobileAppSecurityPinRequireResourceModelV1
+		diags.Append(p.MobileAppSecurityPinRequire.As(ctx, &pinPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		pin := management.NewApplicationOIDCAllOfMobileMobileAppSecurityPinRequire()
+
+		if !pinPlan.Enabled.IsNull() && !pinPlan.Enabled.IsUnknown() {
+			pin.SetEnabled(pinPlan.Enabled.ValueBool())
+		}
+
+		if !pinPlan.RequireForAllDevices.IsNull() && !pinPlan.RequireForAllDevices.IsUnknown() {
+			pin.SetRequireForAllDevices(pinPlan.RequireForAllDevices.ValueBool())
+		}
+
+		if !pinPlan.SecurityPinDigit.IsNull() && !pinPlan.SecurityPinDigit.IsUnknown() {
+			pin.SetSecurityPinDigit(management.EnumMobileAppSecurityPinDigit(pinPlan.SecurityPinDigit.ValueString()))
+		}
+
+		data.SetMobileAppSecurityPinRequire(*pin)
+	}
+
+	if !p.MobileDeviceBiometricsSetting.IsNull() && !p.MobileDeviceBiometricsSetting.IsUnknown() {
+		var biometricsPlan applicationOIDCMobileAppBiometricsSettingResourceModelV1
+		diags.Append(p.MobileDeviceBiometricsSetting.As(ctx, &biometricsPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		biometrics := management.NewApplicationOIDCAllOfMobileMobileDeviceBiometricsSetting()
+
+		if !biometricsPlan.Required.IsNull() && !biometricsPlan.Required.IsUnknown() {
+			biometrics.SetRequired(biometricsPlan.Required.ValueBool())
+		}
+
+		if !biometricsPlan.DevicePasscodeFallbackEnabled.IsNull() && !biometricsPlan.DevicePasscodeFallbackEnabled.IsUnknown() {
+			biometrics.SetDevicePasscodeFallbackEnabled(biometricsPlan.DevicePasscodeFallbackEnabled.ValueBool())
+		}
+
+		if !biometricsPlan.FaceIdConsentEnabled.IsNull() && !biometricsPlan.FaceIdConsentEnabled.IsUnknown() {
+			biometrics.SetFaceIdConsentEnabled(biometricsPlan.FaceIdConsentEnabled.ValueBool())
+		}
+
+		if !biometricsPlan.NotificationActionsEnabled.IsNull() && !biometricsPlan.NotificationActionsEnabled.IsUnknown() {
+			biometrics.SetNotificationActionsEnabled(biometricsPlan.NotificationActionsEnabled.ValueBool())
+		}
+
+		data.SetMobileDeviceBiometricsSetting(*biometrics)
+	}
+
+	if !p.NotifyOptionalMobileVersionUpdates.IsNull() && !p.NotifyOptionalMobileVersionUpdates.IsUnknown() {
+		updates, d := p.expandNotifyOptionalMobileVersionUpdates(ctx, p.NotifyOptionalMobileVersionUpdates)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		if updates != nil {
+			data.SetNotifyOptionalMobileVersionUpdates(*updates)
+		}
+	}
+
+	if !p.NotifyRequireMobileVersionUpdates.IsNull() && !p.NotifyRequireMobileVersionUpdates.IsUnknown() {
+		updates, d := p.expandNotifyRequireMobileVersionUpdates(ctx, p.NotifyRequireMobileVersionUpdates)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		if updates != nil {
+			data.SetNotifyRequireMobileVersionUpdates(*updates)
+		}
+	}
+
+	if !p.OtpPushNotificationEnabled.IsNull() && !p.OtpPushNotificationEnabled.IsUnknown() {
+		var togglePlan applicationOIDCMobileAppEnabledToggleResourceModelV1
+		diags.Append(p.OtpPushNotificationEnabled.As(ctx, &togglePlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		toggle := management.NewApplicationOIDCAllOfMobileOtpPushNotificationEnabled()
+
+		if !togglePlan.Enabled.IsNull() && !togglePlan.Enabled.IsUnknown() {
+			toggle.SetEnabled(togglePlan.Enabled.ValueBool())
+		}
+
+		data.SetOtpPushNotificationEnabled(*toggle)
+	}
+
+	if !p.PingIdSettings.IsNull() && !p.PingIdSettings.IsUnknown() {
+		data.SetPingIDSettings(p.PingIdSettings.ValueBool())
+	}
+
+	if !p.ShowAuthenticationInformation.IsNull() && !p.ShowAuthenticationInformation.IsUnknown() {
+		var togglePlan applicationOIDCMobileAppEnabledToggleResourceModelV1
+		diags.Append(p.ShowAuthenticationInformation.As(ctx, &togglePlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		toggle := management.NewApplicationOIDCAllOfMobileShowAuthenticationInformation()
+
+		if !togglePlan.Enabled.IsNull() && !togglePlan.Enabled.IsUnknown() {
+			toggle.SetEnabled(togglePlan.Enabled.ValueBool())
+		}
+
+		data.SetShowAuthenticationInformation(*toggle)
+	}
+
 	if !p.PasscodeGracePeriod.IsNull() && !p.PasscodeGracePeriod.IsUnknown() {
 		data.SetPasscodeGracePeriod(p.PasscodeGracePeriod.ValueInt32())
 	}
@@ -3152,6 +3608,40 @@ func (p *applicationOIDCMobileAppResourceModelV1) expand(ctx context.Context) (*
 			p.PasscodeRefreshSeconds.ValueInt32(),
 			management.ENUMPASSCODEREFRESHTIMEUNIT_SECONDS,
 		))
+	}
+
+	if !p.Push.IsNull() && !p.Push.IsUnknown() {
+		var pushPlan applicationOIDCMobileAppPushResourceModelV1
+		diags.Append(p.Push.As(ctx, &pushPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		push := management.NewApplicationOIDCAllOfMobilePush()
+
+		if !pushPlan.NumberMatching.IsNull() && !pushPlan.NumberMatching.IsUnknown() {
+			var numberMatchingPlan applicationOIDCMobileAppPushNumberMatchingResourceModelV1
+			diags.Append(pushPlan.NumberMatching.As(ctx, &numberMatchingPlan, basetypes.ObjectAsOptions{
+				UnhandledNullAsEmpty:    false,
+				UnhandledUnknownAsEmpty: false,
+			})...)
+			if diags.HasError() {
+				return nil, diags
+			}
+
+			numberMatching := management.NewApplicationOIDCAllOfMobilePushNumberMatching()
+
+			if !numberMatchingPlan.Type.IsNull() && !numberMatchingPlan.Type.IsUnknown() {
+				numberMatching.SetType(management.EnumApplicationPushNumberMatchingType(numberMatchingPlan.Type.ValueString()))
+			}
+
+			push.SetNumberMatching(*numberMatching)
+		}
+
+		data.SetPush(*push)
 	}
 
 	if !p.UniversalAppLink.IsNull() && !p.UniversalAppLink.IsUnknown() {
@@ -3174,6 +3664,25 @@ func (p *applicationOIDCMobileAppIntegrityDetectionResourceModelV1) expand(ctx c
 			mode = management.ENUMENABLEDSTATUS_DISABLED
 		}
 		data.SetMode(mode)
+	}
+
+	if !p.AppleAppAttestSettings.IsNull() && !p.AppleAppAttestSettings.IsUnknown() {
+		var attestPlan applicationOIDCMobileAppEnabledToggleResourceModelV1
+		diags.Append(p.AppleAppAttestSettings.As(ctx, &attestPlan, basetypes.ObjectAsOptions{
+			UnhandledNullAsEmpty:    false,
+			UnhandledUnknownAsEmpty: false,
+		})...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		attest := management.NewApplicationOIDCAllOfMobileIntegrityDetectionAppleAppAttestSettings()
+
+		if !attestPlan.Enabled.IsNull() && !attestPlan.Enabled.IsUnknown() {
+			attest.SetEnabled(attestPlan.Enabled.ValueBool())
+		}
+
+		data.SetAppleAppAttestSettings(*attest)
 	}
 
 	googleVerificationIncluded := true && data.GetMode() == management.ENUMENABLEDSTATUS_ENABLED
@@ -3266,6 +3775,72 @@ func (p *applicationOIDCMobileAppIntegrityDetectionResourceModelV1) expand(ctx c
 		}
 
 		data.SetCacheDuration(*cacheDuration)
+	}
+
+	return data, diags
+}
+
+func (p *applicationOIDCMobileAppResourceModelV1) expandNotifyOptionalMobileVersionUpdates(ctx context.Context, object types.Object) (*management.ApplicationOIDCAllOfMobileNotifyOptionalMobileVersionUpdates, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if object.IsNull() || object.IsUnknown() {
+		return nil, diags
+	}
+
+	var plan applicationOIDCMobileAppVersionUpdatesResourceModelV1
+	diags.Append(object.As(ctx, &plan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: false,
+	})...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	data := management.NewApplicationOIDCAllOfMobileNotifyOptionalMobileVersionUpdates()
+
+	if !plan.Enabled.IsNull() && !plan.Enabled.IsUnknown() {
+		data.SetEnabled(plan.Enabled.ValueBool())
+	}
+
+	if !plan.Android.IsNull() && !plan.Android.IsUnknown() {
+		data.SetAndroid(plan.Android.ValueString())
+	}
+
+	if !plan.Ios.IsNull() && !plan.Ios.IsUnknown() {
+		data.SetIos(plan.Ios.ValueString())
+	}
+
+	return data, diags
+}
+
+func (p *applicationOIDCMobileAppResourceModelV1) expandNotifyRequireMobileVersionUpdates(ctx context.Context, object types.Object) (*management.ApplicationOIDCAllOfMobileNotifyRequireMobileVersionUpdates, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if object.IsNull() || object.IsUnknown() {
+		return nil, diags
+	}
+
+	var plan applicationOIDCMobileAppVersionUpdatesResourceModelV1
+	diags.Append(object.As(ctx, &plan, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    false,
+		UnhandledUnknownAsEmpty: false,
+	})...)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	data := management.NewApplicationOIDCAllOfMobileNotifyRequireMobileVersionUpdates()
+
+	if !plan.Enabled.IsNull() && !plan.Enabled.IsUnknown() {
+		data.SetEnabled(plan.Enabled.ValueBool())
+	}
+
+	if !plan.Android.IsNull() && !plan.Android.IsUnknown() {
+		data.SetAndroid(plan.Android.ValueString())
+	}
+
+	if !plan.Ios.IsNull() && !plan.Ios.IsUnknown() {
+		data.SetIos(plan.Ios.ValueString())
 	}
 
 	return data, diags

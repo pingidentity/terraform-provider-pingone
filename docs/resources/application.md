@@ -430,24 +430,60 @@ Optional:
 
 Optional:
 
+- `allow_authentication_device_locked` (Attributes) A single object that specifies whether users can authenticate from the lock screen (Android 10.0 or earlier). (see [below for nested schema](#nestedatt--oidc_options--mobile_app--allow_authentication_device_locked))
+- `allow_un_pair_and_change_device_from_app` (Attributes) A single object that specifies whether users can unpair or change device from the PingID mobile app. (see [below for nested schema](#nestedatt--oidc_options--mobile_app--allow_un_pair_and_change_device_from_app))
+- `apple_team_id` (String) If you set "integrity_detection.apple_app_attest_settings.enabled" to "true" to use Apple App Attest for device integrity checking, you must also set "apple_team_id" to the Team ID from your Apple Developer account.
 - `bundle_id` (String) A string that specifies the bundle associated with the application, for push notifications in native apps. The value of the `bundle_id` property is unique per environment, and once defined, is immutable.  This field is immutable and will trigger a replace plan if changed.
 - `huawei_app_id` (String) The unique identifier for the app on the device and in the Huawei Mobile Service AppGallery. The value of this property is unique per environment, and once defined, is immutable.  Required with `huawei_package_name`.  This field is immutable and will trigger a replace plan if changed.
 - `huawei_package_name` (String) The package name associated with the application, for push notifications in native apps. The value of this property is unique per environment, and once defined, is immutable.  Required with `huawei_app_id`.  This field is immutable and will trigger a replace plan if changed.
 - `integrity_detection` (Attributes) A single object that specifies mobile application integrity detection settings. (see [below for nested schema](#nestedatt--oidc_options--mobile_app--integrity_detection))
+- `mobile_app_security_pin_require` (Attributes) A single object that specifies whether the user must enter a security PIN to access the PingID mobile app. (see [below for nested schema](#nestedatt--oidc_options--mobile_app--mobile_app_security_pin_require))
+- `mobile_device_biometrics_setting` (Attributes) A single object that specifies the biometric authentication settings for the PingID mobile app. (see [below for nested schema](#nestedatt--oidc_options--mobile_app--mobile_device_biometrics_setting))
+- `notify_optional_mobile_version_updates` (Attributes) A single object that specifies whether users are notified that a newer version of the PingID app is available. (see [below for nested schema](#nestedatt--oidc_options--mobile_app--notify_optional_mobile_version_updates))
+- `notify_require_mobile_version_updates` (Attributes) A single object that specifies whether a minimum version of the PingID app is required. (see [below for nested schema](#nestedatt--oidc_options--mobile_app--notify_require_mobile_version_updates))
+- `otp_push_notification_enabled` (Attributes) A single object that specifies whether users receive a push notification during authentication that they can tap to open the PingID app. (see [below for nested schema](#nestedatt--oidc_options--mobile_app--otp_push_notification_enabled))
 - `package_name` (String) A string that specifies the package name associated with the application, for push notifications in native apps. The value of the `package_name` property is unique per environment, and once defined, is immutable.  This field is immutable and will trigger a replace plan if changed.
 - `passcode_grace_period` (Number) To cover time synchronization issues, you can use this property to customize the grace period during which the passcode can still be used even after the passcode has been refreshed. The value of the parameter should be the number of windows to use (min `1`, max `10`). In this context, a window is equal to the passcode refresh period in either direction. For example, if you defined a passcode refresh duration of 30 seconds and a grace period of 2 windows, the passcode is valid for 150 seconds (from 60 seconds behind the time of issue until 60 seconds past the expiration time).  Defaults to `5`.
 - `passcode_refresh_seconds` (Number) The amount of time a passcode should be displayed before being replaced with a new passcode - must be between `30` and `60` seconds.  Defaults to `30`.
+- `ping_id_settings` (Boolean) A boolean that specifies whether the PingID mobile app settings are managed for this application. Required to be "true" when updating PingID application settings.
+- `push` (Attributes) A single object that specifies push notification settings for the application. (see [below for nested schema](#nestedatt--oidc_options--mobile_app--push))
+- `show_authentication_information` (Attributes) A single object that specifies whether push notifications include a map that displays the location of the user requesting access. (see [below for nested schema](#nestedatt--oidc_options--mobile_app--show_authentication_information))
 - `universal_app_link` (String) A string that specifies a URI prefix that enables direct triggering of the mobile application when scanning a QR code. The URI prefix can be set to a universal link with a valid value (which can be a URL address that starts with `HTTP://` or `HTTPS://`, such as `https://www.bxretail.org`), or an app schema, which is just a string and requires no special validation.
+
+<a id="nestedatt--oidc_options--mobile_app--allow_authentication_device_locked"></a>
+### Nested Schema for `oidc_options.mobile_app.allow_authentication_device_locked`
+
+Optional:
+
+- `enabled` (Boolean) Set to "true" if you want to allow users to authenticate from the lock screen if they using Android 10.0 or earlier.
+
+
+<a id="nestedatt--oidc_options--mobile_app--allow_un_pair_and_change_device_from_app"></a>
+### Nested Schema for `oidc_options.mobile_app.allow_un_pair_and_change_device_from_app`
+
+Optional:
+
+- `enabled` (Boolean) Set to "true" if you want to allow users to unpair or change device from the PingID mobile app.
+
 
 <a id="nestedatt--oidc_options--mobile_app--integrity_detection"></a>
 ### Nested Schema for `oidc_options.mobile_app.integrity_detection`
 
 Optional:
 
+- `apple_app_attest_settings` (Attributes) A single object that specifies the Apple App Attest settings for device integrity checking on iOS applications. (see [below for nested schema](#nestedatt--oidc_options--mobile_app--integrity_detection--apple_app_attest_settings))
 - `cache_duration` (Attributes) A single object that specifies settings for the caching duration of successful integrity detection calls.  Every attestation request entails a certain time tradeoff. You can choose to cache successful integrity detection calls for a predefined duration, between a minimum of 1 minute and a maximum of 48 hours. If integrity detection is ENABLED, the cache duration must be set. (see [below for nested schema](#nestedatt--oidc_options--mobile_app--integrity_detection--cache_duration))
 - `enabled` (Boolean) A boolean that specifies whether device integrity detection takes place on mobile devices.  Defaults to `false`.
 - `excluded_platforms` (Set of String) You can enable device integrity checking separately for Android and iOS by setting `enabled` to `true` and then using `excluded_platforms` to specify the OS where you do not want to use device integrity checking. The values to use are `GOOGLE` and `IOS` (all upper case). Note that this is implemented as an array even though currently you can only include a single value.  If `GOOGLE` is not included in this list, the `google_play` attribute block must be configured.
 - `google_play` (Attributes) A single object that describes Google Play Integrity API credential settings for Android device integrity detection.  Required when `excluded_platforms` is unset or does not include `GOOGLE`. (see [below for nested schema](#nestedatt--oidc_options--mobile_app--integrity_detection--google_play))
+
+<a id="nestedatt--oidc_options--mobile_app--integrity_detection--apple_app_attest_settings"></a>
+### Nested Schema for `oidc_options.mobile_app.integrity_detection.apple_app_attest_settings`
+
+Optional:
+
+- `enabled` (Boolean) Set to "true" if you have enabled device integrity checking for your iOS app and you want to use Apple App Attest for the check. If the value is set to "true", you must also include a value for "apple_team_id".
+
 
 <a id="nestedatt--oidc_options--mobile_app--integrity_detection--cache_duration"></a>
 ### Nested Schema for `oidc_options.mobile_app.integrity_detection.cache_duration`
@@ -474,6 +510,79 @@ Optional:
 - `service_account_credentials_json` (String, Sensitive) Contents of the JSON file that represents your Service Account Credentials. This parameter must be provided if you have set `verification_type` to `GOOGLE`.  Conflicts with `decryption_key`, `verification_key`.
 - `verification_key` (String, Sensitive) Play Integrity verdict signature verification key from your Google Play Services account. This parameter must be provided if you have set `verification_type` to `INTERNAL`.  Conflicts with `service_account_credentials_json`.
 
+
+
+<a id="nestedatt--oidc_options--mobile_app--mobile_app_security_pin_require"></a>
+### Nested Schema for `oidc_options.mobile_app.mobile_app_security_pin_require`
+
+Optional:
+
+- `enabled` (Boolean) Set to "true" if you want to require the user to enter a security PIN to access the PingID mobile app.
+- `require_for_all_devices` (Boolean) If "mobile_app_security_pin_require.enabled" is set to "true", then by default, the PIN is required only if a device PIN or biometrics have not been defined for the device. Set "require_for_all_devices" to "true" if you want to require PIN use for all devices.
+- `security_pin_digit` (String) If "mobile_app_security_pin_require.enabled" is set to "true", then by default, a six-digit security PIN is required. To specify that a four-digit PIN is sufficient, set "security_pin_digit" to "FOUR_DIGIT". Use "SIX_DIGIT" to specify that a six-digit PIN is required.
+
+
+<a id="nestedatt--oidc_options--mobile_app--mobile_device_biometrics_setting"></a>
+### Nested Schema for `oidc_options.mobile_app.mobile_device_biometrics_setting`
+
+Optional:
+
+- `device_passcode_fallback_enabled` (Boolean) Set to "true" if you want to allow iOS users to authenticate using the device passcode if biometric authentication fails.
+- `face_id_consent_enabled` (Boolean) For iOS devices, set to "true" if you want to prevent users with FaceID defined from authenticating by mistake. When set to "true", the user is prompted to consent explicitly before each face scan is taken.
+- `notification_actions_enabled` (Boolean) Set to "true" if you want to allow users to approve notification requests from their device's lock screen.
+- `required` (Boolean) If you have allowed biometric authentication methods in the MFA policy, then by default, the user is required to use a biometric method with PingID if one is available on their device. If you want to specify that users can authenticate with the PingID mobile app only if they have a biometric method configured, set "required" to "true".
+
+
+<a id="nestedatt--oidc_options--mobile_app--notify_optional_mobile_version_updates"></a>
+### Nested Schema for `oidc_options.mobile_app.notify_optional_mobile_version_updates`
+
+Optional:
+
+- `android` (String) If "enabled" is set to "true", use "android" to specify the version of the app that you want to notify Android device users about. Set the value to "latest" if you want to always notify users about the latest version of the PingID app that is available.
+- `enabled` (Boolean) Set to "true" if you want to notify your users that there is a newer version of the PingID app available if they want to update. The notification is displayed as soon as the user opens the app. When set to "true", you must provide a value for "android", "ios", or both.
+- `ios` (String) If "enabled" is set to "true", use "ios" to specify the version of the app that you want to notify iOS device users about. Set the value to "latest" if you want to always notify users about the latest version of the PingID app that is available.
+
+
+<a id="nestedatt--oidc_options--mobile_app--notify_require_mobile_version_updates"></a>
+### Nested Schema for `oidc_options.mobile_app.notify_require_mobile_version_updates`
+
+Optional:
+
+- `android` (String) If "enabled" is set to "true", use "android" to specify the minimum version of the app that you want to require on Android devices. Set the value to "latest" if you want to require your users to always be running the latest version of the PingID app.
+- `enabled` (Boolean) Set to "true" if you want to require a minimum version of the PingID app and notify the user that they must update the app if they are using an older version. The notification is displayed as soon as the user opens the app. When set to "true", you must provide a value for "android", "ios", or both.
+- `ios` (String) If "enabled" is set to "true", use "ios" to specify the minimum version of the app that you want to require on iOS devices. Set the value to "latest" if you want to require your users to always be running the latest version of the PingID app.
+
+
+<a id="nestedatt--oidc_options--mobile_app--otp_push_notification_enabled"></a>
+### Nested Schema for `oidc_options.mobile_app.otp_push_notification_enabled`
+
+Optional:
+
+- `enabled` (Boolean) Set to "true" if you want users to receive a push notification during authentication that they can tap to open the PingID app.
+
+
+<a id="nestedatt--oidc_options--mobile_app--push"></a>
+### Nested Schema for `oidc_options.mobile_app.push`
+
+Optional:
+
+- `number_matching` (Attributes) A single object that specifies the number matching settings used in MFA policies where number matching has been enabled. (see [below for nested schema](#nestedatt--oidc_options--mobile_app--push--number_matching))
+
+<a id="nestedatt--oidc_options--mobile_app--push--number_matching"></a>
+### Nested Schema for `oidc_options.mobile_app.push.number_matching`
+
+Optional:
+
+- `type` (String) If you enabled number-matching authentication in the MFA policy, specifies whether users should select the displayed number from a group of three numbers, or whether you want to require users to actually enter the number that was shown. Options are "SELECT_NUMBER" (default) and "ENTER_MANUALLY".
+
+
+
+<a id="nestedatt--oidc_options--mobile_app--show_authentication_information"></a>
+### Nested Schema for `oidc_options.mobile_app.show_authentication_information`
+
+Optional:
+
+- `enabled` (Boolean) Set to "true" if you want push notifications to include a map that displays the location of the user requesting access.
 
 
 
