@@ -197,12 +197,6 @@ type applicationOIDCMobileAppPushNumberMatchingResourceModelV1 struct {
 	Type types.String `tfsdk:"type"`
 }
 
-type applicationOIDCMobileAppVersionUpdatesResourceModelV1 struct {
-	Android types.String `tfsdk:"android"`
-	Enabled types.Bool   `tfsdk:"enabled"`
-	Ios     types.String `tfsdk:"ios"`
-}
-
 type applicationOIDCMobileAppIntegrityDetectionCacheDurationResourceModelV1 struct {
 	Amount types.Int32  `tfsdk:"amount"`
 	Units  types.String `tfsdk:"units"`
