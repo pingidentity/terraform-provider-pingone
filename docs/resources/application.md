@@ -73,10 +73,8 @@ resource "pingone_application" "my_awesome_web_app" {
     redirect_uris              = ["https://my-website.com"]
 
     include_x5t                                   = true
-    include_typ                                   = true
     op_session_check_enabled                      = true
     request_scopes_for_multiple_resources_enabled = true
-    skip_token_session_validation                 = true
 
     signing = {
       key_rotation_policy_id = pingone_key_rotation_policy.my_awesome_key_rotation_policy.id
@@ -292,12 +290,6 @@ resource "pingone_application" "my_awesome_wsfed" {
     reply_url                      = "https://login.microsoftonline.com/login.srf"
     slo_endpoint                   = "https://example.com/slo"
     subject_name_identifier_format = "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified"
-
-    # Entra ID hybrid join (limited access feature)
-    hybrid_join_device_attribute  = "deviceAuthenticatorId"
-    sts_token_type                = "urn:oasis:names:tc:SAML:1.0:assertion"
-    use_mex13                     = true
-    user_attribute_username_match = "userName"
 
     idp_signing_key = {
       key_id    = pingone_key.my_awesome_key.id
