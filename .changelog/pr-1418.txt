@@ -13,3 +13,7 @@
 ```release-note:enhancement
 `data-source/pingone_system_application`: Added `logout_type` and `manage_devices_via_my_account_enabled` attributes.
 ```
+
+```release-note:note
+bump `github.com/pingidentity/pingone-go-sdk-legacy/management` v0.80.0 => v0.81.0
+```

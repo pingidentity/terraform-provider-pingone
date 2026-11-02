@@ -771,7 +771,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 
 	oidcOptionsSkipTokenSessionValidationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that indicates whether the session associated with an access token or a refresh token should be taken into consideration when PingOne needs to determine the validity of the token. When set to `true`, PingOne ignores the session status, allowing the use of a valid token even if the user session has expired. By default, this property's value is set to `false`, which invalidates the token (regardless of the token's validity) if the user session is invalid.",
-	).DefaultValue(false)
+	)
 
 	oidcOptionsCertificateBasedAuthenticationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("A single object that specifies Certificate based authentication settings. This parameter block can only be set where the application's `type` parameter is set to `%s`.", management.ENUMAPPLICATIONTYPE_NATIVE_APP),
@@ -793,7 +793,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 
 	wsfedOptionsAssertionDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		fmt.Sprintf("An integer that specifies the assertion validity duration in seconds. The default value is %[1]d seconds (5 minutes). Valid values are between %[2]d and %[3]d.", wsfedOptionsAssertionDurationDefault, wsfedOptionsAssertionDurationMin, wsfedOptionsAssertionDurationMax),
-	).DefaultValue(wsfedOptionsAssertionDurationDefault)
+	)
 
 	wsfedOptionsWsTrustVersionDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the WS-Trust (Web Services Trust) version to use.",
