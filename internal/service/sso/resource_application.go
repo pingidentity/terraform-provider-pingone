@@ -184,12 +184,6 @@ type applicationOIDCMobileAppBiometricsSettingResourceModelV1 struct {
 	Required                      types.Bool `tfsdk:"required"`
 }
 
-type applicationOIDCMobileAppVersionUpdatesResourceModelV1 struct {
-	Android types.String `tfsdk:"android"`
-	Enabled types.Bool   `tfsdk:"enabled"`
-	Ios     types.String `tfsdk:"ios"`
-}
-
 type applicationOIDCMobileAppPushResourceModelV1 struct {
 	NumberMatching types.Object `tfsdk:"number_matching"`
 }
@@ -2377,13 +2371,6 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						Description: "The single logout endpoint URL.",
 						Validators: []validator.String{
 							stringvalidatorinternal.IsURLWithHTTPorHTTPSValidator(),
-						},
-					},
-					"sts_token_type": schema.StringAttribute{
-						Description: "The type of token to use. Valid values are `http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV1.1` (corresponds to SAML 1.1 in the admin console, not suitable for Entra ID hybrid join) and `urn:oasis:names:tc:SAML:1.0:assertion` (corresponds to SAML 1.1 for Office 365 in the admin console, required for Entra ID hybrid join).",
-						Optional:    true,
-						Validators: []validator.String{
-							stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationWSFEDStsTokenTypeEnumValues)...),
 						},
 					},
 					"sts_token_type": schema.StringAttribute{
