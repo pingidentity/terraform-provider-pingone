@@ -49,7 +49,7 @@ func TestAccCredentialTypeDataSource_ByIDFull(t *testing.T) {
 					resource.TestCheckResourceAttr(dataSourceFullName, "revoke_on_delete", "false"),
 					resource.TestMatchResourceAttr(dataSourceFullName, "version.id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(dataSourceFullName, "version.number", regexp.MustCompile(`^\d+$`)),
-					resource.TestMatchResourceAttr(dataSourceFullName, "version.uri", verify.IsURLWithHTTPS),
+					resource.TestCheckResourceAttrWith(dataSourceFullName, "version.uri", verify.IsURLWithHTTPS),
 					resource.TestMatchResourceAttr(dataSourceFullName, "created_at", verify.RFC3339Regexp),
 					resource.TestMatchResourceAttr(dataSourceFullName, "updated_at", verify.RFC3339Regexp),
 				),

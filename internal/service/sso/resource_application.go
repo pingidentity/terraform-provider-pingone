@@ -35,6 +35,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	listvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/listvalidator"
 	objectplanmodifierinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectplanmodifier"
+	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service/sso/helpers/beta"
@@ -195,6 +196,12 @@ type applicationOIDCMobileAppPushResourceModelV1 struct {
 
 type applicationOIDCMobileAppPushNumberMatchingResourceModelV1 struct {
 	Type types.String `tfsdk:"type"`
+}
+
+type applicationOIDCMobileAppVersionUpdatesResourceModelV1 struct {
+	Android types.String `tfsdk:"android"`
+	Enabled types.Bool   `tfsdk:"enabled"`
+	Ios     types.String `tfsdk:"ios"`
 }
 
 type applicationOIDCMobileAppIntegrityDetectionCacheDurationResourceModelV1 struct {
@@ -1062,7 +1069,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						Required:            true,
 
 						Validators: []validator.String{
-							stringvalidator.RegexMatches(verify.IsURLWithHTTPorHTTPS, "Value must be a valid URL with `http://` or `https://` prefix."),
+							stringvalidatorinternal.IsURLWithHTTPorHTTPSValidator(),
 						},
 					},
 				},
@@ -1108,7 +1115,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						Required:            true,
 
 						Validators: []validator.String{
-							stringvalidator.RegexMatches(verify.IsURLWithHTTPorHTTPS, "Value must be a valid URL with `http://` or `https://` prefix."),
+							stringvalidatorinternal.IsURLWithHTTPorHTTPSValidator(),
 						},
 					},
 				},
@@ -1987,7 +1994,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						Optional:    true,
 
 						Validators: []validator.String{
-							stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Expected value to have a url with schema of \"https\"."),
+							stringvalidatorinternal.IsURLWithHTTPSValidator(),
 						},
 					},
 
@@ -2091,7 +2098,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						Optional:    true,
 
 						Validators: []validator.String{
-							stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Expected value to have a url with schema of \"https\"."),
+							stringvalidatorinternal.IsURLWithHTTPSValidator(),
 						},
 					},
 
@@ -2101,7 +2108,7 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						Optional:            true,
 
 						Validators: []validator.String{
-							stringvalidator.RegexMatches(verify.IsURLWithHTTPorHTTPS, "Expected value to have a url with schema of \"http\" or \"https\"."),
+							stringvalidatorinternal.IsURLWithHTTPorHTTPSValidator(),
 						},
 					},
 
@@ -2362,14 +2369,21 @@ func (r *ApplicationResource) Schema(ctx context.Context, req resource.SchemaReq
 						Required:    true,
 						Description: "The URL that the replying party (such as, Office365) uses to accept submissions of RequestSecurityTokenResponse messages that are a result of SSO requests.",
 						Validators: []validator.String{
-							stringvalidator.RegexMatches(verify.IsURLWithHTTPorHTTPS, "Expected value to have a url with schema of \"http\" or \"https\"."),
+							stringvalidatorinternal.IsURLWithHTTPorHTTPSValidator(),
 						},
 					},
 					"slo_endpoint": schema.StringAttribute{
 						Optional:    true,
 						Description: "The single logout endpoint URL.",
 						Validators: []validator.String{
-							stringvalidator.RegexMatches(verify.IsURLWithHTTPorHTTPS, "Expected value to have a url with schema of \"http\" or \"https\"."),
+							stringvalidatorinternal.IsURLWithHTTPorHTTPSValidator(),
+						},
+					},
+					"sts_token_type": schema.StringAttribute{
+						Description: "The type of token to use. Valid values are `http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV1.1` (corresponds to SAML 1.1 in the admin console, not suitable for Entra ID hybrid join) and `urn:oasis:names:tc:SAML:1.0:assertion` (corresponds to SAML 1.1 for Office 365 in the admin console, required for Entra ID hybrid join).",
+						Optional:    true,
+						Validators: []validator.String{
+							stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationWSFEDStsTokenTypeEnumValues)...),
 						},
 					},
 					"sts_token_type": schema.StringAttribute{

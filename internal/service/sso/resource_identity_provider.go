@@ -28,6 +28,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
 	objectplanmodifierinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/objectplanmodifier"
+	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/service"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
@@ -396,7 +397,7 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 						Required:            true,
 
 						Validators: []validator.String{
-							stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
+							stringvalidatorinternal.IsURLWithHTTPSValidator(),
 						},
 					},
 				},
@@ -421,7 +422,7 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 						Required:            true,
 
 						Validators: []validator.String{
-							stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
+							stringvalidatorinternal.IsURLWithHTTPSValidator(),
 						},
 					},
 				},
@@ -632,7 +633,7 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 						Required:    true,
 
 						Validators: []validator.String{
-							stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
+							stringvalidatorinternal.IsURLWithHTTPSValidator(),
 						},
 					},
 
@@ -660,7 +661,7 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 						Optional:    true,
 
 						Validators: []validator.String{
-							stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
+							stringvalidatorinternal.IsURLWithHTTPSValidator(),
 						},
 					},
 
@@ -669,7 +670,7 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 						Required:    true,
 
 						Validators: []validator.String{
-							stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
+							stringvalidatorinternal.IsURLWithHTTPSValidator(),
 						},
 					},
 
@@ -691,7 +692,7 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 						Required:    true,
 
 						Validators: []validator.String{
-							stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
+							stringvalidatorinternal.IsURLWithHTTPSValidator(),
 						},
 					},
 
@@ -714,7 +715,7 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 						Required:    true,
 
 						Validators: []validator.String{
-							stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
+							stringvalidatorinternal.IsURLWithHTTPSValidator(),
 						},
 					},
 
@@ -736,7 +737,7 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 						Optional:    true,
 
 						Validators: []validator.String{
-							stringvalidator.RegexMatches(verify.IsURLWithHTTPS, "Value must be a valid URL with `https://` prefix."),
+							stringvalidatorinternal.IsURLWithHTTPSValidator(),
 						},
 					},
 				},
@@ -851,7 +852,7 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 						Required:    true,
 
 						Validators: []validator.String{
-							stringvalidator.RegexMatches(verify.IsURLWithHTTPorHTTPS, "Value must be a valid URL with `http://` or `https://` prefix."),
+							stringvalidatorinternal.IsURLWithHTTPorHTTPSValidator(),
 						},
 					},
 
@@ -873,7 +874,7 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 						Optional:    true,
 
 						Validators: []validator.String{
-							stringvalidator.RegexMatches(verify.IsURLWithHTTPorHTTPS, "Value must be a valid URL with `http://` or `https://` prefix."),
+							stringvalidatorinternal.IsURLWithHTTPorHTTPSValidator(),
 						},
 					},
 
@@ -883,7 +884,7 @@ func (r *IdentityProviderResource) Schema(ctx context.Context, req resource.Sche
 						Optional:            true,
 
 						Validators: []validator.String{
-							stringvalidator.RegexMatches(verify.IsURLWithHTTPorHTTPS, "Value must be a valid URL with `http://` or `https://` prefix."),
+							stringvalidatorinternal.IsURLWithHTTPorHTTPSValidator(),
 						},
 					},
 

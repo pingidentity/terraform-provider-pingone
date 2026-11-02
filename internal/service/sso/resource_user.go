@@ -32,6 +32,7 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/customtypes/pingonetypes"
 	"github.com/pingidentity/terraform-provider-pingone/internal/framework/legacysdk"
+	stringvalidatorinternal "github.com/pingidentity/terraform-provider-pingone/internal/framework/stringvalidator"
 	"github.com/pingidentity/terraform-provider-pingone/internal/sdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/utils"
 	"github.com/pingidentity/terraform-provider-pingone/internal/verify"
@@ -835,7 +836,7 @@ func (r *UserResource) Schema(ctx context.Context, req resource.SchemaRequest, r
 						Required:            true,
 
 						Validators: []validator.String{
-							stringvalidator.RegexMatches(verify.IsURLWithHTTPorHTTPS, "must be a valid URL with HTTP or HTTPS"),
+							stringvalidatorinternal.IsURLWithHTTPorHTTPSValidator(),
 						},
 					},
 				},
