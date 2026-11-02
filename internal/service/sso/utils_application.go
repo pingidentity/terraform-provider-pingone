@@ -287,6 +287,9 @@ func applicationMobileAppOkToTF(ctx context.Context, apiObject *management.Appli
 	otpPushNotificationEnabled, d := applicationMobileAppOtpPushNotificationEnabledOkToTF(otpPushNotificationEnabledObj, otpPushNotificationEnabledOk)
 	diags.Append(d...)
 
+	push, d := applicationMobileAppPushOkToTF(apiObject.GetPushOk())
+	diags.Append(d...)
+
 	showAuthenticationInformationObj, showAuthenticationInformationOk := apiObject.GetShowAuthenticationInformationOk()
 	showAuthenticationInformation, d := applicationMobileAppShowAuthenticationInformationOkToTF(showAuthenticationInformationObj, showAuthenticationInformationOk)
 	diags.Append(d...)
@@ -308,7 +311,7 @@ func applicationMobileAppOkToTF(ctx context.Context, apiObject *management.Appli
 		"passcode_grace_period":                  framework.Int32OkToTF(apiObject.GetPasscodeGracePeriodOk()),
 		"passcode_refresh_seconds":               types.Int32Null(),
 		"ping_id_settings":                       framework.BoolOkToTF(apiObject.GetPingIDSettingsOk()),
-		"push":                                   applicationMobileAppPushOkToTF(apiObject.GetPushOk()),
+		"push":                                   push,
 		"show_authentication_information":        showAuthenticationInformation,
 		"universal_app_link":                     framework.StringOkToTF(apiObject.GetUriPrefixOk()),
 	}
@@ -419,11 +422,11 @@ func applicationMobileAppAppleAppAttestSettingsOkToTF(apiObject *management.Appl
 	return returnVar, diags
 }
 
-func applicationMobileAppPushOkToTF(apiObject *management.ApplicationOIDCAllOfMobilePush, ok bool) types.Object {
+func applicationMobileAppPushOkToTF(apiObject *management.ApplicationOIDCAllOfMobilePush, ok bool) (types.Object, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
 	if !ok || apiObject == nil {
-		return types.ObjectNull(applicationOidcMobileAppPushTFObjectTypes)
+		return types.ObjectNull(applicationOidcMobileAppPushTFObjectTypes), diags
 	}
 
 	numberMatching := types.ObjectNull(applicationOidcMobileAppPushNumberMatchingTFObjectTypes)
@@ -440,7 +443,7 @@ func applicationMobileAppPushOkToTF(apiObject *management.ApplicationOIDCAllOfMo
 	})
 	diags.Append(d...)
 
-	return returnVar
+	return returnVar, diags
 }
 
 func applicationMobileAppAllowAuthenticationDeviceLockedOkToTF(apiObject *management.ApplicationOIDCAllOfMobileAllowAuthenticationDeviceLocked, ok bool) (types.Object, diag.Diagnostics) {
