@@ -65,6 +65,7 @@ Read-Only:
 
 Read-Only:
 
+- `external_id` (String) For "PORTAL_LINK_APP" type applications, an external ID that can be used for the application in contexts such as targeted risk policies.
 - `home_page_url` (String) The custom home page URL for the application.  Both `http://` and `https://` URLs are permitted.
 
 
@@ -94,6 +95,7 @@ Read-Only:
 - `grant_types` (Set of String) A list that specifies the grant type for the authorization request.
 - `home_page_url` (String) The custom home page URL for the application.  The provided URL is expected to use the `https://` schema.  The `http` schema is permitted where the host is `localhost` or `127.0.0.1`.
 - `idp_signoff` (Boolean) A boolean flag to allow signoff without access to the session token cookie.
+- `include_typ` (Boolean) A boolean that specifies whether tokens signed for this application include the `typ` header with a value of `at+jwt`, regardless of whether the intended audience is the UserInfo endpoint, PingOne APIs, or custom resources. This specifies the JWT as an OAuth 2.0 access token for increased security. On March 2, 2027, PingOne will always include the `typ` header with a value of `at+jwt` when minting access token for the UserInfo endpoint, PingOne APIs, or custom resources.
 - `include_x5t` (Boolean) A boolean that specifies whether tokens signed for this application include the `x5t` signature header in the signed JWT.
 - `initiate_login_uri` (String) A string that specifies the URI to use for third-parties to begin the sign-on process for the application.
 - `jwks` (String) A string that specifies a JWKS string that validates the signature of signed JWTs for applications that use the `PRIVATE_KEY_JWT` option for the `token_endpoint_auth_method`. This property is required when `token_endpoint_auth_method` is `PRIVATE_KEY_JWT` and the `jwks_url` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-private_key_jwt-jwks-string). This property is also required if the optional `request` property JWT on the authorize endpoint is signed using the RS256 (or RS384, RS512) signing algorithm and the `jwks_url` property is empty. For more infornmation about signing the `request` property JWT, see [Create a request property JWT](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-request-property-jwt).
@@ -113,6 +115,7 @@ Read-Only:
 - `require_signed_request_object` (Boolean) A boolean that indicates that the Java Web Token (JWT) for the [request query](https://openid.net/specs/openid-connect-core-1_0.html#RequestObject) parameter is required to be signed. If `false` or null, a signed request object is not required. Both `support_unsigned_request_object` and this property cannot be set to `true`.  Defaults to `false`.
 - `response_types` (Set of String) A list that specifies the code or token type returned by an authorization request.
 - `signing` (Attributes) The OIDC application token signing key settings. (see [below for nested schema](#nestedatt--oidc_options--signing))
+- `skip_token_session_validation` (Boolean) A boolean that indicates whether the session associated with an access token or a refresh token should be taken into consideration when PingOne needs to determine the validity of the token. When set to "true", PingOne ignores the session status, allowing the use of a valid token even if the user session has expired. By default, this property's value is set to "false", which invalidates the token (regardless of the token's validity) if the user session is invalid.
 - `support_unsigned_request_object` (Boolean) A boolean that specifies whether the request query parameter JWT is allowed to be unsigned.
 - `target_link_uri` (String) The URI for the application.
 - `token_endpoint_auth_method` (String) A string that specifies the client authentication methods supported by the token endpoint.
@@ -200,6 +203,7 @@ Read-Only:
 - `assertion_signed_enabled` (Boolean) A boolean that specifies whether the SAML assertion itself should be signed.
 - `cors_settings` (Attributes) A single object that allows customization of how the Authorization and Authentication APIs interact with CORS requests that reference the application. If omitted, the application allows CORS requests from any origin except for operations that expose sensitive information (e.g. `/as/authorize` and `/as/token`).  This is legacy behavior, and it is recommended that applications migrate to include specific CORS settings. (see [below for nested schema](#nestedatt--saml_options--cors_settings))
 - `default_target_url` (String) A string that specfies a default URL used as the `RelayState` parameter by the IdP to deep link into the application after authentication. This value can be overridden by the `applicationUrl` query parameter for [GET Identity Provider Initiated SSO](https://apidocs.pingidentity.com/pingone/platform/v1/api/#get-identity-provider-initiated-sso). Although both of these parameters are generally URLs, because they are used as deep links, this is not enforced. If neither `defaultTargetUrl` nor `applicationUrl` is specified during a SAML authentication flow, no `RelayState` value is supplied to the application. The `defaultTargetUrl` (or the `applicationUrl`) value is passed to the SAML application’s ACS URL as a separate `RelayState` key value (not within the SAMLResponse key value).
+- `enable_always_accept_acs_url_in_signed_authn_request` (Boolean) A boolean that specifies that when a service provider (SP) specifies an ACS URL in its AuthnRequest, and signs the AuthnRequest, then assuming the identity provider (IdP) can validate the signature, the IdP can accept the ACS URL as valid, regardless of whether the ACS URL is specified in "acs_urls".
 - `enable_requested_authn_context` (Boolean) A boolean that specifies whether `requestedAuthnContext` is taken into account in policy decision-making.
 - `home_page_url` (String) A string that specifies the custom home page URL for the application.
 - `idp_signing_key` (Attributes) SAML application assertion/response signing key settings. (see [below for nested schema](#nestedatt--saml_options--idp_signing_key))
@@ -284,15 +288,23 @@ Read-Only:
 
 Read-Only:
 
+- `assertion_duration` (Number) An integer that specifies the assertion validity duration in seconds.
 - `audience_restriction` (String) The service provider ID. The default value is `urn:federation:MicrosoftOnline`.
 - `cors_settings` (Attributes) A single object that allows customization of how the Authorization and Authentication APIs interact with CORS requests that reference the application. If omitted, the application allows CORS requests from any origin except for operations that expose sensitive information (e.g. `/as/authorize` and `/as/token`).  This is legacy behavior, and it is recommended that applications migrate to include specific CORS settings. (see [below for nested schema](#nestedatt--wsfed_options--cors_settings))
 - `domain_name` (String) The federated domain name (for example, the Azure custom domain).
+- `hybrid_join_device_attribute` (String) Required for Entra ID hybrid join. The value must be the name of a custom user attribute that an administrator has created.
 - `idp_signing_key` (Attributes) Contains the information about the signing of requests by the identity provider (IdP). (see [below for nested schema](#nestedatt--wsfed_options--idp_signing_key))
 - `kerberos` (Attributes) The Kerberos authentication settings. Leave this out of the configuration to disable Kerberos authentication. (see [below for nested schema](#nestedatt--wsfed_options--kerberos))
 - `reply_url` (String) The URL that the replying party (such as, Office365) uses to accept submissions of RequestSecurityTokenResponse messages that are a result of SSO requests.
 - `slo_endpoint` (String) The single logout endpoint URL.
+- `sts_token_type` (String) The type of token to use. Valid values are `http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV1.1` (corresponds to SAML 1.1 in the admin console, not suitable for Entra ID hybrid join) and `urn:oasis:names:tc:SAML:1.0:assertion` (corresponds to SAML 1.1 for Office 365 in the admin console, required for Entra ID hybrid join).
 - `subject_name_identifier_format` (String) The format to use for the SubjectNameIdentifier element. Options are `urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified`, `urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress`.
 - `type` (String) A string that specifies the type associated with the application. This is a required property. Options are `WEB_APP`, `NATIVE_APP`, `SINGLE_PAGE_APP`, `WORKER`, `SERVICE`, `CUSTOM_APP`, `PORTAL_LINK_APP`.
+- `use_mex13` (Boolean) Must be `true` to enable Entra ID hybrid join. After it's set to `true`, update Entra ID to use the new metadata exchange endpoint.
+- `user_attribute_username_match` (String) Specifies the PingOne user attribute used to match the username from a Security Token Service (STS) request to an existing user profile. By default, PingOne matches the username against the user's email address.
+- `user_attribute_x509_match` (String) The user attribute to match against the user information in the X.509 certificate. Supports Microsoft Windows primary refresh token (PRT) operations when users log on to their Windows devices, or unlock their locked Windows devices, using PingID.
+- `valid_issuance_certificates` (Attributes Set) Contains the list of valid issuance certificate IDs for the application. A maximum of 10 certificate IDs can be specified. (see [below for nested schema](#nestedatt--wsfed_options--valid_issuance_certificates))
+- `ws_trust_version` (String) The WS-Trust (Web Services Trust) version to use. Options are `1.2` and `1.3`.
 
 <a id="nestedatt--wsfed_options--cors_settings"></a>
 ### Nested Schema for `wsfed_options.cors_settings`
@@ -334,3 +346,13 @@ Read-Only:
 Read-Only:
 
 - `id` (String) The UUID of a user type in the list of `userTypes` for the LDAP gateway. Must be a valid PingOne resource ID.
+
+
+
+
+<a id="nestedatt--wsfed_options--valid_issuance_certificates"></a>
+### Nested Schema for `wsfed_options.valid_issuance_certificates`
+
+Read-Only:
+
+- `certificate_id` (String) The ID of the certificate key pair. The key must have a usage type of `ISSUANCE`.

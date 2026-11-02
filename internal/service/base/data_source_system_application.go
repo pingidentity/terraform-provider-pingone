@@ -28,23 +28,25 @@ import (
 type SystemApplicationDataSource serviceClientType
 
 type systemApplicationDataSourceModel struct {
-	Id                        pingonetypes.ResourceIDValue `tfsdk:"id"`
-	EnvironmentId             pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
-	ApplicationId             pingonetypes.ResourceIDValue `tfsdk:"application_id"`
-	Name                      types.String                 `tfsdk:"name"`
-	Description               types.String                 `tfsdk:"description"`
-	Type                      types.String                 `tfsdk:"type"`
-	Protocol                  types.String                 `tfsdk:"protocol"`
-	Enabled                   types.Bool                   `tfsdk:"enabled"`
-	HiddenFromAppPortal       types.Bool                   `tfsdk:"hidden_from_app_portal"`
-	Icon                      types.Object                 `tfsdk:"icon"`
-	AccessControlRoleType     types.String                 `tfsdk:"access_control_role_type"`
-	AccessControlGroupOptions types.Object                 `tfsdk:"access_control_group_options"`
-	ClientId                  types.String                 `tfsdk:"client_id"`
-	PkceEnforcement           types.String                 `tfsdk:"pkce_enforcement"`
-	TokenEndpointAuthMethod   types.String                 `tfsdk:"token_endpoint_auth_method"`
-	ApplyDefaultTheme         types.Bool                   `tfsdk:"apply_default_theme"`
-	EnableDefaultThemeFooter  types.Bool                   `tfsdk:"enable_default_theme_footer"`
+	Id                               pingonetypes.ResourceIDValue `tfsdk:"id"`
+	EnvironmentId                    pingonetypes.ResourceIDValue `tfsdk:"environment_id"`
+	ApplicationId                    pingonetypes.ResourceIDValue `tfsdk:"application_id"`
+	Name                             types.String                 `tfsdk:"name"`
+	Description                      types.String                 `tfsdk:"description"`
+	Type                             types.String                 `tfsdk:"type"`
+	Protocol                         types.String                 `tfsdk:"protocol"`
+	Enabled                          types.Bool                   `tfsdk:"enabled"`
+	HiddenFromAppPortal              types.Bool                   `tfsdk:"hidden_from_app_portal"`
+	Icon                             types.Object                 `tfsdk:"icon"`
+	AccessControlRoleType            types.String                 `tfsdk:"access_control_role_type"`
+	AccessControlGroupOptions        types.Object                 `tfsdk:"access_control_group_options"`
+	ClientId                         types.String                 `tfsdk:"client_id"`
+	PkceEnforcement                  types.String                 `tfsdk:"pkce_enforcement"`
+	TokenEndpointAuthMethod          types.String                 `tfsdk:"token_endpoint_auth_method"`
+	ApplyDefaultTheme                types.Bool                   `tfsdk:"apply_default_theme"`
+	EnableDefaultThemeFooter         types.Bool                   `tfsdk:"enable_default_theme_footer"`
+	LogoutType                       types.String                 `tfsdk:"logout_type"`
+	ManageDevicesViaMyAccountEnabled types.Bool                   `tfsdk:"manage_devices_via_my_account_enabled"`
 }
 
 var (
@@ -240,6 +242,16 @@ func (r *SystemApplicationDataSource) Schema(ctx context.Context, req datasource
 				MarkdownDescription: enableDefaultThemeFooterDescription.MarkdownDescription,
 				Computed:            true,
 			},
+
+			"logout_type": schema.StringAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the logout type for the application. Options are `OIDC_RP_INITIATED` (the default) and `SAML2_SLO`.").Description,
+				Computed:    true,
+			},
+
+			"manage_devices_via_my_account_enabled": schema.BoolAttribute{
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether PingID users can manage their devices using the MyAccount app. Applicable only when the `type` is `PING_ONE_SELF_SERVICE`.").Description,
+				Computed:    true,
+			},
 		},
 	}
 }
@@ -426,6 +438,8 @@ func (p *systemApplicationDataSourceModel) toState(apiObject *management.ReadOne
 		p.TokenEndpointAuthMethod = framework.EnumOkToTF(apiObject.ApplicationPingOnePortal.GetTokenEndpointAuthMethodOk())
 		p.ApplyDefaultTheme = framework.BoolOkToTF(apiObject.ApplicationPingOnePortal.GetApplyDefaultThemeOk())
 		p.EnableDefaultThemeFooter = types.BoolNull()
+		p.LogoutType = framework.EnumOkToTF(apiObject.ApplicationPingOnePortal.GetLogoutTypeOk())
+		p.ManageDevicesViaMyAccountEnabled = types.BoolNull()
 	}
 
 	if apiObject.ApplicationPingOneSelfService != nil {
@@ -446,6 +460,8 @@ func (p *systemApplicationDataSourceModel) toState(apiObject *management.ReadOne
 		p.TokenEndpointAuthMethod = framework.EnumOkToTF(apiObject.ApplicationPingOneSelfService.GetTokenEndpointAuthMethodOk())
 		p.ApplyDefaultTheme = framework.BoolOkToTF(apiObject.ApplicationPingOneSelfService.GetApplyDefaultThemeOk())
 		p.EnableDefaultThemeFooter = framework.BoolOkToTF(apiObject.ApplicationPingOneSelfService.GetEnableDefaultThemeFooterOk())
+		p.LogoutType = framework.EnumOkToTF(apiObject.ApplicationPingOneSelfService.GetLogoutTypeOk())
+		p.ManageDevicesViaMyAccountEnabled = framework.BoolOkToTF(apiObject.ApplicationPingOneSelfService.GetManageDevicesViaMyAccountEnabledOk())
 	}
 
 	p.Id = framework.PingOneResourceIDToTF(apiObjectCommon.GetId())

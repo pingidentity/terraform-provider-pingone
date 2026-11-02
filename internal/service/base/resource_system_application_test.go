@@ -114,6 +114,7 @@ func TestAccSystemApplication_Portal(t *testing.T) {
 		resource.TestMatchResourceAttr(resourceFullName, "access_control_group_options.groups.1", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.type", "ALL_GROUPS"),
 		resource.TestCheckResourceAttr(resourceFullName, "apply_default_theme", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "logout_type", "SAML2_SLO"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "enable_default_theme_footer"),
 	)
 
@@ -210,6 +211,8 @@ func TestAccSystemApplication_SelfService(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "access_control_group_options.type", "ALL_GROUPS"),
 		resource.TestCheckResourceAttr(resourceFullName, "apply_default_theme", "true"),
 		resource.TestCheckResourceAttr(resourceFullName, "enable_default_theme_footer", "true"),
+		resource.TestCheckResourceAttr(resourceFullName, "logout_type", "SAML2_SLO"),
+		resource.TestCheckResourceAttr(resourceFullName, "manage_devices_via_my_account_enabled", "true"),
 	)
 
 	minimalCheck := resource.ComposeTestCheckFunc(
@@ -376,6 +379,7 @@ resource "pingone_system_application" "%[2]s" {
   }
 
   apply_default_theme = true
+  logout_type         = "SAML2_SLO"
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, enabled)
 }
@@ -414,6 +418,9 @@ resource "pingone_system_application" "%[2]s" {
 
   apply_default_theme         = true
   enable_default_theme_footer = true
+  logout_type                 = "SAML2_SLO"
+
+  manage_devices_via_my_account_enabled = true
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, enabled)
 }
