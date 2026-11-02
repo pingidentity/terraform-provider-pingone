@@ -1877,7 +1877,7 @@ func TestAccApplication_OIDCFullAIAgent(t *testing.T) {
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccApplicationConfig_OIDC_AIAgent(resourceName, name, image),
+				Config: testAccApplicationConfig_OIDC_AIAgent(resourceName, image),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
@@ -4721,7 +4721,7 @@ resource "pingone_application" "%[2]s" {
 `, acctest.GenericSandboxEnvironment(), resourceName, name)
 }
 
-func testAccApplicationConfig_OIDC_AIAgent(resourceName, name, image string) string {
+func testAccApplicationConfig_OIDC_AIAgent(resourceName, image string) string {
 	return fmt.Sprintf(`
 		%[1]s
 
@@ -5226,14 +5226,14 @@ resource "pingone_application" "%[3]s" {
       algorithm = pingone_key.%[3]s.signature_algorithm
     }
     enable_always_accept_acs_url_in_signed_authn_request = true
-    enable_requested_authn_context   = true
-    nameid_format                    = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
-    response_is_signed               = true
-    session_not_on_or_after_duration = 64
-    slo_binding                      = "HTTP_REDIRECT"
-    slo_endpoint                     = "https://www.pingidentity.com/sloendpoint"
-    slo_response_endpoint            = "https://www.pingidentity.com/sloresponseendpoint"
-    slo_window                       = 3
+    enable_requested_authn_context                       = true
+    nameid_format                                        = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+    response_is_signed                                   = true
+    session_not_on_or_after_duration                     = 64
+    slo_binding                                          = "HTTP_REDIRECT"
+    slo_endpoint                                         = "https://www.pingidentity.com/sloendpoint"
+    slo_response_endpoint                                = "https://www.pingidentity.com/sloresponseendpoint"
+    slo_window                                           = 3
 
     default_target_url = "https://www.pingidentity.com/relaystate"
 
@@ -5445,14 +5445,14 @@ resource "pingone_application" "%[3]s" {
       algorithm = pingone_key.%[3]s.signature_algorithm
     }
     enable_always_accept_acs_url_in_signed_authn_request = true
-    enable_requested_authn_context   = true
-    nameid_format                    = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
-    response_is_signed               = true
-    session_not_on_or_after_duration = 64
-    slo_binding                      = "HTTP_REDIRECT"
-    slo_endpoint                     = "https://www.pingidentity.com/sloendpoint"
-    slo_response_endpoint            = "https://www.pingidentity.com/sloresponseendpoint"
-    slo_window                       = 3
+    enable_requested_authn_context                       = true
+    nameid_format                                        = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+    response_is_signed                                   = true
+    session_not_on_or_after_duration                     = 64
+    slo_binding                                          = "HTTP_REDIRECT"
+    slo_endpoint                                         = "https://www.pingidentity.com/sloendpoint"
+    slo_response_endpoint                                = "https://www.pingidentity.com/sloresponseendpoint"
+    slo_window                                           = 3
 
     default_target_url = "https://www.pingidentity.com/relaystate"
 
@@ -5573,14 +5573,14 @@ resource "pingone_application" "%[3]s" {
       algorithm = pingone_key.%[3]s.signature_algorithm
     }
     enable_always_accept_acs_url_in_signed_authn_request = true
-    enable_requested_authn_context   = true
-    nameid_format                    = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
-    response_is_signed               = true
-    session_not_on_or_after_duration = 64
-    slo_binding                      = "HTTP_REDIRECT"
-    slo_endpoint                     = "https://www.pingidentity.com/sloendpoint"
-    slo_response_endpoint            = "https://www.pingidentity.com/sloresponseendpoint"
-    slo_window                       = 3
+    enable_requested_authn_context                       = true
+    nameid_format                                        = "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+    response_is_signed                                   = true
+    session_not_on_or_after_duration                     = 64
+    slo_binding                                          = "HTTP_REDIRECT"
+    slo_endpoint                                         = "https://www.pingidentity.com/sloendpoint"
+    slo_response_endpoint                                = "https://www.pingidentity.com/sloresponseendpoint"
+    slo_window                                           = 3
 
     default_target_url = "https://www.pingidentity.com/relaystate"
 
@@ -5880,7 +5880,7 @@ resource "pingone_application" "%[3]s" {
         }
       ]
     }
-	  
+
     assertion_duration            = 3600
     hybrid_join_device_attribute  = "deviceAuthenticatorId"
     sts_token_type                = "urn:oasis:names:tc:SAML:1.0:assertion"

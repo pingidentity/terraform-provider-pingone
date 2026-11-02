@@ -30,7 +30,7 @@ require (
 	github.com/pingidentity/pingone-go-sdk-legacy v0.18.0
 	github.com/pingidentity/pingone-go-sdk-legacy/authorize v0.10.0
 	github.com/pingidentity/pingone-go-sdk-legacy/credentials v0.15.0
-	github.com/pingidentity/pingone-go-sdk-legacy/management v0.80.0
+	github.com/pingidentity/pingone-go-sdk-legacy/management v0.81.0
 	github.com/pingidentity/pingone-go-sdk-legacy/mfa v0.28.0
 	github.com/pingidentity/pingone-go-sdk-legacy/risk v0.24.0
 	github.com/pingidentity/pingone-go-sdk-legacy/verify v0.13.0
@@ -426,5 +426,3 @@ require (
 	mvdan.cc/gofumpt v0.9.2 // indirect
 	mvdan.cc/unparam v0.0.0-20251027182757-5beb8c8f8f15 // indirect
 )
-
-replace github.com/pingidentity/pingone-go-sdk-legacy/management => ../pingone-go-sdk-legacy/management
