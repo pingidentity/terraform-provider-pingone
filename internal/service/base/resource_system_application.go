@@ -120,7 +120,7 @@ func (r *SystemApplicationResource) Schema(ctx context.Context, req resource.Sch
 
 	logoutTypeDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the logout type for the application. Configurable only when the `type` is `PING_ONE_SELF_SERVICE` or `PING_ONE_PORTAL`.",
-	).AllowedValuesEnum(management.AllowedEnumApplicationLogoutTypeEnumValues).DefaultValue(string(management.ENUMAPPLICATIONLOGOUTTYPE_OIDC_RP_INITIATED))
+	).AllowedValuesEnum(management.AllowedEnumApplicationLogoutTypeEnumValues)
 
 	manageDevicesViaMyAccountEnabledDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A boolean that specifies whether PingID users can manage their devices using the MyAccount app. When set to `true`, this also adds the MyAccount app to all PingID policies that already include Device Management. Configurable only when the `type` is `PING_ONE_SELF_SERVICE`.",
@@ -241,7 +241,6 @@ func (r *SystemApplicationResource) Schema(ctx context.Context, req resource.Sch
 				Description:         logoutTypeDescription.Description,
 				MarkdownDescription: logoutTypeDescription.MarkdownDescription,
 				Optional:            true,
-				Computed:            true,
 
 				Validators: []validator.String{
 					stringvalidator.OneOf(utils.EnumSliceToStringSlice(management.AllowedEnumApplicationLogoutTypeEnumValues)...),
