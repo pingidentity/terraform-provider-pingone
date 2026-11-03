@@ -1,0 +1,42 @@
+name: 'Setup Ping CLI'
+description: >
+  Installs the Ping CLI binary from GitHub releases and verifies its sha256
+  checksum against a pinned digest. Version bumps must update the digest in
+  the same change.
+
+inputs:
+  pingcli-version:
+    description: 'Ping CLI release tag to install (e.g. v0.8.4)'
+    required: false
+    default: 'v0.8.4'
+  expected-sha256:
+    description: 'Expected sha256 of the pingcli_<version>_linux_amd64 release binary'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Download Ping CLI
+      shell: bash
+      env:
+        PINGCLI_VERSION: ${{ inputs.pingcli-version }}
+        EXPECTED_SHA256: ${{ inputs.expected-sha256 }}
+      run: |
+        set -euo pipefail
+
+        version_no_v="${PINGCLI_VERSION#v}"
+        url="https://github.com/pingidentity/pingcli/releases/download/${PINGCLI_VERSION}/pingcli_${version_no_v}_linux_amd64"
+        binary_path="${RUNNER_TEMP}/pingcli_${version_no_v}_linux_amd64"
+
+        curl --fail --silent --show-error --location --output "${binary_path}" "${url}"
+
+        echo "${EXPECTED_SHA256}  ${binary_path}" | sha256sum --check --strict -
+
+        chmod +x "${binary_path}"
+        sudo mv "${binary_path}" /usr/local/bin/pingcli
+
+    - name: Verify installation
+      shell: bash
+      run: |
+        set -euo pipefail
+        pingcli --version
