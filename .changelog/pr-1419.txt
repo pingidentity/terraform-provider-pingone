@@ -1,0 +1,7 @@
+```release-note:enhancement
+`resource/pingone_application`: Added `apple_team_id`, `apple_app_attest_settings`, `ping_id_settings`, the PingID mobile app configuration settings (`allow_authentication_device_locked`, `allow_un_pair_and_change_device_from_app`, `mobile_app_security_pin_require`, `mobile_device_biometrics_setting`, `notify_optional_mobile_version_updates`, `notify_require_mobile_version_updates`, `otp_push_notification_enabled`, `show_authentication_information`), and a `push` block (with `number_matching.type`) to the `oidc_options.mobile_app` block.
+```
+
+```release-note:enhancement
+`data-source/pingone_application`: Added `apple_team_id`, `apple_app_attest_settings`, `ping_id_settings`, the PingID mobile app configuration settings (`allow_authentication_device_locked`, `allow_un_pair_and_change_device_from_app`, `mobile_app_security_pin_require`, `mobile_device_biometrics_setting`, `notify_optional_mobile_version_updates`, `notify_require_mobile_version_updates`, `otp_push_notification_enabled`, `show_authentication_information`), and a `push` block (with `number_matching.type`) to the `oidc_options.mobile_app` block.
+```

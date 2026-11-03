@@ -457,6 +457,32 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 						Computed:    true,
 
 						Attributes: map[string]schema.Attribute{
+							"allow_authentication_device_locked": schema.SingleNestedAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("Whether users can authenticate from the lock screen (Android 10.0 or earlier).").Description,
+								Computed:    true,
+
+								Attributes: map[string]schema.Attribute{
+									"enabled": schema.BoolAttribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("Set to `true` if you want to allow users to authenticate from the lock screen if they using Android 10.0 or earlier.").Description,
+										Computed:    true,
+									},
+								},
+							},
+							"allow_un_pair_and_change_device_from_app": schema.SingleNestedAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("Whether users can unpair or change device from the PingID mobile app.").Description,
+								Computed:    true,
+
+								Attributes: map[string]schema.Attribute{
+									"enabled": schema.BoolAttribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("Set to `true` if you want to allow users to unpair or change device from the PingID mobile app.").Description,
+										Computed:    true,
+									},
+								},
+							},
+							"apple_team_id": schema.StringAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("If you set `integrity_detection.apple_app_attest_settings.enabled` to `true` to use Apple App Attest for device integrity checking, you must also set `apple_team_id` to the Team ID from your Apple Developer account.").Description,
+								Computed:    true,
+							},
 							"bundle_id": schema.StringAttribute{
 								Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies the bundle associated with the application, for push notifications in native apps.").Description,
 								Computed:    true,
@@ -485,6 +511,130 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 								Description: framework.SchemaAttributeDescriptionFromMarkdown("A string that specifies a URI prefix that enables direct triggering of the mobile application when scanning a QR code.").Description,
 								Computed:    true,
 							},
+							"ping_id_settings": schema.BoolAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the PingID mobile app settings are managed for this application.").Description,
+								Computed:    true,
+							},
+							"mobile_app_security_pin_require": schema.SingleNestedAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("Whether the user must enter a security PIN to access the PingID mobile app.").Description,
+								Computed:    true,
+
+								Attributes: map[string]schema.Attribute{
+									"enabled": schema.BoolAttribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("Set to `true` if you want to require the user to enter a security PIN to access the PingID mobile app.").Description,
+										Computed:    true,
+									},
+									"require_for_all_devices": schema.BoolAttribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("If `mobile_app_security_pin_require.enabled` is set to `true`, then by default, the PIN is required only if a device PIN or biometrics have not been defined for the device. Set `require_for_all_devices` to `true` if you want to require PIN use for all devices.").Description,
+										Computed:    true,
+									},
+									"security_pin_digit": schema.StringAttribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("If `mobile_app_security_pin_require.enabled` is set to `true`, then by default, a six-digit security PIN is required. To specify that a four-digit PIN is sufficient, set `security_pin_digit` to `FOUR_DIGIT`. Use `SIX_DIGIT` to specify that a six-digit PIN is required.").Description,
+										Computed:    true,
+									},
+								},
+							},
+							"mobile_device_biometrics_setting": schema.SingleNestedAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("The biometric authentication settings for the PingID mobile app.").Description,
+								Computed:    true,
+
+								Attributes: map[string]schema.Attribute{
+									"required": schema.BoolAttribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("If you have allowed biometric authentication methods in the MFA policy, then by default, the user is required to use a biometric method with PingID if one is available on their device. If you want to specify that users can authenticate with the PingID mobile app only if they have a biometric method configured, set `required` to `true`.").Description,
+										Computed:    true,
+									},
+									"device_passcode_fallback_enabled": schema.BoolAttribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("Set to `true` if you want to allow iOS users to authenticate using the device passcode if biometric authentication fails.").Description,
+										Computed:    true,
+									},
+									"face_id_consent_enabled": schema.BoolAttribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("For iOS devices, set to `true` if you want to prevent users with FaceID defined from authenticating by mistake. When set to `true`, the user is prompted to consent explicitly before each face scan is taken.").Description,
+										Computed:    true,
+									},
+									"notification_actions_enabled": schema.BoolAttribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("Set to `true` if you want to allow users to approve notification requests from their device's lock screen.").Description,
+										Computed:    true,
+									},
+								},
+							},
+							"notify_optional_mobile_version_updates": schema.SingleNestedAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("Whether users are notified that a newer version of the PingID app is available.").Description,
+								Computed:    true,
+
+								Attributes: map[string]schema.Attribute{
+									"enabled": schema.BoolAttribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("Set to `true` if you want to notify your users that there is a newer version of the PingID app available if they want to update.").Description,
+										Computed:    true,
+									},
+									"android": schema.StringAttribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("The version of the app that users on Android devices are notified about.").Description,
+										Computed:    true,
+									},
+									"ios": schema.StringAttribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("The version of the app that users on iOS devices are notified about.").Description,
+										Computed:    true,
+									},
+								},
+							},
+							"notify_require_mobile_version_updates": schema.SingleNestedAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("Whether a minimum version of the PingID app is required.").Description,
+								Computed:    true,
+
+								Attributes: map[string]schema.Attribute{
+									"enabled": schema.BoolAttribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("Set to `true` if you want to require a minimum version of the PingID app and notify the user that they must update the app if they are using an older version.").Description,
+										Computed:    true,
+									},
+									"android": schema.StringAttribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("The minimum version of the app required on Android devices.").Description,
+										Computed:    true,
+									},
+									"ios": schema.StringAttribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("The minimum version of the app required on iOS devices.").Description,
+										Computed:    true,
+									},
+								},
+							},
+							"otp_push_notification_enabled": schema.SingleNestedAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("Whether users receive a push notification during authentication that they can tap to open the PingID app.").Description,
+								Computed:    true,
+
+								Attributes: map[string]schema.Attribute{
+									"enabled": schema.BoolAttribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("Set to `true` if you want users to receive a push notification during authentication that they can tap to open the PingID app.").Description,
+										Computed:    true,
+									},
+								},
+							},
+							"show_authentication_information": schema.SingleNestedAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("Whether push notifications include a map that displays the location of the user requesting access.").Description,
+								Computed:    true,
+
+								Attributes: map[string]schema.Attribute{
+									"enabled": schema.BoolAttribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("Set to `true` if you want push notifications to include a map that displays the location of the user requesting access.").Description,
+										Computed:    true,
+									},
+								},
+							},
+							"push": schema.SingleNestedAttribute{
+								Description: framework.SchemaAttributeDescriptionFromMarkdown("Push notification settings for the application.").Description,
+								Computed:    true,
+
+								Attributes: map[string]schema.Attribute{
+									"number_matching": schema.SingleNestedAttribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("Number matching settings used in MFA policies where number matching has been enabled.").Description,
+										Computed:    true,
+
+										Attributes: map[string]schema.Attribute{
+											"type": schema.StringAttribute{
+												Description: framework.SchemaAttributeDescriptionFromMarkdown("Specifies whether users should select the displayed number from a group of three numbers, or whether users must enter the number that was shown. Options are `SELECT_NUMBER` and `ENTER_MANUALLY`.").Description,
+												Computed:    true,
+											},
+										},
+									},
+								},
+							},
 							"integrity_detection": schema.SingleNestedAttribute{
 								Description: framework.SchemaAttributeDescriptionFromMarkdown("Mobile application integrity detection settings.").Description,
 								Computed:    true,
@@ -493,6 +643,17 @@ func (r *ApplicationDataSource) Schema(ctx context.Context, req datasource.Schem
 									"enabled": schema.BoolAttribute{
 										Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether device integrity detection takes place on mobile devices.").Description,
 										Computed:    true,
+									},
+									"apple_app_attest_settings": schema.SingleNestedAttribute{
+										Description: framework.SchemaAttributeDescriptionFromMarkdown("The Apple App Attest settings for device integrity checking on iOS applications.").Description,
+										Computed:    true,
+
+										Attributes: map[string]schema.Attribute{
+											"enabled": schema.BoolAttribute{
+												Description: framework.SchemaAttributeDescriptionFromMarkdown("Set to `true` if you have enabled device integrity checking for your iOS app and you want to use Apple App Attest for the check. If the value is set to `true`, you must also include a value for `apple_team_id`.").Description,
+												Computed:    true,
+											},
+										},
 									},
 									"excluded_platforms": schema.SetAttribute{
 										Description: framework.SchemaAttributeDescriptionFromMarkdown("Indicates OS excluded from device integrity checking.").Description,
