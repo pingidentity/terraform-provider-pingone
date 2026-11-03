@@ -298,6 +298,10 @@ func TestAccRoleAssignmentGateway_Environment(t *testing.T) {
 				Config:      testAccRoleAssignmentGatewayConfig_Environment(environmentName, licenseID, resourceName, name, "Organization Admin"),
 				ExpectError: regexp.MustCompile(`Incompatible role and scope combination`),
 			},
+			{
+				Config:      testAccRoleAssignmentGatewayConfig_Group(environmentName, licenseID, resourceName, name, "Advanced Help Desk Admin"),
+				ExpectError: regexp.MustCompile(`Group scope is not a valid scope type`),
+			},
 		},
 	})
 }
@@ -448,5 +452,32 @@ resource "pingone_gateway_role_assignment" "%[2]s" {
   role_id        = data.pingone_role.%[2]s.id
 
   scope_environment_id = data.pingone_environment.general_test.id
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, roleName, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName)
+}
+
+func testAccRoleAssignmentGatewayConfig_Group(environmentName, licenseID, resourceName, name, roleName string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+		%[5]s
+
+resource "pingone_gateway" "%[2]s" {
+  environment_id = pingone_environment.%[6]s.id
+  name           = "%[3]s"
+  enabled        = true
+
+  type = "PING_FEDERATE"
+}
+
+data "pingone_role" "%[2]s" {
+  name = "%[4]s"
+}
+
+resource "pingone_gateway_role_assignment" "%[2]s" {
+  environment_id = pingone_environment.%[6]s.id
+  gateway_id     = pingone_gateway.%[2]s.id
+  role_id        = data.pingone_role.%[2]s.id
+
+  scope_group_id = "00000000-0000-0000-0000-000000000000"
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, roleName, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName)
 }
