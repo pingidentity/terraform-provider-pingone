@@ -1,0 +1,31 @@
+```release-note:enhancement
+`resource/pingone_user_role_assignment`: Added a `scope_group_id` attribute to support group-scoped admin role assignments.
+```
+
+```release-note:enhancement
+`resource/pingone_group_role_assignment`: Added a `scope_group_id` attribute to support group-scoped admin role assignments.
+```
+
+```release-note:enhancement
+`resource/pingone_application_role_assignment`: Added a `scope_group_id` attribute to support group-scoped admin role assignments.
+```
+
+```release-note:enhancement
+`resource/pingone_gateway_role_assignment`: Added a `scope_group_id` attribute to support group-scoped admin role assignments.
+```
+
+```release-note:enhancement
+`resource/pingone_role_assignment_user`: Added a `scope_group_id` attribute to support group-scoped admin role assignments.
+```
+
+```release-note:enhancement
+`resource/pingone_custom_role`: Added `GROUP` as a valid `applicable_to` value.
+```
+
+```release-note:enhancement
+`data-source/pingone_role`: Added `Advanced Help Desk Admin`, `Advanced Identity Cloud Tenant Auditor`, `PingOne Privilege Administrator`, `PingOne Privilege Read-Only Administrator`, and `Promotion Admin` as valid `name` values.
+```
+
+```release-note:note
+bump `github.com/pingidentity/pingone-go-sdk-legacy/management` v0.81.0 => v0.82.0
+```
