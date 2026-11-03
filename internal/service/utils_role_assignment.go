@@ -38,12 +38,13 @@ func roleAssignmentScopeDescription(scopeType string, someRolesCannotBeScoped bo
 
 func RoleAssignmentScopeSchema() map[string]schema.Attribute {
 
-	exactlyOneOfParameters := []string{"scope_application_id", "scope_organization_id", "scope_environment_id", "scope_population_id"}
+	exactlyOneOfParameters := []string{"scope_application_id", "scope_organization_id", "scope_environment_id", "scope_population_id", "scope_group_id"}
 
 	applicationIdDescription := roleAssignmentScopeDescription("application", true).ExactlyOneOf(exactlyOneOfParameters)
 	environmentIdDescription := roleAssignmentScopeDescription("environment", true).ExactlyOneOf(exactlyOneOfParameters)
 	organizationIdDescription := roleAssignmentScopeDescription("organization", true).ExactlyOneOf(exactlyOneOfParameters)
 	populationIdDescription := roleAssignmentScopeDescription("population", true).ExactlyOneOf(exactlyOneOfParameters)
+	groupIdDescription := roleAssignmentScopeDescription("group", true).ExactlyOneOf(exactlyOneOfParameters)
 
 	validators := []validator.String{
 		stringvalidator.ExactlyOneOf(
@@ -51,6 +52,7 @@ func RoleAssignmentScopeSchema() map[string]schema.Attribute {
 			path.MatchRelative().AtParent().AtName("scope_environment_id"),
 			path.MatchRelative().AtParent().AtName("scope_organization_id"),
 			path.MatchRelative().AtParent().AtName("scope_population_id"),
+			path.MatchRelative().AtParent().AtName("scope_group_id"),
 		),
 	}
 
@@ -106,10 +108,22 @@ func RoleAssignmentScopeSchema() map[string]schema.Attribute {
 
 			Validators: validators,
 		},
+
+		"scope_group_id": schema.StringAttribute{
+			Description:         groupIdDescription.Description,
+			MarkdownDescription: groupIdDescription.MarkdownDescription,
+			Optional:            true,
+
+			CustomType: pingonetypes.ResourceIDType{},
+
+			PlanModifiers: planModifiers,
+
+			Validators: validators,
+		},
 	}
 }
 
-func ExpandRoleAssignmentScope(scopeEnvironmentID, scopeOrganizationID, scopePopulationID, scopeApplicationID pingonetypes.ResourceIDValue) (scopeId, scopeType string, diags diag.Diagnostics) {
+func ExpandRoleAssignmentScope(scopeEnvironmentID, scopeOrganizationID, scopePopulationID, scopeApplicationID, scopeGroupID pingonetypes.ResourceIDValue) (scopeId, scopeType string, diags diag.Diagnostics) {
 
 	if scopeApplicationID != pingonetypes.ResourceIDNull() && scopeApplicationID != pingonetypes.ResourceIDUnknown() {
 		return scopeApplicationID.ValueString(), "APPLICATION", diags
@@ -127,20 +141,25 @@ func ExpandRoleAssignmentScope(scopeEnvironmentID, scopeOrganizationID, scopePop
 		return scopePopulationID.ValueString(), "POPULATION", diags
 	}
 
+	if scopeGroupID != pingonetypes.ResourceIDNull() && scopeGroupID != pingonetypes.ResourceIDUnknown() {
+		return scopeGroupID.ValueString(), "GROUP", diags
+	}
+
 	diags.AddError(
 		"Invalid configuration",
-		"One of scope_application_id, scope_organization_id, scope_environment_id or scope_population_id must be set",
+		"One of scope_application_id, scope_organization_id, scope_environment_id, scope_population_id or scope_group_id must be set",
 	)
 
 	return "", "", diags
 
 }
 
-func RoleAssignmentScopeOkToTF(roleAssignmentScope *management.RoleAssignmentScope, ok bool) (scopeEnvironmentId, scopeOrganizationId, scopePopulationId, scopeApplicationId pingonetypes.ResourceIDValue) {
+func RoleAssignmentScopeOkToTF(roleAssignmentScope *management.RoleAssignmentScope, ok bool) (scopeEnvironmentId, scopeOrganizationId, scopePopulationId, scopeApplicationId, scopeGroupId pingonetypes.ResourceIDValue) {
 	scopeApplicationId = pingonetypes.NewResourceIDNull()
 	scopeEnvironmentId = pingonetypes.NewResourceIDNull()
 	scopeOrganizationId = pingonetypes.NewResourceIDNull()
 	scopePopulationId = pingonetypes.NewResourceIDNull()
+	scopeGroupId = pingonetypes.NewResourceIDNull()
 
 	if ok {
 		if scopeType, ok := roleAssignmentScope.GetTypeOk(); ok {
@@ -150,6 +169,8 @@ func RoleAssignmentScopeOkToTF(roleAssignmentScope *management.RoleAssignmentSco
 				scopeApplicationId = framework.PingOneResourceIDOkToTF(roleAssignmentScope.GetIdOk())
 			case management.ENUMROLEASSIGNMENTSCOPETYPE_ENVIRONMENT:
 				scopeEnvironmentId = framework.PingOneResourceIDOkToTF(roleAssignmentScope.GetIdOk())
+			case management.ENUMROLEASSIGNMENTSCOPETYPE_GROUP:
+				scopeGroupId = framework.PingOneResourceIDOkToTF(roleAssignmentScope.GetIdOk())
 			case management.ENUMROLEASSIGNMENTSCOPETYPE_ORGANIZATION:
 				scopeOrganizationId = framework.PingOneResourceIDOkToTF(roleAssignmentScope.GetIdOk())
 			case management.ENUMROLEASSIGNMENTSCOPETYPE_POPULATION:

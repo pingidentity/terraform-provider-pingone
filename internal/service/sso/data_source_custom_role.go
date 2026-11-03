@@ -83,8 +83,8 @@ func (r *customRoleDataSource) Schema(ctx context.Context, req datasource.Schema
 			"applicable_to": schema.SetAttribute{
 				ElementType:         types.StringType,
 				Computed:            true,
-				Description:         "The scope types to which the role can be applied. Options are \"ORGANIZATION\", \"ENVIRONMENT\", \"POPULATION\", \"APPLICATION\".",
-				MarkdownDescription: "The scope types to which the role can be applied. Options are `ORGANIZATION`, `ENVIRONMENT`, `POPULATION`, `APPLICATION`.",
+				Description:         "The scope types to which the role can be applied. Options are \"ORGANIZATION\", \"ENVIRONMENT\", \"POPULATION\", \"APPLICATION\", \"GROUP\".",
+				MarkdownDescription: "The scope types to which the role can be applied. Options are `ORGANIZATION`, `ENVIRONMENT`, `POPULATION`, `APPLICATION`, `GROUP`.",
 			},
 			"can_assign": schema.SetNestedAttribute{
 				NestedObject: schema.NestedAttributeObject{
