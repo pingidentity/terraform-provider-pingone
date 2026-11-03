@@ -90,12 +90,12 @@ func (r *customRoleResource) Schema(ctx context.Context, req resource.SchemaRequ
 			"applicable_to": schema.SetAttribute{
 				ElementType:         types.StringType,
 				Required:            true,
-				Description:         "The scope types to which the role can be applied. Options are \"ORGANIZATION\", \"ENVIRONMENT\", \"POPULATION\", \"APPLICATION\". At least one value must be set.",
-				MarkdownDescription: "The scope types to which the role can be applied. Options are `ORGANIZATION`, `ENVIRONMENT`, `POPULATION`, `APPLICATION`. At least one value must be set.",
+				Description:         "The scope types to which the role can be applied. Options are \"ORGANIZATION\", \"ENVIRONMENT\", \"POPULATION\", \"APPLICATION\", \"GROUP\". At least one value must be set.",
+				MarkdownDescription: "The scope types to which the role can be applied. Options are `ORGANIZATION`, `ENVIRONMENT`, `POPULATION`, `APPLICATION`, `GROUP`. At least one value must be set.",
 				Validators: []validator.Set{
 					setvalidator.SizeAtLeast(1),
 					setvalidator.ValueStringsAre(
-						stringvalidator.OneOf("ORGANIZATION", "ENVIRONMENT", "POPULATION", "APPLICATION"),
+						stringvalidator.OneOf("ORGANIZATION", "ENVIRONMENT", "POPULATION", "APPLICATION", "GROUP"),
 					),
 				},
 			},

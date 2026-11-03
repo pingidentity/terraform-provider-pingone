@@ -132,6 +132,11 @@ func TestAccCustomRole_Full(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(resourceFullName, "can_assign.#", "0"),
+					resource.TestCheckResourceAttr(resourceFullName, "applicable_to.#", "4"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "applicable_to.*", "ENVIRONMENT"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "applicable_to.*", "POPULATION"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "applicable_to.*", "APPLICATION"),
+					resource.TestCheckTypeSetElemAttr(resourceFullName, "applicable_to.*", "GROUP"),
 					resource.TestCheckResourceAttr(resourceFullName, "type", "CUSTOM"),
 				),
 			},
@@ -206,6 +211,11 @@ func TestAccCustomRole_MinimalMaximal(t *testing.T) {
 	fullCheckNoCanAssign := resource.ComposeTestCheckFunc(
 		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
 		resource.TestCheckResourceAttr(resourceFullName, "can_assign.#", "0"),
+		resource.TestCheckResourceAttr(resourceFullName, "applicable_to.#", "4"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "applicable_to.*", "ENVIRONMENT"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "applicable_to.*", "POPULATION"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "applicable_to.*", "APPLICATION"),
+		resource.TestCheckTypeSetElemAttr(resourceFullName, "applicable_to.*", "GROUP"),
 		resource.TestCheckResourceAttr(resourceFullName, "type", "CUSTOM"),
 	)
 	fullCheckWithCanAssign := resource.ComposeTestCheckFunc(
@@ -372,7 +382,8 @@ resource "pingone_custom_role" "%[2]s" {
   applicable_to = [
     "ENVIRONMENT",
     "POPULATION",
-    "APPLICATION"
+    "APPLICATION",
+    "GROUP"
   ]
   can_be_assigned_by = [
     {

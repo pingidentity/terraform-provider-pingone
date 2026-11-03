@@ -30,7 +30,7 @@ require (
 	github.com/pingidentity/pingone-go-sdk-legacy v0.18.0
 	github.com/pingidentity/pingone-go-sdk-legacy/authorize v0.10.0
 	github.com/pingidentity/pingone-go-sdk-legacy/credentials v0.15.0
-	github.com/pingidentity/pingone-go-sdk-legacy/management v0.81.0
+	github.com/pingidentity/pingone-go-sdk-legacy/management v0.83.0
 	github.com/pingidentity/pingone-go-sdk-legacy/mfa v0.28.0
 	github.com/pingidentity/pingone-go-sdk-legacy/risk v0.24.0
 	github.com/pingidentity/pingone-go-sdk-legacy/verify v0.13.0

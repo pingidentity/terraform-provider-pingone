@@ -35,9 +35,10 @@ func TestAccCustomRoleDataSource_ByNameFull(t *testing.T) {
 			{
 				Config: testAccCustomRoleDataSourceConfig_ByNameFull(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(dataSourceFullName, "applicable_to.#", "2"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "applicable_to.#", "3"),
 					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "applicable_to.*", "ENVIRONMENT"),
 					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "applicable_to.*", "POPULATION"),
+					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "applicable_to.*", "GROUP"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "can_assign.#", "1"),
 					resource.TestMatchResourceAttr(dataSourceFullName, "can_assign.0.id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(dataSourceFullName, "can_be_assigned_by.#", "2"),
@@ -85,9 +86,10 @@ func TestAccCustomRoleDataSource_ByIDFull(t *testing.T) {
 			{
 				Config: testAccCustomRoleDataSourceConfig_ByIDFull(resourceName, name),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(dataSourceFullName, "applicable_to.#", "2"),
+					resource.TestCheckResourceAttr(dataSourceFullName, "applicable_to.#", "3"),
 					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "applicable_to.*", "ENVIRONMENT"),
 					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "applicable_to.*", "POPULATION"),
+					resource.TestCheckTypeSetElemAttr(dataSourceFullName, "applicable_to.*", "GROUP"),
 					resource.TestCheckResourceAttr(dataSourceFullName, "can_assign.#", "1"),
 					resource.TestMatchResourceAttr(dataSourceFullName, "can_assign.0.id", verify.P1ResourceIDRegexpFullString),
 					resource.TestCheckResourceAttr(dataSourceFullName, "can_be_assigned_by.#", "2"),
@@ -178,7 +180,8 @@ resource "pingone_custom_role" "%[1]s-parent" {
   name           = "%[2]s"
   applicable_to = [
     "ENVIRONMENT",
-    "POPULATION"
+    "POPULATION",
+    "GROUP"
   ]
   can_be_assigned_by = [
     {

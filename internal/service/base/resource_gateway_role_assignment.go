@@ -80,7 +80,7 @@ func (r *GatewayRoleAssignmentResource) Schema(ctx context.Context, req resource
 		},
 	}
 
-	utils.MergeSchemaAttributeMaps(attributes, service.RoleAssignmentScopeSchema(), true)
+	utils.MergeSchemaAttributeMaps(attributes, service.RoleAssignmentScopeSchema(false), true)
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -285,7 +285,7 @@ func (r *GatewayRoleAssignmentResource) ImportState(ctx context.Context, req res
 func (p *GatewayRoleAssignmentResourceModel) expand() (*management.RoleAssignment, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	scopeID, scopeType, d := service.ExpandRoleAssignmentScope(p.ScopeEnvironmentId, p.ScopeOrganizationId, p.ScopePopulationId, p.ScopeApplicationId)
+	scopeID, scopeType, d := service.ExpandRoleAssignmentScope(p.ScopeEnvironmentId, p.ScopeOrganizationId, p.ScopePopulationId, p.ScopeApplicationId, pingonetypes.ResourceIDNull())
 	diags.Append(d...)
 	if diags.HasError() {
 		return nil, diags
@@ -315,7 +315,7 @@ func (p *GatewayRoleAssignmentResourceModel) toState(apiObject *management.RoleA
 	p.RoleId = framework.PingOneResourceIDOkToTF(apiObject.Role.GetIdOk())
 	p.ReadOnly = framework.BoolOkToTF(apiObject.GetReadOnlyOk())
 
-	p.ScopeEnvironmentId, p.ScopeOrganizationId, p.ScopePopulationId, p.ScopeApplicationId = service.RoleAssignmentScopeOkToTF(apiObject.GetScopeOk())
+	p.ScopeEnvironmentId, p.ScopeOrganizationId, p.ScopePopulationId, p.ScopeApplicationId, _ = service.RoleAssignmentScopeOkToTF(apiObject.GetScopeOk())
 
 	return diags
 }

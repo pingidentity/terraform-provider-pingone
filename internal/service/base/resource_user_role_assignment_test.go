@@ -310,6 +310,18 @@ func TestAccRoleAssignmentUser_Environment(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "read_only", "false"),
 	)
 
+	groupScopeCheck := resource.ComposeTestCheckFunc(
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "user_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "role_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckNoResourceAttr(resourceFullName, "scope_population_id"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "scope_organization_id"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "scope_environment_id"),
+		resource.TestMatchResourceAttr(resourceFullName, "scope_group_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckResourceAttr(resourceFullName, "read_only", "false"),
+	)
+
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.PreCheckNoTestAccFlaky(t)
@@ -359,6 +371,14 @@ func TestAccRoleAssignmentUser_Environment(t *testing.T) {
 			},
 			{
 				Config:      testAccRoleAssignmentUserConfig_Environment(resourceName, name, "Organization Admin"),
+				ExpectError: regexp.MustCompile(`Incompatible role and scope combination`),
+			},
+			{
+				Config: testAccRoleAssignmentUserConfig_Group(resourceName, name, "Advanced Help Desk Admin"),
+				Check:  groupScopeCheck,
+			},
+			{
+				Config:      testAccRoleAssignmentUserConfig_Group(resourceName, name, "Environment Admin"),
 				ExpectError: regexp.MustCompile(`Incompatible role and scope combination`),
 			},
 		},
@@ -575,5 +595,41 @@ resource "pingone_user_role_assignment" "%[2]s" {
   role_id        = data.pingone_role.%[2]s.id
 
   scope_environment_id = data.pingone_environment.general_test.id
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, roleName)
+}
+
+func testAccRoleAssignmentUserConfig_Group(resourceName, name, roleName string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_population" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+}
+
+resource "pingone_group" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+}
+
+resource "pingone_user" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  population_id  = pingone_population.%[2]s.id
+
+  username = "%[3]s"
+  email    = "foouser@pingidentity.com"
+}
+
+data "pingone_role" "%[2]s" {
+  name = "%[4]s"
+}
+
+resource "pingone_user_role_assignment" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  user_id        = pingone_user.%[2]s.id
+  role_id        = data.pingone_role.%[2]s.id
+
+  scope_group_id = pingone_group.%[2]s.id
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, roleName)
 }
