@@ -260,8 +260,10 @@ jobs:
           go mod download
 
       - name: Install Ping CLI
-        run: go install github.com/pingidentity/pingcli@v0.8.4
-        continue-on-error: false
+        uses: ./.github/actions/setup-pingcli
+        with:
+          pingcli-version: v0.8.4
+          expected-sha256: d8f83d8b0dcdb953dc8b431653f3c177396af6db1f2c89c49c72dd595a8aa42c
 
       - name: Retrieve access token
         env:
