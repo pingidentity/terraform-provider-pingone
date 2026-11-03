@@ -974,8 +974,10 @@ func (p *applicationOIDCOptionsResourceModelV0) schemaUpgradeMobileAppV0toV1(ctx
 			NotifyRequireMobileVersionUpdates:  types.ObjectNull(applicationOidcMobileAppVersionUpdatesTFObjectTypes),
 			OtpPushNotificationEnabled:         types.ObjectNull(applicationOidcMobileAppEnabledToggleTFObjectTypes),
 			PackageName:                        priorStateData[0].PackageName,
+			PasscodeGracePeriod:                types.Int32Null(),
 			PasscodeRefreshSeconds:             priorStateData[0].PasscodeRefreshSeconds,
 			PingIdSettings:                     types.BoolNull(),
+			Push:                               types.ObjectNull(applicationOidcMobileAppPushTFObjectTypes),
 			ShowAuthenticationInformation:      types.ObjectNull(applicationOidcMobileAppEnabledToggleTFObjectTypes),
 			UniversalAppLink:                   priorStateData[0].UniversalAppLink,
 		}
@@ -1153,7 +1155,9 @@ func (p *applicationResourceModelV0) schemaUpgradeSAMLOptionsV0toV1(ctx context.
 			SpEncryption:                                 spEncryption,
 			SpEntityId:                                   priorStateData[0].SpEntityId,
 			SpVerification:                               spVerification,
+			SessionNotOnOrAfterDuration:                  types.Int32Null(),
 			Type:                                         priorStateData[0].Type,
+			VirtualServerIdSettings:                      types.ObjectNull(applicationSamlOptionsVirtualServerIdSettingsTFObjectTypes),
 		}
 
 		returnVar, d := types.ObjectValueFrom(ctx, attributeTypes, upgradedStateData)
