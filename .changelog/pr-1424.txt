@@ -27,5 +27,5 @@
 ```
 
 ```release-note:note
-bump `github.com/pingidentity/pingone-go-sdk-legacy/management` v0.81.0 => v0.82.0
+bump `github.com/pingidentity/pingone-go-sdk-legacy/management` v0.81.0 => v0.83.0
 ```
