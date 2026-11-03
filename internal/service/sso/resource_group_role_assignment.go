@@ -81,7 +81,7 @@ func (r *GroupRoleAssignmentResource) Schema(ctx context.Context, req resource.S
 		},
 	}
 
-	utils.MergeSchemaAttributeMaps(attributes, service.RoleAssignmentScopeSchema(), true)
+	utils.MergeSchemaAttributeMaps(attributes, service.RoleAssignmentScopeSchema(true), true)
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.

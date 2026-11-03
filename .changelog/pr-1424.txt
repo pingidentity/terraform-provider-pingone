@@ -7,14 +7,6 @@
 ```
 
 ```release-note:enhancement
-`resource/pingone_application_role_assignment`: Added a `scope_group_id` attribute to support group-scoped admin role assignments.
-```
-
-```release-note:enhancement
-`resource/pingone_gateway_role_assignment`: Added a `scope_group_id` attribute to support group-scoped admin role assignments.
-```
-
-```release-note:enhancement
 `resource/pingone_role_assignment_user`: Added a `scope_group_id` attribute to support group-scoped admin role assignments.
 ```
 

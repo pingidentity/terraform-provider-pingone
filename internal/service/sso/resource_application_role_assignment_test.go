@@ -349,10 +349,6 @@ func TestAccRoleAssignmentApplication_Environment(t *testing.T) {
 				Config:      testAccRoleAssignmentApplicationConfig_Environment(resourceName, name, "Organization Admin"),
 				ExpectError: regexp.MustCompile(`Incompatible role and scope combination`),
 			},
-			{
-				Config:      testAccRoleAssignmentApplicationConfig_Group(resourceName, name, "Advanced Help Desk Admin"),
-				ExpectError: regexp.MustCompile(`Group scope is not a valid scope type`),
-			},
 		},
 	})
 }
@@ -597,35 +593,6 @@ resource "pingone_application_role_assignment" "%[2]s" {
   role_id        = data.pingone_role.%[2]s.id
 
   scope_environment_id = data.pingone_environment.general_test.id
-}`, acctest.GenericSandboxEnvironment(), resourceName, name, roleName)
-}
-
-func testAccRoleAssignmentApplicationConfig_Group(resourceName, name, roleName string) string {
-	return fmt.Sprintf(`
-		%[1]s
-
-resource "pingone_application" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s"
-  enabled        = true
-
-  oidc_options = {
-    type                       = "WORKER"
-    grant_types                = ["CLIENT_CREDENTIALS"]
-    token_endpoint_auth_method = "CLIENT_SECRET_BASIC"
-  }
-}
-
-data "pingone_role" "%[2]s" {
-  name = "%[4]s"
-}
-
-resource "pingone_application_role_assignment" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-  application_id = pingone_application.%[2]s.id
-  role_id        = data.pingone_role.%[2]s.id
-
-  scope_group_id = "00000000-0000-0000-0000-000000000000"
 }`, acctest.GenericSandboxEnvironment(), resourceName, name, roleName)
 }
 

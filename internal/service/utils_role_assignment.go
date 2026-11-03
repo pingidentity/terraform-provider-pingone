@@ -36,15 +36,14 @@ func roleAssignmentScopeDescription(scopeType string, someRolesCannotBeScoped bo
 	return description.RequiresReplace()
 }
 
-func RoleAssignmentScopeSchema() map[string]schema.Attribute {
+func RoleAssignmentScopeSchema(includeGroupScope bool) map[string]schema.Attribute {
 
-	exactlyOneOfParameters := []string{"scope_application_id", "scope_organization_id", "scope_environment_id", "scope_population_id", "scope_group_id"}
+	exactlyOneOfParameters := []string{"scope_application_id", "scope_organization_id", "scope_environment_id", "scope_population_id"}
 
 	applicationIdDescription := roleAssignmentScopeDescription("application", true).ExactlyOneOf(exactlyOneOfParameters)
 	environmentIdDescription := roleAssignmentScopeDescription("environment", true).ExactlyOneOf(exactlyOneOfParameters)
 	organizationIdDescription := roleAssignmentScopeDescription("organization", true).ExactlyOneOf(exactlyOneOfParameters)
 	populationIdDescription := roleAssignmentScopeDescription("population", true).ExactlyOneOf(exactlyOneOfParameters)
-	groupIdDescription := roleAssignmentScopeDescription("group", true).ExactlyOneOf(exactlyOneOfParameters)
 
 	validators := []validator.String{
 		stringvalidator.ExactlyOneOf(
@@ -52,15 +51,33 @@ func RoleAssignmentScopeSchema() map[string]schema.Attribute {
 			path.MatchRelative().AtParent().AtName("scope_environment_id"),
 			path.MatchRelative().AtParent().AtName("scope_organization_id"),
 			path.MatchRelative().AtParent().AtName("scope_population_id"),
-			path.MatchRelative().AtParent().AtName("scope_group_id"),
 		),
+	}
+
+	if includeGroupScope {
+		exactlyOneOfParameters = append(exactlyOneOfParameters, "scope_group_id")
+
+		applicationIdDescription = roleAssignmentScopeDescription("application", true).ExactlyOneOf(exactlyOneOfParameters)
+		environmentIdDescription = roleAssignmentScopeDescription("environment", true).ExactlyOneOf(exactlyOneOfParameters)
+		organizationIdDescription = roleAssignmentScopeDescription("organization", true).ExactlyOneOf(exactlyOneOfParameters)
+		populationIdDescription = roleAssignmentScopeDescription("population", true).ExactlyOneOf(exactlyOneOfParameters)
+
+		validators = []validator.String{
+			stringvalidator.ExactlyOneOf(
+				path.MatchRelative().AtParent().AtName("scope_application_id"),
+				path.MatchRelative().AtParent().AtName("scope_environment_id"),
+				path.MatchRelative().AtParent().AtName("scope_organization_id"),
+				path.MatchRelative().AtParent().AtName("scope_population_id"),
+				path.MatchRelative().AtParent().AtName("scope_group_id"),
+			),
+		}
 	}
 
 	planModifiers := []planmodifier.String{
 		stringplanmodifier.RequiresReplace(),
 	}
 
-	return map[string]schema.Attribute{
+	scopeAttributes := map[string]schema.Attribute{
 		"scope_application_id": schema.StringAttribute{
 			Description:         applicationIdDescription.Description,
 			MarkdownDescription: applicationIdDescription.MarkdownDescription,
@@ -108,8 +125,12 @@ func RoleAssignmentScopeSchema() map[string]schema.Attribute {
 
 			Validators: validators,
 		},
+	}
 
-		"scope_group_id": schema.StringAttribute{
+	if includeGroupScope {
+		groupIdDescription := roleAssignmentScopeDescription("group", true).ExactlyOneOf(exactlyOneOfParameters)
+
+		scopeAttributes["scope_group_id"] = schema.StringAttribute{
 			Description:         groupIdDescription.Description,
 			MarkdownDescription: groupIdDescription.MarkdownDescription,
 			Optional:            true,
@@ -119,8 +140,10 @@ func RoleAssignmentScopeSchema() map[string]schema.Attribute {
 			PlanModifiers: planModifiers,
 
 			Validators: validators,
-		},
+		}
 	}
+
+	return scopeAttributes
 }
 
 func ExpandRoleAssignmentScope(scopeEnvironmentID, scopeOrganizationID, scopePopulationID, scopeApplicationID, scopeGroupID pingonetypes.ResourceIDValue) (scopeId, scopeType string, diags diag.Diagnostics) {
