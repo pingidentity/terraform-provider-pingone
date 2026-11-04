@@ -30,7 +30,5 @@
 - Several attributes that hold secret values are now marked as sensitive: the `oauth.client_secret` and `api_key.value` attributes of the `pingone_davinci_application` and `pingone_davinci_applications` data sources, the `properties` attribute of the `pingone_davinci_connector_instance` and `pingone_davinci_connector_instances` data sources, and the `http_endpoint_headers` and `connection_details_headers` attributes of the `pingone_webhook` resource.
 - The provider's `client_secret` and `api_access_token` attributes are now marked as sensitive.
 - bump `github.com/pingidentity/pingone-go-sdk-legacy` v0.17.0 => v0.18.0
-- bump `github.com/pingidentity/pingone-go-sdk-legacy/management` v0.79.0 => v0.80.0
-- bump `github.com/pingidentity/pingone-go-sdk-legacy/management` v0.80.0 => v0.81.0
-- bump `github.com/pingidentity/pingone-go-sdk-legacy/management` v0.81.0 => v0.83.0
+- bump `github.com/pingidentity/pingone-go-sdk-legacy/management` v0.79.0 => v0.83.0
 

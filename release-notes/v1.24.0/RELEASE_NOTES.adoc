@@ -23,12 +23,10 @@
 * `resource/pingone_environment`: Added support for `Recognize` to the `services.type` attribute.
 * `data-source/pingone_environment`: Added support for `Recognize` to the `services.type` attribute.
 * bump `github.com/pingidentity/pingone-go-sdk-legacy` v0.17.0 => v0.18.0
-* bump `github.com/pingidentity/pingone-go-sdk-legacy/management` v0.79.0 => v0.80.0
 * `resource/pingone_application`: Added `include_typ` and `skip_token_session_validation` attributes to the `oidc_options` block, added support for the `AI_AGENT` application type, added `external_id` attribute to the `external_link_options` block, added an `enable_always_accept_acs_url_in_signed_authn_request` attribute to the `saml_options` block, and added `hybrid_join_device_attribute`, `sts_token_type`, `use_mex13`, `user_attribute_username_match`, `user_attribute_x509_match`, `valid_issuance_certificates`, `assertion_duration`, and `ws_trust_version` attributes to the `wsfed_options` block.
 * `data-source/pingone_application`: Added `include_typ` and `skip_token_session_validation` attributes to the `oidc_options` block, added `external_id` attribute to the `external_link_options` block, added an `enable_always_accept_acs_url_in_signed_authn_request` attribute to the `saml_options` block, and added `hybrid_join_device_attribute`, `sts_token_type`, `use_mex13`, `user_attribute_username_match`, `user_attribute_x509_match`, `valid_issuance_certificates`, `assertion_duration`, and `ws_trust_version` attributes to the `wsfed_options` block.
 * `resource/pingone_system_application`: Added `logout_type` and `manage_devices_via_my_account_enabled` attributes.
 * `data-source/pingone_system_application`: Added `logout_type` and `manage_devices_via_my_account_enabled` attributes.
-* bump `github.com/pingidentity/pingone-go-sdk-legacy/management` v0.80.0 => v0.81.0
 * `resource/pingone_application`: Added `apple_team_id`, `apple_app_attest_settings`, `ping_id_settings`, the PingID mobile app configuration settings (`allow_authentication_device_locked`, `allow_un_pair_and_change_device_from_app`, `mobile_app_security_pin_require`, `mobile_device_biometrics_setting`, `notify_optional_mobile_version_updates`, `notify_require_mobile_version_updates`, `otp_push_notification_enabled`, `show_authentication_information`), and a `push` block (with `number_matching.type`) to the `oidc_options.mobile_app` block.
 * `data-source/pingone_application`: Added `apple_team_id`, `apple_app_attest_settings`, `ping_id_settings`, the PingID mobile app configuration settings (`allow_authentication_device_locked`, `allow_un_pair_and_change_device_from_app`, `mobile_app_security_pin_require`, `mobile_device_biometrics_setting`, `notify_optional_mobile_version_updates`, `notify_require_mobile_version_updates`, `otp_push_notification_enabled`, `show_authentication_information`), and a `push` block (with `number_matching.type`) to the `oidc_options.mobile_app` block.
 * `resource/pingone_user_role_assignment`: Added a `scope_group_id` attribute to support group-scoped admin role assignments.
@@ -36,6 +34,6 @@
 * `resource/pingone_role_assignment_user`: Added a `scope_group_id` attribute to support group-scoped admin role assignments.
 * `resource/pingone_custom_role`: Added `GROUP` as a valid `applicable_to` value.
 * `data-source/pingone_role`: Added `Advanced Help Desk Admin`, `Advanced Identity Cloud Tenant Auditor`, `PingOne Privilege Administrator`, `PingOne Privilege Read-Only Administrator`, and `Promotion Admin` as valid `name` values.
-* bump `github.com/pingidentity/pingone-go-sdk-legacy/management` v0.81.0 => v0.83.0
+* bump `github.com/pingidentity/pingone-go-sdk-legacy/management` v0.79.0 => v0.83.0
 
 link:https://github.com/pingidentity/pingcli/releases/tag/v1.24.0[View release on GitHub^]
