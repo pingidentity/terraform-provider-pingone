@@ -43,6 +43,12 @@ resource "pingone_mfa_fido2_policy" "my_awesome_fido2_policy" {
     option                        = "SPECIFIC"
   }
 
+  public_key_credential_hints = [
+    "SECURITY_KEY",
+    "CLIENT_DEVICE",
+    "HYBRID",
+  ]
+
   relying_party_id = "pingidentity.com"
 
   user_display_name_attributes = {
@@ -94,6 +100,7 @@ resource "pingone_mfa_fido2_policy" "my_awesome_fido2_policy" {
 ### Optional
 
 - `description` (String) A string that specifies the description of the FIDO2 policy.
+- `public_key_credential_hints` (List of String) A list of strings that is used to provide public key credential hints to the browser, to help give priority to the authentication method that the user is most likely to use.  The order of the values in the list is significant, expressing preference order.  Options are `CLIENT_DEVICE`, `HYBRID`, `SECURITY_KEY`.  The values provided should align with the `authenticator_attachment` value: `CLIENT_DEVICE` corresponds to platform authenticators, while `SECURITY_KEY` and `HYBRID` correspond to cross-platform authenticators.  If hints from both categories are required, set `authenticator_attachment` to `BOTH`.
 - `user_presence_timeout` (Attributes) A single nested object that specifies the user presence timeout settings, used to control the amount of time a user has to perform a user presence gesture with their FIDO device. If not provided, defaults to 2 minutes. (see [below for nested schema](#nestedatt--user_presence_timeout))
 
 ### Read-Only

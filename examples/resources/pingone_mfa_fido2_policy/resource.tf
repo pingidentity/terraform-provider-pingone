@@ -29,6 +29,12 @@ resource "pingone_mfa_fido2_policy" "my_awesome_fido2_policy" {
     option                        = "SPECIFIC"
   }
 
+  public_key_credential_hints = [
+    "SECURITY_KEY",
+    "CLIENT_DEVICE",
+    "HYBRID",
+  ]
+
   relying_party_id = "pingidentity.com"
 
   user_display_name_attributes = {

@@ -54,6 +54,7 @@ type FIDO2PolicyResourceModel struct {
 	DeviceDisplayName             types.String                 `tfsdk:"device_display_name"`
 	DiscoverableCredentials       types.String                 `tfsdk:"discoverable_credentials"`
 	MdsAuthenticatorsRequirements types.Object                 `tfsdk:"mds_authenticators_requirements"`
+	PublicKeyCredentialHints      types.List                   `tfsdk:"public_key_credential_hints"`
 	RelyingPartyId                types.String                 `tfsdk:"relying_party_id"`
 	UserDisplayNameAttributes     types.Object                 `tfsdk:"user_display_name_attributes"`
 	UserPresenceTimeout           types.Object                 `tfsdk:"user_presence_timeout"`
@@ -211,6 +212,16 @@ func (r *FIDO2PolicyResource) Schema(ctx context.Context, req resource.SchemaReq
 		string(mfa.ENUMFIDO2POLICYMDSAUTHENTICATOROPTION_CERTIFIED):  "allow only FIDO Certified authenticators",
 		string(mfa.ENUMFIDO2POLICYMDSAUTHENTICATOROPTION_SPECIFIC):   "allow only the authenticators specified with the `allowed_authenticator_ids` parameter",
 	})
+
+	publicKeyCredentialHintsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A list of strings that is used to provide public key credential hints to the browser, to help give priority to the authentication method that the user is most likely to use.  The order of the values in the list is significant, expressing preference order.",
+	).AllowedValuesEnum(mfa.AllowedEnumFIDO2PublicKeyCredentialHintEnumValues).AppendMarkdownString(fmt.Sprintf(
+		"The values provided should align with the `authenticator_attachment` value: `%s` corresponds to platform authenticators, while `%s` and `%s` correspond to cross-platform authenticators.  If hints from both categories are required, set `authenticator_attachment` to `%s`.",
+		mfa.ENUMFIDO2PUBLICKEYCREDENTIALHINT_CLIENT_DEVICE,
+		mfa.ENUMFIDO2PUBLICKEYCREDENTIALHINT_SECURITY_KEY,
+		mfa.ENUMFIDO2PUBLICKEYCREDENTIALHINT_HYBRID,
+		mfa.ENUMFIDO2POLICYAUTHENTICATORATTACHMENT_BOTH,
+	))
 
 	relyingPartyIDDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"The ID of the relying party. The value should be a domain name, such as `bxretail.org` (in lower-case characters).",
@@ -415,6 +426,21 @@ func (r *FIDO2PolicyResource) Schema(ctx context.Context, req resource.SchemaReq
 							),
 						},
 					},
+				},
+			},
+
+			"public_key_credential_hints": schema.ListAttribute{
+				Description:         publicKeyCredentialHintsDescription.Description,
+				MarkdownDescription: publicKeyCredentialHintsDescription.MarkdownDescription,
+				Optional:            true,
+
+				ElementType: types.StringType,
+
+				Validators: []validator.List{
+					listvalidator.SizeAtLeast(1),
+					listvalidator.ValueStringsAre(
+						stringvalidator.OneOf(utils.EnumSliceToStringSlice(mfa.AllowedEnumFIDO2PublicKeyCredentialHintEnumValues)...),
+					),
 				},
 			},
 
@@ -962,6 +988,28 @@ func (p *FIDO2PolicyResourceModel) expand(ctx context.Context) (*mfa.FIDO2Policy
 		*userVerification,
 	)
 
+	// Public key credential hints
+	if !p.PublicKeyCredentialHints.IsNull() && !p.PublicKeyCredentialHints.IsUnknown() {
+		var publicKeyCredentialHintsPlan []types.String
+		diags.Append(p.PublicKeyCredentialHints.ElementsAs(ctx, &publicKeyCredentialHintsPlan, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		publicKeyCredentialHints, d := framework.TFTypeStringSliceToStringSlice(publicKeyCredentialHintsPlan, path.Root("public_key_credential_hints"))
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
+
+		publicKeyCredentialHintsList := make([]mfa.EnumFIDO2PublicKeyCredentialHint, 0, len(publicKeyCredentialHints))
+		for _, hint := range publicKeyCredentialHints {
+			publicKeyCredentialHintsList = append(publicKeyCredentialHintsList, mfa.EnumFIDO2PublicKeyCredentialHint(hint))
+		}
+
+		data.SetPublicKeyCredentialHints(publicKeyCredentialHintsList)
+	}
+
 	// User presence timeout
 	if !p.UserPresenceTimeout.IsNull() && !p.UserPresenceTimeout.IsUnknown() {
 		var userPresenceTimeoutPlan FIDO2PolicyUserPresenceTimeoutResourceModel
@@ -1021,6 +1069,11 @@ func (p *FIDO2PolicyResourceModel) toState(apiObject *mfa.FIDO2Policy) diag.Diag
 
 	p.MdsAuthenticatorsRequirements, d = toStateMdsAuthenticatorsRequirements(apiObject.GetMdsAuthenticatorsRequirementsOk())
 	diags.Append(d...)
+
+	p.PublicKeyCredentialHints = types.ListNull(types.StringType)
+	if v, ok := apiObject.GetPublicKeyCredentialHintsOk(); ok && len(v) > 0 {
+		p.PublicKeyCredentialHints = framework.StringListToTF(utils.EnumSliceToStringSlice(v))
+	}
 
 	p.RelyingPartyId = framework.StringOkToTF(apiObject.GetRelyingPartyIdOk())
 
