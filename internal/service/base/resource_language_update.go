@@ -148,22 +148,10 @@ func resourceLanguageUpdateUpdate(ctx context.Context, d *schema.ResourceData, m
 			return legacysdk.CheckEnvironmentExistsOnPermissionsError(ctx, apiClient, d.Get("environment_id").(string), fO, fR, fErr)
 		},
 		"ReadOneLanguage-Update",
-		sdk.CustomErrorResourceNotFoundWarning,
+		sdk.DefaultCustomError,
 		sdk.DefaultCreateReadRetryable,
 	)
 	if diags.HasError() {
-		return diags
-	}
-
-	if resp == nil {
-		if d.IsNewResource() {
-			diags = append(diags, diag.Diagnostic{
-				Severity: diag.Error,
-				Summary:  "Cannot create language update",
-				Detail:   fmt.Sprintf("The language %s was not found in environment %s. Ensure `language_id` references an existing language in that environment before creating this resource.", d.Get("language_id").(string), d.Get("environment_id").(string)),
-			})
-		}
-		d.SetId("")
 		return diags
 	}
 

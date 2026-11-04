@@ -272,7 +272,7 @@ func (r *NotificationTemplateContentResource) Schema(ctx context.Context, req re
 			},
 
 			"default": schema.BoolAttribute{
-				Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the template is a predefined default template.  Default template content is read-only and cannot be modified or deleted by this resource.").Description,
+				Description: framework.SchemaAttributeDescriptionFromMarkdown("A boolean that specifies whether the template is a predefined default template.").Description,
 				Computed:    true,
 			},
 
@@ -648,8 +648,23 @@ func (r *NotificationTemplateContentResource) Read(ctx context.Context, req reso
 		return
 	}
 
-	// Save updated data into Terraform state
 	resp.Diagnostics.Append(data.toState(response)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// The predefined default content for a template is read-only in PingOne and cannot be managed
+	// by this resource.  Prevent the content, typically via import, from entering Terraform state.
+	if data.Default.ValueBool() {
+		resp.Diagnostics.AddError(
+			"The default notification template content cannot be managed by this resource.",
+			fmt.Sprintf("The template content %s for template %s in environment %s is the predefined default content managed by PingOne and is read-only.  To customize this notification, create a new pingone_notification_template_content resource for the template, locale and (optional) variant combination instead.", data.Id.ValueString(), data.TemplateName.ValueString(), data.EnvironmentId.ValueString()),
+		)
+
+		return
+	}
+
+	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -666,22 +681,6 @@ func (r *NotificationTemplateContentResource) Update(ctx context.Context, req re
 	// Read Terraform plan data into the model
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	var defaultContent types.Bool
-	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("default"), &defaultContent)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// Predefined content is read-only; customization requires separate content.
-	if defaultContent.ValueBool() {
-		resp.Diagnostics.AddError(
-			"The default notification template content cannot be modified.",
-			fmt.Sprintf("The template content %s for template %s in environment %s is the predefined default content managed by PingOne and is read-only.  To customize this notification, create a new pingone_notification_template_content resource for the template, locale and (optional) variant combination instead of importing and updating the default content.", plan.Id.ValueString(), plan.TemplateName.ValueString(), plan.EnvironmentId.ValueString()),
-		)
-
 		return
 	}
 
@@ -731,17 +730,6 @@ func (r *NotificationTemplateContentResource) Delete(ctx context.Context, req re
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	// The predefined default template content is read-only in PingOne and cannot be deleted.
-	// Only remove the resource from Terraform state.
-	if data.Default.ValueBool() {
-		resp.Diagnostics.AddWarning(
-			"The default notification template content cannot be deleted.",
-			fmt.Sprintf("The template content %s for template %s in environment %s is the predefined default content managed by PingOne and is read-only.  The resource has been removed from Terraform state, but the default content remains in PingOne.", data.Id.ValueString(), data.TemplateName.ValueString(), data.EnvironmentId.ValueString()),
-		)
-
 		return
 	}
 
@@ -805,16 +793,6 @@ func notificationTemplateCustomWriteError(_ *http.Response, p1Error *model.P1Err
 	var diags diag.Diagnostics
 
 	if p1Error != nil {
-
-		// Default (predefined) content is read-only in PingOne
-		if p1Error.GetCode() == "INVALID_DATA" && p1Error.GetMessage() == "The resource is read only and can not be modified." {
-			diags.AddError(
-				"The default template content is read-only and cannot be modified.",
-				fmt.Sprintf("PingOne reported: %s.  Default template content is managed by PingOne; create a new pingone_notification_template_content resource for the template, locale and (optional) variant combination instead of importing and updating the default content.", p1Error.GetMessage()),
-			)
-
-			return diags
-		}
 
 		if details, ok := p1Error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
 

@@ -798,7 +798,6 @@ func TestAccNotificationTemplateContent_ReadOnlyDefaultContent(t *testing.T) {
 	locale := "en"
 
 	var environmentID, contentID string
-	var originalContent *management.TemplateContent
 
 	var p1Client *client.Client
 	var ctx = context.Background()
@@ -820,79 +819,18 @@ func TestAccNotificationTemplateContent_ReadOnlyDefaultContent(t *testing.T) {
 				Config: acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID),
 				Check:  base.Environment_GetIDs(fmt.Sprintf("pingone_environment.%s", environmentName), &environmentID),
 			},
-			// Import the predefined default content for the template and locale
+			// Importing the predefined default content for the template and locale must error
 			{
 				ResourceName: resourceFullName,
 				Config:       testAccNotificationTemplateContentConfig_DefaultVariant_Push_Minimal(environmentName, licenseID, resourceName, name, locale),
 				ImportStateIdFunc: func() resource.ImportStateIdFunc {
 					return func(s *terraform.State) (string, error) {
 						contentID = base.NotificationTemplateContent_GetDefaultContentID(ctx, p1Client.API.ManagementAPIClient, t, environmentID, name, locale, management.ENUMTEMPLATECONTENTDELIVERYMETHOD_PUSH)
-						var err error
-						originalContent, _, err = p1Client.API.ManagementAPIClient.NotificationsTemplatesApi.ReadOneContent(ctx, environmentID, management.EnumTemplateName(name), contentID).Execute()
-						if err != nil {
-							return "", err
-						}
-
 						return fmt.Sprintf("%s/%s/%s", environmentID, name, contentID), nil
 					}
 				}(),
-				ImportState:        true,
-				ImportStatePersist: true,
-				ImportStateVerify:  false,
-				ImportStateCheck: func(states []*terraform.InstanceState) error {
-
-					for _, s := range states {
-						if s.Attributes["template_name"] != name {
-							continue
-						}
-
-						if s.Attributes["locale"] != locale {
-							return fmt.Errorf("expected %s to be imported for locale %s, got locale=%s", resourceFullName, locale, s.Attributes["locale"])
-						}
-
-						if s.Attributes["default"] != "true" {
-							return fmt.Errorf("expected %s to be imported as the default content, got default=%s", resourceFullName, s.Attributes["default"])
-						}
-						if s.Attributes["push.body"] == "" || s.Attributes["push.title"] == "" {
-							return fmt.Errorf("expected %s to contain push content", resourceFullName)
-						}
-
-						return nil
-					}
-
-					return fmt.Errorf("resource %s not found in imported state", resourceFullName)
-				},
-			},
-			// Attempting to update the imported default content must fail with a friendly error
-			{
-				Config:      testAccNotificationTemplateContentConfig_DefaultVariant_Push_Full(environmentName, licenseID, resourceName, name, locale),
-				ExpectError: regexp.MustCompile("The default notification template content cannot be modified."),
-			},
-			// Remove only the imported resource and check the same default content is unchanged.
-			{
-				Config: acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID),
-				Check: func(s *terraform.State) error {
-					if _, ok := s.RootModule().Resources[resourceFullName]; ok {
-						return fmt.Errorf("resource %s still exists in state", resourceFullName)
-					}
-					environment, ok := s.RootModule().Resources["pingone_environment."+environmentName]
-					if !ok || environment.Primary.ID != environmentID {
-						return fmt.Errorf("environment changed while removing %s", resourceFullName)
-					}
-
-					content, _, err := p1Client.API.ManagementAPIClient.NotificationsTemplatesApi.ReadOneContent(ctx, environmentID, management.EnumTemplateName(name), contentID).Execute()
-					if err != nil {
-						return err
-					}
-					if content.TemplateContentPush == nil || originalContent.TemplateContentPush == nil {
-						return fmt.Errorf("expected default push content %s to remain", contentID)
-					}
-					actual, original := content.TemplateContentPush, originalContent.TemplateContentPush
-					if actual.GetId() != contentID || !actual.GetDefault() || actual.GetBody() != original.GetBody() || actual.GetTitle() != original.GetTitle() || actual.GetPushCategory() != original.GetPushCategory() {
-						return fmt.Errorf("default push content %s was modified", contentID)
-					}
-					return nil
-				},
+				ImportState: true,
+				ExpectError: regexp.MustCompile("The default notification template content cannot be managed by this resource."),
 			},
 		},
 	})

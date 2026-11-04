@@ -3,5 +3,5 @@
 ```
 
 ```release-note:bug
-`resource/pingone_notification_template_content`: Return a clear error when updating the read-only default template content, and remove only the resource from Terraform state when destroying the default content.
+`resource/pingone_notification_template_content`: Return a clear error when importing or managing the read-only default template content.
 ```
