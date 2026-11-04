@@ -14,6 +14,10 @@ resource "pingone_gateway" "my_radius_gateway" {
   radius_clients = [
     {
       ip = "127.0.0.1"
+
+      blast_radius_mitigation = {
+        require_msg_auth = true
+      }
     }
   ]
 }

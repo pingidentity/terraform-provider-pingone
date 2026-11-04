@@ -579,6 +579,14 @@ func TestAccGateway_RADIUS(t *testing.T) {
 				"ip":            "127.0.0.2",
 				"shared_secret": "sharedsecret123-2",
 			}),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "radius_clients.*", map[string]string{
+				"ip": "127.0.0.1",
+				"blast_radius_mitigation.require_msg_auth": "true",
+			}),
+			resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "radius_clients.*", map[string]string{
+				"ip": "127.0.0.2",
+				"blast_radius_mitigation.limit_proxy_state": "true",
+			}),
 			resource.TestCheckResourceAttr(resourceFullName, "radius_network_policy_server.ip", "10.1.1.1"),
 			resource.TestCheckResourceAttr(resourceFullName, "radius_network_policy_server.port", "5000"),
 		),
@@ -632,6 +640,11 @@ func TestAccGateway_RADIUS(t *testing.T) {
 			fullStep,
 			minimalStep,
 			fullStep,
+			// Invalid blast radius mitigation (both fields set to true is rejected by the API)
+			{
+				Config:      testAccGatewayConfig_RADIUSBlastRadiusMitigationConflict(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid Value`),
+			},
 			// Test importing the resource
 			{
 				ResourceName: resourceFullName,
@@ -1065,10 +1078,18 @@ resource "pingone_gateway" "%[2]s" {
     {
       ip            = "127.0.0.1"
       shared_secret = "sharedsecret123-1"
+
+      blast_radius_mitigation = {
+        require_msg_auth = true
+      }
     },
     {
       ip            = "127.0.0.2"
       shared_secret = "sharedsecret123-2"
+
+      blast_radius_mitigation = {
+        limit_proxy_state = true
+      }
     }
   ]
 
@@ -1076,6 +1097,32 @@ resource "pingone_gateway" "%[2]s" {
     ip   = "10.1.1.1"
     port = 5000
   }
+
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccGatewayConfig_RADIUSBlastRadiusMitigationConflict(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_gateway" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+  name           = "%[3]s"
+  enabled        = false
+  type           = "RADIUS"
+
+  radius_davinci_policy_id = "ee8470a281614d76a7afa8505a2da084" // dummy ID
+
+  radius_clients = [
+    {
+      ip = "127.0.0.3"
+
+      blast_radius_mitigation = {
+        require_msg_auth  = true
+        limit_proxy_state = true
+      }
+    }
+  ]
 
 }`, acctest.GenericSandboxEnvironment(), resourceName, name)
 }

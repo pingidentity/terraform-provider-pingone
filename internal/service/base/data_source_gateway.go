@@ -152,6 +152,18 @@ func (r *GatewayDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 		"The shared secret for the RADIUS client. If this value is not provided, the shared secret specified with `default_shared_secret` is used.",
 	)
 
+	radiusClientBlastRadiusMitigationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An optional object that can be used to block Blast RADIUS attacks. The two options use different approaches to deal with the same issue, so do not set more than one of the fields to `true`; if both fields are set to `true`, the API returns an error.",
+	)
+
+	radiusClientBlastRadiusMitigationRequireMsgAuthDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Set to `true` to require that all requests from the client include the Message-Authenticator attribute. Any requests without the attribute will be ignored.",
+	)
+
+	radiusClientBlastRadiusMitigationLimitProxyStateDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"For older clients that don't support sending the Message-Authenticator attribute, set this field to `true`. This instructs the gateway to ignore requests that don't contain the Message-Authenticator attribute but contain the Proxy-State attribute.",
+	)
+
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		Description: "Data source to retrieve a PingOne gateway in an environment from ID or by name.",
@@ -358,6 +370,25 @@ func (r *GatewayDataSource) Schema(ctx context.Context, req datasource.SchemaReq
 							MarkdownDescription: radiusClientSharedSecretDescription.MarkdownDescription,
 							Computed:            true,
 							Sensitive:           true,
+						},
+						"blast_radius_mitigation": schema.SingleNestedAttribute{
+							Description:         radiusClientBlastRadiusMitigationDescription.Description,
+							MarkdownDescription: radiusClientBlastRadiusMitigationDescription.MarkdownDescription,
+							Computed:            true,
+
+							Attributes: map[string]schema.Attribute{
+								"require_msg_auth": schema.BoolAttribute{
+									Description:         radiusClientBlastRadiusMitigationRequireMsgAuthDescription.Description,
+									MarkdownDescription: radiusClientBlastRadiusMitigationRequireMsgAuthDescription.MarkdownDescription,
+									Computed:            true,
+								},
+
+								"limit_proxy_state": schema.BoolAttribute{
+									Description:         radiusClientBlastRadiusMitigationLimitProxyStateDescription.Description,
+									MarkdownDescription: radiusClientBlastRadiusMitigationLimitProxyStateDescription.MarkdownDescription,
+									Computed:            true,
+								},
+							},
 						},
 					},
 				},
