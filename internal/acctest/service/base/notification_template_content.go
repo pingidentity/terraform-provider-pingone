@@ -14,6 +14,40 @@ import (
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 )
 
+// NotificationTemplateContent_GetDefaultContentID finds predefined content for the locale and delivery method.
+func NotificationTemplateContent_GetDefaultContentID(ctx context.Context, apiClient *management.APIClient, t *testing.T, environmentID, templateName, locale string, deliveryMethod management.EnumTemplateContentDeliveryMethod) string {
+	t.Helper()
+
+	pagedIterator := apiClient.NotificationsTemplatesApi.ReadAllTemplateContents(ctx, environmentID, management.EnumTemplateName(templateName)).Execute()
+
+	for pageCursor, err := range pagedIterator {
+		if err != nil {
+			t.Fatalf("Failed to read notification template contents: %v", err)
+		}
+
+		if contents, ok := pageCursor.EntityArray.Embedded.GetContentsOk(); ok {
+
+			for _, content := range contents {
+
+				common, ok := content.GetActualInstance().(interface {
+					GetId() string
+					GetDefault() bool
+					GetLocale() string
+					GetDeliveryMethod() management.EnumTemplateContentDeliveryMethod
+				})
+
+				if ok && common.GetDefault() && common.GetLocale() == locale && common.GetDeliveryMethod() == deliveryMethod {
+					return common.GetId()
+				}
+			}
+		}
+	}
+
+	t.Fatalf("Cannot find default %s content for template %s and locale %s in environment %s", deliveryMethod, templateName, locale, environmentID)
+
+	return ""
+}
+
 func NotificationTemplateContent_CheckDestroy(s *terraform.State) error {
 	var ctx = context.Background()
 

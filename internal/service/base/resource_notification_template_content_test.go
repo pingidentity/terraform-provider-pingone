@@ -11,6 +11,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/pingidentity/pingone-go-sdk-legacy/management"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest"
 	acctestlegacysdk "github.com/pingidentity/terraform-provider-pingone/internal/acctest/legacysdk"
 	"github.com/pingidentity/terraform-provider-pingone/internal/acctest/service/base"
@@ -778,6 +779,58 @@ func TestAccNotificationTemplateContent_Voice(t *testing.T) {
 			{
 				Config:      testAccNotificationTemplateContentConfig_DefaultVariant_Voice_Full(environmentName, licenseID, resourceName, template.Invalid, locale),
 				ExpectError: regexp.MustCompile(`The configured delivery method does not apply to the selected template.`),
+			},
+		},
+	})
+}
+
+func TestAccNotificationTemplateContent_ReadOnlyDefaultContent(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_notification_template_content.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
+
+	name := "strong_authentication"
+	locale := "en"
+
+	var environmentID, contentID string
+
+	var p1Client *client.Client
+	var ctx = context.Background()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNewEnvironment(t)
+			acctest.PreCheckNoBeta(t)
+			p1Client = acctestlegacysdk.PreCheckTestClient(ctx, t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             base.NotificationTemplateContent_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Bootstrap the environment
+			{
+				Config: acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID),
+				Check:  base.Environment_GetIDs(fmt.Sprintf("pingone_environment.%s", environmentName), &environmentID),
+			},
+			// Importing the predefined default content for the template and locale must error
+			{
+				ResourceName: resourceFullName,
+				Config:       testAccNotificationTemplateContentConfig_DefaultVariant_Push_Minimal(environmentName, licenseID, resourceName, name, locale),
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						contentID = base.NotificationTemplateContent_GetDefaultContentID(ctx, p1Client.API.ManagementAPIClient, t, environmentID, name, locale, management.ENUMTEMPLATECONTENTDELIVERYMETHOD_PUSH)
+						return fmt.Sprintf("%s/%s/%s", environmentID, name, contentID), nil
+					}
+				}(),
+				ImportState: true,
+				ExpectError: regexp.MustCompile("The default notification template content cannot be managed by this resource."),
 			},
 		},
 	})

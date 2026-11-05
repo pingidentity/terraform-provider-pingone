@@ -648,8 +648,23 @@ func (r *NotificationTemplateContentResource) Read(ctx context.Context, req reso
 		return
 	}
 
-	// Save updated data into Terraform state
 	resp.Diagnostics.Append(data.toState(response)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// The predefined default content for a template is read-only in PingOne and cannot be managed
+	// by this resource.  Prevent the content, typically via import, from entering Terraform state.
+	if data.Default.ValueBool() {
+		resp.Diagnostics.AddError(
+			"The default notification template content cannot be managed by this resource.",
+			fmt.Sprintf("The template content %s for template %s in environment %s is the predefined default content managed by PingOne and is read-only.  To customize this notification, create a new pingone_notification_template_content resource for the template, locale and (optional) variant combination instead.", data.Id.ValueString(), data.TemplateName.ValueString(), data.EnvironmentId.ValueString()),
+		)
+
+		return
+	}
+
+	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -778,6 +793,7 @@ func notificationTemplateCustomWriteError(_ *http.Response, p1Error *model.P1Err
 	var diags diag.Diagnostics
 
 	if p1Error != nil {
+
 		if details, ok := p1Error.GetDetailsOk(); ok && details != nil && len(details) > 0 {
 
 			// Delivery method not applicable to the template
