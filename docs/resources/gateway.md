@@ -93,6 +93,10 @@ resource "pingone_gateway" "my_radius_gateway" {
   radius_clients = [
     {
       ip = "127.0.0.1"
+
+      blast_radius_mitigation = {
+        require_msg_auth = true
+      }
     }
   ]
 }
@@ -183,7 +187,17 @@ Required:
 
 Optional:
 
+- `blast_radius_mitigation` (Attributes) An optional object that can be used to block Blast RADIUS attacks. The two options use different approaches to deal with the same issue, so do not set more than one of the fields to `true`; if both fields are set to `true`, the API returns an error. (see [below for nested schema](#nestedatt--radius_clients--blast_radius_mitigation))
 - `shared_secret` (String, Sensitive) A string that specifies the shared secret for the RADIUS client. If this value is not provided, the shared secret specified with `radius_default_shared_secret` is used. If you are not providing a shared secret for the client, this parameter is optional.
+
+<a id="nestedatt--radius_clients--blast_radius_mitigation"></a>
+### Nested Schema for `radius_clients.blast_radius_mitigation`
+
+Optional:
+
+- `limit_proxy_state` (Boolean) For older clients that don't support sending the Message-Authenticator attribute, set this field to `true`. This instructs the gateway to ignore requests that don't contain the Message-Authenticator attribute but contain the Proxy-State attribute.
+- `require_msg_auth` (Boolean) Set to `true` to require that all requests from the client include the Message-Authenticator attribute. Any requests without the attribute will be ignored.
+
 
 
 <a id="nestedatt--radius_network_policy_server"></a>

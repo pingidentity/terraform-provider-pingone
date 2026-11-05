@@ -5,6 +5,7 @@ package base
 import (
 	"context"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -57,6 +58,11 @@ type gatewayUserTypeUserMigrationResourceModelV0 struct {
 	AttributeMappings   types.Set                    `tfsdk:"attribute_mapping"`
 	LookupFilterPattern types.String                 `tfsdk:"lookup_filter_pattern"`
 	PopulationId        pingonetypes.ResourceIDValue `tfsdk:"population_id"`
+}
+
+type gatewayRadiusClientResourceModelV0 struct {
+	IP           types.String `tfsdk:"ip"`
+	SharedSecret types.String `tfsdk:"shared_secret"`
 }
 
 func (r *GatewayResource) UpgradeState(ctx context.Context) map[int64]resource.StateUpgrader {
@@ -249,6 +255,9 @@ func (r *GatewayResource) UpgradeState(ctx context.Context) map[int64]resource.S
 				userTypes, d := priorStateData.schemaUpgradeUserTypesV0toV1(ctx)
 				resp.Diagnostics.Append(d...)
 
+				radiusClients, d := priorStateData.schemaUpgradeRadiusClientsV0toV1(ctx)
+				resp.Diagnostics.Append(d...)
+
 				upgradedStateData := gatewayResourceModelV1{
 					Id:                        priorStateData.Id,
 					EnvironmentId:             priorStateData.EnvironmentId,
@@ -265,7 +274,7 @@ func (r *GatewayResource) UpgradeState(ctx context.Context) map[int64]resource.S
 					ValidateTLSCertificates:   priorStateData.ValidateTLSCertificates,
 					Vendor:                    priorStateData.Vendor,
 					UserTypes:                 userTypes,
-					RadiusClients:             priorStateData.RadiusClient,
+					RadiusClients:             radiusClients,
 					RadiusDavinciPolicyId:     priorStateData.RadiusDavinciPolicyId,
 					RadiusDefaultSharedSecret: priorStateData.RadiusDefaultSharedSecret,
 					RadiusNetworkPolicyServer: types.ObjectNull(gatewayRadiusNetworkPolicyServerTFObjectTypes),
@@ -274,6 +283,53 @@ func (r *GatewayResource) UpgradeState(ctx context.Context) map[int64]resource.S
 				resp.Diagnostics.Append(resp.State.Set(ctx, upgradedStateData)...)
 			},
 		},
+	}
+}
+
+func (p *gatewayResourceModelV0) schemaUpgradeRadiusClientsV0toV1(ctx context.Context) (types.Set, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	attributeTypes := types.ObjectType{AttrTypes: gatewayRadiusClientsTFObjectTypes}
+	planAttribute := p.RadiusClient
+
+	if planAttribute.IsNull() {
+		return types.SetNull(attributeTypes), diags
+	} else if planAttribute.IsUnknown() {
+		return types.SetUnknown(attributeTypes), diags
+	} else {
+		var priorStateData []gatewayRadiusClientResourceModelV0
+		d := planAttribute.ElementsAs(ctx, &priorStateData, false)
+		diags.Append(d...)
+		if diags.HasError() {
+			return types.SetNull(attributeTypes), diags
+		}
+
+		if len(priorStateData) == 0 {
+			return types.SetNull(attributeTypes), diags
+		}
+
+		objectList := []attr.Value{}
+		for _, radiusClient := range priorStateData {
+
+			o := map[string]attr.Value{
+				"ip":                      radiusClient.IP,
+				"shared_secret":           radiusClient.SharedSecret,
+				"blast_radius_mitigation": types.ObjectNull(gatewayRadiusClientsBlastRadiusMitigationTFObjectTypes),
+			}
+
+			objValue, d := types.ObjectValue(gatewayRadiusClientsTFObjectTypes, o)
+			diags.Append(d...)
+			if diags.HasError() {
+				return types.SetNull(attributeTypes), diags
+			}
+
+			objectList = append(objectList, objValue)
+		}
+
+		returnVar, d := types.SetValue(attributeTypes, objectList)
+		diags.Append(d...)
+
+		return returnVar, diags
 	}
 }
 
