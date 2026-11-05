@@ -134,6 +134,10 @@ func TestAccFIDO2Policy_Full(t *testing.T) {
 		resource.TestCheckTypeSetElemAttr(resourceFullName, "mds_authenticators_requirements.allowed_authenticator_ids.*", "authenticator_id_3"),
 		resource.TestCheckResourceAttr(resourceFullName, "mds_authenticators_requirements.enforce_during_authentication", "true"),
 		resource.TestCheckResourceAttr(resourceFullName, "mds_authenticators_requirements.option", "SPECIFIC"),
+		resource.TestCheckResourceAttr(resourceFullName, "public_key_credential_hints.#", "3"),
+		resource.TestCheckResourceAttr(resourceFullName, "public_key_credential_hints.0", "SECURITY_KEY"),
+		resource.TestCheckResourceAttr(resourceFullName, "public_key_credential_hints.1", "CLIENT_DEVICE"),
+		resource.TestCheckResourceAttr(resourceFullName, "public_key_credential_hints.2", "HYBRID"),
 		resource.TestCheckResourceAttr(resourceFullName, "relying_party_id", "pingidentity.com"),
 		resource.TestCheckResourceAttr(resourceFullName, "user_display_name_attributes.attributes.#", "3"),
 		resource.TestCheckResourceAttr(resourceFullName, "user_display_name_attributes.attributes.0.name", "email"),
@@ -162,6 +166,7 @@ func TestAccFIDO2Policy_Full(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "mds_authenticators_requirements.allowed_authenticator_ids.#", "0"),
 		resource.TestCheckResourceAttr(resourceFullName, "mds_authenticators_requirements.enforce_during_authentication", "false"),
 		resource.TestCheckResourceAttr(resourceFullName, "mds_authenticators_requirements.option", "NONE"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "public_key_credential_hints.#"),
 		resource.TestCheckResourceAttr(resourceFullName, "relying_party_id", "ping-devops.com"),
 		resource.TestCheckResourceAttr(resourceFullName, "user_display_name_attributes.attributes.#", "1"),
 		resource.TestCheckResourceAttr(resourceFullName, "user_display_name_attributes.attributes.0.name", "username"),
@@ -386,6 +391,12 @@ resource "pingone_mfa_fido2_policy" "%[2]s" {
     enforce_during_authentication = true
     option                        = "SPECIFIC"
   }
+
+  public_key_credential_hints = [
+    "SECURITY_KEY",
+    "CLIENT_DEVICE",
+    "HYBRID",
+  ]
 
   relying_party_id = "pingidentity.com"
 
