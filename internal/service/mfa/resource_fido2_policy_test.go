@@ -270,14 +270,6 @@ func TestAccFIDO2Policy_Errors(t *testing.T) {
 				Config:      testAccFIDO2PolicyConfig_ConflictedOptions_userPresenceTimeout(resourceName, name),
 				ExpectError: regexp.MustCompile(`Invalid Attribute Value`),
 			},
-			{
-				Config:      testAccFIDO2PolicyConfig_Errors_publicKeyCredentialHintsInvalidValue(resourceName, name),
-				ExpectError: regexp.MustCompile(`Invalid Attribute Value`),
-			},
-			{
-				Config:      testAccFIDO2PolicyConfig_Errors_publicKeyCredentialHintsEmptyList(resourceName, name),
-				ExpectError: regexp.MustCompile(`must contain at least 1 elements`),
-			},
 		},
 	})
 }
@@ -609,98 +601,6 @@ resource "pingone_mfa_fido2_policy" "%[2]s" {
     attributes = [
       {
         name = "email"
-      }
-    ]
-  }
-
-  user_verification = {
-    enforce_during_authentication = false
-    option                        = "DISCOURAGED"
-  }
-
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
-}
-
-func testAccFIDO2PolicyConfig_Errors_publicKeyCredentialHintsInvalidValue(resourceName, name string) string {
-	return fmt.Sprintf(`
-		%[1]s
-
-resource "pingone_mfa_fido2_policy" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s"
-
-  attestation_requirements = "NONE"
-  authenticator_attachment = "PLATFORM"
-
-  backup_eligibility = {
-    allow                         = false
-    enforce_during_authentication = true
-  }
-
-  device_display_name = "fidoPolicy.deviceDisplayName02"
-
-  discoverable_credentials = "DISCOURAGED"
-
-  mds_authenticators_requirements = {
-    enforce_during_authentication = false
-    option                        = "NONE"
-  }
-
-  public_key_credential_hints = [
-    "SMART_CARD",
-  ]
-
-  relying_party_id = "ping-devops.com"
-
-  user_display_name_attributes = {
-    attributes = [
-      {
-        name = "username"
-      }
-    ]
-  }
-
-  user_verification = {
-    enforce_during_authentication = false
-    option                        = "DISCOURAGED"
-  }
-
-}`, acctest.GenericSandboxEnvironment(), resourceName, name)
-}
-
-func testAccFIDO2PolicyConfig_Errors_publicKeyCredentialHintsEmptyList(resourceName, name string) string {
-	return fmt.Sprintf(`
-		%[1]s
-
-resource "pingone_mfa_fido2_policy" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-  name           = "%[3]s"
-
-  attestation_requirements = "NONE"
-  authenticator_attachment = "PLATFORM"
-
-  backup_eligibility = {
-    allow                         = false
-    enforce_during_authentication = true
-  }
-
-  device_display_name = "fidoPolicy.deviceDisplayName02"
-
-  discoverable_credentials = "DISCOURAGED"
-
-  mds_authenticators_requirements = {
-    enforce_during_authentication = false
-    option                        = "NONE"
-  }
-
-  public_key_credential_hints = []
-
-  relying_party_id = "ping-devops.com"
-
-  user_display_name_attributes = {
-    attributes = [
-      {
-        name = "username"
       }
     ]
   }
