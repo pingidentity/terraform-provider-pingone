@@ -6,7 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
+	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int32validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
@@ -614,9 +614,16 @@ func (p *notificationSettingsEmailResourceModelV1) expand(ctx context.Context) (
 				req.SetMethod(*method)
 				req.SetUrl(request.URL.ValueString())
 
+				// Regex patterns to match the required variables in the body
+				var (
+					toVarPattern      = regexp.MustCompile(`\$\{to(\|(json|html|url|base64))?\}`)
+					messageVarPattern = regexp.MustCompile(`\$\{message(\|(json|html|url|base64))?\}`)
+				)
+
 				if !request.Body.IsNull() && !request.Body.IsUnknown() {
 					// Check if the body contains the required variables - ${to}, ${message}
-					if !strings.Contains(request.Body.ValueString(), "${to}") || !strings.Contains(request.Body.ValueString(), "${message}") {
+					// if !strings.Contains(request.Body.ValueString(), "${to}") || !strings.Contains(request.Body.ValueString(), "${message}") {
+					if !toVarPattern.MatchString(request.Body.ValueString()) || !messageVarPattern.MatchString(request.Body.ValueString()) {
 						diags.AddError(
 							"Invalid Body Content",
 							"The body must contain the variables `${to}` and `${message}`. Please ensure these variables are included in the body content.",
