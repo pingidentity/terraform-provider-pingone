@@ -40,7 +40,7 @@ type gatewayResourceModelV0 struct {
 
 	// Radius
 	RadiusClient              types.Set                    `tfsdk:"radius_client"`
-	RadiusDavinciPolicyId     davincitypes.ResourceIDValue `tfsdk:"radius_davinci_policy_id"`
+	RadiusDavinciPolicyId     pingonetypes.ResourceIDValue `tfsdk:"radius_davinci_policy_id"`
 	RadiusDefaultSharedSecret types.String                 `tfsdk:"radius_default_shared_secret"`
 }
 
@@ -259,23 +259,27 @@ func (r *GatewayResource) UpgradeState(ctx context.Context) map[int64]resource.S
 				resp.Diagnostics.Append(d...)
 
 				upgradedStateData := gatewayResourceModelV1{
-					Id:                        priorStateData.Id,
-					EnvironmentId:             priorStateData.EnvironmentId,
-					Name:                      priorStateData.Name,
-					Description:               priorStateData.Description,
-					Type:                      priorStateData.Type,
-					Enabled:                   priorStateData.Enabled,
-					BindDN:                    priorStateData.BindDN,
-					BindPassword:              priorStateData.BindPassword,
-					ConnectionSecurity:        priorStateData.ConnectionSecurity,
-					FollowReferrals:           types.BoolNull(),
-					Kerberos:                  kerberos,
-					Servers:                   priorStateData.Servers,
-					ValidateTLSCertificates:   priorStateData.ValidateTLSCertificates,
-					Vendor:                    priorStateData.Vendor,
-					UserTypes:                 userTypes,
-					RadiusClients:             radiusClients,
-					RadiusDavinciPolicyId:     priorStateData.RadiusDavinciPolicyId,
+					Id:                      priorStateData.Id,
+					EnvironmentId:           priorStateData.EnvironmentId,
+					Name:                    priorStateData.Name,
+					Description:             priorStateData.Description,
+					Type:                    priorStateData.Type,
+					Enabled:                 priorStateData.Enabled,
+					BindDN:                  priorStateData.BindDN,
+					BindPassword:            priorStateData.BindPassword,
+					ConnectionSecurity:      priorStateData.ConnectionSecurity,
+					FollowReferrals:         types.BoolNull(),
+					Kerberos:                kerberos,
+					Servers:                 priorStateData.Servers,
+					ValidateTLSCertificates: priorStateData.ValidateTLSCertificates,
+					Vendor:                  priorStateData.Vendor,
+					UserTypes:               userTypes,
+					RadiusClients:           radiusClients,
+					// The v0 schema stored this attribute as a pingonetypes
+					// ResourceID; the v1 schema uses a davincitypes ResourceID.
+					// Both wrap basetypes.StringValue, so the underlying value
+					// is carried over unchanged via the embedded StringValue.
+					RadiusDavinciPolicyId:     davincitypes.ResourceIDValue{StringValue: priorStateData.RadiusDavinciPolicyId.StringValue},
 					RadiusDefaultSharedSecret: priorStateData.RadiusDefaultSharedSecret,
 					RadiusNetworkPolicyServer: types.ObjectNull(gatewayRadiusNetworkPolicyServerTFObjectTypes),
 				}
@@ -304,6 +308,11 @@ func (p *gatewayResourceModelV0) schemaUpgradeRadiusClientsV0toV1(ctx context.Co
 			return types.SetNull(attributeTypes), diags
 		}
 
+		// An empty prior-state set is normalised to null, as the schema
+		// representation for an unconfigured block attribute is a null
+		// collection. This maintains consistency with the other schema
+		// upgrade functions in this file, and prevents spurious diffs
+		// between prior state (empty) and new schema (null) after upgrade.
 		if len(priorStateData) == 0 {
 			return types.SetNull(attributeTypes), diags
 		}

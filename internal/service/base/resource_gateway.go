@@ -806,21 +806,18 @@ func (r *GatewayResource) Schema(ctx context.Context, req resource.SchemaRequest
 							Description:         radiusClientBlastRadiusMitigationDescription.Description,
 							MarkdownDescription: radiusClientBlastRadiusMitigationDescription.MarkdownDescription,
 							Optional:            true,
-							Computed:            true,
 
 							Attributes: map[string]schema.Attribute{
 								"require_msg_auth": schema.BoolAttribute{
 									Description:         radiusClientBlastRadiusMitigationRequireMsgAuthDescription.Description,
 									MarkdownDescription: radiusClientBlastRadiusMitigationRequireMsgAuthDescription.MarkdownDescription,
 									Optional:            true,
-									Computed:            true,
 								},
 
 								"limit_proxy_state": schema.BoolAttribute{
 									Description:         radiusClientBlastRadiusMitigationLimitProxyStateDescription.Description,
 									MarkdownDescription: radiusClientBlastRadiusMitigationLimitProxyStateDescription.MarkdownDescription,
 									Optional:            true,
-									Computed:            true,
 								},
 							},
 						},
