@@ -97,8 +97,14 @@ type gatewayUserTypeMigrationAttributeMappingResourceModelV1 struct {
 }
 
 type gatewayRadiusClientsResourceModelV1 struct {
-	IP           types.String `tfsdk:"ip"`
-	SharedSecret types.String `tfsdk:"shared_secret"`
+	IP                    types.String `tfsdk:"ip"`
+	SharedSecret          types.String `tfsdk:"shared_secret"`
+	BlastRadiusMitigation types.Object `tfsdk:"blast_radius_mitigation"`
+}
+
+type gatewayRadiusClientsBlastRadiusMitigationResourceModelV1 struct {
+	RequireMsgAuth  types.Bool `tfsdk:"require_msg_auth"`
+	LimitProxyState types.Bool `tfsdk:"limit_proxy_state"`
 }
 
 type gatewayRadiusNetworkPolicyServerResourceModelV1 struct {
@@ -139,8 +145,14 @@ var (
 	}
 
 	gatewayRadiusClientsTFObjectTypes = map[string]attr.Type{
-		"ip":            types.StringType,
-		"shared_secret": types.StringType,
+		"ip":                      types.StringType,
+		"shared_secret":           types.StringType,
+		"blast_radius_mitigation": types.ObjectType{AttrTypes: gatewayRadiusClientsBlastRadiusMitigationTFObjectTypes},
+	}
+
+	gatewayRadiusClientsBlastRadiusMitigationTFObjectTypes = map[string]attr.Type{
+		"require_msg_auth":  types.BoolType,
+		"limit_proxy_state": types.BoolType,
 	}
 
 	gatewayRadiusNetworkPolicyServerTFObjectTypes = map[string]attr.Type{
@@ -240,6 +252,18 @@ func (r *GatewayResource) Schema(ctx context.Context, req resource.SchemaRequest
 
 	radiusClientSharedSecretDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"A string that specifies the shared secret for the RADIUS client. If this value is not provided, the shared secret specified with `radius_default_shared_secret` is used. If you are not providing a shared secret for the client, this parameter is optional.",
+	)
+
+	radiusClientBlastRadiusMitigationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"An optional object that can be used to block Blast RADIUS attacks. The two options use different approaches to deal with the same issue, so do not set more than one of the fields to `true`; if both fields are set to `true`, the API returns an error.",
+	)
+
+	radiusClientBlastRadiusMitigationRequireMsgAuthDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"Set to `true` to require that all requests from the client include the Message-Authenticator attribute. Any requests without the attribute will be ignored.",
+	)
+
+	radiusClientBlastRadiusMitigationLimitProxyStateDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"For older clients that don't support sending the Message-Authenticator attribute, set this field to `true`. This instructs the gateway to ignore requests that don't contain the Message-Authenticator attribute but contain the Proxy-State attribute.",
 	)
 
 	ldapRequiredSchemaPaths := []path.Expression{
@@ -777,6 +801,26 @@ func (r *GatewayResource) Schema(ctx context.Context, req resource.SchemaRequest
 							Optional:            true,
 							Sensitive:           true,
 						},
+
+						"blast_radius_mitigation": schema.SingleNestedAttribute{
+							Description:         radiusClientBlastRadiusMitigationDescription.Description,
+							MarkdownDescription: radiusClientBlastRadiusMitigationDescription.MarkdownDescription,
+							Optional:            true,
+
+							Attributes: map[string]schema.Attribute{
+								"require_msg_auth": schema.BoolAttribute{
+									Description:         radiusClientBlastRadiusMitigationRequireMsgAuthDescription.Description,
+									MarkdownDescription: radiusClientBlastRadiusMitigationRequireMsgAuthDescription.MarkdownDescription,
+									Optional:            true,
+								},
+
+								"limit_proxy_state": schema.BoolAttribute{
+									Description:         radiusClientBlastRadiusMitigationLimitProxyStateDescription.Description,
+									MarkdownDescription: radiusClientBlastRadiusMitigationLimitProxyStateDescription.MarkdownDescription,
+									Optional:            true,
+								},
+							},
+						},
 					},
 				},
 			},
@@ -1215,6 +1259,29 @@ func (p *gatewayResourceModelV1) expand(ctx context.Context) (*management.Create
 					radiusClientObj.SetSharedSecret(client.SharedSecret.ValueString())
 				}
 
+				if !client.BlastRadiusMitigation.IsNull() && !client.BlastRadiusMitigation.IsUnknown() {
+					var blastRadiusMitigationPlan gatewayRadiusClientsBlastRadiusMitigationResourceModelV1
+					diags.Append(client.BlastRadiusMitigation.As(ctx, &blastRadiusMitigationPlan, basetypes.ObjectAsOptions{
+						UnhandledNullAsEmpty:    false,
+						UnhandledUnknownAsEmpty: false,
+					})...)
+					if diags.HasError() {
+						return nil, diags
+					}
+
+					blastRadiusMitigation := management.NewGatewayTypeRADIUSAllOfBlastRadiusMitigation()
+
+					if !blastRadiusMitigationPlan.RequireMsgAuth.IsNull() && !blastRadiusMitigationPlan.RequireMsgAuth.IsUnknown() {
+						blastRadiusMitigation.SetRequireMsgAuth(blastRadiusMitigationPlan.RequireMsgAuth.ValueBool())
+					}
+
+					if !blastRadiusMitigationPlan.LimitProxyState.IsNull() && !blastRadiusMitigationPlan.LimitProxyState.IsUnknown() {
+						blastRadiusMitigation.SetLimitProxyState(blastRadiusMitigationPlan.LimitProxyState.ValueBool())
+					}
+
+					radiusClientObj.SetBlastRadiusMitigation(*blastRadiusMitigation)
+				}
+
 				radiusClients = append(radiusClients, radiusClientObj)
 			}
 		}
@@ -1489,8 +1556,15 @@ func toStateRadiusClientOk(apiObject []management.GatewayTypeRADIUSAllOfRadiusCl
 	for _, client := range apiObject {
 
 		o := map[string]attr.Value{
-			"ip":            framework.StringOkToTF(client.GetIpOk()),
-			"shared_secret": framework.StringOkToTF(client.GetSharedSecretOk()),
+			"ip":                      framework.StringOkToTF(client.GetIpOk()),
+			"shared_secret":           framework.StringOkToTF(client.GetSharedSecretOk()),
+			"blast_radius_mitigation": types.ObjectNull(gatewayRadiusClientsBlastRadiusMitigationTFObjectTypes),
+		}
+
+		if blastRadiusMitigation, ok := client.GetBlastRadiusMitigationOk(); ok {
+			brmObj, d := toStateRadiusClientsBlastRadiusMitigationOk(blastRadiusMitigation, ok)
+			diags.Append(d...)
+			o["blast_radius_mitigation"] = brmObj
 		}
 
 		objValue, d := types.ObjectValue(gatewayRadiusClientsTFObjectTypes, o)
@@ -1500,6 +1574,24 @@ func toStateRadiusClientOk(apiObject []management.GatewayTypeRADIUSAllOfRadiusCl
 	}
 
 	returnVar, d := types.SetValue(tfObjType, objectList)
+	diags.Append(d...)
+
+	return returnVar, diags
+}
+
+func toStateRadiusClientsBlastRadiusMitigationOk(apiObject *management.GatewayTypeRADIUSAllOfBlastRadiusMitigation, ok bool) (types.Object, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if !ok || apiObject == nil {
+		return types.ObjectNull(gatewayRadiusClientsBlastRadiusMitigationTFObjectTypes), diags
+	}
+
+	o := map[string]attr.Value{
+		"require_msg_auth":  framework.BoolOkToTF(apiObject.GetRequireMsgAuthOk()),
+		"limit_proxy_state": framework.BoolOkToTF(apiObject.GetLimitProxyStateOk()),
+	}
+
+	returnVar, d := types.ObjectValue(gatewayRadiusClientsBlastRadiusMitigationTFObjectTypes, o)
 	diags.Append(d...)
 
 	return returnVar, diags

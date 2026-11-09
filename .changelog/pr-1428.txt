@@ -1,0 +1,7 @@
+```release-note:enhancement
+`resource/pingone_gateway`: Added the `blast_radius_mitigation` object to the `radius_clients` blocks, supporting the `require_msg_auth` and `limit_proxy_state` RADIUS gateway API fields.
+```
+
+```release-note:enhancement
+`data-source/pingone_gateway`: Added the `blast_radius_mitigation` object to the `radius_clients` blocks, supporting the `require_msg_auth` and `limit_proxy_state` RADIUS gateway API fields.
+```

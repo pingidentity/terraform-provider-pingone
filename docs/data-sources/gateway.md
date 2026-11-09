@@ -69,8 +69,18 @@ Read-Only:
 
 Read-Only:
 
+- `blast_radius_mitigation` (Attributes) An optional object that can be used to block Blast RADIUS attacks. The two options use different approaches to deal with the same issue, so do not set more than one of the fields to `true`; if both fields are set to `true`, the API returns an error. (see [below for nested schema](#nestedatt--radius_clients--blast_radius_mitigation))
 - `ip` (String) The IP of the RADIUS client.
 - `shared_secret` (String, Sensitive) The shared secret for the RADIUS client. If this value is not provided, the shared secret specified with `default_shared_secret` is used.
+
+<a id="nestedatt--radius_clients--blast_radius_mitigation"></a>
+### Nested Schema for `radius_clients.blast_radius_mitigation`
+
+Read-Only:
+
+- `limit_proxy_state` (Boolean) For older clients that don't support sending the Message-Authenticator attribute, set this field to `true`. This instructs the gateway to ignore requests that don't contain the Message-Authenticator attribute but contain the Proxy-State attribute.
+- `require_msg_auth` (Boolean) Set to `true` to require that all requests from the client include the Message-Authenticator attribute. Any requests without the attribute will be ignored.
+
 
 
 <a id="nestedatt--radius_network_policy_server"></a>

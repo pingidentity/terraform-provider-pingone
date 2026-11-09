@@ -109,6 +109,10 @@ func TestAccGatewayDataSource_FindRADIUSGatewayByID(t *testing.T) {
 						"ip":            "127.0.0.2",
 						"shared_secret": "sharedsecret123-2",
 					}),
+					resource.TestCheckTypeSetElemNestedAttrs(dataSourceFullName, "radius_clients.*", map[string]string{
+						"ip": "127.0.0.1",
+						"blast_radius_mitigation.require_msg_auth": "true",
+					}),
 				),
 			},
 		},
@@ -372,6 +376,10 @@ resource "pingone_gateway" "%[2]s" {
     {
       ip            = "127.0.0.1"
       shared_secret = "sharedsecret123-1"
+
+      blast_radius_mitigation = {
+        require_msg_auth = true
+      }
     },
     {
       ip            = "127.0.0.2"
