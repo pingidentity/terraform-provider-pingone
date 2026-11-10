@@ -6,7 +6,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
+	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int32validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
@@ -383,13 +383,21 @@ func (r *NotificationSettingsEmailResource) Schema(ctx context.Context, req reso
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"body": schema.StringAttribute{
-							Description: "Required if method is set to `POST`. Use body to provide the content of the body for the request sent to the email provider.",
+							Description: "Required if method is set to `POST`. Use body to provide the content of the body for the request sent to the email provider.  The body must contain the `${to}` and `${message}` variables, each optionally suffixed with a format of `json`, `html`, `url`, or `base64` (for example, `${to|url}`)",
 							Optional:    true,
 							Validators: []validator.String{
 								stringvalidator.LengthAtLeast(attrMinLength),
 								stringvalidatorinternal.ConflictsIfMatchesPathValue(
 									types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSEMAILDELIVERYSETTINGSCUSTOMREQUESTSMETHOD_GET)),
 									path.MatchRelative().AtParent().AtName("method"),
+								),
+								stringvalidator.RegexMatches(
+									regexp.MustCompile(`\$\{to(\|(json|html|url|base64))?\}`),
+									"Body must contain the `${to}` variable, optionally suffixed with a format of `json`, `html`, `url`, or `base64` (for example, `${to|url}`)",
+								),
+								stringvalidator.RegexMatches(
+									regexp.MustCompile(`\$\{message(\|(json|html|url|base64))?\}`),
+									"Body must contain the `${message}` variable, optionally suffixed with a format of `json`, `html`, `url`, or `base64` (for example, `${message|url}`)",
 								),
 							},
 						},
@@ -807,15 +815,6 @@ func (p *notificationSettingsEmailResourceModelV1) expand(ctx context.Context) (
 				req.SetUrl(request.URL.ValueString())
 
 				if !request.Body.IsNull() && !request.Body.IsUnknown() {
-					// Check if the body contains the required variables - ${to}, ${message}
-					if !strings.Contains(request.Body.ValueString(), "${to}") || !strings.Contains(request.Body.ValueString(), "${message}") {
-						diags.AddError(
-							"Invalid Body Content",
-							"The body must contain the variables `${to}` and `${message}`. Please ensure these variables are included in the body content.",
-						)
-						return nil, diags
-					}
-
 					req.SetBody(request.Body.ValueString())
 				}
 

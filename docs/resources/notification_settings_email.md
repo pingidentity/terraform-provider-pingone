@@ -271,7 +271,7 @@ Required:
 
 Optional:
 
-- `body` (String) Required if method is set to `POST`. Use body to provide the content of the body for the request sent to the email provider.
+- `body` (String) Required if method is set to `POST`. Use body to provide the content of the body for the request sent to the email provider.  The body must contain the `${to}` and `${message}` variables, each optionally suffixed with a format of `json`, `html`, `url`, or `base64` (for example, `${to|url}`)
 - `headers` (Map of String) A map of key-value pairs to specify the headers that your email provider's API expects.
 
 Read-Only:
