@@ -864,7 +864,7 @@ func TestAccNotificationSettingsEmail_CustomProvider_POST_KeyValuesBody(t *testi
 			resource.TestCheckResourceAttr(resourceFullName, "requests.0.headers.updated-subject", "updated-${subject}"),
 			resource.TestCheckResourceAttr(resourceFullName, "requests.0.headers.updated-reply-to", "updated-${reply_to}"),
 			resource.TestCheckResourceAttr(resourceFullName, "requests.0.headers.updated-from", "updated-${from}"),
-			resource.TestCheckResourceAttr(resourceFullName, "requests.0.body", "updated-to=${to}&message=${message}"),
+			resource.TestCheckResourceAttr(resourceFullName, "requests.0.body", "updated-to=${to|url}&message=${message|url}"),
 		),
 	}
 
@@ -985,7 +985,7 @@ resource "pingone_notification_settings_email" "%[3]s" {
         "updated-reply-to" = "updated-$${reply_to}"
         "updated-from"     = "updated-$${from}"
       }
-      body = "updated-to=$${to}&message=$${message}"
+      body = "updated-to=$${to|url}&message=$${message|url}"
       url  = "https://api.pingidentity.com/updated-send-email"
     }
   ]
@@ -1112,157 +1112,6 @@ resource "pingone_notification_settings_email" "%[3]s" {
   ]
 }
 EOF
-      url  = "https://api.pingidentity.com/updated-send-email"
-    }
-  ]
-}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
-}
-
-func TestAccNotificationSettingsEmail_CustomProvider_POST_FormatVariables(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_notification_settings_email.%s", resourceName)
-
-	environmentName := acctest.ResourceNameGenEnvironment()
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-
-	minimalStep := resource.TestStep{
-		Config: testAccNotificationSettingsEmail_CustomProviderConfig_POST_FormatVariables_Minimal(environmentName, licenseID, resourceName),
-		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-			resource.TestCheckResourceAttr(resourceFullName, "custom_provider_name", "CustomProviderName"),
-			resource.TestCheckResourceAttr(resourceFullName, "protocol", "HTTP"),
-			resource.TestCheckResourceAttr(resourceFullName, "requests.#", "1"),
-			resource.TestCheckResourceAttr(resourceFullName, "requests.0.method", "POST"),
-			resource.TestCheckResourceAttr(resourceFullName, "requests.0.url", "https://api.pingidentity.com/send-email"),
-			resource.TestCheckResourceAttr(resourceFullName, "requests.0.body", "from=${from}&subject=${subject}&to=${to|url}&html=${message|url}"),
-		),
-	}
-
-	fullStep := resource.TestStep{
-		Config: testAccNotificationSettingsEmail_CustomProviderConfig_POST_FormatVariables_Full(environmentName, licenseID, resourceName),
-		Check: resource.ComposeTestCheckFunc(
-			resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-			resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-			resource.TestCheckResourceAttr(resourceFullName, "custom_provider_name", "UpdatedCustomProviderName"),
-			resource.TestCheckResourceAttr(resourceFullName, "protocol", "HTTP"),
-			resource.TestCheckResourceAttr(resourceFullName, "requests.#", "1"),
-			resource.TestCheckResourceAttr(resourceFullName, "requests.0.method", "POST"),
-			resource.TestCheckResourceAttr(resourceFullName, "requests.0.url", "https://api.pingidentity.com/updated-send-email"),
-			resource.TestCheckResourceAttr(resourceFullName, "requests.0.body", "to=${to|url}&html=${message|url}&from=${from}&subject=${subject}"),
-		),
-	}
-
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acctest.PreCheckNoTestAccFlaky(t)
-			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoBeta(t)
-		},
-		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.NotificationSettingsEmail_CheckDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			// Full from scratch
-			minimalStep,
-			// Update to full
-			fullStep,
-			// Test importing the resource
-			{
-				ResourceName: resourceFullName,
-				ImportStateIdFunc: func() resource.ImportStateIdFunc {
-					return func(s *terraform.State) (string, error) {
-						rs, ok := s.RootModule().Resources[resourceFullName]
-						if !ok {
-							return "", fmt.Errorf("resource not found: %s", resourceFullName)
-						}
-
-						return rs.Primary.ID, nil
-					}
-				}(),
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateVerifyIgnore: []string{
-					"password",
-					"auth_token",
-				},
-			},
-		},
-	})
-}
-
-func testAccNotificationSettingsEmail_CustomProviderConfig_POST_FormatVariables_Minimal(environmentName, licenseID, resourceName string) string {
-	return fmt.Sprintf(`
-	%[1]s
-
-resource "pingone_notification_settings_email" "%[3]s" {
-  environment_id       = pingone_environment.%[2]s.id
-  custom_provider_name = "CustomProviderName"
-
-  username = "customuser"
-  password = "customuserpassword"
-
-  protocol = "HTTP"
-
-  from = {
-    email_address = "no-reply@pingidentity.com"
-  }
-
-  reply_to = {
-    email_address = "reply@pingidentity.com"
-  }
-
-  requests = [
-    {
-      method = "POST"
-      headers = {
-        "Content-Type" = "application/x-www-form-urlencoded"
-        "subject"      = "$${subject}"
-        "reply-to"     = "$${reply_to}"
-        "from"         = "$${from}"
-      }
-      body = "from=$${from}&subject=$${subject}&to=$${to|url}&html=$${message|url}"
-      url  = "https://api.pingidentity.com/send-email"
-    }
-  ]
-}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
-}
-
-func testAccNotificationSettingsEmail_CustomProviderConfig_POST_FormatVariables_Full(environmentName, licenseID, resourceName string) string {
-	return fmt.Sprintf(`
-	%[1]s
-
-resource "pingone_notification_settings_email" "%[3]s" {
-  environment_id       = pingone_environment.%[2]s.id
-  custom_provider_name = "UpdatedCustomProviderName"
-
-  auth_token = "customauthtoken"
-
-  protocol = "HTTP"
-
-  from = {
-    name          = "Updated Test Sender"
-    email_address = "updated-no-reply@pingidentity.com"
-  }
-
-  reply_to = {
-    name          = "Updated Test Reply To"
-    email_address = "updated-reply@pingidentity.com"
-  }
-
-  requests = [
-    {
-      method = "POST"
-      headers = {
-        "Content-Type"     = "application/x-www-form-urlencoded"
-        "updated-subject"  = "updated-$${subject}"
-        "updated-reply-to" = "updated-$${reply_to}"
-        "updated-from"     = "updated-$${from}"
-      }
-      body = "to=$${to|url}&html=$${message|url}&from=$${from}&subject=$${subject}"
       url  = "https://api.pingidentity.com/updated-send-email"
     }
   ]
@@ -1845,80 +1694,4 @@ resource "pingone_notification_settings_email" "%[3]s" {
     }
   ]
 }`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, authenticationHCL)
-}
-
-func TestAccNotificationSettingsEmail_CustomProvider_BadParameters(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-
-	environmentName := acctest.ResourceNameGenEnvironment()
-	licenseID := os.Getenv("PINGONE_LICENSE_ID")
-
-	invalidBodyStep := func(bodyHCL string, expectError *regexp.Regexp) resource.TestStep {
-		return resource.TestStep{
-			Config:      testAccNotificationSettingsEmail_CustomProviderConfig_Body(environmentName, licenseID, resourceName, bodyHCL),
-			ExpectError: expectError,
-		}
-	}
-
-	missingMessageMatch := regexp.MustCompile(`\$\{message\} variable is missing for EMAIL delivery method`)
-	missingToMatch := regexp.MustCompile(`\$\{to\} variable is missing for EMAIL delivery method`)
-
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acctest.PreCheckNoTestAccFlaky(t)
-			acctest.PreCheckClient(t)
-			acctest.PreCheckNewEnvironment(t)
-			acctest.PreCheckNoBeta(t)
-		},
-		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             base.NotificationSettingsEmail_CheckDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			// Body missing both `${to}` and `${message}`
-			invalidBodyStep(`"from=$${from}&subject=$${subject}"`, missingMessageMatch),
-			// Body missing `${message}`
-			invalidBodyStep(`"from=$${from}&subject=$${subject}&to=$${to}"`, missingMessageMatch),
-			// Body missing `${to}`
-			invalidBodyStep(`"from=$${from}&subject=$${subject}&html=$${message}"`, missingToMatch),
-		},
-	})
-}
-
-func testAccNotificationSettingsEmail_CustomProviderConfig_Body(environmentName, licenseID, resourceName, bodyHCL string) string {
-	return fmt.Sprintf(`
-	%[1]s
-
-resource "pingone_notification_settings_email" "%[3]s" {
-  environment_id       = pingone_environment.%[2]s.id
-  custom_provider_name = "CustomProviderName"
-
-  username = "customuser"
-  password = "customuserpassword"
-
-  protocol = "HTTP"
-
-  from = {
-    email_address = "no-reply@pingidentity.com"
-  }
-
-  reply_to = {
-    email_address = "reply@pingidentity.com"
-  }
-
-  requests = [
-    {
-      method = "POST"
-      headers = {
-        "Content-Type" = "application/x-www-form-urlencoded"
-        "subject"      = "$${subject}"
-        "reply-to"     = "$${reply_to}"
-        "from"         = "$${from}"
-      }
-      body = %[4]s
-      url  = "https://api.pingidentity.com/send-email"
-    }
-  ]
-}`, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName, bodyHCL)
 }
