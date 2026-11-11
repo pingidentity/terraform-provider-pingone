@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int32validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
@@ -390,14 +389,6 @@ func (r *NotificationSettingsEmailResource) Schema(ctx context.Context, req reso
 								stringvalidatorinternal.ConflictsIfMatchesPathValue(
 									types.StringValue(string(management.ENUMNOTIFICATIONSSETTINGSEMAILDELIVERYSETTINGSCUSTOMREQUESTSMETHOD_GET)),
 									path.MatchRelative().AtParent().AtName("method"),
-								),
-								stringvalidator.RegexMatches(
-									regexp.MustCompile(`\$\{to(\|(json|html|url|base64))?\}`),
-									"Body must contain the `${to}` variable, optionally suffixed with a format of `json`, `html`, `url`, or `base64` (for example, `${to|url}`)",
-								),
-								stringvalidator.RegexMatches(
-									regexp.MustCompile(`\$\{message(\|(json|html|url|base64))?\}`),
-									"Body must contain the `${message}` variable, optionally suffixed with a format of `json`, `html`, `url`, or `base64` (for example, `${message|url}`)",
 								),
 							},
 						},

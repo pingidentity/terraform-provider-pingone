@@ -1862,7 +1862,8 @@ func TestAccNotificationSettingsEmail_CustomProvider_BadParameters(t *testing.T)
 		}
 	}
 
-	invalidMatch := regexp.MustCompile(`Invalid Attribute Value Match`)
+	missingMessageMatch := regexp.MustCompile(`\$\{message\} variable is missing for EMAIL delivery method`)
+	missingToMatch := regexp.MustCompile(`\$\{to\} variable is missing for EMAIL delivery method`)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -1876,13 +1877,11 @@ func TestAccNotificationSettingsEmail_CustomProvider_BadParameters(t *testing.T)
 		ErrorCheck:               acctest.ErrorCheck(t),
 		Steps: []resource.TestStep{
 			// Body missing both `${to}` and `${message}`
-			invalidBodyStep(`"from=$${from}&subject=$${subject}"`, invalidMatch),
+			invalidBodyStep(`"from=$${from}&subject=$${subject}"`, missingMessageMatch),
 			// Body missing `${message}`
-			invalidBodyStep(`"from=$${from}&subject=$${subject}&to=$${to}"`, invalidMatch),
+			invalidBodyStep(`"from=$${from}&subject=$${subject}&to=$${to}"`, missingMessageMatch),
 			// Body missing `${to}`
-			invalidBodyStep(`"from=$${from}&subject=$${subject}&html=$${message}"`, invalidMatch),
-			// Body with an invalid format suffix
-			invalidBodyStep(`"from=$${from}&subject=$${subject}&to=$${to|url}&html=$${message|foo}"`, invalidMatch),
+			invalidBodyStep(`"from=$${from}&subject=$${subject}&html=$${message}"`, missingToMatch),
 		},
 	})
 }
