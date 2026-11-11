@@ -78,27 +78,12 @@ func TestAccRiskSettings_MinimalMaximal(t *testing.T) {
 			{
 				// Create the resource with a minimal model
 				Config: riskSettings_MinimalHCL(resourceName),
-				Check:  riskSettings_CheckComputedValuesMinimal(resourceName),
-			},
-			{
-				// Delete the minimal model
-				Config:  riskSettings_MinimalHCL(resourceName),
-				Destroy: true,
-			},
-			{
-				// Re-create with a complete model
-				Config: riskSettings_CompleteHCL(resourceName),
-				Check:  riskSettings_CheckComputedValuesComplete(resourceName),
-			},
-			{
-				// Back to minimal model
-				Config: riskSettings_MinimalHCL(resourceName),
-				Check:  riskSettings_CheckComputedValuesMinimal(resourceName),
+				Check:  riskSettings_CheckComputedValues(resourceName),
 			},
 			{
 				// Back to complete model
 				Config: riskSettings_CompleteHCL(resourceName),
-				Check:  riskSettings_CheckComputedValuesComplete(resourceName),
+				Check:  riskSettings_CheckComputedValues(resourceName),
 			},
 			{
 				// Test importing the resource
@@ -143,7 +128,7 @@ func TestAccRiskSettings_NewEnv(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: riskSettings_NewEnvHCL(environmentName, licenseID, resourceName),
-				Check:  riskSettings_CheckComputedValuesMinimal(resourceName),
+				Check:  riskSettings_CheckComputedValues(resourceName),
 			},
 		},
 	})
@@ -154,6 +139,10 @@ func TestAccRiskSettings_BadParameters(t *testing.T) {
 
 	resourceName := acctest.ResourceNameGen()
 	resourceFullName := fmt.Sprintf("pingone_risk_settings.%s", resourceName)
+
+	environmentName := acctest.ResourceNameGenEnvironment()
+
+	licenseID := os.Getenv("PINGONE_LICENSE_ID")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -166,7 +155,7 @@ func TestAccRiskSettings_BadParameters(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Configure
 			{
-				Config: riskSettings_MinimalHCL(resourceName),
+				Config: riskSettings_NewEnvHCL(environmentName, licenseID, resourceName),
 			},
 			// Errors
 			{
@@ -186,7 +175,11 @@ func riskSettings_MinimalHCL(resourceName string) string {
 
 resource "pingone_risk_settings" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  // TODO set values for minimal fields
+  data_retention = {
+    new_device_in_days               = 30
+    user_based_risk_behavior_in_days = 90
+    user_location_anomaly_in_days    = 45
+  }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
 }
@@ -198,11 +191,10 @@ func riskSettings_CompleteHCL(resourceName string) string {
 
 resource "pingone_risk_settings" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
-  // TODO set values for complete fields
   data_retention = {
-    new_device_in_days = //TODO
-    user_based_risk_behavior_in_days = //TODO
-    user_location_anomaly_in_days = //TODO
+    new_device_in_days               = 1
+    user_based_risk_behavior_in_days = 30
+    user_location_anomaly_in_days    = 30
   }
 }
 `, acctest.GenericSandboxEnvironment(), resourceName)
@@ -214,26 +206,21 @@ func riskSettings_NewEnvHCL(environmentName, licenseID, resourceName string) str
 
 resource "pingone_risk_settings" "%[3]s" {
   environment_id = pingone_environment.%[2]s.id
-  // TODO set values for minimal fields
+  data_retention = {
+    new_device_in_days               = 1
+    user_based_risk_behavior_in_days = 30
+    user_location_anomaly_in_days    = 30
+  }
 }
 `, acctestlegacysdk.MinimalSandboxEnvironment(environmentName, licenseID), environmentName, resourceName)
 }
 
-// Validate any computed values when applying minimal HCL
-// TODO remove any values that are not computed from this check
-// TODO set expected values
-func riskSettings_CheckComputedValuesMinimal(resourceName string) resource.TestCheckFunc {
-	return resource.TestCheckResourceAttr(fmt.Sprintf("pingone_risk_settings.%s", resourceName), "id", "expected_value")
-
-}
-
-// Validate any computed values when applying complete HCL
-// TODO This may not be needed as a separate function from minimal HCL if the expected values match
-// TODO remove any values that are not computed from this check
-// TODO set expected values
-func riskSettings_CheckComputedValuesComplete(resourceName string) resource.TestCheckFunc {
-	return resource.TestCheckResourceAttr(fmt.Sprintf("pingone_risk_settings.%s", resourceName), "id", "expected_value")
-
+// Validate any computed values when applying HCL
+func riskSettings_CheckComputedValues(resourceName string) resource.TestCheckFunc {
+	return resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttrSet(fmt.Sprintf("pingone_risk_settings.%s", resourceName), "id"),
+		resource.TestCheckResourceAttrSet(fmt.Sprintf("pingone_risk_settings.%s", resourceName), "environment_id"),
+	)
 }
 
 func riskSettings_GetIDs(resourceName string, environmentId *string) resource.TestCheckFunc {

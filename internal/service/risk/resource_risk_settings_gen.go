@@ -99,7 +99,7 @@ func (r *riskSettingsResource) Schema(ctx context.Context, req resource.SchemaRe
 						},
 					},
 				},
-				Optional:    true,
+				Required:    true,
 				Description: "The object that contains the fields for setting the data retention period for specific risk predictors.",
 			},
 			"environment_id": framework.Attr_LinkID(
@@ -129,6 +129,7 @@ func (model *riskSettingsResourceModel) buildClientStruct() (*risk.RiskSettings,
 // If necessary, update this function to set any other values that should be present in the default state of the resource
 func (model *riskSettingsResource) buildDefaultClientStruct() *risk.RiskSettings {
 	result := &risk.RiskSettings{}
+	result.DataRetention = risk.NewRiskSettingsDataRetention(30, 90, 45)
 	return result
 }
 
