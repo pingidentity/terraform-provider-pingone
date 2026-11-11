@@ -864,7 +864,7 @@ func TestAccNotificationSettingsEmail_CustomProvider_POST_KeyValuesBody(t *testi
 			resource.TestCheckResourceAttr(resourceFullName, "requests.0.headers.updated-subject", "updated-${subject}"),
 			resource.TestCheckResourceAttr(resourceFullName, "requests.0.headers.updated-reply-to", "updated-${reply_to}"),
 			resource.TestCheckResourceAttr(resourceFullName, "requests.0.headers.updated-from", "updated-${from}"),
-			resource.TestCheckResourceAttr(resourceFullName, "requests.0.body", "updated-to=${to}&message=${message}"),
+			resource.TestCheckResourceAttr(resourceFullName, "requests.0.body", "updated-to=${to|url}&message=${message|url}"),
 		),
 	}
 
@@ -985,7 +985,7 @@ resource "pingone_notification_settings_email" "%[3]s" {
         "updated-reply-to" = "updated-$${reply_to}"
         "updated-from"     = "updated-$${from}"
       }
-      body = "updated-to=$${to}&message=$${message}"
+      body = "updated-to=$${to|url}&message=$${message|url}"
       url  = "https://api.pingidentity.com/updated-send-email"
     }
   ]
