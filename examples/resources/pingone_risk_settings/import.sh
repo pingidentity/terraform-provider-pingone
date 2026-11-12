@@ -1,0 +1,1 @@
+terraform import pingone_risk_settings.example <environment_id>

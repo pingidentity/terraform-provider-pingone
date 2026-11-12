@@ -103,7 +103,7 @@ func (r *riskSettingsResource) Schema(ctx context.Context, req resource.SchemaRe
 				Description: "The object that contains the fields for setting the data retention period for specific risk predictors.",
 			},
 			"environment_id": framework.Attr_LinkID(
-				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to create and manage the settings in. Must be a valid PingOne resource ID. This field is immutable and will trigger a replace plan if changed."),
+				framework.SchemaAttributeDescriptionFromMarkdown("The ID of the environment to create and manage the settings in."),
 			),
 			"id": framework.Attr_ID(),
 		},
