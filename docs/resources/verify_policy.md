@@ -29,18 +29,6 @@ resource "pingone_environment" "my_environment" {
   # ...
 }
 
-resource "pingone_verify_voice_phrase" "my_verify_voice_phrase" {
-  environment_id = pingone_environment.my_environment.id
-  display_name   = "My Verify Voice Phrase for my Verify Policy"
-}
-
-resource "pingone_verify_voice_phrase_content" "my_verify_voice_phrase_content" {
-  environment_id  = pingone_environment.my_environment.id
-  voice_phrase_id = pingone_verify_voice_phrase.my_verify_voice_phrase.id
-  locale          = "en"
-  content         = "My voice content to be used in voice enrollment or verification."
-}
-
 resource "pingone_verify_policy" "my_verify_everything_policy" {
   environment_id = pingone_environment.my_environment.id
   name           = "My Awesome Verify Policy"
@@ -54,15 +42,6 @@ resource "pingone_verify_policy" "my_verify_everything_policy" {
     verify_aamva    = true
     aadhaar = {
       enabled = true
-      otp = {
-        deliveries = {
-          count = 3
-          cooldown = {
-            duration  = 60
-            time_unit = "SECONDS"
-          }
-        }
-      }
     }
   }
 
@@ -118,24 +97,6 @@ resource "pingone_verify_policy" "my_verify_everything_policy" {
           time_unit = "SECONDS"
         }
       }
-    }
-  }
-
-  voice = {
-    verify               = "OPTIONAL"
-    enrollment           = false
-    comparison_threshold = "LOW"
-    liveness_threshold   = "LOW"
-
-    text_dependent = {
-      samples         = "5"
-      voice_phrase_id = pingone_verify_voice_phrase.my_verify_voice_phrase.id
-    }
-
-    reference_data = {
-      retain_original_recordings = false
-      update_on_reenrollment     = false
-      update_on_verification     = false
     }
   }
 
@@ -198,7 +159,6 @@ resource "pingone_verify_policy" "my_verify_everything_policy" {
 - `liveness` (Attributes) Defines the verification requirements to inspect a mobile phone self-image for evidence that the subject is alive and not a representation, such as a photograph or mask. (see [below for nested schema](#nestedatt--liveness))
 - `phone` (Attributes) Defines the verification requirements to validate a mobile phone number using a one-time password (OTP). (see [below for nested schema](#nestedatt--phone))
 - `transaction` (Attributes) Defines the requirements for transactions invoked by the policy. (see [below for nested schema](#nestedatt--transaction))
-- `voice` (Attributes, Deprecated) **[Deprecation notice: This field is deprecated and will be removed in a future release. Please use alternative verification methods.]** Defines the requirements for comparing a voice recording against a reference voice recording. (see [below for nested schema](#nestedatt--voice))
 
 ### Read-Only
 
@@ -528,41 +488,6 @@ Required:
     - If `transaction.timeout.time_unit` is `SECONDS`, the allowed range is `0 - 1800`.
     - Defaults to `30 MINUTES`.
 - `time_unit` (String) Time unit of transaction timeout.  Options are `MINUTES`, `SECONDS`.  Defaults to `MINUTES`.
-
-
-
-<a id="nestedatt--voice"></a>
-### Nested Schema for `voice`
-
-Required:
-
-- `comparison_threshold` (String) Comparison threshold requirements.  Options are `HIGH`, `LOW`, `MEDIUM`.  Defaults to `MEDIUM`.
-- `enrollment` (Boolean) Controls if the transaction performs voice enrollment (`TRUE`) or voice verification (`FALSE`).
-- `liveness_threshold` (String) Liveness threshold requirements.  Options are `HIGH`, `LOW`, `MEDIUM`.  Defaults to `MEDIUM`.
-- `verify` (String) Controls the verification requirements for a Voice verification.  Options are `DISABLED`, `OPTIONAL`, `REQUIRED`.  Defaults to `DISABLED`.
-
-Optional:
-
-- `reference_data` (Attributes) Object for configuration of voice recording reference data. (see [below for nested schema](#nestedatt--voice--reference_data))
-- `text_dependent` (Attributes) Object for configuration of text dependent voice verification. (see [below for nested schema](#nestedatt--voice--text_dependent))
-
-<a id="nestedatt--voice--reference_data"></a>
-### Nested Schema for `voice.reference_data`
-
-Optional:
-
-- `retain_original_recordings` (Boolean) Controls if the service stores the original voice recordings.
-- `update_on_reenrollment` (Boolean) Controls updates to user's voice reference data (voice recordings) upon user re-enrollment. If `TRUE`, new data adds to existing data. If `FALSE`, new data replaces existing data.
-- `update_on_verification` (Boolean) Controls updates to user's voice reference data (voice recordings) upon user verification. If `TRUE`, new data adds to existing data. If `FALSE`, new voice recordings are not retained as reference data.
-
-
-<a id="nestedatt--voice--text_dependent"></a>
-### Nested Schema for `voice.text_dependent`
-
-Required:
-
-- `samples` (Number) Number of voice samples to collect. The allowed range is `3 - 5`.
-- `voice_phrase_id` (String) The identifier (UUID) of a defined `voice_phrase` to associate with the policy.
 
 ## Import
 

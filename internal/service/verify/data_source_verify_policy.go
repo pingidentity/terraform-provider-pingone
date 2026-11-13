@@ -42,7 +42,6 @@ type verifyPolicyDataSourceModel struct {
 	Email                  types.Object                 `tfsdk:"email"`
 	Phone                  types.Object                 `tfsdk:"phone"`
 	Transaction            types.Object                 `tfsdk:"transaction"`
-	Voice                  types.Object                 `tfsdk:"voice"`
 	IdentityRecordMatching types.Object                 `tfsdk:"identity_record_matching"`
 	CreatedAt              timetypes.RFC3339            `tfsdk:"created_at"`
 	UpdatedAt              timetypes.RFC3339            `tfsdk:"updated_at"`
@@ -117,26 +116,6 @@ var (
 		"timeout": types.ObjectType{AttrTypes: genericTimeoutDataSourceServiceTFObjectTypes},
 	}
 
-	voiceDataSourceServiceTFObjectTypes = map[string]attr.Type{
-		"verify":               types.StringType,
-		"enrollment":           types.BoolType,
-		"comparison_threshold": types.StringType,
-		"liveness_threshold":   types.StringType,
-		"text_dependent":       types.ObjectType{AttrTypes: textDependentDataSourceServiceTFObjectTypes},
-		"reference_data":       types.ObjectType{AttrTypes: referenceDataDataSourceServiceTFObjectTypes},
-	}
-
-	textDependentDataSourceServiceTFObjectTypes = map[string]attr.Type{
-		"samples":         types.Int32Type,
-		"voice_phrase_id": pingonetypes.ResourceIDType{},
-	}
-
-	referenceDataDataSourceServiceTFObjectTypes = map[string]attr.Type{
-		"retain_original_recordings": types.BoolType,
-		"update_on_reenrollment":     types.BoolType,
-		"update_on_verification":     types.BoolType,
-	}
-
 	identityRecordMatchingDataSourceServiceTFObjectTypes = map[string]attr.Type{
 		"address":     types.ObjectType{AttrTypes: identityRecordMatchingFieldDataSourceServiceTFObjectTypes},
 		"birth_date":  types.ObjectType{AttrTypes: identityRecordMatchingFieldDataSourceServiceTFObjectTypes},
@@ -173,9 +152,6 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 	const attrMinDuration = 0
 	const attrMaxDurationSeconds = 1800
 	const attrMaxDurationMinutes = 30
-
-	const attrMinVoiceSamples = 3
-	const attrMaxVoiceSamples = 5
 
 	const attrMinLifetimeDurationSeconds = 60
 	const attrMaxLifetimeDurationSeconds = 1800
@@ -254,34 +230,6 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 	deviceVerifyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Controls the verification requirements for an Email or Phone verification.",
 	).AllowedValuesEnum(verify.AllowedEnumVerifyEnumValues).DefaultValue(string(defaultVerify))
-
-	voiceVerifyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Controls the verification requirements for a Voice verification.",
-	).AllowedValuesEnum(verify.AllowedEnumVerifyEnumValues).DefaultValue(string(defaultVerify))
-
-	voiceEnrollmentDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Controls if the transaction performs voice enrollment (`TRUE`) or voice verification (`FALSE`).",
-	)
-
-	voiceTexttDependentSamplesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("Number of voice samples to collect. The allowed range is `%d - %d`", attrMinVoiceSamples, attrMaxVoiceSamples),
-	)
-
-	voiceComparisonThresholdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Comparison threshold requirements.",
-	).AllowedValuesEnum(verify.AllowedEnumThresholdEnumValues).DefaultValue(string(defaultThreshold))
-
-	voiceLivenessThresholdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Liveness threshold requirements.",
-	).AllowedValuesEnum(verify.AllowedEnumThresholdEnumValues).DefaultValue(string(defaultThreshold))
-
-	referenceDataUpdateOnEnrollmentDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Controls updates to user's voice reference data (voice recordings) upon user re-enrollment. If `TRUE`, new data adds to existing data. If `FALSE`, new data replaces existing data.",
-	)
-
-	referenceDataUpdateOnVerificationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Controls updates to user's voice reference data (voice recordings) upon user verification. If `TRUE`, new data adds to existing data. If `FALSE`, new voice recordings are not retained as reference data.",
-	)
 
 	otpLifeTimeEmailDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Lifetime of the OTP delivered via email.\n" +
@@ -756,72 +704,6 @@ func (r *VerifyPolicyDataSource) Schema(ctx context.Context, req datasource.Sche
 				},
 			},
 
-			"voice": schema.SingleNestedAttribute{
-				Description:        "**[Deprecation notice: This field is deprecated and will be removed in a future release. Please use alternative verification methods.]** Defines the requirements for transactions invoked by the policy.",
-				DeprecationMessage: "Deprecation notice: This field is deprecated and will be removed in a future release. Please use alternative verification methods.",
-				Computed:           true, Attributes: map[string]schema.Attribute{
-					"verify": schema.StringAttribute{
-						Description:         voiceVerifyDescription.Description,
-						MarkdownDescription: voiceVerifyDescription.MarkdownDescription,
-						Computed:            true,
-					},
-					"enrollment": schema.BoolAttribute{
-						Description:         voiceEnrollmentDescription.Description,
-						MarkdownDescription: voiceEnrollmentDescription.MarkdownDescription,
-						Computed:            true,
-					},
-					"comparison_threshold": schema.StringAttribute{
-						Description:         voiceComparisonThresholdDescription.Description,
-						MarkdownDescription: voiceComparisonThresholdDescription.MarkdownDescription,
-						Computed:            true,
-					},
-					"liveness_threshold": schema.StringAttribute{
-						Description:         voiceLivenessThresholdDescription.Description,
-						MarkdownDescription: voiceLivenessThresholdDescription.MarkdownDescription,
-						Computed:            true,
-					},
-					"text_dependent": schema.SingleNestedAttribute{
-						Description: "Object for configuration of text dependent voice verification.",
-						Computed:    true,
-
-						Attributes: map[string]schema.Attribute{
-							"samples": schema.Int32Attribute{
-								Description:         voiceTexttDependentSamplesDescription.Description,
-								MarkdownDescription: voiceTexttDependentSamplesDescription.MarkdownDescription,
-								Computed:            true,
-							},
-							"voice_phrase_id": schema.StringAttribute{
-								Description: "	Identifier (UUID) of the voice phrase to use.",
-								Computed:    true,
-
-								CustomType: pingonetypes.ResourceIDType{},
-							},
-						},
-					},
-					"reference_data": schema.SingleNestedAttribute{
-						Description: "Object for configuration of voice recording reference data.",
-						Computed:    true,
-
-						Attributes: map[string]schema.Attribute{
-							"retain_original_recordings": schema.BoolAttribute{
-								Description: "Controls if the service stores the original voice recordings.",
-								Computed:    true,
-							},
-							"update_on_reenrollment": schema.BoolAttribute{
-								Description:         referenceDataUpdateOnEnrollmentDescription.Description,
-								MarkdownDescription: referenceDataUpdateOnEnrollmentDescription.MarkdownDescription,
-								Computed:            true,
-							},
-							"update_on_verification": schema.BoolAttribute{
-								Description:         referenceDataUpdateOnVerificationDescription.Description,
-								MarkdownDescription: referenceDataUpdateOnVerificationDescription.MarkdownDescription,
-								Computed:            true,
-							},
-						},
-					},
-				},
-			},
-
 			"identity_record_matching": schema.SingleNestedAttribute{
 				Description: "Defines the verification requirements for identity record matching.",
 				Computed:    true,
@@ -1136,9 +1018,6 @@ func (p *verifyPolicyDataSourceModel) toState(apiObject *verify.VerifyPolicy) di
 	p.Transaction, d = p.toStateTransaction(apiObject.GetTransactionOk())
 	diags.Append(d...)
 
-	p.Voice, d = p.toStateVoice(apiObject.GetVoiceOk())
-	diags.Append(d...)
-
 	p.IdentityRecordMatching, d = p.toStateIdentityRecordMatching(apiObject.GetIdentityRecordMatchingOk())
 	diags.Append(d...)
 
@@ -1385,55 +1264,6 @@ func (p *verifyPolicyDataSourceModel) toStateDevice(apiObject *verify.OTPDeviceC
 		"verify":            framework.EnumOkToTF(apiObject.GetVerifyOk()),
 		"create_mfa_device": framework.BoolOkToTF(apiObject.GetCreateMfaDeviceOk()),
 		"otp":               otp,
-	})
-	diags.Append(d...)
-
-	return objValue, diags
-}
-
-func (p *verifyPolicyDataSourceModel) toStateVoice(apiObject *verify.VoiceConfiguration, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if !ok || apiObject == nil {
-		return types.ObjectNull(voiceDataSourceServiceTFObjectTypes), diags
-	}
-
-	textDependent := types.ObjectNull(textDependentDataSourceServiceTFObjectTypes)
-	if v, ok := apiObject.GetTextDependentOk(); ok {
-		var d diag.Diagnostics
-
-		o := map[string]attr.Value{
-			"samples":         framework.Int32OkToTF(v.GetSamplesOk()),
-			"voice_phrase_id": framework.PingOneResourceIDToTF(v.GetPhrase().Id),
-		}
-		objValue, d := types.ObjectValue(textDependentDataSourceServiceTFObjectTypes, o)
-		diags.Append(d...)
-
-		textDependent = objValue
-	}
-
-	referenceData := types.ObjectNull(referenceDataDataSourceServiceTFObjectTypes)
-	if v, ok := apiObject.GetReferenceDataOk(); ok {
-		var d diag.Diagnostics
-
-		o := map[string]attr.Value{
-			"retain_original_recordings": framework.BoolOkToTF(v.GetRetainOriginalRecordingsOk()),
-			"update_on_reenrollment":     framework.BoolOkToTF(v.GetUpdateOnReenrollmentOk()),
-			"update_on_verification":     framework.BoolOkToTF(v.GetUpdateOnVerificationOk()),
-		}
-		objValue, d := types.ObjectValue(referenceDataDataSourceServiceTFObjectTypes, o)
-		diags.Append(d...)
-
-		referenceData = objValue
-	}
-
-	objValue, d := types.ObjectValue(voiceDataSourceServiceTFObjectTypes, map[string]attr.Value{
-		"verify":               framework.EnumOkToTF(apiObject.GetVerifyOk()),
-		"enrollment":           framework.BoolOkToTF(apiObject.GetEnrollmentOk()),
-		"comparison_threshold": framework.EnumOkToTF(apiObject.GetComparison().Threshold, ok),
-		"liveness_threshold":   framework.EnumOkToTF(apiObject.GetLiveness().Threshold, ok),
-		"text_dependent":       textDependent,
-		"reference_data":       referenceData,
 	})
 	diags.Append(d...)
 

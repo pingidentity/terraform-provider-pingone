@@ -56,7 +56,6 @@ type verifyPolicyResourceModel struct {
 	Email                  types.Object                 `tfsdk:"email"`
 	Phone                  types.Object                 `tfsdk:"phone"`
 	Transaction            types.Object                 `tfsdk:"transaction"`
-	Voice                  types.Object                 `tfsdk:"voice"`
 	IdentityRecordMatching types.Object                 `tfsdk:"identity_record_matching"`
 	CreatedAt              timetypes.RFC3339            `tfsdk:"created_at"`
 	UpdatedAt              timetypes.RFC3339            `tfsdk:"updated_at"`
@@ -124,26 +123,6 @@ type transactionModel struct {
 
 type transactionDataCollectionModel struct {
 	Timeout types.Object `tfsdk:"timeout"`
-}
-
-type voiceModel struct {
-	Verify              types.String `tfsdk:"verify"`
-	Enrollment          types.Bool   `tfsdk:"enrollment"`
-	ComparisonThreshold types.String `tfsdk:"comparison_threshold"`
-	LivenessThreshold   types.String `tfsdk:"liveness_threshold"`
-	TextDependent       types.Object `tfsdk:"text_dependent"`
-	ReferenceData       types.Object `tfsdk:"reference_data"`
-}
-
-type textDependentModel struct {
-	Samples  types.Int32  `tfsdk:"samples"`
-	PhraseId types.String `tfsdk:"voice_phrase_id"`
-}
-
-type referenceDataModel struct {
-	RetainOriginalRecordings types.Bool `tfsdk:"retain_original_recordings"`
-	UpdateOnReenrollment     types.Bool `tfsdk:"update_on_reenrollment"`
-	UpdateOnRVerification    types.Bool `tfsdk:"update_on_verification"`
 }
 
 type identityRecordMatchingModel struct {
@@ -232,26 +211,6 @@ var (
 		"timeout": types.ObjectType{AttrTypes: genericTimeoutServiceTFObjectTypes},
 	}
 
-	voiceServiceTFObjectTypes = map[string]attr.Type{
-		"verify":               types.StringType,
-		"enrollment":           types.BoolType,
-		"comparison_threshold": types.StringType,
-		"liveness_threshold":   types.StringType,
-		"text_dependent":       types.ObjectType{AttrTypes: textDependentServiceTFObjectTypes},
-		"reference_data":       types.ObjectType{AttrTypes: referenceDataServiceTFObjectTypes},
-	}
-
-	textDependentServiceTFObjectTypes = map[string]attr.Type{
-		"samples":         types.Int32Type,
-		"voice_phrase_id": types.StringType,
-	}
-
-	referenceDataServiceTFObjectTypes = map[string]attr.Type{
-		"retain_original_recordings": types.BoolType,
-		"update_on_reenrollment":     types.BoolType,
-		"update_on_verification":     types.BoolType,
-	}
-
 	identityRecordMatchingServiceTFObjectTypes = map[string]attr.Type{
 		"address":     types.ObjectType{AttrTypes: identityRecordMatchingFieldServiceTFObjectTypes},
 		"birth_date":  types.ObjectType{AttrTypes: identityRecordMatchingFieldServiceTFObjectTypes},
@@ -272,7 +231,6 @@ var (
 			path.MatchRelative().AtParent().AtName("liveness"),
 			path.MatchRelative().AtParent().AtName("email"),
 			path.MatchRelative().AtParent().AtName("phone"),
-			path.MatchRelative().AtParent().AtName("voice"),
 		),
 	}
 )
@@ -303,9 +261,6 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 	const attrMinDuration = 0
 	const attrMaxDurationSeconds = 1800
 	const attrMaxDurationMinutes = 30
-
-	const attrMinVoiceSamples = 3
-	const attrMaxVoiceSamples = 5
 
 	const attrMinLifetimeDurationSeconds = 60
 	const attrMaxLifetimeDurationSeconds = 1800
@@ -342,10 +297,6 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 	const defaultTransactionDuration = 30
 	const defaultTransactionDataCollectionDuration = 15
 	const defaultTransactionTimeUnit = verify.ENUMTIMEUNIT_MINUTES
-
-	const defaultVoiceSamples = 3
-	// P1 Platform does not set a traditional UUID as the default phrase ID value
-	const defaultVoicePhraseId = "exceptional_experiences"
 
 	const defaultBoolFalse = false
 	const defaultBoolTrue = true
@@ -386,37 +337,6 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 	deviceVerifyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Controls the verification requirements for an Email or Phone verification.",
 	).AllowedValuesEnum(verify.AllowedEnumVerifyEnumValues).DefaultValue(string(defaultVerify))
-
-	voiceVerifyDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Controls the verification requirements for a Voice verification.",
-	).AllowedValuesEnum(verify.AllowedEnumVerifyEnumValues).DefaultValue(string(defaultVerify))
-
-	voiceEnrollmentDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Controls if the transaction performs voice enrollment (`TRUE`) or voice verification (`FALSE`).",
-	)
-
-	voiceTexttDependentSamplesDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		fmt.Sprintf("Number of voice samples to collect. The allowed range is `%d - %d`.", attrMinVoiceSamples, attrMaxVoiceSamples),
-	)
-
-	voicePhraseIdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The identifier (UUID) of a defined `voice_phrase` to associate with the policy.",
-	)
-	voiceComparisonThresholdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Comparison threshold requirements.",
-	).AllowedValuesEnum(verify.AllowedEnumThresholdEnumValues).DefaultValue(string(defaultThreshold))
-
-	voiceLivenessThresholdDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Liveness threshold requirements.",
-	).AllowedValuesEnum(verify.AllowedEnumThresholdEnumValues).DefaultValue(string(defaultThreshold))
-
-	referenceDataUpdateOnEnrollmentDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Controls updates to user's voice reference data (voice recordings) upon user re-enrollment. If `TRUE`, new data adds to existing data. If `FALSE`, new data replaces existing data.",
-	)
-
-	referenceDataUpdateOnVerificationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"Controls updates to user's voice reference data (voice recordings) upon user verification. If `TRUE`, new data adds to existing data. If `FALSE`, new voice recordings are not retained as reference data.",
-	)
 
 	otpLifeTimeEmailDurationDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"Lifetime of the OTP delivered via email.\n" +
@@ -1423,142 +1343,6 @@ func (r *VerifyPolicyResource) Schema(ctx context.Context, req resource.SchemaRe
 				},
 			},
 
-			"voice": schema.SingleNestedAttribute{
-				Description:        "**[Deprecation notice: This field is deprecated and will be removed in a future release. Please use alternative verification methods.]** Defines the requirements for comparing a voice recording against a reference voice recording.",
-				DeprecationMessage: "Deprecation notice: This field is deprecated and will be removed in a future release. Please use alternative verification methods.",
-				Optional:           true,
-				Computed:           true,
-				Default: objectdefault.StaticValue(func() basetypes.ObjectValue {
-					o := map[string]attr.Value{
-						"samples":         types.Int32Value(defaultVoiceSamples),
-						"voice_phrase_id": types.StringValue(defaultVoicePhraseId),
-					}
-					textDependentObjValue, d := types.ObjectValue(textDependentServiceTFObjectTypes, o)
-					resp.Diagnostics.Append(d...)
-
-					o = map[string]attr.Value{
-						"retain_original_recordings": types.BoolValue(defaultBoolFalse),
-						"update_on_reenrollment":     types.BoolValue(defaultBoolTrue),
-						"update_on_verification":     types.BoolValue(defaultBoolTrue),
-					}
-					referenceDataObjValue, d := types.ObjectValue(referenceDataServiceTFObjectTypes, o)
-					resp.Diagnostics.Append(d...)
-
-					objValue, d := types.ObjectValue(voiceServiceTFObjectTypes, map[string]attr.Value{
-						"verify":               types.StringValue(string(defaultVerify)),
-						"enrollment":           types.BoolValue(defaultBoolFalse),
-						"comparison_threshold": types.StringValue(string(defaultThreshold)),
-						"liveness_threshold":   types.StringValue(string(defaultThreshold)),
-						"text_dependent":       textDependentObjValue,
-						"reference_data":       referenceDataObjValue,
-					})
-					resp.Diagnostics.Append(d...)
-
-					return objValue
-				}()),
-
-				Attributes: map[string]schema.Attribute{
-					"verify": schema.StringAttribute{
-						Description:         voiceVerifyDescription.Description,
-						MarkdownDescription: voiceVerifyDescription.MarkdownDescription,
-						Required:            true,
-						Validators: []validator.String{
-							stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumVerifyEnumValues)...),
-						},
-					},
-					"enrollment": schema.BoolAttribute{
-						Description:         voiceEnrollmentDescription.Description,
-						MarkdownDescription: voiceEnrollmentDescription.MarkdownDescription,
-						Required:            true,
-					},
-					"comparison_threshold": schema.StringAttribute{
-						Description:         voiceComparisonThresholdDescription.Description,
-						MarkdownDescription: voiceComparisonThresholdDescription.MarkdownDescription,
-						Required:            true,
-						Validators: []validator.String{
-							stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumThresholdEnumValues)...),
-						},
-					},
-					"liveness_threshold": schema.StringAttribute{
-						Description:         voiceLivenessThresholdDescription.Description,
-						MarkdownDescription: voiceLivenessThresholdDescription.MarkdownDescription,
-						Required:            true,
-						Validators: []validator.String{
-							stringvalidator.OneOf(utils.EnumSliceToStringSlice(verify.AllowedEnumThresholdEnumValues)...),
-						},
-					},
-					"text_dependent": schema.SingleNestedAttribute{
-						Description: "Object for configuration of text dependent voice verification.",
-						Optional:    true,
-						Computed:    true,
-
-						Default: objectdefault.StaticValue(types.ObjectValueMust(
-							textDependentServiceTFObjectTypes,
-							map[string]attr.Value{
-								"samples":         types.Int32Value(defaultVoiceSamples),
-								"voice_phrase_id": types.StringValue(defaultVoicePhraseId),
-							},
-						)),
-
-						Attributes: map[string]schema.Attribute{
-							"samples": schema.Int32Attribute{
-								Description:         voiceTexttDependentSamplesDescription.Description,
-								MarkdownDescription: voiceTexttDependentSamplesDescription.MarkdownDescription,
-								Required:            true,
-								Validators: []validator.Int32{
-									int32validator.Between(attrMinVoiceSamples, attrMaxVoiceSamples),
-								},
-							},
-							"voice_phrase_id": schema.StringAttribute{
-								Description:         voicePhraseIdDescription.Description,
-								MarkdownDescription: voicePhraseIdDescription.MarkdownDescription,
-								Required:            true,
-							},
-						},
-					},
-					"reference_data": schema.SingleNestedAttribute{
-						Description: "Object for configuration of voice recording reference data.",
-						Optional:    true,
-
-						Computed: true,
-
-						Default: objectdefault.StaticValue(types.ObjectValueMust(
-							referenceDataServiceTFObjectTypes,
-							map[string]attr.Value{
-								"retain_original_recordings": types.BoolValue(defaultBoolFalse),
-								"update_on_reenrollment":     types.BoolValue(defaultBoolTrue),
-								"update_on_verification":     types.BoolValue(defaultBoolTrue),
-							},
-						)),
-
-						Attributes: map[string]schema.Attribute{
-							"retain_original_recordings": schema.BoolAttribute{
-								Description: "Controls if the service stores the original voice recordings.",
-								Optional:    true,
-								Computed:    true,
-								Default:     booldefault.StaticBool(false),
-							},
-							"update_on_reenrollment": schema.BoolAttribute{
-								Description:         referenceDataUpdateOnEnrollmentDescription.Description,
-								MarkdownDescription: referenceDataUpdateOnEnrollmentDescription.MarkdownDescription,
-								Optional:            true,
-								Computed:            true,
-								Default:             booldefault.StaticBool(false),
-							},
-							"update_on_verification": schema.BoolAttribute{
-								Description:         referenceDataUpdateOnVerificationDescription.Description,
-								MarkdownDescription: referenceDataUpdateOnVerificationDescription.MarkdownDescription,
-								Optional:            true,
-								Computed:            true,
-								Default:             booldefault.StaticBool(false),
-							},
-						},
-					},
-				},
-
-				Validators: verifyPolicyOptions,
-			},
-
 			"identity_record_matching": schema.SingleNestedAttribute{
 				Description:         identityRecordMatchingDescription.Description,
 				MarkdownDescription: identityRecordMatchingDescription.MarkdownDescription,
@@ -2096,28 +1880,6 @@ func (p *verifyPolicyResourceModel) expand(ctx context.Context) (*verify.VerifyP
 		data.SetPhone(*phoneSettings)
 	}
 
-	// Voice Object
-	if !p.Voice.IsNull() && !p.Voice.IsUnknown() {
-
-		var voice voiceModel
-		d := p.Voice.As(ctx, &voice, basetypes.ObjectAsOptions{
-			UnhandledNullAsEmpty:    false,
-			UnhandledUnknownAsEmpty: false,
-		})
-		diags.Append(d...)
-		if diags.HasError() {
-			return nil, diags
-		}
-
-		voiceSettings, d := voice.expandVoiceModel(ctx)
-		diags.Append(d...)
-		if diags.HasError() {
-			return nil, diags
-		}
-
-		data.SetVoice(*voiceSettings)
-	}
-
 	// Top-level arguments
 	if !p.Name.IsNull() && !p.Name.IsUnknown() {
 		data.SetName(p.Name.ValueString())
@@ -2483,89 +2245,6 @@ func (p *deviceModel) expandDevice(ctx context.Context) (*verify.OTPDeviceConfig
 
 }
 
-func (p *voiceModel) expandVoiceModel(ctx context.Context) (*verify.VoiceConfiguration, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	voiceSettings := verify.NewVoiceConfigurationWithDefaults()
-
-	if !p.Verify.IsNull() && !p.Verify.IsUnknown() {
-		voiceSettings.SetVerify(verify.EnumVerify(p.Verify.ValueString()))
-	}
-
-	if !p.Enrollment.IsNull() && !p.Enrollment.IsUnknown() {
-		voiceSettings.SetEnrollment(p.Enrollment.ValueBool())
-	}
-
-	if !p.ComparisonThreshold.IsNull() && !p.ComparisonThreshold.IsUnknown() {
-		comparisonThreshold := verify.NewVoiceConfigurationThreshold(verify.EnumThreshold(p.ComparisonThreshold.ValueString()))
-		voiceSettings.SetComparison(*comparisonThreshold)
-	}
-
-	if !p.LivenessThreshold.IsNull() && !p.LivenessThreshold.IsUnknown() {
-		livenessThreshold := verify.NewVoiceConfigurationThreshold(verify.EnumThreshold(p.LivenessThreshold.ValueString()))
-		voiceSettings.SetLiveness(*livenessThreshold)
-	}
-
-	if !p.TextDependent.IsNull() && !p.TextDependent.IsUnknown() {
-		var textDependent textDependentModel
-		d := p.TextDependent.As(ctx, &textDependent, basetypes.ObjectAsOptions{
-			UnhandledNullAsEmpty:    false,
-			UnhandledUnknownAsEmpty: false,
-		})
-		diags.Append(d...)
-		if diags.HasError() {
-			return nil, diags
-		}
-
-		textDependentObject := verify.NewVoiceConfigurationTextDependentWithDefaults()
-		if !textDependent.PhraseId.IsNull() && !textDependent.PhraseId.IsUnknown() {
-			textDependentPhrase := verify.NewVoiceConfigurationTextDependentPhrase(textDependent.PhraseId.ValueString())
-			textDependentObject.SetPhrase(*textDependentPhrase)
-		}
-
-		if !textDependent.Samples.IsNull() && !textDependent.Samples.IsUnknown() {
-			textDependentObject.SetSamples(textDependent.Samples.ValueInt32())
-		}
-		voiceSettings.SetTextDependent(*textDependentObject)
-	}
-
-	if !p.ReferenceData.IsNull() && !p.ReferenceData.IsUnknown() {
-		var referenceData referenceDataModel
-		d := p.ReferenceData.As(ctx, &referenceData, basetypes.ObjectAsOptions{
-			UnhandledNullAsEmpty:    false,
-			UnhandledUnknownAsEmpty: false,
-		})
-		diags.Append(d...)
-		if diags.HasError() {
-			return nil, diags
-		}
-
-		referenceDataObject := verify.NewVoiceConfigurationReferenceDataWithDefaults()
-		if !referenceData.RetainOriginalRecordings.IsNull() && !referenceData.RetainOriginalRecordings.IsUnknown() {
-			referenceDataObject.SetRetainOriginalRecordings(referenceData.RetainOriginalRecordings.ValueBool())
-		}
-
-		if !referenceData.UpdateOnReenrollment.IsNull() && !referenceData.UpdateOnReenrollment.IsUnknown() {
-			referenceDataObject.SetUpdateOnReenrollment(referenceData.UpdateOnReenrollment.ValueBool())
-		}
-
-		if !referenceData.UpdateOnRVerification.IsNull() && !referenceData.UpdateOnRVerification.IsUnknown() {
-			referenceDataObject.SetUpdateOnVerification(referenceData.UpdateOnRVerification.ValueBool())
-		}
-
-		voiceSettings.SetReferenceData(*referenceDataObject)
-	}
-
-	if voiceSettings == nil {
-		diags.AddError(
-			"Unexpected Value",
-			"Voice configuration object was unexpectedly null on expansion.  Please report this to the provider maintainers.",
-		)
-	}
-	return voiceSettings, diags
-
-}
-
 func (p *identityRecordMatchingModel) expandIdentityRecordMatching(ctx context.Context) (*verify.IdentityRecordMatching, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -2701,9 +2380,6 @@ func (p *verifyPolicyResourceModel) toState(apiObject *verify.VerifyPolicy) diag
 	diags.Append(d...)
 
 	p.Transaction, d = p.toStateTransaction(apiObject.GetTransactionOk())
-	diags.Append(d...)
-
-	p.Voice, d = p.toStateVoice(apiObject.GetVoiceOk())
 	diags.Append(d...)
 
 	p.IdentityRecordMatching, d = p.toStateIdentityRecordMatching(apiObject.GetIdentityRecordMatchingOk())
@@ -2952,71 +2628,6 @@ func (p *verifyPolicyResourceModel) toStateDevice(apiObject *verify.OTPDeviceCon
 		"verify":            framework.EnumOkToTF(apiObject.GetVerifyOk()),
 		"create_mfa_device": framework.BoolOkToTF(apiObject.GetCreateMfaDeviceOk()),
 		"otp":               otp,
-	})
-	diags.Append(d...)
-
-	return objValue, diags
-}
-
-func (p *verifyPolicyResourceModel) toStateVoice(apiObject *verify.VoiceConfiguration, ok bool) (basetypes.ObjectValue, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	if !ok || apiObject == nil {
-		return types.ObjectNull(voiceServiceTFObjectTypes), diags
-	}
-
-	textDependent := types.ObjectNull(textDependentServiceTFObjectTypes)
-	if v, ok := apiObject.GetTextDependentOk(); ok {
-		var d diag.Diagnostics
-
-		o := map[string]attr.Value{
-			"samples":         framework.Int32OkToTF(v.GetSamplesOk()),
-			"voice_phrase_id": framework.StringToTF(v.GetPhrase().Id),
-		}
-		objValue, d := types.ObjectValue(textDependentServiceTFObjectTypes, o)
-		diags.Append(d...)
-
-		textDependent = objValue
-	}
-
-	referenceData := types.ObjectNull(referenceDataServiceTFObjectTypes)
-	if v, ok := apiObject.GetReferenceDataOk(); ok {
-		var d diag.Diagnostics
-
-		o := map[string]attr.Value{
-			"retain_original_recordings": framework.BoolOkToTF(v.GetRetainOriginalRecordingsOk()),
-			"update_on_reenrollment":     framework.BoolOkToTF(v.GetUpdateOnReenrollmentOk()),
-			"update_on_verification":     framework.BoolOkToTF(v.GetUpdateOnVerificationOk()),
-		}
-		objValue, d := types.ObjectValue(referenceDataServiceTFObjectTypes, o)
-		diags.Append(d...)
-
-		referenceData = objValue
-	}
-
-	comparisonThreshold := types.StringNull()
-	if v, ok := apiObject.GetComparisonOk(); ok {
-		if t, ok := v.GetThresholdOk(); ok {
-			comparisonThreshold = framework.EnumToTF(t)
-		}
-
-	}
-
-	livenessThreshold := types.StringNull()
-	if v, ok := apiObject.GetLivenessOk(); ok {
-		if t, ok := v.GetThresholdOk(); ok {
-			livenessThreshold = framework.EnumToTF(t)
-		}
-
-	}
-
-	objValue, d := types.ObjectValue(voiceServiceTFObjectTypes, map[string]attr.Value{
-		"verify":               framework.EnumOkToTF(apiObject.GetVerifyOk()),
-		"enrollment":           framework.BoolOkToTF(apiObject.GetEnrollmentOk()),
-		"comparison_threshold": comparisonThreshold,
-		"liveness_threshold":   livenessThreshold,
-		"text_dependent":       textDependent,
-		"reference_data":       referenceData,
 	})
 	diags.Append(d...)
 
