@@ -15,8 +15,6 @@ type serviceClientType struct {
 func Resources() []func() resource.Resource {
 	resources := []func() resource.Resource{
 		NewVerifyPolicyResource,
-		NewVoicePhraseResource,
-		NewVoicePhraseContentResource,
 	}
 	resources = append(resources, BetaResources()...)
 
@@ -27,9 +25,6 @@ func DataSources() []func() datasource.DataSource {
 	dataSources := []func() datasource.DataSource{
 		NewVerifyPolicyDataSource,
 		NewVerifyPoliciesDataSource,
-		NewVoicePhraseDataSource,
-		NewVoicePhraseContentDataSource,
-		NewVoicePhraseContentsDataSource,
 	}
 	dataSources = append(dataSources, BetaDataSources()...)
 

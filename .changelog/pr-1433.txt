@@ -5,3 +5,23 @@
 ```release-note:breaking-change
 `data-source/pingone_verify_policy`: Removed the `voice` attribute which is no longer supported by the PingOne API.
 ```
+
+```release-note:breaking-change
+`resource/pingone_verify_voice_phrase`: The previously deprecated `pingone_verify_voice_phrase` resource has been removed as the underlying API is no longer supported by the PingOne API.
+```
+
+```release-note:breaking-change
+`resource/pingone_verify_voice_phrase_content`: The previously deprecated `pingone_verify_voice_phrase_content` resource has been removed as the underlying API is no longer supported by the PingOne API.
+```
+
+```release-note:breaking-change
+`data-source/pingone_verify_voice_phrase`: The previously deprecated `pingone_verify_voice_phrase` data source has been removed as the underlying API is no longer supported by the PingOne API.
+```
+
+```release-note:breaking-change
+`data-source/pingone_verify_voice_phrase_content`: The previously deprecated `pingone_verify_voice_phrase_content` data source has been removed as the underlying API is no longer supported by the PingOne API.
+```
+
+```release-note:breaking-change
+`data-source/pingone_verify_voice_phrase_contents`: The previously deprecated `pingone_verify_voice_phrase_contents` data source has been removed as the underlying API is no longer supported by the PingOne API.
+```
