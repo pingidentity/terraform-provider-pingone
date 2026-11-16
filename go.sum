@@ -754,8 +754,8 @@ github.com/pingidentity/pingone-go-sdk-legacy/management v0.83.0 h1:SuHCHdBFVP/a
 github.com/pingidentity/pingone-go-sdk-legacy/management v0.83.0/go.mod h1:nHDVrarIkDZCTPtflkN17AbzV98PfLw4wkJBtTabxxA=
 github.com/pingidentity/pingone-go-sdk-legacy/mfa v0.28.0 h1:7dXTpXWnGeSE4R/fmb50QUENeTSCEyqOm+zFBkFSCNI=
 github.com/pingidentity/pingone-go-sdk-legacy/mfa v0.28.0/go.mod h1:d1F1GF5yR/i6KLPfC0yYzllEzZRVOSu78VI7qifoyxg=
-github.com/pingidentity/pingone-go-sdk-legacy/risk v0.24.0 h1:+NMMPL2fSfJesZwO2UAwOcdUcq4I/SE6Ccf3LkfawWQ=
-github.com/pingidentity/pingone-go-sdk-legacy/risk v0.24.0/go.mod h1:yhktkwh+fFyJQYnm0ulEFCLQ76pf4ruhgubOT/Vz9tQ=
+github.com/pingidentity/pingone-go-sdk-legacy/risk v0.25.0 h1:he2mCW5c42FL00Z1WXTFwCurR4h8/EUjKux6xDXHSMg=
+github.com/pingidentity/pingone-go-sdk-legacy/risk v0.25.0/go.mod h1:yhktkwh+fFyJQYnm0ulEFCLQ76pf4ruhgubOT/Vz9tQ=
 github.com/pingidentity/pingone-go-sdk-legacy/verify v0.13.0 h1:5xODCR3Ju8tYYRI2RCZCK9lrsN+sh5jfa12SwVV8p00=
 github.com/pingidentity/pingone-go-sdk-legacy/verify v0.13.0/go.mod h1:hmNiTYY0F1nn9h2hlWrU4xir4fshvTUPOwa3DlckSTU=
 github.com/pjbgf/sha1cd v0.6.0 h1:3WJ8Wz8gvDz29quX1OcEmkAlUg9diU4GxJHqs0/XiwU=
