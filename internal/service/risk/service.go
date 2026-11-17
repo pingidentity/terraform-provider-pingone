@@ -16,6 +16,7 @@ func Resources() []func() resource.Resource {
 	resources := []func() resource.Resource{
 		NewRiskPolicyResource,
 		NewRiskPredictorResource,
+		NewRiskSettingsResource,
 	}
 	resources = append(resources, BetaResources()...)
 
