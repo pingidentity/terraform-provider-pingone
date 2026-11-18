@@ -1,0 +1,3 @@
+```release-note:enhancement
+resource/pingone_resource: Added support for the `PRIVATE_KEY_JWT` and `CLIENT_SECRET_JWT` introspect endpoint auth methods, with new `jwks` and `jwks_url` attributes
+```

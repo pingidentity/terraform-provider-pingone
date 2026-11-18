@@ -44,7 +44,9 @@ data "pingone_resource" "example_by_id" {
 - `audience` (String) A string that specifies a URL without a fragment or `@ObjectName` and must not contain `pingone` or `pingidentity` (for example, `https://api.myresource.com`). If a URL is not specified, the resource name is used.
 - `description` (String) A description of the resource.
 - `id` (String) The ID of this resource.
-- `introspect_endpoint_auth_method` (String) The client authentication methods supported by the token endpoint.  Options are `CLIENT_SECRET_BASIC`, `CLIENT_SECRET_POST`, `NONE`.
+- `introspect_endpoint_auth_method` (String) The authentication methods supported by the token endpoint.  Options are `CLIENT_SECRET_BASIC`, `CLIENT_SECRET_JWT`, `CLIENT_SECRET_POST`, `NONE`, `PRIVATE_KEY_JWT`.
+- `jwks` (String) A string that specifies the JSON Web Key Set (JWKS) associated with the resource. This property is required when `introspect_endpoint_auth_method` is `PRIVATE_KEY_JWT` and the `jwks_url` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-private_key_jwt-jwks-string).
+- `jwks_url` (String) A string that specifies the URL of the `jwks` value specified for the resource. This property is required when `introspect_endpoint_auth_method` is `PRIVATE_KEY_JWT` and the `jwks` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-private_key_jwt-jwks-string).
 - `type` (String) A string that specifies the type of resource.  Options are `CUSTOM` (specifies the a resource that has been created by admin), `OPENID_CONNECT` (specifies the built-in platform resource for OpenID Connect), `PINGONE_API` (specifies the built-in platform resource for PingOne).
 
 <a id="nestedatt--application_permissions_settings"></a>

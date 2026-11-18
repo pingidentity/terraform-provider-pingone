@@ -299,6 +299,154 @@ func TestAccResource_BadParameters(t *testing.T) {
 	})
 }
 
+func TestAccResource_Jwks(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_resource.%s", resourceName)
+
+	name := resourceName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckNoTestAccFlaky(t)
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             sso.Resource_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Configure with jwks
+			{
+				Config: testAccResourceConfig_Jwks(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+					resource.TestCheckResourceAttr(resourceFullName, "introspect_endpoint_auth_method", "PRIVATE_KEY_JWT"),
+					resource.TestCheckResourceAttr(resourceFullName, "jwks", testAccResourceJwksString),
+				),
+			},
+			// Switch to jwks_url
+			{
+				Config: testAccResourceConfig_JwksUrl(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+					resource.TestCheckResourceAttr(resourceFullName, "introspect_endpoint_auth_method", "PRIVATE_KEY_JWT"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "jwks"),
+					resource.TestCheckResourceAttr(resourceFullName, "jwks_url", "https://example.com/.well-known/jwks.json"),
+				),
+			},
+			// Revert to default auth method without jwks attributes
+			{
+				Config: testAccResourceConfig_Minimal(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "name", name),
+					resource.TestCheckResourceAttr(resourceFullName, "introspect_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "jwks"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "jwks_url"),
+				),
+			},
+			// Errors: PRIVATE_KEY_JWT with neither jwks nor jwks_url
+			{
+				Config:      testAccResourceConfig_JwksNeither(resourceName, name),
+				ExpectError: regexp.MustCompile(`jwksUrl or jwks is required when introspectEndpointAuthMethod=PRIVATE_KEY_JWT`),
+			},
+			// Errors: both jwks and jwks_url set
+			{
+				Config:      testAccResourceConfig_JwksBoth(resourceName, name),
+				ExpectError: regexp.MustCompile(`Invalid Attribute Combination`),
+			},
+			// Revert to a valid minimal config so the post-test destroy does not
+			// re-render the conflicting-attributes config from the error step above
+			{
+				Config: testAccResourceConfig_Minimal(resourceName, name),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceFullName, "introspect_endpoint_auth_method", "CLIENT_SECRET_BASIC"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "jwks"),
+					resource.TestCheckNoResourceAttr(resourceFullName, "jwks_url"),
+				),
+			},
+		},
+	})
+}
+
+// testAccResourceJwksString is the expected state value of the `jwks`
+// attribute when configured with testAccResourceJwksConfig (jsonencode of the
+// fixture JWKS below).
+const testAccResourceJwksString = `{"keys":[{"alg":"RS256","e":"AQAB","kid":"cdi1443-test","kty":"RSA","n":"0vx7agoebGcQSuuPiLJXZptN9nndrQmbXEps2aiAFbWhM78LhWx4cbbfAAtb0CmzzzyYV8dBnrKamTmULCcBLine1V2d70uH7jXGNKLBaaNjZjxBUxQXKFCpbmHBcjW1z5IbjgkG9ESj8STbLIimSbvW7wPE_Td0dzRRPUHMYu7YmC3RLWkv12M7O4MTFGM9vLhUdAD0msh0uDdrEBFQ0dO7YbXCHJ1FFG6gJXf9cmU3g8PLAETWdanT6wT36B0-HmF4FCYUktLXBGikmLQyqxCYBNfPTGqbUc0ETzAToZg2yx3TFW1hQxTVBwOq0ephT6who7IW38SyLv0WaBSG27Z9c9TH0mp2OqSjIiFfr7XcvKX8Q"}]}`
+
+const testAccResourceJwksConfig = `jsonencode({
+    keys = [
+      {
+        alg = "RS256"
+        e   = "AQAB"
+        kid = "cdi1443-test"
+        kty = "RSA"
+        n   = "0vx7agoebGcQSuuPiLJXZptN9nndrQmbXEps2aiAFbWhM78LhWx4cbbfAAtb0CmzzzyYV8dBnrKamTmULCcBLine1V2d70uH7jXGNKLBaaNjZjxBUxQXKFCpbmHBcjW1z5IbjgkG9ESj8STbLIimSbvW7wPE_Td0dzRRPUHMYu7YmC3RLWkv12M7O4MTFGM9vLhUdAD0msh0uDdrEBFQ0dO7YbXCHJ1FFG6gJXf9cmU3g8PLAETWdanT6wT36B0-HmF4FCYUktLXBGikmLQyqxCYBNfPTGqbUc0ETzAToZg2yx3TFW1hQxTVBwOq0ephT6who7IW38SyLv0WaBSG27Z9c9TH0mp2OqSjIiFfr7XcvKX8Q"
+      },
+    ]
+  })`
+
+func testAccResourceConfig_Jwks(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_resource" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  introspect_endpoint_auth_method = "PRIVATE_KEY_JWT"
+
+  jwks = %s
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, testAccResourceJwksConfig)
+}
+
+func testAccResourceConfig_JwksUrl(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_resource" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  introspect_endpoint_auth_method = "PRIVATE_KEY_JWT"
+
+  jwks_url = "https://example.com/.well-known/jwks.json"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccResourceConfig_JwksNeither(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_resource" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  introspect_endpoint_auth_method = "PRIVATE_KEY_JWT"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccResourceConfig_JwksBoth(resourceName, name string) string {
+	return fmt.Sprintf(`
+		%[1]s
+
+resource "pingone_resource" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  introspect_endpoint_auth_method = "PRIVATE_KEY_JWT"
+
+  jwks = %s
+
+  jwks_url = "https://example.com/.well-known/jwks.json"
+}`, acctest.GenericSandboxEnvironment(), resourceName, name, testAccResourceJwksConfig)
+}
+
 func testAccResourceConfig_NewEnv(environmentName, licenseID, resourceName, name string) string {
 	return fmt.Sprintf(`
 		%[1]s

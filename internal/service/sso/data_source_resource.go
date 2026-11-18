@@ -33,6 +33,8 @@ type ResourceDataSourceModel struct {
 	AccessTokenValiditySeconds     types.Int32                  `tfsdk:"access_token_validity_seconds"`
 	ApplicationPermissionsSettings types.Object                 `tfsdk:"application_permissions_settings"`
 	IntrospectEndpointAuthMethod   types.String                 `tfsdk:"introspect_endpoint_auth_method"`
+	Jwks                           types.String                 `tfsdk:"jwks"`
+	JwksUrl                        types.String                 `tfsdk:"jwks_url"`
 }
 
 // Framework interfaces
@@ -76,8 +78,16 @@ func (r *ResourceDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 	)
 
 	introspectEndpointAuthMethodDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"The client authentication methods supported by the token endpoint",
+		"The authentication methods supported by the token endpoint",
 	).AllowedValuesEnum(management.AllowedEnumResourceIntrospectEndpointAuthMethodEnumValues)
+
+	jwksDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the JSON Web Key Set (JWKS) associated with the resource. This property is required when `introspect_endpoint_auth_method` is `PRIVATE_KEY_JWT` and the `jwks_url` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-private_key_jwt-jwks-string).",
+	)
+
+	jwksUrlDescription := framework.SchemaAttributeDescriptionFromMarkdown(
+		"A string that specifies the URL of the `jwks` value specified for the resource. This property is required when `introspect_endpoint_auth_method` is `PRIVATE_KEY_JWT` and the `jwks` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-private_key_jwt-jwks-string).",
+	)
 
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
@@ -139,6 +149,18 @@ func (r *ResourceDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 			"introspect_endpoint_auth_method": schema.StringAttribute{
 				Description:         introspectEndpointAuthMethodDescription.Description,
 				MarkdownDescription: introspectEndpointAuthMethodDescription.MarkdownDescription,
+				Computed:            true,
+			},
+
+			"jwks": schema.StringAttribute{
+				Description:         jwksDescription.Description,
+				MarkdownDescription: jwksDescription.MarkdownDescription,
+				Computed:            true,
+			},
+
+			"jwks_url": schema.StringAttribute{
+				Description:         jwksUrlDescription.Description,
+				MarkdownDescription: jwksUrlDescription.MarkdownDescription,
 				Computed:            true,
 			},
 
@@ -254,6 +276,9 @@ func (p *ResourceDataSourceModel) toState(apiObject *management.Resource) diag.D
 	diags.Append(d...)
 
 	p.IntrospectEndpointAuthMethod = framework.EnumOkToTF(apiObject.GetIntrospectEndpointAuthMethodOk())
+
+	p.Jwks = framework.StringOkToTF(apiObject.GetJwksOk())
+	p.JwksUrl = framework.StringOkToTF(apiObject.GetJwksUrlOk())
 
 	return diags
 }
