@@ -5,6 +5,12 @@ permissions:
 on:
   issues:
     types: [opened]
+  workflow_dispatch:
+    inputs:
+      issue_title:
+        description: "Sample issue title (include special chars to test escaping)"
+        required: false
+        default: "Test issue: *bold*, _italic_, `code`, <angle> brackets, ~strikethrough~"
 
 jobs:
   send-notification:
@@ -24,9 +30,9 @@ jobs:
       - name: Send notification to Slack
         env:
           SLACK_NOTIFY_TO_CDI_JIRA_WEBHOOK: ${{ secrets.SLACK_NOTIFY_TO_CDI_JIRA_WEBHOOK }}
-          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_TITLE: ${{ github.event.issue.title || inputs.issue_title }}
           REPOSITORY_NAME: ${{ github.repository }}
-          GITHUB_EVENT_ISSUE_HTML_URL: ${{ github.event.issue.html_url }}
+          GITHUB_EVENT_ISSUE_HTML_URL: ${{ github.event.issue.html_url || 'https://github.com/pingidentity/terraform-provider-pingone/issues/0' }}
         run: |
           python <<'EOF'
           import os
