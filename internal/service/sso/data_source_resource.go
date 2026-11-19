@@ -82,11 +82,11 @@ func (r *ResourceDataSource) Schema(ctx context.Context, req datasource.SchemaRe
 	).AllowedValuesEnum(management.AllowedEnumResourceIntrospectEndpointAuthMethodEnumValues)
 
 	jwksDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies the JSON Web Key Set (JWKS) associated with the resource. This property is required when `introspect_endpoint_auth_method` is `PRIVATE_KEY_JWT` and the `jwks_url` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-private_key_jwt-jwks-string).",
+		"A string that specifies the JSON Web Key Set (JWKS) associated with the resource. This property is required when `introspect_endpoint_auth_method` is `PRIVATE_KEY_JWT` and the `jwks_url` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://developer.pingidentity.com/pingone-api/auth/auth-config-options/create-a-private-key-jwt-property-jwt.html).",
 	)
 
 	jwksUrlDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies the URL of the `jwks` value specified for the resource. This property is required when `introspect_endpoint_auth_method` is `PRIVATE_KEY_JWT` and the `jwks` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-private_key_jwt-jwks-string).",
+		"A string that specifies the URL of the `jwks` value specified for the resource. This property is required when `introspect_endpoint_auth_method` is `PRIVATE_KEY_JWT` and the `jwks` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://developer.pingidentity.com/pingone-api/auth/auth-config-options/create-a-private-key-jwt-property-jwt.html).",
 	)
 
 	resp.Schema = schema.Schema{

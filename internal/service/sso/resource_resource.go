@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int32validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -109,11 +108,11 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 	).AllowedValuesEnum(management.AllowedEnumResourceIntrospectEndpointAuthMethodEnumValues).DefaultValue(string(management.ENUMRESOURCEINTROSPECTENDPOINTAUTHMETHOD_CLIENT_SECRET_BASIC)).AppendMarkdownString("Applicable only to custom resources.").AppendMarkdownString(fmt.Sprintf("When `%s` is configured, either `jwks` or `jwks_url` must also be configured.", string(management.ENUMRESOURCEINTROSPECTENDPOINTAUTHMETHOD_PRIVATE_KEY_JWT)))
 
 	jwksDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies the JSON Web Key Set (JWKS) associated with the resource. This property is required when `introspect_endpoint_auth_method` is `PRIVATE_KEY_JWT` and the `jwks_url` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-private_key_jwt-jwks-string).",
+		"A string that specifies the JSON Web Key Set (JWKS) associated with the resource. This property is required when `introspect_endpoint_auth_method` is `PRIVATE_KEY_JWT` and the `jwks_url` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://developer.pingidentity.com/pingone-api/auth/auth-config-options/create-a-private-key-jwt-property-jwt.html).",
 	).ConflictsWith([]string{"jwks_url"})
 
 	jwksUrlDescription := framework.SchemaAttributeDescriptionFromMarkdown(
-		"A string that specifies the URL of the `jwks` value specified for the resource. This property is required when `introspect_endpoint_auth_method` is `PRIVATE_KEY_JWT` and the `jwks` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://apidocs.pingidentity.com/pingone/platform/v1/api/#create-a-private_key_jwt-jwks-string).",
+		"A string that specifies the URL of the `jwks` value specified for the resource. This property is required when `introspect_endpoint_auth_method` is `PRIVATE_KEY_JWT` and the `jwks` property is empty. For more information, see [Create a private_key_jwt JWKS string](https://developer.pingidentity.com/pingone-api/auth/auth-config-options/create-a-private-key-jwt-property-jwt.html).",
 	).ConflictsWith([]string{"jwks"})
 
 	applicationPermissionsSettingsDescription := framework.SchemaAttributeDescriptionFromMarkdown(
@@ -214,7 +213,7 @@ func (r *ResourceResource) Schema(ctx context.Context, req resource.SchemaReques
 					stringvalidator.ConflictsWith(
 						path.MatchRoot("jwks"),
 					),
-					stringvalidator.RegexMatches(regexp.MustCompile(`^(https:\/\/).*`), "Expected value to have a url with schema of \"https\"."),
+					stringvalidatorinternal.IsURLWithHTTPSValidator(),
 				},
 			},
 
