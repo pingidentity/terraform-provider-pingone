@@ -1374,6 +1374,8 @@ func TestAccRiskPolicy_Mitigations(t *testing.T) {
 		resource.TestCheckResourceAttr(resourceFullName, "fallback.action", "DENY"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "mitigations.#"),
 		resource.TestCheckNoResourceAttr(resourceFullName, "targets.%"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "policy_scores.%"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "policy_weights.%"),
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -1430,6 +1432,122 @@ func TestAccRiskPolicy_Mitigations(t *testing.T) {
 			{
 				Config: testAccRiskPolicyConfig_Mitigations_Full(resourceName, name),
 				Check:  fullCheck,
+			},
+			// Test importing the resource
+			{
+				ResourceName: resourceFullName,
+				ImportStateIdFunc: func() resource.ImportStateIdFunc {
+					return func(s *terraform.State) (string, error) {
+						rs, ok := s.RootModule().Resources[resourceFullName]
+						if !ok {
+							return "", fmt.Errorf("resource not found: %s", resourceFullName)
+						}
+
+						return fmt.Sprintf("%s/%s", rs.Primary.Attributes["environment_id"], rs.Primary.ID), nil
+					}
+				}(),
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+// TestAccRiskPolicy_MitigationsOnly covers mitigation-only policy sets (no
+// policy_weights / policy_scores blocks), as supported on MFA-only licensed
+// environments and used by the environment's default fallback policy.
+func TestAccRiskPolicy_MitigationsOnly(t *testing.T) {
+	t.Parallel()
+
+	resourceName := acctest.ResourceNameGen()
+	resourceFullName := fmt.Sprintf("pingone_risk_policy.%s", resourceName)
+
+	name := resourceName
+
+	minimalCheck := resource.ComposeTestCheckFunc(
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckResourceAttr(resourceFullName, "name", name),
+		resource.TestCheckResourceAttr(resourceFullName, "mitigations.#", "2"),
+		resource.TestCheckResourceAttr(resourceFullName, "mitigations.0.name", "anonymousNetwork"),
+		resource.TestCheckResourceAttr(resourceFullName, "mitigations.0.priority", "1"),
+		resource.TestCheckResourceAttr(resourceFullName, "mitigations.0.action", "DENY"),
+		resource.TestCheckResourceAttr(resourceFullName, "mitigations.1.name", "geoVelocity"),
+		resource.TestCheckResourceAttr(resourceFullName, "mitigations.1.priority", "2"),
+		resource.TestCheckResourceAttr(resourceFullName, "mitigations.1.action", "DENY"),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "mitigations.*", map[string]string{
+			"name":                                "anonymousNetwork",
+			"action":                              "DENY",
+			"condition.type":                      "VALUE_COMPARISON",
+			"condition.equals":                    "HIGH",
+			"condition.compact_name":              "anonymousNetwork",
+			"condition.predictor_reference_value": "${details.anonymousNetwork.level}",
+		}),
+		resource.TestCheckTypeSetElemNestedAttrs(resourceFullName, "mitigations.*", map[string]string{
+			"name":                                "geoVelocity",
+			"action":                              "DENY",
+			"condition.type":                      "VALUE_COMPARISON",
+			"condition.equals":                    "HIGH",
+			"condition.compact_name":              "geoVelocity",
+			"condition.predictor_reference_value": "${details.geoVelocity.level}",
+		}),
+		resource.TestCheckResourceAttr(resourceFullName, "fallback.action", "DENY"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "policy_scores.%"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "policy_weights.%"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "overrides.#"),
+	)
+
+	fallbackOnlyCheck := resource.ComposeTestCheckFunc(
+		resource.TestMatchResourceAttr(resourceFullName, "id", verify.P1ResourceIDRegexpFullString),
+		resource.TestMatchResourceAttr(resourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
+		resource.TestCheckResourceAttr(resourceFullName, "name", name),
+		resource.TestCheckResourceAttr(resourceFullName, "fallback.action", "DENY"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "mitigations.#"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "targets.%"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "policy_scores.%"),
+		resource.TestCheckNoResourceAttr(resourceFullName, "policy_weights.%"),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.PreCheckTestAccFlaky(t) // PND-5900: policy PUT reverts to previous config on next GET, leaving a non-empty refresh plan
+			acctest.PreCheckClient(t)
+			acctest.PreCheckNoBeta(t)
+		},
+		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
+		CheckDestroy:             risk.RiskPolicy_CheckDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t),
+		Steps: []resource.TestStep{
+			// Mitigations only
+			{
+				Config: testAccRiskPolicyConfig_MitigationsOnly_Minimal(resourceName, name),
+				Check:  minimalCheck,
+			},
+			{
+				Config:  testAccRiskPolicyConfig_MitigationsOnly_Minimal(resourceName, name),
+				Destroy: true,
+			},
+			// Scores -> mitigations-only transition (no aggregated conditions in the PUT)
+			{
+				Config: testAccRiskPolicyConfig_Mitigations_Minimal(resourceName, name),
+				Check:  resource.TestCheckResourceAttr(resourceFullName, "policy_scores.%", "3"),
+			},
+			{
+				Config: testAccRiskPolicyConfig_MitigationsOnly_Minimal(resourceName, name),
+				Check:  minimalCheck,
+			},
+			{
+				Config:  testAccRiskPolicyConfig_MitigationsOnly_Minimal(resourceName, name),
+				Destroy: true,
+			},
+			// Fallback only (mirrors the environment's default fallback policy shape)
+			{
+				Config: testAccRiskPolicyConfig_Mitigations_FallbackOnly(resourceName, name),
+				Check:  fallbackOnlyCheck,
+			},
+			{
+				Config: testAccRiskPolicyConfig_MitigationsOnly_Minimal(resourceName, name),
+				Check:  minimalCheck,
 			},
 			// Test importing the resource
 			{
@@ -1519,6 +1637,11 @@ func TestAccRiskPolicy_MitigationsValidation(t *testing.T) {
 			{
 				Config:      testAccRiskPolicyConfig_Mitigations_EmptyOverrides(resourceName, name),
 				ExpectError: regexp.MustCompile(`Attribute overrides (list|set) must contain at least 1 elements`),
+			},
+			// Mutual exclusion: policy_weights + policy_scores
+			{
+				Config:      testAccRiskPolicyConfig_MitigationsOnly_ScoresAndWeights(resourceName, name),
+				ExpectError: regexp.MustCompile(`Attribute "(policy_scores|policy_weights)" cannot be specified when`),
 			},
 		},
 	})
@@ -2234,6 +2357,76 @@ resource "pingone_risk_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
 
   name = "%[3]s"
+
+  fallback = {
+    action = "DENY"
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+// Mitigation-only configurations (no policy_weights / policy_scores blocks),
+// as supported on MFA-only licensed environments.
+func testAccRiskPolicyConfig_MitigationsOnly_Minimal(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  mitigations = [
+    {
+      action = "DENY"
+
+      condition = {
+        type         = "VALUE_COMPARISON"
+        compact_name = "anonymousNetwork"
+        equals       = "HIGH"
+      }
+    },
+    {
+      action = "DENY"
+
+      condition = {
+        type         = "VALUE_COMPARISON"
+        compact_name = "geoVelocity"
+        equals       = "HIGH"
+      }
+    }
+  ]
+
+  fallback = {
+    action = "DENY"
+  }
+}`, acctest.GenericSandboxEnvironment(), resourceName, name)
+}
+
+func testAccRiskPolicyConfig_MitigationsOnly_ScoresAndWeights(resourceName, name string) string {
+	return fmt.Sprintf(`
+	%[1]s
+
+resource "pingone_risk_policy" "%[2]s" {
+  environment_id = data.pingone_environment.general_test.id
+
+  name = "%[3]s"
+
+  policy_weights = {
+    policy_threshold_medium = {
+      min_score = 30
+    }
+
+    policy_threshold_high = {
+      min_score = 70
+    }
+
+    predictors = [
+      {
+        compact_name = "ipRisk"
+        weight       = 5
+      }
+    ]
+  }
 
   policy_scores = {
     policy_threshold_medium = {
