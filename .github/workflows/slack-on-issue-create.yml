@@ -5,9 +5,6 @@ permissions:
 on:
   issues:
     types: [opened]
-  push:
-    branches:
-      - FixSlackIssueWorkflow  # TEMP: test trigger, remove before merge
   workflow_dispatch:
     inputs:
       issue_title:
