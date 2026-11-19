@@ -2094,19 +2094,12 @@ func (p *riskPolicyResourceModel) expand(ctx context.Context, apiClient *risk.AP
 	// (for example on MFA-only licenses) must not carry AGGREGATED_* conditions,
 	// which are unlicensed without PingOne Protect.
 	if policyBackboneConfigured {
-		// The backbone policies are appended last; their priorities follow the
-		// mitigation/override entries already collected.
-		backbonePriority := int32(1)
-		for range riskPolicies {
-			backbonePriority++
-		}
-
 		// Medium Weighted Policy
 		mwpResult := risk.NewRiskPolicyResult()
 		mwpResult.SetLevel(risk.ENUMRISKLEVEL_MEDIUM)
 		mwp := *risk.NewRiskPolicy("MEDIUM_WEIGHTED_POLICY", *mwpResult)
 		mwp.SetCondition(*mediumPolicyCondition)
-		mwp.SetPriority(backbonePriority)
+		mwp.SetPriority(int32(len(riskPolicies)) + 1)
 		riskPolicies = append(riskPolicies, mwp)
 
 		// High Weighted Policy
@@ -2114,8 +2107,7 @@ func (p *riskPolicyResourceModel) expand(ctx context.Context, apiClient *risk.AP
 		hwpResult.SetLevel(risk.ENUMRISKLEVEL_HIGH)
 		hwp := *risk.NewRiskPolicy("HIGH_WEIGHTED_POLICY", *hwpResult)
 		hwp.SetCondition(*highPolicyCondition)
-		backbonePriority++
-		hwp.SetPriority(backbonePriority)
+		hwp.SetPriority(int32(len(riskPolicies)) + 1)
 		riskPolicies = append(riskPolicies, hwp)
 	}
 
