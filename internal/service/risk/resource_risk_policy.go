@@ -323,7 +323,7 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 	// Weighted Average Policy
 	policyWeightedAverageDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that describes settings for a risk policy using a weighted average calculation, with a final result being a risk score between `0` and `10`.",
-	).ExactlyOneOf([]string{"policy_weights", "policy_scores"})
+	).AppendMarkdownString("Required when configuring weighted-average risk evaluation.  Omit both `policy_weights` and `policy_scores` to define a mitigation-only policy set (for example, for MFA-only licenses or the environment's default fallback policy).")
 
 	policyWeightedAveragePredictor := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that describes a predictor to apply to the risk policy and its associated weight value for the overall weighted average risk calculation.",
@@ -332,7 +332,7 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 	// Scores policy
 	policyScoresDescription := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that describes settings for a risk policy calculated by aggregating score values, with a final result being the sum of score values from each of the configured predictors.",
-	).ExactlyOneOf([]string{"policy_weights", "policy_scores"})
+	).AppendMarkdownString("Required when configuring aggregated-score risk evaluation.  Omit both `policy_weights` and `policy_scores` to define a mitigation-only policy set (for example, for MFA-only licenses or the environment's default fallback policy).")
 
 	policyScoresPredictor := framework.SchemaAttributeDescriptionFromMarkdown(
 		"An object that describes a predictor to apply to the risk policy and its associated high risk / true outcome score to apply to the risk calculation.",
@@ -577,8 +577,7 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 				},
 
 				Validators: []validator.Object{
-					objectvalidator.ExactlyOneOf(
-						path.MatchRelative().AtParent().AtName("policy_weights"),
+					objectvalidator.ConflictsWith(
 						path.MatchRelative().AtParent().AtName("policy_scores"),
 					),
 				},
@@ -651,9 +650,8 @@ func (r *RiskPolicyResource) Schema(ctx context.Context, req resource.SchemaRequ
 				},
 
 				Validators: []validator.Object{
-					objectvalidator.ExactlyOneOf(
+					objectvalidator.ConflictsWith(
 						path.MatchRelative().AtParent().AtName("policy_weights"),
-						path.MatchRelative().AtParent().AtName("policy_scores"),
 					),
 				},
 			},
@@ -1198,7 +1196,7 @@ func (r *RiskPolicyResource) ModifyPlan(ctx context.Context, req resource.Modify
 		// If the policy is different, set the evaluated predictors as unknown
 		if plan.PolicyScores.IsUnknown() || plan.PolicyWeights.IsUnknown() {
 			setEvaluatedPredictorsToUnknown = true
-		} else if (state.PolicyScores.IsNull() && !plan.PolicyScores.IsNull()) || (state.PolicyWeights.IsNull() && !plan.PolicyWeights.IsNull()) {
+		} else if (state.PolicyScores.IsNull() != plan.PolicyScores.IsNull()) || (state.PolicyWeights.IsNull() != plan.PolicyWeights.IsNull()) {
 			setEvaluatedPredictorsToUnknown = true
 		}
 	}
@@ -1307,20 +1305,24 @@ func (r *RiskPolicyResource) ModifyPlan(ctx context.Context, req resource.Modify
 		}
 	}
 
-	// Set the min-max threshold scores/weights
-	var policyThresholdHighMinValue *int32
-	resp.Diagnostics.Append(resp.Plan.GetAttribute(ctx, path.Root(rootPath).AtName("policy_threshold_high").AtName("min_score"), &policyThresholdHighMinValue)...)
-	if resp.Diagnostics.HasError() {
-		return
+	// Set the min-max threshold scores/weights.  Thresholds and predictors only
+	// apply to score-based policies; for mitigation-only policy sets both the
+	// weights and scores blocks are null and rootPath is empty.
+	if rootPath != "" {
+		var policyThresholdHighMinValue *int32
+		resp.Diagnostics.Append(resp.Plan.GetAttribute(ctx, path.Root(rootPath).AtName("policy_threshold_high").AtName("min_score"), &policyThresholdHighMinValue)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		resp.Plan.SetAttribute(ctx, path.Root(rootPath).AtName("policy_threshold_medium").AtName("max_score"), types.Int32Value(*policyThresholdHighMinValue))
+		resp.Plan.SetAttribute(ctx, path.Root(rootPath).AtName("policy_threshold_high").AtName("max_score"), types.Int32Value(int32(maxScore)))
+
+		// Set the predictors
+		plannedPredictors, d := types.SetValue(types.ObjectType{AttrTypes: predictorAttrType}, flattenedPolicyList)
+		resp.Diagnostics.Append(d...)
+		resp.Plan.SetAttribute(ctx, path.Root(rootPath).AtName("predictors"), plannedPredictors)
 	}
-
-	resp.Plan.SetAttribute(ctx, path.Root(rootPath).AtName("policy_threshold_medium").AtName("max_score"), types.Int32Value(*policyThresholdHighMinValue))
-	resp.Plan.SetAttribute(ctx, path.Root(rootPath).AtName("policy_threshold_high").AtName("max_score"), types.Int32Value(int32(maxScore)))
-
-	// Set the predictors
-	plannedPredictors, d := types.SetValue(types.ObjectType{AttrTypes: predictorAttrType}, flattenedPolicyList)
-	resp.Diagnostics.Append(d...)
-	resp.Plan.SetAttribute(ctx, path.Root(rootPath).AtName("predictors"), plannedPredictors)
 
 	// Overrides
 	flattenedOverrideList := []attr.Value{}
@@ -1844,6 +1846,9 @@ func (p *riskPolicyResourceModel) expand(ctx context.Context, apiClient *risk.AP
 		}
 	}
 
+	policyBackboneConfigured := (!p.PolicyWeights.IsNull() && !p.PolicyWeights.IsUnknown()) ||
+		(!p.PolicyScores.IsNull() && !p.PolicyScores.IsUnknown())
+
 	highPolicyCondition := risk.NewRiskPolicyCondition()
 	mediumPolicyCondition := risk.NewRiskPolicyCondition()
 
@@ -1879,10 +1884,13 @@ func (p *riskPolicyResourceModel) expand(ctx context.Context, apiClient *risk.AP
 	}
 
 	var predictorCompactNames []string
-	highPolicyCondition, mediumPolicyCondition, predictorCompactNames, d = plan.expand(ctx, useScores, highPolicyCondition, mediumPolicyCondition)
-	diags.Append(d...)
-	if diags.HasError() {
-		return nil, diags
+
+	if policyBackboneConfigured {
+		highPolicyCondition, mediumPolicyCondition, predictorCompactNames, d = plan.expand(ctx, useScores, highPolicyCondition, mediumPolicyCondition)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
 	}
 
 	riskPolicies := make([]risk.RiskPolicy, 0)
@@ -2081,29 +2089,47 @@ func (p *riskPolicyResourceModel) expand(ctx context.Context, apiClient *risk.AP
 		riskPolicies = append(riskPolicies, fb)
 	}
 
-	// Medium Weighted Policy
-	mwpResult := risk.NewRiskPolicyResult()
-	mwpResult.SetLevel(risk.ENUMRISKLEVEL_MEDIUM)
-	mwp := *risk.NewRiskPolicy("MEDIUM_WEIGHTED_POLICY", *mwpResult)
-	mwp.SetCondition(*mediumPolicyCondition)
-	mwp.SetPriority(int32(len(riskPolicies)) + 1)
-	riskPolicies = append(riskPolicies, mwp)
+	// The weighted-average / aggregated-scores backbone policies.  Only set when
+	// a scores or weights block is configured; mitigation-only policy sets
+	// (for example on MFA-only licenses) must not carry AGGREGATED_* conditions,
+	// which are unlicensed without PingOne Protect.
+	if policyBackboneConfigured {
+		// The backbone policies are appended last; their priorities follow the
+		// mitigation/override entries already collected.
+		backbonePriority := int32(1)
+		for range riskPolicies {
+			backbonePriority++
+		}
 
-	// High Weighted Policy
-	hwpResult := risk.NewRiskPolicyResult()
-	hwpResult.SetLevel(risk.ENUMRISKLEVEL_HIGH)
-	hwp := *risk.NewRiskPolicy("HIGH_WEIGHTED_POLICY", *hwpResult)
-	hwp.SetCondition(*highPolicyCondition)
-	hwp.SetPriority(int32(len(riskPolicies)) + 1)
-	riskPolicies = append(riskPolicies, hwp)
+		// Medium Weighted Policy
+		mwpResult := risk.NewRiskPolicyResult()
+		mwpResult.SetLevel(risk.ENUMRISKLEVEL_MEDIUM)
+		mwp := *risk.NewRiskPolicy("MEDIUM_WEIGHTED_POLICY", *mwpResult)
+		mwp.SetCondition(*mediumPolicyCondition)
+		mwp.SetPriority(backbonePriority)
+		riskPolicies = append(riskPolicies, mwp)
+
+		// High Weighted Policy
+		hwpResult := risk.NewRiskPolicyResult()
+		hwpResult.SetLevel(risk.ENUMRISKLEVEL_HIGH)
+		hwp := *risk.NewRiskPolicy("HIGH_WEIGHTED_POLICY", *hwpResult)
+		hwp.SetCondition(*highPolicyCondition)
+		backbonePriority++
+		hwp.SetPriority(backbonePriority)
+		riskPolicies = append(riskPolicies, hwp)
+	}
 
 	// Set the risk policies
 	data.SetRiskPolicies(riskPolicies)
 
-	riskPolicyPredictorsIDs, d := riskPredictorFetchIDsFromCompactNames(ctx, apiClient, managementApiClient, p.EnvironmentId.ValueString(), predictorCompactNames)
-	diags.Append(d...)
-	if diags.HasError() {
-		return nil, diags
+	riskPolicyPredictorsIDs := make([]string, 0)
+
+	if len(predictorCompactNames) > 0 {
+		riskPolicyPredictorsIDs, d = riskPredictorFetchIDsFromCompactNames(ctx, apiClient, managementApiClient, p.EnvironmentId.ValueString(), predictorCompactNames)
+		diags.Append(d...)
+		if diags.HasError() {
+			return nil, diags
+		}
 	}
 
 	evaluatedPredictors := make([]risk.RiskPolicySetEvaluatedPredictorsInner, 0)
@@ -2146,7 +2172,13 @@ func (p *riskPolicyResourceModel) expand(ctx context.Context, apiClient *risk.AP
 			evaluatedPredictors = append(evaluatedPredictors, *risk.NewRiskPolicySetEvaluatedPredictorsInner(predictorID))
 		}
 	}
-	data.SetEvaluatedPredictors(evaluatedPredictors)
+
+	// Omit when empty so the API resolves to all licensed predictors; an empty
+	// slice would otherwise serialize as "evaluatedPredictors": [] in the
+	// request body.
+	if len(evaluatedPredictors) > 0 {
+		data.SetEvaluatedPredictors(evaluatedPredictors)
+	}
 
 	// Targets
 	if !p.Targets.IsNull() && !p.Targets.IsUnknown() {
@@ -2342,7 +2374,11 @@ func (p *riskPolicyResourceModel) toState(apiObject *risk.RiskPolicySet) diag.Di
 
 	p.Default = framework.BoolOkToTF(apiObject.GetDefaultOk())
 
-	p.EvaluatedPredictors = types.SetNull(types.StringType)
+	// The API omits evaluatedPredictors entirely for policy sets without
+	// explicitly configured predictors (for example, mitigation-only sets).
+	// Normalize to an empty set so the Optional+Computed attribute does not
+	// produce a perpetual unknown value in plans.
+	p.EvaluatedPredictors = types.SetValueMust(types.StringType, []attr.Value{})
 	if v, ok := apiObject.GetEvaluatedPredictorsOk(); ok {
 		list := make([]attr.Value, 0)
 		for _, item := range v {
@@ -2415,9 +2451,9 @@ func (p *riskPolicyResourceModel) toState(apiObject *risk.RiskPolicySet) diag.Di
 func (p *riskPolicyResourceModel) toStatePolicy(riskPolicies []risk.RiskPolicy, ok bool) (basetypes.ObjectValue, basetypes.ObjectValue, basetypes.ListValue, basetypes.ListValue, basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
-	objPolicyWeightsValue := types.ObjectUnknown(policyWeightsTFObjectTypes)
-	objPolicyScoresValue := types.ObjectUnknown(policyScoresTFObjectTypes)
-	objOverridesValue := types.ListUnknown(types.ObjectType{AttrTypes: overridesTFObjectTypes})
+	objPolicyWeightsValue := types.ObjectNull(policyWeightsTFObjectTypes)
+	objPolicyScoresValue := types.ObjectNull(policyScoresTFObjectTypes)
+	objOverridesValue := types.ListNull(types.ObjectType{AttrTypes: overridesTFObjectTypes})
 	objMitigationsValue := types.ListNull(types.ObjectType{AttrTypes: mitigationsTFObjectTypes})
 	objFallbackValue := types.ObjectNull(mitigationsFallbackTFObjectTypes)
 
