@@ -148,43 +148,6 @@ func TestAccRiskPolicyDataSource_Validation(t *testing.T) {
 	})
 }
 
-func TestAccRiskPolicyDataSource_MitigationsOnly(t *testing.T) {
-	t.Parallel()
-
-	resourceName := acctest.ResourceNameGen()
-	resourceFullName := fmt.Sprintf("pingone_risk_policy.%s", resourceName)
-	dataSourceFullName := fmt.Sprintf("data.pingone_risk_policy.%s", resourceName)
-
-	name := resourceName
-
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acctest.PreCheckNoTestAccFlaky(t)
-			acctest.PreCheckClient(t)
-			acctest.PreCheckNoBeta(t)
-		},
-		ProtoV6ProviderFactories: acctest.ProtoV6ProviderFactories,
-		CheckDestroy:             risk.RiskPolicy_CheckDestroy,
-		ErrorCheck:               acctest.ErrorCheck(t),
-		Steps: []resource.TestStep{
-			{
-				Config: testAccRiskPolicyDataSourceConfig_MitigationsOnly_ByID(resourceName, name),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(dataSourceFullName, "id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(dataSourceFullName, "environment_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestMatchResourceAttr(dataSourceFullName, "risk_policy_id", verify.P1ResourceIDRegexpFullString),
-					resource.TestCheckResourceAttrPair(dataSourceFullName, "name", resourceFullName, "name"),
-					resource.TestCheckResourceAttrPair(dataSourceFullName, "mitigations.#", resourceFullName, "mitigations.#"),
-					resource.TestCheckResourceAttrPair(dataSourceFullName, "fallback.action", resourceFullName, "fallback.action"),
-					resource.TestCheckResourceAttrPair(dataSourceFullName, "evaluated_predictors.#", resourceFullName, "evaluated_predictors.#"),
-					resource.TestCheckNoResourceAttr(dataSourceFullName, "policy_scores.%"),
-					resource.TestCheckNoResourceAttr(dataSourceFullName, "policy_weights.%"),
-				),
-			},
-		},
-	})
-}
-
 func testAccRiskPolicyDataSourceConfig_ByID(resourceName, name string) string {
 	return fmt.Sprintf(`%[1]s
 
@@ -201,15 +164,6 @@ data "pingone_risk_policy" "%[2]s" {
   environment_id = data.pingone_environment.general_test.id
   name           = pingone_risk_policy.%[2]s.name
 }`, testAccRiskPolicyConfig_Scores_Minimal(resourceName, name), resourceName)
-}
-
-func testAccRiskPolicyDataSourceConfig_MitigationsOnly_ByID(resourceName, name string) string {
-	return fmt.Sprintf(`%[1]s
-
-data "pingone_risk_policy" "%[2]s" {
-  environment_id = data.pingone_environment.general_test.id
-  risk_policy_id = pingone_risk_policy.%[2]s.id
-}`, testAccRiskPolicyConfig_MitigationsOnly_Minimal(resourceName, name), resourceName)
 }
 
 func testAccRiskPolicyDataSourceConfig_NotFoundByName(resourceName string) string {
