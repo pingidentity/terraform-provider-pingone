@@ -33,7 +33,7 @@ require (
 	github.com/pingidentity/pingone-go-sdk-legacy/management v0.84.0
 	github.com/pingidentity/pingone-go-sdk-legacy/mfa v0.28.0
 	github.com/pingidentity/pingone-go-sdk-legacy/risk v0.25.0
-	github.com/pingidentity/pingone-go-sdk-legacy/verify v0.13.0
+	github.com/pingidentity/pingone-go-sdk-legacy/verify v0.14.0
 )
 
 require (
