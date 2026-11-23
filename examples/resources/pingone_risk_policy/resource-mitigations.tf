@@ -6,31 +6,12 @@ resource "pingone_risk_predictor" "my_awesome_geovelocity_anomaly_predictor" {
   # ...
 }
 
+# A mitigation-only risk policy (no policy_weights / policy_scores blocks), as
+# supported on MFA-only licensed environments.
 resource "pingone_risk_policy" "my_awesome_mitigations_risk_policy" {
   environment_id = pingone_environment.my_environment.id
 
   name = "My Awesome Mitigations-based Risk Policy"
-
-  policy_scores = {
-    policy_threshold_medium = {
-      min_score = 40
-    }
-
-    policy_threshold_high = {
-      min_score = 75
-    }
-
-    predictors = [
-      {
-        compact_name = pingone_risk_predictor.my_awesome_anonymous_network_predictor.compact_name
-        score        = 50
-      },
-      {
-        compact_name = pingone_risk_predictor.my_awesome_geovelocity_anomaly_predictor.compact_name
-        score        = 50
-      }
-    ]
-  }
 
   mitigations = [
     {

@@ -160,31 +160,12 @@ resource "pingone_risk_predictor" "my_awesome_geovelocity_anomaly_predictor" {
   # ...
 }
 
+# A mitigation-only risk policy (no policy_weights / policy_scores blocks), as
+# supported on MFA-only licensed environments.
 resource "pingone_risk_policy" "my_awesome_mitigations_risk_policy" {
   environment_id = pingone_environment.my_environment.id
 
   name = "My Awesome Mitigations-based Risk Policy"
-
-  policy_scores = {
-    policy_threshold_medium = {
-      min_score = 40
-    }
-
-    policy_threshold_high = {
-      min_score = 75
-    }
-
-    predictors = [
-      {
-        compact_name = pingone_risk_predictor.my_awesome_anonymous_network_predictor.compact_name
-        score        = 50
-      },
-      {
-        compact_name = pingone_risk_predictor.my_awesome_geovelocity_anomaly_predictor.compact_name
-        score        = 50
-      }
-    ]
-  }
 
   mitigations = [
     {
@@ -241,8 +222,8 @@ resource "pingone_risk_policy" "my_awesome_mitigations_risk_policy" {
 - `fallback` (Attributes) A single object that specifies the required catch-all fallback mitigation action, applied when no mitigation condition matches. Required when `mitigations` or `targets` is configured. Carries a single mitigation action with no condition. (see [below for nested schema](#nestedatt--fallback))
 - `mitigations` (Attributes List) An ordered list of mitigation-style policy entries to apply to the policy. Each entry pairs a condition with a single mitigation action. Mutually exclusive with `overrides`. When this block is configured, a `fallback` block must also be configured.  The list must contain at least one entry. (see [below for nested schema](#nestedatt--mitigations))
 - `overrides` (Attributes List) An ordered list of policy overrides to apply to the policy.  The ordering of the overrides is important as it determines the priority of the policy override during policy evaluation. (see [below for nested schema](#nestedatt--overrides))
-- `policy_scores` (Attributes) An object that describes settings for a risk policy calculated by aggregating score values, with a final result being the sum of score values from each of the configured predictors.  Exactly one of the following must be defined: `policy_weights`, `policy_scores`. (see [below for nested schema](#nestedatt--policy_scores))
-- `policy_weights` (Attributes) An object that describes settings for a risk policy using a weighted average calculation, with a final result being a risk score between `0` and `10`.  Exactly one of the following must be defined: `policy_weights`, `policy_scores`. (see [below for nested schema](#nestedatt--policy_weights))
+- `policy_scores` (Attributes) An object that describes settings for a risk policy calculated by aggregating score values, with a final result being the sum of score values from each of the configured predictors.  Required when configuring aggregated-score risk evaluation.  Omit both `policy_weights` and `policy_scores` to define a mitigation-only policy set (for example, for MFA-only licenses or the environment's default fallback policy). (see [below for nested schema](#nestedatt--policy_scores))
+- `policy_weights` (Attributes) An object that describes settings for a risk policy using a weighted average calculation, with a final result being a risk score between `0` and `10`.  Required when configuring weighted-average risk evaluation.  Omit both `policy_weights` and `policy_scores` to define a mitigation-only policy set (for example, for MFA-only licenses or the environment's default fallback policy). (see [below for nested schema](#nestedatt--policy_weights))
 - `targets` (Attributes) A single object that scopes this policy set to a subset of events (targeted policy). When configured, a `fallback` block is required and `mitigations` may optionally be configured. Mutually exclusive with `overrides`. (see [below for nested schema](#nestedatt--targets))
 
 ### Read-Only
